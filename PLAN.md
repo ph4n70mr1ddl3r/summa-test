@@ -98,6 +98,20 @@ mode so small teams start simple.
 > ephemeral subtree with fold-back, never mid-commit (§6.3) · stage-less sends are send-once — an
 > ambiguous timeout is an ask, not a resend (§8.2) · ordinary expiring rules join delegations in
 > `lapsed` semantics (§7) · the single control plane is named an accepted boundary (§13.1).
+>
+> **Edge-case closure (v2.16)**: eighth sweep — authority seams closed inline: the last-admin
+> guard covers demotion, not just deactivation — an RBAC edit cannot leave the org headless (§5)
+> · initiative sponsors and leads are ask-eligible at write — viewer and non-active members
+> refused, like ask targets and assignees (§5.1, §7) · ask targets in any non-active state
+> (requested, retiring) reassign up the chain (§8.10) · deputy accepts are audit-only toward
+> multi-approval quorums; a delegated quorum rule addresses the delegate as primary recipient
+> and pool member (§8.10) · topology ops declare their resulting domains — owner/access/store/sod/residency —
+> with most-restrictive access on merge, hold-refused store migrations, and a post-op
+> contradiction re-check inside the lock; dissolution is merge-away-then-archive, never bare
+> delete (§4.4, §7, §9) · closing an initiative unbinds its workspaces — the goal slice
+> re-derives at once (§5.1) · `depends_on` is acyclic — cycles refused at write (§5.1) · a
+> settle that overshoots its reservation settles in full, surfaces, and gates further reserves
+> until acknowledged (§6.2).
 
 ---
 
@@ -317,13 +331,25 @@ strictness separately.
   (§8.10) — detected at proposal time and
   re-checked at publish, inside the domain write lock, so racing publishes cannot land
   contradictions sequentially (§4.3).
-- **Topology changes**: reorgs split, merge, and rename domains — a governed operation, not a
-  hand-run migration: items move with ids stable (citations and supersession chains survive),
+- **Topology changes**: reorgs split, merge, rename, and archive domains — a governed operation,
+  not a hand-run migration: items move with ids stable (citations and supersession chains survive),
   access policies re-evaluate against the new topology, workspace domain tags remap, and the move
-  is a single auditable event. Topology ops serialize behind a domain-level write lock (§4.5):
-  split/merge/rename queue behind in-flight proposals and each other — the stable-id guarantees
-  assume no concurrent topology mutation, so the system enforces the assumption rather than
-  hoping. Prior states stay reconstructible from git history and audit.
+  is a single auditable event. An op declares its result, not just its inputs: split names owner,
+  access, `store`, `sod`, and residency for each resulting domain (inherit-by-default), and merge
+  declares the surviving domain's attributes — access defaults to the most restrictive of the
+  merged pair, and a `store` change migrates content inside the same audited event (git→db-only
+  sweeps the files from the tree in one commit; db-only→git demands an explicit confirm, because
+  the merge publishes immutable history) and is refused outright while either side sits under a
+  kind-`domain` legal hold (§4.5). The commit re-runs contradiction checks against the post-op
+  state inside the lock — items that coexist peacefully across two domains may collide in one,
+  and the collision surfaces as review asks, never as silent coexistence. Dissolution is the
+  degenerate case, not a missing feature: there is no bare delete — merge the domain's remaining
+  items away, then archive the empty domain (§7 `status 'archived'`: read-only history; no
+  injection, routing, or new bindings; nothing shredded, so reconstructibility survives).
+  Topology ops serialize behind a domain-level write lock (§4.5):
+  split/merge/rename/archive queue behind in-flight proposals and each other — the stable-id
+  guarantees assume no concurrent topology mutation, so the system enforces the assumption rather
+  than hoping. Prior states stay reconstructible from git history and audit.
 
 ### 4.5 Storage
 
@@ -367,7 +393,7 @@ under the immutable-history boundary, and an erasure demand that exceeds pseudon
 the documented history-rewrite remediation below. Legal holds
 (`data_holds`, §7) freeze erasure for covered subjects until an admin releases them, audited; an
 erasure request against a member with live dependencies is refused until the §5 offboarding walk
-has run. Topology history for db-only domains rests on the audit log, not git: split/merge/rename
+has run. Topology history for db-only domains rests on the audit log, not git: split/merge/rename/archive
 on a db-only domain writes a full manifest — item ids, from/to domain, access re-evaluations — to
 the audit log and triggers an export snapshot, with scheduled exports backing the history the git
 timeline never held (§4.4's reconstructibility promise, restated per store kind).
@@ -429,7 +455,10 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
   are skipped when walking ask chains. Guard: the last active admin
   cannot be deactivated — evaluated inside the offboarding transaction, so two racing
   deactivations of the last two admins see one success and one refusal (§9's bootstrap
-  atomicity pattern); the org never goes headless by accident or by race. Audit history is retained;
+  atomicity pattern); the org never goes headless by accident or by race. Demotion joins
+deactivation under the guard: an RBAC role change that would leave zero active admins is refused
+by the same transactional check — headless-by-self-demotion is the same accident through a
+different door. Audit history is retained;
   personal data falls under the §4.5 deletion carve-out. Rehire is a new member, never a
   resurrection: deactivation is terminal for identity, so a returning employee gets a fresh row —
 `decided_by` references, audit history, and spend attribution stay pinned to the departed
@@ -468,14 +497,22 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
    and tasks resolved or reassigned; the retrospective files DNA proposals — the §1 loop closes.
    Initiatives may declare dependencies (`depends_on`, §7): closing an upstream initiative with
    active dependents raises an ask to each dependent's sponsor — proceed, re-base, or pause — a
-   coordination signal, not a hard block; the humans who own the downstream calls make them.
+   coordination signal, not a hard block; the humans who own the downstream calls make them. The
+   graph stays a DAG: dependency cycles are refused at write — the §8.10 deputy-cycle guard
+   applied to initiatives; a malformed web of directives is rejected at the door, not discovered
+   mid-close.
 
 **Transitions are owned, not ambient**: `proposed` → `active` is the sponsor's acceptance — an
 initiative opened by anyone other than its sponsor routes an activation ask to the sponsor
 (expiry `deny`: a directive that never won its authority never gets execution), a sponsor's own
 opens active — and only `active` initiatives bind workspaces (§7) and launch runs. Pause and
 resume belong to the lead or the sponsor; close belongs to either and always runs the §6.3
-dependency check (§9).
+dependency check (§9) — and unbinds: workspaces drop the closed initiative from their binding
+list (§7), the goal slice re-derives at once, and no workspace keeps reading a closed spine.
+Both posts are ask-eligible at write — a viewer human, or any non-active member in either role,
+is refused the way an ask target or assignee is (§5): a post that routes asks cannot be held by
+a member who can never answer one, and mid-life departures re-point the posts via the §5/§6.3
+walks, so eligibility is maintained, not merely checked once.
 
 An initiative is an org entity (visible, accountable); **project memory** (§8.3) stays the
 automatic per-workspace memory tier — one is governance, the other learning. **v0 shape**
@@ -527,7 +564,10 @@ delegation assigns a board task or instantiates a playbook.
   budget atomically against (reserved + settled) in the spend ledger (`kind
   'reserve'|'settle'|'release'`, §7), settles to actual cost at completion, and releases on
   failure or reaping — two runs sitting at 49% of a ceiling cannot both spend past it, and §6.4
-  rate/volume limits reserve reads identically.
+  rate/volume limits reserve reads identically. A settle may overshoot its reserve — the final
+  provider call lands after the meter — and the overrun is handled, not rolled forward: it
+  settles in full, surfaces on the spend dashboard and the owner's digest, and further reserves
+  against that cap are refused until an admin acknowledges (degrade to an ask, §2).
 - **Approval gates**: persistent hires → Ask to the owner of the domain the hire's primary
   workspace is bound to (or an admin); agent-spawned
   ephemeral workers exceeding quota → Ask to the spawner's owner human.
@@ -626,9 +666,12 @@ nodes          (id, name, kind 'local'|'remote', capabilities json, region?, cla
                  -- region gates residency-constrained scheduling (§3, §4.5);
                  -- claim: epoch-fenced workspace leases (§3)
 dna_domains    (id, name, owner_human_id, access 'public'|'domain'|'named',
-                 store 'git'|'db-only', sod 'off'|'reviewer-distinct', residency?)
+                 store 'git'|'db-only', sod 'off'|'reviewer-distinct', residency?,
+                 status 'active'|'archived' default 'active')
                  -- db-only: the §4.5 privacy carve-out; sod: proposer ≠ publisher when on (§4.3);
-                 -- residency constrains node placement (§3)
+                 -- residency constrains node placement (§3);
+                 -- archived: read-only history — no injection, routing, or new bindings;
+                 -- dissolution = merge-away then archive, never bare delete (§4.4)
 dna_cards      (id, domain_id, title, definition_md, refs json, provenance json, version,
                  status 'draft'|'active'|'retired')
 dna_rules      (id, domain_id, statement_md, machine_hint json?, effective_from, effective_to?,
@@ -670,17 +713,17 @@ asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request', fro
 initiatives    (id, title, goal_ref?, decision_ref?, sponsor member, lead member,
                  status 'proposed'|'active'|'paused'|'closed', business_budget json?, deadline?,
                  closed_at?, depends_on json?)
-                 -- sponsor: pinned human, like every accountability chain (§5.1); lead: any
-                 -- member, human by default
-                 -- depends_on: cross-initiative DAG; closing an upstream with live dependents
-                 -- asks each sponsor — signal, not block (§5.1)
+                 -- sponsor: pinned human; lead: any member — both ask-eligible at write:
+                 -- viewer and non-active members refused (§5.1)
+                 -- depends_on: cross-initiative DAG — acyclic, enforced at write; closing an
+                 -- upstream with live dependents asks each sponsor — signal, not block (§5.1)
 board_tasks    + assignee_member_id?, initiative_id?  (runs carry initiative_id? the
                  same way — burndown, per-initiative digests)
                  -- assignee: any member but a viewer — the ask-target guard extends to task
                  -- assignment, refused at write (§5)
 workspaces     + initiative_ids json?, node_id?, claim_epoch int default 0, lease_expires_at?
                  -- active initiatives bound here (bound at spawn under an initiative,
-                 -- admin-editable); the source of the §4.2 goal slice;
+                 -- admin-editable; close drops the binding, §5.1); the source of the §4.2 goal slice;
                  -- node/epoch/lease: affinity placement + the fenced claim (§3)
 triggers       + criticality 'standard'|'critical'  -- §6.2 breaker trip order
 spend_ledger   (id, member_id, run_id?, spawn_id?, kind 'reserve'|'settle'|'release',
@@ -798,11 +841,16 @@ same machinery expiry uses). **Quorum asks**: rules may require N distinct appro
 (`machine_hint.requires_approvals` — §4.1's flagship "invoices > $10k require two approvals"
 becomes expressible): the ask carries `quorum_required` (§7) and closes answered once N
 distinct human members have accepted. Addressing is precise, not ambient: `to` names the pool's
-primary recipient — the rule's domain owner — and the eligible pool is that owner plus every
+primary recipient — the rule's domain owner, or its delegate (who joins the pool) when a
+delegation routes the rule — and the eligible pool is that owner plus every
 active admin (`deactivated_at` IS NULL, §7), evaluated at respond time: a pool that grows
 mid-ask admits new acceptors, an acceptance's eligibility re-validates like every other
 respond-time check, and an acceptance that already counted stands — the ask closes the moment
-the Nth valid accept lands, so a later offboarding cannot reopen a closed decision. A deny
+the Nth valid accept lands, so a later offboarding cannot reopen a closed decision. When N > 1,
+only pool members' accepts count: a deputy's accept is audit-only there — for multi-approval
+quorums the pool's own redundancy (owner plus admins) is the absence mechanism, and N approvals
+means N pool principals, never one principal answering through two doors; a quorum-1 ask keeps
+first-response-wins above, where a deputy may stand in for the one signature. A deny
 still closes it denied immediately, expiry still denies, and a stale acceptance is audit-only
 and does not count toward N. SLA breach escalates to the admin, who may contribute one of the
 required approvals. N is validated
@@ -837,7 +885,8 @@ escalation naming the shortfall: an impossible quorum degrades to a visible no, 
   time authority). An unset calendar is still a calendar: humans with no timezone or working
   hours fall back to the control plane's zone and 09:00–17:00 weekdays — the digest always has
   a definite morning to compute. **Agent targets**: an ask routed to a Coworker queues into
-  its next run (or wakes a session worker); if the target is ephemeral, suspended, archived, or
+  its next run (or wakes a session worker); if the target is anything but `active` — requested,
+  retiring, suspended, or archived, the ephemeral states included via the §7 mapping — or is
   busy past SLA, the ask reassigns up the chain (§6.3 suspend re-routing included). **Delegated authority** — a directive can push authority,
   not just work: the sponsor proposes a DNA rule scoped by `machine_hint` (initiative, ceiling,
   window) — "initiative X: store invoices ≤ $25k need one approval, by the lead, until
@@ -872,7 +921,8 @@ POST /nodes/enroll (one-time token exchange) · GET /nodes · POST /nodes/:id/re
 CRUD /dna/domains · /dna/cards|rules|decisions|glossary|goals
 POST /dna/proposals  POST /dna/proposals/:id/review (publish|reject) · POST /dna/proposals/:id/withdraw
                · POST /dna/proposals/:id/amend (revision during review, §4.3)  GET /dna/review-queue
-POST /dna/domains/:id/split|merge|rename (governed topology ops, §4.4)
+POST /dna/domains/:id/split|merge|rename|archive (governed topology ops, §4.4; archive refuses
+               a domain still holding items — merge away first)
 CRUD /role-templates (versioned catalog, §6.5)
 POST /spawn          GET /spawn/:id   (spawn requests; approval + spawn-storm monitoring)
 POST /coworkers/:id/retire · /suspend · /resume   (lifecycle acts on the coworker, §6.3 — not the spawn request)
@@ -991,18 +1041,21 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
 - **Unit**: scope delegation algebra (child ⊆ parent), spawn policy engine (quotas/depth/TTL),
   DNA proposal workflow states, goal-slice injection determinism, delegated-authority evaluation
   in ask routing, egress/path guards, scheduler math, memory 3-tier classifier, offboarding dependency walk (last-admin guard incl.
-  racing offboards, initiative reassignment, deputy clearing, session/PAT revocation, asks-from
-  closure), domain split/merge id-and-chain invariants,
+  racing offboards and self-demotion refusal, initiative reassignment, deputy clearing, session/PAT revocation, asks-from
+  closure), domain split/merge id-and-chain invariants, merge attribute resolution
+  (most-restrictive access, declared store, hold-refused migration) + post-op contradiction
+  re-check + archive-refuses-items,
   template-upgrade scope re-derivation, escalation-walk visited-set (deputy cycles), deputy
   guard (agent, self, viewer, and cycle refusals), trigger catch-up coalescing, atomic quota claims under racing spawners, DNA
   store ingestion quarantine, topology-op write-lock serialization, ask respond-time
   re-validation, quorum accumulation (N distinct accepts, deny-wins, stale accepts don't count,
-  pool-shortfall denial, pool-eligibility at respond time),
-  spend reservation under racing runs, separation-of-duties refusal, playbook cycle detection,
+  pool-shortfall denial, pool-eligibility at respond time, deputy accepts audit-only toward N>1),
+  spend reservation under racing runs, settle-overrun gating, separation-of-duties refusal, playbook cycle detection,
   alias-collision resolution order, injected-layer compartment filtering (rules/glossary/goals),
   org-scoped proposal routing to the admin queue, PAT expiry enforcement, erasure
   pseudonymization + hold blocking (incl. the DNA provenance sweep), initiative transition
-  authority (sponsor activation ask, lead/sponsor pause-close), goal window-end slice drop and
+  authority (sponsor activation ask, lead/sponsor pause-close, viewer/non-active sponsor-lead
+  refusal, close-time workspace unbinding, depends_on cycle refusal), goal window-end slice drop and
   terminal-status exit, viewer assignee refusal.
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
@@ -1054,7 +1107,11 @@ v2.11 triaged, v2.12 designed, v2.13 audited and closed — and v2.14 closed the
 prose and schema that the fifth sweep's audit still left open; v2.15's seventh sweep closed the
 remaining ownership seams — goal window-end semantics (§4.2), initiative transition authority
 (§5.1), viewer assignees (§5), erasure's provenance sweep (§4.5), the transactional last-admin
-guard (§5), suspended subtrees (§6.3), send-once delivery (§8.2), and the offboard endpoint (§9). The former residue — quorum
+guard (§5), suspended subtrees (§6.3), send-once delivery (§8.2), and the offboard endpoint
+(§9); v2.16's eighth sweep closed the authority seams around them — last-admin demotion (§5),
+ask-eligible initiative posts (§5.1), transient ask targets and deputy-vs-quorum counting
+(§8.10), topology-op result declaration with dissolution-by-archive (§4.4), close-time
+workspace unbinding (§5.1), initiative-DAG cycles (§5.1), and settle overruns (§6.2). The former residue — quorum
 approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
 check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
