@@ -223,6 +223,21 @@ mode so small teams start simple.
 > to the initiative itself (§5.1) · card status defaults `active` like the glossary's — an
 > owner's direct create is the publish path, draft an explicit stage (§7).
 
+> **Edge-case closure (v2.24)**: sixteenth sweep — state-machine and gate-completion seams closed
+> inline: the retire walk settles the retiree's asks — asks from it, pending spawn requests
+> included, close with an audit note and drain their template pins, while asks to it ride §8.10's
+> non-active reassignment; a terminal act leaves no waiters (§6.3, §6.5) · merge's undeclared
+> attributes persist from the surviving domain, and the `named` reader list keeps the survivor's
+> unless the op declares the union — never a silent widening; split's inherit-by-default hands
+> results the parent's list (§4.4, §7) · a standalone `store` flip through domain update runs
+> the same audited migration and hold refusal the merge path runs (§4.4, §4.5) · a residency
+> edit re-validates bound workspaces' placements — rebind or starvation ask, never silently
+> grandfathered (§4.4, §3) · the spawn gate is class-matched as well as status-matched (§6.2) ·
+> a denied spawn request archives without activating — the status enum's missing denial
+> transition (§7) · only `active` initiatives launch spawns, the twin of the paused-slice
+> refusal (§5.1) · an exhausted assignment ask returns the task to the board pool (§8.10) · a
+> TTL lapsing under suspension halts-then-reaps (§6.2, §6.3).
+
 ---
 
 ## 1. Product vision
@@ -493,12 +508,24 @@ keeps governing strictness separately.
   not a hand-run migration: items move with ids stable (citations and supersession chains survive),
   access policies re-evaluate against the new topology, workspace domain tags remap, and the move
   is a single auditable event. An op declares its result, not just its inputs: split names owner,
-  access, `store`, `sod`, and residency for each resulting domain (inherit-by-default), and merge
+  access, `store`, `sod`, and residency for each resulting domain (inherit-by-default — each
+  result starts from the parent's `named_readers` list too, §7, there to be edited, not
+  re-derived), and merge
   declares the surviving domain's attributes — access defaults to the most restrictive of the
-  merged pair, and a `store` change migrates content inside the same audited event (git→db-only
+  merged pair, undeclared attributes persist from the surviving domain, and the `named` reader
+  list keeps the same floor: the survivor's list stands unless the op declares the union, so a
+  merge never silently widens access — and a narrowed list shows in the event's access
+  re-evaluation, never a quiet lockout. A `store` change migrates content inside the same audited
+  event (git→db-only
   sweeps the files from the tree in one commit; db-only→git demands an explicit confirm, because
   the merge publishes immutable history) and is refused outright while either side sits under a
-  kind-`domain` legal hold (§4.5). The hold's refusal reaches the dissolving ops too: archive and merge-away of a held domain queue
+  kind-`domain` legal hold (§4.5) — and the migration is a property of the flag, not of the op
+  flipping it: a standalone `store` change through domain update (§9) runs the same one-commit
+  sweep, the same explicit confirm, and the same hold refusal. Residency edits carry the same
+  visibility: a tightened constraint re-validates every bound workspace's placement — conforming
+  leases stand, nonconforming ones rebind through the §3 capability-and-region check or starve
+  into the same §3 starvation ask — an attribute edit is never silently grandfathered onto
+  placements the old value allowed. The hold's refusal reaches the dissolving ops too: archive and merge-away of a held domain queue
   behind the hold's release, while rename stays available — ids, content, and access unchanged,
   the event audited — and merge-into a held domain stays open, a hold freezing removal, not
   addition. The commit re-runs contradiction checks against the post-op
@@ -732,7 +759,10 @@ initiative opened by anyone other than its sponsor routes an activation ask to t
 initiative stays `proposed`, inert — no bindings, no runs, no escalations — until its sponsor or
 lead closes it; org state is never silently evaporated), a sponsor's own
 opens active — initiatives bind workspaces at activation, pause retains the binding frozen
-(above), close drops it (§7) — and only `active` initiatives launch runs. Pause and
+(above), close drops it (§7) — and only `active` initiatives launch runs — and spawns: a spawn
+filed under a non-active initiative is refused at request (§6.2), the spawn twin of the
+paused-slice refusal — `proposed` has no bindings to offer a new workspace (§7), `paused`
+freezes execution, `closed` refuses new work. Pause and
 resume belong to the lead or the sponsor — an admin holds both as emergency backstop, the §6.3
 authority pattern applied to the initiative itself, so the org's halt authority never lacks a
 hand on the switch — and close belongs to either and always runs the §6.3
@@ -795,7 +825,10 @@ delegation assigns a board task or instantiates a playbook.
 - **Allowlists**: which templates each member class may spawn; ephemeral workers restricted to
   whitelisted "subagent" templates — and the allowlist spans the catalog's live surface only: a
   spawn request may name an `active` template (§7), never a `draft` (authoring state) or
-  `retired` (history) one, refused at request time. That gate is the other half of §6.5's
+  `retired` (history) one, refused at request time — and class-matched as well as
+  status-matched: a persistent hire names a `persistent`-class template, an ephemeral worker a
+  whitelisted `ephemeral-subagent` one (§7), the wrong class refused by the same transactional
+  claim. That gate is the other half of §6.5's
   pin-drain — retirement lands once pins and pending requests drain, and no new request can slip
   in behind it: the status check claims the template row inside the spawn transaction, the same
   atomic-claim pattern the count caps use, so a retirement and a racing request see one winner.
@@ -828,7 +861,9 @@ delegation assigns a board task or instantiates a playbook.
   `standard`-class work first while a small critical floor (default 5%) keeps money-moving and
   customer-facing automations alive — total exhaustion still halts everything, loudly. The TTL
   reaper never kills between prepare and commit of an external write: it grants a grace window
-  and leaves a reconcilable `external_writes` row instead (§8.2).
+  and leaves a reconcilable `external_writes` row instead (§8.2). A TTL lapsing while its worker
+  is suspended halts-then-reaps — fold-back and §8.2 reconciliation first, archive after (§6.3):
+  suspension defers the reaper's trigger, never its semantics.
 
 ### 6.3 Lineage
 
@@ -845,8 +880,14 @@ resolving its dependents (automations,
 playbooks, paired IM sessions, live spawned workers — a dying spawner's ephemeral children fold
 back into the workspace's project memory, not the departed personal one — plus board-task
 assignments returned to the pool or reassigned, owned goals re-owned or retired, and initiative
-lead/sponsor posts reassigned or closed via §5.1) — the same dependency check as deleting a
-skill, applied to staff; the §5 offboarding walk is its superset for humans. The retiree's
+lead/sponsor posts reassigned or closed via §5.1, and the retiree's own pending asks closed with
+an audit note — pending spawn requests included, draining the template pins they hold (§6.5):
+their originating runs are halted and folded, so an answer would have no consumer, and a
+terminal act must not leave state waiting on a member who will never respond) — the same
+dependency check as deleting a
+skill, applied to staff; the §5 offboarding walk is its superset for humans. Asks *to* the
+retiree need no walk entry of their own: §8.10's non-active target rule (retiring included)
+already reassigns them up the lineage chain, exactly as under suspension. The retiree's
 personal memory archives with it — inert history under the archived identity, never injected,
 never transferable to a respawn (re-role's lessons-go-to-DNA is the only bridge); a fresh hire
 starts a fresh memory. The ephemeral
@@ -946,6 +987,9 @@ coworkers      + owner_human_id, class 'persistent'|'ephemeral', spawned_by memb
                  -- ephemeral lifecycle maps 1:1: spawned→requested, running→active, done→retiring,
                  -- reaped→archived (done = fold-back pending, the ephemeral analogue of retiring)
                  -- suspended = emergency stop, halts triggers/runs without resolving dependents (§6.3)
+                 -- a denied spawn request transitions requested→archived without ever
+                 -- activating: denial is terminal for a `requested` row — the ask's deny is
+                 -- the record — and archiving it drains the template pin it held (§6.2, §6.5)
 role_templates (id, name, version, class 'persistent'|'ephemeral-subagent', body json
                  (identity/style/handbook), default_scopes json, status 'draft'|'active'|'retired')
                  -- versioned catalog; persistent Coworkers pin (template_id, template_version) (§6.5)
@@ -1211,7 +1255,9 @@ escalation naming the shortfall: an impossible quorum degrades to a visible no, 
   mis-configured cycle ends the hop, not the walk — the §5 last-admin guard and the exhaustion
   broadcast remain the backstops); `deadline` derives from the tier unless set
   explicitly. Chain exhaustion — the terminal admin is inactive or breaches — expires the ask
-  per its expiry behavior (an unanswered approval is a no, never a hang) and broadcasts a
+  per its expiry behavior (an unanswered approval is a no, never a hang; an exhausted assignment
+  returns the task to the board pool with a digest line — the board is an assignment's fallback
+  surface, never a hang either) and broadcasts a
   critical-tier org-stall alert to every active human: the §5 last-admin guard keeps an admin
   from being *deactivated*, not from being *absent*; the broadcast is the backstop. **Batching**: the digest composer groups by initiative, then workspace, then an ungrouped tail — an ask carrying neither link (org-level admin asks, member-direct questions) still renders there, so no ask falls out of every digest — and pre-fills recommended
   answers — recommendations compute only from re-validated, untainted payloads: an ask originating
@@ -1463,7 +1509,13 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   criticality defaults, named-reader derivation (list-backed `named` access, ignored under the
   other policies, dead entries contributing nothing, §5 walk removal), spawn refusal of `draft`
   and `retired` templates, sponsor direction asks escalating on expiry — never denying — with
-  the activation deny as the stated exception.
+  the activation deny as the stated exception, retire-walk ask settlement (from-it closed with
+  an audit note, spawn requests drained with their template pins, to-it re-routed via the
+  non-active rule), merge undeclared-attribute persistence with the named-list floor (union
+  only by declaration, split inheriting the parent's list), standalone store-flip migration and
+  hold refusal, residency-edit placement re-validation, class-matched spawn-gate refusal,
+  denied-request `requested`→`archived` transition, spawn-under-non-active-initiative refusal,
+  assignment-exhaustion pool return, suspended-TTL halt-then-reap.
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -1489,7 +1541,11 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   mention annex instead of rewriting prose; a goal drafted before its window stays out of
   prompts until effective_from opens it; an admin's read of a restricted domain lands in the
   audit log; a merge-away under a kind-'domain' hold is refused until release; a `met` goal
-  raises the sponsor's close-or-re-target ask while runs under the initiative wind down.
+  raises the sponsor's close-or-re-target ask while runs under the initiative wind down; a
+  domain residency tightened under live placements rebinds conforming workspaces and surfaces
+  the starvation ask for the rest; a standalone `store` flip sweeps the tree in one audited
+  commit and is refused under a kind-'domain' hold; a retiring Coworker's pending spawn request
+  closes with an audit note and releases its template pin.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -1570,7 +1626,14 @@ db-only tree-path quarantine (§4.5), hold-frozen dissolution with hold manageme
 (§4.4, §9), and audit-only tainted accepts (§8.10); v2.23's fifteenth sweep closed the
 residual-surface seams beneath those — the named-list schema home with live-state derivation
 (§4.4, §7), the template-status spawn gate (§6.2), escalate-not-deny sponsor direction asks with
-the admin pause backstop (§5.1), and the card default aligned to the glossary's (§7). The former
+the admin pause backstop (§5.1), and the card default aligned to the glossary's (§7); v2.24's
+sixteenth sweep closed the state-machine and gate-completion seams beneath those — retire-walk
+ask settlement with pin drain (§6.3, §6.5), merge's undeclared-attribute algebra with the
+named-list floor (§4.4, §7), the standalone store flip carrying the merge path's migration and
+hold refusal (§4.4, §4.5), residency-edit placement re-validation (§4.4, §3), the class-matched
+spawn gate (§6.2), the denied-request archive transition (§7), the active-only spawn gate
+(§5.1), assignment-exhaustion pool return (§8.10), and suspension-deferred TTL reaping
+(§6.2, §6.3). The former
 residue — quorum approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
 check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
