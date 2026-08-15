@@ -74,6 +74,18 @@ mode so small teams start simple.
 > calendars get a defined fallback — control-plane zone, 09:00–17:00 weekdays (§8.10) ·
 > initiative sponsors pinned human (§5.1) · offboarding terminates sessions and revokes PATs —
 > deactivation is credential-death, not a disabled login flag (§5).
+>
+> **Edge-case closure (v2.14)**: sixth sweep — schema-text seams closed inline: human
+> deactivation is representable (`deactivated_at`, §7) — the last-admin guard and chain-walk
+> skips now have a data basis · goals gain optional domain scoping: sensitive objectives inherit
+> compartment access; org-scoped items (goals, glossary) route proposals to the admin queue
+> (§4.2, §4.3, §7) · injected layers pass the same access check as retrieval — an unreadable
+> workspace degrades to an ask, never a silently empty prompt (§4.2) · quorum addressing pinned:
+> `to` = the rule's domain owner, the pool = that owner + active admins, evaluated at respond
+> time (§7, §8.10) · domain-kind legal holds freeze git history-rewrite remediation and db-only
+> exports (§4.5, §7) · stranded prepared writes get a scheduled reconciliation pass (§8.2) ·
+> initiative sponsor carried as pinned-human in the schema (§7) · admin lockout gets a
+> server-local, audited reset flow (§10).
 
 ---
 
@@ -222,8 +234,13 @@ Every run's system prompt is assembled with:
   narrows matching where present. Each layer carries a token budget (org snapshot ~1k, glossary
   slice ~2k, rules ~4k, goal slice ~1k — soft limits, configurable); overflow demotes items to
   retrieval (rules overflow into the searchable DNA index) rather than truncating silently.
-  Injection stays deterministic per (domain set, linked-goal set, DNA version) so it is testable
-  (§12).
+  Injection stays deterministic per (reader access, domain set, linked-goal set, DNA version)
+  so it is testable (§12). Injected layers pass the same compartment access check as retrieval
+  (§4.4): a domain the run's member cannot read contributes no rules, no glossary entries, no
+  domain-scoped goals — injection never bypasses compartments. Binding a member to a workspace
+  whose domains it cannot read is refused at spawn and on admin edit alike, and a mid-life
+  revocation that leaves a workspace with no readable domains refuses the next run's launch and
+  raises an admin ask — degrade to an ask (§2), never to a silently empty prompt.
 - **Retrieved on demand**: cards, decisions, and goals via hybrid search (BM25 + vector over the
   card index) — same retrieval machinery as v1's KB, now pointed at DNA.
 - **Cited in answers**: responses reference cards; the console (and IM) renders citations that open
@@ -251,8 +268,11 @@ DNA console (diff view, provenance, impact hints); publish creates a version and
 reject leaves an audit trail. The queue has a cadence of its own: proposals carry a review SLA
 (`review_by`, default 7 days, per-domain configurable); a breach escalates to the admin and a
 stale queue surfaces in the owner's digest — the §1 learning loop must not starve on an ignored
-inbox. Taint survives publication as provenance residue: an item accepted from a tainted run
-keeps its flag, renders with an indicator wherever cited, and heads the §4.4 scheduled quality
+inbox. Org-scoped items — org-wide goals and org-wide glossary entries (`domain_id` null, §7) —
+have no domain owner of their own; their proposals route to the admin's review queue, the same
+owner-of-last-resort pattern §5 applies to unowned domains. Taint survives publication as
+provenance residue: an item accepted from a tainted run keeps its flag, renders with an
+indicator wherever cited, and heads the §4.4 scheduled quality
 reviews — the owner's accept is informed consent, not a laundering step. Humans can also propose directly, and can edit in their own tools —
 the store is git-backed markdown, so a PR workflow is possible for teams that want it. Proposals
 are amendable in review: the proposer — or the reviewing owner, as suggested changes — files a new
@@ -540,7 +560,10 @@ New/changed tables (v1 session/run/message/skill/connector tables carry over):
 
 ```
 humans         (id, name, email, rbac 'admin'|'owner'|'member'|'viewer', auth json,
-                 deputy_member_id?, timezone?, working_hours json?, created_at)
+                 deputy_member_id?, timezone?, working_hours json?, created_at, deactivated_at?)
+                 -- deactivated_at: offboarding's terminal marker (§5) — rehire is a new row,
+                 -- so a timestamp is the whole state; ask-chain walks skip deactivated members
+                 -- and the last-admin guard counts admins with deactivated_at IS NULL (§5, §8.10)
                  -- deputy: first hop of the §8.10 chain;
                  -- must reference a humans row that is neither the member nor a viewer —
                  -- agent, self, and viewer deputies refused at write (§8.10)
@@ -571,9 +594,14 @@ dna_rules      (id, domain_id, statement_md, machine_hint json?, effective_from,
                  -- effective_to bounds delegation windows (§8.10); lapsed: delegation ended (§8.10)
 dna_decisions  (id, domain_id, context_md, outcome_md, decided_by member, decided_at)
 dna_glossary   (id, domain_id?, term, definition, aliases json)
-dna_goals      (id, quarter?, statement_md, owner member, status 'active'|'met'|'missed'|'retired',
+dna_goals      (id, domain_id?, quarter?, statement_md, owner member, status 'active'|'met'|'missed'|'retired',
                 inject 'always'|'linked', effective_from, effective_to?)  -- goal-slice source (§4.2)
-                -- the slice's 'deadline' (§4.2) is effective_to
+                -- the slice's 'deadline' (§4.2) is effective_to;
+                -- domain_id null = org-wide: member-public by definition, and its proposals
+                -- route to the admin review queue (§4.3); a domain-scoped goal inherits its
+                -- domain's access policy — it injects only where that domain is readable (§4.2),
+                -- so a sensitive objective (unannounced restructuring, pre-earnings targets)
+                -- is compartmented like any other DNA content
 dna_proposals  (id, kind 'card'|'rule'|'decision'|'goal'|'edit', payload json, revision int
                  default 1, proposed_by member,
                  provenance json, status 'open'|'published'|'rejected'|'withdrawn', reviewed_by?, at,
@@ -586,6 +614,8 @@ asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request', fro
                  default 1, responses json, collapsed_count int default 1)
                  -- supersedes approvals;
                  -- quorum: N distinct human accepts close it answered, deny wins immediately (§8.10);
+                 -- quorum addressing: to = the rule's domain owner (primary recipient); the
+                 -- eligible pool — that owner + active admins — evaluates at respond time (§8.10)
                  -- responses: the accept ledger behind N-of-M; collapsed_count: identical asks
                  -- folded into one canonical row — its answer resolves every waiter (§8.10);
                  -- escalate/reassign close the expired ask and open a linked successor ask (§8.10);
@@ -595,6 +625,8 @@ asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request', fro
 initiatives    (id, title, goal_ref?, decision_ref?, sponsor member, lead member,
                  status 'proposed'|'active'|'paused'|'closed', business_budget json?, deadline?,
                  closed_at?, depends_on json?)
+                 -- sponsor: pinned human, like every accountability chain (§5.1); lead: any
+                 -- member, human by default
                  -- depends_on: cross-initiative DAG; closing an upstream with live dependents
                  -- asks each sponsor — signal, not block (§5.1)
 board_tasks    + assignee_member_id?, initiative_id?  (runs carry initiative_id? the
@@ -617,7 +649,10 @@ external_writes (id, run_id, connector, op, idempotency_key, status 'prepared'|'
                  -- reconciled — confirm, compensate, or escalate; the reaper leaves these, not
                  -- half-posted side effects (§6.2)
 data_holds     (id, kind 'member'|'domain', subject_id, reason_md, created_by, released_at?)
-                 -- legal hold freezes §4.5 erasure until admin release, audited
+                 -- legal hold freezes §4.5 erasure until admin release, audited;
+                 -- kind 'domain' freezes the §4.5 history-rewrite remediation and db-only
+                 -- export/deletion for that domain: sensitive material found in git cannot be
+                 -- scrubbed out from under litigation
 ```
 
 v1's per-Coworker knowledge bases are subsumed: a "KB" is now a DNA domain import (sources are
@@ -653,7 +688,10 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
   stage keyed by the idempotency key of its `external_writes` ledger row (§7): playbook retries
   and node retries reuse the key and cannot duplicate side effects, and a crashed or reaped run
   leaves a `prepared` row that reconciliation resolves — confirm or compensate per connector, or
-  escalate to an admin ask where no compensation exists.
+  escalate to an admin ask where no compensation exists. Reconciliation is scheduled, not
+  improvised: a periodic pass — the steady-state twin of the §11 restore runbook — walks
+  `prepared` rows past the grace window to a terminal state or an admin ask, so a stranded write
+  cannot wait forever on a reaper that has already moved on.
 - **8.3 Memory service** — now three-tier classifier (personal / project / DNA proposal) with the
   v1 machinery (dedupe, timeline, versions, secrets scanner) under it. Taint propagates through
   the tiers: memory written by a tainted run (§13) carries the flag, renders with its provenance
@@ -708,11 +746,16 @@ responses (member and deputy racing) are audit-only; a response to an expired as
 world is audit-only like a late response, with a successor ask opened against current state (the
 same machinery expiry uses). **Quorum asks**: rules may require N distinct approvals
 (`machine_hint.requires_approvals` — §4.1's flagship "invoices > $10k require two approvals"
-becomes expressible): the ask carries `quorum_required` (§7), addresses the eligible approver
-pool (domain owners + admins), and closes answered once N distinct human members have accepted;
-a deny still closes it denied immediately, expiry still denies, and each acceptance re-validates
-at respond time — a stale acceptance is audit-only and does not count toward N. SLA breach
-escalates to the admin, who may contribute one of the required approvals. N is validated
+becomes expressible): the ask carries `quorum_required` (§7) and closes answered once N
+distinct human members have accepted. Addressing is precise, not ambient: `to` names the pool's
+primary recipient — the rule's domain owner — and the eligible pool is that owner plus every
+active admin (`deactivated_at` IS NULL, §7), evaluated at respond time: a pool that grows
+mid-ask admits new acceptors, an acceptance's eligibility re-validates like every other
+respond-time check, and an acceptance that already counted stands — the ask closes the moment
+the Nth valid accept lands, so a later offboarding cannot reopen a closed decision. A deny
+still closes it denied immediately, expiry still denies, and a stale acceptance is audit-only
+and does not count toward N. SLA breach escalates to the admin, who may contribute one of the
+required approvals. N is validated
 against the pool it demands: a rule whose `requires_approvals` exceeds the eligible approvers
 flags at proposal time like any contradiction (§4.4), and a pool that later shrinks below N
 (offboarding) leaves the ask unanswerable — it denies at expiry, fail-safe, with the breach
@@ -798,6 +841,11 @@ GET /governance/policies|quotas|spend  (console screens 12 & 14)
 - Human authn (local accounts → SSO later) + RBAC; PATs hashed, shown once, scoped — and mortal:
   expiry (default 90d), rotation (create-replacement + revoke-old in one flow), a revoke
   endpoint (§9), and last-used stamps for compromise detection.
+- **Admin lockout is recoverable by design**: a single-admin self-hosted org whose admin loses
+  their credentials is not a bricked org — a server-local CLI reset flow (run on the host;
+  physical/filesystem access is the recovery root of trust for self-hosted, mirroring §4.5's
+  git-integrity stance) restores access, and every reset writes an audit entry. Degrade to a
+  documented recovery, never to silence (§2).
 - Agent scopes enforced in code (file scope realpath checks, tool allowlists, egress CIDR guard);
   every call audited; append-only audit log.
 - **Scope delegation invariant** at spawn: child ⊆ parent, enforced by the policy engine.
@@ -896,17 +944,20 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   guard (agent, self, viewer, and cycle refusals), trigger catch-up coalescing, atomic quota claims under racing spawners, DNA
   store ingestion quarantine, topology-op write-lock serialization, ask respond-time
   re-validation, quorum accumulation (N distinct accepts, deny-wins, stale accepts don't count,
-  pool-shortfall denial),
+  pool-shortfall denial, pool-eligibility at respond time),
   spend reservation under racing runs, separation-of-duties refusal, playbook cycle detection,
-  alias-collision resolution order, PAT expiry enforcement, erasure pseudonymization + hold
-  blocking.
+  alias-collision resolution order, injected-layer compartment filtering (rules/glossary/goals),
+  org-scoped proposal routing to the admin queue, PAT expiry enforcement, erasure
+  pseudonymization + hold blocking.
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
   SLA breach → admin escalation; tainted-origin ask renders in the digest without a pre-fill;
   duplicate webhook → one run; staged-write crash → reconciliation row; rebind during partition
   → stale-epoch refusal + reconnect reconciliation; provider outage → queued run + a single
-  admin ask; ask storm → collapsed digest + rate-limit shed; restore replay re-applies erasure.
+  admin ask; ask storm → collapsed digest + rate-limit shed; restore replay re-applies erasure;
+  scope revocation emptying a workspace's readable domains → refused run + admin ask; stranded
+  prepared write past grace → scheduled reconciliation resolves or escalates.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -942,7 +993,8 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
 ### 13.1 Residual risk — accepted boundaries, deferred parameters
 
 Five sweeps (v2.9–v2.13) closed the enumerated edge-case space inline; what v2.10 ranked and
-v2.11 triaged, v2.12 designed, v2.13 audited and closed. The former residue — quorum
+v2.11 triaged, v2.12 designed, v2.13 audited and closed — and v2.14 closed the seams between
+prose and schema that the fifth sweep's audit still left open. The former residue — quorum
 approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
 check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
