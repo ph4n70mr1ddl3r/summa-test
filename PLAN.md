@@ -176,6 +176,22 @@ mode so small teams start simple.
 > DNA CRUD is create/update/retire, never delete — erasure stays the only shredding path
 > (§9, §4.5).
 
+> **Edge-case closure (v2.21)**: thirteenth sweep — corpus-state and post-hoc seams closed
+> inline: glossary entries gain the status the "live entry" duplicate check always presupposed —
+> retire is their item-CRUD surface, freeing terms and aliases as resolvable history (§7, §9) ·
+> decisions are pinned immutable: create-only at every surface, reversal or amendment is a new
+> record citing the old (§7, §9) · retrieval splits from citation — search and injection serve
+> active items only, retired ones resolve read-only, drafts stage to their owner alone, and
+> decisions, lifecycle-free by design, are always live (§4.2) · goal windows are two-sided —
+> admission at `effective_from`, exit at `effective_to` (§4.2, §7) · the settle-overrun reserve
+> gate gains its admin ack endpoint (§9, §6.2) · template retirement counts pending spawn
+> requests as live pins, and an upgrade whose scope intersection comes back empty refuses to
+> land (§6.5) · erasure sweeps memory attribution and reports free-text mentions for admin
+> judgment — never silently kept, never silently rewritten (§4.5) · webhook redelivery after
+> downtime dedupes on a defaulted 7-day window — an outage never converts one event into two
+> side effects (§8.5) · a null `budget_cap` is defined — worker-uncapped, org ceilings still
+> bind (§7) · digest grouping gains its ungrouped tail, so every ask has a place (§8.10).
+
 ---
 
 ## 1. Product vision
@@ -324,7 +340,10 @@ Every run's system prompt is assembled with:
   linked to the workspace through its initiatives, plus goals flagged org-wide (inject 'always'; statement, owner,
   deadline, status) — the flag composes with scope rather than overriding it: a domain-scoped goal
   flagged 'always' injects into every run that can read its domain, 'linked' only where an
-  initiative binds it, and the compartment check below gates both (§7). Goals inherit the rules' window semantics: a goal past `effective_to` leaves
+  initiative binds it, and the compartment check below gates both (§7). Goals inherit the rules' window
+  semantics, two-sided: a goal not yet at `effective_from` has not entered the slice — a Q4
+  objective drafted in Q3 stays out of prompts until its window opens — and a goal past
+  `effective_to` leaves
   the slice at window end — a stale deadline is never injected forever — and the §5.1 sponsor ask
   carries the outcome: extend re-adds it under a new window, a terminal status (`met`/`missed`/
   `retired`, set through the §4.3 write path) ends it for good, and an org-wide goal with no live
@@ -345,7 +364,12 @@ Every run's system prompt is assembled with:
   revocation that leaves a workspace with no readable domains refuses the next run's launch and
   raises an admin ask — degrade to an ask (§2), never to a silently empty prompt.
 - **Retrieved on demand**: cards, decisions, and goals via hybrid search (BM25 + vector over the
-  card index) — same retrieval machinery as v1's KB, now pointed at DNA.
+  card index) — same retrieval machinery as v1's KB, now pointed at DNA. Search and injection
+  serve the living corpus — `active` items only; a retired item resolves by direct citation as
+  read-only history (the page opens, provenance intact) without ever surfacing in search or
+  injection, a draft (owner-staged through item CRUD, §9) is visible to its owner alone, and
+  decisions — lifecycle-free by design, immutable records (§7) — are always live. Citation and
+  search are different surfaces: the record stays navigable without haunting the prompt.
 - **Cited in answers**: responses reference cards; the console (and IM) renders citations that open
   the source card with its provenance.
 - **Precedence is fixed**: when layers disagree mid-run — an applicable rule vs. the goal slice
@@ -355,8 +379,9 @@ Every run's system prompt is assembled with:
   the primary domain's term (§8.10) wins, then org-wide entries, then all candidates render tagged
   with their domains — never a silent coin flip. Within one domain the ambiguity is refused
   rather than resolved: a term or alias duplicating a live entry of the same domain is rejected
-  at propose and at item write (§9) — the resolution order exists for cross-domain overlap, not
-  intra-domain sloppiness. Org-wide entries share the null scope and are held to the same refusal:
+  at propose and at item write (§9; a live entry is a non-retired glossary row, §7 — draft and
+  active hold their terms, retirement is what frees one for reuse) — the resolution order
+  exists for cross-domain overlap, not intra-domain sloppiness. Org-wide entries share the null scope and are held to the same refusal:
   two org-wide definitions of "ARR" is sloppiness, not overlap the order gets to arbitrate.
 
 ### 4.3 Write path — learning without corruption
@@ -487,7 +512,14 @@ Erasure of a *person* is pseudonymization, not shredding: the append-only ledger
 keep the event shape — what happened, when, with what effect — while the member reference is
 replaced by a one-way pseudonym, severing identity without amputating the trail. The sweep covers
 every live-state reference, not just ledgers: DNA provenance frontmatter and proposal attribution
-rewrite to the pseudonym as a normal signed commit, git history retains the pre-pseudonym commits
+rewrite to the pseudonym as a normal signed commit, and memory attribution joins the sweep —
+personal and project memory (§8.3) re-point to the pseudonym the same way, so a departed
+member's lessons survive as lessons while the identity link does not. Free-text mentions —
+prose that names the member inside a card body, a memory item, or a decision's context — are
+reported, never rewritten: the sweep files an erasure annex to the admin listing each mention
+with its owner, and the per-mention call (delete, rewrite under owner review, or contest as
+outside the demand) is a human one — never silently kept, never silently rewritten. Git history
+retains the pre-pseudonym commits
 under the immutable-history boundary, and an erasure demand that exceeds pseudonymization takes
 the documented history-rewrite remediation below. Legal holds
 (`data_holds`, §7) freeze erasure for covered subjects until an admin releases them, audited; an
@@ -707,7 +739,8 @@ delegation assigns a board task or instantiates a playbook.
   rate/volume limits reserve reads identically. A settle may overshoot its reserve — the final
   provider call lands after the meter — and the overrun is handled, not rolled forward: it
   settles in full, surfaces on the spend dashboard and the owner's digest, and further reserves
-  against that cap are refused until an admin acknowledges (degrade to an ask, §2).
+  against that cap are refused until an admin acknowledges through the §9 overrun-ack endpoint —
+  the refusal itself is the ask (§2).
 - **Approval gates**: persistent hires → Ask to the owner of the domain the hire's primary
   workspace is bound to (or an admin) — a primary workspace with no bound domain routes the ask
   to an admin outright, and a multi-domain one routes to the primary domain (first-bound,
@@ -790,10 +823,16 @@ Roles change as the company does; running staff must track the change without a 
 Templates are versioned (§7 `role_templates`); every persistent Coworker pins the version it was
 spawned from. An **upgrade** is proposal-shaped: the diff — IDENTITY/HANDBOOK changes, scope
 deltas — goes to the Coworker's owner as an Ask; on accept, files rebase and scopes re-derive as
-new-template ∩ owner's-current-scopes, never widening. Ephemeral subagent templates upgrade in
-place — workers are short-lived, so new spawns simply get the new version. Retiring a template
-with live pins is refused — upgrade or retire-and-respawn the pinned Coworkers first (the §8.4
-skill-uninstall dependency check, applied to templates). A company-wide role
+new-template ∩ owner's-current-scopes, never widening — and an intersection that comes back
+empty refuses to land: the upgrade closes unresolved with the empty re-derivation surfaced in
+the ask, because a scope-less Coworker is not an upgraded hire (retire-and-respawn is the path
+when the role has genuinely moved past what the owner can carry). Ephemeral subagent templates
+upgrade in place — workers are short-lived, so new spawns simply get the new version. Retiring a
+template with live pins is refused, and pins count pending spawn requests as well as running
+Coworkers: a request awaiting approval references its template exactly as a live worker does,
+and retiring underneath it would let the approval publish into a ghost — upgrade or
+retire-and-respawn the pinned Coworkers and resolve or reject the pending requests first (the
+§8.4 skill-uninstall dependency check, applied to templates). A company-wide role
 overhaul is one template bump plus a queue of owner asks, not a rehire.
 
 ---
@@ -823,7 +862,9 @@ coworkers      + owner_human_id, class 'persistent'|'ephemeral', spawned_by memb
                  budget_cap, lineage_depth, template_id?, template_version?,
                  status 'requested'|'active'|'suspended'|'retiring'|'archived'
                  -- budget_cap window: per-worker lifetime when ephemeral, periodic (default
-                 -- monthly) when persistent — §6.2
+                 -- monthly) when persistent — §6.2; null = worker-uncapped: no per-worker
+                 -- ceiling, but org-wide caps and the §6.2 breaker still bind — a cap is a
+                 -- bound, not a prerequisite
                  -- ephemeral lifecycle maps 1:1: spawned→requested, running→active, done→retiring,
                  -- reaped→archived (done = fold-back pending, the ephemeral analogue of retiring)
                  -- suspended = emergency stop, halts triggers/runs without resolving dependents (§6.3)
@@ -852,10 +893,21 @@ dna_rules      (id, domain_id, statement_md, machine_hint json?, effective_from,
                  -- delegations, dropping out of injection and routing; initiative close lapses
                  -- its scoped rules the same way (§8.10)
 dna_decisions  (id, domain_id, context_md, outcome_md, decided_by member, decided_at)
-dna_glossary   (id, domain_id?, term, definition, aliases json)
+                 -- immutable and lifecycle-free: create-only at every surface (proposal publish
+                 -- and item CRUD, §9) — no update, retire, or delete exists for them, and they
+                 -- are always live in search (§4.2); reversal or amendment is a new decision
+                 -- record citing the old through refs — the decision analogue of §4.4's
+                 -- supersession chains
+dna_glossary   (id, domain_id?, term, definition, aliases json,
+                 status 'draft'|'active'|'retired' default 'active')
+                 -- the "live entry" of the §4.2 duplicate check is any non-retired row of the
+                 -- same scope — draft and active both hold their terms; retire (item CRUD, §9 —
+                 -- never delete) is what frees a term or alias for a new live entry, and the
+                 -- retired entry stays resolvable as read-only history (§4.2)
 dna_goals      (id, domain_id?, quarter?, statement_md, owner member, status 'active'|'met'|'missed'|'retired',
                 inject 'always'|'linked', effective_from, effective_to?)  -- goal-slice source (§4.2)
-                -- the slice's 'deadline' (§4.2) is effective_to;
+                -- the slice's 'deadline' (§4.2) is effective_to, and the window is two-sided:
+                -- admission at effective_from, exit at effective_to (§4.2);
                 -- owner: any member — a viewer human is refused at write (the §5
                 -- ask-eligibility guard: goal expiry asks route to the owner, §4.2, so an
                 -- owner must be answerable; an agent owner keeps the §4.2 admin-routing
@@ -922,8 +974,9 @@ spend_ledger   (id, member_id, run_id?, spawn_id?, kind 'reserve'|'settle'|'rele
                  -- reservation metering: caps evaluate reserved + settled; releases return
                  -- budget on failure or reap (§6.2)
 trigger_firings (id, trigger_id, idempotency_key, fired_at, run_id?)
-                 -- unique (trigger_id, idempotency_key) within the dedupe window:
-                 -- replays return the original run (§8.5)
+                 -- unique (trigger_id, idempotency_key) within the dedupe window
+                 -- (default 7d — sized to cover provider redelivery after downtime, §8.5):
+                 -- replays return the original run
 external_writes (id, run_id, connector, op, idempotency_key, status 'prepared'|'committed'|
                  'compensated'|'failed', prepared_at, resolved_at?)
                  -- staged writes: prepare→confirm→commit (§8.2); stranded 'prepared' rows are
@@ -992,7 +1045,10 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
   bounding a large backlog. Firings are idempotent at the boundary: every firing carries a
   deterministic key — schedule: trigger + scheduled time; webhook/API: event id or
   caller-supplied `Idempotency-Key`; event: source event id — and the `trigger_firings` table
-  (§7) refuses duplicates within a configurable window, returning the original run: a replayed
+  (§7) refuses duplicates within a configurable window (default 7 days), returning the original
+  run — a default sized for redelivery, not just instant replay: webhook providers that back up
+  during a control-plane outage redeliver on recovery, and the late copies meet the same dedupe
+  as the immediate ones — an outage never converts one event into two side effects. A replayed
   webhook is one run, not two invoices.
 - **8.6 Playbook engine** — DSL and sandbox unchanged; `worker()` targets any member (human targets
   create an assignment Ask; a viewer is refused at write like every ask target, §5); spawn-class playbooks (fan-out workers) built on §6 ephemeral workers
@@ -1062,7 +1118,7 @@ escalation naming the shortfall: an impossible quorum degrades to a visible no, 
   explicitly. Chain exhaustion — the terminal admin is inactive or breaches — expires the ask
   per its expiry behavior (an unanswered approval is a no, never a hang) and broadcasts a
   critical-tier org-stall alert to every active human: the §5 last-admin guard keeps an admin
-  from being *deactivated*, not from being *absent*; the broadcast is the backstop. **Batching**: the digest composer groups by initiative, then workspace, and pre-fills recommended
+  from being *deactivated*, not from being *absent*; the broadcast is the backstop. **Batching**: the digest composer groups by initiative, then workspace, then an ungrouped tail — an ask carrying neither link (org-level admin asks, member-direct questions) still renders there, so no ask falls out of every digest — and pre-fills recommended
   answers — recommendations compute only from re-validated, untainted payloads: an ask originating
   in a tainted run (§13) renders without a pre-fill, so one-click accept is a convenience for
   trusted provenance, not an injection surface; approvals render as one-line accept/deny with diff links — reviewers see raw diffs,
@@ -1119,7 +1175,9 @@ CRUD /dna/domains · /dna/cards|rules|decisions|glossary|goals
                re-check, §4.3 sod routing, and the §10 secrets scan — an owner's direct write
                gets every guarantee a reviewed proposal's publish gets; and the surface is
                create / update / retire, never delete: citations, supersession chains, and
-               provenance are the point, and §4.5 erasure is the only shredding path)
+               provenance are the point, and §4.5 erasure is the only shredding path — with
+               decisions the immutable exception: create-only, no update or retire, reversal
+               or amendment a new record citing the old, §7)
 POST /dna/proposals  POST /dna/proposals/:id/review (publish|reject) · POST /dna/proposals/:id/withdraw
                · POST /dna/proposals/:id/amend (revision during review, §4.3)  GET /dna/review-queue
 POST /dna/domains/:id/split|merge|rename|archive (governed topology ops, §4.4; archive refuses
@@ -1137,6 +1195,8 @@ CRUD /board-tasks (assign to any ask-eligible member — viewer and non-active r
 POST /workspaces/:id/rebind (admin affinity failover; refuses a target node lacking the
                workspace's required capabilities, §3)
 GET /governance/policies|quotas|spend  (console screens 12 & 14)
+POST /governance/spend/overruns/:id/ack (admin; lifts the §6.2 reserve gate an acknowledged
+               settle overrun raised — :id is the overshot settle's spend-ledger row)
 (v1 endpoints for coworkers, sessions, messages, workspaces, automated-tasks, triggers, playbooks, runs carry over)
 ```
 
@@ -1287,7 +1347,15 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   coworker credential fences (non-`active` PAT refused at auth, retire revocation,
   resume re-arm), paused-slice planning writes (task file/edit allowed, run/spawn
   refusal unchanged), amendment kind immutability, initiative reopen refusal (closed
-  terminal, revive-as-new), item-CRUD delete refusal (retire only).
+  terminal, revive-as-new), item-CRUD delete refusal (retire only), glossary lifecycle (retire
+  frees a term or alias for reuse, retired entries resolve read-only, duplicates refused only
+  against non-retired entries), decision immutability (update/retire refused at every surface,
+  reversal = new record citing the old), active-only search and injection (retired items absent
+  from both yet resolvable by citation, drafts owner-visible alone), goal two-sided windows
+  (admission at effective_from), settle-overrun ack lifting the reserve gate, template
+  retirement counting pending spawn requests as pins, upgrade empty-intersection refusal,
+  null budget_cap (uncapped worker, org ceilings still enforced), digest ungrouped tail
+  (neither-link asks render).
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -1308,7 +1376,10 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   in-flight run with fold-back and reconciliation, never mid-commit; a quarantined direct edit
   lands in the affected domain owner's queue; a suspended Coworker's PAT firing an API trigger
   is refused at auth, not at the run; a domain merge re-queues its open proposals to the
-  survivor's owner with the SLA clock untouched.
+  survivor's owner with the SLA clock untouched; a webhook redelivered after control-plane
+  downtime lands one run inside the 7-day dedupe window; an erasure sweep files its free-text
+  mention annex instead of rewriting prose; a goal drafted before its window stays out of
+  prompts until effective_from opens it.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -1373,7 +1444,14 @@ read-path layer (§4.2), org-wide glossary duplicate refusal (§4.2), and the ac
 guard (§7); v2.20's twelfth sweep closed the lifecycle seams at the surfaces' edges — open
 proposals across topology ops (§4.4), credential fences on coworker suspend/retire (§6.3, §10),
 paused-slice planning vs. execution (§5.1), amendment kind immutability (§4.3), terminal close
-with revive-as-new (§5.1), and retire-not-delete item CRUD (§9). The former residue — quorum
+with revive-as-new (§5.1), and retire-not-delete item CRUD (§9); v2.21's thirteenth sweep
+closed the corpus-state and post-hoc seams beneath those — glossary lifecycle with
+retirement-as-freeing (§7, §9), decision immutability (§7, §9), the retrieval/citation split
+with active-only search and injection (§4.2), two-sided goal windows (§4.2, §7), the
+settle-overrun ack endpoint (§6.2, §9), template pins counting pending spawn requests plus
+empty-intersection upgrade refusal (§6.5), erasure sweeping memory attribution with a
+free-text mention annex (§4.5), redelivery-proof webhook dedupe (§8.5), null budget_cap
+semantics (§7), and the digest's ungrouped tail (§8.10). The former residue — quorum
 approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
 check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
