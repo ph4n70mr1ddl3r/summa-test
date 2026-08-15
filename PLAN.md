@@ -112,6 +112,21 @@ mode so small teams start simple.
 > re-derives at once (§5.1) · `depends_on` is acyclic — cycles refused at write (§5.1) · a
 > settle that overshoots its reservation settles in full, surfaces, and gates further reserves
 > until acknowledged (§6.2).
+>
+> **Edge-case closure (v2.17)**: ninth sweep — demotion and authority-flip seams closed inline:
+> RBAC demotion is a walked transition, not a label flip — an edit that reduces a role runs the
+> §5 dependency walk scoped to the new role's carrying capacity, inside the last-admin guard's
+> transaction (§5) · goal owners are ask-eligible at write — viewer humans refused, agent owners
+> keep the §4.2 admin-routing fallback (§7) · glossary proposals are expressible — `kind
+> 'glossary'` joins the enum, closing the §4.2 admin-queue routing onto the schema (§7) ·
+> item-level DNA CRUD is the publish path, not a side door — same domain write lock,
+> contradiction re-check, sod routing, secrets scan (§9) · the secrets scanner covers ingested
+> direct edits, not just proposals and memory (§4.5, §10) · the persistent-hire spawn gate
+> falls back to admin for domainless primary workspaces and to the primary domain for
+> multi-domain ones (§6.2) · budget-cap windows match worker class — per-worker lifetime for
+> ephemeral, periodic window for persistent (§6.2) · initial workspace–node binding is
+> capability-checked like rebind, and a residency constraint no node satisfies is surfaced
+> through the same starvation ask, not a silent queue (§3).
 
 ---
 
@@ -198,7 +213,9 @@ boundaries — with a sixth raised to the top: **shared, governed context**.
   rebinds the workspace to another node — a rebind that first validates the target node actually
   advertises the workspace's required capabilities (files present, connectors authorized — §7
   `nodes.capabilities`), and a queue starved past a configurable window (default 24h) raises an
-  admin ask: starvation is surfaced, never silently endured.
+  admin ask: starvation is surfaced, never silently endured. Capability validation is a property
+  of the bind, not of the failover: the initial workspace–node placement runs the same check, so
+  a workspace is never born attached to a node that cannot run it.
 - **Node trust model**: remote nodes are *trusted compute*, not enforcement boundaries — scope,
   egress, and audit code runs on the node, so a compromised node can bypass it. Nodes enroll via
   one-time tokens, authenticate with a keypair identity on every connection, are revocable from
@@ -219,7 +236,9 @@ boundaries — with a sixth raised to the top: **shared, governed context**.
   (§7) define each recipient's morning for digests and `queue_until_morning` (§8.10). Nodes carry
   a `region` tag; domains may declare a residency constraint, and scheduling — affinity and
   rebind — places work only on nodes that satisfy it: EU data stays on EU nodes by construction,
-  not convention.
+  not convention. A residency constraint no enrolled node satisfies is surfaced, not stalled on:
+  affected work starves into the same 24h starvation ask, and the domain's owner sees it in the
+  digest — an impossible placement is a visible configuration error, never a silent queue.
 - **Stack** (unchanged from v1): Node 22 + TS daemon, React + Vite + Tailwind + shadcn console,
   SQLite (WAL) + sqlite-vec + FTS5, `isolated-vm` playbook sandbox, croner triggers, MCP connectors,
   Tauri shell as Phase-8b polish.
@@ -366,7 +385,9 @@ SQLite per the carve-out below; domain-scoped goals file under their domain and 
 flag, org-wide goals under `goals/` are git-backed. Frontmatter carries a `schema_version`: product
 upgrades run in-place content migrations (post-backup) — an old store is never stranded. Direct
 human edits are welcomed, not trusted: the control plane validates every ingested change
-(frontmatter schema, unique ids, effective-window sanity) and quarantines invalid files to a
+(frontmatter schema, unique ids, effective-window sanity, and a secrets scan — §10's scanner
+guards the ingest door too, so a pasted credential cannot enter the canonical store through a
+hand-merge) and quarantines invalid files to a
 review queue with the parse error attached — a bad hand-merge degrades to an ask, never to a
 silently corrupted index.
 
@@ -464,6 +485,20 @@ different door. Audit history is retained;
 `decided_by` references, audit history, and spend attribution stay pinned to the departed
 identity (until a §4.5 erasure request pseudonymizes the reference — the events are durable, the
 identity link is not), and email addresses are not reused.
+- **Demotion is a walked transition, not a label flip**: an RBAC edit that reduces a human's
+  role runs the same dependency walk as offboarding, scoped to what the new role can no longer
+  carry, inside the last-admin guard's transaction — a demotion cannot half-land, and it cannot
+  leave holdings the role does not support. To `viewer`: open asks to the member reassign up the
+  chain (asks from the member close with an audit note, as offboarding does), board-task
+  assignments return to the pool or reassign, deputy references clear in both directions, owned
+  goals re-own via successor or admin custody or retire, sponsored/led initiatives re-point,
+  and owned authority the role no longer carries transfers the way offboarding transfers it —
+  owned domains to a successor or admin custody, owned Coworkers re-owned or retired, with
+  personal assistants always retiring: a never-ask-target cannot own staff, and viewer-mirrored
+  scopes (§6.4) would make the assistant read-only anyway. `owner` → `member` sheds domain
+  ownership by the same rule. The §7 write-time guards refuse viewer deputies, assignees,
+  sponsors, and leads at set; the demotion walk is what keeps those invariants true mid-life,
+  not merely at write — the guard and the walk are one mechanism in two tenses.
 
 ### 5.1 Initiatives — from directive to coordinated execution
 
@@ -558,6 +593,10 @@ delegation assigns a board task or instantiates a playbook.
   whitelisted "subagent" templates.
 - **Quotas & caps**: max concurrent ephemeral workers per spawner, global spawn depth (default 2),
   org-wide concurrent Coworkers, per-spawn and org-wide spend caps metered by the spend ledger.
+  Cap windows match worker class: an ephemeral worker's cap spans its lifetime, a persistent
+  hire's cap is a periodic window (default monthly, admin-configurable) inside which reserved +
+  settled evaluate — a long-lived hire is neither bankrupted in week two by a lifetime cap nor
+  free forever after one exhausted reserve.
   Count caps are *claimed*, not checked: the policy engine increments atomically inside the spawn
   transaction, so two spawners racing the last concurrent slot see one success and one refusal —
   no check-then-act window. The money side reserves the same way: a spawn or run reserves its
@@ -569,7 +608,9 @@ delegation assigns a board task or instantiates a playbook.
   settles in full, surfaces on the spend dashboard and the owner's digest, and further reserves
   against that cap are refused until an admin acknowledges (degrade to an ask, §2).
 - **Approval gates**: persistent hires → Ask to the owner of the domain the hire's primary
-  workspace is bound to (or an admin); agent-spawned
+  workspace is bound to (or an admin) — a primary workspace with no bound domain routes the ask
+  to an admin outright, and a multi-domain one routes to the primary domain (first-bound,
+  admin-editable, §8.10): one deterministic hop, never an undefined gate; agent-spawned
   ephemeral workers exceeding quota → Ask to the spawner's owner human.
 - **Runaway protection**: depth cap, rate limits, TTL reaper, budget circuit-breaker (org spend
   ceiling halts all spawns and automations with a loud Ask to admins). The breaker trips by
@@ -609,8 +650,10 @@ architecture:
   please the human.
 - **Scope mirroring**: the assistant's scopes (DNA compartments, connector scopes, tool access)
   are derived from the human's RBAC role at spawn, **refreshed on role change, revoked on
-  offboarding** (§5). The scope-delegation invariant is reused with the employee's role as the
-  ceiling: assistant ⊆ employee, everywhere.
+  offboarding** (§5) — with one carve-out: a demotion to viewer retires the assistant rather
+  than refreshing it, per the §5 demotion walk (mirrored viewer scopes are read-only, and a
+  never-ask-target owns no staff). The scope-delegation invariant is reused with the employee's
+  role as the ceiling: assistant ⊆ employee, everywhere.
 - **Mirrored access ≠ mirrored behavior**: a human rarely opens 10,000 HR records; an assistant
   might bulk-read them. Restricted-domain reads carry **rate/volume limits** in addition to
   permission checks, and every read of a restricted domain is audited (§13).
@@ -655,6 +698,8 @@ humans         (id, name, email, rbac 'admin'|'owner'|'member'|'viewer', auth js
 coworkers      + owner_human_id, class 'persistent'|'ephemeral', spawned_by member?, ttl_at,
                  budget_cap, lineage_depth, template_id?, template_version?,
                  status 'requested'|'active'|'suspended'|'retiring'|'archived'
+                 -- budget_cap window: per-worker lifetime when ephemeral, periodic (default
+                 -- monthly) when persistent — §6.2
                  -- ephemeral lifecycle maps 1:1: spawned→requested, running→active, done→retiring,
                  -- reaped→archived (done = fold-back pending, the ephemeral analogue of retiring)
                  -- suspended = emergency stop, halts triggers/runs without resolving dependents (§6.3)
@@ -670,6 +715,8 @@ dna_domains    (id, name, owner_human_id, access 'public'|'domain'|'named',
                  status 'active'|'archived' default 'active')
                  -- db-only: the §4.5 privacy carve-out; sod: proposer ≠ publisher when on (§4.3);
                  -- residency constrains node placement (§3);
+                 -- owner must hold role 'owner' or 'admin' at write — an RBAC demotion below
+                 -- that runs the §5 walk (transfer or admin custody, never an orphaned domain);
                  -- archived: read-only history — no injection, routing, or new bindings;
                  -- dissolution = merge-away then archive, never bare delete (§4.4)
 dna_cards      (id, domain_id, title, definition_md, refs json, provenance json, version,
@@ -685,12 +732,16 @@ dna_glossary   (id, domain_id?, term, definition, aliases json)
 dna_goals      (id, domain_id?, quarter?, statement_md, owner member, status 'active'|'met'|'missed'|'retired',
                 inject 'always'|'linked', effective_from, effective_to?)  -- goal-slice source (§4.2)
                 -- the slice's 'deadline' (§4.2) is effective_to;
+                -- owner: any member — a viewer human is refused at write (the §5
+                -- ask-eligibility guard: goal expiry asks route to the owner, §4.2, so an
+                -- owner must be answerable; an agent owner keeps the §4.2 admin-routing
+                -- fallback), and demotion walks ownership like every other holding (§5);
                 -- domain_id null = org-wide: member-public by definition, and its proposals
                 -- route to the admin review queue (§4.3); a domain-scoped goal inherits its
                 -- domain's access policy — it injects only where that domain is readable (§4.2),
                 -- so a sensitive objective (unannounced restructuring, pre-earnings targets)
                 -- is compartmented like any other DNA content
-dna_proposals  (id, kind 'card'|'rule'|'decision'|'goal'|'edit', payload json, revision int
+dna_proposals  (id, kind 'card'|'rule'|'decision'|'goal'|'glossary'|'edit', payload json, revision int
                  default 1, proposed_by member,
                  provenance json, status 'open'|'published'|'rejected'|'withdrawn', reviewed_by?, at,
                  review_by?)  -- review_by: queue SLA deadline; breach escalates to admin (§4.3);
@@ -919,6 +970,10 @@ POST /org/humans/:id/erasure (admin; audited; honors data_holds — §4.5)
 POST /org/humans/:id/offboard (admin; runs the §5 dependency walk; transactional last-admin guard)
 POST /nodes/enroll (one-time token exchange) · GET /nodes · POST /nodes/:id/revoke
 CRUD /dna/domains · /dna/cards|rules|decisions|glossary|goals
+               (item-level CRUD is the publish path, not a side door around §4.3: every write
+               lands inside the domain write lock with the §4.4 publish-time contradiction
+               re-check, §4.3 sod routing, and the §10 secrets scan — an owner's direct write
+               gets every guarantee a reviewed proposal's publish gets)
 POST /dna/proposals  POST /dna/proposals/:id/review (publish|reject) · POST /dna/proposals/:id/withdraw
                · POST /dna/proposals/:id/amend (revision during review, §4.3)  GET /dna/review-queue
 POST /dna/domains/:id/split|merge|rename|archive (governed topology ops, §4.4; archive refuses
@@ -952,7 +1007,8 @@ GET /governance/policies|quotas|spend  (console screens 12 & 14)
   every call audited; append-only audit log.
 - **Scope delegation invariant** at spawn: child ⊆ parent, enforced by the policy engine.
 - **DNA write policy**: agents propose, owners publish; compartment access enforced on retrieval;
-  secrets scanner over all proposals and memory — scanner hits quarantine to the owner with an
+  secrets scanner over all proposals, memory, and ingested direct edits (§4.5) — scanner hits
+  quarantine to the owner with an
   audited admin override, so a false positive is a visible ask, never a silent wedge in the write
   path.
 - **Spawn safety**: quotas, depth ≤ 2, TTL reaper, spend circuit-breaker, approval gates on
@@ -1056,7 +1112,14 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   pseudonymization + hold blocking (incl. the DNA provenance sweep), initiative transition
   authority (sponsor activation ask, lead/sponsor pause-close, viewer/non-active sponsor-lead
   refusal, close-time workspace unbinding, depends_on cycle refusal), goal window-end slice drop and
-  terminal-status exit, viewer assignee refusal.
+  terminal-status exit, viewer assignee refusal,
+  RBAC demotion walk (scoped eligibility shedding: asks reassigned and closed, assignments
+  returned, deputies cleared both directions, goals and initiative posts re-pointed, domains and
+  Coworkers transferred, personal assistants retired — transactional with the last-admin guard),
+  write-time owner guards (viewer goal owner, non-owner/admin domain owner),
+  glossary proposal routing (org-wide → admin queue), item-CRUD publish-path guarantees
+  (lock serialization, sod routing, contradiction re-check), persistent-cap window rollover,
+  domainless/multi-domain spawn-gate routing.
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -1067,7 +1130,9 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   scope revocation emptying a workspace's readable domains → refused run + admin ask; stranded
   prepared write past grace → scheduled reconciliation resolves or escalates; suspend halts the
   ephemeral subtree with fold-back; ambiguous send timeout → ask, no resend; goal window end
-  drops the slice and raises the sponsor ask.
+  drops the slice and raises the sponsor ask; a secret pasted into a direct git edit
+  quarantines on ingest; a workspace's initial bind to a capability-less node is refused; a
+  residency constraint no node satisfies surfaces the starvation ask.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -1111,7 +1176,12 @@ guard (§5), suspended subtrees (§6.3), send-once delivery (§8.2), and the off
 (§9); v2.16's eighth sweep closed the authority seams around them — last-admin demotion (§5),
 ask-eligible initiative posts (§5.1), transient ask targets and deputy-vs-quorum counting
 (§8.10), topology-op result declaration with dissolution-by-archive (§4.4), close-time
-workspace unbinding (§5.1), initiative-DAG cycles (§5.1), and settle overruns (§6.2). The former residue — quorum
+workspace unbinding (§5.1), initiative-DAG cycles (§5.1), and settle overruns (§6.2); v2.17's
+ninth sweep closed the demotion and authority-flip seams beneath them — the RBAC demotion walk
+(§5), ask-eligible goal owners and the domain-owner role guard (§7), glossary proposal kinds
+(§7), the item-CRUD publish path (§9), secrets scanning on ingested edits (§4.5, §10),
+spawn-gate routing fallbacks and cap windows (§6.2), initial-bind capability checks and
+residency starvation surfacing (§3). The former residue — quorum
 approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
 check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
