@@ -287,6 +287,22 @@ mode so small teams start simple.
 > initiative stall clock's state coverage is pinned — `proposed` and `active` run it, pause
 > suspends it, close stops it; inert is not invisible (§5.1).
 
+> **Edge-case closure (v2.28)**: twentieth sweep — holder-mortality, lock-order, and linkage
+> seams closed inline: ephemeral workers are refused at write the posts that outlive them —
+> initiative lead, goal owner, named delegation agent — the agent-sponsor pin's twin: no
+> mid-life walk is asked to re-point what a dying-by-schedule member should never have held,
+> while the reap walk's task-and-ask returns stay the drain for what an ephemeral may
+> legitimately hold (§5.1, §7, §8.10) · ephemeral-origin initiatives join ephemeral-origin DNA
+> proposals in folding back to the spawner — a human or persistent Coworker opens the
+> directive (§5.1) · topology ops touching several domains acquire every affected write lock
+> up front, in domain-id order — overlapping merges serialize deadlock-free, "queue behind
+> each other" gains its mechanism (§4.4) · a spawn-approval ask that expires is the denial's
+> twin: `requested`→`archived`, template pin drained, the expiry the record (§6.2, §7) · the
+> admin queue's org-scoped proposals derive `review_by` from the global default — no domain
+> row governs them (§4.3) · the sponsor's terminal-goal answer moves the linkage with it:
+> extend re-windows the same row, re-base/re-target swap `goal_ref` atomically with the
+> answer, the goal slice re-deriving at once (§5.1).
+
 ---
 
 ## 1. Product vision
@@ -509,7 +525,9 @@ reject leaves an audit trail. The queue has a cadence of its own: proposals carr
 stale queue surfaces in the owner's digest — the §1 learning loop must not starve on an ignored
 inbox. Org-scoped items — org-wide goals and org-wide glossary entries (`domain_id` null, §7) —
 have no domain owner of their own; their proposals route to the admin's review queue, the same
-owner-of-last-resort pattern §5 applies to unowned domains. Taint survives publication as
+owner-of-last-resort pattern §5 applies to unowned domains, and their `review_by` derives from
+the global default — no domain row governs the admin queue, so the 7-day default is its SLA.
+Taint survives publication as
 provenance residue: an item accepted from a tainted run keeps its flag, renders with an
 indicator wherever cited, and heads the §4.4 scheduled quality
 reviews — the owner's accept is informed consent, not a laundering step. Humans of any role but
@@ -616,7 +634,11 @@ keeps governing strictness separately.
   Topology ops serialize behind a domain-level write lock (§4.5):
   split/merge/rename/archive queue behind in-flight proposals and each other — the stable-id
   guarantees assume no concurrent topology mutation, so the system enforces the assumption rather
-  than hoping. Prior states stay reconstructible from git history and audit. Item edits do not
+  than hoping. Ops spanning several domains — merge above all — acquire every affected domain's
+  lock up front, in domain-id order: two overlapping merges (merge A-into-B racing merge
+  B-into-A) serialize in one deterministic order instead of deadlocking on half-acquired lock
+  sets, and "queue behind each other" has its mechanism, not just its promise. Prior states
+  stay reconstructible from git history and audit. Item edits do not
   smuggle topology: an edit proposal — or an item-level write (§9) — that would change an item's
   `domain_id` is refused at propose/write time. Cross-domain moves are topology ops: they carry
   id-stable remapping, attribute declaration, and post-op contradiction re-checks that an edit
@@ -819,7 +841,12 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
    just a window elapsing — the choices track the outcome: window-end offers extend/re-target/
    close, `met` offers close or re-target (a met goal needs no extension), `missed` and
    `retired` offer re-base/re-target/close — so an active initiative never keeps executing
-   toward a goal that has already ended. **Pause is explicit
+   toward a goal that has already ended. The answered choice moves the linkage with it,
+   atomically with the answer: extend re-windows the same row, re-base and re-target swap
+   `goal_ref` onto the new goal, and the goal slice re-derives at once (§7) — the re-point is
+   part of the ask's effect, never a manual afterthought that leaves the spine addressing a
+   terminal row; an unanswered ask escalates rather than leaving the linkage dangling (the
+   direction-ask rule, below). **Pause is explicit
   and total**: a paused initiative suspends its stalled-work escalation and freezes its board
  slice (no new runs or spawns launch under it — filing and editing board tasks on the frozen
  slice stays open as planning: pause stops execution, not deliberation, with §7's assignee
@@ -877,7 +904,15 @@ a member who can never answer one, and mid-life departures re-point the posts vi
 walks, so eligibility is maintained, not merely checked once. The sponsor's pin is a guard, not
 an aspiration: an agent sponsor is refused at the same write — the post is human by schema and
 by check (§7), so no mid-life walk is ever asked to re-point a post that should never have
-existed.
+existed. Mortality joins eligibility as a write guard: an ephemeral worker is refused as lead —
+and as goal owner (§7) and as a named delegation agent (§8.10) — the agent-sponsor pin's logic
+applied to TTL: a member dying by schedule must not hold a post built to outlive it, and the
+§6.3 reap walk — which returns tasks and re-routes asks, the holdings an ephemeral may
+legitimately leave — is never asked to re-point what the write gate should have refused. The
+origin matches the holder: ephemeral-origin initiatives are refused at write, the
+ephemeral-origin DNA-proposal rule (§7) generalized to directives — a bounded worker's
+directive-deserving output folds back to its spawner, and a human or persistent Coworker opens
+the initiative.
 
 An initiative is an org entity (visible, accountable); **project memory** (§8.3) stays the
 automatic per-workspace memory tier — one is governance, the other learning. **v0 shape**
@@ -950,7 +985,10 @@ delegation assigns a board task or instantiates a playbook.
   workspace is bound to (or an admin) — a primary workspace with no bound domain routes the ask
   to an admin outright, and a multi-domain one routes to the primary domain (first-bound,
   admin-editable, §8.10): one deterministic hop, never an undefined gate; agent-spawned
-  ephemeral workers exceeding quota → Ask to the spawner's owner human.
+  ephemeral workers exceeding quota → Ask to the spawner's owner human. An approval ask that
+  expires is the denial's twin — deny is the spawn request's expiry default (§8.10): the
+  request transitions `requested`→`archived` (§7) and drains its template pin, the expiry the
+  record exactly as the deny is (§6.5).
 - **Runaway protection**: depth cap, rate limits, TTL reaper, budget circuit-breaker (org spend
   ceiling halts all spawns and automations with a loud Ask to admins). The breaker trips by
   class: triggers and playbooks carry a `criticality` tag (§7 — a firing's class is the stricter
@@ -1093,7 +1131,10 @@ coworkers      + owner_human_id, class 'persistent'|'ephemeral', spawned_by memb
                  -- suspended = emergency stop, halts triggers/runs without resolving dependents (§6.3)
                  -- a denied spawn request transitions requested→archived without ever
                  -- activating: denial is terminal for a `requested` row — the ask's deny is
-                 -- the record — and archiving it drains the template pin it held (§6.2, §6.5)
+                 -- the record — and archiving it drains the template pin it held (§6.2, §6.5);
+                 -- an expired approval ask is the same denial (deny is the spawn request's
+                 -- expiry default, §8.10): the row archives, the pin drains, the expiry the
+                 -- record (§6.2)
 role_templates (id, name, version, class 'persistent'|'ephemeral-subagent', body json
                  (identity/style/handbook), default_scopes json, status 'draft'|'active'|'retired')
                  -- versioned catalog; persistent Coworkers pin (template_id, template_version) (§6.5)
@@ -1171,10 +1212,12 @@ dna_goals      (id, domain_id?, quarter?, statement_md, owner member, status 'ac
                 inject 'always'|'linked', effective_from, effective_to?)  -- goal-slice source (§4.2)
                 -- the slice's 'deadline' (§4.2) is effective_to, and the window is two-sided:
                 -- admission at effective_from, exit at effective_to (§4.2);
-                -- owner: any member — a viewer human is refused at write (the §5
-                -- ask-eligibility guard: goal expiry asks route to the owner, §4.2, so an
-                -- owner must be answerable; an agent owner keeps the §4.2 admin-routing
-                -- fallback), and demotion walks ownership like every other holding (§5);
+                -- owner: any member but an ephemeral worker — a viewer human is refused at
+                 -- write (the §5 ask-eligibility guard: goal expiry asks route to the owner,
+                 -- §4.2, so an owner must be answerable), an ephemeral by the §5.1 mortality
+                 -- guard (a TTL-mortal member is not a durable owner); an agent owner keeps
+                 -- the §4.2 admin-routing fallback, and demotion walks ownership like every
+                 -- other holding (§5);
                 -- domain_id null = org-wide: member-public by definition, and its proposals
                 -- route to the admin review queue (§4.3); a domain-scoped goal inherits its
                 -- domain's access policy — it injects only where that domain is readable (§4.2),
@@ -1221,8 +1264,8 @@ initiatives    (id, title, goal_ref?, decision_ref?, sponsor member, lead member
                  status 'proposed'|'active'|'paused'|'closed', business_budget json?, deadline?,
                  closed_at?, depends_on json?)
                  -- sponsor: pinned human — an agent sponsor refused at the same write (§5.1);
-                 -- lead: any member — both posts ask-eligible at write:
-                 -- viewer and non-active members refused (§5.1);
+                 -- lead: any member but an ephemeral worker — the §5.1 mortality guard, with
+                 -- the eligibility refusals: viewer and non-active members refused (§5.1);
                  -- transition authority (§5.1): sponsor activation, lead/sponsor pause-resume-close,
                  -- admin backstop on pause/resume
                  -- deadline optional: stall detection without one keys to the linked goal's
@@ -1448,7 +1491,9 @@ escalation naming the shortfall: an impossible quorum degrades to a visible no, 
   included, when choosing approvers, so a static approval matrix doesn't route six months of store
   invoices through the same two people. When several delegated rules match one ask, the most
   restrictive ceiling wins and a contradiction report goes to the sponsoring owners. A
-delegation may name an agent — "by the lead" where the lead is one is precisely the reviewed,
+delegation may name an agent — persistent only: an ephemeral worker is refused at propose, the
+§5.1 mortality guard (a reviewed grant never runs to a dying-by-schedule identity) — and
+"by the lead" where the lead is one is precisely the reviewed,
 windowed grant the agent-deputy refusal above reserves this mechanism for: the named agent is
 the routed ask's primary recipient, answering through its session worker like any agent
 target, and its accept binds the asks its rule routes — the rule's review is the authority,
@@ -1727,7 +1772,13 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   quorum-1 ask, audit-only toward N>1, creation-time recipient resolution), org-stall
   broadcast addressing (viewers read-only, no waited-on response), staged-draft transfer on
   the offboard/demotion walks, stall-clock state coverage (proposed renders the line, pause
-  suspends, close stops).
+  suspends, close stops), ephemeral-holder write refusals (initiative lead, goal owner, named
+  delegation agent, initiative origin — directive output folded back to the spawner),
+  multi-domain lock ordering (overlapping merges acquire affected locks id-ordered up front
+  and serialize without deadlock), spawn-approval expiry archiving (requested→archived with
+  the template pin drained), org-scoped review_by derivation from the global default,
+  sponsor-answer goal_ref re-pointing (extend re-windows the row, re-base/re-target swap it,
+  the goal slice re-deriving).
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -1764,7 +1815,11 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   deadline-less, goal-less initiative surfaces the sponsor staleness line; an admin's
   node-region edit under residency-constrained placements surfaces rebind-or-starvation for
   the nonconforming ones; a delegation naming an agent lead routes its approval through the
-  agent's session worker and closes on the agent's accept.
+  agent's session worker and closes on the agent's accept; an expired spawn-approval ask
+  archives its request and drains the template pin; merge A-into-B racing merge B-into-A
+  serializes behind id-ordered locks, one completing after the other; a re-base answer
+  re-points the initiative's goal_ref and the workspace goal slice re-derives on the next
+  run.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -1870,7 +1925,13 @@ sweep closed the config-surface, delegation-authority, and broadcast seams benea
 the review SLA's schema home (§4.3, §7), governance/node write surfaces with region-edit
 re-validation (§9, §3), agent-named delegations' accept semantics (§8.10), the org-stall
 alert distinguished from an ask against the viewer guard (§8.10, §5), staged drafts riding
-the walks (§5, §4.2), and the stall clock's state coverage (§5.1). The former
+the walks (§5, §4.2), and the stall clock's state coverage (§5.1); v2.28's twentieth sweep
+closed the holder-mortality, lock-order, and linkage seams beneath those — ephemeral holders
+refused the posts that outlive them (lead, goal owner, named delegate) with ephemeral-origin
+initiatives folded back to the spawner (§5.1, §7, §8.10), id-ordered multi-domain lock
+acquisition for overlapping topology ops (§4.4), spawn-approval expiry as denial-with-drain
+(§6.2, §7), the admin queue's default review SLA (§4.3), and sponsor-answer goal_ref
+re-pointing (§5.1). The former
 residue — quorum approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
 check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
