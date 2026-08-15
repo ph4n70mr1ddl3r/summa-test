@@ -420,6 +420,24 @@ mode so small teams start simple.
 > offboarding — the last-admin guard's refusal is the org model staying honest about its
 > human anchor, not a missing exit (§5).
 
+> **Edge-case closure (v2.35)**: twenty-seventh sweep — requester-liveness, holdings-scope,
+> and owner-derivation seams closed inline: a spawn approval names its requester's own state
+> among its respond-time assumptions — an accept racing the requester's suspension is
+> audit-only, the request archiving with its template pin drained and its cap claims
+> released, never a worker published under a halted subtree; retirement and offboarding
+> settle their requests in the walk, and the gate closes the non-terminal case the walks
+> leave standing (§8.10, §6.2, §6.3) · archive's holdings refusal is scoped to the live set
+> — active items, owner-staged drafts, live bindings, open proposals — while terminal
+> history never blocks: it stays with the archived row as the read-only record §7 always
+> named, a history-only domain archives directly, and merge moves the whole corpus with ids
+> stable, so §9's refusal and §7's archived row stop pulling against each other (§4.4, §7,
+> §9) · hire ownership gains its derivation: the persistent hire's `owner_human_id` is the
+> gate's accepting human at activation — a re-keyed gate landing on the re-keyed addressee —
+> and an ephemeral's is the first human up the `spawned_by` line, the §5 invariant derived
+> at spawn rather than merely checked (§6.2, §7) · a group's Leader post joins the walks —
+> re-pointed on departure or retirement, an unnamed successor degrading routing to an admin
+> ask — so no execution surface addresses a dead identity (§5, §6.3).
+
 ---
 
 ## 1. Product vision
@@ -777,15 +795,24 @@ keeps governing strictness separately.
   state inside the lock — items that coexist peacefully across two domains may collide in one,
   and the collision surfaces as review asks, never as silent coexistence. Dissolution is the
   degenerate case, not a missing feature: there is no bare delete — merge the domain's remaining
-  items and workspace bindings away, then archive the empty domain — archive refuses a domain
+  items and workspace bindings away, then archive the emptied domain — archive refuses a domain
   still holding any of them (§9): the merge remaps bound workspaces to the survivor with ids stable,
   and an admin who wants a workspace domainless unbinds it first, so nothing silently re-points.
+  And "holding" is scoped to the live set, so the §7 archived row is a real state, not dead text:
+  an active item, an owner-staged draft (§4.2), a live workspace binding, or an open proposal
+  blocks the archive, while terminal history — superseded and lapsed rules, terminal goals,
+  retired cards and glossary entries — never does: it stays with the archived row as the
+  read-only record §7 names, its items resolving by citation exactly as retired ones do (§4.2),
+  nothing shredded. A domain holding nothing live archives directly — dissolution without a
+  merge receiver — while merge-away moves the whole corpus, history riding with the live set to
+  the survivor, ids stable, one audited event; reconstructibility never depended on emptiness,
+  only on the refusal to shred.
   Open proposals travel with their domain rather than reviewing into a ghost: merge, split, and
   rename remap in-review proposals to the resulting domains' queues — payload `domain_id`
   rewritten, proposal ids stable, a split's proposals following the item mapping the op declares —
   inside the same audited event, their `review_by` clocks still running (a re-route changes the
   reviewer, not the SLA), and archive counts open proposals among the holdings it refuses exactly
-  as it refuses items and live bindings
+  as it refuses live items and live bindings
   (§7 `status 'archived'`: read-only history; no
   injection, routing, or new bindings; nothing shredded, so reconstructibility survives).
   Pending asks travel with their domain too, not just proposals: an ask whose `to` was
@@ -919,9 +946,15 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
 - **Groups/teams** mix humans and Coworkers (v1 kept agent-only groups; v2 unifies — a local
   Coworker still acts as Leader for execution routing). Membership derives from live state
   like every reader set: the offboard walk clears a departed human, the retire walk a retired
-  Coworker — execution routing never addresses a dead identity.
+  Coworker — execution routing never addresses a dead identity. Leadership derives the same
+  way: a group whose Leader departs or retires re-points the post inside the walk — a named
+  successor, else the group's routing degrades to an admin ask (§2) rather than addressing a
+  dead identity — the post is a routing surface, and no routing surface outlives its holder
+  un-asked.
 - **Accountability invariant**: every Coworker row carries `owner_human_id`; spawned workers carry
-  `spawned_by`; the chain must terminate at a human. Enforced at spawn time.
+  `spawned_by`; the chain must terminate at a human. Enforced at spawn time — and derived there,
+  not configured: §6.2 names the row's first owner (the gate's accepting human for a persistent
+  hire, the first human up the chain for an ephemeral), and the §5/§6.3 walks carry it from there.
 - **Offboarding**: deactivating a human runs the §6.3 dependency check across everything they
   touch: owned DNA domains (to a named successor, else **admin custody** — never orphaned,
   and carrying their pending owner-addressed asks with them: the §4.4 re-key binds to
@@ -1207,8 +1240,9 @@ delegation assigns a board task or instantiates a playbook.
   row, not just the moment of claim: a count-cap claim or budget reserve attaches at request
   creation — inside the spawn transaction, where the racing-claim guarantee lives — transfers
   to the live worker at activation, and releases at every terminal a pending request has:
-  denial, approval expiry, and the close-/archive-time settlements that drain template pins
-  (§5.1, §7) — the pin-drain's budget twin. An approval can never publish into an exhausted
+  denial, approval expiry, the close-/archive-time settlements that drain template pins
+  (§5.1, §7), and the requester-state archive the approval gate names (below) — the
+  pin-drain's budget twin, every terminal covered. An approval can never publish into an exhausted
   cap (the accept-time re-validation family, §8.10), and cap space never leaks on a request
   that died waiting. A settle may overshoot its reserve — the final
   provider call lands after the meter — and the overrun is handled, not rolled forward: it
@@ -1230,7 +1264,22 @@ delegation assigns a board task or instantiates a playbook.
   ephemeral workers exceeding quota → Ask to the spawner's owner human. An approval ask that
   expires is the denial's twin — deny is the spawn request's expiry default (§8.10): the
   request transitions `requested`→`archived` (§7) and drains its template pin, the expiry the
-  record exactly as the deny is (§6.5).
+  record exactly as the deny is (§6.5). The requester's own state is an assumption of the same
+  rank: an accept landing while the requesting member sits in any non-active state is
+  audit-only, and the request archives with its template pin drained and its cap claims
+  released (§8.10) — retirement and offboarding already settle their requests inside the walk
+  (§6.3, §5), and suspension, which resolves no dependents, is covered at the door: never a
+  worker published under a halted subtree, and the suspended requester re-requests on resume.
+  Approval is adoption, and ownership follows it: the hire's `owner_human_id` at activation is
+  the gate's accepting human — the domain owner or admin whose answer published it, the
+  self-addressed gate collapsing requester and owner into the one click — so a member hiring
+  into another's domain staffs that domain, and the human who accepted the hire onto the books
+  owns it; a re-keyed gate ask lands the same way, whoever the re-key addressed when the
+  accept arrived owning the hire (§4.4), and the §5/§6.3 walks re-point from there — the
+  derivation names the first owner, never a permanent one. Ephemeral workers, ungated, roll to
+  the chain: their `owner_human_id` is the first human up the `spawned_by` line — the spawner
+  themself when a human spawns, the spawner's owner when an agent does (§2) — pinned at
+  spawn, so `spawned_by` carries lineage while `owner_human_id` carries accountability.
 - **Runaway protection**: depth cap, rate limits, TTL reaper, budget circuit-breaker (org spend
   ceiling halts all spawns and automations with a loud Ask to admins). The breaker trips by
   class: triggers and playbooks carry a `criticality` tag (§7 — a firing's class is the stricter
@@ -1261,7 +1310,8 @@ resolving its dependents (automations,
 playbooks, paired IM sessions, live spawned workers — a dying spawner's ephemeral children fold
 back into the workspace's project memory, not the departed personal one — plus board-task
 assignments returned to the pool or reassigned, the retiree's workspace bindings and group
-memberships dropped (reader sets and execution routing re-deriving — the §5 participants
+memberships dropped and group Leader posts re-pointed or degraded to an admin ask
+(reader sets and execution routing re-deriving — the §5 participants
 scrub's retiree twin, §4.4), owned goals re-owned or retired (narrowing to
 the new owner's ceiling, the §5 rule — an empty intersection retiring), and initiative
 lead/sponsor posts reassigned or closed via §5.1 — their pending sponsor-addressed asks
@@ -1293,7 +1343,11 @@ Two state changes short of retirement: **suspend** — an admin's emergency stop
 and runs without resolving dependents (in-flight asks re-route up the chain); the halt covers the
 subtree — live ephemeral descendants stop and fold back into the workspace's project memory
 exactly as on spawner death, staged writes left to §8.2 reconciliation rather than killed
-mid-commit. **Resume** re-arms triggers (missed schedules coalesce, §8.5) and launches new
+mid-commit — and the halt gates its own publishing: a spawn request pending *from* the
+suspended worker is not a dependent to resolve but a launch the halt refuses, an approval
+landing during the suspension audit-only and the request archiving (§8.10), so suspension
+never publishes into its own halted subtree. **Resume** re-arms triggers (missed schedules
+coalesce, §8.5) and launches new
 runs, but never resurrects a halted one — a run suspended mid-flight is terminal: partial
 results fold back through the memory tiers, interrupted work re-enters as new runs or board
 tasks, and staged writes resolve through §8.2 reconciliation, so resume cannot half-replay a
@@ -1389,6 +1443,10 @@ humans         (id, name, email, rbac 'admin'|'owner'|'member'|'viewer', auth js
 coworkers      + owner_human_id, class 'persistent'|'ephemeral', spawned_by member?, ttl_at,
                  budget_cap, lineage_depth, template_id?, template_version?,
                  status 'requested'|'active'|'suspended'|'retiring'|'archived'
+                 -- owner_human_id derivation (§6.2): a persistent hire's owner is the gate's
+                 -- accepting human at activation (the self-addressed collapse included, a
+                 -- re-keyed gate landing on the re-keyed addressee); an ephemeral's is the
+                 -- first human up the spawned_by line — the §5 invariant derived at spawn
                  -- budget_cap window: per-worker lifetime when ephemeral, periodic (default
                  -- monthly) when persistent — §6.2; null = worker-uncapped: no per-worker
                  -- ceiling, but org-wide caps and the §6.2 breaker still bind — a cap is a
@@ -1448,7 +1506,11 @@ dna_domains    (id, name, owner_human_id, access 'public'|'domain'|'named',
                  -- owner must hold role 'owner' or 'admin' at write — an RBAC demotion below
                  -- that runs the §5 walk (transfer or admin custody, never an orphaned domain);
                  -- archived: read-only history — no injection, routing, or new bindings;
-                 -- dissolution = merge-away then archive, never bare delete (§4.4)
+                 -- the holdings that block archive are the live set only (§4.4): terminal
+                 -- history stays with the row, resolvable by citation (§4.2), and a
+                 -- history-only domain archives directly;
+                 -- dissolution = merge-away then archive, never bare delete (§4.4) — merge
+                 -- moves the whole corpus, history included, ids stable
 dna_cards      (id, domain_id, title, definition_md, refs json, provenance json, version,
                  status 'draft'|'active'|'retired' default 'active')
                  -- default active mirrors the glossary (§7): an owner's direct create is the
@@ -1746,14 +1808,21 @@ responses (member and deputy racing) are audit-only; a response to an expired as
   same way, a response racing the originator's retraction audit-only like one racing expiry.
   Responses re-validate before they bind:
   at respond time the ask's payload assumptions are recomputed — the diff still applies, the
-  referenced DNA item is still live, the scope still holds — and a spawn approval names two
+  referenced DNA item is still live, the scope still holds — and a spawn approval names three
   more assumptions of its own: the initiative it files under still accepts launches (§5.1),
-  and the workspace it binds still accepts bindings and remains readable for the member it
+  the workspace it binds still accepts bindings and remains readable for the member it
   would publish — §4.2's spawn-time refusal, re-checked at the door the approval finally
-  answers — so an accept racing a pause, a close, or a workspace archival is audit-only and
-  the request archives with its template pin drained, never a worker published into a frozen
-  slice or onto an archived row (§7's walk settles the pending request at archival; this is
-  its racing half). And a response against a superseded
+  answers — and the requester itself is still `active`: an approval publishes a worker into
+  its requester's live context, and lineage, fold-back, and quota all key on a spawner that
+  can still receive them. So an accept racing a pause, a close, a workspace archival, or the
+  requester's own suspension is audit-only and the request archives with its template pin
+  drained and its cap claims released, never a worker published into a frozen slice, onto an
+  archived row, or under a halted subtree (§7's walk settles the pending request at archival;
+  this is its racing half). Retirement and offboarding settle the request inside their walks
+  (§6.3, §5); suspension — which resolves no dependents — is the case the walks deliberately
+  leave standing, so the gate closes it at the door: the suspended spawner re-requests on
+  resume, for resume never resurrects what the halt archived (§6.3). And a response against
+  a superseded
 world is audit-only like a late response, with a successor ask opened against current state (the
 same machinery expiry uses). Provenance re-validates with them: an accept originating in a
 tainted run (§13) is audit-only the same way — taint never becomes approval authority — and the
@@ -1900,8 +1969,10 @@ CRUD /dna/domains · /dna/cards|rules|decisions|glossary|goals
 POST /dna/proposals  POST /dna/proposals/:id/review (publish|reject) · POST /dna/proposals/:id/withdraw
                · POST /dna/proposals/:id/amend (revision during review, §4.3)  GET /dna/review-queue
 POST /dna/domains/:id/split|merge|rename|archive (governed topology ops, §4.4; archive refuses
-               a domain still holding items, live workspace bindings, or open proposals — merge
-               away first)
+               a domain still holding live-set items — active rows and owner-staged drafts —
+               live workspace bindings, or open proposals; terminal history never blocks,
+               staying with the archived row as read-only record (§7) — merge away first, or
+               archive directly once only history remains)
 CRUD /role-templates (versioned catalog, §6.5; create/publish/retire are admin writes,
                audited — authorship is infrastructure, adoption rides the §6.5 owner asks)
 POST /spawn          GET /spawn/:id   (spawn requests; approval + spawn-storm monitoring)
@@ -2191,8 +2262,18 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   into an exhausted cap), the workspaceless hire gate (admin-routed like a domainless
   primary), supersession fork refusal (a second live edge onto a superseded predecessor
   refused at propose, amend, and item write, a head-naming successor landing), breaker
-  un-trip only through the trip ask's resolution (no time-based release), and org wind-down
-  outside the offboarding guard (a deployment shutdown, never a headless org).
+  un-trip only through the trip ask's resolution (no time-based release), org wind-down
+  outside the offboarding guard (a deployment shutdown, never a headless org), spawn-approval
+  requester-state re-validation (an accept racing the requester's suspension audit-only, the
+  request archiving with pin and claims released — never a worker published under a halted
+  subtree, re-request on resume), archive-holdings scope (live items, owner-staged drafts,
+  live bindings, and open proposals blocking; terminal history never blocking, staying with
+  the archived row as read-only record; a history-only domain archiving directly; merge
+  moving the whole corpus with ids stable), hire-ownership derivation (the gate's accepting
+  human owning the hire at activation, a re-keyed gate landing on the re-keyed addressee,
+  ephemeral owners resolving to the first human up the spawned_by line), and
+  group-leadership re-pointing on the walks (a departed Leader re-pointed, an unnamed
+  successor degrading routing to an admin ask).
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -2271,7 +2352,13 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   releases its quota claim and budget reserve for the next spawner; a proposal naming an
   already-superseded predecessor is refused while one naming the chain's live head
   publishes; the spend breaker's trip ask resolves the halt — an accept lifting it, a deny
-  holding it — and the halt never lifts by itself.
+  holding it — and the halt never lifts by itself; a spawn approval landing while its
+  requester sits suspended is audit-only, the request archiving with its template pin
+  drained and quota claim released; a domain holding only terminal history archives
+  directly, its citations resolving read-only; a hire published on a domain owner's accept
+  carries the accepter as its owner_human_id; and a group led by a retiring Coworker
+  re-points its Leader inside the walk, an unnamed successor degrading routing to an admin
+  ask.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -2434,7 +2521,13 @@ the walks scrubbing participants entries, retiree bindings, and group membership
 lifecycle with the workspaceless approval gate and the breaker's ask-borne lift named
 (§6.2), supersession chains pinned linear with forks refused at every write door (§4.4, §7,
 §9), and org wind-down named a deployment shutdown outside the last-admin guard's accident
-scope (§5). The former
+scope (§5); v2.35's twenty-seventh sweep closed the requester-liveness, holdings-scope, and
+owner-derivation seams beneath those — spawn approvals re-validating the requester's own
+state, the suspension-raced accept archiving at the door (§8.10, §6.2, §6.3), archive's
+holdings scoped to the live set with terminal history staying on as the archived row's
+read-only record and merge moving the whole corpus (§4.4, §7, §9), hire ownership derived
+from the gate's accepter and ephemeral ownership from the chain's first human (§6.2, §7),
+and group leadership re-pointed by the walks (§5, §6.3). The former
 residue — quorum approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
 check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
