@@ -39,6 +39,8 @@ mode so small teams start simple.
 > **Org-change pass (v2.6)**: first-run bootstrap (§9, §11 P1) · domain split/merge/rename as governed topology ops (§4.4) · offboarding closed out — initiatives, board tasks, deputy refs, admin-custody fallback, last-admin guard (§5) · Coworker suspend + re-role = retire-and-respawn (§6.3) · role-template versioning with owner-approved upgrades (§6.5) · affinity-node loss → queue-or-rebind (§3) · initiative close lapses delegated rules (§8.10) · status enums pinned; viewers never ask targets (§5, §7) · deployment perimeter + proposal strictness parked as decisions (§14.12–13).
 
 > **Consistency audit (v2.7)**: delegated rules get `effective_to` so "end by window" (§8.10) is representable (§7) · goal-slice "deadline" pinned to `dna_goals.effective_to` (§4.2, §7) · per-kind expiry defaults, the domain-owner escalation hop, and suspended ask targets specified (§8.10) · workspace rebind endpoint added (§9, §3) · digest ownership P4 (single-admin) vs P6 (per-human) disambiguated (§11) · single-admin "auto-approve" softened to one-click review, deferring to §14.13 (§13) · personal assistants retire — never re-own — on offboarding (§5) · viewer never-an-ask-target guard pinned in the schema (§7) · SLA-tier breach defaults parked as decision 14 (§14).
+>
+> **Consistency review (v2.8)**: workspace↔initiative binding added so the goal slice has a defined source (§4.2, §7) · asks carry `workspace_id`, keying the domain-owner escalation hop and digest grouping (§7, §8.10) · ephemeral→Coworker status mapping made 1:1 — `done` maps to `retiring` (§7) · domain `rename` joins split/merge as a governed endpoint (§9, §4.4) · retire/suspend/resume moved off `/spawn` onto the coworker they act on (§9) · stalled-initiative escalation specified — the §13 directive-decay row now has a mechanism (§5.1) · P3 goal slice scoped to org-wide goals until initiatives land in P4 (§11).
 
 ---
 
@@ -288,7 +290,9 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
    route asks into each domain's own chain (§8.6, §8.10) — Finance asks to Finance, Legal to Legal
    — so coordination is auditable state, not another chat channel (§8.11).
 5. **Progress is state, not narration**: the initiative view is goal + ask burndown + task/playbook
-   status + spend. Closing runs the same dependency check as retiring a Coworker (§6.3): open asks
+   status + spend. A stalled initiative — deadline passed with open work — raises an ask to its
+   sponsor (then admin), reusing the §8.10 escalation machinery. Closing runs the same dependency
+   check as retiring a Coworker (§6.3): open asks
    and tasks resolved or reassigned; the retrospective files DNA proposals — the §1 loop closes.
 
 An initiative is an org entity (visible, accountable); **project memory** (§8.3) stays the
@@ -400,7 +404,8 @@ humans         (id, name, email, rbac 'admin'|'owner'|'member'|'viewer', auth js
 coworkers      + owner_human_id, class 'persistent'|'ephemeral', spawned_by member?, ttl_at,
                  budget_cap, lineage_depth, template_id?, template_version?,
                  status 'requested'|'active'|'suspended'|'retiring'|'archived'
-                 -- ephemeral spawned/running/done/reaped maps onto requested/active/archived;
+                 -- ephemeral lifecycle maps 1:1: spawned→requested, running→active, done→retiring,
+                 -- reaped→archived (done = fold-back pending, the ephemeral analogue of retiring)
                  -- suspended = emergency stop, halts triggers/runs without resolving dependents (§6.3)
 role_templates (id, name, version, class 'persistent'|'ephemeral-subagent', body json
                  (identity/style/handbook), default_scopes json, status 'draft'|'active'|'retired')
@@ -422,15 +427,18 @@ dna_goals      (id, quarter?, statement_md, owner member, status 'active'|'met'|
 dna_proposals  (id, kind 'card'|'rule'|'decision'|'goal'|'edit', payload json, proposed_by member,
                  provenance json, status 'open'|'published'|'rejected'|'withdrawn', reviewed_by?, at)
 asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request', from member, to member,
-                 payload json, initiative_id?, status 'pending'|'answered'|'expired', deadline, created_at,
+                 payload json, initiative_id?, workspace_id?, status 'pending'|'answered'|'expired', deadline, created_at,
                  sla_tier 'critical'|'standard'|'bulk', escalation json,
                  expiry_behavior 'deny'|'escalate'|'reassign', responded_at?)  -- supersedes approvals;
-                 escalate/reassign close the expired ask and open a linked successor ask (§8.10)
+                 escalate/reassign close the expired ask and open a linked successor ask (§8.10);
+                 workspace_id keys the domain-owner escalation hop and digest grouping (§8.10)
 initiatives    (id, title, goal_ref?, decision_ref?, sponsor member, lead member,
                  status 'proposed'|'active'|'paused'|'closed', business_budget json?, deadline?,
                  closed_at?)
 board_tasks    + assignee_member_id?, initiative_id?  (runs carry initiative_id? the
                  same way — burndown, per-initiative digests)
+workspaces     + initiative_ids json?  -- active initiatives bound here (bound at spawn under an
+                 initiative, admin-editable); the source of the §4.2 goal slice
 spend_ledger   (id, member_id, run_id?, spawn_id?, tokens_in/out, cost, pricing_version, at)
 ```
 
@@ -515,9 +523,10 @@ CRUD /org/humans · /org/members · GET /org/lineage
 POST /nodes/enroll (one-time token exchange) · GET /nodes · POST /nodes/:id/revoke
 CRUD /dna/domains · /dna/cards|rules|decisions|glossary|goals
 POST /dna/proposals  POST /dna/proposals/:id/review (publish|reject) · POST /dna/proposals/:id/withdraw  GET /dna/review-queue
-POST /dna/domains/:id/split|merge (governed topology ops, §4.4)
+POST /dna/domains/:id/split|merge|rename (governed topology ops, §4.4)
 CRUD /role-templates (versioned catalog, §6.5)
-POST /spawn          GET /spawn/:id  POST /spawn/:id/retire · /suspend · /resume
+POST /spawn          GET /spawn/:id   (spawn requests; approval + spawn-storm monitoring)
+POST /coworkers/:id/retire · /suspend · /resume   (lifecycle acts on the coworker, §6.3 — not the spawn request)
 CRUD /asks  ·  POST /asks/:id/respond  ·  WS: ask.requested, ask.answered
 CRUD /initiatives · POST /initiatives/:id/close (runs the §6.3 dependency check)
 CRUD /board-tasks (assign to any member)
@@ -557,7 +566,7 @@ GET /governance/policies|quotas|spend  (console screens 12 & 14)
 | **0. Foundations** | Repo, CI, single-process skeleton | Monorepo, TS strict, Drizzle+SQLite (WAL), REST+WS, console shell, 3-OS CI matrix | 1 wk |
 | **1. MVP agent** | Chat with a Coworker doing real local work | Model gateway, agent loop, guarded fs/shell/web tools, approval cards, audit, streaming chat UI, first-run bootstrap (company + seed admin) | 4–5 wks |
 | **2. Identity, memory, skills, connectors** | Coworkers feel like employees | Role catalog across departments, IDENTITY/STYLE/HANDBOOK, memory tiers 1–2 (personal/project), skills + market, MCP client + tier-1 connectors, workspace kinds, versioned role-template catalog (§6.5) | 3–4 wks |
-| **3. Company DNA v1** | The coherence core | DNA store (git-backed markdown) + domains/index, cards compilation from sources, glossary + applicable-rules + goal-slice injection into every prompt, proposals + owner review queue, citations in answers | 3–4 wks |
+| **3. Company DNA v1** | The coherence core | DNA store (git-backed markdown) + domains/index, cards compilation from sources, glossary + applicable-rules + goal-slice injection into every prompt (org-wide goals first; linked goals wire up with initiatives in P4), proposals + owner review queue, citations in answers | 3–4 wks |
 | **4. Automation** | 24/7 operation | Schedule/API/event triggers, PATs, `{{field}}` templating, headless Ask policy, shared task board, initiatives v0 (goal + lead + deadline + task grouping) | 2–3 wks |
 | — | **v1 cut line** | Phases 0–4 + 8a are shippable v1: a DNA-coherent, automated company run by one admin + Coworkers | — |
 | **5. Playbooks** *(v2 track)* | Multi-stage orchestration | DSL + sandbox, statuses, askUser → Asks, read-only canvas, versions, playbook triggers | 3–4 wks |
