@@ -22,6 +22,11 @@ mode so small teams start simple.
 > mapped onto Ask tiers (§8.1) · ephemeral spawn vs. template allowlist disambiguated (§6.1) ·
 > ask escalation/reassign semantics closed out (§7, §8.10) · node management API added (§9) ·
 > human offboarding defined (§5).
+>
+> **Amendments (v2.3 — enterprise deployment shape)**: knowledge vs. operational data separation —
+> systems of record stay live, never synced into the DNA (§4.6) · personal-assistant deployment
+> shape with mirrored scopes (§6.4) · enterprise connector tier (§8.2) · inter-agent communication
+> policy — state, not chatter (§8.11).
 
 ---
 
@@ -191,6 +196,24 @@ export-on-demand and never enters the git store; the git timeline is reserved fo
 domains. If sensitive material lands in git by mistake, remediation is a documented history
 rewrite (rotate the repo, notify domain owners) — decided here, not improvised under a deadline.
 
+### 4.6 Knowledge vs. operational data (systems of record)
+
+The DNA holds *knowledge about* the company's systems — rules, definitions, decisions, how-tos —
+never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
+
+- **No bulk sync of operational data into the DNA.** A synced copy goes stale the moment the system
+  of record changes; two copies of a fact are two ways to be inconsistent. Operational facts
+  (order status, stock levels, an employee's record) are read live through scoped connectors at
+  task time.
+- **DNA cards carry the interpretive layer**: "refund window is 30 days (ref: policy §4)", "WMS
+  location codes are zone-prefixed", "PO approval matrix by amount" — the context that makes raw
+  rows meaningful, with provenance pointing at the source system or document.
+- **Inconsistencies are signal, not noise**: when a run observes conflicting facts across systems
+  (ERP says X, a DNA card says Y), it files a DNA proposal or contradiction report for the domain
+  owner — a detection loop, never silent reconciliation.
+- **Live lookups are cited like cards**: answers depending on connector reads reference system,
+  record, and timestamp, so freshness is visible in the answer.
+
 ---
 
 ## 5. The org model: humans + Coworkers as members
@@ -264,6 +287,25 @@ ephemeral roles.
 and current status. Retiring a persistent Coworker requires resolving its dependents (automations,
 playbooks, paired IM sessions) — the same dependency check as deleting a skill, applied to staff.
 
+### 6.4 Personal assistants (deployment shape)
+
+One persistent assistant per human employee is a *deployment* of the existing model, not a new
+architecture:
+
+- **Template**: a persistent-hire template (`personal-assistant`) bound 1:1 to a human —
+  `owner_human_id` = the assisted employee. The assistant serves the employee but is accountable
+  to the company: DNA proposals route to domain owners; compartment access is never widened to
+  please the human.
+- **Scope mirroring**: the assistant's scopes (DNA compartments, connector scopes, tool access)
+  are derived from the human's RBAC role at spawn, **refreshed on role change, revoked on
+  offboarding** (§5). The scope-delegation invariant is reused with the employee's role as the
+  ceiling: assistant ⊆ employee, everywhere.
+- **Mirrored access ≠ mirrored behavior**: a human rarely opens 10,000 HR records; an assistant
+  might bulk-read them. Restricted-domain reads carry **rate/volume limits** in addition to
+  permission checks, and every read of a restricted domain is audited (§13).
+- **Identity separation**: the assistant acts under its own member identity (own PAT, own audit
+  trail, own spend-ledger line), never the employee's credentials — actions stay attributable.
+
 ---
 
 ## 7. Data model (v2 delta)
@@ -313,8 +355,10 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
   policy, not a separate one. Scope
   enforcement, egress guard, write-lock, stop semantics, cost metering as in v1.
 - **8.2 Tools & MCP** — built-ins (`fs.*`, guarded `shell.exec`, `web.*`, `kb.search` → `dna.search`,
-  `memory.write`) plus **`spawn`** as a guarded tool. Egress guard unchanged. Connector tiers
-  unchanged (tier 1 = email/calendar/docs).
+  `memory.write`) plus **`spawn`** as a guarded tool. Egress guard unchanged. Connector tiers:
+  tier 1 = email/calendar/docs; **tier 2 = enterprise systems of record** (ERP/WMS/HRIS/CRM) —
+  read-only first, writes gated behind `critical`-tier Asks (§8.10); per-connector scoped
+  credentials via PATs, never shared service accounts; §4.6 governs what may enter the DNA.
 - **8.3 Memory service** — now three-tier classifier (personal / project / DNA proposal) with the
   v1 machinery (dedupe, timeline, versions, secrets scanner) under it.
 - **8.4 Skills** — unchanged; domain-organized packs; uninstall dependency checks.
@@ -344,6 +388,13 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
   never agent-authored summaries alone. **Agent targets**: an ask routed to a Coworker queues into
   its next run (or wakes a session worker); if the target is ephemeral, archived, or busy past
   SLA, the ask reassigns up the chain.
+- **8.11 Inter-agent communication** — agents exchange **state, not chatter**. Agent→agent requests
+  are Asks with an agent target (§8.10); shared context lives on the task board as tasks and
+  artifacts, not repeated in-context explanation; deliberate multi-agent fan-out is a playbook
+  with `worker()` targets (§8.6); disputes between agents escalate to humans as DNA decision
+  proposals — never agent-vs-agent argument loops. No free-form agent-to-agent chat channels; every
+  cross-agent interaction is an auditable ledger entry (ask, task, or run artifact). Rationale:
+  unbounded agent conversation amplifies shared errors, burns tokens, and resists audit.
 
 ---
 
@@ -458,6 +509,9 @@ proves the core loop (work → learning → DNA → better work) end to end.
 | Agent reliability unattended | Conservative scopes, Ask gates before external writes, run-now dry tests, explicit success criteria |
 | Native-module fragility across OSes | 3-OS CI from Phase 0; prebuilt binaries; child-process fallback for the playbook sandbox |
 | Scope creep | Phase ladder above; DNA and spawning are the only new pillars — resist others until v1 ships |
+| Operational-data sync temptation (copying ERP/WMS/HR data into the DNA) | §4.6 hard line: knowledge only, live lookups via connectors; sync requests surface as proposals an owner must reject |
+| Agent-to-agent chatter (error amplification, unauditable loops, token burn) | §8.11: communication only via asks / board / playbooks; no free-form agent channels; disputes escalate to humans |
+| Assistant scope drift after role change; bulk reads of restricted data | Scope mirroring refreshed on role change and revoked on offboarding (§6.4); rate/volume limits + audit on restricted-domain reads |
 
 ## 14. Key open decisions
 
@@ -469,3 +523,5 @@ proves the core loop (work → learning → DNA → better work) end to end.
 6. **First IM channel**: Slack (default) vs Discord vs Telegram.
 7. **Embeddings**: API (default) with local fallback.
 8. **Name/branding**: working title pending trademark + domain search.
+9. **Tier-2 connector priority**: which enterprise system first (ERP vs HRIS vs CRM) — decide when the first company deployment names its pain; not before v1 ships.
+10. **Personal-assistant rollout**: opt-in per employee (default) vs org-wide mandate.
