@@ -258,6 +258,21 @@ mode so small teams start simple.
 > every door (§9) · new board tasks join runs and spawns in the closed-slice refusal, while
 > `proposed` and `paused` keep task-filing open as planning (§5.1).
 
+> **Edge-case closure (v2.26)**: eighteenth sweep — single-writer, catalog, and
+> attention-lifecycle seams closed inline: external git ingest joins the domain write lock —
+> one writer door per domain, whichever side the write comes from (§4.5, §4.4) · a split's
+> declared item mapping respects chain integrity — a supersession chain maps whole to one
+> result, refused at declare (§4.4) · proposal amendment and publish serialize on the lock —
+> racing amendments land as sequential revisions, publish binds the pre-lock latest (§4.3, §7)
+> · template version selection is explicit — spawn requests name the exact catalog row,
+> publication files the owner-upgrade asks, a denied upgrade leaves the pin standing on a
+> still-active version (§6.5, §7) · a deadline-less initiative gets a stall clock anyway —
+> the linked goal's window, else a sponsor staleness line (§5.1, §7) · node capabilities
+> re-advertise on heartbeat — drift surfaces rebind-or-starvation, not per-run failures
+> (§3, §7) · `decided_by` is cited provenance, not authority (§7) · asks gain originator
+> withdrawal — resolving per the expiry behavior, the lifecycle walks'
+> close-with-audit-note its system-applied form (§8.10, §7, §9).
+
 ---
 
 ## 1. Product vision
@@ -346,7 +361,11 @@ boundaries — with a sixth raised to the top: **shared, governed context**.
   `nodes.capabilities`), and a queue starved past a configurable window (default 24h) raises an
   admin ask: starvation is surfaced, never silently endured. Capability validation is a property
   of the bind, not of the failover: the initial workspace–node placement runs the same check, so
-  a workspace is never born attached to a node that cannot run it.
+  a workspace is never born attached to a node that cannot run it. Capabilities are live
+  advertisements, not enrollment facts: every heartbeat re-states them, and a node whose
+  advertisement no longer satisfies a bound workspace — a repo moved on disk, a connector
+  de-authorized — surfaces the same rebind-or-starvation ask the affinity-loss path raises,
+  rather than failing run after run; drift is a scheduling event, not a per-run surprise.
 - **Node trust model**: remote nodes are *trusted compute*, not enforcement boundaries — scope,
   egress, and audit code runs on the node, so a compromised node can bypass it. Nodes enroll via
   one-time tokens, authenticate with a keypair identity on every connection, are revocable from
@@ -478,7 +497,11 @@ viewer (§5's no-write surface) can also propose directly, and can edit in their
 the store is git-backed markdown, so a PR workflow is possible for teams that want it. Proposals
 are amendable in review: the proposer — or the reviewing owner, as suggested changes — files a new
 revision (`revision`, §7); reviewers see latest-plus-history, publish binds the latest, and
-withdraw-and-refile stops being the only edit path. An amendment re-routes with its payload: a
+withdraw-and-refile stops being the only edit path. Amendment and publish serialize behind the
+same domain write lock (§4.4): racing amendments — proposer and reviewing owner filing
+concurrently — land as sequential revisions on the atomically incrementing counter, never a lost
+update, and a publish binds the latest revision that preceded it into the lock, never a moving
+target. An amendment re-routes with its payload: a
 revision that moves an item between org-wide and domain-scoped re-routes the review to the queue
 governing the amended scope — org-wide lands in the admin queue, domain-scoped in the owner's —
 so the reviewing authority always matches what would publish (cross-domain moves are refused
@@ -530,7 +553,11 @@ keeps governing strictness separately.
 - **Topology changes**: reorgs split, merge, rename, and archive domains — a governed operation,
   not a hand-run migration: items move with ids stable (citations and supersession chains survive),
   access policies re-evaluate against the new topology, workspace domain tags remap, and the move
-  is a single auditable event. An op declares its result, not just its inputs: split names owner,
+  is a single auditable event. The declared item mapping respects chain integrity: a supersession
+  chain — intra-domain by the §7 write guard — maps whole to one result, and a split whose
+  declared mapping would divide a chain across its results is refused at declare, the topology
+  twin of that guard: a reorg never strands a chain across domains any more than a write does. An
+  op declares its result, not just its inputs: split names owner,
   access, `store`, `sod`, and residency for each resulting domain (inherit-by-default — each
   result starts from the parent's `named_readers` list too, §7, there to be edited, not
   re-derived), and merge
@@ -595,7 +622,11 @@ guards the ingest door too, so a pasted credential cannot enter the canonical st
 hand-merge) and quarantines invalid files to a
   review queue with the parse error attached — routed to the affected domain's owner (the admin
   for org-wide files), so a quarantine is never an unowned inbox — a bad hand-merge degrades to an ask, never to a
-  silently corrupted index. Paths under a db-only domain's tree are invalid by the same rule:
+  silently corrupted index. And ingest serializes like every other writer: a valid hand-merge or
+  PR landing applies inside the same domain write lock publishes and topology ops queue behind
+  (§4.4) — the domain has one writer door, whichever side the write comes from, so an external
+  edit cannot interleave with a publish or an item move and land as half-applied state. Paths
+  under a db-only domain's tree are invalid by the same rule:
   the canonical copy lives in SQLite (the carve-out below), so a file that appears there — a
   stray hand-merge, a migration leftover — quarantines to the domain's owner rather than forking
   a second canon.
@@ -744,7 +775,11 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
    — so coordination is auditable state, not another chat channel (§8.11).
 5. **Progress is state, not narration**: the initiative view is goal + ask burndown + task/playbook
    status + spend. A stalled initiative — deadline passed with open work — raises an ask to its
-   sponsor (then admin), reusing the §8.10 escalation machinery. A deadline passed with *no*
+   sponsor (then admin), reusing the §8.10 escalation machinery. The stall clock is defined even
+   without a deadline: an initiative opened with none keys staleness to its linked goal's window
+   when there is one, and falls to a bulk-tier staleness line in its sponsor's digest after a
+   configurable window (default 30 days) when there is not — directive decay (§13) has no dead
+   zone. A deadline passed with *no*
    open work is not silent either: a bulk-tier close-out ask goes to the sponsor — close, or
    extend the deadline if more is coming — so a finished initiative cannot linger on holding
    workspace bindings and injecting goals nobody is driving. The same ask fires when the
@@ -972,7 +1007,14 @@ architecture:
 
 Roles change as the company does; running staff must track the change without a respawn stampede.
 Templates are versioned (§7 `role_templates`); every persistent Coworker pins the version it was
-spawned from. An **upgrade** is proposal-shaped: the diff — IDENTITY/HANDBOOK changes, scope
+spawned from. Version selection is explicit at every door: a spawn request names the exact
+catalog row — the console defaults to the newest `active` version — so an approval publishes
+into the version the requester saw, never whichever row appeared or retired in between.
+Publishing a new `active` version files the upgrade ask to each pinned Coworker's owner — the
+company-wide bump-plus-queue below, made literal — and nothing auto-applies: a denied or expired
+upgrade leaves the Coworker pinned to its current version, which remains a legitimate `active`
+row, because publication supersedes but never retires — retirement stays the explicit, pin-gated
+act (below), and the next bump re-asks. An **upgrade** is proposal-shaped: the diff — IDENTITY/HANDBOOK changes, scope
 deltas — goes to the Coworker's owner as an Ask; on accept, files rebase and scopes re-derive as
 new-template ∩ owner's-current-scopes, never widening — and an intersection that comes back
 empty refuses to land: the upgrade closes unresolved with the empty re-derivation surfaced in
@@ -1027,10 +1069,16 @@ role_templates (id, name, version, class 'persistent'|'ephemeral-subagent', body
                  -- versioned catalog; persistent Coworkers pin (template_id, template_version) (§6.5)
                  -- (class, name, version) unique — the catalog's deterministic key: a new
                  -- version is a new row, never an in-place rewrite of one a Coworker pins
+                 -- spawn requests name the exact row (newest active the console default, §6.5);
+                 -- publishing a new active version files owner-upgrade asks to pinned Coworkers —
+                 -- publication supersedes, never retires: a denied upgrade's pin stands on a
+                 -- still-active row until explicitly retired (§6.5)
 nodes          (id, name, kind 'local'|'remote', capabilities json, region?, claim json?,
                  last_heartbeat, pubkey, enrolled_at, revoked_at?, status 'trusted'|'revoked')
                  -- region gates residency-constrained scheduling (§3, §4.5);
                  -- claim: epoch-fenced workspace leases (§3)
+                 -- capabilities re-advertise on every heartbeat: drift against a bound
+                 -- workspace surfaces the §3 rebind-or-starvation ask, not per-run failures
 dna_domains    (id, name, owner_human_id, access 'public'|'domain'|'named',
                  named_readers json, store 'git'|'db-only', sod 'off'|'reviewer-distinct',
                  residency?, status 'active'|'archived' default 'active')
@@ -1073,6 +1121,10 @@ dna_decisions  (id, domain_id, context_md, outcome_md, decided_by member, decide
                  -- are always live in search (§4.2); reversal or amendment is a new decision
                  -- record citing the old through refs — the decision analogue of §4.4's
                  -- supersession chains
+                 -- decided_by is cited provenance, not authority: any member — viewer, agent,
+                 -- since-departed — may be recorded as the decider of record (the field
+                 -- documents the world); review at publish is the authority, and no
+                 -- ask-eligibility guard applies to the field
 dna_glossary   (id, domain_id?, term, definition, aliases json,
                  status 'draft'|'active'|'retired' default 'active')
                  -- the "live entry" of the §4.2 duplicate check is any non-retired row of the
@@ -1105,15 +1157,21 @@ dna_proposals  (id, kind 'card'|'rule'|'decision'|'goal'|'glossary'|'edit', payl
                  provenance json, status 'open'|'published'|'rejected'|'withdrawn', reviewed_by?, at,
                  review_by?)  -- review_by: queue SLA deadline; breach escalates to admin (§4.3);
                  -- revision: amendable in review — history retained, publish binds latest (§4.3);
+                 -- amendment and publish serialize behind the domain write lock, racing
+                 -- amendments landing as sequential revisions (§4.3);
                  -- proposed_by must hold a write surface: humans and persistent Coworkers only —
                  -- an ephemeral worker is refused at propose (§6); its learning folds back, and
                  -- the spawner or a human proposes from it. Viewers are refused the same way (§5)
 asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request', from member, to member,
-                 payload json, initiative_id?, workspace_id?, status 'pending'|'answered'|'expired', deadline, created_at,
+                 payload json, initiative_id?, workspace_id?, status 'pending'|'answered'|'expired'|'withdrawn', deadline, created_at,
                  sla_tier 'critical'|'standard'|'bulk', escalation json,
                  expiry_behavior 'deny'|'escalate'|'reassign', responded_at?, quorum_required int
                  default 1, responses json, collapsed_count int default 1)
                  -- supersedes approvals;
+                 -- withdrawn: the originator's retract of a pending ask — collapsed waiters
+                 -- resolve with it, partial quorum accepts stay audit-only, and whatever waited
+                 -- resolves per the expiry behavior (a withdrawn approval is a no); the §5/§6.3
+                 -- walks' close-with-audit-note is this mechanism system-applied (§8.10);
                  -- quorum: N distinct human accepts close it answered, deny wins immediately (§8.10);
                  -- quorum addressing: to = the rule's domain owner (primary recipient); the
                  -- eligible pool — that owner + active admins — evaluates at respond time (§8.10)
@@ -1133,6 +1191,8 @@ initiatives    (id, title, goal_ref?, decision_ref?, sponsor member, lead member
                  -- viewer and non-active members refused (§5.1);
                  -- transition authority (§5.1): sponsor activation, lead/sponsor pause-resume-close,
                  -- admin backstop on pause/resume
+                 -- deadline optional: stall detection without one keys to the linked goal's
+                 -- window, else the sponsor's staleness digest line (§5.1);
                  -- depends_on: cross-initiative DAG — acyclic, enforced at write; closing an
                  -- upstream with live dependents asks each sponsor — signal, not block (§5.1)
 board_tasks    + assignee_member_id?, initiative_id?  (runs carry initiative_id? the
@@ -1268,7 +1328,11 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
   explicit per ask: `deny` (default for approvals and spawn requests — an expired approval is a
   no), `escalate` (route up the chain — default for questions), `reassign` (fall back to a named
   deputy — default for assignments); a run blocked on an expired ask
-never hangs indefinitely. A quorum-1 ask (the default) closes on the first response received — later
+never hangs indefinitely. Withdrawal is the originator's side of the same coin: `from` may
+retract a pending ask before it closes — collapsed waiters resolve with it, partial quorum
+accepts stay audit-only — and the retraction applies the ask's expiry behavior to whatever was
+waiting (a withdrawn approval is a no), so the §5/§6.3 walks' close-with-audit-note is this
+mechanism applied by the system, not a parallel one. A quorum-1 ask (the default) closes on the first response received — later
 responses (member and deputy racing) are audit-only; a response to an expired ask is recorded but has no
   effect: the successor ask, if any, carries the decision. Responses re-validate before they bind:
   at respond time the ask's payload assumptions are recomputed — the diff still applies, the
@@ -1396,7 +1460,7 @@ POST /spawn          GET /spawn/:id   (spawn requests; approval + spawn-storm mo
 POST /coworkers/:id/retire · /suspend · /resume   (lifecycle acts on the coworker, §6.3 — not the
                spawn request; authority: the Coworker's owner human, an admin, or a
                bound-initiative sponsor)
-CRUD /asks  ·  POST /asks/:id/respond  ·  WS: ask.requested, ask.answered
+CRUD /asks  ·  POST /asks/:id/respond  ·  POST /asks/:id/withdraw (originator retract, §8.10)  ·  WS: ask.requested, ask.answered
 CRUD /initiatives · POST /initiatives/:id/activate|pause|resume|close
                (transition authority §5.1; close runs the §6.3 dependency check)
 CRUD /board-tasks (assign to any ask-eligible member — viewer and non-active refused at write, §7)
@@ -1593,7 +1657,17 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   clamp, domain-name uniqueness among non-archived and template (class, name, version)
   key uniqueness, window-sanity validation identical at the propose, amend, and
   item-write doors, closed-slice task-filing refusal with proposed/paused planning
-  open.
+  open, git-ingest serialization behind the domain write lock (a valid hand-merge racing a
+  publish or topology op queues, never interleaves), split-mapping chain-integrity refusal (a
+  supersession chain divided across results refused at declare), proposal-amendment
+  serialization (racing amendments land as sequential revisions, publish binds the pre-lock
+  latest), spawn-request exact-row version pinning (newest-active console default, approval
+  publishing the row the requester saw), publication-filed owner-upgrade asks, denied-upgrade
+  pins standing on still-active versions, deadline-less initiative staleness (goal-window
+  fallback, sponsor digest line at the 30-day default), heartbeat capability-drift surfacing
+  (rebind-or-starvation, not per-run failure), decided_by provenance semantics (no eligibility
+  guard on the field), ask withdrawal (originator retract applying the expiry behavior,
+  collapsed waiters resolved, lifecycle walk closures as withdrawals).
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -1623,7 +1697,11 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   domain residency tightened under live placements rebinds conforming workspaces and surfaces
   the starvation ask for the rest; a standalone `store` flip sweeps the tree in one audited
   commit and is refused under a kind-'domain' hold; a retiring Coworker's pending spawn request
-  closes with an audit note and releases its template pin.
+  closes with an audit note and releases its template pin; a valid hand-merge landing
+  mid-topology-op serializes behind the domain lock; a split whose declared mapping divides a
+  supersession chain is refused at declare; a node whose heartbeat drops a workspace-required
+  capability surfaces the rebind ask; a withdrawn approval resolves its waiting run as a no; a
+  deadline-less, goal-less initiative surfaces the sponsor staleness line.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -1718,7 +1796,13 @@ retirement-as-terminal for cards and glossary (§7), intra-domain supersession (
 the publish gate's edit-target lifecycle re-check (§4.3), the broadcast admin hop (§8.10,
 §4.3, §6.2), the write-enforced sponsor pin (§5.1, §7), domain-name and template-key
 uniqueness (§7), one window-sanity validation behind every write door (§9), and the
-closed-slice task-filing refusal (§5.1). The former
+closed-slice task-filing refusal (§5.1); v2.26's eighteenth sweep closed the single-writer,
+catalog, and attention-lifecycle seams beneath those — write-locked external ingest (§4.5,
+§4.4), split-mapping chain integrity (§4.4), amendment/publish serialization on the lock
+(§4.3, §7), explicit template-version selection with publication-filed upgrade asks and
+denial leaving the pin standing (§6.5, §7), the deadline-less initiative stall clock (§5.1),
+heartbeat capability-drift surfacing (§3), `decided_by` as cited provenance (§7), and
+originator ask withdrawal unifying the walks' closures (§8.10, §7, §9). The former
 residue — quorum approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
 check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
