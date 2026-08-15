@@ -38,6 +38,8 @@ mode so small teams start simple.
 >
 > **Org-change pass (v2.6)**: first-run bootstrap (§9, §11 P1) · domain split/merge/rename as governed topology ops (§4.4) · offboarding closed out — initiatives, board tasks, deputy refs, admin-custody fallback, last-admin guard (§5) · Coworker suspend + re-role = retire-and-respawn (§6.3) · role-template versioning with owner-approved upgrades (§6.5) · affinity-node loss → queue-or-rebind (§3) · initiative close lapses delegated rules (§8.10) · status enums pinned; viewers never ask targets (§5, §7) · deployment perimeter + proposal strictness parked as decisions (§14.12–13).
 
+> **Consistency audit (v2.7)**: delegated rules get `effective_to` so "end by window" (§8.10) is representable (§7) · goal-slice "deadline" pinned to `dna_goals.effective_to` (§4.2, §7) · per-kind expiry defaults, the domain-owner escalation hop, and suspended ask targets specified (§8.10) · workspace rebind endpoint added (§9, §3) · digest ownership P4 (single-admin) vs P6 (per-human) disambiguated (§11) · single-admin "auto-approve" softened to one-click review, deferring to §14.13 (§13) · personal assistants retire — never re-own — on offboarding (§5) · viewer never-an-ask-target guard pinned in the schema (§7) · SLA-tier breach defaults parked as decision 14 (§14).
+
 ---
 
 ## 1. Product vision
@@ -80,7 +82,7 @@ boundaries — with a sixth raised to the top: **shared, governed context**.
 3. **Every capability is a guarded tool**: file scope, tool scope, egress guard, and audit enforced in code, never in prompts.
 4. **Agents are accountable to humans**: every Coworker has a human owner in its lineage chain; ephemeral workers roll up to their spawner, whose chain terminates at a human.
 5. **Spawning is delegation, not reproduction**: a spawned Coworker's permissions are a subset of its spawner's; budgets and TTLs bound it; policy gates it.
-6. **Files for humans, database for machines**: DNA, identity, and memory are git-friendly markdown humans can read, edit, and review; runs, audit, and indexes live in SQLite.
+6. **Files for humans, database for machines**: DNA, identity, and memory are git-friendly markdown humans can read, edit, and review (sensitive domains excepted — §4.5 carve-out); runs, audit, and indexes live in SQLite.
 7. **Role-agnostic core**: roles are data (templates, skills, connectors, scopes) — engineer, secretary, HR, finance, all the same runtime.
 8. **Governance proportional to blast radius**: ephemeral task workers need quotas, not paperwork; persistent hires and DNA changes need review.
 
@@ -160,7 +162,7 @@ Every run's system prompt is assembled with:
   linked to the workspace through its initiatives, plus goals flagged org-wide (inject 'always'; statement, owner,
   deadline, status). "Applicable" has defined
   semantics: a rule applies when its domain intersects the workspace's domains and its effective
-  window covers the run (superseded rules drop out of injection automatically); `machine_hint`
+  window (`effective_from`…`effective_to`) covers the run (superseded rules drop out of injection automatically); `machine_hint`
   narrows matching where present. Each layer carries a token budget (org snapshot ~1k, glossary
   slice ~2k, rules ~4k, goal slice ~1k — soft limits, configurable); overflow demotes items to
   retrieval (rules overflow into the searchable DNA index) rather than truncating silently.
@@ -264,7 +266,8 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
 - **Offboarding**: deactivating a human runs the §6.3 dependency check across everything they
   touch: owned DNA domains (to a named successor, else **admin custody** — never orphaned), open
   asks and board-task assignments (reassigned or returned to the pool), dependent Coworkers
-  (re-owned or retired), sponsored/led initiatives (reassigned or closed), and deputy references
+  (re-owned or retired — personal assistants are always retired: mirrored scopes die with the
+  member, §6.4), sponsored/led initiatives (reassigned or closed), and deputy references
   (cleared). Inactive members are skipped when walking ask chains. Guard: the last active admin
   cannot be deactivated — the org never goes headless by accident. Audit history is retained;
   personal data falls under the §4.5 deletion carve-out.
@@ -393,6 +396,7 @@ New/changed tables (v1 session/run/message/skill/connector tables carry over):
 ```
 humans         (id, name, email, rbac 'admin'|'owner'|'member'|'viewer', auth json,
                  deputy_member_id?, created_at)  -- deputy: first hop of the §8.10 chain
+                 -- viewers are read-only and never valid ask targets (§5)
 coworkers      + owner_human_id, class 'persistent'|'ephemeral', spawned_by member?, ttl_at,
                  budget_cap, lineage_depth, template_id?, template_version?,
                  status 'requested'|'active'|'suspended'|'retiring'|'archived'
@@ -407,12 +411,14 @@ dna_domains    (id, name, owner_human_id, access 'public'|'domain'|'named',
                  store 'git'|'db-only')  -- db-only: the §4.5 privacy carve-out
 dna_cards      (id, domain_id, title, definition_md, refs json, provenance json, version,
                  status 'draft'|'active'|'retired')
-dna_rules      (id, domain_id, statement_md, machine_hint json?, effective_from, supersedes_id,
-                 status 'active'|'superseded'|'lapsed')  -- lapsed: delegation ended (§8.10)
+dna_rules      (id, domain_id, statement_md, machine_hint json?, effective_from, effective_to?,
+                 supersedes_id, status 'active'|'superseded'|'lapsed')
+                 -- effective_to bounds delegation windows (§8.10); lapsed: delegation ended (§8.10)
 dna_decisions  (id, domain_id, context_md, outcome_md, decided_by member, decided_at)
 dna_glossary   (id, domain_id?, term, definition, aliases json)
 dna_goals      (id, quarter?, statement_md, owner member, status 'active'|'met'|'missed'|'retired',
                 inject 'always'|'linked', effective_from, effective_to?)  -- goal-slice source (§4.2)
+                -- the slice's 'deadline' (§4.2) is effective_to
 dna_proposals  (id, kind 'card'|'rule'|'decision'|'goal'|'edit', payload json, proposed_by member,
                  provenance json, status 'open'|'published'|'rejected'|'withdrawn', reviewed_by?, at)
 asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request', from member, to member,
@@ -472,15 +478,17 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
   latency, so asks are engineered, not merely routed. **SLA tiers**: `critical` (blocks a
   customer-facing or money-moving run — interrupt-grade push, console + IM), `standard` (blocks a
   run — next digest), `bulk` (non-blocking — daily digest, batched). **Expiry semantics** are
-  explicit per ask: `deny` (default for approvals — an expired approval is a no), `escalate`
-  (route up the chain), `reassign` (fall back to a named deputy); a run blocked on an expired ask
+  explicit per ask: `deny` (default for approvals and spawn requests — an expired approval is a
+  no), `escalate` (route up the chain — default for questions), `reassign` (fall back to a named
+  deputy — default for assignments); a run blocked on an expired ask
   never hangs indefinitely. **Escalation chains**: every ask to a human carries member → deputy (set per member in the org
-  registry) → domain owner → admin, walked on SLA breach (inactive members are skipped); `deadline` derives from the tier unless set
+  registry) → domain owner (of the domain the ask's workspace belongs to; asks with no domain skip
+  the hop) → admin, walked on SLA breach (inactive members are skipped); `deadline` derives from the tier unless set
   explicitly. **Batching**: the digest composer groups by initiative, then workspace, and pre-fills recommended
   answers; approvals render as one-line accept/deny with diff links — reviewers see raw diffs,
   never agent-authored summaries alone. **Agent targets**: an ask routed to a Coworker queues into
-  its next run (or wakes a session worker); if the target is ephemeral, archived, or busy past
-  SLA, the ask reassigns up the chain. **Delegated authority** — a directive can push authority,
+  its next run (or wakes a session worker); if the target is ephemeral, suspended, archived, or
+  busy past SLA, the ask reassigns up the chain (§6.3 suspend re-routing included). **Delegated authority** — a directive can push authority,
   not just work: the sponsor proposes a DNA rule scoped by `machine_hint` (initiative, ceiling,
   window) — "initiative X: store invoices ≤ $25k need one approval, by the lead, until
   2026-12-31" — reviewed like any rule. The ask router evaluates applicable rules, delegations
@@ -513,8 +521,9 @@ POST /spawn          GET /spawn/:id  POST /spawn/:id/retire · /suspend · /resu
 CRUD /asks  ·  POST /asks/:id/respond  ·  WS: ask.requested, ask.answered
 CRUD /initiatives · POST /initiatives/:id/close (runs the §6.3 dependency check)
 CRUD /board-tasks (assign to any member)
+POST /workspaces/:id/rebind (admin affinity failover, §3)
 GET /governance/policies|quotas|spend  (console screens 12 & 14)
-(v1 endpoints for coworkers, sessions, messages, automated-tasks, triggers, playbooks, runs carry over)
+(v1 endpoints for coworkers, sessions, messages, workspaces, automated-tasks, triggers, playbooks, runs carry over)
 ```
 
 ---
@@ -552,7 +561,7 @@ GET /governance/policies|quotas|spend  (console screens 12 & 14)
 | **4. Automation** | 24/7 operation | Schedule/API/event triggers, PATs, `{{field}}` templating, headless Ask policy, shared task board, initiatives v0 (goal + lead + deadline + task grouping) | 2–3 wks |
 | — | **v1 cut line** | Phases 0–4 + 8a are shippable v1: a DNA-coherent, automated company run by one admin + Coworkers | — |
 | **5. Playbooks** *(v2 track)* | Multi-stage orchestration | DSL + sandbox, statuses, askUser → Asks, read-only canvas, versions, playbook triggers | 3–4 wks |
-| **6. Multi-human org** *(v2 track)* | A company, not a person | Server deployment, human accounts + RBAC, asks routing + digests, shared board, node registration & workspace-affinity scheduling, delegated authority + initiative budgets, offboarding flows + last-admin guard, Coworker suspend/resume, template upgrades, domain split/merge (§4.4) | 3–4 wks |
+| **6. Multi-human org** *(v2 track)* | A company, not a person | Server deployment, human accounts + RBAC, asks routing + per-human digests (P4 shipped the single-admin digest), shared board, node registration & workspace-affinity scheduling, delegated authority + initiative budgets, offboarding flows + last-admin guard, Coworker suspend/resume, template upgrades, domain split/merge (§4.4) | 3–4 wks |
 | **7. Spawning** *(v2 track)* | The org flexes | Ephemeral workers (quota, TTL, fold-back memory), then persistent hires (owner approval), policy engine, lineage graph, spend ledger + circuit-breaker | 2–3 wks |
 | **8a. v1 hardening** | v1 production-ready | Backup/restore, encrypted secrets, docs, security review | 1 wk |
 | **8b. v1.1 polish** | Distribution | Tauri shell, installers, telemetry (opt-in) | 1–2 wks |
@@ -621,7 +630,7 @@ names the first system — an integration project per connector, not a phase.
 | DNA quality drift / gaming (agents proposing self-serving rules) | Human-owned review, provenance on every item, reviewer-agent contradiction reports, compartment isolation |
 | Prompt injection via external content (email, web, ingested docs steering proposals, spawns, writes) | Taint-tracking for off-platform content; provenance + raw diffs in the review UI; spawns from tainted runs auto-gated; tainted context barred from external writes |
 | Spawn runaway / cost explosion | Depth cap, quotas, TTL reaper, spend circuit-breaker, approval gates on persistent hires |
-| Governance overhead kills small-team speed | Proportional governance: single-admin mode auto-approves own proposals; compartments optional at start |
+| Governance overhead kills small-team speed | Proportional governance: single-admin mode collapses review of own proposals to one click; compartments optional at start; auto-publish itself stays behind the §14.13 decision |
 | Privacy leakage across departments | DNA compartments enforced at retrieval; access scopes on domains; audit on every read of restricted domains |
 | Multi-human/multi-node complexity landing too early | Single-process mode is the default until Phase 6; the split is a deployment change, not a rewrite |
 | Agent reliability unattended | Conservative scopes, Ask gates before external writes, run-now dry tests, explicit success criteria |
@@ -648,3 +657,4 @@ names the first system — an integration project per connector, not a phase.
 11. **Business budgets**: display-only field on initiatives (default) vs enforcement tied into the §8.2 tier-2 write gates — revisit with the first write-capable ERP/WMS connector.
 12. **Deployment perimeter**: one deployment per company (default) — M&A-style consolidation of two deployments is a migration project, not a runtime feature.
 13. **Per-domain proposal strictness**: every proposal reviewed (default) vs opt-in auto-publish for low-blast-radius domains (audited, retro-reviewable) — revisit when proposal volume drowns owners.
+14. **Ask SLA tier defaults**: how long each tier runs before breach-and-escalate (e.g. `critical` 1h, `standard` to next digest, `bulk` 24h) — defaults tuned with the first real org; ask deadlines derive from these unless set per ask (§8.10).
