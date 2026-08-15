@@ -192,6 +192,25 @@ mode so small teams start simple.
 > side effects (§8.5) · a null `budget_cap` is defined — worker-uncapped, org ceilings still
 > bind (§7) · digest grouping gains its ungrouped tail, so every ask has a place (§8.10).
 
+> **Edge-case closure (v2.22)**: fourteenth sweep — access-model and residual-semantics seams
+> closed inline: domain membership is defined — public/domain/named reader sets derive from
+> workspace participation, the owner always reads what they own, and active admins hold audited
+> governance reads everywhere the escalation, sod, and custody paths already hand them content
+> (§4.4, §7) · a `met` goal fires the §5.1 sponsor ask like every other terminal transition,
+> choices tracking the outcome — an initiative never executes on toward a goal that has already
+> ended (§5.1) · sod's "second owner" was unrepresentable — publish routes to an active admin,
+> the single-owner schema's one alternative publisher, and the single-admin collapse is that
+> rule's degenerate case (§4.3) · a deadline passed with no open work still asks — a bulk-tier
+> close-out ask to the sponsor, so finished initiatives never linger on their bindings (§5.1) ·
+> a kind-`domain` hold refuses dissolution, archive, and store migration — rename and merge-into
+> stay open — and holds gain their management endpoints (§4.4, §4.5, §9) · a tainted run's ask
+> accepts are audit-only with an untainted successor — taint never becomes approval authority
+> (§8.10, §13) · draft staging is pinned to the schemas that carry it — cards and glossary stage
+> as drafts, rules and goals through future effective windows, decisions never (§4.2) · trigger
+> and playbook criticality default `standard` (§7) · a retired Coworker's personal memory
+> archives inert with it, never transferred (§6.3) · paths under a db-only domain's tree
+> quarantine on ingest — one canon, not two (§4.5).
+
 ---
 
 ## 1. Product vision
@@ -367,8 +386,10 @@ Every run's system prompt is assembled with:
   card index) — same retrieval machinery as v1's KB, now pointed at DNA. Search and injection
   serve the living corpus — `active` items only; a retired item resolves by direct citation as
   read-only history (the page opens, provenance intact) without ever surfacing in search or
-  injection, a draft (owner-staged through item CRUD, §9) is visible to its owner alone, and
-  decisions — lifecycle-free by design, immutable records (§7) — are always live. Citation and
+  injection, a draft (owner-staged through item CRUD, §9) is visible to its owner alone — staging
+  lives where the schema carries it: cards and glossary hold `draft` status, rules and goals
+  stage through a future `effective_from` window instead, and decisions — lifecycle-free by
+  design, immutable records (§7) — are always live. Citation and
   search are different surfaces: the record stays navigable without haunting the prompt.
 - **Cited in answers**: responses reference cards; the console (and IM) renders citations that open
   the source card with its provenance.
@@ -420,14 +441,27 @@ shape it was not routed to review. Racing publishes cannot land contradictions:
 publish runs inside the domain write lock (§4.4) and re-runs contradiction checks against current
 state at commit — the second of two sequenced contradictory publishes is refused back to review,
 not half-silently merged. Separation of duties is a per-domain knob (`sod`, default `off`): when
-on, the proposer cannot be the publisher — an owner's own proposal routes publish to an admin or
-a second owner; single-admin orgs keep the one-click collapse (§13), and §14.13 keeps governing
-strictness separately.
+on, the proposer cannot be the publisher — an owner's own proposal routes publish to an active
+admin, the one alternative publisher the single-owner schema names (`dna_domains.owner_human_id`,
+§7 — there is no second owner to route to); in a single-admin org that admin is the proposer
+themself, which is exactly the one-click collapse §13 accepts for single-admin mode, and §14.13
+keeps governing strictness separately.
 
 ### 4.4 Governance
 
 - **Domains & compartments**: DNA is partitioned into domains (Engineering, Finance, HR…) each with
-  a human owner and an access policy (`public` | `members of domain` | `named members`). Retrieval
+  a human owner and an access policy (`public` | `members of domain` | `named members`). The
+  reader set is defined, not ambient: `public` admits every member; `members of domain` admits
+  the owner plus every member tied in through an active workspace binding — a Coworker through
+  its workspaces' `domain_ids`, a human through workspace participation (`participants`, §7) —
+  and `named` admits the owner plus the named list. The owner always reads the domain they own —
+  review is ownership's job, and §5's admin custody reads through the ownership it holds — and
+  active admins read every domain: the §4.3 SLA escalation, sod routing, and §5 custody paths
+  all hand admins domain content, so the role carries governance reads — audited on restricted
+  domains like any other read (§13) — rather than a second, smaller map of what an admin may
+  happen to see. Access re-evaluates with its inputs: a topology remap or a workspace unbind
+  re-derives the reader set, and §4.2's no-readable-domains rule — next run refused, admin
+  asked — is the same rule seen from the domain side. Retrieval
   respects the reader's access — the HR intern's Coworker never sees salary cards.
 - **Provenance**: every card/rule/decision records where it came from; uncited claims are flagged
   during review.
@@ -448,7 +482,10 @@ strictness separately.
   merged pair, and a `store` change migrates content inside the same audited event (git→db-only
   sweeps the files from the tree in one commit; db-only→git demands an explicit confirm, because
   the merge publishes immutable history) and is refused outright while either side sits under a
-  kind-`domain` legal hold (§4.5). The commit re-runs contradiction checks against the post-op
+  kind-`domain` legal hold (§4.5). The hold's refusal reaches the dissolving ops too: archive and merge-away of a held domain queue
+  behind the hold's release, while rename stays available — ids, content, and access unchanged,
+  the event audited — and merge-into a held domain stays open, a hold freezing removal, not
+  addition. The commit re-runs contradiction checks against the post-op
   state inside the lock — items that coexist peacefully across two domains may collide in one,
   and the collision surfaces as review asks, never as silent coexistence. Dissolution is the
   degenerate case, not a missing feature: there is no bare delete — merge the domain's remaining
@@ -492,7 +529,10 @@ guards the ingest door too, so a pasted credential cannot enter the canonical st
 hand-merge) and quarantines invalid files to a
   review queue with the parse error attached — routed to the affected domain's owner (the admin
   for org-wide files), so a quarantine is never an unowned inbox — a bad hand-merge degrades to an ask, never to a
-silently corrupted index.
+  silently corrupted index. Paths under a db-only domain's tree are invalid by the same rule:
+  the canonical copy lives in SQLite (the carve-out below), so a file that appears there — a
+  stray hand-merge, a migration leftover — quarantines to the domain's owner rather than forking
+  a second canon.
 
 **Git integrity**: the control plane is the DNA repo's only direct writer — it signs commits and
 refs with a deployment key and refuses non-fast-forward updates it did not perform; divergence
@@ -635,11 +675,17 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
    — so coordination is auditable state, not another chat channel (§8.11).
 5. **Progress is state, not narration**: the initiative view is goal + ask burndown + task/playbook
    status + spend. A stalled initiative — deadline passed with open work — raises an ask to its
-   sponsor (then admin), reusing the §8.10 escalation machinery. The same ask fires when the
+   sponsor (then admin), reusing the §8.10 escalation machinery. A deadline passed with *no*
+   open work is not silent either: a bulk-tier close-out ask goes to the sponsor — close, or
+   extend the deadline if more is coming — so a finished initiative cannot linger on holding
+   workspace bindings and injecting goals nobody is driving. The same ask fires when the
    linked goal's window (`effective_to`, §4.2) ends while the initiative is still active —
    extend, re-target, or close is a human call, not a silent drop from the slice — and any
-   terminal transition of the linked goal (`retired`, `missed`) fires the same ask, not just a
-   window elapsing. **Pause is explicit
+   terminal transition of the linked goal (`met`, `missed`, `retired`) fires the same ask, not
+   just a window elapsing — the choices track the outcome: window-end offers extend/re-target/
+   close, `met` offers close or re-target (a met goal needs no extension), `missed` and
+   `retired` offer re-base/re-target/close — so an active initiative never keeps executing
+   toward a goal that has already ended. **Pause is explicit
   and total**: a paused initiative suspends its stalled-work escalation and freezes its board
  slice (no new runs or spawns launch under it — filing and editing board tasks on the frozen
  slice stays open as planning: pause stops execution, not deliberation, with §7's assignee
@@ -771,7 +817,10 @@ playbooks, paired IM sessions, live spawned workers — a dying spawner's epheme
 back into the workspace's project memory, not the departed personal one — plus board-task
 assignments returned to the pool or reassigned, owned goals re-owned or retired, and initiative
 lead/sponsor posts reassigned or closed via §5.1) — the same dependency check as deleting a
-skill, applied to staff; the §5 offboarding walk is its superset for humans. The ephemeral
+skill, applied to staff; the §5 offboarding walk is its superset for humans. The retiree's
+personal memory archives with it — inert history under the archived identity, never injected,
+never transferable to a respawn (re-role's lessons-go-to-DNA is the only bridge); a fresh hire
+starts a fresh memory. The ephemeral
 analogue runs at reap: the TTL reaper's fold-back returns the dying worker's open board-task
 assignments to the pool and re-routes its in-flight asks up the chain — memory is not the only
 state a worker holds.
@@ -880,6 +929,9 @@ dna_domains    (id, name, owner_human_id, access 'public'|'domain'|'named',
                  status 'active'|'archived' default 'active')
                  -- db-only: the §4.5 privacy carve-out; sod: proposer ≠ publisher when on (§4.3);
                  -- residency constrains node placement (§3);
+                 -- access reader sets defined (§4.4): public = every member; domain = owner +
+                 -- participants of workspaces bound to it; named = owner + the named list;
+                 -- the owner always reads their own domain, active admins read all (audited, §13)
                  -- owner must hold role 'owner' or 'admin' at write — an RBAC demotion below
                  -- that runs the §5 walk (transfer or admin custody, never an orphaned domain);
                  -- archived: read-only history — no injection, routing, or new bindings;
@@ -955,7 +1007,10 @@ board_tasks    + assignee_member_id?, initiative_id?  (runs carry initiative_id?
                  -- guard (§5.1) extended to assignments; suspension freezes an assignee's tasks
                  -- (resume re-arms them), retire/offboard walks return them (§5, §6.3)
 workspaces     + initiative_ids json?, domain_ids json?, node_id?, claim_epoch int default 0,
-                 lease_expires_at?
+                 lease_expires_at?, participants json
+                 -- participants: the member ids on this workspace's collaboration surface —
+                 -- §4.4 'domain' DNA access derives its human reader set from the binding
+                 -- through this list (a Coworker's reads derive from its workspaces directly)
                  -- initiatives bound here from activation (bound at spawn under an initiative,
                  -- admin-editable; pause retains the binding frozen and close drops it, §5.1);
                  -- the source of the §4.2 goal slice;
@@ -966,9 +1021,9 @@ workspaces     + initiative_ids json?, domain_ids json?, node_id?, claim_epoch i
                  -- empty list is a domainless workspace with the defined fallbacks (§6.2,
                  -- §8.10), and topology ops remap the list with ids stable (§4.4)
                  -- node/epoch/lease: affinity placement + the fenced claim (§3)
-triggers       + criticality 'standard'|'critical'  -- §6.2 breaker trip order
-playbooks      + criticality 'standard'|'critical'  -- with triggers (§6.2 breaker): a firing's
-                 -- class is the stricter of its trigger's and playbook's tags
+triggers       + criticality 'standard'|'critical' default 'standard'  -- §6.2 breaker trip order
+playbooks      + criticality 'standard'|'critical' default 'standard'  -- with triggers (§6.2
+                 -- breaker): a firing's class is the stricter of its trigger's and playbook's tags
 spend_ledger   (id, member_id, run_id?, spawn_id?, kind 'reserve'|'settle'|'release',
                  tokens_in/out, cost, pricing_version, at)
                  -- reservation metering: caps evaluate reserved + settled; releases return
@@ -983,6 +1038,7 @@ external_writes (id, run_id, connector, op, idempotency_key, status 'prepared'|'
                  -- reconciled — confirm, compensate, or escalate; the reaper leaves these, not
                  -- half-posted side effects (§6.2)
 data_holds     (id, kind 'member'|'domain', subject_id, reason_md, created_by, released_at?)
+                 -- created/released through the §9 admin endpoints, audited;
                  -- legal hold freezes §4.5 erasure until admin release, audited;
                  -- kind 'domain' freezes the §4.5 history-rewrite remediation and db-only
                  -- export/deletion for that domain: sensitive material found in git cannot be
@@ -1084,7 +1140,10 @@ responses (member and deputy racing) are audit-only; a response to an expired as
   at respond time the ask's payload assumptions are recomputed — the diff still applies, the
   referenced DNA item is still live, the scope still holds — and a response against a superseded
 world is audit-only like a late response, with a successor ask opened against current state (the
-same machinery expiry uses). **Quorum asks**: rules may require N distinct approvals
+same machinery expiry uses). Provenance re-validates with them: an accept originating in a
+tainted run (§13) is audit-only the same way — taint never becomes approval authority — and the
+successor ask renders without a pre-fill (below) while it carries the decision to an untainted
+reader. **Quorum asks**: rules may require N distinct approvals
 (`machine_hint.requires_approvals` — §4.1's flagship "invoices > $10k require two approvals"
 becomes expressible): the ask carries `quorum_required` (§7) and closes answered once N
 distinct human members have accepted. Addressing is precise, not ambient: `to` names the pool's
@@ -1197,6 +1256,8 @@ POST /workspaces/:id/rebind (admin affinity failover; refuses a target node lack
 GET /governance/policies|quotas|spend  (console screens 12 & 14)
 POST /governance/spend/overruns/:id/ack (admin; lifts the §6.2 reserve gate an acknowledged
                settle overrun raised — :id is the overshot settle's spend-ledger row)
+POST /governance/holds · POST /governance/holds/:id/release  (admin; audited — data_holds
+               lifecycle; erasure (§4.5) and the hold-refused topology ops (§4.4) check it)
 (v1 endpoints for coworkers, sessions, messages, workspaces, automated-tasks, triggers, playbooks, runs carry over)
 ```
 
@@ -1355,7 +1416,14 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   (admission at effective_from), settle-overrun ack lifting the reserve gate, template
   retirement counting pending spawn requests as pins, upgrade empty-intersection refusal,
   null budget_cap (uncapped worker, org ceilings still enforced), digest ungrouped tail
-  (neither-link asks render).
+  (neither-link asks render), domain-access reader-set derivation (public/domain/named,
+  owner-always-reads, admin governance reads audited, re-evaluation on unbind/remap), met-goal
+  sponsor ask with outcome-tracked choices, sod publish routing to an active admin (single-owner
+  schema), close-out ask on a deadline passed with no open work, retire archiving personal
+  memory inert, db-only tree-path quarantine on ingest, hold-refused dissolution/archive/
+  store-migration with rename and merge-into open, tainted-run accepts audit-only with an
+  untainted successor ask, draft staging confined to cards and glossary, trigger/playbook
+  criticality defaults.
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -1379,7 +1447,9 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   survivor's owner with the SLA clock untouched; a webhook redelivered after control-plane
   downtime lands one run inside the 7-day dedupe window; an erasure sweep files its free-text
   mention annex instead of rewriting prose; a goal drafted before its window stays out of
-  prompts until effective_from opens it.
+  prompts until effective_from opens it; an admin's read of a restricted domain lands in the
+  audit log; a merge-away under a kind-'domain' hold is refused until release; a `met` goal
+  raises the sponsor's close-or-re-target ask while runs under the initiative wind down.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -1398,7 +1468,7 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
 | Risk | Mitigation |
 |---|---|
 | DNA quality drift / gaming (agents proposing self-serving rules) | Human-owned review, provenance on every item, reviewer-agent contradiction reports, compartment isolation |
-| Prompt injection via external content (email, web, ingested docs steering proposals, spawns, writes, ask answers) | Taint-tracking for off-platform content; provenance + raw diffs in the review UI; spawns from tainted runs auto-gated; tainted context barred from external writes; tainted-origin asks lose digest pre-fills; taint survives publication as a provenance flag and propagates through memory until explicitly reviewed (§8.10, §4.3, §8.3) |
+| Prompt injection via external content (email, web, ingested docs steering proposals, spawns, writes, ask answers) | Taint-tracking for off-platform content; provenance + raw diffs in the review UI; spawns from tainted runs auto-gated; tainted context barred from external writes; tainted-origin asks lose digest pre-fills and tainted-run accepts are audit-only; taint survives publication as a provenance flag and propagates through memory until explicitly reviewed (§8.10, §4.3, §8.3) |
 | Spawn runaway / cost explosion | Depth cap, quotas, TTL reaper, spend circuit-breaker, approval gates on persistent hires |
 | Governance overhead kills small-team speed | Proportional governance: single-admin mode collapses review of own proposals to one click; compartments optional at start; auto-publish itself stays behind the §14.13 decision |
 | Privacy leakage across departments | DNA compartments enforced at retrieval; access scopes on domains; audit on every read of restricted domains |
@@ -1451,7 +1521,13 @@ with active-only search and injection (§4.2), two-sided goal windows (§4.2, §
 settle-overrun ack endpoint (§6.2, §9), template pins counting pending spawn requests plus
 empty-intersection upgrade refusal (§6.5), erasure sweeping memory attribution with a
 free-text mention annex (§4.5), redelivery-proof webhook dedupe (§8.5), null budget_cap
-semantics (§7), and the digest's ungrouped tail (§8.10). The former residue — quorum
+semantics (§7), and the digest's ungrouped tail (§8.10); v2.22's fourteenth sweep closed the
+access-model and residual-semantics seams beneath those — defined domain-membership reader sets
+with owner and audited admin reads (§4.4, §7), the `met`-goal sponsor ask (§5.1), sod's
+single-owner admin routing (§4.3), criticality defaults (§7), draft-staging applicability
+(§4.2), the finished-initiative close-out ask (§5.1), inert personal memory on retire (§6.3),
+db-only tree-path quarantine (§4.5), hold-frozen dissolution with hold management endpoints
+(§4.4, §9), and audit-only tainted accepts (§8.10). The former residue — quorum
 approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
 check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
