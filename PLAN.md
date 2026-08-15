@@ -35,6 +35,8 @@ mode so small teams start simple.
 > display-only until post-v1 (§14.11).
 >
 > **Review pass (v2.5)**: goal slice wired through the runtime + DNA-engine read path (§8.1, §8.7) · proposal kinds cover goals; SOPs pinned as playbooks + pointer cards (§4.1, §7) · ask-digest grouping unified (§8.10, §11 P4) · schema gaps closed: ask→initiative link, domain `store` flag, human deputy, ephemeral status mapping, proposal withdraw (§7, §9) · new API: `/dna/goals`, `/initiatives`, governance reads (§9) · tier-2 connectors explicitly post-v1 (§11).
+>
+> **Org-change pass (v2.6)**: first-run bootstrap (§9, §11 P1) · domain split/merge/rename as governed topology ops (§4.4) · offboarding closed out — initiatives, board tasks, deputy refs, admin-custody fallback, last-admin guard (§5) · Coworker suspend + re-role = retire-and-respawn (§6.3) · role-template versioning with owner-approved upgrades (§6.5) · affinity-node loss → queue-or-rebind (§3) · initiative close lapses delegated rules (§8.10) · status enums pinned; viewers never ask targets (§5, §7) · deployment perimeter + proposal strictness parked as decisions (§14.12–13).
 
 ---
 
@@ -112,7 +114,9 @@ boundaries — with a sixth raised to the top: **shared, governed context**.
   the MVP path; nothing is lost when scaling out later.
 - **Workspace affinity**: runs are scheduled to the node where the workspace's files/connectors
   live (an engineer Coworker runs on the machine with the repo; the secretary's mailbox connector
-  lives wherever it was authorized).
+  lives wherever it was authorized). Affinity is a scheduling preference, not a marriage: when the
+  affinity node is offline or revoked, new runs queue until its heartbeat returns or an admin
+  rebinds the workspace to another node.
 - **Node trust model**: remote nodes are *trusted compute*, not enforcement boundaries — scope,
   egress, and audit code runs on the node, so a compromised node can bypass it. Nodes enroll via
   one-time tokens, authenticate with a keypair identity on every connection, are revocable from
@@ -194,6 +198,10 @@ the store is git-backed markdown, so a PR workflow is possible for teams that wa
   agent drafts a report; humans decide).
 - **Conflicts**: new rules supersede old ones explicitly (chains retained); the review UI shows
   contradictions detected at proposal time.
+- **Topology changes**: reorgs split, merge, and rename domains — a governed operation, not a
+  hand-run migration: items move with ids stable (citations and supersession chains survive),
+  access policies re-evaluate against the new topology, workspace domain tags remap, and the move
+  is a single auditable event. Prior states stay reconstructible from git history and audit.
 
 ### 4.5 Storage
 
@@ -204,7 +212,8 @@ the store is git-backed markdown, so a PR workflow is possible for teams that wa
 ```
 Markdown + frontmatter (id, version, effective dates, provenance, access); the control plane
 maintains the SQLite/FTS/vector index over it. Humans can read and edit their company's brain with
-any editor; git history *is* the DNA timeline.
+any editor; git history *is* the DNA timeline. Frontmatter carries a `schema_version`: product
+upgrades run in-place content migrations (post-backup) — an old store is never stranded.
 
 **Privacy carve-out**: git history is effectively immutable, which collides with deletion
 obligations (GDPR-style erasure, offboarded-employee data, HR/Finance records). Domains may
@@ -238,7 +247,7 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
 - **Members**: `humans` (identity, RBAC role) and `coworkers` (identity files, scopes) share one
   member namespace — the task board, asks, groups, and lineage all reference members.
 - **Human RBAC**: `admin` (everything), `owner` (one or more DNA domains + their Coworkers), `member` (work,
-  propose DNA, spawn within policy), `viewer` (read-only). Auth starts as local accounts; SSO/OIDC
+  propose DNA, spawn within policy), `viewer` (read-only — never an ask target). Auth starts as local accounts; SSO/OIDC
   later.
 - **Asks — the universal interrupt**: approvals, questions, assignments, and spawn requests are all
   *Asks*: routed to a member (human or agent) with payload, deadline, and escalation policy —
@@ -252,9 +261,13 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
   Coworker still acts as Leader for execution routing).
 - **Accountability invariant**: every Coworker row carries `owner_human_id`; spawned workers carry
   `spawned_by`; the chain must terminate at a human. Enforced at spawn time.
-- **Offboarding**: deactivating a human reassigns their owned DNA domains, open asks, and
-  dependent Coworkers via the same dependency check as retiring a Coworker (§6.3); audit history
-  is retained, and their personal data is subject to the §4.5 deletion carve-out.
+- **Offboarding**: deactivating a human runs the §6.3 dependency check across everything they
+  touch: owned DNA domains (to a named successor, else **admin custody** — never orphaned), open
+  asks and board-task assignments (reassigned or returned to the pool), dependent Coworkers
+  (re-owned or retired), sponsored/led initiatives (reassigned or closed), and deputy references
+  (cleared). Inactive members are skipped when walking ask chains. Guard: the last active admin
+  cannot be deactivated — the org never goes headless by accident. Audit history is retained;
+  personal data falls under the §4.5 deletion carve-out.
 
 ### 5.1 Initiatives — from directive to coordinated execution
 
@@ -331,6 +344,12 @@ delegation assigns a board task or instantiates a playbook.
 and current status. Retiring a persistent Coworker requires resolving its dependents (automations,
 playbooks, paired IM sessions) — the same dependency check as deleting a skill, applied to staff.
 
+Two state changes short of retirement: **suspend** — an admin's emergency stop that halts triggers
+and runs without resolving dependents (in-flight asks re-route up the chain) — and **re-role** —
+re-tasking a Coworker to a different role is retire-and-respawn (identities are role-shaped;
+project memory stays with the workspace, lessons go to DNA), never an in-place IDENTITY rewrite.
+In-place evolution of the *same* role is the template upgrade path (§6.5).
+
 ### 6.4 Personal assistants (deployment shape)
 
 One persistent assistant per human employee is a *deployment* of the existing model, not a new
@@ -350,6 +369,16 @@ architecture:
 - **Identity separation**: the assistant acts under its own member identity (own PAT, own audit
   trail, own spend-ledger line), never the employee's credentials — actions stay attributable.
 
+### 6.5 Role & template evolution
+
+Roles change as the company does; running staff must track the change without a respawn stampede.
+Templates are versioned (§7 `role_templates`); every persistent Coworker pins the version it was
+spawned from. An **upgrade** is proposal-shaped: the diff — IDENTITY/HANDBOOK changes, scope
+deltas — goes to the Coworker's owner as an Ask; on accept, files rebase and scopes re-derive as
+new-template ∩ owner's-current-scopes, never widening. Ephemeral subagent templates upgrade in
+place — workers are short-lived, so new spawns simply get the new version. A company-wide role
+overhaul is one template bump plus a queue of owner asks, not a rehire.
+
 ---
 
 ## 7. Data model (v2 delta)
@@ -365,17 +394,24 @@ New/changed tables (v1 session/run/message/skill/connector tables carry over):
 humans         (id, name, email, rbac 'admin'|'owner'|'member'|'viewer', auth json,
                  deputy_member_id?, created_at)  -- deputy: first hop of the §8.10 chain
 coworkers      + owner_human_id, class 'persistent'|'ephemeral', spawned_by member?, ttl_at,
-                 budget_cap, lineage_depth, status 'requested'|'active'|'retiring'|'archived'
-                 -- ephemeral spawned/running/done/reaped maps onto requested/active/archived
+                 budget_cap, lineage_depth, template_id?, template_version?,
+                 status 'requested'|'active'|'suspended'|'retiring'|'archived'
+                 -- ephemeral spawned/running/done/reaped maps onto requested/active/archived;
+                 -- suspended = emergency stop, halts triggers/runs without resolving dependents (§6.3)
+role_templates (id, name, version, class 'persistent'|'ephemeral-subagent', body json
+                 (identity/style/handbook), default_scopes json, status 'draft'|'active'|'retired')
+                 -- versioned catalog; persistent Coworkers pin (template_id, template_version) (§6.5)
 nodes          (id, name, kind 'local'|'remote', capabilities json, last_heartbeat,
                  pubkey, enrolled_at, revoked_at?, status 'trusted'|'revoked')
 dna_domains    (id, name, owner_human_id, access 'public'|'domain'|'named',
                  store 'git'|'db-only')  -- db-only: the §4.5 privacy carve-out
-dna_cards      (id, domain_id, title, definition_md, refs json, provenance json, version, status)
-dna_rules      (id, domain_id, statement_md, machine_hint json?, effective_from, supersedes_id, status)
+dna_cards      (id, domain_id, title, definition_md, refs json, provenance json, version,
+                 status 'draft'|'active'|'retired')
+dna_rules      (id, domain_id, statement_md, machine_hint json?, effective_from, supersedes_id,
+                 status 'active'|'superseded'|'lapsed')  -- lapsed: delegation ended (§8.10)
 dna_decisions  (id, domain_id, context_md, outcome_md, decided_by member, decided_at)
 dna_glossary   (id, domain_id?, term, definition, aliases json)
-dna_goals      (id, quarter?, statement_md, owner member, status,
+dna_goals      (id, quarter?, statement_md, owner member, status 'active'|'met'|'missed'|'retired',
                 inject 'always'|'linked', effective_from, effective_to?)  -- goal-slice source (§4.2)
 dna_proposals  (id, kind 'card'|'rule'|'decision'|'goal'|'edit', payload json, proposed_by member,
                  provenance json, status 'open'|'published'|'rejected'|'withdrawn', reviewed_by?, at)
@@ -439,7 +475,7 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
   explicit per ask: `deny` (default for approvals — an expired approval is a no), `escalate`
   (route up the chain), `reassign` (fall back to a named deputy); a run blocked on an expired ask
   never hangs indefinitely. **Escalation chains**: every ask to a human carries member → deputy (set per member in the org
-  registry) → domain owner → admin, walked on SLA breach; `deadline` derives from the tier unless set
+  registry) → domain owner → admin, walked on SLA breach (inactive members are skipped); `deadline` derives from the tier unless set
   explicitly. **Batching**: the digest composer groups by initiative, then workspace, and pre-fills recommended
   answers; approvals render as one-line accept/deny with diff links — reviewers see raw diffs,
   never agent-authored summaries alone. **Agent targets**: an ask routed to a Coworker queues into
@@ -450,7 +486,8 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
   2026-12-31" — reviewed like any rule. The ask router evaluates applicable rules, delegations
   included, when choosing approvers, so a static approval matrix doesn't route six months of store
   invoices through the same two people. Delegations end by window, supersession, or initiative
-  close — rule semantics, not bespoke state.
+  close — rule semantics, not bespoke state: closing an initiative lapses every rule whose
+  `machine_hint` scopes it to that initiative (status → `lapsed`, dropped from injection and routing).
 - **8.11 Inter-agent communication** — agents exchange **state, not chatter**. Agent→agent requests
   are Asks with an agent target (§8.10); shared context lives on the task board as tasks and
   artifacts, not repeated in-context explanation; deliberate multi-agent fan-out is a playbook
@@ -465,11 +502,14 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
 
 ```
 POST /auth/login (human sessions; PATs for agents/services)
+POST /org/bootstrap (first-run: create company + first admin; refused once any human exists)
 CRUD /org/humans · /org/members · GET /org/lineage
 POST /nodes/enroll (one-time token exchange) · GET /nodes · POST /nodes/:id/revoke
 CRUD /dna/domains · /dna/cards|rules|decisions|glossary|goals
-POST /dna/proposals  POST /dna/proposals/:id/review (publish|reject|withdraw)  GET /dna/review-queue
-POST /spawn          GET /spawn/:id  POST /spawn/:id/retire
+POST /dna/proposals  POST /dna/proposals/:id/review (publish|reject) · POST /dna/proposals/:id/withdraw  GET /dna/review-queue
+POST /dna/domains/:id/split|merge (governed topology ops, §4.4)
+CRUD /role-templates (versioned catalog, §6.5)
+POST /spawn          GET /spawn/:id  POST /spawn/:id/retire · /suspend · /resume
 CRUD /asks  ·  POST /asks/:id/respond  ·  WS: ask.requested, ask.answered
 CRUD /initiatives · POST /initiatives/:id/close (runs the §6.3 dependency check)
 CRUD /board-tasks (assign to any member)
@@ -506,13 +546,13 @@ GET /governance/policies|quotas|spend  (console screens 12 & 14)
 | Phase | Deliverable | Key work | Est. (1 dev) |
 |---|---|---|---|
 | **0. Foundations** | Repo, CI, single-process skeleton | Monorepo, TS strict, Drizzle+SQLite (WAL), REST+WS, console shell, 3-OS CI matrix | 1 wk |
-| **1. MVP agent** | Chat with a Coworker doing real local work | Model gateway, agent loop, guarded fs/shell/web tools, approval cards, audit, streaming chat UI | 4–5 wks |
-| **2. Identity, memory, skills, connectors** | Coworkers feel like employees | Role catalog across departments, IDENTITY/STYLE/HANDBOOK, memory tiers 1–2 (personal/project), skills + market, MCP client + tier-1 connectors, workspace kinds | 3–4 wks |
+| **1. MVP agent** | Chat with a Coworker doing real local work | Model gateway, agent loop, guarded fs/shell/web tools, approval cards, audit, streaming chat UI, first-run bootstrap (company + seed admin) | 4–5 wks |
+| **2. Identity, memory, skills, connectors** | Coworkers feel like employees | Role catalog across departments, IDENTITY/STYLE/HANDBOOK, memory tiers 1–2 (personal/project), skills + market, MCP client + tier-1 connectors, workspace kinds, versioned role-template catalog (§6.5) | 3–4 wks |
 | **3. Company DNA v1** | The coherence core | DNA store (git-backed markdown) + domains/index, cards compilation from sources, glossary + applicable-rules + goal-slice injection into every prompt, proposals + owner review queue, citations in answers | 3–4 wks |
 | **4. Automation** | 24/7 operation | Schedule/API/event triggers, PATs, `{{field}}` templating, headless Ask policy, shared task board, initiatives v0 (goal + lead + deadline + task grouping) | 2–3 wks |
 | — | **v1 cut line** | Phases 0–4 + 8a are shippable v1: a DNA-coherent, automated company run by one admin + Coworkers | — |
 | **5. Playbooks** *(v2 track)* | Multi-stage orchestration | DSL + sandbox, statuses, askUser → Asks, read-only canvas, versions, playbook triggers | 3–4 wks |
-| **6. Multi-human org** *(v2 track)* | A company, not a person | Server deployment, human accounts + RBAC, asks routing + digests, shared board, node registration & workspace-affinity scheduling, delegated authority + initiative budgets | 3–4 wks |
+| **6. Multi-human org** *(v2 track)* | A company, not a person | Server deployment, human accounts + RBAC, asks routing + digests, shared board, node registration & workspace-affinity scheduling, delegated authority + initiative budgets, offboarding flows + last-admin guard, Coworker suspend/resume, template upgrades, domain split/merge (§4.4) | 3–4 wks |
 | **7. Spawning** *(v2 track)* | The org flexes | Ephemeral workers (quota, TTL, fold-back memory), then persistent hires (owner approval), policy engine, lineage graph, spend ledger + circuit-breaker | 2–3 wks |
 | **8a. v1 hardening** | v1 production-ready | Backup/restore, encrypted secrets, docs, security review | 1 wk |
 | **8b. v1.1 polish** | Distribution | Tauri shell, installers, telemetry (opt-in) | 1–2 wks |
@@ -546,7 +586,9 @@ names the first system — an integration project per connector, not a phase.
 - **P4**: headless trigger fires overnight; a blocked approval auto-denies at expiry; the morning
   digest renders correctly, grouped by initiative.
 - **P6**: two humans + two nodes; heartbeat loss mid-run recovers with no orphaned work; a
-  delegated-authority rule routes an approval to the initiative lead and expires cleanly.
+  delegated-authority rule routes an approval to the initiative lead and expires cleanly;
+  offboarding one human reassigns domains, asks, and initiatives, and the last-admin guard
+  refuses the final admin.
 - **P7**: spawn storm trips the circuit-breaker; a depth-3 spawn is refused by policy, not prompt.
 
 ---
@@ -555,9 +597,12 @@ names the first system — an integration project per connector, not a phase.
 
 - **Unit**: scope delegation algebra (child ⊆ parent), spawn policy engine (quotas/depth/TTL),
   DNA proposal workflow states, goal-slice injection determinism, delegated-authority evaluation
-  in ask routing, egress/path guards, scheduler math, memory 3-tier classifier.
+  in ask routing, egress/path guards, scheduler math, memory 3-tier classifier, offboarding dependency walk (last-admin guard,
+  initiative reassignment, deputy clearing), domain split/merge id-and-chain invariants,
+  template-upgrade scope re-derivation.
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
-  same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker.
+  same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
+  offline → runs queue, rebind resumes.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -586,6 +631,7 @@ names the first system — an integration project per connector, not a phase.
 | Agent-to-agent chatter (error amplification, unauditable loops, token burn) | §8.11: communication only via asks / board / playbooks; no free-form agent channels; disputes escalate to humans |
 | Assistant scope drift after role change; bulk reads of restricted data | Scope mirroring refreshed on role change and revoked on offboarding (§6.4); rate/volume limits + audit on restricted-domain reads |
 | Directive decay (decisions published, never decomposed; initiatives go stale) | §5.1: initiatives are first-class — lead, deadline, status; the goal slice keeps directives in every relevant prompt (§4.2); stalled initiatives escalate like asks (§8.10); close runs the dependency check (§6.3) |
+| Reorgs outpace the model (domain splits, role overhauls, departures mid-initiative) | Topology changes are governed single-event ops with stable ids (§4.4); offboarding walks every dependency with admin-custody fallback and a last-admin guard (§5); template upgrades rebase running staff in place (§6.5) |
 
 ## 14. Key open decisions
 
@@ -600,3 +646,5 @@ names the first system — an integration project per connector, not a phase.
 9. **Tier-2 connector priority**: which enterprise system first (ERP vs HRIS vs CRM) — decide when the first company deployment names its pain; not before v1 ships.
 10. **Personal-assistant rollout**: opt-in per employee (default) vs org-wide mandate.
 11. **Business budgets**: display-only field on initiatives (default) vs enforcement tied into the §8.2 tier-2 write gates — revisit with the first write-capable ERP/WMS connector.
+12. **Deployment perimeter**: one deployment per company (default) — M&A-style consolidation of two deployments is a migration project, not a runtime feature.
+13. **Per-domain proposal strictness**: every proposal reviewed (default) vs opt-in auto-publish for low-blast-radius domains (audited, retro-reviewable) — revisit when proposal volume drowns owners.
