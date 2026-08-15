@@ -491,6 +491,26 @@ mode so small teams start simple.
 > §6.5), personal memory never rides (§6.3), and the hire's own promotion-sense folds to its
 > owner as an ask (§6.1, §6.5, §7, §9, §12).
 
+> **Edge-case closure (v2.39)**: thirty-first sweep — writer-order, catalog-state, and
+> live-rendering seams closed inline: the domain write lock's id-ordered discipline covers
+> every binding-surface writer — the admin `domain_ids` edit that re-keys the gate, the
+> workspace-archive walk that drops bindings and kills the claim, and a hand-merge touching
+> several domains' trees join topology remaps in up-front, id-ordered acquisition, so the
+> ordered binding list the gate hop, reader sets, and remaps key on has one writer at a time
+> and the second writer re-reads inside the lock — an edit racing a merge is a serialized
+> sequence, never a lost update (§4.4, §4.5, §7) · the custom-hire founding pin names its
+> state set — adoption at live activated states only (`active`, `suspended`); `requested`
+> would pin a row its own approval could yet archive, `retiring` and `archived` are
+> terminal-bound or terminal, each publishing unpinned with the reference as history, and a
+> hire activating after an unpinned publish stays unpinned (§6.5, §7, §9) · spawn parameters
+> class-match the template gate — a `ttl` on a persistent-hire request refused at write, a
+> hire never half-persistent, mortal by an unreviewed field (§6.2) · the admin broadcast
+> renders and admits responses against the live admin set — a mid-wait addition joins pending
+> broadcasts, a departure contributes nothing, a former admin's late response refused at the
+> eligibility door (§8.10) · and the org snapshot injects the live member set — departed
+> members leave the always-injected layer at the walk, their record living in decisions and
+> audit, no prompt carrying a departed member as present (§4.2).
+
 ---
 
 ## 1. Product vision
@@ -666,7 +686,10 @@ card; playbook changes ride the playbook engine's own versioning.
 ### 4.2 Read path — how coherence actually happens
 
 Every run's system prompt is assembled with:
-- **Always injected**: the org snapshot (who's who), the glossary slice relevant to the task's
+- **Always injected**: the org snapshot (who's who — the live member set: a deactivated human
+  or retired Coworker leaves the snapshot at the walk, their record living on in decisions and
+  audit, the §4.4 reader-set liveness rule applied to the injected layer's own source — no
+  prompt carries a departed member as present), the glossary slice relevant to the task's
   domain, all *applicable rules* for the workspace's domains, and the **goal slice**: active goals
   linked to the workspace through its initiatives, plus goals flagged org-wide (inject 'always'; statement, owner,
   deadline, status) — the flag composes with scope rather than overriding it: a domain-scoped goal
@@ -913,7 +936,17 @@ Topology ops serialize behind a domain-level write lock (§4.5):
   than hoping. Ops spanning several domains — merge above all — acquire every affected domain's
   lock up front, in domain-id order: two overlapping merges (merge A-into-B racing merge
   B-into-A) serialize in one deterministic order instead of deadlocking on half-acquired lock
-  sets, and "queue behind each other" has its mechanism, not just its promise. Prior states
+  sets, and "queue behind each other" has its mechanism, not just its promise. The same
+  discipline binds every writer to a workspace's `domain_ids`, not only the topology ops that
+  remap them: the admin binding edit that re-keys the §6.2 gate (§7) and the workspace-archive
+  walk that drops bindings and kills the claim (§7) acquire every affected domain's lock up
+  front, in id order, before touching the list — and a hand-merge or PR touching several
+  domains' trees in one commit acquires id-ordered the same way. The ordered binding is state
+  the gate hop, the reader sets, and every remap key on; an unserialized edit racing a merge is
+  a lost update either way it lands — the merge overwriting a deliberate unbind with a remap
+  read from stale state, or the edit resurrecting a domain id the merge dissolved — so the
+  binding rows get the one-writer door the content already has, and the second writer re-reads
+  the list inside the lock it queued behind. Prior states
   stay reconstructible from git history and audit. Item edits do not
   smuggle topology: an edit proposal — or an item-level write (§9) — that would change an item's
   `domain_id` is refused at propose/write time. Cross-domain moves are topology ops: they carry
@@ -943,7 +976,9 @@ hand-merge) and quarantines invalid files to a
   silently corrupted index. And ingest serializes like every other writer: a valid hand-merge or
   PR landing applies inside the same domain write lock publishes and topology ops queue behind
   (§4.4) — the domain has one writer door, whichever side the write comes from, so an external
-  edit cannot interleave with a publish or an item move and land as half-applied state. Paths
+  edit cannot interleave with a publish or an item move and land as half-applied state — and a
+  commit touching several domains' trees is a writer spanning domains like a merge: it acquires
+  every affected lock up front, in id order, before applying a line. Paths
   under a db-only domain's tree are invalid by the same rule:
   the canonical copy lives in SQLite (the carve-out below), so a file that appears there — a
   stray hand-merge, a migration leftover — quarantines to the domain's owner rather than forking
@@ -1319,6 +1354,11 @@ not only from what was pre-authored.
   pin-drain — retirement lands once pins and pending requests drain, and no new request can slip
   in behind it: the status check claims the template row inside the spawn transaction, the same
   atomic-claim pattern the count caps use, so a retirement and a racing request see one winner.
+  Parameters class-match like the row: a `ttl` on a persistent-hire request is refused at write —
+  the class's bounds are budget policy and an owner (the §6 class table), and a TTL-mortal org
+  member is the ephemeral shape — the class-matched gate extended from the catalog row to the
+  request's own fields, so a hire cannot arrive half-persistent, mortal by a field nobody
+  reviews.
 - **Quotas & caps**: max concurrent ephemeral workers per spawner, global spawn depth (default 2),
   org-wide concurrent Coworkers, per-spawn and org-wide spend caps metered by the spend ledger.
   Cap windows match worker class: an ephemeral worker's cap spans its lifetime, a persistent
@@ -1552,14 +1592,20 @@ owners exactly as a hand-authored publication does — and the placement validat
 catalog write: a name colliding at the named version refuses the accept with the ask standing
 (a bad answer, not a dead ask), and a class flip refuses outright — §7's class immutability at
 its newest door; a custom hire is persistent by construction (§6.1), so promotion never lands an
-ephemeral row. The accept pins the hire it promotes: a live hire at accept — suspended included,
-the §6.3 rebase rule, a pin being data, not execution — becomes the template's founding instance,
+ephemeral row. The accept pins the hire it promotes, and the adoption names its state set
+exactly: a hire in a live, activated state at accept — `active`, or `suspended` (the §6.3
+rebase rule; a pin is data, not execution) — becomes the template's founding instance,
 identity continuity exact (the body is its own) and later versions' upgrade asks reaching it like
 every pinned Coworker, while the pin itself re-derives nothing — the hire's live scopes stand,
-already ∩ its owner (§6.2); the upgrade algebra first applies at the next version's accept. A
-hire retired before the accept publishes its template unpinned, the founding reference riding the
+already ∩ its owner (§6.2); the upgrade algebra first applies at the next version's accept.
+Every other state publishes its template unpinned: a hire still `requested` would pin a row
+its own approval could yet archive — denial and expiry are terminal for a pending request
+(§7), and a founding pin must not ride a row one expiry away from history — while `retiring`
+and `archived` are terminal-bound or terminal already; in each the founding reference rides the
 audit event and the body's citation as history — the §5 terminal-clamp pattern at the catalog
-door, the record surviving the row that made it. The snapshot is the role, never the life:
+door, the record surviving the row that made it. A hire that activates after an unpinned
+publish stays unpinned — the founding moment passed it by, and a later version's upgrade path
+is the only rebase it can ride. The snapshot is the role, never the life:
 identity files and effective scopes, the latter stored as the template's `default_scopes` — a
 ceiling, not a grant: every future spawn still derives child ⊆ spawner (§6.2), every upgrade
 still re-derives new ∩ owner — and never personal memory (§6.3: a fresh hire starts fresh; a
@@ -1612,10 +1658,11 @@ coworkers      + owner_human_id, class 'persistent'|'ephemeral', spawned_by memb
                  -- expiry default, §8.10): the row archives, the pin drains, the expiry the
                  -- record (§6.2)
                  -- template_id null marks a customRole hire (§6.1): promotion (§6.5) is its
-                 -- catalog door — the accepting admin's publish pins the live hire as the new
-                 -- row's founding instance (suspended included, the §6.3 rebase rule), the pin
-                 -- re-deriving nothing; retired before the accept, the template publishes
-                 -- unpinned, the founding reference audit and citation
+                 -- catalog door — the accepting admin's publish pins the hire as the new
+                 -- row's founding instance when it sits in a live, activated state (active,
+                 -- or suspended — the §6.3 rebase rule), the pin re-deriving nothing;
+                 -- requested, retiring, or already archived at the accept, the template
+                 -- publishes unpinned, the founding reference audit and citation
 role_templates (id, name, version, class 'persistent'|'ephemeral-subagent', body json
                  (identity/style/handbook), default_scopes json, status 'draft'|'active'|'retired')
                  -- versioned catalog; persistent Coworkers pin (template_id, template_version) (§6.5)
@@ -1827,7 +1874,11 @@ workspaces     + initiative_ids json?, domain_ids json?, node_id?, claim_epoch i
                   -- §8.10), and topology ops remap the list with ids stable (§4.4);
                   -- a pending §6.2 spawn approval keyed on this binding re-keys at the edit —
                   -- the gate the new primary derives, an admin once domainless — ids and
-                  -- deadlines stable, creation-time addressing never stale (§4.4)
+                  -- deadlines stable, creation-time addressing never stale (§4.4);
+                  -- and binding writes serialize behind the affected domains' write locks
+                  -- (§4.4): the admin edit and the archive walk join topology remaps and
+                  -- multi-domain ingests in up-front, id-ordered acquisition — one writer
+                  -- door for the binding rows, as for the content
                  -- node/epoch/lease: affinity placement + the fenced claim (§3)
                  -- lifecycle: workspaces archive, never bare-delete — runs and artifacts
                  -- are history; archival is a walked transition (§3, §4.4, §5.1, §8.10):
@@ -2060,9 +2111,14 @@ escalation naming the shortfall: an impossible quorum degrades to a visible no, 
   routes to "an admin" — this terminal hop, the §4.3 review-SLA escalation and sod publish
   routing, the §6.2 spawn gate's fallback — addresses all active admins at once and the first
   valid response wins (sod publish resolves inside the domain write lock, so racing admins see
-  one winner); a single-admin org is the one-recipient degenerate case, and the broadcast is
-  not ambient authority — a member-addressed ask stays member-addressed until its own chain
-  escalates. `deadline` derives from the tier unless set
+  one winner). The broadcast's recipient set is itself live-derived, the quorum pool's rule:
+  it renders and admits responses against the current active-admin set, so an admin added
+  mid-wait joins pending broadcasts, and one departed mid-wait contributes nothing — the §5
+  walk owes no reassignment for an ask no single member holds, the last-admin guard keeps the
+  set from emptying, and a former admin's late response is refused at the eligibility door
+  like any out-of-set answer (§7). A single-admin org is the one-recipient degenerate case,
+  and the broadcast is not ambient authority — a member-addressed ask stays member-addressed
+  until its own chain escalates. `deadline` derives from the tier unless set
   explicitly — and an explicit deadline earlier than the ask's creation is refused at write:
   a past deadline is a contradiction, not a tier, and never an instantly-expired ask (the §9
   window-sanity rule's attention-side twin). Chain exhaustion — the admin broadcast finds no active recipient, or breaches — expires the ask
@@ -2187,8 +2243,9 @@ POST /coworkers/:id/retire · /suspend · /resume   (lifecycle acts on the cowor
 POST /coworkers/:id/promote  (catalog act, §6.5 — files the promotion ask for a customRole hire;
                authority: the hire's owner human or an admin; the ask snapshots identity files
                and effective scopes at creation, the accept names the placement — a new template
-               or a new version of an existing one — and publishes the row active, pinning a
-               live hire as the founding instance)
+               or a new version of an existing one — and publishes the row active, pinning the
+               hire as the founding instance only in a live activated state: active or
+               suspended; requested/retiring/archived publish unpinned, the reference history)
 CRUD /asks  ·  POST /asks/:id/respond  ·  POST /asks/:id/withdraw (originator retract, §8.10)  ·  WS: ask.requested, ask.answered
 CRUD /initiatives · POST /initiatives/:id/activate|pause|resume|close
                (transition authority §5.1; close runs the §6.3 dependency check)
@@ -2509,11 +2566,22 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   owner/admin ask snapshotting identity files and effective scopes with personal memory never
   carried; the accept publishing `active` with its named placement; name-version collision
   refusing the accept with the ask standing; class-flip refusal at the promotion door;
-  live-hire founding-pin adoption, suspended included, retired-at-accept publishing unpinned
-  with the reference as history; version-bump promotion filing upgrade asks to the pinned
-  owners; `default_scopes` stored as a ceiling — future spawns still child ⊆ spawner; the
+  founding-pin adoption at live activated states only — active, suspended — with requested,
+  retiring, and archived publishing unpinned, the reference as history, and a hire activating
+  after an unpinned publish staying unpinned; version-bump promotion filing upgrade asks to
+  the pinned owners; `default_scopes` stored as a ceiling — future spawns still child ⊆ spawner; the
   founding pin re-deriving nothing, the upgrade algebra first applying at the next version's
-  accept).
+  accept), binding-surface write serialization (an admin `domain_ids` edit and the
+  workspace-archive walk acquiring every affected domain's lock id-ordered against a racing
+  merge, the second writer re-reading the list inside the lock — no lost update either
+  direction: no deliberate unbind overwritten by a stale remap, no dissolved id resurrected),
+  multi-domain ingest lock ordering (one commit touching several domains' trees acquiring
+  id-ordered before applying a line), class-matched spawn parameters (a `ttl` on a
+  persistent-hire request refused at write), admin-broadcast live-set rendering (a mid-wait
+  admin addition joining pending broadcasts, a departed admin contributing nothing, a former
+  admin's late response refused at the eligibility door), and org-snapshot liveness (a
+  deactivated human and a retired Coworker absent from the injected layer, their records
+  resolvable through decisions and audit).
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -2614,7 +2682,16 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   a storm's aggregate admin ask closes resolved when its source's rate falls back under the
   limit; and a console node edit attempting capabilities is refused, the advertisement
   re-stating on heartbeat; a promoted custom hire pinned at its accept receives the next
-  version's upgrade ask like any pinned Coworker, its personal memory staying its own.
+  version's upgrade ask like any pinned Coworker, its personal memory staying its own; an
+  admin binding edit racing a domain merge serializes behind id-ordered domain locks, the
+  merge remapping the list it re-read inside the lock; a hand-merge touching two domains'
+  trees acquires both locks id-ordered before applying a line; a promotion accept landing on
+  a still-`requested` custom hire publishes its template unpinned with the reference riding
+  the audit event, and the hire's later activation leaves it unpinned; a spawn request
+  carrying a `ttl` on a persistent class is refused at write; an admin added mid-wait sees
+  the pending admin-broadcast asks in their inbox and may answer them, while a departed
+  admin's late response is refused at the door; and a departed human is absent from the org
+  snapshot of every subsequently assembled prompt.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -2804,7 +2881,14 @@ capabilities pinned heartbeat-owned against console edits (§3, §7, §9); v2.38
 closed the custom-hire catalog seam beneath those — `customRole` hires promoting into the
 versioned catalog through an owner-filed, admin-published ask: creation-time snapshot,
 accept-named placement with collision and class-flip refusals, founding-pin adoption with the
-retired-at-accept unpinned publish, and scope-ceiling/memory hygiene (§6.1, §6.5, §7, §9, §12).
+retired-at-accept unpinned publish, and scope-ceiling/memory hygiene (§6.1, §6.5, §7, §9, §12);
+v2.39's thirty-first sweep closed the writer-order, catalog-state, and live-rendering seams
+beneath those — binding-surface writers (the admin `domain_ids` edit, the workspace-archive
+walk) and multi-domain hand-merges joining the id-ordered domain write lock (§4.4, §4.5, §7),
+the founding pin's state coverage at the promotion door (§6.5, §7, §9), class-matched spawn
+parameters with the persistent-class `ttl` refused (§6.2), the admin broadcast's live-set
+rendering with door-refused late responses (§8.10), and the org snapshot's live member set
+(§4.2).
 The former
 residue — quorum approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
