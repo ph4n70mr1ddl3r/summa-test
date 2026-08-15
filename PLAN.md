@@ -66,6 +66,14 @@ mode so small teams start simple.
 > over via dual index (§8.7) · glossary alias collisions resolve deterministically (§4.2) · §13.1
 > restated as accepted boundaries + deferred parameters; new principle: degrade to an ask, never
 > to silence (§2).
+>
+> **Edge-case closure (v2.13)**: fifth sweep — audit residue closed inline: viewer deputies
+> refused at write, like agent and self deputies — a read-only member is never a standing answer
+> hop (§7, §8.10) · quorum N validated against the eligible approver pool at proposal time, and
+> a pool that shrinks below N denies at expiry with the shortfall named (§4.4, §8.10) · unset
+> calendars get a defined fallback — control-plane zone, 09:00–17:00 weekdays (§8.10) ·
+> initiative sponsors pinned human (§5.1) · offboarding terminates sessions and revokes PATs —
+> deactivation is credential-death, not a disabled login flag (§5).
 
 ---
 
@@ -268,8 +276,9 @@ strictness separately.
   agent drafts a report; humans decide) re-validate provenance refs too — moved documents and
   rotated systems flag the card stale instead of letting citations rot silently.
 - **Conflicts**: new rules supersede old ones explicitly (chains retained); the review UI shows
-  contradictions — rule-vs-rule, goal-vs-goal, and decision-vs-rule — detected at proposal time
-  and re-checked at publish, inside the domain write lock, so racing publishes cannot land
+  contradictions — rule-vs-rule, goal-vs-goal, decision-vs-rule, and quorum-vs-pool shortfalls
+  (§8.10) — detected at proposal time and
+  re-checked at publish, inside the domain write lock, so racing publishes cannot land
   contradictions sequentially (§4.3).
 - **Topology changes**: reorgs split, merge, and rename domains — a governed operation, not a
   hand-run migration: items move with ids stable (citations and supersession chains survive),
@@ -365,8 +374,9 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
   member, §6.4), sponsored/led initiatives (reassigned or closed), owned goals
   (`dna_goals.owner` — re-owned via the successor or admin custody, else retired), membership in
   `named` domain access lists (removed; policies re-evaluated), and deputy references (cleared in
-  both directions — anyone deputizing the departing member re-points or clears), and pending DNA
-  proposals they authored (transferred to the successor for owned domains, auto-withdrawn with an
+  both directions — anyone deputizing the departing member re-points or clears), sessions
+  terminated and PATs revoked (deactivation is credential-death, not a disabled login flag), and
+  pending DNA proposals they authored (transferred to the successor for owned domains, auto-withdrawn with an
   audit note for member proposals — the review queue never waits on a departed proposer). Inactive members
   are skipped when walking ask chains. Guard: the last active admin
   cannot be deactivated — the org never goes headless by accident. Audit history is retained;
@@ -383,7 +393,8 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
 1. **DNA first**: the directive lands as a decision record and (usually) a goal through the normal
    write path (§4.3) — the *what* and *why* stay governed.
 2. **An initiative opens**: the execution spine linking goal → work. It carries a **sponsor** (the
-   authority behind the directive), a **lead** (accountable member, human by default), a deadline,
+   authority behind the directive — pinned human, like every accountability chain §2), a **lead**
+   (accountable member, human by default), a deadline,
    status (`proposed` → `active` → `paused`/`closed`), and an optional business budget (§14.11).
 3. **Decomposition is work, not talk**: the lead creates board tasks (human or Coworker assignees),
    instantiates the relevant SOP as a playbook, requests spawns — all tagged with the initiative
@@ -531,7 +542,8 @@ New/changed tables (v1 session/run/message/skill/connector tables carry over):
 humans         (id, name, email, rbac 'admin'|'owner'|'member'|'viewer', auth json,
                  deputy_member_id?, timezone?, working_hours json?, created_at)
                  -- deputy: first hop of the §8.10 chain;
-                 -- must reference a humans row — agent and self deputies refused at write (§8.10)
+                 -- must reference a humans row that is neither the member nor a viewer —
+                 -- agent, self, and viewer deputies refused at write (§8.10)
                  -- viewers are read-only and never valid ask targets (§5)
                  -- timezone/working_hours: per-human calendar — digests and queue_until_morning
                  -- compute against it (§8.10, §3)
@@ -700,10 +712,16 @@ becomes expressible): the ask carries `quorum_required` (§7), addresses the eli
 pool (domain owners + admins), and closes answered once N distinct human members have accepted;
 a deny still closes it denied immediately, expiry still denies, and each acceptance re-validates
 at respond time — a stale acceptance is audit-only and does not count toward N. SLA breach
-escalates to the admin, who may contribute one of the required approvals. **Escalation chains**: every ask to a human carries member → deputy (set per member in the org
+escalates to the admin, who may contribute one of the required approvals. N is validated
+against the pool it demands: a rule whose `requires_approvals` exceeds the eligible approvers
+flags at proposal time like any contradiction (§4.4), and a pool that later shrinks below N
+(offboarding) leaves the ask unanswerable — it denies at expiry, fail-safe, with the breach
+escalation naming the shortfall: an impossible quorum degrades to a visible no, never a hang.
+**Escalation chains**: every ask to a human carries member → deputy (set per member in the org
   registry; humans only — an agent deputy is refused at write, because standing approval authority
-  for agents is exactly what the reviewed, windowed delegated rules below exist for; self-deputy
-  and deputy cycles are refused the same way) → domain owner (of the domain the ask's workspace
+  for agents is exactly what the reviewed, windowed delegated rules below exist for; self-deputy,
+  deputy cycles, and viewer deputies are refused the same way — a read-only member is never a
+  standing answer hop) → domain owner (of the domain the ask's workspace
   belongs to; asks with no domain skip the hop; multi-domain workspaces hop to the primary domain
   — first-bound, admin-editable: one deterministic hop, not a fan-out to every owner) → admin,
   walked on SLA breach (inactive members are skipped; the walk carries a visited-set, so a
@@ -723,7 +741,9 @@ escalates to the admin, who may contribute one of the required approvals. **Esca
   Coworker) sheds overflow into a single aggregate admin ask — the attention-side twin of the
   §6.2 circuit-breaker. Digests compute per recipient: each human's timezone and working hours
   (§7) define their morning — `queue_until_morning` means the recipient's, not the server's (§3
-  time authority). **Agent targets**: an ask routed to a Coworker queues into
+  time authority). An unset calendar is still a calendar: humans with no timezone or working
+  hours fall back to the control plane's zone and 09:00–17:00 weekdays — the digest always has
+  a definite morning to compute. **Agent targets**: an ask routed to a Coworker queues into
   its next run (or wakes a session worker); if the target is ephemeral, suspended, archived, or
   busy past SLA, the ask reassigns up the chain (§6.3 suspend re-routing included). **Delegated authority** — a directive can push authority,
   not just work: the sponsor proposes a DNA rule scoped by `machine_hint` (initiative, ceiling,
@@ -871,11 +891,12 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
 - **Unit**: scope delegation algebra (child ⊆ parent), spawn policy engine (quotas/depth/TTL),
   DNA proposal workflow states, goal-slice injection determinism, delegated-authority evaluation
   in ask routing, egress/path guards, scheduler math, memory 3-tier classifier, offboarding dependency walk (last-admin guard,
-  initiative reassignment, deputy clearing), domain split/merge id-and-chain invariants,
+  initiative reassignment, deputy clearing, session/PAT revocation), domain split/merge id-and-chain invariants,
   template-upgrade scope re-derivation, escalation-walk visited-set (deputy cycles), deputy
-  humans-only guard, trigger catch-up coalescing, atomic quota claims under racing spawners, DNA
+  guard (agent, self, viewer, and cycle refusals), trigger catch-up coalescing, atomic quota claims under racing spawners, DNA
   store ingestion quarantine, topology-op write-lock serialization, ask respond-time
-  re-validation, quorum accumulation (N distinct accepts, deny-wins, stale accepts don't count),
+  re-validation, quorum accumulation (N distinct accepts, deny-wins, stale accepts don't count,
+  pool-shortfall denial),
   spend reservation under racing runs, separation-of-duties refusal, playbook cycle detection,
   alias-collision resolution order, PAT expiry enforcement, erasure pseudonymization + hold
   blocking.
@@ -920,14 +941,15 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
 
 ### 13.1 Residual risk — accepted boundaries, deferred parameters
 
-Four sweeps (v2.9–v2.12) closed the enumerated edge-case space inline; what v2.10 ranked and
-v2.11 triaged, v2.12 designed. The former residue — quorum approvals, external-write atomicity,
+Five sweeps (v2.9–v2.13) closed the enumerated edge-case space inline; what v2.10 ranked and
+v2.11 triaged, v2.12 designed, v2.13 audited and closed. The former residue — quorum
+approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
 check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
 ask storms, self-approval, cross-initiative dependencies, clock/calendar semantics, proposal
 amendment, runtime precedence, taint decay, playbook recursion, git integrity, PAT lifecycle,
 breaker collateral, authored proposals, embedding re-index, alias collisions — now has working
-mechanisms in the sections the v2.12 changelog cites. What remains is stated, not hidden:
+mechanisms in the sections the sweep changelogs cite. What remains is stated, not hidden:
 
 - **Malicious insider — accepted boundary.** Governance treats humans as the trust anchor: a
   domain owner publishing a poisoned rule gets agents obeying it until audit catches up; nothing
