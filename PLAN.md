@@ -273,6 +273,20 @@ mode so small teams start simple.
 > withdrawal — resolving per the expiry behavior, the lifecycle walks'
 > close-with-audit-note its system-applied form (§8.10, §7, §9).
 
+> **Edge-case closure (v2.27)**: nineteenth sweep — config-surface, delegation-authority, and
+> broadcast seams closed inline: the per-domain review SLA gets its schema home —
+> `dna_domains.review_sla_days` drives `review_by`, topology results inherit it (§4.3, §7) ·
+> governance policy/quota writes and node updates join the API surface, and a region edit
+> re-validates residency-constrained placements — the node-side twin of §4.4's rule (§9, §3) ·
+> a delegation naming an agent is the reviewed grant the agent-deputy refusal reserves this
+> mechanism for — the agent's accept binds the asks its rule routes, is audit-only toward
+> N>1, and resolves its recipient at ask creation (§8.10) · the org-stall broadcast is an
+> alert, not an ask — viewers receive it read-only; the never-a-target guard governs waited-on
+> answers (§8.10, §5) · owner-staged drafts ride the offboard/demotion walks — transferred with
+> the domain and surfaced to the successor, never orphaned invisible (§5, §4.2) · the
+> initiative stall clock's state coverage is pinned — `proposed` and `active` run it, pause
+> suspends it, close stops it; inert is not invisible (§5.1).
+
 ---
 
 ## 1. Product vision
@@ -389,6 +403,11 @@ boundaries — with a sixth raised to the top: **shared, governed context**.
   not convention. A residency constraint no enrolled node satisfies is surfaced, not stalled on:
   affected work starves into the same 24h starvation ask, and the domain's owner sees it in the
   digest — an impossible placement is a visible configuration error, never a silent queue.
+  Region is admin-set, not self-reported, so its drift rides the edit rather than the
+  heartbeat: editing a node's region re-validates every residency-constrained placement bound
+  to it (§9) — conforming leases stand, nonconforming ones surface the same
+  rebind-or-starvation ask — the node-side twin of the §4.4 domain-edit rule, never a silent
+  grandfathering.
 - **Stack** (unchanged from v1): Node 22 + TS daemon, React + Vite + Tailwind + shadcn console,
   SQLite (WAL) + sqlite-vec + FTS5, `isolated-vm` playbook sandbox, croner triggers, MCP connectors,
   Tauri shell as Phase-8b polish.
@@ -452,7 +471,8 @@ Every run's system prompt is assembled with:
   card index) — same retrieval machinery as v1's KB, now pointed at DNA. Search and injection
   serve the living corpus — `active` items only; a retired item resolves by direct citation as
   read-only history (the page opens, provenance intact) without ever surfacing in search or
-  injection, a draft (owner-staged through item CRUD, §9) is visible to its owner alone — staging
+  injection, a draft (owner-staged through item CRUD, §9) is visible to its owner alone (and a departing
+  owner's drafts transfer with the domain, §5 — never orphaned invisible) — staging
   lives where the schema carries it: cards and glossary hold `draft` status, rules and goals
   stage through a future `effective_from` window instead, and decisions — lifecycle-free by
   design, immutable records (§7) — are always live. Citation and
@@ -485,7 +505,7 @@ A DNA proposal carries the change (new card / rule / decision / edit), its prove
 session, docs, or observation), and the proposing member. Domain owners review from a queue in the
 DNA console (diff view, provenance, impact hints); publish creates a version and an effective date;
 reject leaves an audit trail. The queue has a cadence of its own: proposals carry a review SLA
-(`review_by`, default 7 days, per-domain configurable); a breach escalates to the admin and a
+(`review_by`, default 7 days, per-domain configurable through `dna_domains.review_sla_days`, §7); a breach escalates to the admin and a
 stale queue surfaces in the owner's digest — the §1 learning loop must not starve on an ignored
 inbox. Org-scoped items — org-wide goals and org-wide glossary entries (`domain_id` null, §7) —
 have no domain owner of their own; their proposals route to the admin's review queue, the same
@@ -725,7 +745,11 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
   both directions — anyone deputizing the departing member re-points or clears), sessions
   terminated and PATs revoked (deactivation is credential-death, not a disabled login flag), and
   pending DNA proposals they authored (transferred to the successor for owned domains, auto-withdrawn with an
-  audit note for member proposals — the review queue never waits on a departed proposer). Inactive members
+  audit note for member proposals — the review queue never waits on a departed
+  proposer) — and owner-staged drafts (§4.2), the other authored-but-unpublished state: they
+  transfer with the domain to the successor or admin custody and surface in the inheritor's
+  DNA console as staged items awaiting a decision, never orphaning as content invisible to
+  every living member. Inactive members
   are skipped when walking ask chains. Guard: the last active admin
   cannot be deactivated — evaluated inside the offboarding transaction, so two racing
   deactivations of the last two admins see one success and one refusal (§9's bootstrap
@@ -753,7 +777,9 @@ identity link is not), and email addresses are not reused.
   ownership by the same rule. Authored proposals travel with the authority, exactly as at
   offboarding: transferred to the successor for shed domains, withdrawn with an audit note when
   the new role can no longer propose (to viewer) — the review queue never waits on a proposer who
-  can no longer amend, and the member level keeps its amendment rights (§4.3). The §7 write-time guards refuse viewer deputies, assignees,
+  can no longer amend, and the member level keeps its amendment rights (§4.3). Staged drafts
+  ride the shed domains the same way — transferred with them, surfaced to the successor, the
+  clause offboarding pins (§4.2). The §7 write-time guards refuse viewer deputies, assignees,
   sponsors, and leads at set; the demotion walk is what keeps those invariants true mid-life,
   not merely at write — the guard and the walk are one mechanism in two tenses.
 
@@ -779,7 +805,11 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
    without a deadline: an initiative opened with none keys staleness to its linked goal's window
    when there is one, and falls to a bulk-tier staleness line in its sponsor's digest after a
    configurable window (default 30 days) when there is not — directive decay (§13) has no dead
-   zone. A deadline passed with *no*
+   zone. The clock's state coverage is pinned with it: it runs while `active` and while
+   `proposed` — a directive that never won its activation is decay in its purest form, and the
+   activation ask's deny (below) ends the wait, not the watch: the bulk line keeps rendering in
+   the sponsor's digest, inert is not invisible — `paused` suspends it exactly as it suspends
+   the stalled-work escalation, resume restarting it, and `closed` stops it for good. A deadline passed with *no*
    open work is not silent either: a bulk-tier close-out ask goes to the sponsor — close, or
    extend the deadline if more is coming — so a finished initiative cannot linger on holding
    workspace bindings and injecting goals nobody is driving. The same ask fires when the
@@ -1081,8 +1111,12 @@ nodes          (id, name, kind 'local'|'remote', capabilities json, region?, cla
                  -- workspace surfaces the §3 rebind-or-starvation ask, not per-run failures
 dna_domains    (id, name, owner_human_id, access 'public'|'domain'|'named',
                  named_readers json, store 'git'|'db-only', sod 'off'|'reviewer-distinct',
+                 review_sla_days int default 7,
                  residency?, status 'active'|'archived' default 'active')
                  -- db-only: the §4.5 privacy carve-out; sod: proposer ≠ publisher when on (§4.3);
+                 -- review_sla_days: the per-domain queue SLA's schema home (§4.3) — review_by
+                 -- derives from it at propose, and topology results inherit or persist it like
+                 -- every other domain attribute (§4.4);
                  -- residency constrains node placement (§3);
                  -- name unique among non-archived domains — review queues, digests, and
                  -- routing keys never alias (an archived name is history and may be reused);
@@ -1383,7 +1417,11 @@ escalation naming the shortfall: an impossible quorum degrades to a visible no, 
   returns the task to the board pool with a digest line — the board is an assignment's fallback
   surface, never a hang either) and broadcasts a
   critical-tier org-stall alert to every active human: the §5 last-admin guard keeps an admin
-  from being *deactivated*, not from being *absent*; the broadcast is the backstop. **Batching**: the digest composer groups by initiative, then workspace, then an ungrouped tail — an ask carrying neither link (org-level admin asks, member-direct questions) still renders there, so no ask falls out of every digest — and pre-fills recommended
+  from being *deactivated*, not from being *absent*; the broadcast is the backstop. The
+  broadcast is an alert, not an ask: it renders to every active human — viewers included,
+  read-only — because the never-an-ask-target guard (§5) governs members the org waits on for
+  an answer and an awareness blast waits on no one; the ask-shaped exhaustion record behind it
+  addresses answerable members only. **Batching**: the digest composer groups by initiative, then workspace, then an ungrouped tail — an ask carrying neither link (org-level admin asks, member-direct questions) still renders there, so no ask falls out of every digest — and pre-fills recommended
   answers — recommendations compute only from re-validated, untainted payloads: an ask originating
   in a tainted run (§13) renders without a pre-fill, so one-click accept is a convenience for
   trusted provenance, not an injection surface; approvals render as one-line accept/deny with diff links — reviewers see raw diffs,
@@ -1409,7 +1447,17 @@ escalation naming the shortfall: an impossible quorum degrades to a visible no, 
   2026-12-31" — reviewed like any rule. The ask router evaluates applicable rules, delegations
   included, when choosing approvers, so a static approval matrix doesn't route six months of store
   invoices through the same two people. When several delegated rules match one ask, the most
-  restrictive ceiling wins and a contradiction report goes to the sponsoring owners. Delegations end by window, supersession, or initiative
+  restrictive ceiling wins and a contradiction report goes to the sponsoring owners. A
+delegation may name an agent — "by the lead" where the lead is one is precisely the reviewed,
+windowed grant the agent-deputy refusal above reserves this mechanism for: the named agent is
+the routed ask's primary recipient, answering through its session worker like any agent
+target, and its accept binds the asks its rule routes — the rule's review is the authority,
+and the accept is a run output carrying §13's taint rules like any other. Toward
+multi-approval quorums the human-principals rule stands: an agent's accept is audit-only
+there, exactly like a deputy's — a single signature may be delegated to a reviewed agent; a
+quorum may not. The named recipient resolves at ask-creation time — the grant runs to the
+post's current holder, and a non-active delegate reassigns by the standing chain rules,
+never to a departed identity. Delegations end by window, supersession, or initiative
   close — rule semantics, not bespoke state: closing an initiative lapses every rule whose
   `machine_hint` scopes it to that initiative (status → `lapsed`, dropped from injection and routing).
 - **8.11 Inter-agent communication** — agents exchange **state, not chatter**. Agent→agent requests
@@ -1434,6 +1482,8 @@ CRUD /org/humans · /org/members · GET /org/lineage
 POST /org/humans/:id/erasure (admin; audited; honors data_holds — §4.5)
 POST /org/humans/:id/offboard (admin; runs the §5 dependency walk; transactional last-admin guard)
 POST /nodes/enroll (one-time token exchange) · GET /nodes · POST /nodes/:id/revoke
+               · PUT /nodes/:id (admin; a region edit re-validates every residency-constrained
+               placement bound to the node — §3, the node-side twin of §4.4's domain-edit rule)
 CRUD /dna/domains · /dna/cards|rules|decisions|glossary|goals
                (item-level CRUD is the publish path, not a side door around §4.3: every write
                lands inside the domain write lock with the §4.4 publish-time contradiction
@@ -1467,6 +1517,10 @@ CRUD /board-tasks (assign to any ask-eligible member — viewer and non-active r
 POST /workspaces/:id/rebind (admin affinity failover; refuses a target node lacking the
                workspace's required capabilities, §3)
 GET /governance/policies|quotas|spend  (console screens 12 & 14)
+               · PUT /governance/policies|quotas  (admin; audited — the org-global tunables'
+               write surface; per-object settings ride their own CRUD — §4.3's SLA on the
+               domain, §8.5's catch-up policy on the trigger — and §14's deferred parameters
+               land here when decided)
 POST /governance/spend/overruns/:id/ack (admin; lifts the §6.2 reserve gate an acknowledged
                settle overrun raised — :id is the overshot settle's spend-ledger row)
 POST /governance/holds · POST /governance/holds/:id/release  (admin; audited — data_holds
@@ -1667,7 +1721,13 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   fallback, sponsor digest line at the 30-day default), heartbeat capability-drift surfacing
   (rebind-or-starvation, not per-run failure), decided_by provenance semantics (no eligibility
   guard on the field), ask withdrawal (originator retract applying the expiry behavior,
-  collapsed waiters resolved, lifecycle walk closures as withdrawals).
+  collapsed waiters resolved, lifecycle walk closures as withdrawals), review-SLA derivation
+  (review_by from dna_domains.review_sla_days, default 7d), governance policy/quota and
+  node-update writes (admin-only, audited), delegated agent approvers (accept binds the routed
+  quorum-1 ask, audit-only toward N>1, creation-time recipient resolution), org-stall
+  broadcast addressing (viewers read-only, no waited-on response), staged-draft transfer on
+  the offboard/demotion walks, stall-clock state coverage (proposed renders the line, pause
+  suspends, close stops).
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -1701,7 +1761,10 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   mid-topology-op serializes behind the domain lock; a split whose declared mapping divides a
   supersession chain is refused at declare; a node whose heartbeat drops a workspace-required
   capability surfaces the rebind ask; a withdrawn approval resolves its waiting run as a no; a
-  deadline-less, goal-less initiative surfaces the sponsor staleness line.
+  deadline-less, goal-less initiative surfaces the sponsor staleness line; an admin's
+  node-region edit under residency-constrained placements surfaces rebind-or-starvation for
+  the nonconforming ones; a delegation naming an agent lead routes its approval through the
+  agent's session worker and closes on the agent's accept.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -1802,7 +1865,12 @@ catalog, and attention-lifecycle seams beneath those — write-locked external i
 (§4.3, §7), explicit template-version selection with publication-filed upgrade asks and
 denial leaving the pin standing (§6.5, §7), the deadline-less initiative stall clock (§5.1),
 heartbeat capability-drift surfacing (§3), `decided_by` as cited provenance (§7), and
-originator ask withdrawal unifying the walks' closures (§8.10, §7, §9). The former
+originator ask withdrawal unifying the walks' closures (§8.10, §7, §9); v2.27's nineteenth
+sweep closed the config-surface, delegation-authority, and broadcast seams beneath those —
+the review SLA's schema home (§4.3, §7), governance/node write surfaces with region-edit
+re-validation (§9, §3), agent-named delegations' accept semantics (§8.10), the org-stall
+alert distinguished from an ask against the viewer guard (§8.10, §5), staged drafts riding
+the walks (§5, §4.2), and the stall clock's state coverage (§5.1). The former
 residue — quorum approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
 check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
