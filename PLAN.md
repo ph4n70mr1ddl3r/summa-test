@@ -47,6 +47,25 @@ mode so small teams start simple.
 > **Edge-case audit (v2.10)**: second sweep — §13.1 re-ranked into severity tiers and extended · quorum approvals inexpressible (§4.1 vs §8.10) · external-write atomicity + trigger idempotency · erasure vs. append-only ledgers + data residency · db-only reconstructibility (§4.4 vs §4.5) · check-then-spend races (§6.2) · workspace-rebind fencing (§9) · restore reconciliation (8a) · mid-run rule staleness (§8.1) · ask storms (§8.10) · self-approval (§4.3) · clock/timezone semantics · proposal amendment (§7) · runtime precedence (§4.2) · taint decay (§8.3) · playbook recursion (§8.6) · git integrity (§4.5) · PAT lifecycle (§9, §10) · offboarding vs. authored proposals (§5) · embedding re-index (§14.7) · glossary alias collisions (§4.2, §7).
 >
 > **Edge-case pass (v2.11)**: third sweep — its findings closed inline: tainted-origin asks lose digest pre-fills; taint survives publication as provenance residue (§8.10, §4.3, §13) · deputies must be human; escalation walks carry a visited-set; multi-domain ask hops pinned to the primary domain (§8.10, §7) · DNA review queues get an SLA with admin escalation (§4.3, §7) · retire + offboarding walks extended to board tasks, owned goals, initiative posts, named-access lists (§5, §6.3) · trigger catch-up coalescing (§8.5) · paused-initiative semantics pinned (§5.1) · topology ops serialized behind a domain write lock (§4.4) · ask responses re-validate payload assumptions (§8.10) · count caps and bootstrap claimed atomically (§6.2, §9) · human DNA edits validate-or-quarantine (§4.5) · affinity starvation raises an ask; rebind is capability-checked (§3, §9) · rehire = new member, never resurrection (§5) · decision-vs-rule contradictions + provenance link re-validation (§4.4) · secrets-scanner override is an audited ask, not a silent wedge (§10).
+>
+> **Edge-case closure (v2.12)**: fourth sweep — the §13.1 residue is designed, not deferred:
+> N-of-M quorum asks make "two approvals" expressible (§4.1, §8.10, §7) · trigger idempotency keys
+> + staged external writes on an `external_writes` ledger, reaper grace, retry-safe keys (§8.5,
+> §8.2, §6.2) · erasure = pseudonymized ledgers + legal holds + node-region residency (§4.5, §3,
+> §7) · db-only reconstructibility via topology audit manifests + scheduled exports (§4.5) ·
+> reservation metering closes check-then-spend races (§6.2, §7) · workspace claims become
+> epoch-fenced leases (§3) · restore gains a reconciliation runbook — audit replay + node
+> re-registration (§11) · rules gate external writes like scopes (§8.1) · ask storms collapse +
+> shed by rate limit (§8.10) · separation-of-duties knob per domain (§4.3) · initiatives grow
+> `depends_on` (§5.1) · control-plane time authority + per-human calendars (§3, §7, §8.10) ·
+> proposal amendment + publish-transaction contradiction re-checks (§4.3, §4.4) · runtime
+> precedence pinned (§4.2) · taint propagates through memory, cleared only by review (§8.3) ·
+> playbook depth cap + cycle detection (§8.6) · git integrity: signed refs + non-FF refusal
+> (§4.5, §10) · PAT expiry/rotation/revocation (§9, §10) · breaker trips by criticality class
+> (§6.2) · offboarding transfers or withdraws authored proposals (§5) · embedding switches cut
+> over via dual index (§8.7) · glossary alias collisions resolve deterministically (§4.2) · §13.1
+> restated as accepted boundaries + deferred parameters; new principle: degrade to an ask, never
+> to silence (§2).
 
 ---
 
@@ -93,6 +112,10 @@ boundaries — with a sixth raised to the top: **shared, governed context**.
 6. **Files for humans, database for machines**: DNA, identity, and memory are git-friendly markdown humans can read, edit, and review (sensitive domains excepted — §4.5 carve-out); runs, audit, and indexes live in SQLite.
 7. **Role-agnostic core**: roles are data (templates, skills, connectors, scopes) — engineer, secretary, HR, finance, all the same runtime.
 8. **Governance proportional to blast radius**: ephemeral task workers need quotas, not paperwork; persistent hires and DNA changes need review.
+9. **Degrade to an ask, never to silence**: when any subsystem meets a state its designers did not
+   enumerate — malformed payload, racing update, broken invariant — the universal failure mode is:
+   refuse the effect, write the audit, raise an ask. Handling every scenario does not mean
+   predicting every scenario; it means no failure mode is silent (§12 enforces it).
 
 ---
 
@@ -137,6 +160,20 @@ boundaries — with a sixth raised to the top: **shared, governed context**.
   a hostile node (egress allowlisting, secret handling) routes through the control plane / model
   gateway for remote nodes; single-process mode has no such exposure. 24/7 automations require an
   always-on node — workspace affinity on a sleeping dev machine is for interactive work only.
+- **Workspace claims are fenced leases**: a node holds a workspace under a renewable claim lease
+  carrying an epoch; heartbeats renew it, an admin rebind revokes it and bumps the epoch. A node
+  must hold a live lease before claiming runs and before each external write; an expired lease
+  (partition) forces a pause-and-resync before the node touches anything the control plane
+  mediates — model gateway, connectors — so rebind never races a partitioned-but-alive node into
+  dual-writer mode. A stale node's already-committed local writes are reconciled on reconnect
+  (audit entry + contradiction report), not silently overwritten. The lease interval is §14.16's
+  tunable; the fence itself is not optional.
+- **Time & residency**: the control plane is the time authority — deadlines, SLAs, windows, TTLs,
+  and leases evaluate against its clock, never a node's. Per-human timezones and working hours
+  (§7) define each recipient's morning for digests and `queue_until_morning` (§8.10). Nodes carry
+  a `region` tag; domains may declare a residency constraint, and scheduling — affinity and
+  rebind — places work only on nodes that satisfy it: EU data stays on EU nodes by construction,
+  not convention.
 - **Stack** (unchanged from v1): Node 22 + TS daemon, React + Vite + Tailwind + shadcn console,
   SQLite (WAL) + sqlite-vec + FTS5, `isolated-vm` playbook sandbox, croner triggers, MCP connectors,
   Tauri shell as Phase-8b polish.
@@ -183,6 +220,12 @@ Every run's system prompt is assembled with:
   card index) — same retrieval machinery as v1's KB, now pointed at DNA.
 - **Cited in answers**: responses reference cards; the console (and IM) renders citations that open
   the source card with its provenance.
+- **Precedence is fixed**: when layers disagree mid-run — an applicable rule vs. the goal slice
+  vs. a retrieved card — the run obeys rules (normative, windowed) over goals (aspirational) over
+  retrieved knowledge (descriptive), and files a contradiction report (§4.4) instead of silently
+  picking a side. Glossary alias collisions in a multi-domain workspace resolve deterministically:
+  the primary domain's term (§8.10) wins, then org-wide entries, then all candidates render tagged
+  with their domains — never a silent coin flip.
 
 ### 4.3 Write path — learning without corruption
 
@@ -203,7 +246,16 @@ stale queue surfaces in the owner's digest — the §1 learning loop must not st
 inbox. Taint survives publication as provenance residue: an item accepted from a tainted run
 keeps its flag, renders with an indicator wherever cited, and heads the §4.4 scheduled quality
 reviews — the owner's accept is informed consent, not a laundering step. Humans can also propose directly, and can edit in their own tools —
-the store is git-backed markdown, so a PR workflow is possible for teams that want it.
+the store is git-backed markdown, so a PR workflow is possible for teams that want it. Proposals
+are amendable in review: the proposer — or the reviewing owner, as suggested changes — files a new
+revision (`revision`, §7); reviewers see latest-plus-history, publish binds the latest, and
+withdraw-and-refile stops being the only edit path. Racing publishes cannot land contradictions:
+publish runs inside the domain write lock (§4.4) and re-runs contradiction checks against current
+state at commit — the second of two sequenced contradictory publishes is refused back to review,
+not half-silently merged. Separation of duties is a per-domain knob (`sod`, default `off`): when
+on, the proposer cannot be the publisher — an owner's own proposal routes publish to an admin or
+a second owner; single-admin orgs keep the one-click collapse (§13), and §14.13 keeps governing
+strictness separately.
 
 ### 4.4 Governance
 
@@ -216,7 +268,9 @@ the store is git-backed markdown, so a PR workflow is possible for teams that wa
   agent drafts a report; humans decide) re-validate provenance refs too — moved documents and
   rotated systems flag the card stale instead of letting citations rot silently.
 - **Conflicts**: new rules supersede old ones explicitly (chains retained); the review UI shows
-  contradictions — rule-vs-rule, goal-vs-goal, and decision-vs-rule — detected at proposal time.
+  contradictions — rule-vs-rule, goal-vs-goal, and decision-vs-rule — detected at proposal time
+  and re-checked at publish, inside the domain write lock, so racing publishes cannot land
+  contradictions sequentially (§4.3).
 - **Topology changes**: reorgs split, merge, and rename domains — a governed operation, not a
   hand-run migration: items move with ids stable (citations and supersession chains survive),
   access policies re-evaluate against the new topology, workspace domain tags remap, and the move
@@ -241,12 +295,29 @@ human edits are welcomed, not trusted: the control plane validates every ingeste
 review queue with the parse error attached — a bad hand-merge degrades to an ask, never to a
 silently corrupted index.
 
+**Git integrity**: the control plane is the DNA repo's only direct writer — it signs commits and
+refs with a deployment key and refuses non-fast-forward updates it did not perform; divergence
+quarantines like any invalid ingest. Teams adopting the PR workflow get protected-branch
+prerequisites (no force-push, no direct push, review through PRs) as deployment requirements,
+verified at startup — the history that citations and supersession chains depend on is guarded,
+not assumed.
+
 **Privacy carve-out**: git history is effectively immutable, which collides with deletion
 obligations (GDPR-style erasure, offboarded-employee data, HR/Finance records). Domains may
 declare `store: 'db-only'` — HR and Finance default to it: content lives in SQLite with
 export-on-demand and never enters the git store; the git timeline is reserved for non-sensitive
 domains. If sensitive material lands in git by mistake, remediation is a documented history
 rewrite (rotate the repo, notify domain owners) — decided here, not improvised under a deadline.
+
+Erasure of a *person* is pseudonymization, not shredding: the append-only ledgers (audit, spend)
+keep the event shape — what happened, when, with what effect — while the member reference is
+replaced by a one-way pseudonym, severing identity without amputating the trail. Legal holds
+(`data_holds`, §7) freeze erasure for covered subjects until an admin releases them, audited; an
+erasure request against a member with live dependencies is refused until the §5 offboarding walk
+has run. Topology history for db-only domains rests on the audit log, not git: split/merge/rename
+on a db-only domain writes a full manifest — item ids, from/to domain, access re-evaluations — to
+the audit log and triggers an export snapshot, with scheduled exports backing the history the git
+timeline never held (§4.4's reconstructibility promise, restated per store kind).
 
 ### 4.6 Knowledge vs. operational data (systems of record)
 
@@ -294,13 +365,16 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
   member, §6.4), sponsored/led initiatives (reassigned or closed), owned goals
   (`dna_goals.owner` — re-owned via the successor or admin custody, else retired), membership in
   `named` domain access lists (removed; policies re-evaluated), and deputy references (cleared in
-  both directions — anyone deputizing the departing member re-points or clears). Inactive members
+  both directions — anyone deputizing the departing member re-points or clears), and pending DNA
+  proposals they authored (transferred to the successor for owned domains, auto-withdrawn with an
+  audit note for member proposals — the review queue never waits on a departed proposer). Inactive members
   are skipped when walking ask chains. Guard: the last active admin
   cannot be deactivated — the org never goes headless by accident. Audit history is retained;
   personal data falls under the §4.5 deletion carve-out. Rehire is a new member, never a
   resurrection: deactivation is terminal for identity, so a returning employee gets a fresh row —
-  `decided_by` references, audit history, and spend attribution stay pinned to the departed
-  identity, and email addresses are not reused.
+`decided_by` references, audit history, and spend attribution stay pinned to the departed
+identity (until a §4.5 erasure request pseudonymizes the reference — the events are durable, the
+identity link is not), and email addresses are not reused.
 
 ### 5.1 Initiatives — from directive to coordinated execution
 
@@ -329,6 +403,9 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
   pause is a state, not a way to outlive a deadline silently. Closing runs the same dependency
    check as retiring a Coworker (§6.3): open asks
    and tasks resolved or reassigned; the retrospective files DNA proposals — the §1 loop closes.
+   Initiatives may declare dependencies (`depends_on`, §7): closing an upstream initiative with
+   active dependents raises an ask to each dependent's sponsor — proceed, re-base, or pause — a
+   coordination signal, not a hard block; the humans who own the downstream calls make them.
 
 An initiative is an org entity (visible, accountable); **project memory** (§8.3) stays the
 automatic per-workspace memory tier — one is governance, the other learning. **v0 shape**
@@ -376,12 +453,21 @@ delegation assigns a board task or instantiates a playbook.
   org-wide concurrent Coworkers, per-spawn and org-wide spend caps metered by the spend ledger.
   Count caps are *claimed*, not checked: the policy engine increments atomically inside the spawn
   transaction, so two spawners racing the last concurrent slot see one success and one refusal —
-  no check-then-act window (the money-side reservation design stays open, §13.1).
+  no check-then-act window. The money side reserves the same way: a spawn or run reserves its
+  budget atomically against (reserved + settled) in the spend ledger (`kind
+  'reserve'|'settle'|'release'`, §7), settles to actual cost at completion, and releases on
+  failure or reaping — two runs sitting at 49% of a ceiling cannot both spend past it, and §6.4
+  rate/volume limits reserve reads identically.
 - **Approval gates**: persistent hires → Ask to the owner of the domain the hire's primary
   workspace is bound to (or an admin); agent-spawned
   ephemeral workers exceeding quota → Ask to the spawner's owner human.
 - **Runaway protection**: depth cap, rate limits, TTL reaper, budget circuit-breaker (org spend
-  ceiling halts all spawns and automations with a loud Ask to admins).
+  ceiling halts all spawns and automations with a loud Ask to admins). The breaker trips by
+  class: triggers and templates carry a `criticality` tag, and a ceiling breach halts
+  `standard`-class work first while a small critical floor (default 5%) keeps money-moving and
+  customer-facing automations alive — total exhaustion still halts everything, loudly. The TTL
+  reaper never kills between prepare and commit of an external write: it grants a grace window
+  and leaves a reconcilable `external_writes` row instead (§8.2).
 
 ### 6.3 Lineage
 
@@ -443,9 +529,12 @@ New/changed tables (v1 session/run/message/skill/connector tables carry over):
 
 ```
 humans         (id, name, email, rbac 'admin'|'owner'|'member'|'viewer', auth json,
-                 deputy_member_id?, created_at)  -- deputy: first hop of the §8.10 chain;
+                 deputy_member_id?, timezone?, working_hours json?, created_at)
+                 -- deputy: first hop of the §8.10 chain;
                  -- must reference a humans row — agent and self deputies refused at write (§8.10)
                  -- viewers are read-only and never valid ask targets (§5)
+                 -- timezone/working_hours: per-human calendar — digests and queue_until_morning
+                 -- compute against it (§8.10, §3)
 coworkers      + owner_human_id, class 'persistent'|'ephemeral', spawned_by member?, ttl_at,
                  budget_cap, lineage_depth, template_id?, template_version?,
                  status 'requested'|'active'|'suspended'|'retiring'|'archived'
@@ -455,10 +544,14 @@ coworkers      + owner_human_id, class 'persistent'|'ephemeral', spawned_by memb
 role_templates (id, name, version, class 'persistent'|'ephemeral-subagent', body json
                  (identity/style/handbook), default_scopes json, status 'draft'|'active'|'retired')
                  -- versioned catalog; persistent Coworkers pin (template_id, template_version) (§6.5)
-nodes          (id, name, kind 'local'|'remote', capabilities json, last_heartbeat,
-                 pubkey, enrolled_at, revoked_at?, status 'trusted'|'revoked')
+nodes          (id, name, kind 'local'|'remote', capabilities json, region?, claim json?,
+                 last_heartbeat, pubkey, enrolled_at, revoked_at?, status 'trusted'|'revoked')
+                 -- region gates residency-constrained scheduling (§3, §4.5);
+                 -- claim: epoch-fenced workspace leases (§3)
 dna_domains    (id, name, owner_human_id, access 'public'|'domain'|'named',
-                 store 'git'|'db-only')  -- db-only: the §4.5 privacy carve-out
+                 store 'git'|'db-only', sod 'off'|'reviewer-distinct', residency?)
+                 -- db-only: the §4.5 privacy carve-out; sod: proposer ≠ publisher when on (§4.3);
+                 -- residency constrains node placement (§3)
 dna_cards      (id, domain_id, title, definition_md, refs json, provenance json, version,
                  status 'draft'|'active'|'retired')
 dna_rules      (id, domain_id, statement_md, machine_hint json?, effective_from, effective_to?,
@@ -469,25 +562,50 @@ dna_glossary   (id, domain_id?, term, definition, aliases json)
 dna_goals      (id, quarter?, statement_md, owner member, status 'active'|'met'|'missed'|'retired',
                 inject 'always'|'linked', effective_from, effective_to?)  -- goal-slice source (§4.2)
                 -- the slice's 'deadline' (§4.2) is effective_to
-dna_proposals  (id, kind 'card'|'rule'|'decision'|'goal'|'edit', payload json, proposed_by member,
+dna_proposals  (id, kind 'card'|'rule'|'decision'|'goal'|'edit', payload json, revision int
+                 default 1, proposed_by member,
                  provenance json, status 'open'|'published'|'rejected'|'withdrawn', reviewed_by?, at,
-                 review_by?)  -- review_by: queue SLA deadline; breach escalates to admin (§4.3)
+                 review_by?)  -- review_by: queue SLA deadline; breach escalates to admin (§4.3);
+                 -- revision: amendable in review — history retained, publish binds latest (§4.3)
 asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request', from member, to member,
                  payload json, initiative_id?, workspace_id?, status 'pending'|'answered'|'expired', deadline, created_at,
                  sla_tier 'critical'|'standard'|'bulk', escalation json,
-                 expiry_behavior 'deny'|'escalate'|'reassign', responded_at?)  -- supersedes approvals;
-                 escalate/reassign close the expired ask and open a linked successor ask (§8.10);
-                 workspace_id keys the domain-owner escalation hop and digest grouping (§8.10);
+                 expiry_behavior 'deny'|'escalate'|'reassign', responded_at?, quorum_required int
+                 default 1, responses json, collapsed_count int default 1)
+                 -- supersedes approvals;
+                 -- quorum: N distinct human accepts close it answered, deny wins immediately (§8.10);
+                 -- responses: the accept ledger behind N-of-M; collapsed_count: identical asks
+                 -- folded into one canonical row — its answer resolves every waiter (§8.10);
+                 -- escalate/reassign close the expired ask and open a linked successor ask (§8.10);
+                 -- workspace_id keys the domain-owner escalation hop and digest grouping (§8.10);
                  -- respond re-validates payload assumptions — answers against a superseded
                  -- world are audit-only, a successor ask carries the decision (§8.10)
 initiatives    (id, title, goal_ref?, decision_ref?, sponsor member, lead member,
                  status 'proposed'|'active'|'paused'|'closed', business_budget json?, deadline?,
-                 closed_at?)
+                 closed_at?, depends_on json?)
+                 -- depends_on: cross-initiative DAG; closing an upstream with live dependents
+                 -- asks each sponsor — signal, not block (§5.1)
 board_tasks    + assignee_member_id?, initiative_id?  (runs carry initiative_id? the
                  same way — burndown, per-initiative digests)
-workspaces     + initiative_ids json?  -- active initiatives bound here (bound at spawn under an
-                 initiative, admin-editable); the source of the §4.2 goal slice
-spend_ledger   (id, member_id, run_id?, spawn_id?, tokens_in/out, cost, pricing_version, at)
+workspaces     + initiative_ids json?, node_id?, claim_epoch int default 0, lease_expires_at?
+                 -- active initiatives bound here (bound at spawn under an initiative,
+                 -- admin-editable); the source of the §4.2 goal slice;
+                 -- node/epoch/lease: affinity placement + the fenced claim (§3)
+triggers       + criticality 'standard'|'critical'  -- §6.2 breaker trip order
+spend_ledger   (id, member_id, run_id?, spawn_id?, kind 'reserve'|'settle'|'release',
+                 tokens_in/out, cost, pricing_version, at)
+                 -- reservation metering: caps evaluate reserved + settled; releases return
+                 -- budget on failure or reap (§6.2)
+trigger_firings (id, trigger_id, idempotency_key, fired_at, run_id?)
+                 -- unique (trigger_id, idempotency_key) within the dedupe window:
+                 -- replays return the original run (§8.5)
+external_writes (id, run_id, connector, op, idempotency_key, status 'prepared'|'committed'|
+                 'compensated'|'failed', prepared_at, resolved_at?)
+                 -- staged writes: prepare→confirm→commit (§8.2); stranded 'prepared' rows are
+                 -- reconciled — confirm, compensate, or escalate; the reaper leaves these, not
+                 -- half-posted side effects (§6.2)
+data_holds     (id, kind 'member'|'domain', subject_id, reason_md, created_by, released_at?)
+                 -- legal hold freezes §4.5 erasure until admin release, audited
 ```
 
 v1's per-Coworker knowledge bases are subsumed: a "KB" is now a DNA domain import (sources are
@@ -507,28 +625,54 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
   enforcement, egress guard, write-lock, stop semantics, cost metering as in v1. (c) Scope
   changes — revocations, §6.4 role-change refreshes — take effect at the next run's prompt
   assembly; a long-running run re-checks its scopes before each external write, so a mid-run
-  revocation gates the next side effect rather than lingering to the run's end.
+  revocation gates the next side effect rather than lingering to the run's end. Rules re-check at
+  the same gate: rules carrying enforcement-bearing `machine_hint`s gate external writes exactly
+  like scopes — a write the current applicable slice forbids is blocked and raises an ask, while
+  purely narrative rules stay advisory context (§4.2 precedence). (d) Provider degradation: the
+  model gateway queues with backoff instead of failing fast; headless runs wait out a bounded
+  outage, and a sustained one raises a single critical admin ask — routing policy stays decision
+  15 (§14), but no 24/7 run dies on a vendor blip.
 - **8.2 Tools & MCP** — built-ins (`fs.*`, guarded `shell.exec`, `web.*`, `kb.search` → `dna.search`,
   `memory.write`) plus **`spawn`** as a guarded tool. Egress guard unchanged. Connector tiers:
   tier 1 = email/calendar/docs; **tier 2 = enterprise systems of record** (ERP/WMS/HRIS/CRM) —
   read-only first, writes gated behind `critical`-tier Asks (§8.10); per-connector scoped
   credentials via PATs, never shared service accounts; §4.6 governs what may enter the DNA.
+  Write-capable tier-2 connectors implement staged writes — prepare → confirm → commit — every
+  stage keyed by the idempotency key of its `external_writes` ledger row (§7): playbook retries
+  and node retries reuse the key and cannot duplicate side effects, and a crashed or reaped run
+  leaves a `prepared` row that reconciliation resolves — confirm or compensate per connector, or
+  escalate to an admin ask where no compensation exists.
 - **8.3 Memory service** — now three-tier classifier (personal / project / DNA proposal) with the
-  v1 machinery (dedupe, timeline, versions, secrets scanner) under it.
+  v1 machinery (dedupe, timeline, versions, secrets scanner) under it. Taint propagates through
+  the tiers: memory written by a tainted run (§13) carries the flag, renders with its provenance
+  when retrieved, is barred from digest pre-fills like tainted asks (§8.10), and is cleared only
+  by explicit review — the spawner's owner for personal memory, the domain owner for project
+  memory — never by the passage of time. A tainted memory item cannot be the sole support for an
+  external write: pair it with an untainted source, or ask.
 - **8.4 Skills** — unchanged; domain-organized packs; uninstall dependency checks.
 - **8.5 Trigger engine** — schedule/API/event triggers unchanged; every firing is a run of the same
   session worker; API triggers gain PAT scopes for external callers. Missed schedules neither
   replay nor vanish: firings elapsing during a Coworker suspension or control-plane downtime
   coalesce into one catch-up run per trigger on resume, carrying a missed-schedule summary (count,
   window) — per-trigger policy `replay|coalesce|skip`, default coalesce, with §6.2 rate limits
-  bounding a large backlog.
+  bounding a large backlog. Firings are idempotent at the boundary: every firing carries a
+  deterministic key — schedule: trigger + scheduled time; webhook/API: event id or
+  caller-supplied `Idempotency-Key`; event: source event id — and the `trigger_firings` table
+  (§7) refuses duplicates within a configurable window, returning the original run: a replayed
+  webhook is one run, not two invoices.
 - **8.6 Playbook engine** — DSL and sandbox unchanged; `worker()` targets any member (human targets
   create an assignment Ask); spawn-class playbooks (fan-out workers) built on §6 ephemeral workers
   · **initiative playbooks** (§5.1): an SOP instantiated under an initiative becomes the
   cross-domain spine — nodes route asks into each domain's escalation chain (§8.10) and artifacts
-  land on the initiative's board slice.
+  land on the initiative's board slice. Instantiation is bounded like spawning: playbooks carry
+  an instantiation depth cap (default 2, mirroring §6.2) and are cycle-checked at publish —
+  direct or transitive self-instantiation is refused at save, and the runtime depth cap is the
+  backstop; an orchestration loop cannot starve sandbox quotas underneath the spawn policy.
 - **8.7 DNA engine** — inherits v1 KB machinery (ingest → chunk → embed → cards → hybrid retrieval →
-  citations) extended with domains, proposals, review queue, and glossary/rule/goal-slice injection.
+  citations) extended with domains, proposals, review queue, and glossary/rule/goal-slice
+  injection. An embedding-model switch (§14.7) is a migration, not a reset: the index records its
+  model, the new index builds alongside the old, a recall-parity sample gates the cutover, and
+  the old index serves until the new one passes — search never blinks.
 - **8.8 Groups & IM** — unified human+agent teams; IM pairing routes to a Coworker whose asks
   escalate to the channel.
 - **8.9 Console screens** — v1 screens 1–9, plus five new: **10. Org & People** (members, RBAC, lineage graph,
@@ -544,13 +688,19 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
   explicit per ask: `deny` (default for approvals and spawn requests — an expired approval is a
   no), `escalate` (route up the chain — default for questions), `reassign` (fall back to a named
   deputy — default for assignments); a run blocked on an expired ask
-  never hangs indefinitely. An ask closes on the first response received — later responses
-  (member and deputy racing) are audit-only; a response to an expired ask is recorded but has no
+never hangs indefinitely. A quorum-1 ask (the default) closes on the first response received — later
+responses (member and deputy racing) are audit-only; a response to an expired ask is recorded but has no
   effect: the successor ask, if any, carries the decision. Responses re-validate before they bind:
   at respond time the ask's payload assumptions are recomputed — the diff still applies, the
   referenced DNA item is still live, the scope still holds — and a response against a superseded
-  world is audit-only like a late response, with a successor ask opened against current state (the
-  same machinery expiry uses). **Escalation chains**: every ask to a human carries member → deputy (set per member in the org
+world is audit-only like a late response, with a successor ask opened against current state (the
+same machinery expiry uses). **Quorum asks**: rules may require N distinct approvals
+(`machine_hint.requires_approvals` — §4.1's flagship "invoices > $10k require two approvals"
+becomes expressible): the ask carries `quorum_required` (§7), addresses the eligible approver
+pool (domain owners + admins), and closes answered once N distinct human members have accepted;
+a deny still closes it denied immediately, expiry still denies, and each acceptance re-validates
+at respond time — a stale acceptance is audit-only and does not count toward N. SLA breach
+escalates to the admin, who may contribute one of the required approvals. **Escalation chains**: every ask to a human carries member → deputy (set per member in the org
   registry; humans only — an agent deputy is refused at write, because standing approval authority
   for agents is exactly what the reviewed, windowed delegated rules below exist for; self-deputy
   and deputy cycles are refused the same way) → domain owner (of the domain the ask's workspace
@@ -566,7 +716,14 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
   answers — recommendations compute only from re-validated, untainted payloads: an ask originating
   in a tainted run (§13) renders without a pre-fill, so one-click accept is a convenience for
   trusted provenance, not an injection surface; approvals render as one-line accept/deny with diff links — reviewers see raw diffs,
-  never agent-authored summaries alone. **Agent targets**: an ask routed to a Coworker queues into
+  never agent-authored summaries alone. Storms collapse: identical pending asks — same kind,
+  target set, payload hash — attach to one canonical ask as a `collapsed_count` within a window,
+  the digest renders "37 identical escalations" as one line, and the canonical ask's answer
+  resolves every collapsed waiter; a per-source ask-creation rate limit (per run, trigger,
+  Coworker) sheds overflow into a single aggregate admin ask — the attention-side twin of the
+  §6.2 circuit-breaker. Digests compute per recipient: each human's timezone and working hours
+  (§7) define their morning — `queue_until_morning` means the recipient's, not the server's (§3
+  time authority). **Agent targets**: an ask routed to a Coworker queues into
   its next run (or wakes a session worker); if the target is ephemeral, suspended, archived, or
   busy past SLA, the ask reassigns up the chain (§6.3 suspend re-routing included). **Delegated authority** — a directive can push authority,
   not just work: the sponsor proposes a DNA rule scoped by `machine_hint` (initiative, ceiling,
@@ -591,12 +748,16 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
 
 ```
 POST /auth/login (human sessions; PATs for agents/services)
+POST /auth/pats · POST /auth/pats/:id/revoke  (PAT lifecycle: scoped create, expiry + rotation
+               + last-used stamps, §10)
 POST /org/bootstrap (first-run: create company + first admin; refused once any human exists —
                a transactional singleton guard, not check-then-act)
 CRUD /org/humans · /org/members · GET /org/lineage
+POST /org/humans/:id/erasure (admin; audited; honors data_holds — §4.5)
 POST /nodes/enroll (one-time token exchange) · GET /nodes · POST /nodes/:id/revoke
 CRUD /dna/domains · /dna/cards|rules|decisions|glossary|goals
-POST /dna/proposals  POST /dna/proposals/:id/review (publish|reject) · POST /dna/proposals/:id/withdraw  GET /dna/review-queue
+POST /dna/proposals  POST /dna/proposals/:id/review (publish|reject) · POST /dna/proposals/:id/withdraw
+               · POST /dna/proposals/:id/amend (revision during review, §4.3)  GET /dna/review-queue
 POST /dna/domains/:id/split|merge|rename (governed topology ops, §4.4)
 CRUD /role-templates (versioned catalog, §6.5)
 POST /spawn          GET /spawn/:id   (spawn requests; approval + spawn-storm monitoring)
@@ -614,7 +775,9 @@ GET /governance/policies|quotas|spend  (console screens 12 & 14)
 
 ## 10. Security & governance checklist
 
-- Human authn (local accounts → SSO later) + RBAC; PATs hashed, shown once, scoped.
+- Human authn (local accounts → SSO later) + RBAC; PATs hashed, shown once, scoped — and mortal:
+  expiry (default 90d), rotation (create-replacement + revoke-old in one flow), a revoke
+  endpoint (§9), and last-used stamps for compromise detection.
 - Agent scopes enforced in code (file scope realpath checks, tool allowlists, egress CIDR guard);
   every call audited; append-only audit log.
 - **Scope delegation invariant** at spawn: child ⊆ parent, enforced by the policy engine.
@@ -633,6 +796,10 @@ GET /governance/policies|quotas|spend  (console screens 12 & 14)
   providers covers secrets *and* PII.
 - Webhooks signature-verified; console served over localhost or TLS behind the company's reverse
   proxy in server mode.
+- DNA repo integrity: the control plane is the only direct writer, commits and refs are signed,
+  non-fast-forward updates are refused, and PR workflows require protected branches (§4.5).
+- Erasure & residency: erasure requests pseudonymize the append-only ledgers under legal-hold
+  guards (§4.5); node regions + domain residency constraints govern placement (§3).
 
 ---
 
@@ -649,7 +816,7 @@ GET /governance/policies|quotas|spend  (console screens 12 & 14)
 | **5. Playbooks** *(v2 track)* | Multi-stage orchestration | DSL + sandbox, statuses, askUser → Asks, read-only canvas, versions, playbook triggers | 3–4 wks |
 | **6. Multi-human org** *(v2 track)* | A company, not a person | Server deployment, human accounts + RBAC, asks routing + per-human digests (P4 shipped the single-admin digest), shared board, node registration & workspace-affinity scheduling, delegated authority + initiative budgets, offboarding flows + last-admin guard, Coworker suspend/resume, template upgrades, domain split/merge (§4.4) | 3–4 wks |
 | **7. Spawning** *(v2 track)* | The org flexes | Ephemeral workers (quota, TTL, fold-back memory), then persistent hires (owner approval), policy engine, lineage graph, spend ledger + circuit-breaker | 2–3 wks |
-| **8a. v1 hardening** | v1 production-ready | Backup/restore, encrypted secrets, docs, security review | 1 wk |
+| **8a. v1 hardening** | v1 production-ready | Backup/restore with a reconciliation runbook (audit replay + node re-registration), encrypted secrets, docs, security review | 1 wk |
 | **8b. v1.1 polish** | Distribution | Tauri shell, installers, telemetry (opt-in) | 1–2 wks |
 
 **v1 (Phases 0–4 + 8a): ~14–18 weeks solo.** Full company OS (v2 track + 8b): ~23–31 weeks total.
@@ -665,7 +832,17 @@ proves the core loop (work → learning → DNA → better work) end to end. Ini
 steps — v0 grouping in Phase 4 (a lone admin still needs directives turned into work); budgets and
 delegated authority in Phase 6 (delegation presumes more than one human). Tier-2 enterprise
 connectors (§8.2) are deliberately absent from the ladder: they start after v1 ships, once §14.9
-names the first system — an integration project per connector, not a phase.
+names the first system — an integration project per connector, not a phase. The enterprise seams
+ride the same track: quorum asks, staged writes, and erasure/residency governance ship with the
+first write-capable connector (§8.10, §8.2, §4.5); claim leases and fencing ship with Phase 6
+node registration (§3).
+
+**Restore runbook** (ships with Phase 8a): restore DB + DNA git to point T, then reconcile — the
+audit log never rewinds (pre-restore segments are re-appended as a replay segment, so the
+append-only property survives the restore); nodes re-register and report runs executed after T;
+`external_writes` rows are rebuilt from node reports and connector-side idempotency-key queries
+where supported; erasure events in the replayed segment re-apply, so a restore cannot resurrect
+erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12).
 
 **Phase-0 spikes** (timeboxed; the ladder isn't committed until they pass):
 - `isolated-vm` on Node 22: maintenance status, compatibility, child-process fallback prototype.
@@ -681,6 +858,7 @@ names the first system — an integration project per connector, not a phase.
 - **P4**: headless trigger fires overnight; a blocked approval auto-denies at expiry; the morning
   digest renders correctly, grouped by initiative.
 - **P6**: two humans + two nodes; heartbeat loss mid-run recovers with no orphaned work; a
+  stale-epoch workspace claim is refused at the mediated boundary and reconciled on reconnect; a
   delegated-authority rule routes an approval to the initiative lead and expires cleanly;
   offboarding one human reassigns domains, asks, and initiatives, and the last-admin guard
   refuses the final admin.
@@ -697,11 +875,17 @@ names the first system — an integration project per connector, not a phase.
   template-upgrade scope re-derivation, escalation-walk visited-set (deputy cycles), deputy
   humans-only guard, trigger catch-up coalescing, atomic quota claims under racing spawners, DNA
   store ingestion quarantine, topology-op write-lock serialization, ask respond-time
-  re-validation.
+  re-validation, quorum accumulation (N distinct accepts, deny-wins, stale accepts don't count),
+  spend reservation under racing runs, separation-of-duties refusal, playbook cycle detection,
+  alias-collision resolution order, PAT expiry enforcement, erasure pseudonymization + hold
+  blocking.
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
-  SLA breach → admin escalation; tainted-origin ask renders in the digest without a pre-fill.
+  SLA breach → admin escalation; tainted-origin ask renders in the digest without a pre-fill;
+  duplicate webhook → one run; staged-write crash → reconciliation row; rebind during partition
+  → stale-epoch refusal + reconnect reconciliation; provider outage → queued run + a single
+  admin ask; ask storm → collapsed digest + rate-limit shed; restore replay re-applies erasure.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -711,14 +895,16 @@ names the first system — an integration project per connector, not a phase.
 - **Golden runs**: "morning brief", "issue triage → fix → ask", and a "spawn ephemeral researcher →
   fold back report" flow replayed in CI with fake models.
 - **Chaos-lite**: kill node mid-run; kill control plane with live nodes; restart → resumes cleanly,
-  audit intact, no orphan spawns (reaper).
+  audit intact, no orphan spawns (reaper); fault-injection probes assert the §2 contract — an
+  unanticipated state refuses the effect, writes audit, and raises an ask; never a silent
+  failure.
 
 ## 13. Risks & mitigations
 
 | Risk | Mitigation |
 |---|---|
 | DNA quality drift / gaming (agents proposing self-serving rules) | Human-owned review, provenance on every item, reviewer-agent contradiction reports, compartment isolation |
-| Prompt injection via external content (email, web, ingested docs steering proposals, spawns, writes, ask answers) | Taint-tracking for off-platform content; provenance + raw diffs in the review UI; spawns from tainted runs auto-gated; tainted context barred from external writes; tainted-origin asks lose digest pre-fills, and taint survives publication as a provenance flag (§8.10, §4.3) |
+| Prompt injection via external content (email, web, ingested docs steering proposals, spawns, writes, ask answers) | Taint-tracking for off-platform content; provenance + raw diffs in the review UI; spawns from tainted runs auto-gated; tainted context barred from external writes; tainted-origin asks lose digest pre-fills; taint survives publication as a provenance flag and propagates through memory until explicitly reviewed (§8.10, §4.3, §8.3) |
 | Spawn runaway / cost explosion | Depth cap, quotas, TTL reaper, spend circuit-breaker, approval gates on persistent hires |
 | Governance overhead kills small-team speed | Proportional governance: single-admin mode collapses review of own proposals to one click; compartments optional at start; auto-publish itself stays behind the §14.13 decision |
 | Privacy leakage across departments | DNA compartments enforced at retrieval; access scopes on domains; audit on every read of restricted domains |
@@ -732,116 +918,29 @@ names the first system — an integration project per connector, not a phase.
 | Directive decay (decisions published, never decomposed; initiatives go stale) | §5.1: initiatives are first-class — lead, deadline, status; the goal slice keeps directives in every relevant prompt (§4.2); stalled initiatives escalate like asks (§8.10); close runs the dependency check (§6.3) |
 | Reorgs outpace the model (domain splits, role overhauls, departures mid-initiative) | Topology changes are governed single-event ops with stable ids (§4.4); offboarding walks every dependency with admin-custody fallback and a last-admin guard (§5); template upgrades rebase running staff in place (§6.5) |
 
-### 13.1 Known unhandled edge cases (documented, not designed)
+### 13.1 Residual risk — accepted boundaries, deferred parameters
 
-Three audit passes: v2.9 closed the cheap seams inline (§4.4, §5.1, §6.3, §6.5, §8.1, §8.10);
-v2.10 ran a second sweep and re-ranked the residue by severity; v2.11 ran a third sweep and
-closed its findings inline (deputy governance, escalation cycles, review-queue SLA, retire and
-offboarding walk completeness, trigger catch-up, paused-initiative semantics, topology-op
-serialization, stale ask payloads, atomic count caps, store-ingest quarantine, taint residue,
-affinity starvation, rebind capability checks, rehire semantics, named-access staleness,
-decision-vs-rule contradictions, provenance rot, scanner override). The residue below still
-needs real design, not a sentence:
+Four sweeps (v2.9–v2.12) closed the enumerated edge-case space inline; what v2.10 ranked and
+v2.11 triaged, v2.12 designed. The former residue — quorum approvals, external-write atomicity,
+trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
+check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
+ask storms, self-approval, cross-initiative dependencies, clock/calendar semantics, proposal
+amendment, runtime precedence, taint decay, playbook recursion, git integrity, PAT lifecycle,
+breaker collateral, authored proposals, embedding re-index, alias collisions — now has working
+mechanisms in the sections the v2.12 changelog cites. What remains is stated, not hidden:
 
-**Blocks correctness or the first enterprise deployment**
-
-- **Multi-approver quorum rules are inexpressible.** The plan's own flagship rule — "Invoices >
-  $10k require two approvals" (§4.1) — cannot run: asks close on the first response (§8.10) and
-  delegated authority selects *the* approver; no countersign or N-of-M semantics exist anywhere
-  in the rule or ask model. Must land with the tier-2 write gates (§8.2, §14.11), before
-  money-moving writes become routine.
-- **External writes without atomicity.** No transactional boundary spans external systems: the
-  TTL reaper can kill an ephemeral worker mid-write (§6.2) — half-posted invoice, partial commit
-  — and a playbook retrying a failed node duplicates side effects (§8.6). Needs staged writes
-  (prepare → confirm → commit) or per-connector compensations before write-capable ERP/WMS
-  integration (§14.9).
-- **Trigger idempotency.** A replayed webhook or duplicated API trigger (§8.5) fires duplicate
-  runs and duplicate external writes; no idempotency key exists anywhere in the trigger, ask,
-  or run model. Headless 24/7 operation (§11 P4) needs dedupe at the trigger boundary.
-- **Erasure vs. provenance — and the append-only ledgers.** The §4.5 carve-out deletes content,
-  but provenance *is* member references; the audit log and spend ledger carry member references
-  too and are append-only by design (§10); and a multi-node org can place EU employee data on a
-  US node — residency is unmodelled (§3). Legal hold remains unaddressed. Needs a
-  data-governance pass before the first enterprise deployment.
-- **db-only domains vs. reconstructibility.** §4.4 promises prior states survive topology
-  changes via git history + audit; §4.5 exempts HR/Finance from git, so their topology history
-  rests on audit alone and the history-rewrite remediation doesn't apply to them. The
-  topology-op guarantees need restating per store kind.
-
-**High — correctness under concurrency and failure**
-
-- **Check-then-spend races.** Spend caps (§6.2) and §6.4 rate/volume limits are evaluated per
-  run: two parallel runs at 49% of a ceiling both pass, then both spend past it. Needs
-  reservation-style metering (reserve at write-planning, settle at completion) in the spend
-  ledger.
-- **Workspace-rebind dual-writer.** An admin rebind (§9, §3) while a partitioned-but-alive node
-  still executes a claimed run puts two writers on one repo — a fencing problem, distinct from
-  §14.16's staleness question; needs epoch/lease fencing on workspace claims.
-- **Partitioned-node authority.** A node cut off from the control plane keeps executing under
-  cached DNA version and scopes for as long as it runs (§3 trust model); max staleness, lease
-  expiry, and post-reconnect audit reconciliation are undesigned — parked as §14.16.
-- **Restore vs. live state.** A point-in-time restore (Phase 8a) against nodes and an
-  append-only audit holding newer events needs rewind reconciliation — the inverse of §14.16's
-  reconnect problem, equally undesigned.
-- **Rules are not re-checked mid-run.** §8.1(c) re-checks scopes before each external write but
-  not rules — a run started under the old regime can complete a write the new rule forbids.
-  Whether rules gate writes like scopes or stay advisory context is a semantics call, not a
-  sentence.
-- **Ask storms.** The circuit-breaker (§6.2) caps spend, not attention: a mass incident fans
-  out N failed runs, each raising an escalation ask (§8.10). Digests batch but nothing collapses
-  identical asks or sheds load — the attention-side twin of circuit-breaker collateral (below).
-- **Self-approval in multi-human orgs.** A domain owner proposing and publishing their own rule
-  is structurally unchecked (§4.3–§4.4) — no malice required, unlike the malicious-insider
-  boundary below. Needs a separation-of-duties knob per domain; §14.13 governs strictness, not
-  self-review.
-- **Model-provider outage.** The gateway fronts multiple providers (§3) but has no degradation
-  strategy — queueing, fallback routing, degraded-mode behavior for a 24/7 org (§11 P4) are
-  undesigned — parked as §14.15.
-- **Cross-initiative dependencies.** Close checks are self-contained (§5.1); initiative DAGs
-  ("Austin depends on ERP migration") are unmodelled — closing an upstream initiative can strand
-  a downstream one. Needs a dependency representation before multi-initiative orgs.
-
-**Medium — real seams, bounded blast radius today**
-
-- **Clock skew and calendar semantics.** TTL reaping, SLA deadlines, effective windows, and
-  delegation expiry (§4.2, §6.2, §8.10) assume synchronized clocks — a skewed node can act
-  under an expired delegation; `queue_until_morning` (§8.1) has no timezone semantics for a
-  distributed org — whose morning? Needs a time authority plus per-human calendars.
-- **Proposal amendment.** Only `withdraw` exists (§7): an edit during review forces
-  withdraw-and-refile, and racing proposals can publish contradictory versions sequentially —
-  contradiction detection (§4.4) runs pairwise at publish, not re-run on concurrent publishes.
-- **Runtime precedence conflicts.** Contradiction detection is proposal-time only (§4.4): an
-  injected rule vs. a retrieved card vs. the goal slice (§4.2) can disagree mid-run with no
-  defined precedence. Stating an order is cheap; choosing the right one is a design call.
-- **Taint decay.** Taint flags gate the tainted run and its proposals (§13), but tainted content
-  that lands in project memory (§8.3) and is retrieved weeks later by an untainted run has no
-  propagation or decay semantics.
-- **Playbook recursion.** The depth cap bounds agent spawns (§6.2), not playbook→playbook
-  instantiation loops (§8.6) — a self-instantiating playbook starves sandbox quotas without
-  ever tripping spawn policy.
-- **Git integrity guard.** "Git history *is* the DNA timeline" (§4.5), yet nothing detects or
-  refuses an accidental force-push/rebase that destroys citations and supersession chains —
-  needs signed refs or commit signing alongside the §10 checklist.
-- **PAT lifecycle.** PATs are hashed, shown once, and scoped (§10), but have no revocation
-  endpoint (§9), expiry, or rotation flow — compromise detection is undesigned.
-- **Circuit-breaker collateral.** The org-wide spend ceiling halts *all* spawns and automations
-  (§6.2), critical runs included; there are no per-run criticality classes or carve-outs.
-  Revisit with §14.11 (budgets) — until then a noisy consumer can stop the org, deliberately.
-
-**Low — real but bounded**
-
-- **Offboarding vs. authored proposals.** The §5 dependency walk reassigns owned domains, asks,
-  and initiatives but leaves the departing member's pending DNA proposals in queue under a
-  stale proposer — they should auto-withdraw or transfer with the successor.
-- **Embedding-model switch.** Switching embedding models (§14.7 local fallback) invalidates the
-  entire vector index; the Phase-0 spike tests per-model determinism, not re-index migration.
-- **Glossary alias collisions.** Aliases are per-domain (`dna_glossary.domain_id?`, §7), but a
-  multi-domain workspace injects several glossary slices (§4.2) — colliding aliases have no
-  disambiguation rule.
-- **Malicious insider.** Governance assumes humans are the trust anchor: a domain owner
-  publishing a poisoned rule gets every agent obeying it; audit is after-the-fact, and nothing
-  sits above the owner short of admin. Accepted boundary of the trust model, stated so nobody
-  is surprised.
+- **Malicious insider — accepted boundary.** Governance treats humans as the trust anchor: a
+  domain owner publishing a poisoned rule gets agents obeying it until audit catches up; nothing
+  sits above the owner short of admin. The §4.3 separation-of-duties knob raises the cost; the
+  boundary itself is the trust model, stated so nobody is surprised.
+- **Deferred parameters, not deferred designs.** Provider routing (§14.15) and lease intervals
+  (§14.16) are decisions *over* designed mechanisms — §8.1(d)'s queue-and-ask, §3's fenced
+  leases: the behavior exists; the tuning is organizational and lands with Phase 6 and the first
+  24/7 rollout respectively.
+- **The universal fallback.** For the space no enumeration covers, §2's ninth principle is the
+  contract: refuse the effect, write the audit, raise an ask — no subsystem may fail silently or
+  improvise a side effect. Handling every scenario does not mean predicting every scenario; it
+  means no failure mode is silent, and §12's chaos + fault-injection suites exist to enforce it.
 
 ## 14. Key open decisions
 
@@ -859,5 +958,5 @@ needs real design, not a sentence:
 12. **Deployment perimeter**: one deployment per company (default) — M&A-style consolidation of two deployments is a migration project, not a runtime feature.
 13. **Per-domain proposal strictness**: every proposal reviewed (default) vs opt-in auto-publish for low-blast-radius domains (audited, retro-reviewable) — revisit when proposal volume drowns owners.
 14. **Ask SLA tier defaults**: how long each tier runs before breach-and-escalate (e.g. `critical` 1h, `standard` to next digest, `bulk` 24h) — defaults tuned with the first real org; ask deadlines derive from these unless set per ask (§8.10).
-15. **Model-provider degradation**: single provider (default) with manual fallback vs. automatic multi-provider routing and queueing for headless runs — design before the first 24/7 deployment leans on one vendor's uptime (§13.1).
-16. **Partitioned-node authority**: how long a node may act on cached scopes/DNA without a control-plane heartbeat (lease vs. unlimited trust), and what reconnect reconciliation owes the audit log — decide with Phase 6 node registration (§13.1).
+15. **Model-provider degradation**: single provider (default) with manual fallback vs. automatic multi-provider routing — queueing, bounded wait, and the single-outage critical ask are designed (§8.1(d)); the decision is the routing policy, to be made before the first 24/7 deployment leans on one vendor's uptime.
+16. **Partitioned-node authority**: how long a node may act on cached scopes/DNA without a control-plane heartbeat — the fenced-lease mechanism (epoch claims, pause-and-resync, reconnect reconciliation) is designed (§3); the lease interval and reconciliation depth are the tunables — decide with Phase 6 node registration.
