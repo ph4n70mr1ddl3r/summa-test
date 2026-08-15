@@ -33,6 +33,8 @@ mode so small teams start simple.
 > (§5.1, §7, §8.9) · cross-domain coordination via initiative playbooks (§8.6) · delegated approval
 > authority as scoped, expiring DNA rules the ask router evaluates (§8.10) · business budgets
 > display-only until post-v1 (§14.11).
+>
+> **Review pass (v2.5)**: goal slice wired through the runtime + DNA-engine read path (§8.1, §8.7) · proposal kinds cover goals; SOPs pinned as playbooks + pointer cards (§4.1, §7) · ask-digest grouping unified (§8.10, §11 P4) · schema gaps closed: ask→initiative link, domain `store` flag, human deputy, ephemeral status mapping, proposal withdraw (§7, §9) · new API: `/dna/goals`, `/initiatives`, governance reads (§9) · tier-2 connectors explicitly post-v1 (§11).
 
 ---
 
@@ -101,7 +103,7 @@ boundaries — with a sixth raised to the top: **shared, governed context**.
                │ node protocol (register, heartbeat, claim runs, stream events)
    ┌───────────┴──────────┐   ┌──────────────────────┐   ┌──────────────────────┐
    │ Node A (dev machine) │   │ Node B (office box)  │   │ Node C (server-local)│
-   │ session workers      │   │ secretary + HR       │   │ automations, KB jobs │
+   │ session workers      │   │ secretary + HR       │   │ automations, DNA jobs│
    │ near repos/tools     │   │ near email/calendar  │   │                      │
    └──────────────────────┘   └──────────────────────┘   └──────────────────────┘
 ```
@@ -136,17 +138,22 @@ documents; it is curated, structured, versioned context.
 | **Cards** | Atomic knowledge: definitions, how-tos, facts, with provenance | "Our refund policy has a 30-day window (ref: policy.doc §4)" |
 | **Rules** | Normative statements with effective dates; supersession chains; optional machine hints | "Invoices > $10k require two approvals" |
 | **Decisions** | Decision records: context, options chosen, outcome, owner, date | "We chose Postgres over Mongo for billing (2026-05-12, Alice)" |
-| **SOPs** | Process definitions; the durable ones are executable playbooks | "Onboarding checklist → onboarding playbook" |
+| **SOPs** | Process definitions — versioned playbooks plus a pointer card (note below the table) | "Onboarding checklist → onboarding playbook" |
 | **Glossary** | Canonical terminology, mapped to aliases | "ARR = annual recurring revenue (not 'annual revenue')" |
 | **Org facts** | Who exists (humans + Coworkers), teams, domain ownership | generated from the org registry, read-only |
 | **Goals & metrics** | Company/quarterly objectives and KPIs; work links to them through initiatives (§5.1) | "Q3: cut support first-response to < 2h" |
+
+**SOP representation** (pinned — §4.5 and §7 deliberately carry no `dna_sops`): the executable
+process is a versioned playbook (§8.6); the DNA holds a card carrying the narrative and a reference
+to the playbook id — never a second executable copy. Proposing an SOP means proposing the pointer
+card; playbook changes ride the playbook engine's own versioning.
 
 ### 4.2 Read path — how coherence actually happens
 
 Every run's system prompt is assembled with:
 - **Always injected**: the org snapshot (who's who), the glossary slice relevant to the task's
   domain, all *applicable rules* for the workspace's domains, and the **goal slice**: active goals
-  linked to the workspace through its initiatives, plus goals flagged org-wide (statement, owner,
+  linked to the workspace through its initiatives, plus goals flagged org-wide (inject 'always'; statement, owner,
   deadline, status). "Applicable" has defined
   semantics: a rule applies when its domain intersects the workspace's domains and its effective
   window covers the run (superseded rules drop out of injection automatically); `machine_hint`
@@ -230,7 +237,7 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
 
 - **Members**: `humans` (identity, RBAC role) and `coworkers` (identity files, scopes) share one
   member namespace — the task board, asks, groups, and lineage all reference members.
-- **Human RBAC**: `admin` (everything), `owner` (a DNA domain + its Coworkers), `member` (work,
+- **Human RBAC**: `admin` (everything), `owner` (one or more DNA domains + their Coworkers), `member` (work,
   propose DNA, spawn within policy), `viewer` (read-only). Auth starts as local accounts; SSO/OIDC
   later.
 - **Asks — the universal interrupt**: approvals, questions, assignments, and spawn requests are all
@@ -301,7 +308,8 @@ spawn({ from: templateId | customRole, class: 'persistent'|'ephemeral',
 
 `customRole` is for persistent hires (proposed by humans, or by agents behind an approval gate);
 ephemeral workers must instantiate whitelisted subagent templates (§6.2) — no free-form
-ephemeral roles.
+ephemeral roles. Ephemeral spawning is an agent/playbook capability only; a human wanting bounded
+delegation assigns a board task or instantiates a playbook.
 
 ### 6.2 Policy engine (hard-coded, not prompt-enforced)
 
@@ -311,7 +319,8 @@ ephemeral roles.
   whitelisted "subagent" templates.
 - **Quotas & caps**: max concurrent ephemeral workers per spawner, global spawn depth (default 2),
   org-wide concurrent Coworkers, per-spawn and org-wide spend caps metered by the spend ledger.
-- **Approval gates**: persistent hires → Ask to the domain owner (or admin); agent-spawned
+- **Approval gates**: persistent hires → Ask to the owner of the domain the hire's primary
+  workspace is bound to (or an admin); agent-spawned
   ephemeral workers exceeding quota → Ask to the spawner's owner human.
 - **Runaway protection**: depth cap, rate limits, TTL reaper, budget circuit-breaker (org spend
   ceiling halts all spawns and automations with a loud Ask to admins).
@@ -353,29 +362,32 @@ New/changed tables (v1 session/run/message/skill/connector tables carry over):
 > per-Coworker KBs → DNA domain imports.
 
 ```
-humans         (id, name, email, rbac 'admin'|'owner'|'member'|'viewer', auth json, created_at)
+humans         (id, name, email, rbac 'admin'|'owner'|'member'|'viewer', auth json,
+                 deputy_member_id?, created_at)  -- deputy: first hop of the §8.10 chain
 coworkers      + owner_human_id, class 'persistent'|'ephemeral', spawned_by member?, ttl_at,
                  budget_cap, lineage_depth, status 'requested'|'active'|'retiring'|'archived'
+                 -- ephemeral spawned/running/done/reaped maps onto requested/active/archived
 nodes          (id, name, kind 'local'|'remote', capabilities json, last_heartbeat,
                  pubkey, enrolled_at, revoked_at?, status 'trusted'|'revoked')
-dna_domains    (id, name, owner_human_id, access 'public'|'domain'|'named')
+dna_domains    (id, name, owner_human_id, access 'public'|'domain'|'named',
+                 store 'git'|'db-only')  -- db-only: the §4.5 privacy carve-out
 dna_cards      (id, domain_id, title, definition_md, refs json, provenance json, version, status)
 dna_rules      (id, domain_id, statement_md, machine_hint json?, effective_from, supersedes_id, status)
 dna_decisions  (id, domain_id, context_md, outcome_md, decided_by member, decided_at)
 dna_glossary   (id, domain_id?, term, definition, aliases json)
 dna_goals      (id, quarter?, statement_md, owner member, status,
                 inject 'always'|'linked', effective_from, effective_to?)  -- goal-slice source (§4.2)
-dna_proposals  (id, kind 'card'|'rule'|'decision'|'edit', payload json, proposed_by member,
+dna_proposals  (id, kind 'card'|'rule'|'decision'|'goal'|'edit', payload json, proposed_by member,
                  provenance json, status 'open'|'published'|'rejected'|'withdrawn', reviewed_by?, at)
 asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request', from member, to member,
-                 payload json, status 'pending'|'answered'|'expired', deadline, created_at,
+                 payload json, initiative_id?, status 'pending'|'answered'|'expired', deadline, created_at,
                  sla_tier 'critical'|'standard'|'bulk', escalation json,
                  expiry_behavior 'deny'|'escalate'|'reassign', responded_at?)  -- supersedes approvals;
                  escalate/reassign close the expired ask and open a linked successor ask (§8.10)
 initiatives    (id, title, goal_ref?, decision_ref?, sponsor member, lead member,
                  status 'proposed'|'active'|'paused'|'closed', business_budget json?, deadline?,
                  closed_at?)
-board_tasks    + assignee_member_id?, initiative_id?  (asks and runs carry initiative_id? the
+board_tasks    + assignee_member_id?, initiative_id?  (runs carry initiative_id? the
                  same way — burndown, per-initiative digests)
 spend_ledger   (id, member_id, run_id?, spawn_id?, tokens_in/out, cost, pricing_version, at)
 ```
@@ -389,7 +401,7 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
 
 - **8.1 Agent runtime** — unchanged core (prompt assembly → guarded loop → structured result), with
   two v2 changes: (a) the always-injected DNA layer (org snapshot, glossary slice, applicable
-  rules) precedes per-Coworker context; (b) headless approval policy now routes into **Asks** —
+  rules, goal slice) precedes per-Coworker context; (b) headless approval policy now routes into **Asks** —
   `auto_deny` (default) | `queue_until_morning` (Task Board digest) | `escalate_im`. These are
   Ask tiers in disguise (§8.10): `escalate_im` → `critical`, `queue_until_morning` → `standard`
   (next digest), `auto_deny` → expiry behavior `deny`; the configuration surface is the ask
@@ -411,7 +423,7 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
   cross-domain spine — nodes route asks into each domain's escalation chain (§8.10) and artifacts
   land on the initiative's board slice.
 - **8.7 DNA engine** — inherits v1 KB machinery (ingest → chunk → embed → cards → hybrid retrieval →
-  citations) extended with domains, proposals, review queue, and glossary/rule injection.
+  citations) extended with domains, proposals, review queue, and glossary/rule/goal-slice injection.
 - **8.8 Groups & IM** — unified human+agent teams; IM pairing routes to a Coworker whose asks
   escalate to the channel.
 - **8.9 Console screens** — v1 screens 1–9, plus five new: **10. Org & People** (members, RBAC, lineage graph,
@@ -426,9 +438,9 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
   run — next digest), `bulk` (non-blocking — daily digest, batched). **Expiry semantics** are
   explicit per ask: `deny` (default for approvals — an expired approval is a no), `escalate`
   (route up the chain), `reassign` (fall back to a named deputy); a run blocked on an expired ask
-  never hangs indefinitely. **Escalation chains**: every ask to a human carries member → deputy →
-  domain owner → admin, walked on SLA breach; `deadline` derives from the tier unless set
-  explicitly. **Batching**: the digest composer groups by workspace and pre-fills recommended
+  never hangs indefinitely. **Escalation chains**: every ask to a human carries member → deputy (set per member in the org
+  registry) → domain owner → admin, walked on SLA breach; `deadline` derives from the tier unless set
+  explicitly. **Batching**: the digest composer groups by initiative, then workspace, and pre-fills recommended
   answers; approvals render as one-line accept/deny with diff links — reviewers see raw diffs,
   never agent-authored summaries alone. **Agent targets**: an ask routed to a Coworker queues into
   its next run (or wakes a session worker); if the target is ephemeral, archived, or busy past
@@ -455,11 +467,13 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
 POST /auth/login (human sessions; PATs for agents/services)
 CRUD /org/humans · /org/members · GET /org/lineage
 POST /nodes/enroll (one-time token exchange) · GET /nodes · POST /nodes/:id/revoke
-CRUD /dna/domains · /dna/cards|rules|decisions|glossary
-POST /dna/proposals  POST /dna/proposals/:id/review (publish|reject)  GET /dna/review-queue
+CRUD /dna/domains · /dna/cards|rules|decisions|glossary|goals
+POST /dna/proposals  POST /dna/proposals/:id/review (publish|reject|withdraw)  GET /dna/review-queue
 POST /spawn          GET /spawn/:id  POST /spawn/:id/retire
 CRUD /asks  ·  POST /asks/:id/respond  ·  WS: ask.requested, ask.answered
+CRUD /initiatives · POST /initiatives/:id/close (runs the §6.3 dependency check)
 CRUD /board-tasks (assign to any member)
+GET /governance/policies|quotas|spend  (console screens 12 & 14)
 (v1 endpoints for coworkers, sessions, messages, automated-tasks, triggers, playbooks, runs carry over)
 ```
 
@@ -514,7 +528,9 @@ to be safe. The v1 cut line stays at Phase 4 because playbooks, multi-human, and
 *multiplicative* complexity (governance surface × trust surface), not additive features — v1 first
 proves the core loop (work → learning → DNA → better work) end to end. Initiatives land in two
 steps — v0 grouping in Phase 4 (a lone admin still needs directives turned into work); budgets and
-delegated authority in Phase 6 (delegation presumes more than one human).
+delegated authority in Phase 6 (delegation presumes more than one human). Tier-2 enterprise
+connectors (§8.2) are deliberately absent from the ladder: they start after v1 ships, once §14.9
+names the first system — an integration project per connector, not a phase.
 
 **Phase-0 spikes** (timeboxed; the ladder isn't committed until they pass):
 - `isolated-vm` on Node 22: maintenance status, compatibility, child-process fallback prototype.
