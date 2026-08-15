@@ -383,6 +383,24 @@ mode so small teams start simple.
 > ask the audit record (§6.2); and an ask deadline before its creation is refused at write
 > (§8.10).
 
+> **Edge-case closure (v2.33)**: twenty-fifth sweep — spawn-approval, dependency-liveness,
+> and reference-mortality seams closed inline: workspace archival settles the pending spawn
+> requests that bind to it — archived with their template pins drained, the initiative-close
+> settlement on the workspace axis — and a spawn approval names its workspace among its
+> respond-time assumptions: still binding-accepting, still readable for the member it would
+> publish, an accept racing archival audit-only, the request archiving, never a worker
+> published onto a row that refuses bindings (§7, §6.2, §8.10) · `depends_on` names live
+> rows — an edge naming a closed initiative is refused at write, the `goal_ref` liveness rule
+> on the graph axis, the only way an edge comes to address a terminal row being the upstream
+> closing under it, exactly the case the close-ask exists for (§5.1, §7) · an activation
+> accept re-validates the initiative's own state — an accept landing after a close that beat
+> it is audit-only, terminal beats activation, the spawn-approval's pause/close rule at the
+> activation door (§5.1, §8.10) · retiring a playbook version refuses while live references
+> hold it — triggers and schedules re-point or disable first, the §8.4 uninstall check
+> applied to playbooks, runs pinning the version they launched from, and SOP pointer cards
+> riding the §4.4 freshness flags rather than dangling silently (§8.6) · workspace archival
+> gets its endpoint and authority — admin, running the §7 walk (§9).
+
 ---
 
 ## 1. Product vision
@@ -979,8 +997,14 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
    alongside the stall clock — playing on resume, the pause-defers-timetables rule applied to
    attention — and a goal ending while `proposed` joins the activation ask on the sponsor's
    desk, one desk, two questions. Activation re-validates the `goal_ref` it inherits like
-   every respond-time assumption (§8.10): a sponsor accepting activation against a goal that
-   died mid-wait is audit-only, the re-point successor ask carrying the decision. And the
+	  every respond-time assumption (§8.10): a sponsor accepting activation against a goal that
+	  died mid-wait is audit-only, the re-point successor ask carrying the decision. The ask
+	  re-validates the initiative's own state at the same door: a close may land from
+	  `proposed` — the denied-initiative rule names it, a sponsor or lead shutting down a
+	  directive that never won its authority — and an activation accept arriving after that
+	  close is audit-only, the row stays closed: terminal beats activation, the spawn
+	  approval's pause/close rule (§8.10) applied at the activation door, so a closed
+	  initiative is never resurrected by an answer that raced its own funeral. And the
    linkage is guarded at birth: a new initiative's `goal_ref` names a live goal at write
    (§7) — an initiative is never born pointed at history; the only way it comes to address a
    terminal row is the goal dying under it, which is exactly the case the ask exists for. The answered choice moves the linkage with it,
@@ -1024,7 +1048,12 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
    coordination signal, not a hard block; the humans who own the downstream calls make them. The
    graph stays a DAG: dependency cycles are refused at write — the §8.10 deputy-cycle guard
    applied to initiatives; a malformed web of directives is rejected at the door, not discovered
-   mid-close.
+   mid-close. Edges name live rows, the `goal_ref` rule on the graph axis: a dependency
+   declared on a closed initiative is refused at write — the upstream's close signal already
+   fired without this dependent, and an edge born pointing at history is a fossil, not a
+   coordination signal. The only way an edge comes to address a terminal row is the upstream
+   closing under a dependent that declared it live, which is exactly the case the close-ask
+   exists for.
 
 **Transitions are owned, not ambient**: `proposed` → `active` is the sponsor's acceptance — an
 initiative opened by anyone other than its sponsor routes an activation ask to the sponsor
@@ -1475,8 +1504,11 @@ initiatives    (id, title, goal_ref?, decision_ref?, sponsor member, lead member
                  -- decision (§5.1, §8.10)
                  -- deadline optional: stall detection without one keys to the linked goal's
                  -- window, else the sponsor's staleness digest line (§5.1);
-                 -- depends_on: cross-initiative DAG — acyclic, enforced at write; closing an
-                 -- upstream with live dependents asks each sponsor — signal, not block (§5.1)
+                 -- depends_on: cross-initiative DAG — acyclic, enforced at write, and its
+                 -- edges name non-closed rows: a dependency on a closed initiative is
+                 -- refused at write, the goal_ref liveness rule on the graph axis (§5.1);
+                 -- closing an upstream with live dependents asks each sponsor — signal,
+                 -- not block (§5.1)
 board_tasks    + assignee_member_id?, initiative_id?  (runs carry initiative_id? the
                  same way — burndown, per-initiative digests)
                  -- assignee: any member but a viewer — and active at write, the sponsor/lead
@@ -1504,7 +1536,11 @@ workspaces     + initiative_ids json?, domain_ids json?, node_id?, claim_epoch i
                  -- case), new spawn bindings are refused (the domain-archive rule), and
                  -- workspace-keyed asks degrade to the domainless fallback — hop skipped,
                  -- digest tail — so no pending ask routes through a workspace gone from
-                 -- live state; and the runtime that launches into the workspace drains with
+                 -- live state; pending spawn requests binding to it archive with their
+                 -- template pins drained — the initiative-close settlement on the workspace
+                 -- axis (§5.1, §6.5): an approval landing after archival has no live row to
+                 -- publish into, and a terminal act leaves no waiters; and the runtime that
+                 -- launches into the workspace drains with
                  -- it: in-flight runs complete onto the archived slice as history — close's
                  -- drain (§5.1); a walk is a walk, never a kill — queued-but-unlaunched
                  -- runs close with an audit note (nothing half-starts on a dead surface),
@@ -1607,6 +1643,14 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
   an instantiation depth cap (default 2, mirroring §6.2) and are cycle-checked at publish —
   direct or transitive self-instantiation is refused at save, and the runtime depth cap is the
   backstop; an orchestration loop cannot starve sandbox quotas underneath the spawn policy.
+  Versioned references are pinned, not dangling: a run launches from the exact playbook
+  version it was instantiated against, so in-flight instantiations complete on their pin
+  through a later publication or retirement — the template-row rule's shape (§6.5) — and
+  retiring a version refuses while live references hold it: triggers and schedules pointing
+  at the version re-point or disable first, the §8.4 skill-uninstall dependency check applied
+  to playbooks. An SOP pointer card left citing a retired version does not block retirement —
+  it rides the §4.4 freshness pass and flags stale, a dangling reference surfaced to its
+  owner, never silently followed into a ghost.
 - **8.7 DNA engine** — inherits v1 KB machinery (ingest → chunk → embed → cards → hybrid retrieval →
   citations) extended with domains, proposals, review queue, and glossary/rule/goal-slice
   injection. An embedding-model switch (§14.7) is a migration, not a reset: the index records its
@@ -1640,10 +1684,14 @@ responses (member and deputy racing) are audit-only; a response to an expired as
   same way, a response racing the originator's retraction audit-only like one racing expiry.
   Responses re-validate before they bind:
   at respond time the ask's payload assumptions are recomputed — the diff still applies, the
-  referenced DNA item is still live, the scope still holds — and a spawn approval names one
-  more assumption of its own: the initiative it files under still accepts launches (§5.1),
-  so an accept racing a pause or close is audit-only and the request archives with its
-  template pin drained, never a worker published into a frozen or closed slice. And a response against a superseded
+  referenced DNA item is still live, the scope still holds — and a spawn approval names two
+  more assumptions of its own: the initiative it files under still accepts launches (§5.1),
+  and the workspace it binds still accepts bindings and remains readable for the member it
+  would publish — §4.2's spawn-time refusal, re-checked at the door the approval finally
+  answers — so an accept racing a pause, a close, or a workspace archival is audit-only and
+  the request archives with its template pin drained, never a worker published into a frozen
+  slice or onto an archived row (§7's walk settles the pending request at archival; this is
+  its racing half). And a response against a superseded
 world is audit-only like a late response, with a successor ask opened against current state (the
 same machinery expiry uses). Provenance re-validates with them: an accept originating in a
 tainted run (§13) is audit-only the same way — taint never becomes approval authority — and the
@@ -1804,6 +1852,11 @@ CRUD /initiatives · POST /initiatives/:id/activate|pause|resume|close
 CRUD /board-tasks (assign to any ask-eligible member — viewer and non-active refused at write, §7)
 POST /workspaces/:id/rebind (admin affinity failover; refuses a target node lacking the
                workspace's required capabilities, §3)
+POST /workspaces/:id/archive (admin; runs the §7 walked transition — initiative bindings
+               dropped with the goal slice re-derived, reader sets re-derived, node claim
+               killed, pending spawn requests archived with their template pins drained,
+               runtime drained, project memory inert — the endpoint and authority the walk
+               presupposes)
 GET /governance/policies|quotas|spend  (console screens 12 & 14)
                · PUT /governance/policies|quotas  (admin; audited — the org-global tunables'
                write surface; per-object settings ride their own CRUD — §4.3's SLA on the
@@ -2058,8 +2111,17 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   injecting until its superseder's effective_from opens), ephemeral-origin persistent-hire
   request refusal with spawner fold-back, re-own scope narrowing (current ∩ new-owner
   ceiling, empty-intersection retirement), the self-addressed approval gate (owner hiring
-  into their own domain — one-click accept, quota/depth/budget still binding), and
-  ask-deadline sanity (a deadline before created_at refused at write).
+  into their own domain — one-click accept, quota/depth/budget still binding), ask-deadline
+  sanity (a deadline before created_at refused at write), workspace-archive spawn-request
+  settlement (pending requests binding to the workspace archived with their template pins
+  drained, an accept racing archival audit-only — the respond-time workspace assumption:
+  binding-accepting and member-readable, the §4.2 spawn-time refusal re-checked at the
+  door), dependency-edge liveness (depends_on naming a closed initiative refused at write),
+  activation-accept racing close (audit-only, the row staying closed — terminal beats
+  activation), playbook-version retirement refusing live trigger and schedule references
+  (runs pinning their launched version, SOP pointer cards flagging stale through the
+  freshness pass instead of blocking), and workspace-archive endpoint authority (admin,
+  running the full §7 walk).
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -2127,7 +2189,12 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   request is refused at write and folds back to its spawner; a re-owned Coworker's scopes
   narrow to the new owner's ceiling, an empty intersection retiring it; a domain owner's
   self-addressed hire approval closes on their own accept; an ask filed with a past deadline
-  is refused at creation.
+  is refused at creation; archiving a workspace archives a pending spawn request bound to it
+  and drains its template pin, while a racing accept stays audit-only; an initiative naming
+  a closed dependency is refused at creation; a sponsor's activation accept landing after
+  the lead closed the proposed initiative is audit-only and the row stays closed; retiring a
+  playbook version with a live trigger is refused until the trigger re-points, an in-flight
+  run completing on its pinned version meanwhile.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -2272,7 +2339,17 @@ successor a scheduled replacement, never a normative gap (§4.2, §7), ephemeral
 persistent-hire requests refused at write with spawner fold-back (§6.1, §6.2), re-owning
 pinned as scope-narrowing with empty-intersection retirement (§5, §6.3), the self-addressed
 approval gate named as the audited one-click it is (§6.2), and ask deadlines sanity-checked
-at creation (§8.10). The former
+at creation (§8.10); v2.33's twenty-fifth sweep closed the spawn-approval,
+dependency-liveness, and reference-mortality seams beneath those — workspace archival
+settling the pending spawn requests that bind to it with their template pins drained, and
+the spawn approval's respond-time assumptions extended to its workspace — still
+binding-accepting, still readable for the member it would publish, an accept racing
+archival audit-only (§7, §6.2, §8.10), dependency edges naming live initiatives with a
+closed-row dependency refused at write (§5.1, §7), the activation accept re-validating the
+initiative's own state against a racing close — terminal beats activation (§5.1, §8.10),
+playbook-version retirement refusing live trigger references with runs pinning their
+launched version and SOP pointer cards riding the freshness flags (§8.6, §4.4), and the
+workspace-archive endpoint with admin authority naming the walk's door (§9). The former
 residue — quorum approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
 check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
