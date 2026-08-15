@@ -544,6 +544,25 @@ mode so small teams start simple.
 > overflow is ordered, not discretionary — glossary, then goals ('linked' before 'always'),
 > then rules (narrative before enforcement-bearing), id-ascending ties, the org snapshot
 > degrading to its routing spine plus the org-facts directory rather than truncating (§4.2).
+>
+> **Edge-case closure (v2.42)**: thirty-fourth sweep — proposer-mortality, ceiling-liveness,
+> catalog-naming, and erasure-prose seams closed inline: a retiring persistent Coworker's open
+> DNA proposals settle in the walk — withdrawn with an audit note, the §5 member-proposal
+> rule's agent twin (a Coworker never owns domains, so no transfer branch exists), the
+> folded-back learning available to the owner for re-proposal, and suspension leaving them
+> standing per the non-terminal rule — the review queue never waits on a departed proposer,
+> whatever member shape the proposer was (§6.3, §4.3) · the spawn approval's respond-time
+> assumptions gain their ceiling: `scopeCeiling` lands at activation as requested ∩ the
+> requester's live scopes — the §6.5 upgrade algebra at the spawn door — an empty intersection
+> archiving the request with pin and claims released, so child ⊆ parent binds the parent the
+> accept finds, never the snapshot the request filed (§6.2, §8.10, §7) · a template name keys
+> its lineage across live and retired rows: a new template reusing a fully retired name must
+> carry that name's class — class immutability spanning the lineage, not the live set — and a
+> role whose class genuinely changed takes a new name, the domain-name reuse rule's catalog
+> twin (§6.5, §7) · and the erasure annex covers operational prose: ask payloads, board-task
+> descriptions, and run artifacts naming the member are reported for the human
+> delete/rewrite/contest call like DNA prose — identity fields pseudonymize, prose reports
+> (§4.5).
 
 ---
 
@@ -1069,10 +1088,14 @@ the responses ledger behind any quorum — and completed board-task assignments 
 with the audit and spend lines, the event shape (what was asked, what answered, what was
 assigned, when) kept while the identity link severs; pending state needs no rule of its own,
 the §5 walk having resolved it before an erasure request can run. Free-text mentions —
-prose that names the member inside a card body, a memory item, or a decision's context — are
-reported, never rewritten: the sweep files an erasure annex to the admin listing each mention
-with its owner, and the per-mention call (delete, rewrite under owner review, or contest as
-outside the demand) is a human one — never silently kept, never silently rewritten. Git history
+prose that names the member inside a card body, a memory item, a decision's context, or the
+operational record's own prose: ask payloads, board-task descriptions, and run artifacts —
+are reported, never rewritten: the sweep files an erasure annex to the admin listing each
+mention with its owner — the initiative sponsor where the surface is initiative-tagged, else
+the admin, operational records having no domain owner — and the per-mention call (delete,
+rewrite under owner review, or contest as outside the demand) is a human one — never
+silently kept, never silently rewritten; the identity fields around the prose pseudonymize
+on the ledger's terms (above) while the prose itself reports. Git history
 retains the pre-pseudonym commits
 under the immutable-history boundary, and an erasure demand that exceeds pseudonymization takes
 the documented history-rewrite remediation below. Legal holds
@@ -1481,6 +1504,13 @@ not only from what was pre-authored.
   released (§8.10) — retirement and offboarding already settle their requests inside the walk
   (§6.3, §5), and suspension, which resolves no dependents, is covered at the door: never a
   worker published under a halted subtree, and the suspended requester re-requests on resume.
+  The ceiling the request names is an assumption of the same rank: `scopeCeiling` lands at
+  activation as requested ∩ the requester's live scopes — the §6.5 upgrade algebra at the
+  spawn door, a requester narrowed between filing and accept narrowing the child with the
+  answer — and an intersection that comes back empty archives the request with its template
+  pin drained and its cap claims released, the empty-intersection refusal's spawn twin:
+  child ⊆ parent binds the parent the accept finds, never the snapshot the request filed,
+  so a demoted or de-scoped requester cannot publish a child above the ceiling they now hold.
   And the change of heart has a door of its own: the approval ask is the requester's — `from`
   the requester, §8.10 — so its withdraw is the request's retraction: the ask resolves per
   the withdrawal algebra (a withdrawn approval is a no), and the request archives with its
@@ -1562,9 +1592,16 @@ re-keying to the re-pointed sponsor inside the walk, the offboard rule's post-de
 twin — and the retiree's own pending asks closed with
 an audit note — pending spawn requests included, draining the template pins they hold (§6.5):
 their originating runs are halted and folded, so an answer would have no consumer, and a
-terminal act must not leave state waiting on a member who will never respond) — the same
-dependency check as deleting a skill, applied to staff; the §5 offboarding walk is its
-superset for humans. Upgrade asks about the retiree settle with it: an owner-upgrade ask
+terminal act must not leave state waiting on a member who will never respond) — and authored
+proposals join the settlement: a persistent Coworker's open DNA proposals withdraw with an
+audit note inside the walk, the §5 member-proposal rule's agent twin (a Coworker never owns
+domains, so there is no transfer branch), the folded-back learning staying available to its
+owner for a fresh proposal, and the review queue never waiting on a departed proposer
+whatever member shape the proposer was — while suspension leaves them standing, the
+non-terminal rule: the reviewing owner may still publish, amendment alone waits on the
+proposer. The whole requirement is the same dependency check as deleting a skill, applied to
+staff; the §5 offboarding walk is its superset for humans. Upgrade asks about the retiree
+settle with it: an owner-upgrade ask
 pinned to this Coworker (§6.5) closes unresolved with an audit note inside the walk — the
 pin dies with the row — and a response racing the retirement is audit-only with no
 successor ask, the respond-time re-validation's terminal case (§8.10). Suspension strands
@@ -1635,7 +1672,11 @@ spawned from. A template's class is its identity across those versions: a versio
 a class different from its name's predecessors is refused at publish — the (class, name,
 version) key names rows, but the name keys the lineage — so a persistent Coworker's
 upgrade ask can never point at an ephemeral-class row; a role that has genuinely changed
-class is a new template and the retire-and-respawn path (§6.3), not a version bump.
+class is a new template and the retire-and-respawn path (§6.3), not a version bump. And the
+name carries that lineage past retirement: a new template may reuse a fully retired name,
+but only in that name's class — the class pin spans the name's live and retired rows alike,
+so a catalog name never changes shape over time (§7), the domain-name reuse rule (§4.4)
+applied to the catalog.
 The catalog's write surface is admin-governed and audited — authoring,
 publishing, and retiring templates are infrastructure acts; the owner asks below govern
 adoption of what lands, never authorship of it. Version selection is explicit at every door:
@@ -1756,7 +1797,12 @@ role_templates (id, name, version, class 'persistent'|'ephemeral-subagent', body
                  -- version is a new row, never an in-place rewrite of one a Coworker pins;
                  -- class is stable across a name's versions — a class-flipping version is
                  -- refused at publish (§6.5), so a pinned lineage never changes shape
-                 -- under the Coworkers holding it
+                 -- under the Coworkers holding it — and the name keys the lineage past
+                 -- retirement: a new template reusing a fully retired name must carry that
+                 -- name's class, class immutability spanning the lineage's live and retired
+                 -- rows alike, so a catalog name never changes shape over time; a role whose
+                 -- class genuinely changed takes a new name (§6.5), the domain-name reuse
+                 -- rule's catalog twin (§4.4)
                  -- spawn requests name the exact row (newest active the console default, §6.5);
                  -- publishing a new active version files owner-upgrade asks to pinned Coworkers —
                  -- publication supersedes, never retires: a denied upgrade's pin stands on a
@@ -2149,15 +2195,19 @@ responses (member and deputy racing) are audit-only; a response to an expired as
   contract, checked like what it answers.
   Responses re-validate before they bind:
   at respond time the ask's payload assumptions are recomputed — the diff still applies, the
-  referenced DNA item is still live, the scope still holds — and a spawn approval names four
+  referenced DNA item is still live, the scope still holds — and a spawn approval names five
   more assumptions of its own: the initiative it files under still accepts launches (§5.1),
   the workspace it binds still accepts bindings and remains readable for the member it
   would publish — §4.2's spawn-time refusal, re-checked at the door the approval finally
   answers — and the requester itself is still `active`: an approval publishes a worker into
   its requester's live context, and lineage, fold-back, and quota all key on a spawner that
-  can still receive them — and the spend halt is not holding: a §6.2 trip refuses launches,
+  can still receive them — and the ceiling it names still derives: `scopeCeiling` lands at
+  activation as requested ∩ the requester's live scopes, an empty intersection archiving the
+  request with pin and claims released (§6.2), the child never published above a narrowed
+  parent — and the spend halt is not holding: a §6.2 trip refuses launches,
   and publishing a worker is one. So an accept racing a pause, a close, a workspace archival,
-  the requester's own suspension, or the breaker's trip is audit-only and the request archives
+  the requester's own suspension, a narrowing that emptied the ceiling, or the breaker's trip
+  is audit-only and the request archives
   with its template pin
   drained and its cap claims released, never a worker published into a frozen slice, onto an
   archived row, under a halted subtree, or past a tripped ceiling (§7's walk settles the pending request at archival;
@@ -2716,7 +2766,16 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   id-ascending ties — the org snapshot degrading to spine-plus-org-facts rather than
   truncating), and erasure's operational-history sweep (resolved asks —
   `from`/`to` and quorum response ledgers — and completed assignments pseudonymized with
-  the event shape kept, pending state resolved by the prerequisite walk).
+  the event shape kept, pending state resolved by the prerequisite walk), retire-walk
+  proposal settlement (a persistent Coworker's open DNA proposals withdrawn with an audit
+  note inside the retirement, the folded-back learning available to the owner, suspension
+  leaving them standing — publish open, amendment waiting), spawn-approval ceiling
+  re-derivation (requested ∩ the requester's live scopes at the accept, a narrowing landing
+  the child at the narrower ceiling, an empty intersection archiving with pin and claims
+  released), template-name lineage reuse (a fully retired name reusable same-class only, a
+  class-flipping reuse refused at create), and erasure's operational-prose annex (ask
+  payloads, task descriptions, and run artifacts reported with the accountable human and the
+  human call, identity fields pseudonymizing).
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -2841,7 +2900,15 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   injected, and an org snapshot past its budget renders the routing spine with members
   demoted to the org-facts directory; and erasing a departed member pseudonymizes their
   resolved asks and completed
-  assignments while the walks have already resolved the pending ones.
+  assignments while the walks have already resolved the pending ones; retiring a Coworker
+  mid-review withdraws its open proposals with an audit note and the reviewing owner's queue
+  moves on, a suspended retiree-to-be's proposals still publishable meanwhile; a spawn
+  approval landing after its requester's scopes were narrowed publishes the child at the
+  re-derived ceiling, while one landing on a narrowed-to-empty ceiling archives the request
+  with its claims released; creating a template on a fully retired name in the other class is
+  refused at the door while a same-class reuse lands as a new version row; and erasing a
+  departed member lists their name inside ask payloads and task descriptions in the annex —
+  sponsor- or admin-owned per surface — while the addressing pseudonymizes.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -3050,7 +3117,15 @@ withdraw on a pending spawn approval as the request's own retraction terminal (�
 §8.10, §9), agent-named delegation grants lapsing with their grantee inside the retire walk
 while post-named grants ride re-pointing (§6.3, §8.10), review-SLA edits re-deriving
 standing clocks monotonically with the ≥1 bound at every door (§4.3, §7), and the injection
-overflow's ordered demotion with the org snapshot degrading to spine-plus-org-facts (§4.2).
+overflow's ordered demotion with the org snapshot degrading to spine-plus-org-facts (§4.2);
+v2.42's thirty-fourth sweep closed the proposer-mortality, ceiling-liveness, catalog-naming,
+and erasure-prose seams beneath those — the retire walk withdrawing a persistent Coworker's
+open DNA proposals with an audit note, the §5 member-proposal rule's agent twin (§6.3, §4.3),
+the spawn approval's ceiling re-derived against the requester's live scopes at the door,
+landing requested ∩ current with an empty intersection archiving (§6.2, §8.10), template
+names keying their lineage across retired rows with class-pinned reuse (§6.5, §7), and the
+erasure annex extended to operational prose — ask payloads, task descriptions, run artifacts
+(§4.5).
 The former
 residue — quorum approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,

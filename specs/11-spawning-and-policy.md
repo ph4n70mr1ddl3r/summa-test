@@ -95,6 +95,12 @@ Source: PLAN.md §6.1, §6.2.
   released — denial, expiry, the walks' settlements, the requester-state archive, and the
   retract: one settlement, every terminal; a pending hire never outlives the live intent
   that filed it.
+- **SPW-048** — The requested `scopeCeiling` is a respond-time assumption of the same rank:
+  it lands at activation as requested ∩ the requester's live scopes (the upgrade algebra,
+  TPL-020, at the spawn door), and an empty intersection archives the request with its
+  template pin drained and cap claims released. Child ⊆ parent binds the parent the accept
+  finds, never the snapshot the request filed — a demoted or de-scoped requester cannot
+  publish a child above the ceiling they now hold (ASK-041's re-validation family).
 
 ## Spend circuit-breaker
 

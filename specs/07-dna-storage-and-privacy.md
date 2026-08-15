@@ -63,6 +63,11 @@ Source: PLAN.md §4.5, §4.6.
   until an admin releases them, audited; an erasure request against a member with live
   dependencies is refused until the SPEC-09 offboarding walk has run.
 - **STG-035** — Erasure is the only shredding path in the product (DWP-061).
+- **STG-036** — The annex covers operational prose: ask payloads, board-task descriptions,
+  and run artifacts naming the member are reported for the human delete/rewrite/contest call
+  like DNA prose, each listed with the surface's accountable human — the initiative sponsor
+  where the surface is initiative-tagged, else the admin (operational records have no domain
+  owner). Identity fields pseudonymize on the ledger's terms (STG-031); the prose reports.
 
 ## Reconstructibility (db-only)
 

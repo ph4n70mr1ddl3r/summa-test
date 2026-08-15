@@ -47,11 +47,13 @@ Source: PLAN.md §8.10.
   endpoint with the attempt audited.
 - **ASK-041** — Responses re-validate before they bind: payload assumptions are recomputed
   at respond time — the diff still applies, the referenced DNA item is still live, the scope
-  still holds — and a spawn approval names five assumptions: the initiative still accepts
-  launches (INT-080), the workspace still accepts bindings and remains readable for the
-  member it would publish, the requester is still `active`, and the spend halt is not
-  holding. An accept racing a pause, close, workspace archival, requester suspension, or the
-  breaker's trip is audit-only: the request archives with pin drained and claims released.
+  still holds — and a spawn approval names its own assumption set: the initiative still
+  accepts launches (INT-080), the workspace still accepts bindings and remains readable for
+  the member it would publish, the requester is still `active`, the ceiling it names still
+  derives (SPW-048), and the spend halt is not holding. An accept racing a pause, close,
+  workspace archival, requester suspension, a narrowing that emptied the ceiling (SPW-048),
+  or the breaker's trip is audit-only: the request archives with pin drained and claims
+  released.
 - **ASK-042** — A response against a superseded world is audit-only with a successor ask
   opened against current state (the machinery expiry uses).
 - **ASK-043** — Provenance re-validates: an accept originating in a tainted run is

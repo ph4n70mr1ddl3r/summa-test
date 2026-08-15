@@ -49,6 +49,13 @@ Source: PLAN.md §6.3, §6.4.
   content stands, its routing reverting to the domain owner, a digest line noting the grant
   that died with its grantee (ASK-095). A post-named grant ("by the lead") rides the post's
   re-pointing instead, and suspension keeps the non-active reassignment as its transient.
+- **CLC-026** — Authored proposals ride the retire walk: a persistent Coworker's open DNA
+  proposals withdraw with an audit note inside the retirement — the SPEC-09 member-proposal
+  rule's agent twin (a Coworker never owns domains, so there is no transfer branch), the
+  folded-back learning staying available to its owner for a fresh proposal, and the review
+  queue never waiting on a departed proposer whatever member shape the proposer was.
+  Suspension leaves them standing (non-terminal): the reviewing owner may still publish;
+  amendment alone waits on the proposer.
 
 ## Suspend and resume
 

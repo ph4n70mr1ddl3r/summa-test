@@ -14,6 +14,11 @@ Source: PLAN.md §6.5.
   retire-and-respawn path.
 - **TPL-004** — Catalog writes — create, publish, retire — are admin-governed and audited:
   authorship is infrastructure; owner asks govern adoption, never authoring.
+- **TPL-045** — A template name keys its lineage across live and retired rows: a new
+  template reusing a fully retired name shall carry that name's class — class immutability
+  spans the lineage, not the live set, so a catalog name never changes shape over time — and
+  a role whose class genuinely changed takes a new name; the domain-name reuse rule
+  (DAT-050/DNC-060) applied to the catalog.
 
 ## Version selection and publication
 
