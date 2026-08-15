@@ -325,6 +325,26 @@ mode so small teams start simple.
 > resume, and closing re-points or disables the triggers and playbook schedules that launch
 > under the initiative — pause defers timetables, close answers the door (§5.1).
 
+> **Edge-case closure (v2.30)**: twenty-second sweep — revocation-mortality, goal-linkage,
+> and close-drain seams closed inline: revoking a node with live workspace bindings surfaces
+> each bound workspace's rebind ask at revocation time — a deliberate act is a visible
+> configuration error, never a 24h silent queue a hopeless topology quietly endures — and
+> in-flight runs on the node halt the way suspension halts them (fold-back + §8.2
+> reconciliation, never mid-commit, terminal with no resurrection), the node's claims dying
+> with the row: revocation is the fenced lease's terminal case (§3, §9) · the goal-end
+> direction ask fires in every non-closed initiative state — under pause its escalation is
+> suspended with the stall clock and plays on resume, under `proposed` it joins the activation
+> ask on the sponsor's desk — activation itself re-validates the `goal_ref` it inherits: an
+> accept against a dead goal is audit-only, the re-point successor ask carrying the decision;
+> a new initiative's `goal_ref` names a live goal at write, and a re-point answer's target
+> rides the same liveness check — an initiative is never born pointed at history, and the
+> only way it comes to address a terminal row is the goal dying under it (§5.1, §8.10, §7) ·
+> closing archives the initiative's pending spawn requests with their template pins drained —
+> the retire walk's settlement applied at close — and a spawn-approval ask names the
+> initiative among its respond-time assumptions: an accept racing a pause or close is
+> audit-only, the request archiving, never a worker published into a slice that refuses
+> launches (§5.1, §6.2, §8.10).
+
 ---
 
 ## 1. Product vision
@@ -407,11 +427,20 @@ boundaries — with a sixth raised to the top: **shared, governed context**.
 - **Workspace affinity**: runs are scheduled to the node where the workspace's files/connectors
   live (an engineer Coworker runs on the machine with the repo; the secretary's mailbox connector
   lives wherever it was authorized). Affinity is a scheduling preference, not a marriage: when the
-  affinity node is offline or revoked, new runs queue until its heartbeat returns or an admin
-  rebinds the workspace to another node — a rebind that first validates the target node actually
+  affinity node goes offline, new runs queue until its heartbeat returns or an admin rebinds the
+  workspace to another node — a rebind that first validates the target node actually
   advertises the workspace's required capabilities (files present, connectors authorized — §7
   `nodes.capabilities`), and a queue starved past a configurable window (default 24h) raises an
-  admin ask: starvation is surfaced, never silently endured. Capability validation is a property
+  admin ask: starvation is surfaced, never silently endured. Revocation is not the silent twin
+  of an outage: an offline node may heartbeat back, a revoked one never will — its keypair is
+  refused at every connection — so revoking a node with live workspace bindings surfaces each
+  bound workspace's rebind ask at revocation time (§9), the impossible-placement pattern applied
+  to a deliberate act, never a 24h queue the topology itself made hopeless. In-flight runs on a
+  revoked node halt the way suspension halts them — partial results fold back through the memory
+  tiers, staged writes go to §8.2 reconciliation, never killed mid-commit, and the runs are
+  terminal with no resurrection (§6.3) — and the node's claims die with the row: revocation is
+  the fenced lease's terminal case, the epoch fence refusing at the mediated boundary whatever a
+  revoked node still holds. Capability validation is a property
   of the bind, not of the failover: the initial workspace–node placement runs the same check, so
   a workspace is never born attached to a node that cannot run it. Capabilities are live
   advertisements, not enrollment facts: every heartbeat re-states them, and a node whose
@@ -868,17 +897,28 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
    open work is not silent either: a bulk-tier close-out ask goes to the sponsor — close, or
    extend the deadline if more is coming — so a finished initiative cannot linger on holding
    workspace bindings and injecting goals nobody is driving. The same ask fires when the
-   linked goal's window (`effective_to`, §4.2) ends while the initiative is still active —
+   linked goal's window (`effective_to`, §4.2) ends while the initiative is live —
    extend, re-target, or close is a human call, not a silent drop from the slice — and any
    terminal transition of the linked goal (`met`, `missed`, `retired`) fires the same ask, not
    just a window elapsing — the choices track the outcome: window-end offers extend/re-target/
    close, `met` offers close or re-target (a met goal needs no extension), `missed` and
-   `retired` offer re-base/re-target/close — so an active initiative never keeps executing
-   toward a goal that has already ended. The answered choice moves the linkage with it,
+   `retired` offer re-base/re-target/close — so an initiative never keeps executing
+   toward a goal that has already ended. The ask's state coverage is every non-closed state,
+   not `active` alone: a goal ending under pause raises it with the escalation suspended
+   alongside the stall clock — playing on resume, the pause-defers-timetables rule applied to
+   attention — and a goal ending while `proposed` joins the activation ask on the sponsor's
+   desk, one desk, two questions. Activation re-validates the `goal_ref` it inherits like
+   every respond-time assumption (§8.10): a sponsor accepting activation against a goal that
+   died mid-wait is audit-only, the re-point successor ask carrying the decision. And the
+   linkage is guarded at birth: a new initiative's `goal_ref` names a live goal at write
+   (§7) — an initiative is never born pointed at history; the only way it comes to address a
+   terminal row is the goal dying under it, which is exactly the case the ask exists for. The answered choice moves the linkage with it,
    atomically with the answer: extend re-windows the same row, re-base and re-target swap
    `goal_ref` onto the new goal, and the goal slice re-derives at once (§7) — the re-point is
    part of the ask's effect, never a manual afterthought that leaves the spine addressing a
-   terminal row; an unanswered ask escalates rather than leaving the linkage dangling (the
+   terminal row — and the swap's target rides the same respond-time liveness check (§8.10):
+   a re-point onto a goal that itself died while the ask waited is audit-only, the successor
+   ask carrying a live choice; an unanswered ask escalates rather than leaving the linkage dangling (the
    direction-ask rule, below). **Pause is explicit
   and total**: a paused initiative suspends its stalled-work escalation and freezes its board
  slice (no new runs or spawns launch under it — filing and editing board tasks on the frozen
@@ -892,7 +932,10 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
   `effective_to`) stays the bound, and pausing past the deadline still raises the sponsor ask —
   pause is a state, not a way to outlive a deadline silently. Closing runs the same dependency
    check as retiring a Coworker (§6.3) over the initiative's durable state — open asks
-   and tasks resolved or reassigned, and the triggers and playbook schedules whose runs launch
+   and tasks resolved or reassigned, pending spawn requests archived with their template pins
+   drained (the retire walk's spawn-request settlement applied at close, §6.3, §6.5: an
+   approval landing after close would publish a worker into a slice that refuses launches,
+   and a terminal act leaves no waiters), and the triggers and playbook schedules whose runs launch
    under it re-pointed to a successor initiative or disabled with an audit note, the
    retire-walk's automation resolution applied to the spine, so nothing keeps knocking on a
    closed door — while its in-flight execution drains, never truncates:
@@ -1316,6 +1359,11 @@ initiatives    (id, title, goal_ref?, decision_ref?, sponsor member, lead member
                  -- the eligibility refusals: viewer and non-active members refused (§5.1);
                  -- transition authority (§5.1): sponsor activation, lead/sponsor pause-resume-close,
                  -- admin backstop on pause/resume
+                 -- goal_ref: a live goal at write — an initiative is never born pointed at
+                 -- history (§5.1); the goal-end direction ask fires in every non-closed state,
+                 -- and activation re-validates the reference: an accept against a goal that
+                 -- died mid-wait is audit-only, the re-point successor ask carrying the
+                 -- decision (§5.1, §8.10)
                  -- deadline optional: stall detection without one keys to the linked goal's
                  -- window, else the sponsor's staleness digest line (§5.1);
                  -- depends_on: cross-initiative DAG — acyclic, enforced at write; closing an
@@ -1466,7 +1514,10 @@ responses (member and deputy racing) are audit-only; a response to an expired as
   same way, a response racing the originator's retraction audit-only like one racing expiry.
   Responses re-validate before they bind:
   at respond time the ask's payload assumptions are recomputed — the diff still applies, the
-  referenced DNA item is still live, the scope still holds — and a response against a superseded
+  referenced DNA item is still live, the scope still holds — and a spawn approval names one
+  more assumption of its own: the initiative it files under still accepts launches (§5.1),
+  so an accept racing a pause or close is audit-only and the request archives with its
+  template pin drained, never a worker published into a frozen or closed slice. And a response against a superseded
 world is audit-only like a late response, with a successor ask opened against current state (the
 same machinery expiry uses). Provenance re-validates with them: an accept originating in a
 tainted run (§13) is audit-only the same way — taint never becomes approval authority — and the
@@ -1582,6 +1633,9 @@ CRUD /org/humans · /org/members · GET /org/lineage
 POST /org/humans/:id/erasure (admin; audited; honors data_holds — §4.5)
 POST /org/humans/:id/offboard (admin; runs the §5 dependency walk; transactional last-admin guard)
 POST /nodes/enroll (one-time token exchange) · GET /nodes · POST /nodes/:id/revoke
+               (revocation surfaces the §3 rebind ask for every workspace bound to the node —
+               a deliberate act is never a silent queue; in-flight runs halt with fold-back
+               and §8.2 reconciliation; the node's claims die with the row)
                · PUT /nodes/:id (admin; a region edit re-validates every residency-constrained
                placement bound to the node — §3, the node-side twin of §4.4's domain-edit rule)
 CRUD /dna/domains · /dna/cards|rules|decisions|glossary|goals
@@ -1849,7 +1903,14 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   re-routed, from-it closed with an audit note), PAT live-authority intersection under
   demotion, residency at-rest attestation on set or tighten, quorum lower bound
   (`requires_approvals` ≥ 1) at every write door, withdrawn-racer responses audit-only,
-  close-time automation re-pointing or disabling.
+  close-time automation re-pointing or disabling, node revocation with live bindings
+  (rebind ask surfaced at revocation time, in-flight halt with fold-back, claims dying with
+  the row), goal-end direction asks beyond `active` (pause suspending the escalation with the
+  stall clock, proposed joining the activation ask, activation re-validating the goal_ref with
+  an audit-only accept against a dead goal), goal_ref live-at-write (an initiative never born
+  pointed at history, a re-point target riding the same liveness check), close-time
+  spawn-request archival with template-pin drain, spawn-approval respond-time initiative
+  re-validation (an accept racing pause or close audit-only, the request archiving).
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -1897,7 +1958,13 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   silently; firings elapsing under an initiative pause coalesce and play on resume; closing
   an initiative disables or re-points the triggers whose runs launched under it, with an
   audit note; a reaped ephemeral's pending ask from it closes with an audit note while asks
-  to it re-route up the chain.
+  to it re-route up the chain; revoking a node with bound workspaces surfaces their rebind
+  asks at revocation time and halts in-flight runs with fold-back and reconciliation; a goal
+  going terminal under a paused initiative raises the sponsor ask suspended with the stall
+  clock and playing on resume, and a sponsor's activation accept against a goal that died
+  mid-wait is audit-only with the re-point successor ask carrying the decision; a spawn
+  approval racing its initiative's close is audit-only, the request archiving with its
+  template pin drained.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -2016,7 +2083,14 @@ write authority pinned — structural admin, compartmental owner, authorship adm
 §6.5), the reap walk's both-direction ask settlement (§6.3), live-RBAC credential narrowing
 on demotion (§10), residency's at-rest admin attestation (§3), parity-stall surfacing (§8.7),
 the quorum lower bound at every write door (§8.10, §9), withdrawn-racer audit-only responses
-(§8.10), and pause-coalesced schedules plus close-time automation resolution (§5.1). The former
+(§8.10), and pause-coalesced schedules plus close-time automation resolution (§5.1); v2.30's
+twenty-second sweep closed the revocation-mortality, goal-linkage, and close-drain seams
+beneath those — node revocation with live bindings surfacing rebind asks at revocation time,
+halting in-flight runs with fold-back and reconciliation, and killing claims with the row
+(§3, §9), the goal-end direction ask extended to every non-closed initiative state with
+activation re-validating the goal_ref and the linkage guarded live-at-write (§5.1, §8.10,
+§7), and close-time spawn-request archival with the initiative named among spawn-approval
+respond-time assumptions (§5.1, §6.2, §8.10). The former
 residue — quorum approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
 check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
