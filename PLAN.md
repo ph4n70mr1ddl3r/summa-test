@@ -510,6 +510,24 @@ mode so small teams start simple.
 > eligibility door (§8.10) · and the org snapshot injects the live member set — departed
 > members leave the always-injected layer at the walk, their record living in decisions and
 > audit, no prompt carrying a departed member as present (§4.2).
+>
+> **Edge-case closure (v2.40)**: thirty-second sweep — timetable, originator, and
+> state-rendering seams closed inline: the spend halt is a timetable state, not only a launch
+> gate — schedules elapsing under the trip coalesce per the §8.5 machinery and play on the
+> trip ask's resolution, the critical floor launching critical-class firings throughout, total
+> exhaustion coalescing everything — pause's deferral rule extended to the money door, never a
+> silent drop nor a lift storm (§6.2, §8.5) · plane-filed asks gain their originator: a
+> reserved system principal — never a target, never response-eligible, rendered 'System' —
+> with withdrawal reserved to the mechanisms that name their closures, and each side's
+> retraction its own door; a compliance ask never files `from` the member it watches (§7,
+> §8.10) · the org snapshot carries state, not just membership: suspended renders
+> present-but-halted — the §8.10 non-active reassignment's rendering twin, never offered as a
+> destination — retiring renders terminal-bound, and a `requested` hire is absent until
+> activation publishes it, so what a prompt presents as answerable matches what the write
+> guards accept (§4.2) · erasure sweeps operational history: resolved asks — `from`/`to`
+> addressing and quorum response ledgers — and completed board-task assignments pseudonymize
+> with the audit and spend lines, event shape kept, identity link severed, pending state
+> pre-resolved by the §5 walk (§4.5).
 
 ---
 
@@ -689,7 +707,13 @@ Every run's system prompt is assembled with:
 - **Always injected**: the org snapshot (who's who — the live member set: a deactivated human
   or retired Coworker leaves the snapshot at the walk, their record living on in decisions and
   audit, the §4.4 reader-set liveness rule applied to the injected layer's own source — no
-  prompt carries a departed member as present), the glossary slice relevant to the task's
+  prompt carries a departed member as present — and membership is not the whole render: the
+  snapshot carries state, so an `active` member renders available, a `suspended` Coworker
+  renders present-but-halted — never offered as a destination, the §8.10 non-active
+  reassignment's rendering twin — a `retiring` one terminal-bound, and a `requested` hire is
+  absent until activation publishes it; what a prompt presents as answerable matches what the
+  write guards accept, the liveness rule of the injected layer extended from membership to
+  state), the glossary slice relevant to the task's
   domain, all *applicable rules* for the workspace's domains, and the **goal slice**: active goals
   linked to the workspace through its initiatives, plus goals flagged org-wide (inject 'always'; statement, owner,
   deadline, status) — the flag composes with scope rather than overriding it: a domain-scoped goal
@@ -1004,7 +1028,12 @@ replaced by a one-way pseudonym, severing identity without amputating the trail.
 every live-state reference, not just ledgers: DNA provenance frontmatter and proposal attribution
 rewrite to the pseudonym as a normal signed commit, and memory attribution joins the sweep —
 personal and project memory (§8.3) re-point to the pseudonym the same way, so a departed
-member's lessons survive as lessons while the identity link does not. Free-text mentions —
+member's lessons survive as lessons while the identity link does not. Operational history
+joins the sweep on the ledger's terms: resolved ask rows — their `from`/`to` addressing and
+the responses ledger behind any quorum — and completed board-task assignments pseudonymize
+with the audit and spend lines, the event shape (what was asked, what answered, what was
+assigned, when) kept while the identity link severs; pending state needs no rule of its own,
+the §5 walk having resolved it before an erasure request can run. Free-text mentions —
 prose that names the member inside a card body, a memory item, or a decision's context — are
 reported, never rewritten: the sweep files an erasure annex to the admin listing each mention
 with its owner, and the per-mention call (delete, rewrite under owner review, or contest as
@@ -1448,7 +1477,15 @@ not only from what was pre-authored.
   tags live on triggers and playbooks (§7), so the floor keeps critical-class firings —
   in-flight and newly fired — reserving within its headroom through a partial breach, but a
   spawn approval carries no criticality tag and never rides the floor; no accept publishes a
-  worker past a halt, and total exhaustion halts everything anyway. The TTL
+  worker past a halt, and total exhaustion halts everything anyway. And the halt is a timetable
+  state as well, not only a launch gate: schedules elapsing while it holds are pause's rule at
+  the money door — firings coalesce per the §8.5 machinery, one catch-up run per trigger with
+  its missed-schedule summary, §6.2 rate limits bounding the backlog — and play when the trip
+  ask resolves, so a standard-class trigger neither dies silently under the halt (§2) nor
+  storms on the lift; the critical floor keeps critical-class firings launching in its headroom
+  throughout, and a total-exhaustion halt coalesces everything, playing on lift — the money
+  door defers timetables exactly as an initiative pause (§5.1) and a suspension (§8.5) do,
+  never dropping them. The TTL
   reaper never kills between prepare and commit of an external write: it grants a grace window
   and leaves a reconcilable `external_writes` row instead (§8.2). A TTL lapsing while its worker
   is suspended halts-then-reaps — fold-back and §8.2 reconciliation first, archive after (§6.3):
@@ -1829,6 +1866,16 @@ asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request', fro
                  -- audit-only (§8.10, §4.4)
                  -- the terminal admin hop is a broadcast: every active admin addressed at once,
                  -- first valid response wins — a single-admin org the degenerate case (§8.10)
+                 -- from: member-filed asks name their filer; plane-filed asks — goal-window,
+                 -- stall, close-out, dependency, starvation, rebind, trip, upgrade,
+                 -- activation, contradiction, quarantine, parity, storm-aggregate among
+                 -- them, the filing event the rule, not the enumeration — carry the
+                 -- reserved system originator: not a member row, never a target, never
+                 -- response-eligible, rendered 'System'
+                 -- (§8.10); withdrawal of a system ask belongs to the system's named closures
+                 -- alone — the walks' audit-note settlement, the aggregate's recovery-or-ack
+                 -- close, expiry per behavior — and the system withdraws no member's ask:
+                 -- each side's retract is its own door
 initiatives    (id, title, goal_ref?, decision_ref?, sponsor member, lead member,
                  status 'proposed'|'active'|'paused'|'closed', business_budget json?, deadline?,
                  closed_at?, depends_on json?)
@@ -1975,9 +2022,10 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
 - **8.4 Skills** — unchanged; domain-organized packs; uninstall dependency checks.
 - **8.5 Trigger engine** — schedule/API/event triggers unchanged; every firing is a run of the same
   session worker; API triggers gain PAT scopes for external callers. Missed schedules neither
-  replay nor vanish: firings elapsing during a Coworker suspension or control-plane downtime
-  coalesce into one catch-up run per trigger on resume, carrying a missed-schedule summary (count,
-  window) — per-trigger policy `replay|coalesce|skip`, default coalesce, with §6.2 rate limits
+  replay nor vanish: firings elapsing during a Coworker suspension, an initiative pause (§5.1),
+  the §6.2 spend halt, or control-plane downtime coalesce into one catch-up run per trigger when
+  the halt holding them lifts (resume, un-pause, or the trip ask's resolution), carrying a
+  missed-schedule summary (count, window) — per-trigger policy `replay|coalesce|skip`, default coalesce, with §6.2 rate limits
   bounding a large backlog. Firings are idempotent at the boundary: every firing carries a
   deterministic key — schedule: trigger + scheduled time; webhook/API: event id or
   caller-supplied `Idempotency-Key`; event: source event id — and the `trigger_firings` table
@@ -2029,7 +2077,17 @@ never hangs indefinitely. Withdrawal is the originator's side of the same coin: 
 retract a pending ask before it closes — collapsed waiters resolve with it, partial quorum
 accepts stay audit-only — and the retraction applies the ask's expiry behavior to whatever was
 waiting (a withdrawn approval is a no), so the §5/§6.3 walks' close-with-audit-note is this
-mechanism applied by the system, not a parallel one. A quorum-1 ask (the default) closes on the first response received — later
+mechanism applied by the system, not a parallel one. The system files asks as well as
+settling them: the plane-originated asks the design leans on — goal-window, stall, close-out,
+dependency, starvation, rebind, trip, upgrade, activation, contradiction, quarantine,
+parity, the storm aggregate, among others, the filing event the rule rather than the
+enumeration — carry a reserved system originator rather than borrowing a member's identity (a compliance ask filed
+`from` the owner it watches would hand them the retract). The system originator is never a
+target and never response-eligible, renders as 'System' in every digest, and its withdrawal is
+only ever a mechanism that names its own closure — the walks' audit-note settlement, the
+aggregate's recovery-or-ack, expiry per behavior — while a member's withdraw on a system ask is
+refused at the door and the system retracts no member's ask: each side's retraction is its own.
+A quorum-1 ask (the default) closes on the first response received — later
 responses (member and deputy racing) are audit-only; a response to an expired ask is recorded but has no
   effect: the successor ask, if any, carries the decision — and a withdrawn ask is terminal the
   same way, a response racing the originator's retraction audit-only like one racing expiry.
@@ -2579,9 +2637,19 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   id-ordered before applying a line), class-matched spawn parameters (a `ttl` on a
   persistent-hire request refused at write), admin-broadcast live-set rendering (a mid-wait
   admin addition joining pending broadcasts, a departed admin contributing nothing, a former
-  admin's late response refused at the eligibility door), and org-snapshot liveness (a
+  admin's late response refused at the eligibility door), org-snapshot liveness (a
   deactivated human and a retired Coworker absent from the injected layer, their records
-  resolvable through decisions and audit).
+  resolvable through decisions and audit), spend-halt timetable coalescing (an elapsing
+  trigger deferring under the trip as one catch-up run per trigger, playing on the trip
+  ask's resolution, critical-class launching in the floor's headroom throughout, total
+  exhaustion coalescing everything), the system originator (plane-filed asks carrying the
+  reserved principal, refused as a target and as a responder, the walks' closures its only
+  withdrawal, a member's withdraw attempt on a system ask refused at the door, the system
+  retracting no member's ask), org-snapshot state rendering (a suspended Coworker
+  present-but-halted, a retiring one terminal-bound, a requested hire absent until
+  activation publishes it), and erasure's operational-history sweep (resolved asks —
+  `from`/`to` and quorum response ledgers — and completed assignments pseudonymized with
+  the event shape kept, pending state resolved by the prerequisite walk).
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -2690,8 +2758,15 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   the audit event, and the hire's later activation leaves it unpinned; a spawn request
   carrying a `ttl` on a persistent class is refused at write; an admin added mid-wait sees
   the pending admin-broadcast asks in their inbox and may answer them, while a departed
-  admin's late response is refused at the door; and a departed human is absent from the org
-  snapshot of every subsequently assembled prompt.
+  admin's late response is refused at the door; a departed human is absent from the org
+  snapshot of every subsequently assembled prompt; a trigger elapsing under a tripped spend
+  breaker plays its coalesced catch-up run when the trip ask's accept lifts the halt, while
+  a critical-tagged trigger keeps firing in the floor's headroom throughout; a plane-filed
+  goal-window ask renders 'System' as its originator and a member's withdraw attempt on it
+  is refused at the door; a suspended Coworker renders present-but-halted in every org
+  snapshot assembled while the suspension holds, and a requested hire renders nowhere until
+  activation; and erasing a departed member pseudonymizes their resolved asks and completed
+  assignments while the walks have already resolved the pending ones.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -2888,7 +2963,13 @@ walk) and multi-domain hand-merges joining the id-ordered domain write lock (§4
 the founding pin's state coverage at the promotion door (§6.5, §7, §9), class-matched spawn
 parameters with the persistent-class `ttl` refused (§6.2), the admin broadcast's live-set
 rendering with door-refused late responses (§8.10), and the org snapshot's live member set
-(§4.2).
+(§4.2); v2.40's thirty-second sweep closed the timetable, originator, and state-rendering
+seams beneath those — the spend halt's coalesced timetables playing on the trip ask's
+resolution, the critical floor carrying critical-class throughout (§6.2, §8.5), the reserved
+system originator for plane-filed asks with retraction kept to the system's named closures
+(§7, §8.10), the org snapshot's state axis — suspended rendered present-but-halted, requested
+absent until activation (§4.2) — and erasure extended to resolved asks and completed
+assignments on the ledger's terms (§4.5).
 The former
 residue — quorum approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
