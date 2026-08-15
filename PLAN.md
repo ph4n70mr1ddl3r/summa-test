@@ -401,6 +401,25 @@ mode so small teams start simple.
 > riding the §4.4 freshness flags rather than dangling silently (§8.6) · workspace archival
 > gets its endpoint and authority — admin, running the §7 walk (§9).
 
+> **Edge-case closure (v2.34)**: twenty-sixth sweep — reader-set-liveness, spawn-claim, and
+> chain-linearity seams closed inline: every reader-set input evaluates against live state —
+> a `participants` entry or Coworker binding of a deactivated human or retired Coworker
+> contributes nothing to `domain`-access reads, and the §5/§6.3 walks scrub the lists
+> (participants removal, retiree bindings, group memberships) the way they scrub
+> `named_readers` (§4.4, §5, §6.3, §7) · spawn-request claims are lifecycle-pinned —
+> count-cap claims and budget reserves attach at request creation inside the spawn
+> transaction, transfer at activation, and release at every terminal a pending request has
+> (denial, approval expiry, close-/archive-time settlement), so an approval never publishes
+> into an exhausted cap and cap space never leaks on a dead request; a workspaceless hire
+> routes its approval to the admin gate like a domainless primary; and the spend breaker
+> un-trips only through its trip ask's resolution — never by time (§6.2) · supersession
+> chains are linear, not forks: a second live `supersedes_id` edge onto an already-superseded
+> predecessor is refused at propose, amend, and item write — displacing a superseded rule
+> means naming the chain's live head, so a predecessor's displacer is always exactly one
+> rule (§4.4, §7, §9) · winding the company down is a deployment shutdown, never an
+> offboarding — the last-admin guard's refusal is the org model staying honest about its
+> human anchor, not a missing exit (§5).
+
 ---
 
 ## 1. Product vision
@@ -690,7 +709,13 @@ keeps governing strictness separately.
   and `named` admits the owner plus the named list — a list with a schema home (`named_readers`,
   §7: member ids, ignored unless access is `named`) that derives from live state like every other
   reader set: a deactivated human or retired Coworker on it contributes nothing — access
-  re-evaluates with its inputs, and rehire's fresh row re-admits no one until named again. The
+  re-evaluates with its inputs, and rehire's fresh row re-admits no one until named again.
+  Liveness is a property of every input, not just the named list: a `participants` entry or a
+  Coworker workspace binding whose member is deactivated — or whose Coworker is retired —
+  contributes nothing to a `domain`-access reader set, the same live-state derivation
+  `named_readers` gets (§7), and the §5/§6.3 walks scrub the lists anyway, so a departing
+  member loses compartment reads at the walk and again at the derive — defense in depth, not
+  two different rules. The
   owner always reads the domain they own —
   review is ownership's job, and §5's admin custody reads through the ownership it holds — and
   active admins read every domain: the §4.3 SLA escalation, sod routing, and §5 custody paths
@@ -705,7 +730,11 @@ keeps governing strictness separately.
 - **Freshness**: review cadence and stale flags per item; scheduled DNA quality checks (a reviewer
   agent drafts a report; humans decide) re-validate provenance refs too — moved documents and
   rotated systems flag the card stale instead of letting citations rot silently.
-- **Conflicts**: new rules supersede old ones explicitly (chains retained); the review UI shows
+- **Conflicts**: new rules supersede old ones explicitly (chains, not forks: a predecessor
+  carries at most one live displacer — a second `supersedes_id` edge onto an already-superseded
+  row is refused at every write door, §7, and the way to replace a superseded rule is to name
+  the chain's live head — so the displacer whose window ends a predecessor's injection is
+  always exactly one rule, never an unresolved pair); the review UI shows
   contradictions — rule-vs-rule, goal-vs-goal, decision-vs-rule, and quorum-vs-pool shortfalls
   (§8.10) — detected at proposal time and
   re-checked at publish, inside the domain write lock, so racing publishes cannot land
@@ -888,7 +917,9 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
   read-only member is not a worker, refused at write (§7) — groupable under initiatives (§5.1);
   visible org-wide within access scopes.
 - **Groups/teams** mix humans and Coworkers (v1 kept agent-only groups; v2 unifies — a local
-  Coworker still acts as Leader for execution routing).
+  Coworker still acts as Leader for execution routing). Membership derives from live state
+  like every reader set: the offboard walk clears a departed human, the retire walk a retired
+  Coworker — execution routing never addresses a dead identity.
 - **Accountability invariant**: every Coworker row carries `owner_human_id`; spawned workers carry
   `spawned_by`; the chain must terminate at a human. Enforced at spawn time.
 - **Offboarding**: deactivating a human runs the §6.3 dependency check across everything they
@@ -911,7 +942,9 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
   (`dna_goals.owner` — re-owned via the successor or admin custody, else retired; the walk clamps
   to active goals: a terminal one is frozen history (§7) whose owner reference stays pinned to
   the departed identity — severable only by §4.5 erasure, never rewritten by the walk), membership in
-  `named` domain access lists (removed; policies re-evaluated), and deputy references (cleared in
+  `named` domain access lists (removed; policies re-evaluated), workspace participation and
+  group memberships (`participants` entries removed, groups cleared — the named-list scrub's
+  twin, §4.4: reader sets and execution routing re-derive), and deputy references (cleared in
   both directions — anyone deputizing the departing member re-points or clears), sessions
   terminated and PATs revoked (deactivation is credential-death, not a disabled login flag), and
   pending DNA proposals they authored (transferred to the successor for owned domains, auto-withdrawn with an
@@ -923,7 +956,12 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
   are skipped when walking ask chains. Guard: the last active admin
   cannot be deactivated — evaluated inside the offboarding transaction, so two racing
   deactivations of the last two admins see one success and one refusal (§9's bootstrap
-  atomicity pattern); the org never goes headless by accident or by race. Demotion joins
+  atomicity pattern); the org never goes headless by accident or by race. The guard's refusal
+  is a boundary statement, not a missing exit: winding the company down is never an
+  offboarding — an org with zero humans has no accountability anchor (§2), so dissolution is
+  a deployment shutdown (export, halt — §11's backup artifacts), an operational act with no
+  in-product endpoint, and the guard refusing the last offboarding is the org model staying
+  honest about that. Demotion joins
 deactivation under the guard: an RBAC role change that would leave zero active admins is refused
 by the same transactional check — headless-by-self-demotion is the same accident through a
 different door. Audit history is retained;
@@ -1165,14 +1203,23 @@ delegation assigns a board task or instantiates a playbook.
   budget atomically against (reserved + settled) in the spend ledger (`kind
   'reserve'|'settle'|'release'`, §7), settles to actual cost at completion, and releases on
   failure or reaping — two runs sitting at 49% of a ceiling cannot both spend past it, and §6.4
-  rate/volume limits reserve reads identically. A settle may overshoot its reserve — the final
+  rate/volume limits reserve reads identically. Claims are lifecycle-pinned to the request
+  row, not just the moment of claim: a count-cap claim or budget reserve attaches at request
+  creation — inside the spawn transaction, where the racing-claim guarantee lives — transfers
+  to the live worker at activation, and releases at every terminal a pending request has:
+  denial, approval expiry, and the close-/archive-time settlements that drain template pins
+  (§5.1, §7) — the pin-drain's budget twin. An approval can never publish into an exhausted
+  cap (the accept-time re-validation family, §8.10), and cap space never leaks on a request
+  that died waiting. A settle may overshoot its reserve — the final
   provider call lands after the meter — and the overrun is handled, not rolled forward: it
   settles in full, surfaces on the spend dashboard and the owner's digest, and further reserves
   against that cap are refused until an admin acknowledges through the §9 overrun-ack endpoint —
   the refusal itself is the ask (§2).
 - **Approval gates**: persistent hires → Ask to the owner of the domain the hire's primary
   workspace is bound to (or an admin) — a primary workspace with no bound domain routes the ask
-  to an admin outright, and a multi-domain one routes to the primary domain (first-bound,
+  to an admin outright, as does a hire with no workspace binding at all: no primary workspace
+  is no primary domain, the same deterministic hop — and a multi-domain one routes to the
+  primary domain (first-bound,
   admin-editable, §8.10): one deterministic hop, never an undefined gate — and a gate may
   address its own originator: the domain owner hiring into their own domain accepts in one
   click, the ask itself the audit record of the self-approval (sod governs DNA publish, §4.3,
@@ -1189,7 +1236,11 @@ delegation assigns a board task or instantiates a playbook.
   class: triggers and playbooks carry a `criticality` tag (§7 — a firing's class is the stricter
   of its trigger's and playbook's tags), and a ceiling breach halts
   `standard`-class work first while a small critical floor (default 5%) keeps money-moving and
-  customer-facing automations alive — total exhaustion still halts everything, loudly. The TTL
+  customer-facing automations alive — total exhaustion still halts everything, loudly. And it
+  un-trips only through that ask: the trip ask's accept lifts the halt, a deny holds it while
+  ceilings are re-tuned — spend does not decay with time, so the breaker never releases
+  itself, and an unacknowledged halt stays visible instead of expiring into silence (§2's
+  contract on the money surface). The TTL
   reaper never kills between prepare and commit of an external write: it grants a grace window
   and leaves a reconcilable `external_writes` row instead (§8.2). A TTL lapsing while its worker
   is suspended halts-then-reaps — fold-back and §8.2 reconciliation first, archive after (§6.3):
@@ -1209,7 +1260,9 @@ to §8.2 reconciliation, never killed mid-commit — before dependents resolve. 
 resolving its dependents (automations,
 playbooks, paired IM sessions, live spawned workers — a dying spawner's ephemeral children fold
 back into the workspace's project memory, not the departed personal one — plus board-task
-assignments returned to the pool or reassigned, owned goals re-owned or retired (narrowing to
+assignments returned to the pool or reassigned, the retiree's workspace bindings and group
+memberships dropped (reader sets and execution routing re-deriving — the §5 participants
+scrub's retiree twin, §4.4), owned goals re-owned or retired (narrowing to
 the new owner's ceiling, the §5 rule — an empty intersection retiring), and initiative
 lead/sponsor posts reassigned or closed via §5.1 — their pending sponsor-addressed asks
 re-keying to the re-pointed sponsor inside the walk, the offboard rule's post-derivation
@@ -1418,7 +1471,12 @@ dna_rules      (id, domain_id, statement_md, machine_hint json?, effective_from,
                  -- future-windowed successor is a scheduled replacement, never a normative
                  -- gap — status records the chain edge at publish; the slice obeys the windows;
                  -- supersedes_id is intra-domain, refused cross-domain at propose and write —
-                 -- topology ops move chains whole, so a chain never straddles domains (§4.4)
+                 -- topology ops move chains whole, so a chain never straddles domains (§4.4);
+                 -- and a chain is linear, never a fork: a predecessor holds at most one live
+                 -- displacer — a second live supersedes edge onto an already-superseded row is
+                 -- refused at propose, amend, and item write (§9's one-validation rule), the
+                 -- way to displace a superseded rule being to name the chain's live head, so
+                 -- the superseder whose window displaces a predecessor is always one rule (§4.4)
 dna_decisions  (id, domain_id, context_md, outcome_md, decided_by member, decided_at)
                  -- immutable and lifecycle-free: create-only at every surface (proposal publish
                  -- and item CRUD, §9) — no update, retire, or delete exists for them, and they
@@ -1518,7 +1576,11 @@ workspaces     + initiative_ids json?, domain_ids json?, node_id?, claim_epoch i
                  lease_expires_at?, participants json
                  -- participants: the member ids on this workspace's collaboration surface —
                  -- §4.4 'domain' DNA access derives its human reader set from the binding
-                 -- through this list (a Coworker's reads derive from its workspaces directly)
+                 -- through this list (a Coworker's reads derive from its workspaces directly);
+                 -- the list evaluates against live state like named_readers (§4.4) — a
+                 -- deactivated human or retired Coworker contributes nothing — and the walks
+                 -- scrub it: §5 removes a departing human's entries, §6.3 drops a retiree's
+                 -- bindings, defense in depth at both surfaces
                  -- initiatives bound here from activation (bound at spawn under an initiative,
                  -- admin-editable; pause retains the binding frozen and close drops it, §5.1);
                  -- the source of the §4.2 goal slice;
@@ -2120,8 +2182,17 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   activation-accept racing close (audit-only, the row staying closed — terminal beats
   activation), playbook-version retirement refusing live trigger and schedule references
   (runs pinning their launched version, SOP pointer cards flagging stale through the
-  freshness pass instead of blocking), and workspace-archive endpoint authority (admin,
-  running the full §7 walk).
+  freshness pass instead of blocking), workspace-archive endpoint authority (admin,
+  running the full §7 walk), reader-set input liveness (a deactivated participant or a
+  retired Coworker's binding contributing nothing to domain-access reads, the walks
+  scrubbing participants entries and group memberships), spawn-claim lifecycle (count-cap
+  claims and budget reserves attaching at request creation, riding the pending row,
+  releasing at denial, expiry, and archive-time settlement — an approval never publishing
+  into an exhausted cap), the workspaceless hire gate (admin-routed like a domainless
+  primary), supersession fork refusal (a second live edge onto a superseded predecessor
+  refused at propose, amend, and item write, a head-naming successor landing), breaker
+  un-trip only through the trip ask's resolution (no time-based release), and org wind-down
+  outside the offboarding guard (a deployment shutdown, never a headless org).
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -2194,7 +2265,13 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   a closed dependency is refused at creation; a sponsor's activation accept landing after
   the lead closed the proposed initiative is audit-only and the row stays closed; retiring a
   playbook version with a live trigger is refused until the trigger re-points, an in-flight
-  run completing on its pinned version meanwhile.
+  run completing on its pinned version meanwhile; offboarding a human removes their
+  participants entries and group memberships with domain reader sets re-derived, and
+  retiring a Coworker drops its workspace bindings; a denied or expired spawn request
+  releases its quota claim and budget reserve for the next spawner; a proposal naming an
+  already-superseded predecessor is refused while one naming the chain's live head
+  publishes; the spend breaker's trip ask resolves the halt — an accept lifting it, a deny
+  holding it — and the halt never lifts by itself.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -2349,7 +2426,15 @@ closed-row dependency refused at write (§5.1, §7), the activation accept re-va
 initiative's own state against a racing close — terminal beats activation (§5.1, §8.10),
 playbook-version retirement refusing live trigger references with runs pinning their
 launched version and SOP pointer cards riding the freshness flags (§8.6, §4.4), and the
-workspace-archive endpoint with admin authority naming the walk's door (§9). The former
+workspace-archive endpoint with admin authority naming the walk's door (§9); v2.34's
+twenty-sixth sweep closed the reader-set-liveness, spawn-claim, and chain-linearity seams
+beneath those — participants and Coworker-binding inputs evaluated against live state with
+the walks scrubbing participants entries, retiree bindings, and group memberships (§4.4, §5,
+§6.3, §7), spawn-request quota claims and budget reserves pinned to the request row's
+lifecycle with the workspaceless approval gate and the breaker's ask-borne lift named
+(§6.2), supersession chains pinned linear with forks refused at every write door (§4.4, §7,
+§9), and org wind-down named a deployment shutdown outside the last-admin guard's accident
+scope (§5). The former
 residue — quorum approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
 check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
