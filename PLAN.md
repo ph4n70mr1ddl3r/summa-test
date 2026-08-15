@@ -238,6 +238,26 @@ mode so small teams start simple.
 > refusal (§5.1) · an exhausted assignment ask returns the task to the board pool (§8.10) · a
 > TTL lapsing under suspension halts-then-reaps (§6.2, §6.3).
 
+> **Edge-case closure (v2.25)**: seventeenth sweep — lifecycle-terminal and addressing seams
+> closed inline: item-level retire on a rule is window truncation — `effective_to` pinned to
+> now, the row lapsing at that boundary; the rules enum carries no `retired` because lapse is a
+> rule's terminal (§9, §7) · frozen history is frozen at every surface — updates to
+> superseded/lapsed rules, terminal goals, and retired cards/glossary entries are refused;
+> correction and revival are new items citing or superseding the old, a predecessor stays
+> superseded when its superseder lapses, and a draft discards by retiring (§9, §7) ·
+> supersession is intra-domain — a cross-domain `supersedes_id` refused at propose and write;
+> topology ops move chains whole (§4.4, §7) · publish re-validation covers the edit target's
+> lifecycle — an edit proposal whose item retired mid-review refuses back to review (§4.3) ·
+> the admin hop is a broadcast — every path routing to "an admin" addresses all active admins
+> at once, first valid response wins, single-admin the degenerate case, and exhaustion is an
+> unanswered broadcast (§8.10, §4.3, §6.2) · the sponsor pin is a write guard — agent sponsors
+> refused at write (§5.1, §7) · the offboard/demotion goal walk clamps to active goals — a
+> terminal goal's owner reference is pinned history, severable only by erasure (§5, §7) ·
+> domain names unique among non-archived, role templates keyed unique on (class, name, version)
+> (§7) · the §4.5 ingest sanity runs at propose, amend, and item write alike — one validation,
+> every door (§9) · new board tasks join runs and spawns in the closed-slice refusal, while
+> `proposed` and `paused` keep task-filing open as planning (§5.1).
+
 ---
 
 ## 1. Product vision
@@ -467,7 +487,10 @@ revision that should be a rule is a new proposal, so a review queue is never han
 shape it was not routed to review. Racing publishes cannot land contradictions:
 publish runs inside the domain write lock (§4.4) and re-runs contradiction checks against current
 state at commit — the second of two sequenced contradictory publishes is refused back to review,
-not half-silently merged. Separation of duties is a per-domain knob (`sod`, default `off`): when
+not half-silently merged. The re-check covers the edit target's lifecycle as well: an edit
+proposal whose item has retired — or otherwise left the live set (§7) — mid-review refuses back
+to review instead of editing frozen history; §8.10's respond-time re-validation, applied at the
+publish gate. Separation of duties is a per-domain knob (`sod`, default `off`): when
 on, the proposer cannot be the publisher — an owner's own proposal routes publish to an active
 admin, the one alternative publisher the single-owner schema names (`dna_domains.owner_human_id`,
 §7 — there is no second owner to route to); in a single-admin org that admin is the proposer
@@ -664,7 +687,9 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
   (reassigned or returned to the pool), dependent Coworkers
   (re-owned or retired — personal assistants are always retired: mirrored scopes die with the
   member, §6.4), sponsored/led initiatives (reassigned or closed), owned goals
-  (`dna_goals.owner` — re-owned via the successor or admin custody, else retired), membership in
+  (`dna_goals.owner` — re-owned via the successor or admin custody, else retired; the walk clamps
+  to active goals: a terminal one is frozen history (§7) whose owner reference stays pinned to
+  the departed identity — severable only by §4.5 erasure, never rewritten by the walk), membership in
   `named` domain access lists (removed; policies re-evaluated), and deputy references (cleared in
   both directions — anyone deputizing the departing member re-points or clears), sessions
   terminated and PATs revoked (deactivation is credential-death, not a disabled login flag), and
@@ -688,7 +713,8 @@ identity link is not), and email addresses are not reused.
   leave holdings the role does not support. To `viewer`: open asks to the member reassign up the
   chain (asks from the member close with an audit note, as offboarding does), board-task
   assignments return to the pool or reassign, deputy references clear in both directions, owned
-  goals re-own via successor or admin custody or retire, sponsored/led initiatives re-point,
+  goals re-own via successor or admin custody or retire — active goals, the same clamp as
+  offboarding: terminal ones are frozen history (§7) — sponsored/led initiatives re-point,
   and owned authority the role no longer carries transfers the way offboarding transfers it —
   owned domains to a successor or admin custody, owned Coworkers re-owned or retired, with
   personal assistants always retiring: a never-ask-target cannot own staff, and viewer-mirrored
@@ -762,7 +788,10 @@ opens active — initiatives bind workspaces at activation, pause retains the bi
 (above), close drops it (§7) — and only `active` initiatives launch runs — and spawns: a spawn
 filed under a non-active initiative is refused at request (§6.2), the spawn twin of the
 paused-slice refusal — `proposed` has no bindings to offer a new workspace (§7), `paused`
-freezes execution, `closed` refuses new work. Pause and
+freezes execution, `closed` refuses new work — and board tasks join runs and spawns in that
+refusal: filing stays open on `proposed` and `paused` slices as planning (the pause rule,
+generalized), never on a closed one — a task that still needs filing belongs to a successor
+initiative, so the closed slice is history the day it closes. Pause and
 resume belong to the lead or the sponsor — an admin holds both as emergency backstop, the §6.3
 authority pattern applied to the initiative itself, so the org's halt authority never lacks a
 hand on the switch — and close belongs to either and always runs the §6.3
@@ -780,7 +809,10 @@ themselves instead of being rewritten.
 Both posts are ask-eligible at write — a viewer human, or any non-active member in either role,
 is refused the way an ask target or assignee is (§5): a post that routes asks cannot be held by
 a member who can never answer one, and mid-life departures re-point the posts via the §5/§6.3
-walks, so eligibility is maintained, not merely checked once.
+walks, so eligibility is maintained, not merely checked once. The sponsor's pin is a guard, not
+an aspiration: an agent sponsor is refused at the same write — the post is human by schema and
+by check (§7), so no mid-life walk is ever asked to re-point a post that should never have
+existed.
 
 An initiative is an org entity (visible, accountable); **project memory** (§8.3) stays the
 automatic per-workspace memory tier — one is governance, the other learning. **v0 shape**
@@ -993,6 +1025,8 @@ coworkers      + owner_human_id, class 'persistent'|'ephemeral', spawned_by memb
 role_templates (id, name, version, class 'persistent'|'ephemeral-subagent', body json
                  (identity/style/handbook), default_scopes json, status 'draft'|'active'|'retired')
                  -- versioned catalog; persistent Coworkers pin (template_id, template_version) (§6.5)
+                 -- (class, name, version) unique — the catalog's deterministic key: a new
+                 -- version is a new row, never an in-place rewrite of one a Coworker pins
 nodes          (id, name, kind 'local'|'remote', capabilities json, region?, claim json?,
                  last_heartbeat, pubkey, enrolled_at, revoked_at?, status 'trusted'|'revoked')
                  -- region gates residency-constrained scheduling (§3, §4.5);
@@ -1002,6 +1036,8 @@ dna_domains    (id, name, owner_human_id, access 'public'|'domain'|'named',
                  residency?, status 'active'|'archived' default 'active')
                  -- db-only: the §4.5 privacy carve-out; sod: proposer ≠ publisher when on (§4.3);
                  -- residency constrains node placement (§3);
+                 -- name unique among non-archived domains — review queues, digests, and
+                 -- routing keys never alias (an archived name is history and may be reused);
                  -- access reader sets defined (§4.4): public = every member; domain = owner +
                  -- participants of workspaces bound to it; named = owner + the named list;
                  -- the owner always reads their own domain, active admins read all (audited, §13);
@@ -1016,12 +1052,21 @@ dna_cards      (id, domain_id, title, definition_md, refs json, provenance json,
                  status 'draft'|'active'|'retired' default 'active')
                  -- default active mirrors the glossary (§7): an owner's direct create is the
                  -- publish path (§9); draft is an explicit owner-staged phase (§4.2)
+                 -- retirement is terminal: revival is a new card, and a draft discards by
+                 -- retiring — one lifecycle, no un-retire (§9)
 dna_rules      (id, domain_id, statement_md, machine_hint json?, effective_from, effective_to?,
                  supersedes_id, status 'active'|'superseded'|'lapsed')
                  -- effective_to bounds delegation windows (§8.10); lapsed: the window ended —
                  -- ordinary expiring rules transition lapsed at effective_to exactly like
                  -- delegations, dropping out of injection and routing; initiative close lapses
                  -- its scoped rules the same way (§8.10)
+                 -- item-level retire (§9) is window truncation: effective_to pinned to now,
+                 -- the row lapsing at that boundary — the enum carries no 'retired' because
+                 -- lapse is a rule's terminal; superseded and lapsed rows are frozen history —
+                 -- updates refused, revival a new rule, and a predecessor stays superseded when
+                 -- its superseder lapses (chains are explicit; nothing flips back silently);
+                 -- supersedes_id is intra-domain, refused cross-domain at propose and write —
+                 -- topology ops move chains whole, so a chain never straddles domains (§4.4)
 dna_decisions  (id, domain_id, context_md, outcome_md, decided_by member, decided_at)
                  -- immutable and lifecycle-free: create-only at every surface (proposal publish
                  -- and item CRUD, §9) — no update, retire, or delete exists for them, and they
@@ -1034,6 +1079,8 @@ dna_glossary   (id, domain_id?, term, definition, aliases json,
                  -- same scope — draft and active both hold their terms; retire (item CRUD, §9 —
                  -- never delete) is what frees a term or alias for a new live entry, and the
                  -- retired entry stays resolvable as read-only history (§4.2)
+                 -- retirement stays terminal for the same reason it frees terms: un-retiring
+                 -- would collide with a re-claimed term or alias — revival is a new entry (§9)
 dna_goals      (id, domain_id?, quarter?, statement_md, owner member, status 'active'|'met'|'missed'|'retired',
                 inject 'always'|'linked', effective_from, effective_to?)  -- goal-slice source (§4.2)
                 -- the slice's 'deadline' (§4.2) is effective_to, and the window is two-sided:
@@ -1049,6 +1096,10 @@ dna_goals      (id, domain_id?, quarter?, statement_md, owner member, status 'ac
                 -- is compartmented like any other DNA content; the inject flag composes with
                 -- that scope: 'always' reaches every run that can read the domain, 'linked'
                 -- only initiative-bound workspaces (§4.2)
+                -- terminal statuses are immutable: post-terminal updates refused at every
+                -- surface (§9) — re-base and re-target create a new goal row; the §5 walks
+                -- clamp to active goals, a terminal owner reference staying pinned to the
+                -- departed identity — severable only by §4.5 erasure, never by a walk
 dna_proposals  (id, kind 'card'|'rule'|'decision'|'goal'|'glossary'|'edit', payload json, revision int
                  default 1, proposed_by member,
                  provenance json, status 'open'|'published'|'rejected'|'withdrawn', reviewed_by?, at,
@@ -1072,10 +1123,13 @@ asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request', fro
                  -- workspace_id keys the domain-owner escalation hop and digest grouping (§8.10);
                  -- respond re-validates payload assumptions — answers against a superseded
                  -- world are audit-only, a successor ask carries the decision (§8.10)
+                 -- the terminal admin hop is a broadcast: every active admin addressed at once,
+                 -- first valid response wins — a single-admin org the degenerate case (§8.10)
 initiatives    (id, title, goal_ref?, decision_ref?, sponsor member, lead member,
                  status 'proposed'|'active'|'paused'|'closed', business_budget json?, deadline?,
                  closed_at?, depends_on json?)
-                 -- sponsor: pinned human; lead: any member — both ask-eligible at write:
+                 -- sponsor: pinned human — an agent sponsor refused at the same write (§5.1);
+                 -- lead: any member — both posts ask-eligible at write:
                  -- viewer and non-active members refused (§5.1);
                  -- transition authority (§5.1): sponsor activation, lead/sponsor pause-resume-close,
                  -- admin backstop on pause/resume
@@ -1253,8 +1307,14 @@ escalation naming the shortfall: an impossible quorum degrades to a visible no, 
   — first-bound, admin-editable: one deterministic hop, not a fan-out to every owner) → admin,
   walked on SLA breach (inactive members are skipped; the walk carries a visited-set, so a
   mis-configured cycle ends the hop, not the walk — the §5 last-admin guard and the exhaustion
-  broadcast remain the backstops); `deadline` derives from the tier unless set
-  explicitly. Chain exhaustion — the terminal admin is inactive or breaches — expires the ask
+  broadcast remain the backstops). The admin hop is a broadcast, not a pick: every path that
+  routes to "an admin" — this terminal hop, the §4.3 review-SLA escalation and sod publish
+  routing, the §6.2 spawn gate's fallback — addresses all active admins at once and the first
+  valid response wins (sod publish resolves inside the domain write lock, so racing admins see
+  one winner); a single-admin org is the one-recipient degenerate case, and the broadcast is
+  not ambient authority — a member-addressed ask stays member-addressed until its own chain
+  escalates. `deadline` derives from the tier unless set
+  explicitly. Chain exhaustion — the admin broadcast finds no active recipient, or breaches — expires the ask
   per its expiry behavior (an unanswered approval is a no, never a hang; an exhausted assignment
   returns the task to the board pool with a digest line — the board is an assignment's fallback
   surface, never a hang either) and broadcasts a
@@ -1318,7 +1378,14 @@ CRUD /dna/domains · /dna/cards|rules|decisions|glossary|goals
                create / update / retire, never delete: citations, supersession chains, and
                provenance are the point, and §4.5 erasure is the only shredding path — with
                decisions the immutable exception: create-only, no update or retire, reversal
-               or amendment a new record citing the old, §7)
+               or amendment a new record citing the old, §7; updates land on live states only —
+               an owner's draft or an active item — while superseded/lapsed rules, terminal
+               goals, and retired cards/glossary entries are frozen history (§7): correction
+               and revival are new items citing or superseding the old, a rule's retire maps
+               to window truncation (§7), and a draft discards by retiring; and the §4.5
+               ingest sanity — window ordering, unique ids — is the same validation at every
+               door: propose, amend, and item write run one check, so no door is softer than
+               the git door)
 POST /dna/proposals  POST /dna/proposals/:id/review (publish|reject) · POST /dna/proposals/:id/withdraw
                · POST /dna/proposals/:id/amend (revision during review, §4.3)  GET /dna/review-queue
 POST /dna/domains/:id/split|merge|rename|archive (governed topology ops, §4.4; archive refuses
@@ -1515,7 +1582,18 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   only by declaration, split inheriting the parent's list), standalone store-flip migration and
   hold refusal, residency-edit placement re-validation, class-matched spawn-gate refusal,
   denied-request `requested`→`archived` transition, spawn-under-non-active-initiative refusal,
-  assignment-exhaustion pool return, suspended-TTL halt-then-reap.
+  assignment-exhaustion pool return, suspended-TTL halt-then-reap, rule item-retire
+  truncation (effective_to pinned to now, lapsed transition, a predecessor staying
+  superseded), frozen-history update refusal (superseded and lapsed rules, terminal
+  goals, retired cards and glossary — draft discard riding retire), cross-domain
+  supersedes_id refusal at propose and write, edit-proposal publish refused onto a
+  retired target, admin-hop broadcast addressing (first valid response wins,
+  member-addressed asks unpreempted pre-escalation, an unanswered broadcast as
+  exhaustion), agent-sponsor write refusal, the offboard/demotion goal-walk terminal
+  clamp, domain-name uniqueness among non-archived and template (class, name, version)
+  key uniqueness, window-sanity validation identical at the propose, amend, and
+  item-write doors, closed-slice task-filing refusal with proposed/paused planning
+  open.
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -1633,7 +1711,14 @@ named-list floor (§4.4, §7), the standalone store flip carrying the merge path
 hold refusal (§4.4, §4.5), residency-edit placement re-validation (§4.4, §3), the class-matched
 spawn gate (§6.2), the denied-request archive transition (§7), the active-only spawn gate
 (§5.1), assignment-exhaustion pool return (§8.10), and suspension-deferred TTL reaping
-(§6.2, §6.3). The former
+(§6.2, §6.3); v2.25's seventeenth sweep closed the lifecycle-terminal and addressing seams
+beneath those — rule retirement as window truncation over frozen superseded/lapsed history
+(§7, §9), terminal-goal immutability with the walks clamped to active goals (§7, §5),
+retirement-as-terminal for cards and glossary (§7), intra-domain supersession (§4.4, §7),
+the publish gate's edit-target lifecycle re-check (§4.3), the broadcast admin hop (§8.10,
+§4.3, §6.2), the write-enforced sponsor pin (§5.1, §7), domain-name and template-key
+uniqueness (§7), one window-sanity validation behind every write door (§9), and the
+closed-slice task-filing refusal (§5.1). The former
 residue — quorum approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
 check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
