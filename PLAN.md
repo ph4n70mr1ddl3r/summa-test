@@ -127,6 +127,23 @@ mode so small teams start simple.
 > ephemeral, periodic window for persistent (§6.2) · initial workspace–node binding is
 > capability-checked like rebind, and a residency constraint no node satisfies is surfaced
 > through the same starvation ask, not a silent queue (§3).
+>
+> **Edge-case closure (v2.18)**: tenth sweep — representation and drain seams closed inline:
+> the workspace–domain binding — the read path's applicability set, the spawn gate's hop, and
+> the ask router's escalation hop all key on it — is schema-explicit: ordered `domain_ids`,
+> first entry primary, unbinding the primary promotes the next, an empty list is domainless
+> with the defined fallbacks, topology ops remap (§7) · archive refuses live workspace
+> bindings; the merge step remaps them, ids stable (§4.4, §9) · cross-domain item moves are
+> topology ops only — edit proposals and item-level CRUD refuse a `domain_id` change (§4.4) ·
+> proposal amendments re-route with their payload: the reviewing queue matches the amended
+> scope (§4.3) · the goal `inject` flag composes with scope — a domain-scoped 'always'
+> injects wherever its domain is readable (§4.2, §7) · intra-domain glossary duplicates are
+> refused at write; the resolution order stays cross-domain (§4.2) · initiative close drains:
+> in-flight runs complete onto the closed slice, new work is refused, urgent stops go through
+> suspend/retire (§5.1) · resume re-arms triggers and launches new runs but never resurrects
+> a halted one — fold-back plus §8.2 reconciliation, no half-replayed side effect (§6.3) ·
+> the TTL reaper returns open task assignments and re-routes in-flight asks, not just memory
+> (§6.3) · the personal-assistant 1:1 is enforced by the policy engine, not implied (§6.4).
 
 ---
 
@@ -273,7 +290,9 @@ Every run's system prompt is assembled with:
 - **Always injected**: the org snapshot (who's who), the glossary slice relevant to the task's
   domain, all *applicable rules* for the workspace's domains, and the **goal slice**: active goals
   linked to the workspace through its initiatives, plus goals flagged org-wide (inject 'always'; statement, owner,
-  deadline, status). Goals inherit the rules' window semantics: a goal past `effective_to` leaves
+  deadline, status) — the flag composes with scope rather than overriding it: a domain-scoped goal
+  flagged 'always' injects into every run that can read its domain, 'linked' only where an
+  initiative binds it, and the compartment check below gates both (§7). Goals inherit the rules' window semantics: a goal past `effective_to` leaves
   the slice at window end — a stale deadline is never injected forever — and the §5.1 sponsor ask
   carries the outcome: extend re-adds it under a new window, a terminal status (`met`/`missed`/
   `retired`, set through the §4.3 write path) ends it for good, and an org-wide goal with no live
@@ -300,7 +319,10 @@ Every run's system prompt is assembled with:
   retrieved knowledge (descriptive), and files a contradiction report (§4.4) instead of silently
   picking a side. Glossary alias collisions in a multi-domain workspace resolve deterministically:
   the primary domain's term (§8.10) wins, then org-wide entries, then all candidates render tagged
-  with their domains — never a silent coin flip.
+  with their domains — never a silent coin flip. Within one domain the ambiguity is refused
+  rather than resolved: a term or alias duplicating a live entry of the same domain is rejected
+  at propose and at item write (§9) — the resolution order exists for cross-domain overlap, not
+  intra-domain sloppiness.
 
 ### 4.3 Write path — learning without corruption
 
@@ -327,7 +349,11 @@ reviews — the owner's accept is informed consent, not a laundering step. Human
 the store is git-backed markdown, so a PR workflow is possible for teams that want it. Proposals
 are amendable in review: the proposer — or the reviewing owner, as suggested changes — files a new
 revision (`revision`, §7); reviewers see latest-plus-history, publish binds the latest, and
-withdraw-and-refile stops being the only edit path. Racing publishes cannot land contradictions:
+withdraw-and-refile stops being the only edit path. An amendment re-routes with its payload: a
+revision that moves an item between org-wide and domain-scoped re-routes the review to the queue
+governing the amended scope — org-wide lands in the admin queue, domain-scoped in the owner's —
+so the reviewing authority always matches what would publish (cross-domain moves are refused
+outright, §4.4). Racing publishes cannot land contradictions:
 publish runs inside the domain write lock (§4.4) and re-runs contradiction checks against current
 state at commit — the second of two sequenced contradictory publishes is refused back to review,
 not half-silently merged. Separation of duties is a per-domain knob (`sod`, default `off`): when
@@ -363,12 +389,19 @@ strictness separately.
   state inside the lock — items that coexist peacefully across two domains may collide in one,
   and the collision surfaces as review asks, never as silent coexistence. Dissolution is the
   degenerate case, not a missing feature: there is no bare delete — merge the domain's remaining
-  items away, then archive the empty domain (§7 `status 'archived'`: read-only history; no
+  items and workspace bindings away, then archive the empty domain — archive refuses a domain
+  still holding either (§9): the merge remaps bound workspaces to the survivor with ids stable,
+  and an admin who wants a workspace domainless unbinds it first, so nothing silently re-points
+  (§7 `status 'archived'`: read-only history; no
   injection, routing, or new bindings; nothing shredded, so reconstructibility survives).
   Topology ops serialize behind a domain-level write lock (§4.5):
   split/merge/rename/archive queue behind in-flight proposals and each other — the stable-id
   guarantees assume no concurrent topology mutation, so the system enforces the assumption rather
-  than hoping. Prior states stay reconstructible from git history and audit.
+  than hoping. Prior states stay reconstructible from git history and audit. Item edits do not
+  smuggle topology: an edit proposal — or an item-level write (§9) — that would change an item's
+  `domain_id` is refused at propose/write time. Cross-domain moves are topology ops: they carry
+  id-stable remapping, attribute declaration, and post-op contradiction re-checks that an edit
+  field would bypass.
 
 ### 4.5 Storage
 
@@ -528,8 +561,14 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
   (§8.10): pause freezes execution, not authority; the delegation's own window (§4.2
   `effective_to`) stays the bound, and pausing past the deadline still raises the sponsor ask —
   pause is a state, not a way to outlive a deadline silently. Closing runs the same dependency
-   check as retiring a Coworker (§6.3): open asks
-   and tasks resolved or reassigned; the retrospective files DNA proposals — the §1 loop closes.
+   check as retiring a Coworker (§6.3) over the initiative's durable state — open asks
+   and tasks resolved or reassigned — while its in-flight execution drains, never truncates:
+   runs already launched complete (staged external writes are never killed mid-commit, §8.2)
+   with artifacts landing on the closed slice as history, new runs and spawns under the
+   initiative are refused, and its ephemeral workers finish their bounded task and fold back;
+   a sponsor who needs work stopped mid-flight suspends or retires the specific Coworkers
+   (§6.3) rather than closing under them. The retrospective files DNA proposals — the §1 loop
+   closes.
    Initiatives may declare dependencies (`depends_on`, §7): closing an upstream initiative with
    active dependents raises an ask to each dependent's sponsor — proceed, re-base, or pause — a
    coordination signal, not a hard block; the humans who own the downstream calls make them. The
@@ -628,13 +667,20 @@ playbooks, paired IM sessions, live spawned workers — a dying spawner's epheme
 back into the workspace's project memory, not the departed personal one — plus board-task
 assignments returned to the pool or reassigned, owned goals re-owned or retired, and initiative
 lead/sponsor posts reassigned or closed via §5.1) — the same dependency check as deleting a
-skill, applied to staff; the §5 offboarding walk is its superset for humans.
+skill, applied to staff; the §5 offboarding walk is its superset for humans. The ephemeral
+analogue runs at reap: the TTL reaper's fold-back returns the dying worker's open board-task
+assignments to the pool and re-routes its in-flight asks up the chain — memory is not the only
+state a worker holds.
 
 Two state changes short of retirement: **suspend** — an admin's emergency stop that halts triggers
 and runs without resolving dependents (in-flight asks re-route up the chain); the halt covers the
 subtree — live ephemeral descendants stop and fold back into the workspace's project memory
 exactly as on spawner death, staged writes left to §8.2 reconciliation rather than killed
-mid-commit — and **re-role** —
+mid-commit. **Resume** re-arms triggers (missed schedules coalesce, §8.5) and launches new
+runs, but never resurrects a halted one — a run suspended mid-flight is terminal: partial
+results fold back through the memory tiers, interrupted work re-enters as new runs or board
+tasks, and staged writes resolve through §8.2 reconciliation, so resume cannot half-replay a
+side effect. The second state change is **re-role** —
 re-tasking a Coworker to a different role is retire-and-respawn (identities are role-shaped;
 project memory stays with the workspace, lessons go to DNA), never an in-place IDENTITY rewrite.
 In-place evolution of the *same* role is the template upgrade path (§6.5).
@@ -645,7 +691,9 @@ One persistent assistant per human employee is a *deployment* of the existing mo
 architecture:
 
 - **Template**: a persistent-hire template (`personal-assistant`) bound 1:1 to a human —
-  `owner_human_id` = the assisted employee. The assistant serves the employee but is accountable
+  `owner_human_id` = the assisted employee. The 1:1 is enforced, not implied: the policy
+  engine refuses a second `personal-assistant` spawn for a human with a live assistant —
+  retirement closes the deployment, a fresh spawn reopens it. The assistant serves the employee but is accountable
   to the company: DNA proposals route to domain owners; compartment access is never widened to
   please the human.
 - **Scope mirroring**: the assistant's scopes (DNA compartments, connector scopes, tool access)
@@ -740,7 +788,9 @@ dna_goals      (id, domain_id?, quarter?, statement_md, owner member, status 'ac
                 -- route to the admin review queue (§4.3); a domain-scoped goal inherits its
                 -- domain's access policy — it injects only where that domain is readable (§4.2),
                 -- so a sensitive objective (unannounced restructuring, pre-earnings targets)
-                -- is compartmented like any other DNA content
+                -- is compartmented like any other DNA content; the inject flag composes with
+                -- that scope: 'always' reaches every run that can read the domain, 'linked'
+                -- only initiative-bound workspaces (§4.2)
 dna_proposals  (id, kind 'card'|'rule'|'decision'|'goal'|'glossary'|'edit', payload json, revision int
                  default 1, proposed_by member,
                  provenance json, status 'open'|'published'|'rejected'|'withdrawn', reviewed_by?, at,
@@ -772,9 +822,16 @@ board_tasks    + assignee_member_id?, initiative_id?  (runs carry initiative_id?
                  same way — burndown, per-initiative digests)
                  -- assignee: any member but a viewer — the ask-target guard extends to task
                  -- assignment, refused at write (§5)
-workspaces     + initiative_ids json?, node_id?, claim_epoch int default 0, lease_expires_at?
+workspaces     + initiative_ids json?, domain_ids json?, node_id?, claim_epoch int default 0,
+                 lease_expires_at?
                  -- active initiatives bound here (bound at spawn under an initiative,
                  -- admin-editable; close drops the binding, §5.1); the source of the §4.2 goal slice;
+                 -- domain_ids: the ordered domain binding — the read path's applicability set
+                 -- (§4.2), the spawn gate's hop (§6.2), and the ask router's escalation hop
+                 -- (§8.10) all key on it; the first entry is the primary domain (first-bound,
+                 -- admin-editable, §8.10); unbinding the primary promotes the next entry, an
+                 -- empty list is a domainless workspace with the defined fallbacks (§6.2,
+                 -- §8.10), and topology ops remap the list with ids stable (§4.4)
                  -- node/epoch/lease: affinity placement + the fenced claim (§3)
 triggers       + criticality 'standard'|'critical'  -- §6.2 breaker trip order
 spend_ledger   (id, member_id, run_id?, spawn_id?, kind 'reserve'|'settle'|'release',
@@ -977,7 +1034,7 @@ CRUD /dna/domains · /dna/cards|rules|decisions|glossary|goals
 POST /dna/proposals  POST /dna/proposals/:id/review (publish|reject) · POST /dna/proposals/:id/withdraw
                · POST /dna/proposals/:id/amend (revision during review, §4.3)  GET /dna/review-queue
 POST /dna/domains/:id/split|merge|rename|archive (governed topology ops, §4.4; archive refuses
-               a domain still holding items — merge away first)
+               a domain still holding items or live workspace bindings — merge away first)
 CRUD /role-templates (versioned catalog, §6.5)
 POST /spawn          GET /spawn/:id   (spawn requests; approval + spawn-storm monitoring)
 POST /coworkers/:id/retire · /suspend · /resume   (lifecycle acts on the coworker, §6.3 — not the spawn request)
@@ -1119,7 +1176,13 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   write-time owner guards (viewer goal owner, non-owner/admin domain owner),
   glossary proposal routing (org-wide → admin queue), item-CRUD publish-path guarantees
   (lock serialization, sod routing, contradiction re-check), persistent-cap window rollover,
-  domainless/multi-domain spawn-gate routing.
+  domainless/multi-domain spawn-gate routing, workspace-domain binding semantics (ordered
+  list, primary promotion on unbind, topology remap, archive refusing live bindings),
+  cross-domain item-edit refusal at propose and write, amendment re-routing between
+  org-wide and domain scope, domain-scoped goal inject-flag composition, intra-domain
+  alias duplicate refusal, ephemeral-reap task and ask returns, personal-assistant 1:1
+  spawn refusal, initiative close-drain ordering (durable state resolved, in-flight
+  completes, new work refused).
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -1132,7 +1195,10 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   ephemeral subtree with fold-back; ambiguous send timeout → ask, no resend; goal window end
   drops the slice and raises the sponsor ask; a secret pasted into a direct git edit
   quarantines on ingest; a workspace's initial bind to a capability-less node is refused; a
-  residency constraint no node satisfies surfaces the starvation ask.
+  residency constraint no node satisfies surfaces the starvation ask; suspend → resume leaves
+  the halted run terminal (fold-back + reconciliation, no half-replayed side effect) while
+  missed triggers coalesce; an in-flight run at initiative close drains onto the closed slice
+  while new runs under it are refused.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -1181,7 +1247,13 @@ ninth sweep closed the demotion and authority-flip seams beneath them — the RB
 (§5), ask-eligible goal owners and the domain-owner role guard (§7), glossary proposal kinds
 (§7), the item-CRUD publish path (§9), secrets scanning on ingested edits (§4.5, §10),
 spawn-gate routing fallbacks and cap windows (§6.2), initial-bind capability checks and
-residency starvation surfacing (§3). The former residue — quorum
+residency starvation surfacing (§3); v2.18's tenth sweep closed the representation and drain
+seams beneath those — the schema-explicit workspace–domain binding with primary promotion and
+topology remap (§7), archive refusing live workspace bindings (§4.4), cross-domain item moves
+refused as edits (§4.4), amendment re-routing with the payload's scope (§4.3), goal inject-flag
+composition (§4.2, §7), intra-domain alias duplicate refusal (§4.2), initiative close drain
+semantics (§5.1), resume-without-resurrection (§6.3), ephemeral reap returning held state
+(§6.3), and the policy-enforced assistant 1:1 (§6.4). The former residue — quorum
 approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
 check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
