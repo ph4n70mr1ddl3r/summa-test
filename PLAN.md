@@ -211,6 +211,18 @@ mode so small teams start simple.
 > archives inert with it, never transferred (§6.3) · paths under a db-only domain's tree
 > quarantine on ingest — one canon, not two (§4.5).
 
+> **Edge-case closure (v2.23)**: fifteenth sweep — residual-surface seams closed inline: the
+> `named` access policy's reader list gains the schema home its §5 walk always presupposed —
+> `named_readers` member ids, ignored under the other policies, derived from live state so dead
+> entries read nothing and rehire re-admits no one (§4.4, §7) · spawn requests gate on template
+> status: `active` only — draft is authoring state, retired is history, refused at request time,
+> the other half of §6.5's pin-drain (§6.2) · the sponsor's direction asks — stalled-work,
+> close-out, goal-window, terminal-goal — escalate on expiry and stay pending in every digest,
+> never a silent no; the activation ask's deny stays the deliberate exception (§5.1, §8.10) · an
+> admin holds initiative pause/resume as emergency backstop — the §6.3 authority pattern applied
+> to the initiative itself (§5.1) · card status defaults `active` like the glossary's — an
+> owner's direct create is the publish path, draft an explicit stage (§7).
+
 ---
 
 ## 1. Product vision
@@ -454,7 +466,11 @@ keeps governing strictness separately.
   reader set is defined, not ambient: `public` admits every member; `members of domain` admits
   the owner plus every member tied in through an active workspace binding — a Coworker through
   its workspaces' `domain_ids`, a human through workspace participation (`participants`, §7) —
-  and `named` admits the owner plus the named list. The owner always reads the domain they own —
+  and `named` admits the owner plus the named list — a list with a schema home (`named_readers`,
+  §7: member ids, ignored unless access is `named`) that derives from live state like every other
+  reader set: a deactivated human or retired Coworker on it contributes nothing — access
+  re-evaluates with its inputs, and rehire's fresh row re-admits no one until named again. The
+  owner always reads the domain they own —
   review is ownership's job, and §5's admin custody reads through the ownership it holds — and
   active admins read every domain: the §4.3 SLA escalation, sod routing, and §5 custody paths
   all hand admins domain content, so the role carries governance reads — audited on restricted
@@ -717,9 +733,17 @@ initiative stays `proposed`, inert — no bindings, no runs, no escalations — 
 lead closes it; org state is never silently evaporated), a sponsor's own
 opens active — initiatives bind workspaces at activation, pause retains the binding frozen
 (above), close drops it (§7) — and only `active` initiatives launch runs. Pause and
-resume belong to the lead or the sponsor; close belongs to either and always runs the §6.3
+resume belong to the lead or the sponsor — an admin holds both as emergency backstop, the §6.3
+authority pattern applied to the initiative itself, so the org's halt authority never lacks a
+hand on the switch — and close belongs to either and always runs the §6.3
 dependency check (§9) — and unbinds: workspaces drop the closed initiative from their binding
 list (§7), the goal slice re-derives at once, and no workspace keeps reading a closed spine.
+The sponsor's other direction asks — stalled-work escalation, the close-out ask, goal-window and
+terminal-goal asks — carry the opposite expiry from activation: they are questions (§8.10), so an
+unanswered one escalates sponsor → admin and stays pending in every digest rather than dying as a
+silent no — an unanswered question may never decide an initiative's fate by disappearing, which
+is precisely what the activation ask's `deny` reserves for itself: a directive that never won its
+authority must never execute.
 `Closed` is terminal — initiatives never reopen: a revived directive opens a new initiative
 referencing the old one's decision (`decision_ref`), so burndown and history survive as
 themselves instead of being rewritten.
@@ -769,7 +793,12 @@ delegation assigns a board task or instantiates a playbook.
 - **Scope delegation**: child's file/tool/connector scopes ⊆ parent's. A secretary cannot spawn
   anything with repo write access she doesn't have.
 - **Allowlists**: which templates each member class may spawn; ephemeral workers restricted to
-  whitelisted "subagent" templates.
+  whitelisted "subagent" templates — and the allowlist spans the catalog's live surface only: a
+  spawn request may name an `active` template (§7), never a `draft` (authoring state) or
+  `retired` (history) one, refused at request time. That gate is the other half of §6.5's
+  pin-drain — retirement lands once pins and pending requests drain, and no new request can slip
+  in behind it: the status check claims the template row inside the spawn transaction, the same
+  atomic-claim pattern the count caps use, so a retirement and a racing request see one winner.
 - **Quotas & caps**: max concurrent ephemeral workers per spawner, global spawn depth (default 2),
   org-wide concurrent Coworkers, per-spawn and org-wide spend caps metered by the spend ledger.
   Cap windows match worker class: an ephemeral worker's cap spans its lifetime, a persistent
@@ -925,19 +954,24 @@ nodes          (id, name, kind 'local'|'remote', capabilities json, region?, cla
                  -- region gates residency-constrained scheduling (§3, §4.5);
                  -- claim: epoch-fenced workspace leases (§3)
 dna_domains    (id, name, owner_human_id, access 'public'|'domain'|'named',
-                 store 'git'|'db-only', sod 'off'|'reviewer-distinct', residency?,
-                 status 'active'|'archived' default 'active')
+                 named_readers json, store 'git'|'db-only', sod 'off'|'reviewer-distinct',
+                 residency?, status 'active'|'archived' default 'active')
                  -- db-only: the §4.5 privacy carve-out; sod: proposer ≠ publisher when on (§4.3);
                  -- residency constrains node placement (§3);
                  -- access reader sets defined (§4.4): public = every member; domain = owner +
                  -- participants of workspaces bound to it; named = owner + the named list;
-                 -- the owner always reads their own domain, active admins read all (audited, §13)
+                 -- the owner always reads their own domain, active admins read all (audited, §13);
+                 -- named_readers: the member ids behind access 'named' — ignored under the other
+                 -- policies, evaluated against live state (deactivated/retired entries contribute
+                 -- nothing), and removed outright by the §5 walk (§4.4)
                  -- owner must hold role 'owner' or 'admin' at write — an RBAC demotion below
                  -- that runs the §5 walk (transfer or admin custody, never an orphaned domain);
                  -- archived: read-only history — no injection, routing, or new bindings;
                  -- dissolution = merge-away then archive, never bare delete (§4.4)
 dna_cards      (id, domain_id, title, definition_md, refs json, provenance json, version,
-                 status 'draft'|'active'|'retired')
+                 status 'draft'|'active'|'retired' default 'active')
+                 -- default active mirrors the glossary (§7): an owner's direct create is the
+                 -- publish path (§9); draft is an explicit owner-staged phase (§4.2)
 dna_rules      (id, domain_id, statement_md, machine_hint json?, effective_from, effective_to?,
                  supersedes_id, status 'active'|'superseded'|'lapsed')
                  -- effective_to bounds delegation windows (§8.10); lapsed: the window ended —
@@ -998,7 +1032,9 @@ initiatives    (id, title, goal_ref?, decision_ref?, sponsor member, lead member
                  status 'proposed'|'active'|'paused'|'closed', business_budget json?, deadline?,
                  closed_at?, depends_on json?)
                  -- sponsor: pinned human; lead: any member — both ask-eligible at write:
-                 -- viewer and non-active members refused (§5.1)
+                 -- viewer and non-active members refused (§5.1);
+                 -- transition authority (§5.1): sponsor activation, lead/sponsor pause-resume-close,
+                 -- admin backstop on pause/resume
                  -- depends_on: cross-initiative DAG — acyclic, enforced at write; closing an
                  -- upstream with live dependents asks each sponsor — signal, not block (§5.1)
 board_tasks    + assignee_member_id?, initiative_id?  (runs carry initiative_id? the
@@ -1382,8 +1418,9 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   alias-collision resolution order, injected-layer compartment filtering (rules/glossary/goals),
   org-scoped proposal routing to the admin queue, PAT expiry enforcement, erasure
   pseudonymization + hold blocking (incl. the DNA provenance sweep), initiative transition
-  authority (sponsor activation ask, lead/sponsor pause-close, viewer/non-active sponsor-lead
-  refusal, close-time workspace unbinding, depends_on cycle refusal), goal window-end slice drop and
+  authority (sponsor activation ask, lead/sponsor pause-close, admin pause backstop,
+  viewer/non-active sponsor-lead refusal, close-time workspace unbinding, depends_on cycle
+  refusal), goal window-end slice drop and
   terminal-status exit, viewer assignee refusal,
   RBAC demotion walk (scoped eligibility shedding: asks reassigned and closed, assignments
   returned, deputies cleared both directions, goals and initiative posts re-pointed, domains and
@@ -1423,7 +1460,10 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   memory inert, db-only tree-path quarantine on ingest, hold-refused dissolution/archive/
   store-migration with rename and merge-into open, tainted-run accepts audit-only with an
   untainted successor ask, draft staging confined to cards and glossary, trigger/playbook
-  criticality defaults.
+  criticality defaults, named-reader derivation (list-backed `named` access, ignored under the
+  other policies, dead entries contributing nothing, §5 walk removal), spawn refusal of `draft`
+  and `retired` templates, sponsor direction asks escalating on expiry — never denying — with
+  the activation deny as the stated exception.
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -1527,8 +1567,11 @@ with owner and audited admin reads (§4.4, §7), the `met`-goal sponsor ask (§5
 single-owner admin routing (§4.3), criticality defaults (§7), draft-staging applicability
 (§4.2), the finished-initiative close-out ask (§5.1), inert personal memory on retire (§6.3),
 db-only tree-path quarantine (§4.5), hold-frozen dissolution with hold management endpoints
-(§4.4, §9), and audit-only tainted accepts (§8.10). The former residue — quorum
-approvals, external-write atomicity,
+(§4.4, §9), and audit-only tainted accepts (§8.10); v2.23's fifteenth sweep closed the
+residual-surface seams beneath those — the named-list schema home with live-state derivation
+(§4.4, §7), the template-status spawn gate (§6.2), escalate-not-deny sponsor direction asks with
+the admin pause backstop (§5.1), and the card default aligned to the glossary's (§7). The former
+residue — quorum approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
 check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
 ask storms, self-approval, cross-initiative dependencies, clock/calendar semantics, proposal
