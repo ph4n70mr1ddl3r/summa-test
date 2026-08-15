@@ -144,6 +144,24 @@ mode so small teams start simple.
 > a halted one — fold-back plus §8.2 reconciliation, no half-replayed side effect (§6.3) ·
 > the TTL reaper returns open task assignments and re-routes in-flight asks, not just memory
 > (§6.3) · the personal-assistant 1:1 is enforced by the policy engine, not implied (§6.4).
+>
+> **Edge-case closure (v2.19)**: eleventh sweep — authority-surface seams closed inline: the viewer
+> role is a total no-write surface — never a target, assignee, or originator: propose, amend, ask,
+> task, initiative, and spawn writes are all refused at write (§5) · demotion carries authored
+> proposals with the authority — transferred for shed domains, withdrawn when the role can no
+> longer propose, mirroring offboarding (§5) · the agent-target ask chain is pinned to the lineage
+> owner, then the human chain — an ask to an agent never lacks a human next hop (§8.10) · pause
+> retains its workspace bindings frozen — linked goals keep injecting while runs and spawns refuse;
+> close still unbinds; a denied activation leaves the initiative `proposed` and inert (§5.1, §7) ·
+> ephemeral-origin DNA proposals are refused at write — learning folds back, the spawner proposes
+> (§7) · retire is a halt like suspend — fold-back + reconciliation, never mid-commit — and
+> suspend/retire/resume authority is named: the owner human, an admin, or a bound-initiative
+> sponsor, reconciling §5.1's sponsor stop with §6.3's emergency stop (§6.3, §9) · playbook
+> criticality joins the schema, and a firing's class is the stricter of trigger and playbook tags
+> (§7, §6.2) · ingest quarantine routes to the domain's owner — never an unowned inbox (§4.5) ·
+> the domainless workspace has a defined read-path layer, and org-wide glossary duplicates are
+> refused like intra-domain ones (§4.2) · board-task assignees must be active at write — suspend
+> freezes assignments, retire/offboard walks return them (§7).
 
 ---
 
@@ -159,7 +177,8 @@ makes it explicit and operational:
   SOPs/playbooks, glossary, org facts, goals and metrics. Every member reads it; changes to it are
   governed.
 - **Work ledger** — chat tasks, automations, and playbooks all create runs with results, artifacts,
-  and to-dos on a shared Task Board any member can hold or assign. A directive becomes an
+  and to-dos on a shared Task Board any member can hold or assign (a viewer reads it — §5's
+  read-only surface). A directive becomes an
   **initiative** — a goal, a lead, and the tasks/playbooks/spawns that carry it to done (§5.1).
 - **Governed spawning** — delegation by hiring: a human or agent can spawn a new Coworker for a
   role or a task, inside policy, budget, and lineage constraints.
@@ -300,7 +319,9 @@ Every run's system prompt is assembled with:
   (§8.10 chain) — so no goal expires silently. "Applicable" has defined
   semantics: a rule applies when its domain intersects the workspace's domains and its effective
   window (`effective_from`…`effective_to`) covers the run (superseded rules drop out of injection automatically); `machine_hint`
-  narrows matching where present. Each layer carries a token budget (org snapshot ~1k, glossary
+  narrows matching where present. A domainless workspace (§7, empty `domain_ids`) still has a defined
+  layer, not an error state: no rules (nothing intersects), the org-wide glossary slice, and org-wide
+  `always` goals — the same determinism, one domain smaller. Each layer carries a token budget (org snapshot ~1k, glossary
   slice ~2k, rules ~4k, goal slice ~1k — soft limits, configurable); overflow demotes items to
   retrieval (rules overflow into the searchable DNA index) rather than truncating silently.
   Injection stays deterministic per (reader access, domain set, linked-goal set, DNA version)
@@ -322,7 +343,8 @@ Every run's system prompt is assembled with:
   with their domains — never a silent coin flip. Within one domain the ambiguity is refused
   rather than resolved: a term or alias duplicating a live entry of the same domain is rejected
   at propose and at item write (§9) — the resolution order exists for cross-domain overlap, not
-  intra-domain sloppiness.
+  intra-domain sloppiness. Org-wide entries share the null scope and are held to the same refusal:
+  two org-wide definitions of "ARR" is sloppiness, not overlap the order gets to arbitrate.
 
 ### 4.3 Write path — learning without corruption
 
@@ -345,7 +367,8 @@ have no domain owner of their own; their proposals route to the admin's review q
 owner-of-last-resort pattern §5 applies to unowned domains. Taint survives publication as
 provenance residue: an item accepted from a tainted run keeps its flag, renders with an
 indicator wherever cited, and heads the §4.4 scheduled quality
-reviews — the owner's accept is informed consent, not a laundering step. Humans can also propose directly, and can edit in their own tools —
+reviews — the owner's accept is informed consent, not a laundering step. Humans of any role but
+viewer (§5's no-write surface) can also propose directly, and can edit in their own tools —
 the store is git-backed markdown, so a PR workflow is possible for teams that want it. Proposals
 are amendable in review: the proposer — or the reviewing owner, as suggested changes — files a new
 revision (`revision`, §7); reviewers see latest-plus-history, publish binds the latest, and
@@ -421,7 +444,8 @@ human edits are welcomed, not trusted: the control plane validates every ingeste
 (frontmatter schema, unique ids, effective-window sanity, and a secrets scan — §10's scanner
 guards the ingest door too, so a pasted credential cannot enter the canonical store through a
 hand-merge) and quarantines invalid files to a
-review queue with the parse error attached — a bad hand-merge degrades to an ask, never to a
+  review queue with the parse error attached — routed to the affected domain's owner (the admin
+  for org-wide files), so a quarantine is never an unowned inbox — a bad hand-merge degrades to an ask, never to a
 silently corrupted index.
 
 **Git integrity**: the control plane is the DNA repo's only direct writer — it signs commits and
@@ -477,7 +501,10 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
 - **Members**: `humans` (identity, RBAC role) and `coworkers` (identity files, scopes) share one
   member namespace — the task board, asks, groups, and lineage all reference members.
 - **Human RBAC**: `admin` (everything), `owner` (one or more DNA domains + their Coworkers), `member` (work,
-  propose DNA, spawn within policy), `viewer` (read-only — never an ask target). Auth starts as local accounts; SSO/OIDC
+  propose DNA, spawn within policy), `viewer` (read-only in full — never an ask target, never an assignee, and
+  never an originator: proposing or amending DNA, filing asks, creating board tasks or initiatives, and spawning
+  are all refused at write; the deputy, target, assignee, sponsor, lead, owner, and proposer guards in this plan
+  are facets of one total no-write surface, not a checklist to dodge one item at a time). Auth starts as local accounts; SSO/OIDC
   later.
 - **Asks — the universal interrupt**: approvals, questions, assignments, and spawn requests are all
   *Asks*: routed to a member (human or agent) with payload, deadline, and escalation policy —
@@ -485,7 +512,8 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
   routing table.
   Humans answer in the console (later IM/email digests); agents answer via their session worker.
   Approvals from v1 become Asks of kind `approval`.
-- **Shared Task Board**: to-dos come from run results, playbook nodes, or any member; assignable to
+- **Shared Task Board**: to-dos come from run results, playbook nodes, or any member with a write
+  surface (a viewer reads the board, never writes it — §5's role bullet); assignable to
   humans or Coworkers — never viewers: the never-an-ask-target guard extends to assignments, a
   read-only member is not a worker, refused at write (§7) — groupable under initiatives (§5.1);
   visible org-wide within access scopes.
@@ -529,7 +557,10 @@ identity link is not), and email addresses are not reused.
   owned domains to a successor or admin custody, owned Coworkers re-owned or retired, with
   personal assistants always retiring: a never-ask-target cannot own staff, and viewer-mirrored
   scopes (§6.4) would make the assistant read-only anyway. `owner` → `member` sheds domain
-  ownership by the same rule. The §7 write-time guards refuse viewer deputies, assignees,
+  ownership by the same rule. Authored proposals travel with the authority, exactly as at
+  offboarding: transferred to the successor for shed domains, withdrawn with an audit note when
+  the new role can no longer propose (to viewer) — the review queue never waits on a proposer who
+  can no longer amend, and the member level keeps its amendment rights (§4.3). The §7 write-time guards refuse viewer deputies, assignees,
   sponsors, and leads at set; the demotion walk is what keeps those invariants true mid-life,
   not merely at write — the guard and the walk are one mechanism in two tenses.
 
@@ -557,8 +588,10 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
    terminal transition of the linked goal (`retired`, `missed`) fires the same ask, not just a
    window elapsing. **Pause is explicit
   and total**: a paused initiative suspends its stalled-work escalation and freezes its board
-  slice (no new runs launch under it), but — unlike close — does *not* lapse its delegated rules
-  (§8.10): pause freezes execution, not authority; the delegation's own window (§4.2
+ slice (no new runs or spawns launch under it), but — unlike close — does *not* lapse its delegated
+ rules (§8.10) or drop its workspace bindings: the binding list keeps the paused initiative, linked
+ goals keep injecting (context, not execution), and resume unfreezes in place — close, not pause, is
+ the transition that unbinds (§7). Pause freezes execution, not authority; the delegation's own window (§4.2
   `effective_to`) stays the bound, and pausing past the deadline still raises the sponsor ask —
   pause is a state, not a way to outlive a deadline silently. Closing runs the same dependency
    check as retiring a Coworker (§6.3) over the initiative's durable state — open asks
@@ -578,8 +611,11 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
 
 **Transitions are owned, not ambient**: `proposed` → `active` is the sponsor's acceptance — an
 initiative opened by anyone other than its sponsor routes an activation ask to the sponsor
-(expiry `deny`: a directive that never won its authority never gets execution), a sponsor's own
-opens active — and only `active` initiatives bind workspaces (§7) and launch runs. Pause and
+(expiry `deny`: a directive that never won its authority never gets execution — the denied
+initiative stays `proposed`, inert — no bindings, no runs, no escalations — until its sponsor or
+lead closes it; org state is never silently evaporated), a sponsor's own
+opens active — initiatives bind workspaces at activation, pause retains the binding frozen
+(above), close drops it (§7) — and only `active` initiatives launch runs. Pause and
 resume belong to the lead or the sponsor; close belongs to either and always runs the §6.3
 dependency check (§9) — and unbinds: workspaces drop the closed initiative from their binding
 list (§7), the goal slice re-derives at once, and no workspace keeps reading a closed spine.
@@ -653,7 +689,8 @@ delegation assigns a board task or instantiates a playbook.
   ephemeral workers exceeding quota → Ask to the spawner's owner human.
 - **Runaway protection**: depth cap, rate limits, TTL reaper, budget circuit-breaker (org spend
   ceiling halts all spawns and automations with a loud Ask to admins). The breaker trips by
-  class: triggers and templates carry a `criticality` tag, and a ceiling breach halts
+  class: triggers and playbooks carry a `criticality` tag (§7 — a firing's class is the stricter
+  of its trigger's and playbook's tags), and a ceiling breach halts
   `standard`-class work first while a small critical floor (default 5%) keeps money-moving and
   customer-facing automations alive — total exhaustion still halts everything, loudly. The TTL
   reaper never kills between prepare and commit of an external write: it grants a grace window
@@ -661,8 +698,16 @@ delegation assigns a board task or instantiates a playbook.
 
 ### 6.3 Lineage
 
+Lifecycle acts carry named authority: suspend, retire, and resume belong to the Coworker's owner
+human, an admin, or the sponsor of an initiative the Coworker is bound to — §5.1's "a sponsor who
+needs work stopped mid-flight suspends or retires" routes through this authority, not around it,
+and an owner's staff stop at the owner's hand.
+
 `spawned_by` chains render as an org graph in the console: who created whom, why (purpose), spend,
-and current status. Retiring a persistent Coworker requires resolving its dependents (automations,
+and current status. Retiring a persistent Coworker is a halt, not a drain: in-flight runs stop
+exactly as under suspension — partial results fold back through the memory tiers, staged writes go
+to §8.2 reconciliation, never killed mid-commit — before dependents resolve. Retiring requires
+resolving its dependents (automations,
 playbooks, paired IM sessions, live spawned workers — a dying spawner's ephemeral children fold
 back into the workspace's project memory, not the departed personal one — plus board-task
 assignments returned to the pool or reassigned, owned goals re-owned or retired, and initiative
@@ -795,7 +840,10 @@ dna_proposals  (id, kind 'card'|'rule'|'decision'|'goal'|'glossary'|'edit', payl
                  default 1, proposed_by member,
                  provenance json, status 'open'|'published'|'rejected'|'withdrawn', reviewed_by?, at,
                  review_by?)  -- review_by: queue SLA deadline; breach escalates to admin (§4.3);
-                 -- revision: amendable in review — history retained, publish binds latest (§4.3)
+                 -- revision: amendable in review — history retained, publish binds latest (§4.3);
+                 -- proposed_by must hold a write surface: humans and persistent Coworkers only —
+                 -- an ephemeral worker is refused at propose (§6); its learning folds back, and
+                 -- the spawner or a human proposes from it. Viewers are refused the same way (§5)
 asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request', from member, to member,
                  payload json, initiative_id?, workspace_id?, status 'pending'|'answered'|'expired', deadline, created_at,
                  sla_tier 'critical'|'standard'|'bulk', escalation json,
@@ -820,12 +868,14 @@ initiatives    (id, title, goal_ref?, decision_ref?, sponsor member, lead member
                  -- upstream with live dependents asks each sponsor — signal, not block (§5.1)
 board_tasks    + assignee_member_id?, initiative_id?  (runs carry initiative_id? the
                  same way — burndown, per-initiative digests)
-                 -- assignee: any member but a viewer — the ask-target guard extends to task
-                 -- assignment, refused at write (§5)
+                 -- assignee: any member but a viewer — and active at write, the sponsor/lead
+                 -- guard (§5.1) extended to assignments; suspension freezes an assignee's tasks
+                 -- (resume re-arms them), retire/offboard walks return them (§5, §6.3)
 workspaces     + initiative_ids json?, domain_ids json?, node_id?, claim_epoch int default 0,
                  lease_expires_at?
-                 -- active initiatives bound here (bound at spawn under an initiative,
-                 -- admin-editable; close drops the binding, §5.1); the source of the §4.2 goal slice;
+                 -- initiatives bound here from activation (bound at spawn under an initiative,
+                 -- admin-editable; pause retains the binding frozen and close drops it, §5.1);
+                 -- the source of the §4.2 goal slice;
                  -- domain_ids: the ordered domain binding — the read path's applicability set
                  -- (§4.2), the spawn gate's hop (§6.2), and the ask router's escalation hop
                  -- (§8.10) all key on it; the first entry is the primary domain (first-bound,
@@ -834,6 +884,8 @@ workspaces     + initiative_ids json?, domain_ids json?, node_id?, claim_epoch i
                  -- §8.10), and topology ops remap the list with ids stable (§4.4)
                  -- node/epoch/lease: affinity placement + the fenced claim (§3)
 triggers       + criticality 'standard'|'critical'  -- §6.2 breaker trip order
+playbooks      + criticality 'standard'|'critical'  -- with triggers (§6.2 breaker): a firing's
+                 -- class is the stricter of its trigger's and playbook's tags
 spend_ledger   (id, member_id, run_id?, spawn_id?, kind 'reserve'|'settle'|'release',
                  tokens_in/out, cost, pricing_version, at)
                  -- reservation metering: caps evaluate reserved + settled; releases return
@@ -912,7 +964,7 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
   (§7) refuses duplicates within a configurable window, returning the original run: a replayed
   webhook is one run, not two invoices.
 - **8.6 Playbook engine** — DSL and sandbox unchanged; `worker()` targets any member (human targets
-  create an assignment Ask); spawn-class playbooks (fan-out workers) built on §6 ephemeral workers
+  create an assignment Ask; a viewer is refused at write like every ask target, §5); spawn-class playbooks (fan-out workers) built on §6 ephemeral workers
   · **initiative playbooks** (§5.1): an SOP instantiated under an initiative becomes the
   cross-domain spine — nodes route asks into each domain's escalation chain (§8.10) and artifacts
   land on the initiative's board slice. Instantiation is bounded like spawning: playbooks carry
@@ -995,7 +1047,11 @@ escalation naming the shortfall: an impossible quorum degrades to a visible no, 
   a definite morning to compute. **Agent targets**: an ask routed to a Coworker queues into
   its next run (or wakes a session worker); if the target is anything but `active` — requested,
   retiring, suspended, or archived, the ephemeral states included via the §7 mapping — or is
-  busy past SLA, the ask reassigns up the chain (§6.3 suspend re-routing included). **Delegated authority** — a directive can push authority,
+  busy past SLA, the ask reassigns up the chain (§6.3 suspend re-routing included). The agent
+  chain is the lineage chain: the first hop is the Coworker's `owner_human_id` (§2 — the chain
+  always terminates at a human, so the hop is never undefined), and from there it continues down
+  the human chain — deputy → domain owner → admin — with the same visited-set; an ask to an
+  agent never lacks a human next hop. **Delegated authority** — a directive can push authority,
   not just work: the sponsor proposes a DNA rule scoped by `machine_hint` (initiative, ceiling,
   window) — "initiative X: store invoices ≤ $25k need one approval, by the lead, until
   2026-12-31" — reviewed like any rule. The ask router evaluates applicable rules, delegations
@@ -1037,11 +1093,13 @@ POST /dna/domains/:id/split|merge|rename|archive (governed topology ops, §4.4; 
                a domain still holding items or live workspace bindings — merge away first)
 CRUD /role-templates (versioned catalog, §6.5)
 POST /spawn          GET /spawn/:id   (spawn requests; approval + spawn-storm monitoring)
-POST /coworkers/:id/retire · /suspend · /resume   (lifecycle acts on the coworker, §6.3 — not the spawn request)
+POST /coworkers/:id/retire · /suspend · /resume   (lifecycle acts on the coworker, §6.3 — not the
+               spawn request; authority: the Coworker's owner human, an admin, or a
+               bound-initiative sponsor)
 CRUD /asks  ·  POST /asks/:id/respond  ·  WS: ask.requested, ask.answered
 CRUD /initiatives · POST /initiatives/:id/activate|pause|resume|close
                (transition authority §5.1; close runs the §6.3 dependency check)
-CRUD /board-tasks (assign to any member)
+CRUD /board-tasks (assign to any ask-eligible member — viewer and non-active refused at write, §7)
 POST /workspaces/:id/rebind (admin affinity failover; refuses a target node lacking the
                workspace's required capabilities, §3)
 GET /governance/policies|quotas|spend  (console screens 12 & 14)
@@ -1182,7 +1240,13 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   org-wide and domain scope, domain-scoped goal inject-flag composition, intra-domain
   alias duplicate refusal, ephemeral-reap task and ask returns, personal-assistant 1:1
   spawn refusal, initiative close-drain ordering (durable state resolved, in-flight
-  completes, new work refused).
+  completes, new work refused), viewer no-write surface (propose, amend, ask, task, initiative,
+  and spawn refusals at write), demotion transfer/withdrawal of authored proposals, agent-ask
+  chain rooted at the lineage owner, ephemeral-origin proposal refusal, active-assignee guard
+  (suspend freezes, retire/offboard walks return), pause-retained workspace binding (linked
+  goals inject, runs and spawns refuse, close drops), denied-activation inertness, coworker
+  lifecycle authority (owner human, admin, bound-initiative sponsor), firing-criticality
+  composition (stricter of trigger and playbook).
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -1198,7 +1262,10 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   residency constraint no node satisfies surfaces the starvation ask; suspend → resume leaves
   the halted run terminal (fold-back + reconciliation, no half-replayed side effect) while
   missed triggers coalesce; an in-flight run at initiative close drains onto the closed slice
-  while new runs under it are refused.
+  while new runs under it are refused; pause keeps the binding frozen — linked goals still
+  inject while new runs and spawns are refused, and resume unfreezes in place; retire halts an
+  in-flight run with fold-back and reconciliation, never mid-commit; a quarantined direct edit
+  lands in the affected domain owner's queue.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -1253,7 +1320,14 @@ topology remap (§7), archive refusing live workspace bindings (§4.4), cross-do
 refused as edits (§4.4), amendment re-routing with the payload's scope (§4.3), goal inject-flag
 composition (§4.2, §7), intra-domain alias duplicate refusal (§4.2), initiative close drain
 semantics (§5.1), resume-without-resurrection (§6.3), ephemeral reap returning held state
-(§6.3), and the policy-enforced assistant 1:1 (§6.4). The former residue — quorum
+(§6.3), and the policy-enforced assistant 1:1 (§6.4); v2.19's eleventh sweep closed the
+authority-surface seams beneath those — the viewer's total no-write surface (§5), demotion
+carrying authored proposals (§5), the agent-target ask chain pinned to the lineage owner (§8.10),
+pause's retained workspace binding and inert denied-activation initiatives (§5.1, §7),
+ephemeral-origin proposal refusal (§7), retire's halt semantics and named lifecycle authority
+(§6.3, §9), playbook criticality in the schema (§7), quarantine routing (§4.5), the domainless
+read-path layer (§4.2), org-wide glossary duplicate refusal (§4.2), and the active-assignee
+guard (§7). The former residue — quorum
 approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
 check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
