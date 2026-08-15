@@ -86,6 +86,18 @@ mode so small teams start simple.
 > exports (§4.5, §7) · stranded prepared writes get a scheduled reconciliation pass (§8.2) ·
 > initiative sponsor carried as pinned-human in the schema (§7) · admin lockout gets a
 > server-local, audited reset flow (§10).
+>
+> **Edge-case closure (v2.15)**: seventh sweep — ownership and lifecycle seams closed inline:
+> goal window-end semantics pinned — expired goals leave the slice, the sponsor ask carries the
+> outcome, terminal goal transitions re-open it (§4.2, §5.1) · initiative transitions are owned —
+> sponsor activation (ask-routed, deny at expiry), lead/sponsor pause-close, lifecycle endpoints
+> added (§5.1, §9) · viewers are never task assignees, like ask targets (§5, §7) · erasure sweeps
+> DNA provenance, not just ledgers; the storage tree gains domain-scoped goals and the db-only
+> split (§4.5) · the last-admin guard is transactional — racing offboards cannot both land (§5) ·
+> offboarding closes asks-from audit-only and gains its endpoint (§5, §9) · suspension halts the
+> ephemeral subtree with fold-back, never mid-commit (§6.3) · stage-less sends are send-once — an
+> ambiguous timeout is an ask, not a resend (§8.2) · ordinary expiring rules join delegations in
+> `lapsed` semantics (§7) · the single control plane is named an accepted boundary (§13.1).
 
 ---
 
@@ -228,7 +240,12 @@ Every run's system prompt is assembled with:
 - **Always injected**: the org snapshot (who's who), the glossary slice relevant to the task's
   domain, all *applicable rules* for the workspace's domains, and the **goal slice**: active goals
   linked to the workspace through its initiatives, plus goals flagged org-wide (inject 'always'; statement, owner,
-  deadline, status). "Applicable" has defined
+  deadline, status). Goals inherit the rules' window semantics: a goal past `effective_to` leaves
+  the slice at window end — a stale deadline is never injected forever — and the §5.1 sponsor ask
+  carries the outcome: extend re-adds it under a new window, a terminal status (`met`/`missed`/
+  `retired`, set through the §4.3 write path) ends it for good, and an org-wide goal with no live
+  initiative routes the same ask to its owner — the admin, when the owner is an agent or departed
+  (§8.10 chain) — so no goal expires silently. "Applicable" has defined
   semantics: a rule applies when its domain intersects the workspace's domains and its effective
   window (`effective_from`…`effective_to`) covers the run (superseded rules drop out of injection automatically); `machine_hint`
   narrows matching where present. Each layer carries a token budget (org snapshot ~1k, glossary
@@ -312,12 +329,15 @@ strictness separately.
 
 ```
 ~/.coworker/dna/            (or a company git repo — the canonical store)
-  domains/<domain>/cards/*.md, rules/*.md, decisions/*.md, glossary.md
-  goals/<quarter>.md
+  domains/<domain>/cards/*.md, rules/*.md, decisions/*.md, glossary.md, goals/*.md
+  goals/<quarter>.md          (org-wide — domain_id null)
 ```
 Markdown + frontmatter (id, version, effective dates, provenance, access); the control plane
 maintains the SQLite/FTS/vector index over it. Humans can read and edit their company's brain with
-any editor; git history *is* the DNA timeline. Frontmatter carries a `schema_version`: product
+any editor; git history *is* the DNA timeline. The tree holds `store: 'git'` domains only: a
+db-only domain's whole content set — cards, rules, decisions, glossary, goals included — lives in
+SQLite per the carve-out below; domain-scoped goals file under their domain and follow its `store`
+flag, org-wide goals under `goals/` are git-backed. Frontmatter carries a `schema_version`: product
 upgrades run in-place content migrations (post-backup) — an old store is never stranded. Direct
 human edits are welcomed, not trusted: the control plane validates every ingested change
 (frontmatter schema, unique ids, effective-window sanity) and quarantines invalid files to a
@@ -340,7 +360,11 @@ rewrite (rotate the repo, notify domain owners) — decided here, not improvised
 
 Erasure of a *person* is pseudonymization, not shredding: the append-only ledgers (audit, spend)
 keep the event shape — what happened, when, with what effect — while the member reference is
-replaced by a one-way pseudonym, severing identity without amputating the trail. Legal holds
+replaced by a one-way pseudonym, severing identity without amputating the trail. The sweep covers
+every live-state reference, not just ledgers: DNA provenance frontmatter and proposal attribution
+rewrite to the pseudonym as a normal signed commit, git history retains the pre-pseudonym commits
+under the immutable-history boundary, and an erasure demand that exceeds pseudonymization takes
+the documented history-rewrite remediation below. Legal holds
 (`data_holds`, §7) freeze erasure for covered subjects until an admin releases them, audited; an
 erasure request against a member with live dependencies is refused until the §5 offboarding walk
 has run. Topology history for db-only domains rests on the audit log, not git: split/merge/rename
@@ -382,14 +406,18 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
   Humans answer in the console (later IM/email digests); agents answer via their session worker.
   Approvals from v1 become Asks of kind `approval`.
 - **Shared Task Board**: to-dos come from run results, playbook nodes, or any member; assignable to
-  humans or Coworkers, groupable under initiatives (§5.1); visible org-wide within access scopes.
+  humans or Coworkers — never viewers: the never-an-ask-target guard extends to assignments, a
+  read-only member is not a worker, refused at write (§7) — groupable under initiatives (§5.1);
+  visible org-wide within access scopes.
 - **Groups/teams** mix humans and Coworkers (v1 kept agent-only groups; v2 unifies — a local
   Coworker still acts as Leader for execution routing).
 - **Accountability invariant**: every Coworker row carries `owner_human_id`; spawned workers carry
   `spawned_by`; the chain must terminate at a human. Enforced at spawn time.
 - **Offboarding**: deactivating a human runs the §6.3 dependency check across everything they
   touch: owned DNA domains (to a named successor, else **admin custody** — never orphaned), open
-  asks and board-task assignments (reassigned or returned to the pool), dependent Coworkers
+  asks (to the member: reassigned up the chain; from the member: closed with an audit note — a
+  departed member's pending spawn requests no longer gate anything) and board-task assignments
+  (reassigned or returned to the pool), dependent Coworkers
   (re-owned or retired — personal assistants are always retired: mirrored scopes die with the
   member, §6.4), sponsored/led initiatives (reassigned or closed), owned goals
   (`dna_goals.owner` — re-owned via the successor or admin custody, else retired), membership in
@@ -399,7 +427,9 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
   pending DNA proposals they authored (transferred to the successor for owned domains, auto-withdrawn with an
   audit note for member proposals — the review queue never waits on a departed proposer). Inactive members
   are skipped when walking ask chains. Guard: the last active admin
-  cannot be deactivated — the org never goes headless by accident. Audit history is retained;
+  cannot be deactivated — evaluated inside the offboarding transaction, so two racing
+  deactivations of the last two admins see one success and one refusal (§9's bootstrap
+  atomicity pattern); the org never goes headless by accident or by race. Audit history is retained;
   personal data falls under the §4.5 deletion carve-out. Rehire is a new member, never a
   resurrection: deactivation is terminal for identity, so a returning employee gets a fresh row —
 `decided_by` references, audit history, and spend attribution stay pinned to the departed
@@ -426,7 +456,9 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
    status + spend. A stalled initiative — deadline passed with open work — raises an ask to its
    sponsor (then admin), reusing the §8.10 escalation machinery. The same ask fires when the
    linked goal's window (`effective_to`, §4.2) ends while the initiative is still active —
-   extend, re-target, or close is a human call, not a silent drop from the slice. **Pause is explicit
+   extend, re-target, or close is a human call, not a silent drop from the slice — and any
+   terminal transition of the linked goal (`retired`, `missed`) fires the same ask, not just a
+   window elapsing. **Pause is explicit
   and total**: a paused initiative suspends its stalled-work escalation and freezes its board
   slice (no new runs launch under it), but — unlike close — does *not* lapse its delegated rules
   (§8.10): pause freezes execution, not authority; the delegation's own window (§4.2
@@ -437,6 +469,13 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
    Initiatives may declare dependencies (`depends_on`, §7): closing an upstream initiative with
    active dependents raises an ask to each dependent's sponsor — proceed, re-base, or pause — a
    coordination signal, not a hard block; the humans who own the downstream calls make them.
+
+**Transitions are owned, not ambient**: `proposed` → `active` is the sponsor's acceptance — an
+initiative opened by anyone other than its sponsor routes an activation ask to the sponsor
+(expiry `deny`: a directive that never won its authority never gets execution), a sponsor's own
+opens active — and only `active` initiatives bind workspaces (§7) and launch runs. Pause and
+resume belong to the lead or the sponsor; close belongs to either and always runs the §6.3
+dependency check (§9).
 
 An initiative is an org entity (visible, accountable); **project memory** (§8.3) stays the
 automatic per-workspace memory tier — one is governance, the other learning. **v0 shape**
@@ -511,7 +550,10 @@ lead/sponsor posts reassigned or closed via §5.1) — the same dependency check
 skill, applied to staff; the §5 offboarding walk is its superset for humans.
 
 Two state changes short of retirement: **suspend** — an admin's emergency stop that halts triggers
-and runs without resolving dependents (in-flight asks re-route up the chain) — and **re-role** —
+and runs without resolving dependents (in-flight asks re-route up the chain); the halt covers the
+subtree — live ephemeral descendants stop and fold back into the workspace's project memory
+exactly as on spawner death, staged writes left to §8.2 reconciliation rather than killed
+mid-commit — and **re-role** —
 re-tasking a Coworker to a different role is retire-and-respawn (identities are role-shaped;
 project memory stays with the workspace, lessons go to DNA), never an in-place IDENTITY rewrite.
 In-place evolution of the *same* role is the template upgrade path (§6.5).
@@ -591,7 +633,10 @@ dna_cards      (id, domain_id, title, definition_md, refs json, provenance json,
                  status 'draft'|'active'|'retired')
 dna_rules      (id, domain_id, statement_md, machine_hint json?, effective_from, effective_to?,
                  supersedes_id, status 'active'|'superseded'|'lapsed')
-                 -- effective_to bounds delegation windows (§8.10); lapsed: delegation ended (§8.10)
+                 -- effective_to bounds delegation windows (§8.10); lapsed: the window ended —
+                 -- ordinary expiring rules transition lapsed at effective_to exactly like
+                 -- delegations, dropping out of injection and routing; initiative close lapses
+                 -- its scoped rules the same way (§8.10)
 dna_decisions  (id, domain_id, context_md, outcome_md, decided_by member, decided_at)
 dna_glossary   (id, domain_id?, term, definition, aliases json)
 dna_goals      (id, domain_id?, quarter?, statement_md, owner member, status 'active'|'met'|'missed'|'retired',
@@ -631,6 +676,8 @@ initiatives    (id, title, goal_ref?, decision_ref?, sponsor member, lead member
                  -- asks each sponsor — signal, not block (§5.1)
 board_tasks    + assignee_member_id?, initiative_id?  (runs carry initiative_id? the
                  same way — burndown, per-initiative digests)
+                 -- assignee: any member but a viewer — the ask-target guard extends to task
+                 -- assignment, refused at write (§5)
 workspaces     + initiative_ids json?, node_id?, claim_epoch int default 0, lease_expires_at?
                  -- active initiatives bound here (bound at spawn under an initiative,
                  -- admin-editable); the source of the §4.2 goal slice;
@@ -688,7 +735,10 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
   stage keyed by the idempotency key of its `external_writes` ledger row (§7): playbook retries
   and node retries reuse the key and cannot duplicate side effects, and a crashed or reaped run
   leaves a `prepared` row that reconciliation resolves — confirm or compensate per connector, or
-  escalate to an admin ask where no compensation exists. Reconciliation is scheduled, not
+  escalate to an admin ask where no compensation exists. Stage-less targets — an email send has
+  no prepare — get send-once semantics: retry only on transport failure before the remote
+  acknowledges; an ambiguous timeout after the wire degrades to an ask with the attempt audited,
+  never a blind resend — at-most-once delivery where idempotency cannot be engineered. Reconciliation is scheduled, not
   improvised: a periodic pass — the steady-state twin of the §11 restore runbook — walks
   `prepared` rows past the grace window to a terminal state or an admin ask, so a stranded write
   cannot wait forever on a reaper that has already moved on.
@@ -817,6 +867,7 @@ POST /org/bootstrap (first-run: create company + first admin; refused once any h
                a transactional singleton guard, not check-then-act)
 CRUD /org/humans · /org/members · GET /org/lineage
 POST /org/humans/:id/erasure (admin; audited; honors data_holds — §4.5)
+POST /org/humans/:id/offboard (admin; runs the §5 dependency walk; transactional last-admin guard)
 POST /nodes/enroll (one-time token exchange) · GET /nodes · POST /nodes/:id/revoke
 CRUD /dna/domains · /dna/cards|rules|decisions|glossary|goals
 POST /dna/proposals  POST /dna/proposals/:id/review (publish|reject) · POST /dna/proposals/:id/withdraw
@@ -826,7 +877,8 @@ CRUD /role-templates (versioned catalog, §6.5)
 POST /spawn          GET /spawn/:id   (spawn requests; approval + spawn-storm monitoring)
 POST /coworkers/:id/retire · /suspend · /resume   (lifecycle acts on the coworker, §6.3 — not the spawn request)
 CRUD /asks  ·  POST /asks/:id/respond  ·  WS: ask.requested, ask.answered
-CRUD /initiatives · POST /initiatives/:id/close (runs the §6.3 dependency check)
+CRUD /initiatives · POST /initiatives/:id/activate|pause|resume|close
+               (transition authority §5.1; close runs the §6.3 dependency check)
 CRUD /board-tasks (assign to any member)
 POST /workspaces/:id/rebind (admin affinity failover; refuses a target node lacking the
                workspace's required capabilities, §3)
@@ -938,8 +990,9 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
 
 - **Unit**: scope delegation algebra (child ⊆ parent), spawn policy engine (quotas/depth/TTL),
   DNA proposal workflow states, goal-slice injection determinism, delegated-authority evaluation
-  in ask routing, egress/path guards, scheduler math, memory 3-tier classifier, offboarding dependency walk (last-admin guard,
-  initiative reassignment, deputy clearing, session/PAT revocation), domain split/merge id-and-chain invariants,
+  in ask routing, egress/path guards, scheduler math, memory 3-tier classifier, offboarding dependency walk (last-admin guard incl.
+  racing offboards, initiative reassignment, deputy clearing, session/PAT revocation, asks-from
+  closure), domain split/merge id-and-chain invariants,
   template-upgrade scope re-derivation, escalation-walk visited-set (deputy cycles), deputy
   guard (agent, self, viewer, and cycle refusals), trigger catch-up coalescing, atomic quota claims under racing spawners, DNA
   store ingestion quarantine, topology-op write-lock serialization, ask respond-time
@@ -948,7 +1001,9 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   spend reservation under racing runs, separation-of-duties refusal, playbook cycle detection,
   alias-collision resolution order, injected-layer compartment filtering (rules/glossary/goals),
   org-scoped proposal routing to the admin queue, PAT expiry enforcement, erasure
-  pseudonymization + hold blocking.
+  pseudonymization + hold blocking (incl. the DNA provenance sweep), initiative transition
+  authority (sponsor activation ask, lead/sponsor pause-close), goal window-end slice drop and
+  terminal-status exit, viewer assignee refusal.
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -957,7 +1012,9 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   → stale-epoch refusal + reconnect reconciliation; provider outage → queued run + a single
   admin ask; ask storm → collapsed digest + rate-limit shed; restore replay re-applies erasure;
   scope revocation emptying a workspace's readable domains → refused run + admin ask; stranded
-  prepared write past grace → scheduled reconciliation resolves or escalates.
+  prepared write past grace → scheduled reconciliation resolves or escalates; suspend halts the
+  ephemeral subtree with fold-back; ambiguous send timeout → ask, no resend; goal window end
+  drops the slice and raises the sponsor ask.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -994,7 +1051,10 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
 
 Five sweeps (v2.9–v2.13) closed the enumerated edge-case space inline; what v2.10 ranked and
 v2.11 triaged, v2.12 designed, v2.13 audited and closed — and v2.14 closed the seams between
-prose and schema that the fifth sweep's audit still left open. The former residue — quorum
+prose and schema that the fifth sweep's audit still left open; v2.15's seventh sweep closed the
+remaining ownership seams — goal window-end semantics (§4.2), initiative transition authority
+(§5.1), viewer assignees (§5), erasure's provenance sweep (§4.5), the transactional last-admin
+guard (§5), suspended subtrees (§6.3), send-once delivery (§8.2), and the offboard endpoint (§9). The former residue — quorum
 approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
 check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
@@ -1007,6 +1067,11 @@ mechanisms in the sections the sweep changelogs cite. What remains is stated, no
   domain owner publishing a poisoned rule gets agents obeying it until audit catches up; nothing
   sits above the owner short of admin. The §4.3 separation-of-duties knob raises the cost; the
   boundary itself is the trust model, stated so nobody is surprised.
+- **Single control plane — accepted boundary.** One control-plane instance is the design (§3's
+  stack: one binary, SQLite WAL); its downtime is survived, not eliminated — runs queue, triggers
+  coalesce (§8.5), leases hold to their fence and pause-and-resync on reconnect (§3), and
+  recovery rides the §11 restore runbook. Multi-instance HA is a redesign beyond this plan,
+  stated so nobody expects it silently.
 - **Deferred parameters, not deferred designs.** Provider routing (§14.15) and lease intervals
   (§14.16) are decisions *over* designed mechanisms — §8.1(d)'s queue-and-ask, §3's fenced
   leases: the behavior exists; the tuning is organizational and lands with Phase 6 and the first
