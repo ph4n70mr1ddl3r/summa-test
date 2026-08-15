@@ -438,6 +438,22 @@ mode so small teams start simple.
 > re-pointed on departure or retirement, an unnamed successor degrading routing to an admin
 > ask — so no execution surface addresses a dead identity (§5, §6.3).
 
+> **Edge-case closure (v2.36)**: twenty-eighth sweep — assumption-settlement, gate-rekey, and
+> leader-guard seams closed inline: the event that terminally breaks a named ask assumption
+> settles the ask at the event — a quorum ask whose rule went terminal mid-wait resolves per
+> its expiry behavior with the successor machinery carrying the decision, and a domain's
+> archive closes its owner-addressed pending asks with an audit note, so no ask lingers
+> rendering answerable against a dead premise (§8.10, §4.4, §9) · the spawn gate's
+> creation-time hop never outlives the workspace binding it was read from — an admin edit of
+> a bound workspace's `domain_ids` re-keys its pending spawn approval to the gate the edited
+> binding derives, ids stable and deadlines untouched, the re-key's fourth door (§6.2, §7,
+> §4.4) · the group-Leader post gains its write guards — viewer and non-active members
+> refused at set, an ephemeral refused by the mortality pin, and the demotion walk re-pointing
+> a Leader the new role can no longer answer for (§5, §6.3) · and governance cap edits are
+> pinned claim-scoped, never retroactive — live claims run out, new claims refuse, and a
+> ceiling tightened below live spend trips the breaker loudly rather than contradicting its
+> own ledger (§6.2, §9).
+
 ---
 
 ## 1. Product vision
@@ -824,8 +840,19 @@ keeps governing strictness separately.
   creation-time addressing is the only piece a remap could leave stale, and the remap
   carries it — and the re-key binds to owner re-pointing itself, not to this op alone:
   re-pointing has three doors (this topology op, the §9 domain edit, the §5 walks' transfer),
-  and a pending approval or quorum ask never outlives the act at any of them.
-  Topology ops serialize behind a domain-level write lock (§4.5):
+  and a pending approval or quorum ask never outlives the act at any of them. The gate hop
+  carries a derivation of its own beyond the owner, so a fourth door joins the three: the §6.2
+  approval keys on the hire workspace's primary domain, and an admin edit of that binding (§7
+  — primary demoted, unbound, or emptied to domainless) re-keys a pending spawn approval to
+  the gate the edited binding derives — the new primary's owner or an admin once domainless —
+  inside the audited edit, ids stable and deadlines untouched: creation-time addressing never
+  outlives the row it was read from, on the binding surface any more than on the owner
+  surface. And archive, which has no resulting owner to re-key onto, settles instead:
+  owner-addressed asks pending against the archiving domain close with an audit note inside
+  the event — §8.10's event-side settlement at the dissolution door — so the attention a
+  domain held dies with its routing, never left addressing an owner of record that routing no
+  longer derives.
+Topology ops serialize behind a domain-level write lock (§4.5):
   split/merge/rename/archive queue behind in-flight proposals and each other — the stable-id
   guarantees assume no concurrent topology mutation, so the system enforces the assumption rather
   than hoping. Ops spanning several domains — merge above all — acquire every affected domain's
@@ -929,7 +956,7 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
 - **Human RBAC**: `admin` (everything), `owner` (one or more DNA domains + their Coworkers), `member` (work,
   propose DNA, spawn within policy), `viewer` (read-only in full — never an ask target, never an assignee, and
   never an originator: proposing or amending DNA, filing asks, creating board tasks or initiatives, and spawning
-  are all refused at write; the deputy, target, assignee, sponsor, lead, owner, and proposer guards in this plan
+  are all refused at write; the deputy, target, assignee, sponsor, lead, owner, group-Leader, and proposer guards in this plan
   are facets of one total no-write surface, not a checklist to dodge one item at a time). Auth starts as local accounts; SSO/OIDC
   later.
 - **Asks — the universal interrupt**: approvals, questions, assignments, and spawn requests are all
@@ -950,7 +977,16 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
   way: a group whose Leader departs or retires re-points the post inside the walk — a named
   successor, else the group's routing degrades to an admin ask (§2) rather than addressing a
   dead identity — the post is a routing surface, and no routing surface outlives its holder
-  un-asked.
+  un-asked. The post is guarded at write like every routing surface it kinships with: a
+  viewer human — or any non-active member — is refused the Leader post at set, routing
+  addresses the Leader and the Leader must be answerable, the never-an-ask-target guard's
+  facet; an ephemeral Coworker is refused by the mortality pin (§5.1), the lead/goal-owner/
+  delegate guard's twin — a member dying by schedule must not hold a post built to outlive
+  it, the reap walk's re-point (§6.3) the drain for what slipped past, never the design. And
+  the demotion walk carries the post with the authority: a human demoted to viewer sheds the
+  Leader post the way they shed deputy references and led initiatives — re-pointed inside the
+  walk, a named successor else the admin-ask degradation — never left addressing a member who
+  can no longer answer.
 - **Accountability invariant**: every Coworker row carries `owner_human_id`; spawned workers carry
   `spawned_by`; the chain must terminate at a human. Enforced at spawn time — and derived there,
   not configured: §6.2 names the row's first owner (the gate's accepting human for a persistent
@@ -1008,7 +1044,8 @@ identity link is not), and email addresses are not reused.
   carry, inside the last-admin guard's transaction — a demotion cannot half-land, and it cannot
   leave holdings the role does not support. To `viewer`: open asks to the member reassign up the
   chain (asks from the member close with an audit note, as offboarding does), board-task
-  assignments return to the pool or reassign, deputy references clear in both directions, owned
+  assignments return to the pool or reassign, deputy references clear in both directions, group Leader posts re-point (the routing
+  surface's answer-eligibility shed, the groups bullet's demotion clause), owned
   goals re-own via successor or admin custody or retire — active goals, the same clamp as
   offboarding: terminal ones are frozen history (§7) — sponsored/led initiatives re-point,
   and owned authority the role no longer carries transfers the way offboarding transfers it —
@@ -1248,7 +1285,14 @@ delegation assigns a board task or instantiates a playbook.
   provider call lands after the meter — and the overrun is handled, not rolled forward: it
   settles in full, surfaces on the spend dashboard and the owner's digest, and further reserves
   against that cap are refused until an admin acknowledges through the §9 overrun-ack endpoint —
-  the refusal itself is the ask (§2).
+  the refusal itself is the ask (§2). And cap edits are claim-scoped, never retroactive:
+  caps gate claims, not existence — a tightened count cap leaves live workers to run out their
+  natural terminal on the claims they hold while new claims refuse the tightened value, and
+  nothing is force-reaped or stranded by a configuration act. The spend ceiling is the one
+  edit that bites immediately, and it bites as designed: a ceiling tightened below live
+  reserved+settled is the breaker's trip condition — the halt lands, the trip ask raises
+  below, and the edit is a loud act, never a silent contradiction between a cap row and its
+  ledger.
 - **Approval gates**: persistent hires → Ask to the owner of the domain the hire's primary
   workspace is bound to (or an admin) — a primary workspace with no bound domain routes the ask
   to an admin outright, as does a hire with no workspace binding at all: no primary workspace
@@ -1259,7 +1303,12 @@ delegation assigns a board task or instantiates a playbook.
   click, the ask itself the audit record of the self-approval (sod governs DNA publish, §4.3,
   not hire, and the quota, depth, and budget gates still bind); the hop's addressee rides
   owner re-pointing wherever it happens — topology op, §9 domain edit, or the §5 walk — a
-  pending approval re-keying to the resulting owner with its deadline untouched (§4.4);
+  pending approval re-keying to the resulting owner with its deadline untouched, and it rides
+  the binding too: an admin edit of the hire workspace's `domain_ids` (§7 — primary demoted,
+  unbound, or emptied to domainless) re-keys a pending approval to the gate the edited binding
+  derives, the new primary domain's owner or an admin once domainless, inside the audited edit
+  with ids stable and deadlines untouched — the creation-time hop never outliving the binding
+  row it was read from (§4.4);
   agent-spawned
   ephemeral workers exceeding quota → Ask to the spawner's owner human. An approval ask that
   expires is the denial's twin — deny is the spawn request's expiry default (§8.10): the
@@ -1607,6 +1656,11 @@ asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request', fro
                  -- workspace_id keys the domain-owner escalation hop and digest grouping (§8.10);
                  -- respond re-validates payload assumptions — answers against a superseded
                  -- world are audit-only, a successor ask carries the decision (§8.10)
+                 -- event-side settlement: the event that terminally breaks a named
+                 -- assumption resolves the ask at the event per its expiry behavior — a
+                 -- quorum ask whose rule went terminal mid-wait, a domain's archive closing
+                 -- its owner-addressed asks with an audit note — partial accepts staying
+                 -- audit-only (§8.10, §4.4)
                  -- the terminal admin hop is a broadcast: every active admin addressed at once,
                  -- first valid response wins — a single-admin org the degenerate case (§8.10)
 initiatives    (id, title, goal_ref?, decision_ref?, sponsor member, lead member,
@@ -1651,7 +1705,10 @@ workspaces     + initiative_ids json?, domain_ids json?, node_id?, claim_epoch i
                  -- (§8.10) all key on it; the first entry is the primary domain (first-bound,
                  -- admin-editable, §8.10); unbinding the primary promotes the next entry, an
                  -- empty list is a domainless workspace with the defined fallbacks (§6.2,
-                 -- §8.10), and topology ops remap the list with ids stable (§4.4)
+                  -- §8.10), and topology ops remap the list with ids stable (§4.4);
+                  -- a pending §6.2 spawn approval keyed on this binding re-keys at the edit —
+                  -- the gate the new primary derives, an admin once domainless — ids and
+                  -- deadlines stable, creation-time addressing never stale (§4.4)
                  -- node/epoch/lease: affinity placement + the fenced claim (§3)
                  -- lifecycle: workspaces archive, never bare-delete — runs and artifacts
                  -- are history; archival is a walked transition (§3, §4.4, §5.1, §8.10):
@@ -1824,7 +1881,21 @@ responses (member and deputy racing) are audit-only; a response to an expired as
   resume, for resume never resurrects what the halt archived (§6.3). And a response against
   a superseded
 world is audit-only like a late response, with a successor ask opened against current state (the
-same machinery expiry uses). Provenance re-validates with them: an accept originating in a
+same machinery expiry uses). Settlement has an event-side twin: the respond door is not the
+  only place a broken assumption is discovered — the event that terminally breaks one settles
+  the ask at the event, the walks' leave-no-waiters contract applied to attention. A quorum
+  ask whose rule went terminal mid-wait — superseded, lapsed, or close-lapsed with its
+  initiative — resolves per its expiry behavior the moment the premise dies (an approval
+  denies, fail-safe), partial accepts staying audit-only, the withdrawal algebra (§7), and
+  the successor-ask machinery carries any decision the action still needs against current
+  rules, the live slice re-derived: a pending ask is attention owed on a live question, and a
+  question whose premise has died must not linger in every digest as answerable. Non-terminal
+  states keep the deadline their resolver — suspension's request rule (§6.2) stands exactly
+  as written, and a pool shrunk below N (below) denies at expiry rather than at the event
+  precisely because a live pool can grow back; a terminal premise cannot, and that is the
+  line: settle at the event only what the event ended. A domain's archive settles the same
+  way — no resulting owner exists to re-key onto, so owner-addressed asks pending against it
+  close with an audit note inside the event (§4.4). Provenance re-validates with them: an accept originating in a
 tainted run (§13) is audit-only the same way — taint never becomes approval authority — and the
 successor ask renders without a pre-fill (below) while it carries the decision to an untainted
 reader. **Quorum asks**: rules may require N distinct approvals
@@ -1972,7 +2043,9 @@ POST /dna/domains/:id/split|merge|rename|archive (governed topology ops, §4.4; 
                a domain still holding live-set items — active rows and owner-staged drafts —
                live workspace bindings, or open proposals; terminal history never blocks,
                staying with the archived row as read-only record (§7) — merge away first, or
-               archive directly once only history remains)
+               archive directly once only history remains; owner-addressed pending asks
+               settle inside the event instead of blocking — closed with an audit note,
+               attention dying with the domain's routing, §8.10)
 CRUD /role-templates (versioned catalog, §6.5; create/publish/retire are admin writes,
                audited — authorship is infrastructure, adoption rides the §6.5 owner asks)
 POST /spawn          GET /spawn/:id   (spawn requests; approval + spawn-storm monitoring)
@@ -1994,7 +2067,9 @@ GET /governance/policies|quotas|spend  (console screens 12 & 14)
                · PUT /governance/policies|quotas  (admin; audited — the org-global tunables'
                write surface; per-object settings ride their own CRUD — §4.3's SLA on the
                domain, §8.5's catch-up policy on the trigger — and §14's deferred parameters
-               land here when decided)
+               land here when decided; cap edits are claim-scoped, never retroactive over
+               live claims — a spend ceiling tightened below live reserved+settled trips the
+               §6.2 breaker loudly rather than contradicting its own ledger (§6.2))
 POST /governance/spend/overruns/:id/ack (admin; lifts the §6.2 reserve gate an acknowledged
                settle overrun raised — :id is the overshot settle's spend-ledger row)
 POST /governance/holds · POST /governance/holds/:id/release  (admin; audited — data_holds
@@ -2273,7 +2348,16 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   human owning the hire at activation, a re-keyed gate landing on the re-keyed addressee,
   ephemeral owners resolving to the first human up the spawned_by line), and
   group-leadership re-pointing on the walks (a departed Leader re-pointed, an unnamed
-  successor degrading routing to an admin ask).
+  successor degrading routing to an admin ask), event-side ask settlement (a quorum ask
+  resolving per its expiry behavior the moment its rule goes terminal mid-wait, the
+  successor ask carrying the decision; archive closing owner-addressed asks with an audit
+  note), spawn-gate re-key on workspace-binding edits (a pending approval re-keyed inside the
+  audited edit to the gate the edited `domain_ids` derives — the new primary's owner or the
+  admin fallback — ids and deadlines stable), group-Leader write guards (viewer and
+  non-active members refused at set, the ephemeral mortality pin) with demotion re-pointing,
+  and cap-edit non-retroactivity (a tightened count cap refusing new claims while live
+  claims run out, a spend ceiling tightened below live reserved+settled tripping the breaker
+  with its ask).
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -2358,6 +2442,12 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   directly, its citations resolving read-only; a hire published on a domain owner's accept
   carries the accepter as its owner_human_id; and a group led by a retiring Coworker
   re-points its Leader inside the walk, an unnamed successor degrading routing to an admin
+  ask; a quorum ask whose rule is superseded mid-wait closes at the event, its successor ask
+  carrying the decision against current rules; archiving a domain closes its owner-addressed
+  pending ask with an audit note inside the event; an admin unbinding a pending hire's
+  primary domain re-keys its approval ask to the gate the new binding derives; and tightening
+  the ephemeral quota under live workers refuses new claims while the live ones run out,
+  while tightening the spend ceiling below live spend trips the breaker and raises its trip
   ask.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
@@ -2527,7 +2617,14 @@ state, the suspension-raced accept archiving at the door (§8.10, §6.2, §6.3),
 holdings scoped to the live set with terminal history staying on as the archived row's
 read-only record and merge moving the whole corpus (§4.4, §7, §9), hire ownership derived
 from the gate's accepter and ephemeral ownership from the chain's first human (§6.2, §7),
-and group leadership re-pointed by the walks (§5, §6.3). The former
+and group leadership re-pointed by the walks (§5, §6.3); v2.36's twenty-eighth sweep closed
+the assumption-settlement, gate-rekey, and leader-guard seams beneath those — events that
+terminally break a named ask assumption settling the ask at the event, a quorum ask
+resolving per its expiry behavior when its rule dies and a domain's archive closing its
+owner-addressed attention with an audit note (§8.10, §4.4, §9), the spawn gate's pending hop
+re-keyed at workspace-binding edits, the re-key's fourth door (§6.2, §7, §4.4), the
+group-Leader post's write guards and demotion re-pointing (§5, §6.3), and claim-scoped,
+non-retroactive cap edits with a loud breaker trip on a tightened ceiling (§6.2, §9). The former
 residue — quorum approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
 check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
