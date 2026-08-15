@@ -89,6 +89,12 @@ Source: PLAN.md §6.1, §6.2.
   activation is the gate's accepting human (the self-addressed collapse included; a re-keyed
   gate lands on the re-keyed addressee); the walks re-point from there. Ephemeral workers,
   ungated, roll to the chain: the first human up the `spawned_by` line, pinned at spawn.
+- **SPW-047** — The requester's withdraw on a pending spawn-approval ask is the request's
+  own retraction: the ask resolves per the withdrawal algebra (ASK-030 — a withdrawn
+  approval is a no), and the request archives with its template pin drained and cap claims
+  released — denial, expiry, the walks' settlements, the requester-state archive, and the
+  retract: one settlement, every terminal; a pending hire never outlives the live intent
+  that filed it.
 
 ## Spend circuit-breaker
 

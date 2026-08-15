@@ -130,6 +130,12 @@ Source: PLAN.md §8.10.
 - **ASK-094** — Delegations end by window, supersession, or initiative close (rule
   semantics): closing an initiative lapses every rule scoped to it — status `lapsed`, dropped
   from injection and routing.
+- **ASK-095** — The grantee's own retirement is a delegate edge's fourth end: the retire
+  walk lapses an agent-named grant with its grantee (CLC-025) — the rule stands, routing
+  reverting to its owner, the digest line the notice — while a post-named grant rides the
+  post's re-pointing and suspension remains the transient the non-active reassignment
+  covers. A reviewed grant never runs to a departed identity, exactly as no routing surface
+  does.
 
 ## Storms and digests
 

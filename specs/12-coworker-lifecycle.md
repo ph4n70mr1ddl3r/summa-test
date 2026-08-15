@@ -44,6 +44,11 @@ Source: PLAN.md §6.3, §6.4.
 - **CLC-024** — The ephemeral analogue runs at reap: the TTL reaper's fold-back returns open
   board-task assignments to the pool, re-routes asks *to* it up the chain, and closes asks
   *from* it with an audit note.
+- **CLC-025** — Delegation grants naming the retiree as their agent approver resolve with
+  it: the `machine_hint`'s delegate edge lapses inside the walk — the rule's normative
+  content stands, its routing reverting to the domain owner, a digest line noting the grant
+  that died with its grantee (ASK-095). A post-named grant ("by the lead") rides the post's
+  re-pointing instead, and suspension keeps the non-active reassignment as its transient.
 
 ## Suspend and resume
 

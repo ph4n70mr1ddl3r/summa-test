@@ -24,6 +24,14 @@ Source: PLAN.md §4.2.
 - **DRP-006** — Binding a member to a workspace whose domains it cannot read shall be refused
   at spawn and on admin edit; a mid-life revocation that leaves a workspace with no readable
   domains shall refuse the next run's launch and raise an admin ask.
+- **DRP-007** — Overflow demotion is ordered, not discretionary, so determinism survives an
+  overflow: layers demote in reverse precedence — glossary first (terms stay resolvable
+  through search and citation), then the goal slice ('linked' goals before 'always'), then
+  rules last; within rules, narrative statements before enforcement-bearing
+  (`machine_hint`-carrying) ones; ties break by item id ascending. The org snapshot degrades
+  structurally instead: the routing spine — domains with their owners, groups with their
+  Leaders — never demotes, and member rows beyond the budget demote to the org-facts
+  directory (DNC-003), never a truncated roster.
 
 ## Applicable rules
 

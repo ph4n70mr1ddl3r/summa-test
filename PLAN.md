@@ -528,6 +528,22 @@ mode so small teams start simple.
 > addressing and quorum response ledgers — and completed board-task assignments pseudonymize
 > with the audit and spend lines, event shape kept, identity link severed, pending state
 > pre-resolved by the §5 walk (§4.5).
+>
+> **Edge-case closure (v2.41)**: thirty-third sweep — retraction, grant-mortality,
+> queue-clock, and ordered-degradation seams closed inline: the change of heart has the same
+> door every terminal has — a pending spawn request is retractable by its requester, the
+> approval ask's withdraw (its `from`) archiving the row with pin drained and claims
+> released, one settlement at every door (§6.2, §7, §8.10, §9) · a delegation's agent-named
+> grant dies with its grantee — the retire walk lapses the delegate edge, routing reverting
+> to the owner with a digest line, a post-named grant riding its post's re-pointing and
+> suspension keeping the non-active reassignment as its transient; window, supersession,
+> initiative close, and grantee retirement are a delegate edge's four ends (§6.3, §8.10) ·
+> the review SLA is bounded and monotonic under edit — `review_sla_days` ≥ 1 at every write
+> door, tightening recomputes standing `review_by` earlier and loosening never touches
+> standing clocks, §3's monotonic idiom at the queue door (§4.3, §7) · and injection
+> overflow is ordered, not discretionary — glossary, then goals ('linked' before 'always'),
+> then rules (narrative before enforcement-bearing), id-ascending ties, the org snapshot
+> degrading to its routing spine plus the org-facts directory rather than truncating (§4.2).
 
 ---
 
@@ -738,7 +754,19 @@ Every run's system prompt is assembled with:
   layer, not an error state: no rules (nothing intersects), the org-wide glossary slice, and org-wide
   `always` goals — the same determinism, one domain smaller. Each layer carries a token budget (org snapshot ~1k, glossary
   slice ~2k, rules ~4k, goal slice ~1k — soft limits, configurable); overflow demotes items to
-  retrieval (rules overflow into the searchable DNA index) rather than truncating silently.
+  retrieval (rules overflow into the searchable DNA index) rather than truncating silently —
+  and the demotion is ordered, not discretionary, so the determinism claim survives an
+  overflow: layers demote in reverse precedence — glossary entries first (terms stay
+  resolvable through search and citation), then the goal slice ('linked' goals before 'always'
+  ones), then rules last, and within rules narrative statements before enforcement-bearing
+  ones (`machine_hint`-carrying), ties broken by item id ascending — the normative,
+  enforcement-bearing content is the last to leave the prompt, and the order is testable
+  alongside the slice (§12). The org snapshot is the one layer that cannot demote its items to
+  retrieval and stay coherent, so it degrades by structure instead: the routing spine —
+  domains with their owners, groups with their Leaders — never demotes, and member rows beyond
+  the budget demote to the org-facts record (§4.1, generated from the registry, read-only and
+  retrievable), a large org rendering as its spine plus a directory rather than a truncated
+  roster.
   Injection stays deterministic per (reader access, domain set, linked-goal set, DNA version)
   so it is testable (§12). Injected layers pass the same compartment access check as retrieval
   (§4.4): a domain the run's member cannot read contributes no rules, no glossary entries, no
@@ -790,7 +818,14 @@ DNA console (diff view, provenance, impact hints); publish creates a version and
 reject leaves an audit trail. The queue has a cadence of its own: proposals carry a review SLA
 (`review_by`, default 7 days, per-domain configurable through `dna_domains.review_sla_days`, §7); a breach escalates to the admin and a
 stale queue surfaces in the owner's digest — the §1 learning loop must not starve on an ignored
-inbox. The queue belongs to the domain, not to the owner's inbox: it renders to whoever holds
+inbox. The SLA itself is bounded and monotonic under edit: `review_sla_days` is ≥ 1 day at
+every write door (the one-validation rule's newest bound — an SLA of zero is an
+always-breaching queue, not a cadence), and an edit re-derives standing clocks in one
+direction only — tightening recomputes each open proposal's `review_by` from its filed date
+under the new SLA and applies it only where it lands earlier, while loosening leaves
+standing clocks untouched and governs proposals filed after it: urgency moves forward,
+never back, §3's monotonic idiom at the queue door, so an owner tightening a chronically
+late queue sees the breach surface now, not after the old clock runs out. The queue belongs to the domain, not to the owner's inbox: it renders to whoever holds
 `owner_human_id`, and owner re-pointing at any of its doors — a topology op (§4.4), the §9
 domain edit, the §5 walks' transfer — re-keys the rendering to the new owner with `review_by`
 clocks untouched, the §4.4 remap rule applied at the ownership door: a transferred domain's
@@ -1405,8 +1440,8 @@ not only from what was pre-authored.
   creation — inside the spawn transaction, where the racing-claim guarantee lives — transfers
   to the live worker at activation, and releases at every terminal a pending request has:
   denial, approval expiry, the close-/archive-time settlements that drain template pins
-  (§5.1, §7), and the requester-state archive the approval gate names (below) — the
-  pin-drain's budget twin, every terminal covered. An approval can never publish into an exhausted
+  (§5.1, §7), the requester-state archive the approval gate names (below), and the
+  requester's own retraction (below) — the pin-drain's budget twin, every terminal covered. An approval can never publish into an exhausted
   cap (the accept-time re-validation family, §8.10), and cap space never leaks on a request
   that died waiting. A settle may overshoot its reserve — the final
   provider call lands after the meter — and the overrun is handled, not rolled forward: it
@@ -1446,6 +1481,12 @@ not only from what was pre-authored.
   released (§8.10) — retirement and offboarding already settle their requests inside the walk
   (§6.3, §5), and suspension, which resolves no dependents, is covered at the door: never a
   worker published under a halted subtree, and the suspended requester re-requests on resume.
+  And the change of heart has a door of its own: the approval ask is the requester's — `from`
+  the requester, §8.10 — so its withdraw is the request's retraction: the ask resolves per
+  the withdrawal algebra (a withdrawn approval is a no), and the request archives with its
+  template pin drained and its cap claims released — denial, expiry, the walks'
+  settlements, the requester-state archive, and now the requester's own retract: one
+  settlement, every terminal, a pending hire never outliving the live intent that filed it.
   Approval is adoption, and ownership follows it: the hire's `owner_human_id` at activation is
   the gate's accepting human — the domain owner or admin whose answer published it, the
   self-addressed gate collapsing requester and owner into the one click — so a member hiring
@@ -1509,7 +1550,13 @@ assignments returned to the pool or reassigned, the retiree's workspace bindings
 memberships dropped and group Leader posts re-pointed or degraded to an admin ask
 (reader sets and execution routing re-deriving — the §5 participants
 scrub's retiree twin, §4.4), owned goals re-owned or retired (narrowing to
-the new owner's ceiling, the §5 rule — an empty intersection retiring), and initiative
+the new owner's ceiling, the §5 rule — an empty intersection retiring), delegation grants
+naming the retiree as their agent approver resolved with it — the `machine_hint`'s delegate
+edge lapses inside the walk, the rule's normative content standing while its routing
+reverts to the domain owner, a digest line noting the grant that died with its grantee
+(§8.10: window, supersession, initiative close, and grantee retirement are a delegate
+edge's four ends; a post-named grant — "by the lead" — rides the post's re-pointing
+instead, and suspension keeps the non-active reassignment as its transient), and initiative
 lead/sponsor posts reassigned or closed via §5.1 — their pending sponsor-addressed asks
 re-keying to the re-pointed sponsor inside the walk, the offboard rule's post-derivation
 twin — and the retiree's own pending asks closed with
@@ -1693,7 +1740,9 @@ coworkers      + owner_human_id, class 'persistent'|'ephemeral', spawned_by memb
                  -- the record — and archiving it drains the template pin it held (§6.2, §6.5);
                  -- an expired approval ask is the same denial (deny is the spawn request's
                  -- expiry default, §8.10): the row archives, the pin drains, the expiry the
-                 -- record (§6.2)
+                 -- record (§6.2); and the requester's withdraw on the approval ask is the
+                 -- same terminal — the retraction archives the row, drains the pin, and
+                 -- releases the claims (§6.2)
                  -- template_id null marks a customRole hire (§6.1): promotion (§6.5) is its
                  -- catalog door — the accepting admin's publish pins the hire as the new
                  -- row's founding instance when it sits in a live, activated state (active,
@@ -1731,7 +1780,9 @@ dna_domains    (id, name, owner_human_id, access 'public'|'domain'|'named',
                  -- db-only: the §4.5 privacy carve-out; sod: proposer ≠ publisher when on (§4.3);
                  -- review_sla_days: the per-domain queue SLA's schema home (§4.3) — review_by
                  -- derives from it at propose, and topology results inherit or persist it like
-                 -- every other domain attribute (§4.4);
+                 -- every other domain attribute (§4.4); bounded ≥ 1 at every write door, and
+                 -- an edit re-derives standing clocks monotonically — tightening earlier,
+                 -- never loosening (§4.3);
                  -- row-write authority is split (§9): create/archive, the structural
                  -- attributes — store, sod, residency — and owner re-pointing are admin
                  -- writes; the owner edits access, named_readers, and review_sla_days;
@@ -2232,6 +2283,11 @@ post's current holder, and a non-active delegate reassigns by the standing chain
 never to a departed identity. Delegations end by window, supersession, or initiative
   close — rule semantics, not bespoke state: closing an initiative lapses every rule whose
   `machine_hint` scopes it to that initiative (status → `lapsed`, dropped from injection and routing).
+  The grantee's own retirement is the fourth end: the §6.3 walk lapses an agent-named
+  delegate edge with its grantee — the rule stands, routing reverting to its owner, the
+  digest line the notice — while a post-named grant rides the post's re-pointing and
+  suspension remains the transient the non-active reassignment covers. A reviewed grant
+  never runs to a departed identity, exactly as no routing surface does.
 - **8.11 Inter-agent communication** — agents exchange **state, not chatter**. Agent→agent requests
   are Asks with an agent target (§8.10); shared context lives on the task board as tasks and
   artifacts, not repeated in-context explanation; deliberate multi-agent fan-out is a playbook
@@ -2294,7 +2350,8 @@ POST /dna/domains/:id/split|merge|rename|archive (governed topology ops, §4.4; 
                attention dying with the domain's routing, §8.10)
 CRUD /role-templates (versioned catalog, §6.5; create/publish/retire are admin writes,
                audited — authorship is infrastructure, adoption rides the §6.5 owner asks)
-POST /spawn          GET /spawn/:id   (spawn requests; approval + spawn-storm monitoring)
+POST /spawn          GET /spawn/:id   (spawn requests; approval + spawn-storm monitoring; the
+               requester's retraction rides the approval ask's withdraw endpoint, §6.2, §8.10)
 POST /coworkers/:id/retire · /suspend · /resume   (lifecycle acts on the coworker, §6.3 — not the
                spawn request; authority: the Coworker's owner human, an admin, or a
                bound-initiative sponsor)
@@ -2647,7 +2704,17 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   withdrawal, a member's withdraw attempt on a system ask refused at the door, the system
   retracting no member's ask), org-snapshot state rendering (a suspended Coworker
   present-but-halted, a retiring one terminal-bound, a requested hire absent until
-  activation publishes it), and erasure's operational-history sweep (resolved asks —
+  activation publishes it), spawn-request retraction (the requester's withdraw on the
+  approval ask archiving the request with its template pin drained and cap claims released —
+  the denial/expiry settlement at the originator's own door), delegation-grant mortality
+  (the retire walk lapsing an agent-named delegate edge with routing reverting to the owner,
+  a post-named grant riding its post's re-pointing, suspension keeping the non-active
+  reassignment as its transient), review-SLA edit monotonicity (tightening recomputing
+  standing review_by earlier from the filed date, loosening never touching standing clocks,
+  the ≥1-day bound refused at every write door), injection overflow demotion order
+  (glossary before goals, 'linked' before 'always', narrative before enforcement-bearing,
+  id-ascending ties — the org snapshot degrading to spine-plus-org-facts rather than
+  truncating), and erasure's operational-history sweep (resolved asks —
   `from`/`to` and quorum response ledgers — and completed assignments pseudonymized with
   the event shape kept, pending state resolved by the prerequisite walk).
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
@@ -2765,7 +2832,15 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   goal-window ask renders 'System' as its originator and a member's withdraw attempt on it
   is refused at the door; a suspended Coworker renders present-but-halted in every org
   snapshot assembled while the suspension holds, and a requested hire renders nowhere until
-  activation; and erasing a departed member pseudonymizes their resolved asks and completed
+  activation; a requester withdrawing their pending spawn-approval ask archives the request
+  and releases its claims for the next spawner; retiring an agent named as a delegation's
+  approver lapses the grant's routing edge and the next ask the rule routes addresses the
+  owner; tightening a domain's review SLA moves its open proposals' review_by earlier while
+  loosening leaves standing clocks untouched; a rules layer overflowing its token budget
+  demotes narrative rules to the searchable index first while enforcement-bearing rules stay
+  injected, and an org snapshot past its budget renders the routing spine with members
+  demoted to the org-facts directory; and erasing a departed member pseudonymizes their
+  resolved asks and completed
   assignments while the walks have already resolved the pending ones.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
@@ -2969,7 +3044,13 @@ resolution, the critical floor carrying critical-class throughout (§6.2, §8.5)
 system originator for plane-filed asks with retraction kept to the system's named closures
 (§7, §8.10), the org snapshot's state axis — suspended rendered present-but-halted, requested
 absent until activation (§4.2) — and erasure extended to resolved asks and completed
-assignments on the ledger's terms (§4.5).
+assignments on the ledger's terms (§4.5); v2.41's thirty-third sweep closed the retraction,
+grant-mortality, queue-clock, and ordered-degradation seams beneath those — the requester's
+withdraw on a pending spawn approval as the request's own retraction terminal (§6.2, §7,
+§8.10, §9), agent-named delegation grants lapsing with their grantee inside the retire walk
+while post-named grants ride re-pointing (§6.3, §8.10), review-SLA edits re-deriving
+standing clocks monotonically with the ≥1 bound at every door (§4.3, §7), and the injection
+overflow's ordered demotion with the org snapshot degrading to spine-plus-org-facts (§4.2).
 The former
 residue — quorum approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,

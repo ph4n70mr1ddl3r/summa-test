@@ -32,6 +32,13 @@ Source: PLAN.md §4.3.
   quality reviews — the owner's accept is informed consent, not a laundering step.
 - **DWP-024** — Humans of any role but viewer may propose directly and may edit in their own
   tools (the store is git-backed; a PR workflow is possible for teams that want it, STG-010).
+- **DWP-025** — The SLA is bounded and monotonic under edit: `review_sla_days` ≥ 1 day at
+  every write door (an SLA of zero is an always-breaching queue, not a cadence), and an edit
+  re-derives standing clocks in one direction only — tightening recomputes each open
+  proposal's `review_by` from its filed date under the new SLA and applies it only where it
+  lands earlier; loosening leaves standing clocks untouched and governs proposals filed
+  after it. Urgency moves forward, never back (ARC-031's monotonic idiom at the queue
+  door).
 
 ## Amendment
 
