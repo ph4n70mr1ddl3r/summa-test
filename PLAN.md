@@ -41,6 +41,8 @@ mode so small teams start simple.
 > **Consistency audit (v2.7)**: delegated rules get `effective_to` so "end by window" (§8.10) is representable (§7) · goal-slice "deadline" pinned to `dna_goals.effective_to` (§4.2, §7) · per-kind expiry defaults, the domain-owner escalation hop, and suspended ask targets specified (§8.10) · workspace rebind endpoint added (§9, §3) · digest ownership P4 (single-admin) vs P6 (per-human) disambiguated (§11) · single-admin "auto-approve" softened to one-click review, deferring to §14.13 (§13) · personal assistants retire — never re-own — on offboarding (§5) · viewer never-an-ask-target guard pinned in the schema (§7) · SLA-tier breach defaults parked as decision 14 (§14).
 >
 > **Consistency review (v2.8)**: workspace↔initiative binding added so the goal slice has a defined source (§4.2, §7) · asks carry `workspace_id`, keying the domain-owner escalation hop and digest grouping (§7, §8.10) · ephemeral→Coworker status mapping made 1:1 — `done` maps to `retiring` (§7) · domain `rename` joins split/merge as a governed endpoint (§9, §4.4) · retire/suspend/resume moved off `/spawn` onto the coworker they act on (§9) · stalled-initiative escalation specified — the §13 directive-decay row now has a mechanism (§5.1) · P3 goal slice scoped to org-wide goals until initiatives land in P4 (§11).
+>
+> **Edge-case pass (v2.9)**: escalation-chain exhaustion pinned — expire-per-behavior plus a critical org-stall broadcast (§8.10) · first-response-wins and expired-response = audit-only close the late/racing-answer seam (§8.10) · conflicting delegations resolve most-restrictive with a contradiction report (§8.10) · scope revocations re-checked before external writes (§8.1) · template retirement refuses live pins (§6.5) · spawner death retargets ephemeral fold-back to project memory (§6.3) · goal-window expiry under a live initiative raises a sponsor ask (§5.1) · goal-vs-goal contradictions join proposal-time checks (§4.4) · residual unhandled edge cases documented as §13.1; provider degradation and partitioned-node authority parked as decisions 15–16 (§14).
 
 ---
 
@@ -201,7 +203,7 @@ the store is git-backed markdown, so a PR workflow is possible for teams that wa
 - **Freshness**: review cadence and stale flags per item; scheduled DNA quality checks (a reviewer
   agent drafts a report; humans decide).
 - **Conflicts**: new rules supersede old ones explicitly (chains retained); the review UI shows
-  contradictions detected at proposal time.
+  contradictions — rule-vs-rule and goal-vs-goal — detected at proposal time.
 - **Topology changes**: reorgs split, merge, and rename domains — a governed operation, not a
   hand-run migration: items move with ids stable (citations and supersession chains survive),
   access policies re-evaluate against the new topology, workspace domain tags remap, and the move
@@ -291,7 +293,9 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
    — so coordination is auditable state, not another chat channel (§8.11).
 5. **Progress is state, not narration**: the initiative view is goal + ask burndown + task/playbook
    status + spend. A stalled initiative — deadline passed with open work — raises an ask to its
-   sponsor (then admin), reusing the §8.10 escalation machinery. Closing runs the same dependency
+   sponsor (then admin), reusing the §8.10 escalation machinery. The same ask fires when the
+   linked goal's window (`effective_to`, §4.2) ends while the initiative is still active —
+   extend, re-target, or close is a human call, not a silent drop from the slice. Closing runs the same dependency
    check as retiring a Coworker (§6.3): open asks
    and tasks resolved or reassigned; the retrospective files DNA proposals — the §1 loop closes.
 
@@ -349,7 +353,9 @@ delegation assigns a board task or instantiates a playbook.
 
 `spawned_by` chains render as an org graph in the console: who created whom, why (purpose), spend,
 and current status. Retiring a persistent Coworker requires resolving its dependents (automations,
-playbooks, paired IM sessions) — the same dependency check as deleting a skill, applied to staff.
+playbooks, paired IM sessions, live spawned workers — a dying spawner's ephemeral children fold
+back into the workspace's project memory, not the departed personal one) — the same dependency
+check as deleting a skill, applied to staff.
 
 Two state changes short of retirement: **suspend** — an admin's emergency stop that halts triggers
 and runs without resolving dependents (in-flight asks re-route up the chain) — and **re-role** —
@@ -383,7 +389,9 @@ Templates are versioned (§7 `role_templates`); every persistent Coworker pins t
 spawned from. An **upgrade** is proposal-shaped: the diff — IDENTITY/HANDBOOK changes, scope
 deltas — goes to the Coworker's owner as an Ask; on accept, files rebase and scopes re-derive as
 new-template ∩ owner's-current-scopes, never widening. Ephemeral subagent templates upgrade in
-place — workers are short-lived, so new spawns simply get the new version. A company-wide role
+place — workers are short-lived, so new spawns simply get the new version. Retiring a template
+with live pins is refused — upgrade or retire-and-respawn the pinned Coworkers first (the §8.4
+skill-uninstall dependency check, applied to templates). A company-wide role
 overhaul is one template bump plus a queue of owner asks, not a rehire.
 
 ---
@@ -456,7 +464,10 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
   Ask tiers in disguise (§8.10): `escalate_im` → `critical`, `queue_until_morning` → `standard`
   (next digest), `auto_deny` → expiry behavior `deny`; the configuration surface is the ask
   policy, not a separate one. Scope
-  enforcement, egress guard, write-lock, stop semantics, cost metering as in v1.
+  enforcement, egress guard, write-lock, stop semantics, cost metering as in v1. (c) Scope
+  changes — revocations, §6.4 role-change refreshes — take effect at the next run's prompt
+  assembly; a long-running run re-checks its scopes before each external write, so a mid-run
+  revocation gates the next side effect rather than lingering to the run's end.
 - **8.2 Tools & MCP** — built-ins (`fs.*`, guarded `shell.exec`, `web.*`, `kb.search` → `dna.search`,
   `memory.write`) plus **`spawn`** as a guarded tool. Egress guard unchanged. Connector tiers:
   tier 1 = email/calendar/docs; **tier 2 = enterprise systems of record** (ERP/WMS/HRIS/CRM) —
@@ -489,10 +500,15 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
   explicit per ask: `deny` (default for approvals and spawn requests — an expired approval is a
   no), `escalate` (route up the chain — default for questions), `reassign` (fall back to a named
   deputy — default for assignments); a run blocked on an expired ask
-  never hangs indefinitely. **Escalation chains**: every ask to a human carries member → deputy (set per member in the org
+  never hangs indefinitely. An ask closes on the first response received — later responses
+  (member and deputy racing) are audit-only; a response to an expired ask is recorded but has no
+  effect: the successor ask, if any, carries the decision. **Escalation chains**: every ask to a human carries member → deputy (set per member in the org
   registry) → domain owner (of the domain the ask's workspace belongs to; asks with no domain skip
   the hop) → admin, walked on SLA breach (inactive members are skipped); `deadline` derives from the tier unless set
-  explicitly. **Batching**: the digest composer groups by initiative, then workspace, and pre-fills recommended
+  explicitly. Chain exhaustion — the terminal admin is inactive or breaches — expires the ask
+  per its expiry behavior (an unanswered approval is a no, never a hang) and broadcasts a
+  critical-tier org-stall alert to every active human: the §5 last-admin guard keeps an admin
+  from being *deactivated*, not from being *absent*; the broadcast is the backstop. **Batching**: the digest composer groups by initiative, then workspace, and pre-fills recommended
   answers; approvals render as one-line accept/deny with diff links — reviewers see raw diffs,
   never agent-authored summaries alone. **Agent targets**: an ask routed to a Coworker queues into
   its next run (or wakes a session worker); if the target is ephemeral, suspended, archived, or
@@ -501,7 +517,8 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
   window) — "initiative X: store invoices ≤ $25k need one approval, by the lead, until
   2026-12-31" — reviewed like any rule. The ask router evaluates applicable rules, delegations
   included, when choosing approvers, so a static approval matrix doesn't route six months of store
-  invoices through the same two people. Delegations end by window, supersession, or initiative
+  invoices through the same two people. When several delegated rules match one ask, the most
+  restrictive ceiling wins and a contradiction report goes to the sponsoring owners. Delegations end by window, supersession, or initiative
   close — rule semantics, not bespoke state: closing an initiative lapses every rule whose
   `machine_hint` scopes it to that initiative (status → `lapsed`, dropped from injection and routing).
 - **8.11 Inter-agent communication** — agents exchange **state, not chatter**. Agent→agent requests
@@ -651,6 +668,32 @@ names the first system — an integration project per connector, not a phase.
 | Directive decay (decisions published, never decomposed; initiatives go stale) | §5.1: initiatives are first-class — lead, deadline, status; the goal slice keeps directives in every relevant prompt (§4.2); stalled initiatives escalate like asks (§8.10); close runs the dependency check (§6.3) |
 | Reorgs outpace the model (domain splits, role overhauls, departures mid-initiative) | Topology changes are governed single-event ops with stable ids (§4.4); offboarding walks every dependency with admin-custody fallback and a last-admin guard (§5); template upgrades rebase running staff in place (§6.5) |
 
+### 13.1 Known unhandled edge cases (documented, not designed)
+
+The v2.9 pass closed the cheap seams inline (§4.4, §5.1, §6.3, §6.5, §8.1, §8.10); these remain
+open — each needs real design, not a sentence:
+
+- **Cross-initiative dependencies.** Close checks are self-contained (§5.1); initiative DAGs
+  ("Austin depends on ERP migration") are unmodelled — closing an upstream initiative can strand
+  a downstream one. Needs a dependency representation before multi-initiative orgs.
+- **Circuit-breaker collateral.** The org-wide spend ceiling halts *all* spawns and automations
+  (§6.2), critical runs included; there are no per-run criticality classes or carve-outs. Revisit
+  with §14.11 (budgets) — until then a noisy consumer can stop the org, deliberately.
+- **Partitioned-node authority.** A node cut off from the control plane keeps executing under
+  cached DNA version and scopes for as long as it runs (§3 trust model); max staleness, lease
+  expiry, and post-reconnect audit reconciliation are undesigned — parked as §14.16.
+- **Model-provider outage.** The gateway fronts multiple providers (§3) but has no degradation
+  strategy — queueing, fallback routing, degraded-mode behavior for a 24/7 org (§11 P4) are
+  undesigned — parked as §14.15.
+- **Malicious insider.** Governance assumes humans are the trust anchor: a domain owner
+  publishing a poisoned rule gets every agent obeying it; audit is after-the-fact, and nothing
+  sits above the owner short of admin. Accepted boundary of the trust model, stated so nobody
+  is surprised.
+- **Erasure vs. provenance.** The §4.5 carve-out deletes content, but provenance *is* member
+  references; a GDPR-style erasure from a widely-cited author collides with attribution
+  retention, and legal hold is unaddressed. Needs a data-governance pass before the first
+  enterprise deployment.
+
 ## 14. Key open decisions
 
 1. **DNA canonical store**: plain git repo vs. DB-with-export (default: git-backed markdown).
@@ -667,3 +710,5 @@ names the first system — an integration project per connector, not a phase.
 12. **Deployment perimeter**: one deployment per company (default) — M&A-style consolidation of two deployments is a migration project, not a runtime feature.
 13. **Per-domain proposal strictness**: every proposal reviewed (default) vs opt-in auto-publish for low-blast-radius domains (audited, retro-reviewable) — revisit when proposal volume drowns owners.
 14. **Ask SLA tier defaults**: how long each tier runs before breach-and-escalate (e.g. `critical` 1h, `standard` to next digest, `bulk` 24h) — defaults tuned with the first real org; ask deadlines derive from these unless set per ask (§8.10).
+15. **Model-provider degradation**: single provider (default) with manual fallback vs. automatic multi-provider routing and queueing for headless runs — design before the first 24/7 deployment leans on one vendor's uptime (§13.1).
+16. **Partitioned-node authority**: how long a node may act on cached scopes/DNA without a control-plane heartbeat (lease vs. unlimited trust), and what reconnect reconciliation owes the audit log — decide with Phase 6 node registration (§13.1).
