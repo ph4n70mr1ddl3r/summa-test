@@ -366,6 +366,23 @@ mode so small teams start simple.
 > step never un-expires an ask, window, lease, or TTL, nor reverses a terminal transition
 > (§3).
 
+> **Edge-case closure (v2.32)**: twenty-fourth sweep — runtime-drain, re-key, and
+> windowed-supersession seams closed inline: workspace archival drains the runtime that
+> launches into it, not just the bindings — in-flight runs complete onto the archived slice as
+> history, queued-but-unlaunched runs close with an audit note, workspace-bound triggers and
+> playbook schedules re-point or disable, and project memory archives inert with it (§7, §5.1,
+> §8.3) · pending asks re-key with every post they address, at every door the re-pointing has —
+> sponsor-addressed asks follow the §5/§6.3 walks' sponsor re-pointing, and owner-derived asks
+> re-key at the domain edit and the walk, not just the topology op (§4.4, §5, §6.2, §6.3) ·
+> supersession takes effect at the superseder's window opening — a future-windowed successor
+> is a scheduled replacement, never a normative gap (§4.2, §7) · an ephemeral worker is
+> refused the persistent-hire request at write, its recommendation folding back to the
+> spawner (§6.1, §6.2) · re-owning is scope-narrowing — transferred Coworkers re-derive
+> against the new owner's ceiling, an empty intersection retiring (§5, §6.3, §6.5) · an
+> approval gate may address its own originator — the owner hiring into their own domain — the
+> ask the audit record (§6.2); and an ask deadline before its creation is refused at write
+> (§8.10).
+
 ---
 
 ## 1. Product vision
@@ -552,7 +569,12 @@ Every run's system prompt is assembled with:
   initiative routes the same ask to its owner — the admin, when the owner is an agent or departed
   (§8.10 chain) — so no goal expires silently. "Applicable" has defined
   semantics: a rule applies when its domain intersects the workspace's domains and its effective
-  window (`effective_from`…`effective_to`) covers the run (superseded rules drop out of injection automatically); `machine_hint`
+  window (`effective_from`…`effective_to`) covers the run (superseded rules drop out of injection
+  automatically — co-temporal with their superseder: a supersession takes effect at the
+  superseder's `effective_from`, so publishing a successor with a future window schedules the
+  replacement rather than opening a normative gap — the predecessor keeps injecting until its
+  superseder's window opens, the chain edge recorded at publish and the slice obeying the
+  windows, §7); `machine_hint`
   narrows matching where present. A domainless workspace (§7, empty `domain_ids`) still has a defined
   layer, not an error state: no rules (nothing intersects), the org-wide glossary slice, and org-wide
   `always` goals — the same determinism, one domain smaller. Each layer carries a token budget (org snapshot ~1k, glossary
@@ -726,7 +748,9 @@ keeps governing strictness separately.
   the addressee, not the SLA), the open-proposals rule extended to the attention surface;
   escalation hops and quorum pools already evaluate against live state (§8.10), so
   creation-time addressing is the only piece a remap could leave stale, and the remap
-  carries it.
+  carries it — and the re-key binds to owner re-pointing itself, not to this op alone:
+  re-pointing has three doors (this topology op, the §9 domain edit, the §5 walks' transfer),
+  and a pending approval or quorum ask never outlives the act at any of them.
   Topology ops serialize behind a domain-level write lock (§4.5):
   split/merge/rename/archive queue behind in-flight proposals and each other — the stable-id
   guarantees assume no concurrent topology mutation, so the system enforces the assumption rather
@@ -850,12 +874,22 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
 - **Accountability invariant**: every Coworker row carries `owner_human_id`; spawned workers carry
   `spawned_by`; the chain must terminate at a human. Enforced at spawn time.
 - **Offboarding**: deactivating a human runs the §6.3 dependency check across everything they
-  touch: owned DNA domains (to a named successor, else **admin custody** — never orphaned), open
+  touch: owned DNA domains (to a named successor, else **admin custody** — never orphaned,
+  and carrying their pending owner-addressed asks with them: the §4.4 re-key binds to
+  re-pointing at every door, this walk included — a spawn approval or quorum ask re-keys to
+  the successor or custody inside the transfer, ids stable, deadlines untouched), open
   asks (to the member: reassigned up the chain; from the member: closed with an audit note — a
   departed member's pending spawn requests no longer gate anything) and board-task assignments
   (reassigned or returned to the pool), dependent Coworkers
-  (re-owned or retired — personal assistants are always retired: mirrored scopes die with the
-  member, §6.4), sponsored/led initiatives (reassigned or closed), owned goals
+  (re-owned or retired — re-owning narrows, never widens: a transferred Coworker's scopes
+  re-derive as current ∩ the new owner's live ceiling at the walk, the §6.5 upgrade algebra
+  applied to custody, and a transfer whose intersection comes back empty retires the worker —
+  custody is never a scope widening; personal assistants are always retired: mirrored scopes die with the
+  member, §6.4), sponsored/led initiatives (reassigned or closed — with their pending
+  sponsor-addressed asks re-keying to the re-pointed sponsor inside the same walk, ids stable
+  and deadlines untouched: the §4.4 remap rule extended from domain-owner derivations to post
+  derivations, so activation, direction, and dependency decisions land on the member who now
+  holds the post, never on the departed member's deputy), owned goals
   (`dna_goals.owner` — re-owned via the successor or admin custody, else retired; the walk clamps
   to active goals: a terminal one is frozen history (§7) whose owner reference stays pinned to
   the departed identity — severable only by §4.5 erasure, never rewritten by the walk), membership in
@@ -891,7 +925,10 @@ identity link is not), and email addresses are not reused.
   and owned authority the role no longer carries transfers the way offboarding transfers it —
   owned domains to a successor or admin custody, owned Coworkers re-owned or retired, with
   personal assistants always retiring: a never-ask-target cannot own staff, and viewer-mirrored
-  scopes (§6.4) would make the assistant read-only anyway. `owner` → `member` sheds domain
+  scopes (§6.4) would make the assistant read-only anyway. The re-key rules ride identically —
+  sponsor-addressed asks re-point with the posts, owner-addressed asks with the domains,
+  re-owned staff narrow to the new owner's ceiling: the walk is one mechanism with two doors,
+  and its attention and scope effects are the same through either. `owner` → `member` sheds domain
   ownership by the same rule. Authored proposals travel with the authority, exactly as at
   offboarding: transferred to the successor for shed domains, withdrawn with an audit note when
   the new role can no longer propose (to viewer) — the review queue never waits on a proposer who
@@ -1063,7 +1100,12 @@ spawn({ from: templateId | customRole, class: 'persistent'|'ephemeral',
         budgetCap, ttl? })
 ```
 
-`customRole` is for persistent hires (proposed by humans, or by agents behind an approval gate);
+`customRole` is for persistent hires (proposed by humans or persistent Coworkers behind an
+approval gate — the requester gate is class-matched like the §6.2 template gate: an ephemeral
+worker is refused a persistent-hire request at write, template or customRole, its
+recommendation folding back to the spawner, the §5.1/§7 ephemeral-origin rule applied to the
+hire surface; a dying-by-schedule requester would otherwise leave the approval ask for the
+reap walk to close, and a write gate beats a walk);
 ephemeral workers must instantiate whitelisted subagent templates (§6.2) — no free-form
 ephemeral roles. Ephemeral spawning is an agent/playbook capability only; a human wanting bounded
 delegation assigns a board task or instantiates a playbook.
@@ -1102,7 +1144,13 @@ delegation assigns a board task or instantiates a playbook.
 - **Approval gates**: persistent hires → Ask to the owner of the domain the hire's primary
   workspace is bound to (or an admin) — a primary workspace with no bound domain routes the ask
   to an admin outright, and a multi-domain one routes to the primary domain (first-bound,
-  admin-editable, §8.10): one deterministic hop, never an undefined gate; agent-spawned
+  admin-editable, §8.10): one deterministic hop, never an undefined gate — and a gate may
+  address its own originator: the domain owner hiring into their own domain accepts in one
+  click, the ask itself the audit record of the self-approval (sod governs DNA publish, §4.3,
+  not hire, and the quota, depth, and budget gates still bind); the hop's addressee rides
+  owner re-pointing wherever it happens — topology op, §9 domain edit, or the §5 walk — a
+  pending approval re-keying to the resulting owner with its deadline untouched (§4.4);
+  agent-spawned
   ephemeral workers exceeding quota → Ask to the spawner's owner human. An approval ask that
   expires is the denial's twin — deny is the spawn request's expiry default (§8.10): the
   request transitions `requested`→`archived` (§7) and drains its template pin, the expiry the
@@ -1132,8 +1180,11 @@ to §8.2 reconciliation, never killed mid-commit — before dependents resolve. 
 resolving its dependents (automations,
 playbooks, paired IM sessions, live spawned workers — a dying spawner's ephemeral children fold
 back into the workspace's project memory, not the departed personal one — plus board-task
-assignments returned to the pool or reassigned, owned goals re-owned or retired, and initiative
-lead/sponsor posts reassigned or closed via §5.1, and the retiree's own pending asks closed with
+assignments returned to the pool or reassigned, owned goals re-owned or retired (narrowing to
+the new owner's ceiling, the §5 rule — an empty intersection retiring), and initiative
+lead/sponsor posts reassigned or closed via §5.1 — their pending sponsor-addressed asks
+re-keying to the re-pointed sponsor inside the walk, the offboard rule's post-derivation
+twin — and the retiree's own pending asks closed with
 an audit note — pending spawn requests included, draining the template pins they hold (§6.5):
 their originating runs are halted and folded, so an answer would have no consumer, and a
 terminal act must not leave state waiting on a member who will never respond) — the same
@@ -1333,6 +1384,10 @@ dna_rules      (id, domain_id, statement_md, machine_hint json?, effective_from,
                  -- lapse is a rule's terminal; superseded and lapsed rows are frozen history —
                  -- updates refused, revival a new rule, and a predecessor stays superseded when
                  -- its superseder lapses (chains are explicit; nothing flips back silently);
+                 -- the displacement edge is the superseder's effective_from: a predecessor
+                 -- keeps injecting until its superseder's window opens (§4.2), so a
+                 -- future-windowed successor is a scheduled replacement, never a normative
+                 -- gap — status records the chain edge at publish; the slice obeys the windows;
                  -- supersedes_id is intra-domain, refused cross-domain at propose and write —
                  -- topology ops move chains whole, so a chain never straddles domains (§4.4)
 dna_decisions  (id, domain_id, context_md, outcome_md, decided_by member, decided_at)
@@ -1449,7 +1504,16 @@ workspaces     + initiative_ids json?, domain_ids json?, node_id?, claim_epoch i
                  -- case), new spawn bindings are refused (the domain-archive rule), and
                  -- workspace-keyed asks degrade to the domainless fallback — hop skipped,
                  -- digest tail — so no pending ask routes through a workspace gone from
-                 -- live state
+                 -- live state; and the runtime that launches into the workspace drains with
+                 -- it: in-flight runs complete onto the archived slice as history — close's
+                 -- drain (§5.1); a walk is a walk, never a kill — queued-but-unlaunched
+                 -- runs close with an audit note (nothing half-starts on a dead surface),
+                 -- the triggers and playbook schedules bound to the workspace re-point to a
+                 -- successor workspace or disable with an audit note (§5.1's close-time
+                 -- automation rule on the workspace axis), new runs join spawns in refusing
+                 -- the archived row, and project memory (§8.3) archives inert with it — the
+                 -- retire rule applied to the workspace's own tier: never transferred, never
+                 -- injected
 triggers       + criticality 'standard'|'critical' default 'standard'  -- §6.2 breaker trip order
 playbooks      + criticality 'standard'|'critical' default 'standard'  -- with triggers (§6.2
                  -- breaker): a firing's class is the stricter of its trigger's and playbook's tags
@@ -1623,7 +1687,9 @@ escalation naming the shortfall: an impossible quorum degrades to a visible no, 
   one winner); a single-admin org is the one-recipient degenerate case, and the broadcast is
   not ambient authority — a member-addressed ask stays member-addressed until its own chain
   escalates. `deadline` derives from the tier unless set
-  explicitly. Chain exhaustion — the admin broadcast finds no active recipient, or breaches — expires the ask
+  explicitly — and an explicit deadline earlier than the ask's creation is refused at write:
+  a past deadline is a contradiction, not a tier, and never an instantly-expired ask (the §9
+  window-sanity rule's attention-side twin). Chain exhaustion — the admin broadcast finds no active recipient, or breaches — expires the ask
   per its expiry behavior (an unanswered approval is a no, never a hang; an exhausted assignment
   returns the task to the board pool with a digest line — the board is an assignment's fallback
   surface, never a hang either) and broadcasts a
@@ -1984,7 +2050,16 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   domainless fallback), pause drain of in-flight runs (completing onto the paused slice
   while new launches still refuse), domain-owner re-pointing as an admin write, and
   monotonic expiry under a backward clock step (no ask, window, lease, or TTL
-  un-expires, no terminal transition reverses).
+  un-expires, no terminal transition reverses), workspace-archive runtime drain (in-flight
+  completion onto the archived slice, queued-launch closure with an audit note, trigger
+  re-point-or-disable, project memory archiving inert), sponsor-addressed ask re-keying on
+  the walks' sponsor re-pointing plus owner-addressed re-keying at every owner-re-point door
+  (domain edit and §5 walk, not just topology ops), future-window supersession (a predecessor
+  injecting until its superseder's effective_from opens), ephemeral-origin persistent-hire
+  request refusal with spawner fold-back, re-own scope narrowing (current ∩ new-owner
+  ceiling, empty-intersection retirement), the self-addressed approval gate (owner hiring
+  into their own domain — one-click accept, quota/depth/budget still binding), and
+  ask-deadline sanity (a deadline before created_at refused at write).
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -2044,7 +2119,15 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   workspace drops its initiative bindings, kills its node claim, and degrades its keyed
   asks to the domainless fallback; runs in flight at an initiative pause complete onto
   the paused slice while new launches refuse; a backward clock step leaves every expiry
-  standing.
+  standing; archiving a workspace with an in-flight run completes it onto the archived slice
+  while its bound trigger disables with an audit note and its queued launch closes; a
+  departing sponsor's pending activation ask re-keys to the re-pointed sponsor with its
+  deadline untouched; a superseding rule published with a future window leaves its
+  predecessor injecting until the window opens; an ephemeral worker's persistent-hire
+  request is refused at write and folds back to its spawner; a re-owned Coworker's scopes
+  narrow to the new owner's ceiling, an empty intersection retiring it; a domain owner's
+  self-addressed hire approval closes on their own accept; an ask filed with a past deadline
+  is refused at creation.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -2178,7 +2261,18 @@ rebased inertly under suspension (§6.3, §6.5) — template class immutability 
 name's versions (§6.5, §7), workspace archival as a walked transition degrading keyed
 asks to the domainless fallback (§7, §3), pause as a launch gate that drains in-flight
 runs (§5.1), domain-owner re-pointing as an admin write (§9, §7), and monotonic expiry
-evaluation against backward clock steps (§3). The former
+evaluation against backward clock steps (§3); v2.32's twenty-fourth sweep closed the
+runtime-drain, re-key, and windowed-supersession seams beneath those — workspace archival
+draining the runtime that launches into it (in-flight completion as history, queued-launch
+closure, trigger re-point-or-disable, inert project memory, §7, §5.1), pending asks re-keying
+with every post they address at every door the re-pointing has (sponsor posts on the §5/§6.3
+walks, owner re-pointing across topology op, domain edit, and walk, §4.4, §6.2), the
+supersession displacement edge pinned to the superseder's window opening — a future-windowed
+successor a scheduled replacement, never a normative gap (§4.2, §7), ephemeral-origin
+persistent-hire requests refused at write with spawner fold-back (§6.1, §6.2), re-owning
+pinned as scope-narrowing with empty-intersection retirement (§5, §6.3), the self-addressed
+approval gate named as the audited one-click it is (§6.2), and ask deadlines sanity-checked
+at creation (§8.10). The former
 residue — quorum approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
 check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
