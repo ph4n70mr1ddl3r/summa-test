@@ -163,6 +163,19 @@ mode so small teams start simple.
 > refused like intra-domain ones (§4.2) · board-task assignees must be active at write — suspend
 > freezes assignments, retire/offboard walks return them (§7).
 
+> **Edge-case closure (v2.20)**: twelfth sweep — lifecycle seams at the surfaces' edges closed
+> inline: open proposals travel with their domain — merge/split/rename remap in-review proposals
+> to the resulting queues inside the audited event with `review_by` clocks running, and archive
+> counts them among the holdings it refuses (§4.4, §9) · coworker lifecycle acts are credential
+> fences — PATs and sessions authenticate only while `active`, re-validated at every use; retire
+> revokes outright, the §5 credential-death (§6.3, §10) · pause freezes execution, not
+> deliberation — tasks may be filed and edited on the frozen slice as planning, runs and spawns
+> still refuse (§5.1) · proposal revisions re-route by scope but never change `kind` — a queue
+> is never handed a payload shape it wasn't routed to review (§4.3) · `closed` is terminal —
+> revival is a new initiative referencing the old decision, never a rewrite (§5.1) · item-level
+> DNA CRUD is create/update/retire, never delete — erasure stays the only shredding path
+> (§9, §4.5).
+
 ---
 
 ## 1. Product vision
@@ -376,7 +389,9 @@ withdraw-and-refile stops being the only edit path. An amendment re-routes with 
 revision that moves an item between org-wide and domain-scoped re-routes the review to the queue
 governing the amended scope — org-wide lands in the admin queue, domain-scoped in the owner's —
 so the reviewing authority always matches what would publish (cross-domain moves are refused
-outright, §4.4). Racing publishes cannot land contradictions:
+outright, §4.4). Revisions never change `kind`: scope re-routes, kind does not — a card
+revision that should be a rule is a new proposal, so a review queue is never handed a payload
+shape it was not routed to review. Racing publishes cannot land contradictions:
 publish runs inside the domain write lock (§4.4) and re-runs contradiction checks against current
 state at commit — the second of two sequenced contradictory publishes is refused back to review,
 not half-silently merged. Separation of duties is a per-domain knob (`sod`, default `off`): when
@@ -413,8 +428,14 @@ strictness separately.
   and the collision surfaces as review asks, never as silent coexistence. Dissolution is the
   degenerate case, not a missing feature: there is no bare delete — merge the domain's remaining
   items and workspace bindings away, then archive the empty domain — archive refuses a domain
-  still holding either (§9): the merge remaps bound workspaces to the survivor with ids stable,
-  and an admin who wants a workspace domainless unbinds it first, so nothing silently re-points
+  still holding any of them (§9): the merge remaps bound workspaces to the survivor with ids stable,
+  and an admin who wants a workspace domainless unbinds it first, so nothing silently re-points.
+  Open proposals travel with their domain rather than reviewing into a ghost: merge, split, and
+  rename remap in-review proposals to the resulting domains' queues — payload `domain_id`
+  rewritten, proposal ids stable, a split's proposals following the item mapping the op declares —
+  inside the same audited event, their `review_by` clocks still running (a re-route changes the
+  reviewer, not the SLA), and archive counts open proposals among the holdings it refuses exactly
+  as it refuses items and live bindings
   (§7 `status 'archived'`: read-only history; no
   injection, routing, or new bindings; nothing shredded, so reconstructibility survives).
   Topology ops serialize behind a domain-level write lock (§4.5):
@@ -588,7 +609,9 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
    terminal transition of the linked goal (`retired`, `missed`) fires the same ask, not just a
    window elapsing. **Pause is explicit
   and total**: a paused initiative suspends its stalled-work escalation and freezes its board
- slice (no new runs or spawns launch under it), but — unlike close — does *not* lapse its delegated
+ slice (no new runs or spawns launch under it — filing and editing board tasks on the frozen
+ slice stays open as planning: pause stops execution, not deliberation, with §7's assignee
+ freeze the per-member axis and this the per-initiative one), but — unlike close — does *not* lapse its delegated
  rules (§8.10) or drop its workspace bindings: the binding list keeps the paused initiative, linked
  goals keep injecting (context, not execution), and resume unfreezes in place — close, not pause, is
  the transition that unbinds (§7). Pause freezes execution, not authority; the delegation's own window (§4.2
@@ -619,6 +642,9 @@ opens active — initiatives bind workspaces at activation, pause retains the bi
 resume belong to the lead or the sponsor; close belongs to either and always runs the §6.3
 dependency check (§9) — and unbinds: workspaces drop the closed initiative from their binding
 list (§7), the goal slice re-derives at once, and no workspace keeps reading a closed spine.
+`Closed` is terminal — initiatives never reopen: a revived directive opens a new initiative
+referencing the old one's decision (`decision_ref`), so burndown and history survive as
+themselves instead of being rewritten.
 Both posts are ask-eligible at write — a viewer human, or any non-active member in either role,
 is refused the way an ask target or assignee is (§5): a post that routes asks cannot be held by
 a member who can never answer one, and mid-life departures re-point the posts via the §5/§6.3
@@ -725,7 +751,12 @@ mid-commit. **Resume** re-arms triggers (missed schedules coalesce, §8.5) and l
 runs, but never resurrects a halted one — a run suspended mid-flight is terminal: partial
 results fold back through the memory tiers, interrupted work re-enters as new runs or board
 tasks, and staged writes resolve through §8.2 reconciliation, so resume cannot half-replay a
-side effect. The second state change is **re-role** —
+side effect. Lifecycle acts are credential fences: a Coworker's PATs and sessions authenticate
+only while its status is `active` — auth re-validates status at every use, so a suspended
+worker's PAT cannot fire an API trigger and a retiring one's credentials die with the halt
+(retire revokes PATs and terminates sessions outright, the same credential-death §5 gives
+human offboarding); resume re-arms what suspension made inert, and suspension made it inert —
+never deleted — so nothing re-authenticates from a stale grant. The second state change is **re-role** —
 re-tasking a Coworker to a different role is retire-and-respawn (identities are role-shaped;
 project memory stays with the workspace, lessons go to DNA), never an in-place IDENTITY rewrite.
 In-place evolution of the *same* role is the template upgrade path (§6.5).
@@ -1086,11 +1117,14 @@ CRUD /dna/domains · /dna/cards|rules|decisions|glossary|goals
                (item-level CRUD is the publish path, not a side door around §4.3: every write
                lands inside the domain write lock with the §4.4 publish-time contradiction
                re-check, §4.3 sod routing, and the §10 secrets scan — an owner's direct write
-               gets every guarantee a reviewed proposal's publish gets)
+               gets every guarantee a reviewed proposal's publish gets; and the surface is
+               create / update / retire, never delete: citations, supersession chains, and
+               provenance are the point, and §4.5 erasure is the only shredding path)
 POST /dna/proposals  POST /dna/proposals/:id/review (publish|reject) · POST /dna/proposals/:id/withdraw
                · POST /dna/proposals/:id/amend (revision during review, §4.3)  GET /dna/review-queue
 POST /dna/domains/:id/split|merge|rename|archive (governed topology ops, §4.4; archive refuses
-               a domain still holding items or live workspace bindings — merge away first)
+               a domain still holding items, live workspace bindings, or open proposals — merge
+               away first)
 CRUD /role-templates (versioned catalog, §6.5)
 POST /spawn          GET /spawn/:id   (spawn requests; approval + spawn-storm monitoring)
 POST /coworkers/:id/retire · /suspend · /resume   (lifecycle acts on the coworker, §6.3 — not the
@@ -1112,7 +1146,9 @@ GET /governance/policies|quotas|spend  (console screens 12 & 14)
 
 - Human authn (local accounts → SSO later) + RBAC; PATs hashed, shown once, scoped — and mortal:
   expiry (default 90d), rotation (create-replacement + revoke-old in one flow), a revoke
-  endpoint (§9), and last-used stamps for compromise detection.
+  endpoint (§9), and last-used stamps for compromise detection. Coworker credentials are
+  status-fenced on top of mortal: they authenticate only while the Coworker is `active`,
+  re-validated at every use (§6.3).
 - **Admin lockout is recoverable by design**: a single-admin self-hosted org whose admin loses
   their credentials is not a bricked org — a server-local CLI reset flow (run on the host;
   physical/filesystem access is the recovery root of trust for self-hosted, mirroring §4.5's
@@ -1246,7 +1282,12 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   (suspend freezes, retire/offboard walks return), pause-retained workspace binding (linked
   goals inject, runs and spawns refuse, close drops), denied-activation inertness, coworker
   lifecycle authority (owner human, admin, bound-initiative sponsor), firing-criticality
-  composition (stricter of trigger and playbook).
+  composition (stricter of trigger and playbook), topology-op proposal remap (queues
+  re-pointed inside the event, `review_by` clocks kept, archive counting open proposals),
+  coworker credential fences (non-`active` PAT refused at auth, retire revocation,
+  resume re-arm), paused-slice planning writes (task file/edit allowed, run/spawn
+  refusal unchanged), amendment kind immutability, initiative reopen refusal (closed
+  terminal, revive-as-new), item-CRUD delete refusal (retire only).
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -1265,7 +1306,9 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   while new runs under it are refused; pause keeps the binding frozen — linked goals still
   inject while new runs and spawns are refused, and resume unfreezes in place; retire halts an
   in-flight run with fold-back and reconciliation, never mid-commit; a quarantined direct edit
-  lands in the affected domain owner's queue.
+  lands in the affected domain owner's queue; a suspended Coworker's PAT firing an API trigger
+  is refused at auth, not at the run; a domain merge re-queues its open proposals to the
+  survivor's owner with the SLA clock untouched.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -1327,7 +1370,10 @@ pause's retained workspace binding and inert denied-activation initiatives (§5.
 ephemeral-origin proposal refusal (§7), retire's halt semantics and named lifecycle authority
 (§6.3, §9), playbook criticality in the schema (§7), quarantine routing (§4.5), the domainless
 read-path layer (§4.2), org-wide glossary duplicate refusal (§4.2), and the active-assignee
-guard (§7). The former residue — quorum
+guard (§7); v2.20's twelfth sweep closed the lifecycle seams at the surfaces' edges — open
+proposals across topology ops (§4.4), credential fences on coworker suspend/retire (§6.3, §10),
+paused-slice planning vs. execution (§5.1), amendment kind immutability (§4.3), terminal close
+with revive-as-new (§5.1), and retire-not-delete item CRUD (§9). The former residue — quorum
 approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
 check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
