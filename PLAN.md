@@ -43,6 +43,8 @@ mode so small teams start simple.
 > **Consistency review (v2.8)**: workspace↔initiative binding added so the goal slice has a defined source (§4.2, §7) · asks carry `workspace_id`, keying the domain-owner escalation hop and digest grouping (§7, §8.10) · ephemeral→Coworker status mapping made 1:1 — `done` maps to `retiring` (§7) · domain `rename` joins split/merge as a governed endpoint (§9, §4.4) · retire/suspend/resume moved off `/spawn` onto the coworker they act on (§9) · stalled-initiative escalation specified — the §13 directive-decay row now has a mechanism (§5.1) · P3 goal slice scoped to org-wide goals until initiatives land in P4 (§11).
 >
 > **Edge-case pass (v2.9)**: escalation-chain exhaustion pinned — expire-per-behavior plus a critical org-stall broadcast (§8.10) · first-response-wins and expired-response = audit-only close the late/racing-answer seam (§8.10) · conflicting delegations resolve most-restrictive with a contradiction report (§8.10) · scope revocations re-checked before external writes (§8.1) · template retirement refuses live pins (§6.5) · spawner death retargets ephemeral fold-back to project memory (§6.3) · goal-window expiry under a live initiative raises a sponsor ask (§5.1) · goal-vs-goal contradictions join proposal-time checks (§4.4) · residual unhandled edge cases documented as §13.1; provider degradation and partitioned-node authority parked as decisions 15–16 (§14).
+>
+> **Edge-case audit (v2.10)**: second sweep — §13.1 re-ranked into severity tiers and extended · quorum approvals inexpressible (§4.1 vs §8.10) · external-write atomicity + trigger idempotency · erasure vs. append-only ledgers + data residency · db-only reconstructibility (§4.4 vs §4.5) · check-then-spend races (§6.2) · workspace-rebind fencing (§9) · restore reconciliation (8a) · mid-run rule staleness (§8.1) · ask storms (§8.10) · self-approval (§4.3) · clock/timezone semantics · proposal amendment (§7) · runtime precedence (§4.2) · taint decay (§8.3) · playbook recursion (§8.6) · git integrity (§4.5) · PAT lifecycle (§9, §10) · offboarding vs. authored proposals (§5) · embedding re-index (§14.7) · glossary alias collisions (§4.2, §7).
 
 ---
 
@@ -670,29 +672,109 @@ names the first system — an integration project per connector, not a phase.
 
 ### 13.1 Known unhandled edge cases (documented, not designed)
 
-The v2.9 pass closed the cheap seams inline (§4.4, §5.1, §6.3, §6.5, §8.1, §8.10); these remain
-open — each needs real design, not a sentence:
+Two audit passes: v2.9 closed the cheap seams inline (§4.4, §5.1, §6.3, §6.5, §8.1, §8.10);
+v2.10 ran a second sweep and re-ranked the residue by severity. Each item needs real design,
+not a sentence:
 
-- **Cross-initiative dependencies.** Close checks are self-contained (§5.1); initiative DAGs
-  ("Austin depends on ERP migration") are unmodelled — closing an upstream initiative can strand
-  a downstream one. Needs a dependency representation before multi-initiative orgs.
-- **Circuit-breaker collateral.** The org-wide spend ceiling halts *all* spawns and automations
-  (§6.2), critical runs included; there are no per-run criticality classes or carve-outs. Revisit
-  with §14.11 (budgets) — until then a noisy consumer can stop the org, deliberately.
+**Blocks correctness or the first enterprise deployment**
+
+- **Multi-approver quorum rules are inexpressible.** The plan's own flagship rule — "Invoices >
+  $10k require two approvals" (§4.1) — cannot run: asks close on the first response (§8.10) and
+  delegated authority selects *the* approver; no countersign or N-of-M semantics exist anywhere
+  in the rule or ask model. Must land with the tier-2 write gates (§8.2, §14.11), before
+  money-moving writes become routine.
+- **External writes without atomicity.** No transactional boundary spans external systems: the
+  TTL reaper can kill an ephemeral worker mid-write (§6.2) — half-posted invoice, partial commit
+  — and a playbook retrying a failed node duplicates side effects (§8.6). Needs staged writes
+  (prepare → confirm → commit) or per-connector compensations before write-capable ERP/WMS
+  integration (§14.9).
+- **Trigger idempotency.** A replayed webhook or duplicated API trigger (§8.5) fires duplicate
+  runs and duplicate external writes; no idempotency key exists anywhere in the trigger, ask,
+  or run model. Headless 24/7 operation (§11 P4) needs dedupe at the trigger boundary.
+- **Erasure vs. provenance — and the append-only ledgers.** The §4.5 carve-out deletes content,
+  but provenance *is* member references; the audit log and spend ledger carry member references
+  too and are append-only by design (§10); and a multi-node org can place EU employee data on a
+  US node — residency is unmodelled (§3). Legal hold remains unaddressed. Needs a
+  data-governance pass before the first enterprise deployment.
+- **db-only domains vs. reconstructibility.** §4.4 promises prior states survive topology
+  changes via git history + audit; §4.5 exempts HR/Finance from git, so their topology history
+  rests on audit alone and the history-rewrite remediation doesn't apply to them. The
+  topology-op guarantees need restating per store kind.
+
+**High — correctness under concurrency and failure**
+
+- **Check-then-spend races.** Spend caps (§6.2) and §6.4 rate/volume limits are evaluated per
+  run: two parallel runs at 49% of a ceiling both pass, then both spend past it. Needs
+  reservation-style metering (reserve at write-planning, settle at completion) in the spend
+  ledger.
+- **Workspace-rebind dual-writer.** An admin rebind (§9, §3) while a partitioned-but-alive node
+  still executes a claimed run puts two writers on one repo — a fencing problem, distinct from
+  §14.16's staleness question; needs epoch/lease fencing on workspace claims.
 - **Partitioned-node authority.** A node cut off from the control plane keeps executing under
   cached DNA version and scopes for as long as it runs (§3 trust model); max staleness, lease
   expiry, and post-reconnect audit reconciliation are undesigned — parked as §14.16.
+- **Restore vs. live state.** A point-in-time restore (Phase 8a) against nodes and an
+  append-only audit holding newer events needs rewind reconciliation — the inverse of §14.16's
+  reconnect problem, equally undesigned.
+- **Rules are not re-checked mid-run.** §8.1(c) re-checks scopes before each external write but
+  not rules — a run started under the old regime can complete a write the new rule forbids.
+  Whether rules gate writes like scopes or stay advisory context is a semantics call, not a
+  sentence.
+- **Ask storms.** The circuit-breaker (§6.2) caps spend, not attention: a mass incident fans
+  out N failed runs, each raising an escalation ask (§8.10). Digests batch but nothing collapses
+  identical asks or sheds load — the attention-side twin of circuit-breaker collateral (below).
+- **Self-approval in multi-human orgs.** A domain owner proposing and publishing their own rule
+  is structurally unchecked (§4.3–§4.4) — no malice required, unlike the malicious-insider
+  boundary below. Needs a separation-of-duties knob per domain; §14.13 governs strictness, not
+  self-review.
 - **Model-provider outage.** The gateway fronts multiple providers (§3) but has no degradation
   strategy — queueing, fallback routing, degraded-mode behavior for a 24/7 org (§11 P4) are
   undesigned — parked as §14.15.
+- **Cross-initiative dependencies.** Close checks are self-contained (§5.1); initiative DAGs
+  ("Austin depends on ERP migration") are unmodelled — closing an upstream initiative can strand
+  a downstream one. Needs a dependency representation before multi-initiative orgs.
+
+**Medium — real seams, bounded blast radius today**
+
+- **Clock skew and calendar semantics.** TTL reaping, SLA deadlines, effective windows, and
+  delegation expiry (§4.2, §6.2, §8.10) assume synchronized clocks — a skewed node can act
+  under an expired delegation; `queue_until_morning` (§8.1) has no timezone semantics for a
+  distributed org — whose morning? Needs a time authority plus per-human calendars.
+- **Proposal amendment.** Only `withdraw` exists (§7): an edit during review forces
+  withdraw-and-refile, and racing proposals can publish contradictory versions sequentially —
+  contradiction detection (§4.4) runs pairwise at publish, not re-run on concurrent publishes.
+- **Runtime precedence conflicts.** Contradiction detection is proposal-time only (§4.4): an
+  injected rule vs. a retrieved card vs. the goal slice (§4.2) can disagree mid-run with no
+  defined precedence. Stating an order is cheap; choosing the right one is a design call.
+- **Taint decay.** Taint flags gate the tainted run and its proposals (§13), but tainted content
+  that lands in project memory (§8.3) and is retrieved weeks later by an untainted run has no
+  propagation or decay semantics.
+- **Playbook recursion.** The depth cap bounds agent spawns (§6.2), not playbook→playbook
+  instantiation loops (§8.6) — a self-instantiating playbook starves sandbox quotas without
+  ever tripping spawn policy.
+- **Git integrity guard.** "Git history *is* the DNA timeline" (§4.5), yet nothing detects or
+  refuses an accidental force-push/rebase that destroys citations and supersession chains —
+  needs signed refs or commit signing alongside the §10 checklist.
+- **PAT lifecycle.** PATs are hashed, shown once, and scoped (§10), but have no revocation
+  endpoint (§9), expiry, or rotation flow — compromise detection is undesigned.
+- **Circuit-breaker collateral.** The org-wide spend ceiling halts *all* spawns and automations
+  (§6.2), critical runs included; there are no per-run criticality classes or carve-outs.
+  Revisit with §14.11 (budgets) — until then a noisy consumer can stop the org, deliberately.
+
+**Low — real but bounded**
+
+- **Offboarding vs. authored proposals.** The §5 dependency walk reassigns owned domains, asks,
+  and initiatives but leaves the departing member's pending DNA proposals in queue under a
+  stale proposer — they should auto-withdraw or transfer with the successor.
+- **Embedding-model switch.** Switching embedding models (§14.7 local fallback) invalidates the
+  entire vector index; the Phase-0 spike tests per-model determinism, not re-index migration.
+- **Glossary alias collisions.** Aliases are per-domain (`dna_glossary.domain_id?`, §7), but a
+  multi-domain workspace injects several glossary slices (§4.2) — colliding aliases have no
+  disambiguation rule.
 - **Malicious insider.** Governance assumes humans are the trust anchor: a domain owner
   publishing a poisoned rule gets every agent obeying it; audit is after-the-fact, and nothing
   sits above the owner short of admin. Accepted boundary of the trust model, stated so nobody
   is surprised.
-- **Erasure vs. provenance.** The §4.5 carve-out deletes content, but provenance *is* member
-  references; a GDPR-style erasure from a widely-cited author collides with attribution
-  retention, and legal hold is unaddressed. Needs a data-governance pass before the first
-  enterprise deployment.
 
 ## 14. Key open decisions
 
