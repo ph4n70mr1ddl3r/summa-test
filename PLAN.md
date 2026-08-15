@@ -473,6 +473,24 @@ mode so small teams start simple.
 > heartbeat-owned — the console node surface edits region and metadata, never the
 > advertisement (§3, §7, §9).
 
+> **Edge-case closure (v2.38)**: thirtieth sweep — the custom-hire catalog seam closed inline: a
+> successful `customRole` hire is a candidate, not a dead end — its owner human, or an admin,
+> files a promotion ask snapshotting identity files and effective scopes at creation (the
+> proposal-payload pattern, §4.3) and addressing the admin broadcast (§8.10): catalog authorship
+> stays admin, adoption stays an owner ask · the accept publishes the row `active` with the
+> placement it names — a new template, or a new version of an existing one, the version path
+> filing upgrade asks to that template's pinned owners — and placement validates like every
+> catalog write: a name-version collision refuses the accept with the ask standing, and a class
+> flip refuses outright (§7's class immutability at its newest door — a custom hire is persistent
+> by construction, §6.1) · the accept pins the hire it promotes: a live hire — suspended included,
+> the §6.3 rebase rule, a pin being data, not execution — becomes the founding instance, later
+> versions' upgrade asks reaching it like every pin, while a hire retired before the accept
+> publishes unpinned, the founding reference audit and citation, the §5 terminal-clamp pattern at
+> the catalog door · the snapshot is the role, never the life — `default_scopes` stores effective
+> scopes as a ceiling (future spawns still child ⊆ spawner, §6.2; upgrades still new ∩ owner,
+> §6.5), personal memory never rides (§6.3), and the hire's own promotion-sense folds to its
+> owner as an ask (§6.1, §6.5, §7, §9, §12).
+
 ---
 
 ## 1. Product vision
@@ -1282,7 +1300,10 @@ hire surface; a dying-by-schedule requester would otherwise leave the approval a
 reap walk to close, and a write gate beats a walk);
 ephemeral workers must instantiate whitelisted subagent templates (§6.2) — no free-form
 ephemeral roles. Ephemeral spawning is an agent/playbook capability only; a human wanting bounded
-delegation assigns a board task or instantiates a playbook.
+delegation assigns a board task or instantiates a playbook. And a custom hire is one-off by
+request, not by fate: the role definition lives in the hire, and one that worked promotes into
+the reusable catalog through the owner-asked path (§6.5) — the catalog grows from what worked,
+not only from what was pre-authored.
 
 ### 6.2 Policy engine (hard-coded, not prompt-enforced)
 
@@ -1520,6 +1541,33 @@ retire-and-respawn the pinned Coworkers and resolve or reject the pending reques
 §8.4 skill-uninstall dependency check, applied to templates). A company-wide role
 overhaul is one template bump plus a queue of owner asks, not a rehire.
 
+**Custom hires promote into the catalog.** A one-off role that worked is a candidate, not a dead
+end, and the connection is adoption-shaped: the hire's owner human — or an admin — files a
+promotion ask (the §9 endpoint snapshots identity files and effective scopes at creation; the
+payload is the proposal's, §4.3's pattern, never a live view), addressed to the admin broadcast
+(§8.10): catalog authorship stays an admin surface, and the owner's ask is the adoption door. The
+accept publishes the row `active` with the placement it names — a new template, or a new version
+of an existing one, the version path filing upgrade asks to that template's pinned Coworkers'
+owners exactly as a hand-authored publication does — and the placement validates like every
+catalog write: a name colliding at the named version refuses the accept with the ask standing
+(a bad answer, not a dead ask), and a class flip refuses outright — §7's class immutability at
+its newest door; a custom hire is persistent by construction (§6.1), so promotion never lands an
+ephemeral row. The accept pins the hire it promotes: a live hire at accept — suspended included,
+the §6.3 rebase rule, a pin being data, not execution — becomes the template's founding instance,
+identity continuity exact (the body is its own) and later versions' upgrade asks reaching it like
+every pinned Coworker, while the pin itself re-derives nothing — the hire's live scopes stand,
+already ∩ its owner (§6.2); the upgrade algebra first applies at the next version's accept. A
+hire retired before the accept publishes its template unpinned, the founding reference riding the
+audit event and the body's citation as history — the §5 terminal-clamp pattern at the catalog
+door, the record surviving the row that made it. The snapshot is the role, never the life:
+identity files and effective scopes, the latter stored as the template's `default_scopes` — a
+ceiling, not a grant: every future spawn still derives child ⊆ spawner (§6.2), every upgrade
+still re-derives new ∩ owner — and never personal memory (§6.3: a fresh hire starts fresh; a
+founding instance's lessons are its own). The hire's own sense that it has become a role routes
+to its owner as an ask, the fold-back shape — self-promotion is an adoption question, not a
+catalog door. A denied or expired promotion ask is record only, and nothing about the hire
+changes while its promotion pends: the ask is adoption, not alteration.
+
 ---
 
 ## 7. Data model (v2 delta)
@@ -1563,6 +1611,11 @@ coworkers      + owner_human_id, class 'persistent'|'ephemeral', spawned_by memb
                  -- an expired approval ask is the same denial (deny is the spawn request's
                  -- expiry default, §8.10): the row archives, the pin drains, the expiry the
                  -- record (§6.2)
+                 -- template_id null marks a customRole hire (§6.1): promotion (§6.5) is its
+                 -- catalog door — the accepting admin's publish pins the live hire as the new
+                 -- row's founding instance (suspended included, the §6.3 rebase rule), the pin
+                 -- re-deriving nothing; retired before the accept, the template publishes
+                 -- unpinned, the founding reference audit and citation
 role_templates (id, name, version, class 'persistent'|'ephemeral-subagent', body json
                  (identity/style/handbook), default_scopes json, status 'draft'|'active'|'retired')
                  -- versioned catalog; persistent Coworkers pin (template_id, template_version) (§6.5)
@@ -1909,7 +1962,7 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
 - **8.8 Groups & IM** — unified human+agent teams; IM pairing routes to a Coworker whose asks
   escalate to the channel.
 - **8.9 Console screens** — v1 screens 1–9, plus five new: **10. Org & People** (members, RBAC, lineage graph,
-  retirement flows) · **11. DNA console** (browse cards/rules/decisions per domain, review queue
+  retirement flows, the custom-hire promotion action §6.5) · **11. DNA console** (browse cards/rules/decisions per domain, review queue
   with diffs and provenance, proposal history, glossary editor) · **12. Governance** (policies,
   quotas, spend dashboard, spawn audit) · **13. Ask inbox** (SLA indicators, batched digests,
   one-line accept/deny with diff links) · **14. Initiatives** (goal-linked execution: status, ask
@@ -2131,6 +2184,11 @@ POST /spawn          GET /spawn/:id   (spawn requests; approval + spawn-storm mo
 POST /coworkers/:id/retire · /suspend · /resume   (lifecycle acts on the coworker, §6.3 — not the
                spawn request; authority: the Coworker's owner human, an admin, or a
                bound-initiative sponsor)
+POST /coworkers/:id/promote  (catalog act, §6.5 — files the promotion ask for a customRole hire;
+               authority: the hire's owner human or an admin; the ask snapshots identity files
+               and effective scopes at creation, the accept names the placement — a new template
+               or a new version of an existing one — and publishes the row active, pinning a
+               live hire as the founding instance)
 CRUD /asks  ·  POST /asks/:id/respond  ·  POST /asks/:id/withdraw (originator retract, §8.10)  ·  WS: ask.requested, ask.answered
 CRUD /initiatives · POST /initiatives/:id/activate|pause|resume|close
                (transition authority §5.1; close runs the §6.3 dependency check)
@@ -2447,7 +2505,15 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   rendering to the new owner at every door, `review_by` clocks untouched), the storm
   aggregate's close condition (rate recovery for a full window or admin acknowledgment, the
   count preserved in audit), and heartbeat-owned node capabilities (console node edits
-  refusing capabilities, region and metadata only).
+  refusing capabilities, region and metadata only), custom-hire catalog promotion (the
+  owner/admin ask snapshotting identity files and effective scopes with personal memory never
+  carried; the accept publishing `active` with its named placement; name-version collision
+  refusing the accept with the ask standing; class-flip refusal at the promotion door;
+  live-hire founding-pin adoption, suspended included, retired-at-accept publishing unpinned
+  with the reference as history; version-bump promotion filing upgrade asks to the pinned
+  owners; `default_scopes` stored as a ceiling — future spawns still child ⊆ spawner; the
+  founding pin re-deriving nothing, the upgrade algebra first applying at the next version's
+  accept).
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -2547,7 +2613,8 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   mid-review moves its open proposals into the successor's queue with the SLA clock untouched;
   a storm's aggregate admin ask closes resolved when its source's rate falls back under the
   limit; and a console node edit attempting capabilities is refused, the advertisement
-  re-stating on heartbeat.
+  re-stating on heartbeat; a promoted custom hire pinned at its accept receives the next
+  version's upgrade ask like any pinned Coworker, its personal memory staying its own.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -2733,7 +2800,12 @@ lifecycle-free history that never blocks archive and leaves search with their do
 §8.10), respond-door eligibility refused outside the ask's eligible set with the attempt
 audited (§7, §8.10), the review queue re-keying with owner re-pointing at every door, clocks
 untouched (§4.3), the storm-shed aggregate gaining its close condition (§8.10), and node
-capabilities pinned heartbeat-owned against console edits (§3, §7, §9). The former
+capabilities pinned heartbeat-owned against console edits (§3, §7, §9); v2.38's thirtieth sweep
+closed the custom-hire catalog seam beneath those — `customRole` hires promoting into the
+versioned catalog through an owner-filed, admin-published ask: creation-time snapshot,
+accept-named placement with collision and class-flip refusals, founding-pin adoption with the
+retired-at-accept unpinned publish, and scope-ceiling/memory hygiene (§6.1, §6.5, §7, §9, §12).
+The former
 residue — quorum approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
 check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
