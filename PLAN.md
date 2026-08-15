@@ -303,6 +303,28 @@ mode so small teams start simple.
 > extend re-windows the same row, re-base/re-target swap `goal_ref` atomically with the
 > answer, the goal slice re-deriving at once (§5.1).
 
+> **Edge-case closure (v2.29)**: twenty-first sweep — split-completion, write-authority, and
+> schedule seams closed inline: a split's declared mapping is total — every item, binding, and
+> open proposal names its result or the op refuses at declare — and the emptied parent
+> archives inside the same audited event, division pinned as dissolve-by-split; a held
+> domain's split queues behind the hold's release with archive and merge-away (§4.4) ·
+> domain-row writes get their authority home — create/archive and structural attributes
+> (`store`, `sod`, residency) admin, compartmental attributes (access, `named_readers`,
+> `review_sla_days`) owner — and template authorship joins them as an audited admin surface,
+> adoption staying with the §6.5 owner asks (§9, §7, §6.5) · the reap walk settles asks in
+> both directions — to-it re-routed up the chain, from-it closed with an audit note, the
+> retire-walk settlement's ephemeral twin (§6.3) · human PATs and sessions authorize against
+> live RBAC at every use — demotion narrows a standing credential at its next call, the
+> credential-side twin of §6.3's status fence (§10) · residency's at-rest half is an audited
+> admin attestation at set or tighten — the control plane's own hosting is declared, never
+> silently assumed (§3) · a repeatedly failing recall-parity gate surfaces an admin ask with
+> the deltas — never an eternal silent shadow index (§8.7) · quorum N is bounded below
+> (`requires_approvals` ≥ 1) at every write door, the one-validation rule's newest bound
+> (§8.10, §9) · a response racing an originator's withdrawal is audit-only, terminal like
+> expiry (§8.10) · schedules elapsing under an initiative pause coalesce per §8.5 and play on
+> resume, and closing re-points or disables the triggers and playbook schedules that launch
+> under the initiative — pause defers timetables, close answers the door (§5.1).
+
 ---
 
 ## 1. Product vision
@@ -423,7 +445,12 @@ boundaries — with a sixth raised to the top: **shared, governed context**.
   heartbeat: editing a node's region re-validates every residency-constrained placement bound
   to it (§9) — conforming leases stand, nonconforming ones surface the same
   rebind-or-starvation ask — the node-side twin of the §4.4 domain-edit rule, never a silent
-  grandfathering.
+  grandfathering. Residency's at-rest half is declared, not assumed: data at rest — the git
+  store, SQLite, the db-only exports — lives with the control plane, so an obligation that
+  reaches at-rest placement pins the deployment itself. Setting or tightening a residency
+  constraint takes an audited admin attestation that the control plane's own hosting satisfies
+  it — the db-only→git confirm's pattern (§4.5) — so a placement promise the deployment cannot
+  keep is surfaced at declaration, never discovered at audit time.
 - **Stack** (unchanged from v1): Node 22 + TS daemon, React + Vite + Tailwind + shadcn console,
   SQLite (WAL) + sqlite-vec + FTS5, `isolated-vm` playbook sandbox, croner triggers, MCP connectors,
   Tauri shell as Phase-8b polish.
@@ -598,7 +625,11 @@ keeps governing strictness separately.
   op declares its result, not just its inputs: split names owner,
   access, `store`, `sod`, and residency for each resulting domain (inherit-by-default — each
   result starts from the parent's `named_readers` list too, §7, there to be edited, not
-  re-derived), and merge
+  re-derived), a split's declared mapping is total or it refuses at declare — every item,
+  workspace binding, and open proposal names its result, the archive rule's holdings
+  enumerated up front — and the emptied parent archives inside the same audited event:
+  division is dissolve-by-split, merge-away-then-archive's algebra with N receivers, the
+  results new rows while items keep the stable ids citations depend on. Merge
   declares the surviving domain's attributes — access defaults to the most restrictive of the
   merged pair, undeclared attributes persist from the surviving domain, and the `named` reader
   list keeps the same floor: the survivor's list stands unless the op declares the union, so a
@@ -616,7 +647,9 @@ keeps governing strictness separately.
   placements the old value allowed. The hold's refusal reaches the dissolving ops too: archive and merge-away of a held domain queue
   behind the hold's release, while rename stays available — ids, content, and access unchanged,
   the event audited — and merge-into a held domain stays open, a hold freezing removal, not
-  addition. The commit re-runs contradiction checks against the post-op
+  addition. Split queues with the refusing side: dividing a held domain is removal in bulk —
+  every item leaves it — so a split waits behind the hold's release too, and no topology op
+  empties a domain while it is held. The commit re-runs contradiction checks against the post-op
   state inside the lock — items that coexist peacefully across two domains may collide in one,
   and the collision surfaces as review asks, never as silent coexistence. Dissolution is the
   degenerate case, not a missing feature: there is no bare delete — merge the domain's remaining
@@ -850,14 +883,19 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
   and total**: a paused initiative suspends its stalled-work escalation and freezes its board
  slice (no new runs or spawns launch under it — filing and editing board tasks on the frozen
  slice stays open as planning: pause stops execution, not deliberation, with §7's assignee
- freeze the per-member axis and this the per-initiative one), but — unlike close — does *not* lapse its delegated
+  freeze the per-member axis and this the per-initiative one; schedules elapsing under the
+  pause coalesce per §8.5 and play their catch-up run on resume — pause defers timetables,
+  never drops them), but — unlike close — does *not* lapse its delegated
  rules (§8.10) or drop its workspace bindings: the binding list keeps the paused initiative, linked
  goals keep injecting (context, not execution), and resume unfreezes in place — close, not pause, is
  the transition that unbinds (§7). Pause freezes execution, not authority; the delegation's own window (§4.2
   `effective_to`) stays the bound, and pausing past the deadline still raises the sponsor ask —
   pause is a state, not a way to outlive a deadline silently. Closing runs the same dependency
    check as retiring a Coworker (§6.3) over the initiative's durable state — open asks
-   and tasks resolved or reassigned — while its in-flight execution drains, never truncates:
+   and tasks resolved or reassigned, and the triggers and playbook schedules whose runs launch
+   under it re-pointed to a successor initiative or disabled with an audit note, the
+   retire-walk's automation resolution applied to the spine, so nothing keeps knocking on a
+   closed door — while its in-flight execution drains, never truncates:
    runs already launched complete (staged external writes are never killed mid-commit, §8.2)
    with artifacts landing on the closed slice as history, new runs and spawns under the
    initiative are refused, and its ephemeral workers finish their bounded task and fold back;
@@ -1027,8 +1065,10 @@ personal memory archives with it — inert history under the archived identity, 
 never transferable to a respawn (re-role's lessons-go-to-DNA is the only bridge); a fresh hire
 starts a fresh memory. The ephemeral
 analogue runs at reap: the TTL reaper's fold-back returns the dying worker's open board-task
-assignments to the pool and re-routes its in-flight asks up the chain — memory is not the only
-state a worker holds.
+assignments to the pool, re-routes asks *to* it up the chain, and closes asks *from* it with an
+audit note — the retire-walk settlement's ephemeral twin: a folded-back worker's pending
+approvals have no consumer, and a terminal act leaves no waiters (§8.10) — memory is not the
+only state a worker holds.
 
 Two state changes short of retirement: **suspend** — an admin's emergency stop that halts triggers
 and runs without resolving dependents (in-flight asks re-route up the chain); the halt covers the
@@ -1075,7 +1115,10 @@ architecture:
 
 Roles change as the company does; running staff must track the change without a respawn stampede.
 Templates are versioned (§7 `role_templates`); every persistent Coworker pins the version it was
-spawned from. Version selection is explicit at every door: a spawn request names the exact
+spawned from. The catalog's write surface is admin-governed and audited — authoring,
+publishing, and retiring templates are infrastructure acts; the owner asks below govern
+adoption of what lands, never authorship of it. Version selection is explicit at every door:
+a spawn request names the exact
 catalog row — the console defaults to the newest `active` version — so an approval publishes
 into the version the requester saw, never whichever row appeared or retired in between.
 Publishing a new `active` version files the upgrade ask to each pinned Coworker's owner — the
@@ -1143,7 +1186,9 @@ role_templates (id, name, version, class 'persistent'|'ephemeral-subagent', body
                  -- spawn requests name the exact row (newest active the console default, §6.5);
                  -- publishing a new active version files owner-upgrade asks to pinned Coworkers —
                  -- publication supersedes, never retires: a denied upgrade's pin stands on a
-                 -- still-active row until explicitly retired (§6.5)
+                 -- still-active row until explicitly retired (§6.5);
+                 -- catalog writes — create, publish, retire — are admin, audited (§9):
+                 -- authorship is infrastructure; the owner asks govern adoption, not authoring
 nodes          (id, name, kind 'local'|'remote', capabilities json, region?, claim json?,
                  last_heartbeat, pubkey, enrolled_at, revoked_at?, status 'trusted'|'revoked')
                  -- region gates residency-constrained scheduling (§3, §4.5);
@@ -1158,6 +1203,9 @@ dna_domains    (id, name, owner_human_id, access 'public'|'domain'|'named',
                  -- review_sla_days: the per-domain queue SLA's schema home (§4.3) — review_by
                  -- derives from it at propose, and topology results inherit or persist it like
                  -- every other domain attribute (§4.4);
+                 -- row-write authority is split (§9): create/archive and the structural
+                 -- attributes — store, sod, residency — are admin writes; the owner edits
+                 -- access, named_readers, and review_sla_days; every row-write audited;
                  -- residency constrains node placement (§3);
                  -- name unique among non-archived domains — review queues, digests, and
                  -- routing keys never alias (an archived name is history and may be reused);
@@ -1389,7 +1437,10 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
   citations) extended with domains, proposals, review queue, and glossary/rule/goal-slice
   injection. An embedding-model switch (§14.7) is a migration, not a reset: the index records its
   model, the new index builds alongside the old, a recall-parity sample gates the cutover, and
-  the old index serves until the new one passes — search never blinks.
+  the old index serves until the new one passes — search never blinks. A gate that keeps
+  failing is a decision, not a limbo: the stall surfaces as an admin ask carrying the parity
+  deltas — roll forward, retune the sample, or stay on the old index — so a failed migration
+  never becomes an eternal, silent shadow.
 - **8.8 Groups & IM** — unified human+agent teams; IM pairing routes to a Coworker whose asks
   escalate to the channel.
 - **8.9 Console screens** — v1 screens 1–9, plus five new: **10. Org & People** (members, RBAC, lineage graph,
@@ -1411,7 +1462,9 @@ accepts stay audit-only — and the retraction applies the ask's expiry behavior
 waiting (a withdrawn approval is a no), so the §5/§6.3 walks' close-with-audit-note is this
 mechanism applied by the system, not a parallel one. A quorum-1 ask (the default) closes on the first response received — later
 responses (member and deputy racing) are audit-only; a response to an expired ask is recorded but has no
-  effect: the successor ask, if any, carries the decision. Responses re-validate before they bind:
+  effect: the successor ask, if any, carries the decision — and a withdrawn ask is terminal the
+  same way, a response racing the originator's retraction audit-only like one racing expiry.
+  Responses re-validate before they bind:
   at respond time the ask's payload assumptions are recomputed — the diff still applies, the
   referenced DNA item is still live, the scope still holds — and a response against a superseded
 world is audit-only like a late response, with a successor ask opened against current state (the
@@ -1434,7 +1487,9 @@ means N pool principals, never one principal answering through two doors; a quor
 first-response-wins above, where a deputy may stand in for the one signature. A deny
 still closes it denied immediately, expiry still denies, and a stale acceptance is audit-only
 and does not count toward N. SLA breach escalates to the admin, who may contribute one of the
-required approvals. N is validated
+required approvals. N is bounded below and pool-checked at every write door:
+`requires_approvals` must be ≥ 1 — a quorum of zero is the absence of an ask, not a rule —
+and N is validated
 against the pool it demands: a rule whose `requires_approvals` exceeds the eligible approvers
 flags at proposal time like any contradiction (§4.4), and a pool that later shrinks below N
 (offboarding) leaves the ask unanswerable — it denies at expiry, fail-safe, with the breach
@@ -1530,6 +1585,9 @@ POST /nodes/enroll (one-time token exchange) · GET /nodes · POST /nodes/:id/re
                · PUT /nodes/:id (admin; a region edit re-validates every residency-constrained
                placement bound to the node — §3, the node-side twin of §4.4's domain-edit rule)
 CRUD /dna/domains · /dna/cards|rules|decisions|glossary|goals
+               (domain-row authority, §7: create/archive and structural attributes — `store`,
+               `sod`, residency — are admin writes; the owner edits access policy,
+               `named_readers`, and `review_sla_days`; every row-write audited)
                (item-level CRUD is the publish path, not a side door around §4.3: every write
                lands inside the domain write lock with the §4.4 publish-time contradiction
                re-check, §4.3 sod routing, and the §10 secrets scan — an owner's direct write
@@ -1542,7 +1600,8 @@ CRUD /dna/domains · /dna/cards|rules|decisions|glossary|goals
                goals, and retired cards/glossary entries are frozen history (§7): correction
                and revival are new items citing or superseding the old, a rule's retire maps
                to window truncation (§7), and a draft discards by retiring; and the §4.5
-               ingest sanity — window ordering, unique ids — is the same validation at every
+               ingest sanity — window ordering, unique ids, machine-hint bounds (quorum N ≥ 1,
+               §8.10) — is the same validation at every
                door: propose, amend, and item write run one check, so no door is softer than
                the git door)
 POST /dna/proposals  POST /dna/proposals/:id/review (publish|reject) · POST /dna/proposals/:id/withdraw
@@ -1550,7 +1609,8 @@ POST /dna/proposals  POST /dna/proposals/:id/review (publish|reject) · POST /dn
 POST /dna/domains/:id/split|merge|rename|archive (governed topology ops, §4.4; archive refuses
                a domain still holding items, live workspace bindings, or open proposals — merge
                away first)
-CRUD /role-templates (versioned catalog, §6.5)
+CRUD /role-templates (versioned catalog, §6.5; create/publish/retire are admin writes,
+               audited — authorship is infrastructure, adoption rides the §6.5 owner asks)
 POST /spawn          GET /spawn/:id   (spawn requests; approval + spawn-storm monitoring)
 POST /coworkers/:id/retire · /suspend · /resume   (lifecycle acts on the coworker, §6.3 — not the
                spawn request; authority: the Coworker's owner human, an admin, or a
@@ -1579,7 +1639,11 @@ POST /governance/holds · POST /governance/holds/:id/release  (admin; audited �
 
 - Human authn (local accounts → SSO later) + RBAC; PATs hashed, shown once, scoped — and mortal:
   expiry (default 90d), rotation (create-replacement + revoke-old in one flow), a revoke
-  endpoint (§9), and last-used stamps for compromise detection. Coworker credentials are
+  endpoint (§9), and last-used stamps for compromise detection. They also authorize against
+  live authority: a PAT's — or session's — effective scopes are the grant intersected with the
+  principal's current RBAC, re-evaluated at every use, so a demotion narrows a standing
+  credential at its next call instead of letting it outlive the role that authorized it — the
+  credential-side twin of §6.3's status fence. Coworker credentials are
   status-fenced on top of mortal: they authenticate only while the Coworker is `active`,
   re-validated at every use (§6.3).
 - **Admin lockout is recoverable by design**: a single-admin self-hosted org whose admin loses
@@ -1778,7 +1842,14 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   and serialize without deadlock), spawn-approval expiry archiving (requested→archived with
   the template pin drained), org-scoped review_by derivation from the global default,
   sponsor-answer goal_ref re-pointing (extend re-windows the row, re-base/re-target swap it,
-  the goal slice re-deriving).
+  the goal slice re-deriving), split totality and parent archival (an unmapped holding refused
+  at declare, the emptied parent archived inside the event), held-domain split queueing behind
+  release, domain-row write authority (structural attributes admin, compartmental attributes
+  owner), template-catalog authorship as an admin surface, reap-walk ask settlement (to-it
+  re-routed, from-it closed with an audit note), PAT live-authority intersection under
+  demotion, residency at-rest attestation on set or tighten, quorum lower bound
+  (`requires_approvals` ≥ 1) at every write door, withdrawn-racer responses audit-only,
+  close-time automation re-pointing or disabling.
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -1819,7 +1890,14 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   archives its request and drains the template pin; merge A-into-B racing merge B-into-A
   serializes behind id-ordered locks, one completing after the other; a re-base answer
   re-points the initiative's goal_ref and the workspace goal slice re-derives on the next
-  run.
+  run; a split whose mapping leaves a holding unmapped is refused at declare, and a completed
+  split archives its emptied parent inside the event; a split of a held domain queues behind
+  the hold's release; a demoted human's standing PAT narrows to the new role at its next
+  call; a repeatedly failing recall-parity gate surfaces its admin ask instead of serving
+  silently; firings elapsing under an initiative pause coalesce and play on resume; closing
+  an initiative disables or re-points the triggers whose runs launched under it, with an
+  audit note; a reaped ephemeral's pending ask from it closes with an audit note while asks
+  to it re-route up the chain.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -1931,7 +2009,14 @@ refused the posts that outlive them (lead, goal owner, named delegate) with ephe
 initiatives folded back to the spawner (§5.1, §7, §8.10), id-ordered multi-domain lock
 acquisition for overlapping topology ops (§4.4), spawn-approval expiry as denial-with-drain
 (§6.2, §7), the admin queue's default review SLA (§4.3), and sponsor-answer goal_ref
-re-pointing (§5.1). The former
+re-pointing (§5.1); v2.29's twenty-first sweep closed the split-completion, write-authority,
+and schedule seams beneath those — total split mappings with the emptied parent archived
+in-event and held-domain splits queued behind release (§4.4), domain-row and template-catalog
+write authority pinned — structural admin, compartmental owner, authorship admin (§9, §7,
+§6.5), the reap walk's both-direction ask settlement (§6.3), live-RBAC credential narrowing
+on demotion (§10), residency's at-rest admin attestation (§3), parity-stall surfacing (§8.7),
+the quorum lower bound at every write door (§8.10, §9), withdrawn-racer audit-only responses
+(§8.10), and pause-coalesced schedules plus close-time automation resolution (§5.1). The former
 residue — quorum approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
 check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
