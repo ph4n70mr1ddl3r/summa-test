@@ -454,6 +454,25 @@ mode so small teams start simple.
 > ceiling tightened below live spend trips the breaker loudly rather than contradicting its
 > own ledger (§6.2, §9).
 
+> **Edge-case closure (v2.37)**: twenty-ninth sweep — spend-halt, record-mortality, and
+> answer-authority seams closed inline: the breaker's halt is a launch gate at every door —
+> runs in flight at the trip complete and settle onto the ledger, a settle overshoot tripping
+> the overrun gate as designed, and a spawn-approval accept landing under an active halt is
+> audit-only, the request archiving with pin and claims released, the pause-race rule at the
+> money door — while the critical floor carries critical-tagged firings only, never a hire
+> (§6.2, §8.10) · decisions never block archive — lifecycle-free records are history at
+> birth, they ride the archived row as citation history, leave search with their domain's
+> corpus, and merge-away moves them with it, ids stable (§4.2, §4.4, §7, §9) · an upgrade
+> accept re-validates its target version — a retirement that beat the accept is audit-only,
+> the pin standing, the next publication re-asking (§6.5, §7, §8.10) · a response from
+> outside the ask's eligible set — addressee, deputy, quorum pool — is refused at the door,
+> the attempt audited (§7, §8.10) · the review queue belongs to the domain, not the owner's
+> inbox — owner re-pointing at every door re-keys its rendering with `review_by` clocks
+> untouched (§4.3) · the storm-shed aggregate admin ask closes on rate recovery or
+> acknowledgment, the count preserved in audit (§8.10) · and node capabilities are
+> heartbeat-owned — the console node surface edits region and metadata, never the
+> advertisement (§3, §7, §9).
+
 ---
 
 ## 1. Product vision
@@ -555,7 +574,11 @@ boundaries — with a sixth raised to the top: **shared, governed context**.
   advertisements, not enrollment facts: every heartbeat re-states them, and a node whose
   advertisement no longer satisfies a bound workspace — a repo moved on disk, a connector
   de-authorized — surfaces the same rebind-or-starvation ask the affinity-loss path raises,
-  rather than failing run after run; drift is a scheduling event, not a per-run surprise.
+  rather than failing run after run; drift is a scheduling event, not a per-run surprise. The
+  advertisement is the node's own — heartbeat-owned, not console-editable: the admin surface
+  edits region and metadata, never capabilities, because a console edit there would be a
+  silent no-op the next heartbeat overwrites; a capability change reaches the plane as drift,
+  with its ask — the one door that fact has.
 - **Node trust model**: remote nodes are *trusted compute*, not enforcement boundaries — scope,
   egress, and audit code runs on the node, so a compromised node can bypass it. Nodes enroll via
   one-time tokens, authenticate with a keypair identity on every connection, are revocable from
@@ -666,7 +689,11 @@ Every run's system prompt is assembled with:
   owner's drafts transfer with the domain, §5 — never orphaned invisible) — staging
   lives where the schema carries it: cards and glossary hold `draft` status, rules and goals
   stage through a future `effective_from` window instead, and decisions — lifecycle-free by
-  design, immutable records (§7) — are always live. Citation and
+  design, immutable records (§7) — are always live: that is the item axis — no retired state
+  exists for a decision — and it composes with the domain axis rather than overriding it, an
+  archived domain's decisions leaving search with their domain's corpus and resolving by
+  citation like the rest of its history (§4.4) — the phrase names a record's lifecycle, never
+  an exemption from its domain's. Citation and
   search are different surfaces: the record stays navigable without haunting the prompt.
 - **Cited in answers**: responses reference cards; the console (and IM) renders citations that open
   the source card with its provenance.
@@ -698,7 +725,12 @@ DNA console (diff view, provenance, impact hints); publish creates a version and
 reject leaves an audit trail. The queue has a cadence of its own: proposals carry a review SLA
 (`review_by`, default 7 days, per-domain configurable through `dna_domains.review_sla_days`, §7); a breach escalates to the admin and a
 stale queue surfaces in the owner's digest — the §1 learning loop must not starve on an ignored
-inbox. Org-scoped items — org-wide goals and org-wide glossary entries (`domain_id` null, §7) —
+inbox. The queue belongs to the domain, not to the owner's inbox: it renders to whoever holds
+`owner_human_id`, and owner re-pointing at any of its doors — a topology op (§4.4), the §9
+domain edit, the §5 walks' transfer — re-keys the rendering to the new owner with `review_by`
+clocks untouched, the §4.4 remap rule applied at the ownership door: a transferred domain's
+open proposals surface in the successor's queue at once, never waiting on an owner of record
+the row no longer names. Org-scoped items — org-wide goals and org-wide glossary entries (`domain_id` null, §7) —
 have no domain owner of their own; their proposals route to the admin's review queue, the same
 owner-of-last-resort pattern §5 applies to unowned domains, and their `review_by` derives from
 the global default — no domain row governs the admin queue, so the 7-day default is its SLA.
@@ -817,12 +849,17 @@ keeps governing strictness separately.
   And "holding" is scoped to the live set, so the §7 archived row is a real state, not dead text:
   an active item, an owner-staged draft (§4.2), a live workspace binding, or an open proposal
   blocks the archive, while terminal history — superseded and lapsed rules, terminal goals,
-  retired cards and glossary entries — never does: it stays with the archived row as the
-  read-only record §7 names, its items resolving by citation exactly as retired ones do (§4.2),
-  nothing shredded. A domain holding nothing live archives directly — dissolution without a
+  retired cards and glossary entries — never does, and decisions never do either: a
+  lifecycle-free record (§7) is history the moment it is written, not live state — "always
+  live" (§4.2) names its search lifecycle inside the corpus, never an exemption from its
+  domain's. History stays with the archived row as the
+  read-only record §7 names, its items — decisions included — resolving by citation exactly as
+  retired ones do (§4.2),
+  nothing shredded. A domain holding nothing live archives directly — decisions and terminal
+  rows alone are that domain — dissolution without a
   merge receiver — while merge-away moves the whole corpus, history riding with the live set to
-  the survivor, ids stable, one audited event; reconstructibility never depended on emptiness,
-  only on the refusal to shred.
+  the survivor, decisions among it, ids stable, one audited event; reconstructibility never
+  depended on emptiness, only on the refusal to shred.
   Open proposals travel with their domain rather than reviewing into a ghost: merge, split, and
   rename remap in-review proposals to the resulting domains' queues — payload `domain_id`
   rewritten, proposal ids stable, a split's proposals following the item mapping the op declares —
@@ -1338,7 +1375,19 @@ delegation assigns a board task or instantiates a playbook.
   un-trips only through that ask: the trip ask's accept lifts the halt, a deny holds it while
   ceilings are re-tuned — spend does not decay with time, so the breaker never releases
   itself, and an unacknowledged halt stays visible instead of expiring into silence (§2's
-  contract on the money surface). The TTL
+  contract on the money surface). The halt is a launch gate at every door the money surface
+  has, not only the scheduler's: runs already in flight when the trip lands complete and
+  settle onto the ledger — a settle overshooting under the halt trips the overrun ack gate
+  exactly as designed (above) — and staged external writes are never killed mid-commit
+  (§8.2); the spawn gate joins them: a spawn-approval accept landing while the halt holds is
+  audit-only, the request archiving with its template pin drained and its cap claims released
+  — the §8.10 pause-race rule at the money door, publishing a worker being a launch the halt
+  refuses — and the requester re-requests once the trip ask resolves (lift or re-tuned
+  ceilings, above). The critical floor scopes with this rather than around it: criticality
+  tags live on triggers and playbooks (§7), so the floor keeps critical-class firings —
+  in-flight and newly fired — reserving within its headroom through a partial breach, but a
+  spawn approval carries no criticality tag and never rides the floor; no accept publishes a
+  worker past a halt, and total exhaustion halts everything anyway. The TTL
   reaper never kills between prepare and commit of an external write: it grants a grace window
   and leaves a reconcilable `external_writes` row instead (§8.2). A TTL lapsing while its worker
   is suspended halts-then-reaps — fold-back and §8.2 reconciliation first, archive after (§6.3):
@@ -1452,7 +1501,12 @@ Publishing a new `active` version files the upgrade ask to each pinned Coworker'
 company-wide bump-plus-queue below, made literal — and nothing auto-applies: a denied or expired
 upgrade leaves the Coworker pinned to its current version, which remains a legitimate `active`
 row, because publication supersedes but never retires — retirement stays the explicit, pin-gated
-act (below), and the next bump re-asks. An **upgrade** is proposal-shaped: the diff — IDENTITY/HANDBOOK changes, scope
+act (below), and the next bump re-asks. The accept re-validates what it would apply: an
+upgrade accept re-checks its target version's status at the door — a new version holds no pins
+of its own, so it can retire while its upgrade asks wait, and a retirement that beat the
+accept leaves it audit-only, the pin standing on its still-legitimate row, the next
+publication re-asking — the §8.10 respond-time family applied to the catalog, so no answer
+rebases a Coworker onto a version the catalog has buried. An **upgrade** is proposal-shaped: the diff — IDENTITY/HANDBOOK changes, scope
 deltas — goes to the Coworker's owner as an Ask; on accept, files rebase and scopes re-derive as
 new-template ∩ owner's-current-scopes, never widening — and an intersection that comes back
 empty refuses to land: the upgrade closes unresolved with the empty re-derivation surfaced in
@@ -1520,7 +1574,9 @@ role_templates (id, name, version, class 'persistent'|'ephemeral-subagent', body
                  -- spawn requests name the exact row (newest active the console default, §6.5);
                  -- publishing a new active version files owner-upgrade asks to pinned Coworkers —
                  -- publication supersedes, never retires: a denied upgrade's pin stands on a
-                 -- still-active row until explicitly retired (§6.5);
+                 -- still-active row until explicitly retired (§6.5); an upgrade accept
+                 -- re-validates the target row's status — a version retired mid-wait makes
+                 -- the accept audit-only, the pin standing (§6.5, §8.10);
                  -- catalog writes — create, publish, retire — are admin, audited (§9):
                  -- authorship is infrastructure; the owner asks govern adoption, not authoring
 nodes          (id, name, kind 'local'|'remote', capabilities json, region?, claim json?,
@@ -1529,6 +1585,8 @@ nodes          (id, name, kind 'local'|'remote', capabilities json, region?, cla
                  -- claim: epoch-fenced workspace leases (§3)
                  -- capabilities re-advertise on every heartbeat: drift against a bound
                  -- workspace surfaces the §3 rebind-or-starvation ask, not per-run failures
+                 -- the advertisement is heartbeat-owned: console edits touch region and
+                 -- metadata only, never capabilities (§3, §9)
 dna_domains    (id, name, owner_human_id, access 'public'|'domain'|'named',
                  named_readers json, store 'git'|'db-only', sod 'off'|'reviewer-distinct',
                  review_sla_days int default 7,
@@ -1556,8 +1614,9 @@ dna_domains    (id, name, owner_human_id, access 'public'|'domain'|'named',
                  -- that runs the §5 walk (transfer or admin custody, never an orphaned domain);
                  -- archived: read-only history — no injection, routing, or new bindings;
                  -- the holdings that block archive are the live set only (§4.4): terminal
-                 -- history stays with the row, resolvable by citation (§4.2), and a
-                 -- history-only domain archives directly;
+                 -- history stays with the row, resolvable by citation (§4.2), decisions
+                 -- included — lifecycle-free records are history at birth, never live-set
+                 -- members (§4.2) — and a history-only domain archives directly;
                  -- dissolution = merge-away then archive, never bare delete (§4.4) — merge
                  -- moves the whole corpus, history included, ids stable
 dna_cards      (id, domain_id, title, definition_md, refs json, provenance json, version,
@@ -1598,6 +1657,10 @@ dna_decisions  (id, domain_id, context_md, outcome_md, decided_by member, decide
                  -- since-departed — may be recorded as the decider of record (the field
                  -- documents the world); review at publish is the authority, and no
                  -- ask-eligibility guard applies to the field
+                 -- archive interplay (§4.4): a decision never blocks its domain's archive —
+                 -- lifecycle-free means no live-set membership — an archived domain's
+                 -- decisions leave search with its corpus, resolving by citation like the
+                 -- rest of its history, and merge-away moves them with the corpus, ids stable
 dna_glossary   (id, domain_id?, term, definition, aliases json,
                  status 'draft'|'active'|'retired' default 'active')
                  -- the "live entry" of the §4.2 duplicate check is any non-retired row of the
@@ -1656,6 +1719,9 @@ asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request', fro
                  -- workspace_id keys the domain-owner escalation hop and digest grouping (§8.10);
                  -- respond re-validates payload assumptions — answers against a superseded
                  -- world are audit-only, a successor ask carries the decision (§8.10)
+                 -- respond-door eligibility: a response from outside the ask's eligible set —
+                 -- addressee, deputy, quorum pool — is refused at the door, the attempt
+                 -- audited (§8.10)
                  -- event-side settlement: the event that terminally breaks a named
                  -- assumption resolves the ask at the event per its expiry behavior — a
                  -- quorum ask whose rule went terminal mid-wait, a domain's archive closing
@@ -1863,18 +1929,25 @@ mechanism applied by the system, not a parallel one. A quorum-1 ask (the default
 responses (member and deputy racing) are audit-only; a response to an expired ask is recorded but has no
   effect: the successor ask, if any, carries the decision — and a withdrawn ask is terminal the
   same way, a response racing the originator's retraction audit-only like one racing expiry.
+  Eligibility is checked at the door itself: a response tendered by a member with no standing
+  on the ask — neither the addressee, nor the addressee's deputy, nor, for a quorum ask, a
+  member of the evaluated pool or a pool member's deputy — is refused at the respond endpoint
+  with the attempt audited, never recorded as an answer; who may answer is part of the ask's
+  contract, checked like what it answers.
   Responses re-validate before they bind:
   at respond time the ask's payload assumptions are recomputed — the diff still applies, the
-  referenced DNA item is still live, the scope still holds — and a spawn approval names three
+  referenced DNA item is still live, the scope still holds — and a spawn approval names four
   more assumptions of its own: the initiative it files under still accepts launches (§5.1),
   the workspace it binds still accepts bindings and remains readable for the member it
   would publish — §4.2's spawn-time refusal, re-checked at the door the approval finally
   answers — and the requester itself is still `active`: an approval publishes a worker into
   its requester's live context, and lineage, fold-back, and quota all key on a spawner that
-  can still receive them. So an accept racing a pause, a close, a workspace archival, or the
-  requester's own suspension is audit-only and the request archives with its template pin
+  can still receive them — and the spend halt is not holding: a §6.2 trip refuses launches,
+  and publishing a worker is one. So an accept racing a pause, a close, a workspace archival,
+  the requester's own suspension, or the breaker's trip is audit-only and the request archives
+  with its template pin
   drained and its cap claims released, never a worker published into a frozen slice, onto an
-  archived row, or under a halted subtree (§7's walk settles the pending request at archival;
+  archived row, under a halted subtree, or past a tripped ceiling (§7's walk settles the pending request at archival;
   this is its racing half). Retirement and offboarding settle the request inside their walks
   (§6.3, §5); suspension — which resolves no dependents — is the case the walks deliberately
   leave standing, so the gate closes it at the door: the suspended spawner re-requests on
@@ -1957,7 +2030,10 @@ escalation naming the shortfall: an impossible quorum degrades to a visible no, 
   the digest renders "37 identical escalations" as one line, and the canonical ask's answer
   resolves every collapsed waiter; a per-source ask-creation rate limit (per run, trigger,
   Coworker) sheds overflow into a single aggregate admin ask — the attention-side twin of the
-  §6.2 circuit-breaker. Digests compute per recipient: each human's timezone and working hours
+  §6.2 circuit-breaker — and the aggregate has a lifecycle, not a permanent residence: it
+  closes resolved when its source's creation rate falls back under the limit for a full window
+  or an admin acknowledges it, the shed count preserved in the audit — the line that surfaces
+  a storm never outlives the storm it surfaced. Digests compute per recipient: each human's timezone and working hours
   (§7) define their morning — `queue_until_morning` means the recipient's, not the server's (§3
   time authority). An unset calendar is still a calendar: humans with no timezone or working
   hours fall back to the control plane's zone and 09:00–17:00 weekdays — the digest always has
@@ -2014,8 +2090,10 @@ POST /nodes/enroll (one-time token exchange) · GET /nodes · POST /nodes/:id/re
                (revocation surfaces the §3 rebind ask for every workspace bound to the node —
                a deliberate act is never a silent queue; in-flight runs halt with fold-back
                and §8.2 reconciliation; the node's claims die with the row)
-               · PUT /nodes/:id (admin; a region edit re-validates every residency-constrained
-               placement bound to the node — §3, the node-side twin of §4.4's domain-edit rule)
+               · PUT /nodes/:id (admin; region and metadata — capabilities are heartbeat-owned
+               advertisements, not console-editable, §3; a region edit re-validates every
+               residency-constrained placement bound to the node — §3, the node-side twin of
+               §4.4's domain-edit rule)
 CRUD /dna/domains · /dna/cards|rules|decisions|glossary|goals
                (domain-row authority, §7: create/archive, structural attributes — `store`,
                `sod`, residency — and owner re-pointing are admin writes; the owner edits
@@ -2041,8 +2119,9 @@ POST /dna/proposals  POST /dna/proposals/:id/review (publish|reject) · POST /dn
                · POST /dna/proposals/:id/amend (revision during review, §4.3)  GET /dna/review-queue
 POST /dna/domains/:id/split|merge|rename|archive (governed topology ops, §4.4; archive refuses
                a domain still holding live-set items — active rows and owner-staged drafts —
-               live workspace bindings, or open proposals; terminal history never blocks,
-               staying with the archived row as read-only record (§7) — merge away first, or
+               live workspace bindings, or open proposals; terminal history never blocks —
+               decisions included, lifecycle-free records (§7, §4.4) — staying with the
+               archived row as read-only record (§7) — merge away first, or
                archive directly once only history remains; owner-addressed pending asks
                settle inside the event instead of blocking — closed with an audit note,
                attention dying with the domain's routing, §8.10)
@@ -2357,7 +2436,18 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   non-active members refused at set, the ephemeral mortality pin) with demotion re-pointing,
   and cap-edit non-retroactivity (a tightened count cap refusing new claims while live
   claims run out, a spend ceiling tightened below live reserved+settled tripping the breaker
-  with its ask).
+  with its ask), spend-halt launch-gating (runs in flight at a trip completing and settling,
+  a spawn-approval accept under an active halt audit-only with the request archived and its
+  claims released, the critical floor carrying critical-tagged firings only, never a hire),
+  decision-archive interplay (a decision never blocking archive, an archived domain's
+  decisions leaving search and resolving by citation, merge moving them with the corpus),
+  upgrade-accept target re-validation (a version retired mid-wait leaving the accept
+  audit-only, the pin standing), respond-door eligibility (an out-of-set response refused at
+  the door with the attempt audited), review-queue re-keying on owner re-pointing (the queue
+  rendering to the new owner at every door, `review_by` clocks untouched), the storm
+  aggregate's close condition (rate recovery for a full window or admin acknowledgment, the
+  count preserved in audit), and heartbeat-owned node capabilities (console node edits
+  refusing capabilities, region and metadata only).
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -2448,7 +2538,16 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   primary domain re-keys its approval ask to the gate the new binding derives; and tightening
   the ephemeral quota under live workers refuses new claims while the live ones run out,
   while tightening the spend ceiling below live spend trips the breaker and raises its trip
-  ask.
+  ask; a breaker trip landing mid-run lets the in-flight run complete and settle while new
+  launches and a racing spawn-approval accept refuse until the trip ask resolves; a domain
+  holding only decisions and terminal history archives directly, its decisions resolving by
+  citation, and a merge moves decisions with the corpus; an upgrade accept arriving after its
+  target version retired stays audit-only with the pin standing; a response from a member with
+  no standing on the ask is refused at the door and audited; re-pointing a domain's owner
+  mid-review moves its open proposals into the successor's queue with the SLA clock untouched;
+  a storm's aggregate admin ask closes resolved when its source's rate falls back under the
+  limit; and a console node edit attempting capabilities is refused, the advertisement
+  re-stating on heartbeat.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -2624,7 +2723,17 @@ resolving per its expiry behavior when its rule dies and a domain's archive clos
 owner-addressed attention with an audit note (§8.10, §4.4, §9), the spawn gate's pending hop
 re-keyed at workspace-binding edits, the re-key's fourth door (§6.2, §7, §4.4), the
 group-Leader post's write guards and demotion re-pointing (§5, §6.3), and claim-scoped,
-non-retroactive cap edits with a loud breaker trip on a tightened ceiling (§6.2, §9). The former
+non-retroactive cap edits with a loud breaker trip on a tightened ceiling (§6.2, §9); v2.37's
+twenty-ninth sweep closed the spend-halt, record-mortality, and answer-authority seams beneath
+those — the breaker's halt pinned as a launch gate at every door, in-flight runs draining to
+their settles, a spawn-approval accept racing the trip archiving at the door, and the critical
+floor carrying critical-tagged firings only, never a hire (§6.2, §8.10), decisions pinned
+lifecycle-free history that never blocks archive and leaves search with their domain
+(§4.2, §4.4, §7, §9), the upgrade accept re-validating its target version's status (§6.5, §7,
+§8.10), respond-door eligibility refused outside the ask's eligible set with the attempt
+audited (§7, §8.10), the review queue re-keying with owner re-pointing at every door, clocks
+untouched (§4.3), the storm-shed aggregate gaining its close condition (§8.10), and node
+capabilities pinned heartbeat-owned against console edits (§3, §7, §9). The former
 residue — quorum approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
 check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
