@@ -345,6 +345,27 @@ mode so small teams start simple.
 > audit-only, the request archiving, never a worker published into a slice that refuses
 > launches (§5.1, §6.2, §8.10).
 
+> **Edge-case closure (v2.31)**: twenty-third sweep — attention-remap, holder-racing, and
+> workspace-mortality seams closed inline: pending asks travel with their topology — an ask
+> whose `to` was derived from a domain's owner (the spawn-approval gate, a quorum ask's
+> primary recipient) is re-keyed to the resulting owner inside the audited event, ask ids
+> stable and deadlines untouched, the open-proposals rule extended to the attention surface,
+> while hops and pools already evaluate against live state (§4.4, §6.2, §8.10) · upgrade
+> asks settle with the Coworker they name — the retire walk closes an in-flight owner-upgrade
+> ask unresolved with an audit note, a racing accept is audit-only with no successor, and
+> suspension strands nothing: the rebase lands and resume re-arms (§6.3, §6.5, §8.10) · a
+> template's class is immutable across its versions — a class-flipping version refused at
+> publish; a role that changed class is a new template, the retire-and-respawn path (§6.5,
+> §7) · workspace archival is a walked transition, never a bare delete — initiative bindings
+> drop with the goal slice re-deriving, domain reader sets re-derive, the node claim dies
+> with the row, new spawn bindings are refused, and workspace-keyed asks degrade to the
+> domainless fallback (§7, §5.1, §3, §6.2, §8.10) · an initiative pause is a launch gate,
+> not a mid-run kill — runs in flight complete onto the paused slice exactly as close's
+> drain completes them (§5.1) · domain-owner re-pointing is an admin write, the §5 walks its
+> system-applied form (§9, §7) · the time authority is monotonic in effect: a backward clock
+> step never un-expires an ask, window, lease, or TTL, nor reverses a terminal transition
+> (§3).
+
 ---
 
 ## 1. Product vision
@@ -463,7 +484,12 @@ boundaries — with a sixth raised to the top: **shared, governed context**.
   (audit entry + contradiction report), not silently overwritten. The lease interval is §14.16's
   tunable; the fence itself is not optional.
 - **Time & residency**: the control plane is the time authority — deadlines, SLAs, windows, TTLs,
-  and leases evaluate against its clock, never a node's. Per-human timezones and working hours
+  and leases evaluate against its clock, never a node's. That authority is monotonic in
+  effect: expiries evaluate against a persisted high-water mark, so a backward clock step —
+  an NTP correction, a drifted host — never un-expires an ask, un-lapses a window, lease, or
+  rule, or reverses a terminal transition; a forward step only makes the watchers fire
+  sooner. Time is an input the plane bounds, never one it trusts nakedly. Per-human
+  timezones and working hours
   (§7) define each recipient's morning for digests and `queue_until_morning` (§8.10). Nodes carry
   a `region` tag; domains may declare a residency constraint, and scheduling — affinity and
   rebind — places work only on nodes that satisfy it: EU data stays on EU nodes by construction,
@@ -693,6 +719,14 @@ keeps governing strictness separately.
   as it refuses items and live bindings
   (§7 `status 'archived'`: read-only history; no
   injection, routing, or new bindings; nothing shredded, so reconstructibility survives).
+  Pending asks travel with their domain too, not just proposals: an ask whose `to` was
+  derived from a domain's owner — a persistent-hire spawn approval's gate hop (§6.2), a
+  quorum ask's primary recipient (§8.10) — is re-keyed to the resulting domain's owner
+  inside the same audited event, ask ids stable and deadlines untouched (a re-key changes
+  the addressee, not the SLA), the open-proposals rule extended to the attention surface;
+  escalation hops and quorum pools already evaluate against live state (§8.10), so
+  creation-time addressing is the only piece a remap could leave stale, and the remap
+  carries it.
   Topology ops serialize behind a domain-level write lock (§4.5):
   split/merge/rename/archive queue behind in-flight proposals and each other — the stable-id
   guarantees assume no concurrent topology mutation, so the system enforces the assumption rather
@@ -925,7 +959,10 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
  slice stays open as planning: pause stops execution, not deliberation, with §7's assignee
   freeze the per-member axis and this the per-initiative one; schedules elapsing under the
   pause coalesce per §8.5 and play their catch-up run on resume — pause defers timetables,
-  never drops them), but — unlike close — does *not* lapse its delegated
+  never drops them). The freeze is a launch gate, not a mid-run kill: runs already in
+  flight when the pause lands complete onto the paused slice — the same drain close runs,
+  below — and stopping work mid-flight stays suspend/retire's job (§6.3). Pause — unlike
+  close — does *not* lapse its delegated
  rules (§8.10) or drop its workspace bindings: the binding list keeps the paused initiative, linked
  goals keep injecting (context, not execution), and resume unfreezes in place — close, not pause, is
  the transition that unbinds (§7). Pause freezes execution, not authority; the delegation's own window (§4.2
@@ -1100,8 +1137,14 @@ lead/sponsor posts reassigned or closed via §5.1, and the retiree's own pending
 an audit note — pending spawn requests included, draining the template pins they hold (§6.5):
 their originating runs are halted and folded, so an answer would have no consumer, and a
 terminal act must not leave state waiting on a member who will never respond) — the same
-dependency check as deleting a
-skill, applied to staff; the §5 offboarding walk is its superset for humans. Asks *to* the
+dependency check as deleting a skill, applied to staff; the §5 offboarding walk is its
+superset for humans. Upgrade asks about the retiree settle with it: an owner-upgrade ask
+pinned to this Coworker (§6.5) closes unresolved with an audit note inside the walk — the
+pin dies with the row — and a response racing the retirement is audit-only with no
+successor ask, the respond-time re-validation's terminal case (§8.10). Suspension strands
+no upgrade either way: an accept landing on a suspended Coworker is a data rebase — files
+and scopes, not execution — and resume re-arms under the rebased template, the halt
+freezing execution without freezing identity. Asks *to* the
 retiree need no walk entry of their own: §8.10's non-active target rule (retiring included)
 already reassigns them up the lineage chain, exactly as under suspension. The retiree's
 personal memory archives with it — inert history under the archived identity, never injected,
@@ -1158,7 +1201,12 @@ architecture:
 
 Roles change as the company does; running staff must track the change without a respawn stampede.
 Templates are versioned (§7 `role_templates`); every persistent Coworker pins the version it was
-spawned from. The catalog's write surface is admin-governed and audited — authoring,
+spawned from. A template's class is its identity across those versions: a version declaring
+a class different from its name's predecessors is refused at publish — the (class, name,
+version) key names rows, but the name keys the lineage — so a persistent Coworker's
+upgrade ask can never point at an ephemeral-class row; a role that has genuinely changed
+class is a new template and the retire-and-respawn path (§6.3), not a version bump.
+The catalog's write surface is admin-governed and audited — authoring,
 publishing, and retiring templates are infrastructure acts; the owner asks below govern
 adoption of what lands, never authorship of it. Version selection is explicit at every door:
 a spawn request names the exact
@@ -1225,7 +1273,10 @@ role_templates (id, name, version, class 'persistent'|'ephemeral-subagent', body
                  (identity/style/handbook), default_scopes json, status 'draft'|'active'|'retired')
                  -- versioned catalog; persistent Coworkers pin (template_id, template_version) (§6.5)
                  -- (class, name, version) unique — the catalog's deterministic key: a new
-                 -- version is a new row, never an in-place rewrite of one a Coworker pins
+                 -- version is a new row, never an in-place rewrite of one a Coworker pins;
+                 -- class is stable across a name's versions — a class-flipping version is
+                 -- refused at publish (§6.5), so a pinned lineage never changes shape
+                 -- under the Coworkers holding it
                  -- spawn requests name the exact row (newest active the console default, §6.5);
                  -- publishing a new active version files owner-upgrade asks to pinned Coworkers —
                  -- publication supersedes, never retires: a denied upgrade's pin stands on a
@@ -1246,9 +1297,12 @@ dna_domains    (id, name, owner_human_id, access 'public'|'domain'|'named',
                  -- review_sla_days: the per-domain queue SLA's schema home (§4.3) — review_by
                  -- derives from it at propose, and topology results inherit or persist it like
                  -- every other domain attribute (§4.4);
-                 -- row-write authority is split (§9): create/archive and the structural
-                 -- attributes — store, sod, residency — are admin writes; the owner edits
-                 -- access, named_readers, and review_sla_days; every row-write audited;
+                 -- row-write authority is split (§9): create/archive, the structural
+                 -- attributes — store, sod, residency — and owner re-pointing are admin
+                 -- writes; the owner edits access, named_readers, and review_sla_days;
+                 -- every row-write audited; owner re-pointing is the §5 walks' voluntary
+                 -- form — the walk transfers on departure, the edit re-points in place,
+                 -- one authority behind both;
                  -- residency constrains node placement (§3);
                  -- name unique among non-archived domains — review queues, digests, and
                  -- routing keys never alias (an archived name is history and may be reused);
@@ -1388,6 +1442,14 @@ workspaces     + initiative_ids json?, domain_ids json?, node_id?, claim_epoch i
                  -- empty list is a domainless workspace with the defined fallbacks (§6.2,
                  -- §8.10), and topology ops remap the list with ids stable (§4.4)
                  -- node/epoch/lease: affinity placement + the fenced claim (§3)
+                 -- lifecycle: workspaces archive, never bare-delete — runs and artifacts
+                 -- are history; archival is a walked transition (§3, §4.4, §5.1, §8.10):
+                 -- initiative bindings drop (the goal slice re-derives), domain reader
+                 -- sets re-derive, the node claim dies with the row (the lease's terminal
+                 -- case), new spawn bindings are refused (the domain-archive rule), and
+                 -- workspace-keyed asks degrade to the domainless fallback — hop skipped,
+                 -- digest tail — so no pending ask routes through a workspace gone from
+                 -- live state
 triggers       + criticality 'standard'|'critical' default 'standard'  -- §6.2 breaker trip order
 playbooks      + criticality 'standard'|'critical' default 'standard'  -- with triggers (§6.2
                  -- breaker): a firing's class is the stricter of its trigger's and playbook's tags
@@ -1639,9 +1701,10 @@ POST /nodes/enroll (one-time token exchange) · GET /nodes · POST /nodes/:id/re
                · PUT /nodes/:id (admin; a region edit re-validates every residency-constrained
                placement bound to the node — §3, the node-side twin of §4.4's domain-edit rule)
 CRUD /dna/domains · /dna/cards|rules|decisions|glossary|goals
-               (domain-row authority, §7: create/archive and structural attributes — `store`,
-               `sod`, residency — are admin writes; the owner edits access policy,
-               `named_readers`, and `review_sla_days`; every row-write audited)
+               (domain-row authority, §7: create/archive, structural attributes — `store`,
+               `sod`, residency — and owner re-pointing are admin writes; the owner edits
+               access policy, `named_readers`, and `review_sla_days`; every row-write
+               audited)
                (item-level CRUD is the publish path, not a side door around §4.3: every write
                lands inside the domain write lock with the §4.4 publish-time contradiction
                re-check, §4.3 sod routing, and the §10 secrets scan — an owner's direct write
@@ -1910,7 +1973,18 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   an audit-only accept against a dead goal), goal_ref live-at-write (an initiative never born
   pointed at history, a re-point target riding the same liveness check), close-time
   spawn-request archival with template-pin drain, spawn-approval respond-time initiative
-  re-validation (an accept racing pause or close audit-only, the request archiving).
+  re-validation (an accept racing pause or close audit-only, the request archiving),
+  topology remap of owner-addressed asks (spawn-approval and quorum primary recipients
+  re-keyed to the resulting owner, ids and deadlines stable), retire-walk upgrade-ask
+  settlement (closed unresolved with an audit note, a racing accept audit-only with no
+  successor, an accept on a suspended Coworker rebasing inertly), template class
+  immutability (a class-flipping version refused at publish), workspace archival walk
+  (initiative bindings dropped with the goal slice re-derived, reader sets re-derived,
+  node claim death, spawn-binding refusal, workspace-keyed asks degraded to the
+  domainless fallback), pause drain of in-flight runs (completing onto the paused slice
+  while new launches still refuse), domain-owner re-pointing as an admin write, and
+  monotonic expiry under a backward clock step (no ask, window, lease, or TTL
+  un-expires, no terminal transition reverses).
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -1964,7 +2038,13 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   clock and playing on resume, and a sponsor's activation accept against a goal that died
   mid-wait is audit-only with the re-point successor ask carrying the decision; a spawn
   approval racing its initiative's close is audit-only, the request archiving with its
-  template pin drained.
+  template pin drained; a merge re-keys a pending spawn-approval ask to the surviving
+  domain's owner with its deadline untouched; an owner-upgrade ask racing its Coworker's
+  retirement closes unresolved while a racing accept stays audit-only; archiving a
+  workspace drops its initiative bindings, kills its node claim, and degrades its keyed
+  asks to the domainless fallback; runs in flight at an initiative pause complete onto
+  the paused slice while new launches refuse; a backward clock step leaves every expiry
+  standing.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -2090,7 +2170,15 @@ halting in-flight runs with fold-back and reconciliation, and killing claims wit
 (§3, §9), the goal-end direction ask extended to every non-closed initiative state with
 activation re-validating the goal_ref and the linkage guarded live-at-write (§5.1, §8.10,
 §7), and close-time spawn-request archival with the initiative named among spawn-approval
-respond-time assumptions (§5.1, §6.2, §8.10). The former
+respond-time assumptions (§5.1, §6.2, §8.10); v2.31's twenty-third sweep closed the
+attention-remap, holder-racing, and workspace-mortality seams beneath those — topology
+remaps re-keying owner-addressed pending asks with ids and deadlines stable (§4.4, §8.10),
+upgrade asks settling with the Coworker they name — closed unresolved at retirement,
+rebased inertly under suspension (§6.3, §6.5) — template class immutability across a
+name's versions (§6.5, §7), workspace archival as a walked transition degrading keyed
+asks to the domainless fallback (§7, §3), pause as a launch gate that drains in-flight
+runs (§5.1), domain-owner re-pointing as an admin write (§9, §7), and monotonic expiry
+evaluation against backward clock steps (§3). The former
 residue — quorum approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
 check-then-spend races, rebind dual-writers, restore reconciliation, mid-run rule staleness,
