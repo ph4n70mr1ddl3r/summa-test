@@ -27,6 +27,12 @@ mode so small teams start simple.
 > systems of record stay live, never synced into the DNA (§4.6) · personal-assistant deployment
 > shape with mirrored scopes (§6.4) · enterprise connector tier (§8.2) · inter-agent communication
 > policy — state, not chatter (§8.11).
+>
+> **Amendments (v2.4 — directive-to-execution)**: goal slice promoted into the read path (§4.2) ·
+> initiatives — the directive→work spine with sponsor, lead, deadline, dependency-checked close
+> (§5.1, §7, §8.9) · cross-domain coordination via initiative playbooks (§8.6) · delegated approval
+> authority as scoped, expiring DNA rules the ask router evaluates (§8.10) · business budgets
+> display-only until post-v1 (§14.11).
 
 ---
 
@@ -42,7 +48,8 @@ makes it explicit and operational:
   SOPs/playbooks, glossary, org facts, goals and metrics. Every member reads it; changes to it are
   governed.
 - **Work ledger** — chat tasks, automations, and playbooks all create runs with results, artifacts,
-  and to-dos on a shared Task Board any member can hold or assign.
+  and to-dos on a shared Task Board any member can hold or assign. A directive becomes an
+  **initiative** — a goal, a lead, and the tasks/playbooks/spawns that carry it to done (§5.1).
 - **Governed spawning** — delegation by hiring: a human or agent can spawn a new Coworker for a
   role or a task, inside policy, budget, and lineage constraints.
 
@@ -132,21 +139,24 @@ documents; it is curated, structured, versioned context.
 | **SOPs** | Process definitions; the durable ones are executable playbooks | "Onboarding checklist → onboarding playbook" |
 | **Glossary** | Canonical terminology, mapped to aliases | "ARR = annual recurring revenue (not 'annual revenue')" |
 | **Org facts** | Who exists (humans + Coworkers), teams, domain ownership | generated from the org registry, read-only |
-| **Goals & metrics** | Company/quarterly objectives and KPIs; work links to them | "Q3: cut support first-response to < 2h" |
+| **Goals & metrics** | Company/quarterly objectives and KPIs; work links to them through initiatives (§5.1) | "Q3: cut support first-response to < 2h" |
 
 ### 4.2 Read path — how coherence actually happens
 
 Every run's system prompt is assembled with:
 - **Always injected**: the org snapshot (who's who), the glossary slice relevant to the task's
-  domain, and all *applicable rules* for the workspace's domains. "Applicable" has defined
+  domain, all *applicable rules* for the workspace's domains, and the **goal slice**: active goals
+  linked to the workspace through its initiatives, plus goals flagged org-wide (statement, owner,
+  deadline, status). "Applicable" has defined
   semantics: a rule applies when its domain intersects the workspace's domains and its effective
   window covers the run (superseded rules drop out of injection automatically); `machine_hint`
   narrows matching where present. Each layer carries a token budget (org snapshot ~1k, glossary
-  slice ~2k, rules ~4k — soft limits, configurable); overflow demotes items to retrieval (rules
-  overflow into the searchable DNA index) rather than truncating silently. Injection stays
-  deterministic per (domain set, DNA version) so it is testable (§12).
-- **Retrieved on demand**: cards and decisions via hybrid search (BM25 + vector over the card
-  index) — same retrieval machinery as v1's KB, now pointed at DNA.
+  slice ~2k, rules ~4k, goal slice ~1k — soft limits, configurable); overflow demotes items to
+  retrieval (rules overflow into the searchable DNA index) rather than truncating silently.
+  Injection stays deterministic per (domain set, linked-goal set, DNA version) so it is testable
+  (§12).
+- **Retrieved on demand**: cards, decisions, and goals via hybrid search (BM25 + vector over the
+  card index) — same retrieval machinery as v1's KB, now pointed at DNA.
 - **Cited in answers**: responses reference cards; the console (and IM) renders citations that open
   the source card with its provenance.
 
@@ -230,7 +240,7 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
   Humans answer in the console (later IM/email digests); agents answer via their session worker.
   Approvals from v1 become Asks of kind `approval`.
 - **Shared Task Board**: to-dos come from run results, playbook nodes, or any member; assignable to
-  humans or Coworkers; visible org-wide within access scopes.
+  humans or Coworkers, groupable under initiatives (§5.1); visible org-wide within access scopes.
 - **Groups/teams** mix humans and Coworkers (v1 kept agent-only groups; v2 unifies — a local
   Coworker still acts as Leader for execution routing).
 - **Accountability invariant**: every Coworker row carries `owner_human_id`; spawned workers carry
@@ -238,6 +248,31 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
 - **Offboarding**: deactivating a human reassigns their owned DNA domains, open asks, and
   dependent Coworkers via the same dependency check as retiring a Coworker (§6.3); audit history
   is retained, and their personal data is subject to the §4.5 deletion carve-out.
+
+### 5.1 Initiatives — from directive to coordinated execution
+
+A CEO-level directive ("let's open the Austin store") must not die in a chat scroll. Its path:
+
+1. **DNA first**: the directive lands as a decision record and (usually) a goal through the normal
+   write path (§4.3) — the *what* and *why* stay governed.
+2. **An initiative opens**: the execution spine linking goal → work. It carries a **sponsor** (the
+   authority behind the directive), a **lead** (accountable member, human by default), a deadline,
+   status (`proposed` → `active` → `paused`/`closed`), and an optional business budget (§14.11).
+3. **Decomposition is work, not talk**: the lead creates board tasks (human or Coworker assignees),
+   instantiates the relevant SOP as a playbook, requests spawns — all tagged with the initiative
+   and visible on its slice of the shared board.
+4. **Cross-domain coordination runs through the playbook spine**: an initiative playbook's nodes
+   route asks into each domain's own chain (§8.6, §8.10) — Finance asks to Finance, Legal to Legal
+   — so coordination is auditable state, not another chat channel (§8.11).
+5. **Progress is state, not narration**: the initiative view is goal + ask burndown + task/playbook
+   status + spend. Closing runs the same dependency check as retiring a Coworker (§6.3): open asks
+   and tasks resolved or reassigned; the retrospective files DNA proposals — the §1 loop closes.
+
+An initiative is an org entity (visible, accountable); **project memory** (§8.3) stays the
+automatic per-workspace memory tier — one is governance, the other learning. **v0 shape**
+(Phase 4): goal + lead + deadline + task grouping. Business budgets and delegated authority
+(§8.10) land with the multi-human org (Phase 6) — delegating authority presumes more than one
+human to delegate to.
 
 ---
 
@@ -328,6 +363,8 @@ dna_cards      (id, domain_id, title, definition_md, refs json, provenance json,
 dna_rules      (id, domain_id, statement_md, machine_hint json?, effective_from, supersedes_id, status)
 dna_decisions  (id, domain_id, context_md, outcome_md, decided_by member, decided_at)
 dna_glossary   (id, domain_id?, term, definition, aliases json)
+dna_goals      (id, quarter?, statement_md, owner member, status,
+                inject 'always'|'linked', effective_from, effective_to?)  -- goal-slice source (§4.2)
 dna_proposals  (id, kind 'card'|'rule'|'decision'|'edit', payload json, proposed_by member,
                  provenance json, status 'open'|'published'|'rejected'|'withdrawn', reviewed_by?, at)
 asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request', from member, to member,
@@ -335,7 +372,11 @@ asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request', fro
                  sla_tier 'critical'|'standard'|'bulk', escalation json,
                  expiry_behavior 'deny'|'escalate'|'reassign', responded_at?)  -- supersedes approvals;
                  escalate/reassign close the expired ask and open a linked successor ask (§8.10)
-board_tasks    + assignee_member_id?  (assignee references the unified member namespace)
+initiatives    (id, title, goal_ref?, decision_ref?, sponsor member, lead member,
+                 status 'proposed'|'active'|'paused'|'closed', business_budget json?, deadline?,
+                 closed_at?)
+board_tasks    + assignee_member_id?, initiative_id?  (asks and runs carry initiative_id? the
+                 same way — burndown, per-initiative digests)
 spend_ledger   (id, member_id, run_id?, spawn_id?, tokens_in/out, cost, pricing_version, at)
 ```
 
@@ -365,16 +406,20 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
 - **8.5 Trigger engine** — schedule/API/event triggers unchanged; every firing is a run of the same
   session worker; API triggers gain PAT scopes for external callers.
 - **8.6 Playbook engine** — DSL and sandbox unchanged; `worker()` targets any member (human targets
-  create an assignment Ask); spawn-class playbooks (fan-out workers) built on §6 ephemeral workers.
+  create an assignment Ask); spawn-class playbooks (fan-out workers) built on §6 ephemeral workers
+  · **initiative playbooks** (§5.1): an SOP instantiated under an initiative becomes the
+  cross-domain spine — nodes route asks into each domain's escalation chain (§8.10) and artifacts
+  land on the initiative's board slice.
 - **8.7 DNA engine** — inherits v1 KB machinery (ingest → chunk → embed → cards → hybrid retrieval →
   citations) extended with domains, proposals, review queue, and glossary/rule injection.
 - **8.8 Groups & IM** — unified human+agent teams; IM pairing routes to a Coworker whose asks
   escalate to the channel.
-- **8.9 Console screens** — v1 screens 1–9, plus four new: **10. Org & People** (members, RBAC, lineage graph,
+- **8.9 Console screens** — v1 screens 1–9, plus five new: **10. Org & People** (members, RBAC, lineage graph,
   retirement flows) · **11. DNA console** (browse cards/rules/decisions per domain, review queue
   with diffs and provenance, proposal history, glossary editor) · **12. Governance** (policies,
   quotas, spend dashboard, spawn audit) · **13. Ask inbox** (SLA indicators, batched digests,
-  one-line accept/deny with diff links).
+  one-line accept/deny with diff links) · **14. Initiatives** (goal-linked execution: status, ask
+  burndown, task/playbook progress, spend vs. budget, delegated-authority grants).
 - **8.10 Asks — the human-attention subsystem** — system throughput is bounded by ask-response
   latency, so asks are engineered, not merely routed. **SLA tiers**: `critical` (blocks a
   customer-facing or money-moving run — interrupt-grade push, console + IM), `standard` (blocks a
@@ -387,7 +432,13 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
   answers; approvals render as one-line accept/deny with diff links — reviewers see raw diffs,
   never agent-authored summaries alone. **Agent targets**: an ask routed to a Coworker queues into
   its next run (or wakes a session worker); if the target is ephemeral, archived, or busy past
-  SLA, the ask reassigns up the chain.
+  SLA, the ask reassigns up the chain. **Delegated authority** — a directive can push authority,
+  not just work: the sponsor proposes a DNA rule scoped by `machine_hint` (initiative, ceiling,
+  window) — "initiative X: store invoices ≤ $25k need one approval, by the lead, until
+  2026-12-31" — reviewed like any rule. The ask router evaluates applicable rules, delegations
+  included, when choosing approvers, so a static approval matrix doesn't route six months of store
+  invoices through the same two people. Delegations end by window, supersession, or initiative
+  close — rule semantics, not bespoke state.
 - **8.11 Inter-agent communication** — agents exchange **state, not chatter**. Agent→agent requests
   are Asks with an agent target (§8.10); shared context lives on the task board as tasks and
   artifacts, not repeated in-context explanation; deliberate multi-agent fan-out is a playbook
@@ -443,11 +494,11 @@ CRUD /board-tasks (assign to any member)
 | **0. Foundations** | Repo, CI, single-process skeleton | Monorepo, TS strict, Drizzle+SQLite (WAL), REST+WS, console shell, 3-OS CI matrix | 1 wk |
 | **1. MVP agent** | Chat with a Coworker doing real local work | Model gateway, agent loop, guarded fs/shell/web tools, approval cards, audit, streaming chat UI | 4–5 wks |
 | **2. Identity, memory, skills, connectors** | Coworkers feel like employees | Role catalog across departments, IDENTITY/STYLE/HANDBOOK, memory tiers 1–2 (personal/project), skills + market, MCP client + tier-1 connectors, workspace kinds | 3–4 wks |
-| **3. Company DNA v1** | The coherence core | DNA store (git-backed markdown) + domains/index, cards compilation from sources, glossary + applicable-rules injection into every prompt, proposals + owner review queue, citations in answers | 3–4 wks |
-| **4. Automation** | 24/7 operation | Schedule/API/event triggers, PATs, `{{field}}` templating, headless Ask policy, shared task board | 2–3 wks |
+| **3. Company DNA v1** | The coherence core | DNA store (git-backed markdown) + domains/index, cards compilation from sources, glossary + applicable-rules + goal-slice injection into every prompt, proposals + owner review queue, citations in answers | 3–4 wks |
+| **4. Automation** | 24/7 operation | Schedule/API/event triggers, PATs, `{{field}}` templating, headless Ask policy, shared task board, initiatives v0 (goal + lead + deadline + task grouping) | 2–3 wks |
 | — | **v1 cut line** | Phases 0–4 + 8a are shippable v1: a DNA-coherent, automated company run by one admin + Coworkers | — |
 | **5. Playbooks** *(v2 track)* | Multi-stage orchestration | DSL + sandbox, statuses, askUser → Asks, read-only canvas, versions, playbook triggers | 3–4 wks |
-| **6. Multi-human org** *(v2 track)* | A company, not a person | Server deployment, human accounts + RBAC, asks routing + digests, shared board, node registration & workspace-affinity scheduling | 3–4 wks |
+| **6. Multi-human org** *(v2 track)* | A company, not a person | Server deployment, human accounts + RBAC, asks routing + digests, shared board, node registration & workspace-affinity scheduling, delegated authority + initiative budgets | 3–4 wks |
 | **7. Spawning** *(v2 track)* | The org flexes | Ephemeral workers (quota, TTL, fold-back memory), then persistent hires (owner approval), policy engine, lineage graph, spend ledger + circuit-breaker | 2–3 wks |
 | **8a. v1 hardening** | v1 production-ready | Backup/restore, encrypted secrets, docs, security review | 1 wk |
 | **8b. v1.1 polish** | Distribution | Tauri shell, installers, telemetry (opt-in) | 1–2 wks |
@@ -461,7 +512,9 @@ Sequencing rationale: DNA lands early (Phase 3) because everything after it (mul
 depends on shared context; spawning lands last because it needs governance + budgets + the org model
 to be safe. The v1 cut line stays at Phase 4 because playbooks, multi-human, and spawning add
 *multiplicative* complexity (governance surface × trust surface), not additive features — v1 first
-proves the core loop (work → learning → DNA → better work) end to end.
+proves the core loop (work → learning → DNA → better work) end to end. Initiatives land in two
+steps — v0 grouping in Phase 4 (a lone admin still needs directives turned into work); budgets and
+delegated authority in Phase 6 (delegation presumes more than one human).
 
 **Phase-0 spikes** (timeboxed; the ladder isn't committed until they pass):
 - `isolated-vm` on Node 22: maintenance status, compatibility, child-process fallback prototype.
@@ -475,8 +528,9 @@ proves the core loop (work → learning → DNA → better work) end to end.
 - **P3**: fixed task battery run with/without DNA injection shows measurable improvement
   (citation accuracy, rule compliance) — the product's core hypothesis, tested here, not assumed.
 - **P4**: headless trigger fires overnight; a blocked approval auto-denies at expiry; the morning
-  digest renders correctly.
-- **P6**: two humans + two nodes; heartbeat loss mid-run recovers with no orphaned work.
+  digest renders correctly, grouped by initiative.
+- **P6**: two humans + two nodes; heartbeat loss mid-run recovers with no orphaned work; a
+  delegated-authority rule routes an approval to the initiative lead and expires cleanly.
 - **P7**: spawn storm trips the circuit-breaker; a depth-3 spawn is refused by policy, not prompt.
 
 ---
@@ -484,10 +538,13 @@ proves the core loop (work → learning → DNA → better work) end to end.
 ## 12. Testing & quality
 
 - **Unit**: scope delegation algebra (child ⊆ parent), spawn policy engine (quotas/depth/TTL),
-  DNA proposal workflow states, egress/path guards, scheduler math, memory 3-tier classifier.
+  DNA proposal workflow states, goal-slice injection determinism, delegated-authority evaluation
+  in ask routing, egress/path guards, scheduler math, memory 3-tier classifier.
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker.
-- **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule.
+- **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
+  and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
+  retrospective proposal.
 - **Injection suite**: a tainted external document yields a DNA proposal that carries its taint
   flag; the reviewer sees the raw diff (never an agent summary alone); a tainted run cannot spawn
   ungated.
@@ -512,6 +569,7 @@ proves the core loop (work → learning → DNA → better work) end to end.
 | Operational-data sync temptation (copying ERP/WMS/HR data into the DNA) | §4.6 hard line: knowledge only, live lookups via connectors; sync requests surface as proposals an owner must reject |
 | Agent-to-agent chatter (error amplification, unauditable loops, token burn) | §8.11: communication only via asks / board / playbooks; no free-form agent channels; disputes escalate to humans |
 | Assistant scope drift after role change; bulk reads of restricted data | Scope mirroring refreshed on role change and revoked on offboarding (§6.4); rate/volume limits + audit on restricted-domain reads |
+| Directive decay (decisions published, never decomposed; initiatives go stale) | §5.1: initiatives are first-class — lead, deadline, status; the goal slice keeps directives in every relevant prompt (§4.2); stalled initiatives escalate like asks (§8.10); close runs the dependency check (§6.3) |
 
 ## 14. Key open decisions
 
@@ -525,3 +583,4 @@ proves the core loop (work → learning → DNA → better work) end to end.
 8. **Name/branding**: working title pending trademark + domain search.
 9. **Tier-2 connector priority**: which enterprise system first (ERP vs HRIS vs CRM) — decide when the first company deployment names its pain; not before v1 ships.
 10. **Personal-assistant rollout**: opt-in per employee (default) vs org-wide mandate.
+11. **Business budgets**: display-only field on initiatives (default) vs enforcement tied into the §8.2 tier-2 write gates — revisit with the first write-capable ERP/WMS connector.
