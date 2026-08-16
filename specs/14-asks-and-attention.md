@@ -26,8 +26,8 @@ Source: PLAN.md §8.10.
 ## Withdrawal and the system originator
 
 - **ASK-030** — Withdrawal is the originator's side: `from` may retract a pending ask before
-  it closes — collapsed waiters resolve with it, partial quorum accepts stay audit-only —
-  and the retraction applies the ask's expiry behavior to whatever was waiting; the
+  it closes — the retracting originator's waiters resolve per the ask's expiry behavior, the
+  retraction originator-scoped per ASK-033 — partial quorum accepts stay audit-only; the
   SPEC-09/12 walks' close-with-audit-note is this mechanism applied by the system.
 - **ASK-031** — The system files asks as well as settling them: plane-originated asks —
   goal-window, stall, close-out, dependency, starvation, rebind, trip, upgrade, activation,
@@ -38,6 +38,15 @@ Source: PLAN.md §8.10.
   the walks' audit-note settlement, the aggregate's recovery-or-ack close, expiry per
   behavior; a member's withdraw on a system ask is refused at the door, and the system
   retracts no member's ask: each side's retraction is its own.
+- **ASK-033** — A retraction is originator-scoped, never communal: it resolves the
+  retracting originator's own waiters per the ask's expiry behavior, while a collapsed
+  canonical row (ASK-100) survives on the remaining originators — `from` re-keying to a
+  surviving one, `collapsed_count` adjusting — and only the last live originator's
+  retraction terminal-closes the ask. The answer is communal — one decision for identical
+  questions, the canonical row's answer resolving every waiter (ASK-100); the retraction is
+  not: one member's change of heart never answers another's. The walks' system-applied
+  closure (ASK-030) closes a departing member's waiters alone, every other originator's
+  identical question standing.
 
 ## Respond door
 
@@ -144,7 +153,8 @@ Source: PLAN.md §8.10.
 - **ASK-100** — Storms collapse: identical pending asks — same kind, target set, payload
   hash — attach to one canonical ask as a `collapsed_count` within a window; the digest
   renders "37 identical escalations" as one line; the canonical ask's answer resolves every
-  collapsed waiter.
+  collapsed waiter — the answer communal, one decision for identical questions, where the
+  retraction is originator-scoped (ASK-033).
 - **ASK-101** — A per-source ask-creation rate limit (per run, trigger, Coworker) sheds
   overflow into a single aggregate admin ask; the aggregate has a lifecycle: it closes
   resolved when its source's rate falls back under the limit for a full window or an admin

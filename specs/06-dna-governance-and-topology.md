@@ -50,11 +50,20 @@ Source: PLAN.md §4.4.
   ARC-012 or starve into ARC-011's ask; an attribute edit is never silently grandfathered.
 - **DGV-017** — Legal holds freeze removal, not addition: archive, merge-away, split, and
   store migration of a held domain queue behind the hold's release; rename and merge-into
-  stay open.
+  stay open — a cross-store merge-into being the exception DGV-054 names, the addition a
+  hold permits never doubling as an unconfirmed publication into immutable history.
 - **DGV-018** — The commit re-runs contradiction checks against post-op state inside the
   lock — items peaceful across two domains may collide in one, surfacing as review asks.
 - **DGV-019** — Dissolution is the degenerate case: no bare delete exists — merge remaining
   items and bindings away, then archive the emptied domain.
+- **DGV-054** — A topology op whose sides differ in `store` runs the store-change discipline
+  (DGV-015) — content moving across stores is the flag's change whatever door it moves
+  through: a merge of a db-only side into a git survivor demands the db-only→git explicit
+  confirm (the op refusing until confirmed), a git side merging into a db-only survivor runs
+  the one-commit sweep, and either direction refuses while either side sits under a
+  kind-`domain` hold; a split result whose declared `store` differs from its parent migrates
+  its mapped items by the same rules — confirm on the db-only bound, sweep on the git bound
+  (held splits already queue behind release, DGV-017).
 
 ## Archive semantics
 

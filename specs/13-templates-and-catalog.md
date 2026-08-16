@@ -78,6 +78,11 @@ Source: PLAN.md §6.5.
 - **TPL-044** — The hire's own sense that it has become a role routes to its owner as an ask
   (the fold-back shape) — self-promotion is an adoption question, not a catalog door; a
   denied or expired promotion ask is record only: the ask is adoption, not alteration.
+- **TPL-046** — Adoption is one question at a time: a hire with a live promotion ask refuses
+  a second at filing — the CLC-050 assistant-1:1 pattern at the catalog door — so two
+  accepts can never race to pin one hire (TPL-042 names the founding instance one row's to
+  be) and a placement decision never lands twice; the ask's own terminals — deny, expiry,
+  accept — clear the way for the next.
 
 ## Key acceptance scenarios
 

@@ -56,6 +56,15 @@ Source: PLAN.md §6.3, §6.4.
   queue never waiting on a departed proposer whatever member shape the proposer was.
   Suspension leaves them standing (non-terminal): the reviewing owner may still publish;
   amendment alone waits on the proposer.
+- **CLC-027** — Re-owning is the upgrade ask's re-key door: a pending owner-upgrade ask is
+  derived from the row's `owner_human_id` (the staff-ownership post), so the OFB-011
+  re-owning re-keys it to the successor or admin custody inside the transfer — ids stable,
+  deadlines untouched, DGV-045's owner-derived rule applied at the staff door; the generic
+  asks-to-the-departing-member reassignment (OFB-003) covers only what no live derivation
+  addresses. A response from the departing owner racing the transfer is refused at the
+  eligibility door (ASK-040), audit-only; the accept evaluates the upgrade algebra against
+  the owner it finds — new-template ∩ the re-derived owner's current scopes — so an upgrade
+  never widens past the member the walk just handed the staff to (TPL-020).
 
 ## Suspend and resume
 
@@ -120,4 +129,11 @@ Scenario: Terminal act leaves no waiters
   When it retires
   Then the spawn request closes with an audit note and drains its pin
   And asks to it re-route up the chain
+
+Scenario: Re-owning carries the upgrade decision
+  Given a pending owner-upgrade ask addressed to a Coworker's departing owner
+  When the offboard walk re-owns the Coworker to a successor
+  Then the ask re-keys to the successor with its deadline untouched
+  And the departed owner's racing response is refused at the eligibility door
+  And the successor's accept rebases at the successor's own ceiling
 ```

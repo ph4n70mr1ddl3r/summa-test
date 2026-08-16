@@ -16,8 +16,10 @@ Source: PLAN.md §5 (offboarding, demotion, last-admin guard).
 - **OFB-010** — Board-task assignments are reassigned or returned to the pool.
 - **OFB-011** — Dependent Coworkers are re-owned or retired. Re-owning narrows, never widens:
   scopes re-derive as current ∩ the new owner's live ceiling; an empty intersection retires
-  the worker. Personal assistants are always retired (mirrored scopes die with the member,
-  CLC-050).
+  the worker. The attention the ownership derives re-keys with it: a pending owner-upgrade
+  ask addressed to the departing owner follows the staff to the re-derived owner — successor
+  or custody — inside the same transfer, ids stable, deadlines untouched (CLC-027). Personal
+  assistants are always retired (mirrored scopes die with the member, CLC-050).
 - **OFB-012** — Sponsored/led initiatives are reassigned or closed, with their pending
   sponsor-addressed asks re-keying to the re-pointed sponsor inside the walk, ids stable,
   deadlines untouched.
@@ -63,7 +65,8 @@ Source: PLAN.md §5 (offboarding, demotion, last-admin guard).
   viewer); the member level keeps its amendment rights. Staged drafts ride the shed domains.
 - **OFB-033** — `owner` → `member` sheds domain ownership by the same rule; the re-key rules
   ride identically — sponsor-addressed asks with the posts, owner-addressed asks with the
-  domains, re-owned staff narrowing to the new ceiling.
+  domains, re-owned staff narrowing to the new ceiling with their pending upgrade asks
+  re-keying with the ownership (CLC-027).
 
 ## Key acceptance scenarios
 

@@ -563,6 +563,28 @@ mode so small teams start simple.
 > descriptions, and run artifacts naming the member are reported for the human
 > delete/rewrite/contest call like DNA prose — identity fields pseudonymize, prose reports
 > (§4.5).
+>
+> **Edge-case closure (v2.43)**: thirty-fifth sweep — staff-rekey, collapsed-retraction,
+> adoption-exclusivity, and cross-store seams closed inline: a pending owner-upgrade ask is
+> derived from the Coworker's `owner_human_id` — the staff-ownership post — and the §5
+> walks' re-owning re-keys it to the successor or admin custody inside the transfer, ids
+> stable and deadlines untouched, a response from the departing owner racing the transfer
+> refused at the eligibility door, the accept intersecting the re-derived owner's ceiling —
+> the §4.4 owner-derived re-key rule applied at the staff door, the upgrade decision landing
+> on the member who now owns the worker, never on the chain a departure walks (§5, §6.3, §7) ·
+> a retraction is originator-scoped, never communal: it resolves the retracting originator's
+> waiters alone, a collapsed canonical row surviving on the remaining originators with `from`
+> re-keyed and `collapsed_count` adjusted, only the last live originator's retraction closing
+> the ask per its expiry behavior — the answer communal, one decision for identical
+> questions; the retraction not, one change of heart per originator (§8.10, §7) · adoption
+> is one question at a time: a customRole hire with a live promotion ask refuses a second at
+> filing, the §6.4 assistant 1:1's pattern at the catalog door, so two accepts can never
+> race to pin one hire (§6.5, §9) · and a topology op whose sides differ in `store` runs
+> the store-change discipline — db-only content entering a git survivor demands the explicit
+> confirm, git entering a db-only survivor the one-commit sweep, either direction refusing
+> under either side's kind-`domain` hold, merge-into a held domain staying open exactly when
+> it moves no content across stores, a split result differing in `store` migrating its
+> mapped items the same way (§4.4, §4.5).
 
 ---
 
@@ -949,7 +971,17 @@ keeps governing strictness separately.
   the merge publishes immutable history) and is refused outright while either side sits under a
   kind-`domain` legal hold (§4.5) — and the migration is a property of the flag, not of the op
   flipping it: a standalone `store` change through domain update (§9) runs the same one-commit
-  sweep, the same explicit confirm, and the same hold refusal. Residency edits carry the same
+  sweep, the same explicit confirm, and the same hold refusal — and the same is true of a
+  topology op whose sides differ in `store`, content moving across stores being the flag's
+  change whatever door it moves through: a merge of a db-only side into a git survivor runs
+  the disappearing side's content through the db-only→git confirm — the op refusing until
+  confirmed, immutable history never entered by a merge's momentum — a git side merging into
+  a db-only survivor runs the one-commit sweep, and either direction refuses under either
+  side's hold, so merge-into a held domain stays open (above) exactly when it moves no
+  content across stores, the addition a hold permits never doubling as an unconfirmed
+  publication; a split result whose declared `store` differs from its parent migrates its
+  mapped items by the same rules — confirm on the db-only bound, sweep on the git bound —
+  and held splits already queue behind release (§4.5). Residency edits carry the same
   visibility: a tightened constraint re-validates every bound workspace's placement — conforming
   leases stand, nonconforming ones rebind through the §3 capability-and-region check or starve
   into the same §3 starvation ask — an attribute edit is never silently grandfathered onto
@@ -1173,13 +1205,20 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
   and carrying their pending owner-addressed asks with them: the §4.4 re-key binds to
   re-pointing at every door, this walk included — a spawn approval or quorum ask re-keys to
   the successor or custody inside the transfer, ids stable, deadlines untouched), open
-  asks (to the member: reassigned up the chain; from the member: closed with an audit note — a
-  departed member's pending spawn requests no longer gate anything) and board-task assignments
+  asks (to the member: reassigned up the chain — save those a live derivation re-keys, an
+  owner-upgrade ask following the re-owned staff below; from the member: closed with an audit
+  note — a departed member's pending spawn requests no longer gate anything) and board-task
+  assignments
   (reassigned or returned to the pool), dependent Coworkers
   (re-owned or retired — re-owning narrows, never widens: a transferred Coworker's scopes
   re-derive as current ∩ the new owner's live ceiling at the walk, the §6.5 upgrade algebra
   applied to custody, and a transfer whose intersection comes back empty retires the worker —
-  custody is never a scope widening; personal assistants are always retired: mirrored scopes die with the
+  custody is never a scope widening, and the attention the ownership derives re-keys with it:
+  a pending owner-upgrade ask (§6.5) addressed to the departing owner follows the staff to the
+  re-derived owner — successor or custody — inside the same transfer, ids stable and deadlines
+  untouched, the §4.4 owner-derived re-key rule applied at the staff door, so the upgrade
+  decision lands on the member who now owns the worker, never on the chain a departure walks;
+  personal assistants are always retired: mirrored scopes die with the
   member, §6.4), sponsored/led initiatives (reassigned or closed — with their pending
   sponsor-addressed asks re-keying to the re-pointed sponsor inside the same walk, ids stable
   and deadlines untouched: the §4.4 remap rule extended from domain-owner derivations to post
@@ -1230,7 +1269,8 @@ identity link is not), and email addresses are not reused.
   personal assistants always retiring: a never-ask-target cannot own staff, and viewer-mirrored
   scopes (§6.4) would make the assistant read-only anyway. The re-key rules ride identically —
   sponsor-addressed asks re-point with the posts, owner-addressed asks with the domains,
-  re-owned staff narrow to the new owner's ceiling: the walk is one mechanism with two doors,
+  re-owned staff narrow to the new owner's ceiling and their pending upgrade asks re-key with
+  the ownership (§6.3): the walk is one mechanism with two doors,
   and its attention and scope effects are the same through either. `owner` → `member` sheds domain
   ownership by the same rule. Authored proposals travel with the authority, exactly as at
   offboarding: transferred to the successor for shed domains, withdrawn with an audit note when
@@ -1607,7 +1647,16 @@ pin dies with the row — and a response racing the retirement is audit-only wit
 successor ask, the respond-time re-validation's terminal case (§8.10). Suspension strands
 no upgrade either way: an accept landing on a suspended Coworker is a data rebase — files
 and scopes, not execution — and resume re-arms under the rebased template, the halt
-freezing execution without freezing identity. Asks *to* the
+freezing execution without freezing identity. Re-owning is the re-key door between the
+terminals: a pending owner-upgrade ask is derived from the row's `owner_human_id` — the
+staff-ownership post — so the §5 walks' re-owning re-keys it to the successor or admin
+custody inside the transfer, ids stable and deadlines untouched, the §4.4 owner-derived
+re-key rule applied at the staff door, and the generic asks-to-the-departing-member
+reassignment covers only what no live derivation addresses. A response from the departing
+owner racing the transfer is refused at the eligibility door (§8.10), audit-only, and the
+accept evaluates the upgrade algebra against the owner it finds — new-template ∩ the
+re-derived owner's current scopes, §6.5's ceiling rule at the custody door — so an upgrade
+never widens past the member the walk just handed the staff to. Asks *to* the
 retiree need no walk entry of their own: §8.10's non-active target rule (retiring included)
 already reassigns them up the lineage chain, exactly as under suspension. The retiree's
 personal memory archives with it — inert history under the archived identity, never injected,
@@ -1737,7 +1786,13 @@ still re-derives new ∩ owner — and never personal memory (§6.3: a fresh hir
 founding instance's lessons are its own). The hire's own sense that it has become a role routes
 to its owner as an ask, the fold-back shape — self-promotion is an adoption question, not a
 catalog door. A denied or expired promotion ask is record only, and nothing about the hire
-changes while its promotion pends: the ask is adoption, not alteration.
+changes while its promotion pends: the ask is adoption, not alteration. And adoption is one
+question at a time: a hire with a live promotion ask refuses a second at filing — the §6.4
+assistant 1:1's pattern at the catalog door — so two accepts can never race to pin one hire
+(the founding instance is one row's to be) and a placement decision never lands twice; the
+ask's own terminals — deny, expiry, accept — clear the way for the next, and the filing
+guard is the door, never a walk: nothing mid-life needs re-pointing because the exclusivity
+refused the second ask before it existed.
 
 ---
 
@@ -1768,7 +1823,9 @@ coworkers      + owner_human_id, class 'persistent'|'ephemeral', spawned_by memb
                  -- owner_human_id derivation (§6.2): a persistent hire's owner is the gate's
                  -- accepting human at activation (the self-addressed collapse included, a
                  -- re-keyed gate landing on the re-keyed addressee); an ephemeral's is the
-                 -- first human up the spawned_by line — the §5 invariant derived at spawn
+                 -- first human up the spawned_by line — the §5 invariant derived at spawn —
+                 -- and a pending owner-upgrade ask (§6.5) re-keys with every re-pointing of
+                 -- the field, the §4.4 owner-derived rule at the staff door (§5, §6.3)
                  -- budget_cap window: per-worker lifetime when ephemeral, periodic (default
                  -- monthly) when persistent — §6.2; null = worker-uncapped: no per-worker
                  -- ceiling, but org-wide caps and the §6.2 breaker still bind — a cap is a
@@ -1940,10 +1997,13 @@ asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request', fro
                  expiry_behavior 'deny'|'escalate'|'reassign', responded_at?, quorum_required int
                  default 1, responses json, collapsed_count int default 1)
                  -- supersedes approvals;
-                 -- withdrawn: the originator's retract of a pending ask — collapsed waiters
-                 -- resolve with it, partial quorum accepts stay audit-only, and whatever waited
-                 -- resolves per the expiry behavior (a withdrawn approval is a no); the §5/§6.3
-                 -- walks' close-with-audit-note is this mechanism system-applied (§8.10);
+                 -- withdrawn: the originator's retract of a pending ask — originator-scoped,
+                 -- never communal: the retracting originator's waiters resolve per the expiry
+                 -- behavior (a withdrawn approval is a no), partial quorum accepts stay
+                 -- audit-only, a collapsed canonical row survives on remaining originators
+                 -- with `from` re-keyed and `collapsed_count` adjusted, and only the last
+                 -- originator's retraction closes the ask; the §5/§6.3 walks'
+                 -- close-with-audit-note is this mechanism system-applied (§8.10);
                  -- quorum: N distinct human accepts close it answered, deny wins immediately (§8.10);
                  -- quorum addressing: to = the rule's domain owner (primary recipient); the
                  -- eligible pool — that owner + active admins — evaluates at respond time (§8.10)
@@ -2171,10 +2231,16 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
   no), `escalate` (route up the chain — default for questions), `reassign` (fall back to a named
   deputy — default for assignments); a run blocked on an expired ask
 never hangs indefinitely. Withdrawal is the originator's side of the same coin: `from` may
-retract a pending ask before it closes — collapsed waiters resolve with it, partial quorum
-accepts stay audit-only — and the retraction applies the ask's expiry behavior to whatever was
-waiting (a withdrawn approval is a no), so the §5/§6.3 walks' close-with-audit-note is this
-mechanism applied by the system, not a parallel one. The system files asks as well as
+retract a pending ask before it closes — and the retraction is originator-scoped, never
+communal: it resolves the retracting originator's own waiters per the ask's expiry behavior
+(a withdrawn approval is a no), partial quorum accepts staying audit-only, while a collapsed
+canonical row (below) survives on the remaining originators — `from` re-keying to a
+surviving one, `collapsed_count` adjusting — and only the last live originator's retraction
+terminal-closes the ask; the storm case is unchanged, its thirty-seven identical escalations
+sharing one originator and one retraction closing all of them. So the §5/§6.3 walks'
+close-with-audit-note is this mechanism applied by the system, not a parallel one: a
+departing member's waiters close inside the walk while every other originator's identical
+question stands — one member's change of heart never answers another's. The system files asks as well as
 settling them: the plane-originated asks the design leans on — goal-window, stall, close-out,
 dependency, starvation, rebind, trip, upgrade, activation, contradiction, quarantine,
 parity, the storm aggregate, among others, the filing event the rule rather than the
@@ -2296,7 +2362,9 @@ escalation naming the shortfall: an impossible quorum degrades to a visible no, 
   never agent-authored summaries alone. Storms collapse: identical pending asks — same kind,
   target set, payload hash — attach to one canonical ask as a `collapsed_count` within a window,
   the digest renders "37 identical escalations" as one line, and the canonical ask's answer
-  resolves every collapsed waiter; a per-source ask-creation rate limit (per run, trigger,
+  resolves every collapsed waiter — the answer communal, one decision for identical
+  questions, where the retraction is originator-scoped (above), one change of heart per
+  originator; a per-source ask-creation rate limit (per run, trigger,
   Coworker) sheds overflow into a single aggregate admin ask — the attention-side twin of the
   §6.2 circuit-breaker — and the aggregate has a lifecycle, not a permanent residence: it
   closes resolved when its source's creation rate falls back under the limit for a full window
@@ -2406,7 +2474,8 @@ POST /coworkers/:id/retire · /suspend · /resume   (lifecycle acts on the cowor
                spawn request; authority: the Coworker's owner human, an admin, or a
                bound-initiative sponsor)
 POST /coworkers/:id/promote  (catalog act, §6.5 — files the promotion ask for a customRole hire;
-               authority: the hire's owner human or an admin; the ask snapshots identity files
+               authority: the hire's owner human or an admin; one live promotion ask per hire —
+               a second refused at filing, §6.5; the ask snapshots identity files
                and effective scopes at creation, the accept names the placement — a new template
                or a new version of an existing one — and publishes the row active, pinning the
                hire as the founding instance only in a live activated state: active or
@@ -2773,9 +2842,22 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   re-derivation (requested ∩ the requester's live scopes at the accept, a narrowing landing
   the child at the narrower ceiling, an empty intersection archiving with pin and claims
   released), template-name lineage reuse (a fully retired name reusable same-class only, a
-  class-flipping reuse refused at create), and erasure's operational-prose annex (ask
+  class-flipping reuse refused at create), erasure's operational-prose annex (ask
   payloads, task descriptions, and run artifacts reported with the accountable human and the
-  human call, identity fields pseudonymizing).
+  human call, identity fields pseudonymizing), owner-upgrade ask re-keying at staff
+  re-owning (a pending upgrade ask following `owner_human_id`'s transfer to the successor or
+  admin custody inside the §5 walk, ids and deadlines stable, a racing response from the
+  departed owner refused at the eligibility door, the accept intersecting the re-derived
+  owner's ceiling), originator-scoped collapsed withdrawal (a retraction resolving the
+  retracting originator's waiters alone, the canonical row surviving on remaining
+  originators with `from` re-keyed and `collapsed_count` adjusted, the last retraction
+  closing per the expiry behavior, the walk closing a departing member's waiters alone),
+  promotion-ask exclusivity (a second promotion ask for a hire with one live refused at
+  filing, deny/expiry/accept clearing the way), and cross-store topology migration (a
+  db-only side merging into a git survivor demanding the explicit confirm and refusing
+  until given, a git side into a db-only survivor sweeping in one commit, either direction
+  refused under either side's hold, a split result differing in `store` migrating its
+  mapped items by the same rules).
 - **Integration**: agent loop against scripted mock models; DNA injection determinism (same domain →
   same rules in prompt); multi-node run scheduling and heartbeat loss; spawn storm → circuit-breaker; affinity node
   offline → runs queue, starvation ask at window, capability-less rebind refused; review-queue
@@ -2906,9 +2988,18 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   approval landing after its requester's scopes were narrowed publishes the child at the
   re-derived ceiling, while one landing on a narrowed-to-empty ceiling archives the request
   with its claims released; creating a template on a fully retired name in the other class is
-  refused at the door while a same-class reuse lands as a new version row; and erasing a
+  refused at the door while a same-class reuse lands as a new version row; erasing a
   departed member lists their name inside ask payloads and task descriptions in the annex —
-  sponsor- or admin-owned per surface — while the addressing pseudonymizes.
+  sponsor- or admin-owned per surface — while the addressing pseudonymizes; offboarding a
+  Coworker owner mid-upgrade-wait re-keys the pending upgrade ask to the successor inside
+  the walk, the departed owner's racing response refused at the door while the successor's
+  accept rebases at their own ceiling; one of two members whose identical questions
+  collapsed retracts and the other's question stands, answered by the canonical row's
+  addressee alone; a second promotion ask for a hire with one pending is refused at filing
+  while the first still renders in the admin broadcast; and merging a db-only domain into a
+  git survivor refuses until the explicit confirm, migrates in one audited event on
+  confirm, and refuses under either side's legal hold, while a split result declared
+  db-only from a git parent sweeps its mapped items from the tree in one commit.
 - **E2E**: hire → chat → gated write approval → DNA proposal → review → next run uses the new rule;
   and directive → decision + goal → initiative → playbook fan-out → dependency-checked close →
   retrospective proposal.
@@ -3125,7 +3216,14 @@ the spawn approval's ceiling re-derived against the requester's live scopes at t
 landing requested ∩ current with an empty intersection archiving (§6.2, §8.10), template
 names keying their lineage across retired rows with class-pinned reuse (§6.5, §7), and the
 erasure annex extended to operational prose — ask payloads, task descriptions, run artifacts
-(§4.5).
+(§4.5); v2.43's thirty-fifth sweep closed the staff-rekey, collapsed-retraction,
+adoption-exclusivity, and cross-store seams beneath those — owner-upgrade asks re-keying
+with staff re-owning at the walks' transfer door, the accept intersecting the re-derived
+owner's ceiling (§5, §6.3, §7), collapsed-ask withdrawal pinned originator-scoped with the
+canonical row surviving on remaining originators while answers stay communal (§8.10, §7),
+the custom-hire promotion ask made one-per-live-hire at filing (§6.5, §9), and cross-store
+merges and split results running the store-change discipline — confirm, sweep, hold refusal,
+held merge-into staying open exactly when it moves no content across stores (§4.4, §4.5).
 The former
 residue — quorum approvals, external-write atomicity,
 trigger idempotency, erasure vs. append-only ledgers, db-only reconstructibility,
