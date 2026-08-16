@@ -45,7 +45,9 @@ Source: PLAN.md §4.2, §4.6.
 ## Goal slice
 
 - **DRP-020** — The slice contains active goals linked to the workspace through its
-  initiatives, plus goals flagged org-wide `always` (statement, owner, deadline, status).
+  initiatives, plus `always`-flagged goals the run can read — org-wide ones in every run,
+  domain-scoped ones wherever their domain is readable (the composition rule, DNC-054) —
+  each carrying statement, owner, deadline, status.
 - **DRP-021** — Window semantics per DNC-051 apply to the slice; a goal past `effective_to`
   leaves the slice and the sponsor ask carries the outcome (INT-050): extend re-adds it under
   a new window; a terminal status ends it for good.

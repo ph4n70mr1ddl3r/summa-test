@@ -35,7 +35,7 @@ Source: PLAN.md §6.1, §6.2.
 - **SPW-030** — Scope delegation: child's file/tool/connector scopes ⊆ parent's, enforced by
   the policy engine.
 - **SPW-031** — Quotas: max concurrent ephemeral workers per spawner (CFG-040), global
-  spawn depth (default 2), org-wide concurrent agents (default 100 active agents,
+  spawn depth (default 2, CFG-018), org-wide concurrent agents (default 100 active agents,
   persistent + ephemeral combined, CFG-017), per-spawn and org-wide spend caps metered by
   the spend ledger. Count caps are *claimed*, not checked: the engine increments atomically
   inside the spawn transaction — two spawners racing the last slot see one success and one
@@ -46,8 +46,8 @@ Source: PLAN.md §6.1, §6.2.
   after one exhausted reserve.
 - **SPW-033** — The money side reserves atomically: a spawn or run reserves against
   (reserved + settled) in the spend ledger, settles to actual cost at completion, releases on
-  failure or reaping; two runs at 49% of a ceiling cannot both spend past it; §6.4
-  rate/volume limits reserve reads identically.
+  failure or reaping; two runs at 49% of a ceiling cannot both spend past it;
+  restricted-domain rate/volume limits (CLC-052) reserve reads identically.
 - **SPW-034** — Claims are lifecycle-pinned to the request row: count-cap claims and budget
   reserves attach at request creation inside the spawn transaction, transfer to the live
   worker at activation, and release at every terminal a pending request has — denial,

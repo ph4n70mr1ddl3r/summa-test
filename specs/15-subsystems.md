@@ -57,7 +57,8 @@ Source: PLAN.md §8.1–8.9, §8.11.
   agent suspension, an initiative pause (INT-033), the spend halt (SPW-064), or
   control-plane downtime coalesce into one catch-up run per trigger when the halt holding
   them lifts, carrying a missed-schedule summary (count, window) — per-trigger policy
-  `replay|coalesce|skip`, default coalesce, with rate limits bounding a large backlog.
+  `replay|coalesce|skip`, default coalesce, with the runaway-protection rate limits
+  (SPW-070) bounding a large backlog.
 - **SUB-052** — Firings are idempotent at the boundary: every firing carries a deterministic
   key (schedule: trigger + scheduled time; webhook/API: event id or caller-supplied
   `Idempotency-Key`; event: source event id); the `trigger_firings` table refuses duplicates
@@ -73,9 +74,9 @@ Source: PLAN.md §8.1–8.9, §8.11.
 - **SUB-061** — Initiative playbooks: an SOP instantiated under an initiative becomes the
   cross-domain spine — nodes route asks into each domain's escalation chain and artifacts
   land on the initiative's board slice.
-- **SUB-062** — Instantiation is bounded: depth cap (default 2, mirroring spawn depth) and
-  cycle-checked at publish — direct or transitive self-instantiation refused at save; the
-  runtime depth cap is the backstop.
+- **SUB-062** — Instantiation is bounded: depth cap (default 2, mirroring spawn depth,
+  CFG-018) and cycle-checked at publish — direct or transitive self-instantiation refused
+  at save; the runtime depth cap is the backstop.
 - **SUB-063** — Versioned references are pinned: a run launches from the exact playbook
   version it was instantiated against; in-flight instantiations complete on their pin
   through a later publication or retirement.

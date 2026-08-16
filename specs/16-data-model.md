@@ -22,7 +22,8 @@ nodes          (id, name, kind 'local'|'remote', capabilities json, region?, cla
                 last_heartbeat, pubkey, enrolled_at, revoked_at?, status 'trusted'|'revoked')
 dna_domains    (id, name, owner_human_id, access 'public'|'domain'|'named',
                 named_readers json, store 'git'|'db-only', sod 'off'|'reviewer-distinct',
-                review_sla_days int default 7, residency?, status 'active'|'archived')
+                review_sla_days int default 7, residency?, status 'active'|'archived'
+                default 'active')
 dna_cards      (id, domain_id, title, definition_md, refs json, provenance json, version,
                 status 'draft'|'active'|'retired' default 'active')
 dna_rules      (id, domain_id, statement_md, machine_hint json?, effective_from, effective_to?,
@@ -101,7 +102,9 @@ memory_items   (id, tier 'personal'|'project'|'proposal', member_id?, workspace_
 - **DAT-080** — `asks`: quorum addressing per ASK-051; responses ledger behind N-of-M;
   `collapsed_count` folds identical asks (ASK-100); `workspace_id` keys the domain-owner
   escalation hop and digest grouping; the system originator (ASK-031) is a reserved
-  non-member value of `from`.
+  non-member value of `from`; `to` reserves the broadcast addressee `admins` — every
+  active admin, evaluated at render and respond time (ASK-055) — carried by every ask
+  routed to 'an admin' at creation or on escalation, never a single admin's id.
 - **DAT-081** — `initiatives.sponsor` pinned human (INT-001); `goal_ref` live at write
   (INT-011); `depends_on` acyclic with live edges (INT-070).
 - **DAT-090** — `workspaces.domain_ids` is the ordered binding — first entry primary
@@ -128,7 +131,8 @@ memory_items   (id, tier 'personal'|'project'|'proposal', member_id?, workspace_
   carries `h:<humans.id>` or `a:<agents.id>` — never a bare integer — and resolves against
   the live row of its keyed kind (ORG-001's shared namespace, given a representation). The
   reserved `system` originator is the one non-member value a member-typed column may carry,
-  `asks.from` alone (DAT-080).
+  `asks.from` alone (DAT-080); `asks.to` carries the suite's one reserved addressee —
+  `admins`, the live-evaluated admin broadcast (DAT-080).
 - **DAT-121** — `audit_events` is append-only: rows are inserted, never updated or deleted;
   every refusal, write door, credential use, and admin act lands one row (SEC-009,
   NFR-001); `node_id` stamps the acting node where one exists (SEC-012); restore re-appends

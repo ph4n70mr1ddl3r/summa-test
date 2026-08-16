@@ -18,8 +18,8 @@ forever.
 ## Lifecycle act authority
 
 - **CLC-010** — Suspend, retire, and resume belong to the agent's owner human, an admin,
-  or the sponsor of an initiative the agent is bound to — §5.1's sponsor stop routes
-  through this authority, not around it.
+  or the sponsor of an initiative the agent is bound to — the sponsor's mid-flight stop
+  (INT-041) routes through this authority, not around it.
 - **CLC-015** — Retiring a persistent agent is a halt, not a drain: in-flight runs stop
   exactly as under suspension — partial results fold back through the memory tiers, staged
   writes go to reconciliation, never killed mid-commit — before dependents resolve.

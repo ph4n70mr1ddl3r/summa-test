@@ -4,6 +4,26 @@ Version history for PLAN.md and the `specs/` suite. Newest first. Entries v2.1�
 were extracted verbatim from PLAN.md's preamble in v2.46; from v2.46 on, history lives
 here alone (PLAN.md carries only the current version stamp).
 
+**Errata pass (v2.47)**: a full-suite review — PLAN.md and all 21 modules read against each
+other for consistency, completeness, and unambiguity — closed nine residues: the spawn
+depth cap is one tunable, not two rules — SEC-011 and §10's checklist said "depth ≤ 2"
+where §6.2/SPW-031 and §8.6/SUB-062 said default 2 — now CFG-018 (default 2), cited by
+SPW-031 and SUB-062, with SEC-011 re-pointed at SPW-070 as the checklist's pointer to the
+policy engine's home · the admin broadcast gained the representation DAT-120's keyed
+member-reference rule left undefined: `asks.to` reserves the addressee `admins` — every
+active admin, evaluated at render and respond time (ASK-055) — DAT-080 completing the
+rule ASK-055's live-derived broadcast and ASK-101's aggregate admin ask presuppose ·
+DRP-020's goal slice names domain-scoped `always` goals (the DNC-054 composition, §4.2's
+own clause) instead of reading org-wide-only · INT-042's retrospective fallback drops
+"lead is unset" — `lead` is required at write (INT-001, §7), non-active the only
+fallback · two citations repointed to their REQ homes per the suite's cross-reference
+convention (SPW-033 §6.4 → CLC-052; CLC-010 §5.1 → INT-041) · SUB-051's backlog "rate
+limits" anchored to the runaway set (SPW-070) · SPEC-16's `dna_domains.status` regained
+its `default 'active'` (§7 parity) · SPEC-21's Phase-6 deliverable says "agent
+suspend/resume" (humans deactivate, they do not suspend) · TRACEABILITY's §13 row now
+states where the unmapped risk rows' mitigations live (their cited modules). Lint green
+under the new ID: 476 requirements, TRACEABILITY exact both directions.
+
 **Review pass (v2.46)**: document architecture and tooling close the loop on v2.45's
 review — PLAN.md history (v2.1–v2.45) moves to CHANGELOG.md, the plan gains a linked table of
 contents, a version stamp, and a provenance note resolving the v1-baseline dependency (the

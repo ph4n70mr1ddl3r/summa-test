@@ -13,7 +13,7 @@ Source: PLAN.md §11, §12.
 | **4. Automation** | 24/7 operation — triggers, PATs, templating, headless Ask policy, shared task board, initiatives v0 (goal + lead + deadline + task grouping) | 2–3 wks |
 | — | **v1 cut line**: Phases 0–4 + 8a are shippable v1 | — |
 | **5. Playbooks** (v2 track) | DSL + sandbox, statuses, askUser → Asks, read-only canvas, versions, playbook triggers | 3–4 wks |
-| **6. Multi-human org** (v2 track) | Server deployment, human accounts + RBAC, ask routing + per-human digests, shared board, node registration & affinity scheduling, delegated authority + initiative budgets, offboarding + last-admin guard, suspend/resume, template upgrades, domain split/merge | 3–4 wks |
+| **6. Multi-human org** (v2 track) | Server deployment, human accounts + RBAC, ask routing + per-human digests, shared board, node registration & affinity scheduling, delegated authority + initiative budgets, offboarding + last-admin guard, agent suspend/resume, template upgrades, domain split/merge | 3–4 wks |
 | **7. Spawning** (v2 track) | Ephemeral workers (quota, TTL, fold-back), persistent hires (owner approval), policy engine, lineage graph, spend ledger + circuit-breaker | 2–3 wks |
 | **8a. v1 hardening** | Backup/restore with reconciliation runbook, encrypted secrets, docs, security review | 1 wk |
 | **8b. v1.1 polish** | Tauri shell, installers, telemetry (opt-in) | 1–2 wks |

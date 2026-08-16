@@ -13,7 +13,7 @@ is promoted to a central, governed **Company DNA** with proposals and review; ag
 agents (governed); topology becomes a **control plane + execution nodes**, with a single-process
 mode so small teams start simple.
 
-*Version v2.46 · 2026-08-16 — change history: [CHANGELOG.md](CHANGELOG.md)*
+*Version v2.47 · 2026-08-16 — change history: [CHANGELOG.md](CHANGELOG.md)*
 
 > **Provenance & completion status**: the v1 design document that §7, §8, and §9 delta
 > against is not part of this repository. The normative, testable statement of every
@@ -2018,8 +2018,9 @@ wrote and the ask it raised (SPEC-17 API-061).
   quarantine to the owner with an
   audited admin override, so a false positive is a visible ask, never a silent wedge in the write
   path.
-- **Spawn safety**: quotas, depth ≤ 2, TTL reaper, spend circuit-breaker, approval gates on
-  persistent hires; ephemeral workers get connector-sandboxed, task-scoped workspaces only.
+- **Spawn safety**: quotas, depth cap (default 2), TTL reaper, spend circuit-breaker,
+  approval gates on persistent hires; ephemeral workers get connector-sandboxed,
+  task-scoped workspaces only.
 - **Node trust**: enrollment via one-time tokens + keypair identity, revocation from the console,
   node id stamped on every audit event; for remote nodes, egress allowlisting and secret handling
   route through the control plane / gateway rather than node-local code. The console surfaces each

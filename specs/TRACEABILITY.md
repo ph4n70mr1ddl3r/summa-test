@@ -1,6 +1,6 @@
 # Traceability — PLAN.md ⇄ Specification Suite
 
-Completeness proof for the SDD suite: every section of `PLAN.md` (v2.46) maps to requirements
+Completeness proof for the SDD suite: every section of `PLAN.md` (v2.47) maps to requirements
 in these specs, and every requirement traces back to a PLAN source. The coverage column lists
 exact ID ranges generated from the defined requirements (no elided prefixes, no implied gaps).
 Both directions — every defined ID listed, every listed ID defined — are verified by
@@ -42,9 +42,9 @@ Both directions — every defined ID listed, every listed ID defined — are ver
 | §10 Security & governance checklist | 18 | SEC-001…005, SEC-009…012, SEC-020, SEC-030, SEC-040…042, SEC-050 |
 | §11 Delivery plan (phases, spikes, acceptance, restore) | 21 | DLV-010…013, DLV-040…043, DLV-050…055 |
 | §12 Testing & quality | 21, README, 19 | DLV-060…061; NFR-010…011 (determinism); README verification conventions |
-| §13 Risks & mitigations | 19 | NFR-030…035 |
+| §13 Risks & mitigations | 19 | NFR-030…035; the table's remaining rows carry mitigations specified by their cited modules (SPW, DGV, ARC, SUB, CLC, DLV) |
 | §13.1 Residual risk / accepted boundaries | 19 | NFR-001, NFR-020…022 |
-| §14 Key open decisions 1–16 + named parameters | 20 | CFG-001, CFG-010…017, CFG-020, CFG-030, CFG-040, CFG-050, CFG-060, CFG-070, CFG-080, CFG-090, CFG-100, CFG-110, CFG-120, CFG-130, CFG-140, CFG-150, CFG-160 |
+| §14 Key open decisions 1–16 + named parameters | 20 | CFG-001, CFG-010…018, CFG-020, CFG-030, CFG-040, CFG-050, CFG-060, CFG-070, CFG-080, CFG-090, CFG-100, CFG-110, CFG-120, CFG-130, CFG-140, CFG-150, CFG-160 |
 
 ## Maintenance rule
 

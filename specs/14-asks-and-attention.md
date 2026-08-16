@@ -113,7 +113,8 @@ Source: PLAN.md §8.10.
   an ask to an agent never lacks a human next hop.
 - **ASK-055** — The admin hop is a broadcast: every path routing to "an admin" — the
   terminal hop, review-SLA escalation, sod publish routing, the spawn gate's fallback —
-  addresses all active admins at once and the first valid response wins; the broadcast
+  addresses all active admins at once — the reserved `admins` addressee (DAT-080) — and
+  the first valid response wins; the broadcast
   renders and admits responses against the live admin set: an admin added mid-wait joins
   pending broadcasts, a departed one contributes nothing, and a former admin's late response
   is refused at the eligibility door. A single-admin org is the degenerate case.

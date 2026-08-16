@@ -55,3 +55,5 @@ trigger; the mechanism it tunes is already designed (NFR-022). Defaults live beh
 - **CFG-017** — Org-wide concurrent agent cap: default 100 active agents (persistent +
   ephemeral combined) — a runaway-spawn backstop sized to trip well before resource
   exhaustion (SPW-031).
+- **CFG-018** — Spawn depth cap: default 2 — the global lineage depth SPW-031 enforces
+  and the playbook instantiation depth mirrors (SUB-062).

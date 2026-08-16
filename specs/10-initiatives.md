@@ -65,7 +65,8 @@ Source: PLAN.md §5.1.
   mid-flight stops suspends or retires the specific agents (CLC-015).
 - **INT-042** — When an initiative transitions to `closed`, the close event shall file a
   retrospective ask (kind `question`, tier `standard`, expiry `escalate`) to the lead —
-  the sponsor when the lead is unset or non-active — directing DNA proposals through the
+  the sponsor when the lead is non-active (a lead is required at write, INT-001; the walks
+  re-point or close the post before it can sit unheld) — directing DNA proposals through the
   normal write path (DWP-010): a decision record of the outcome, plus the lessons worth
   keeping. The ask's resolution is the filing; the §1 loop closes.
 
