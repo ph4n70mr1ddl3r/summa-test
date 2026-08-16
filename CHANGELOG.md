@@ -4,6 +4,23 @@ Version history for PLAN.md and the `specs/` suite. Newest first. Entries v2.1�
 were extracted verbatim from PLAN.md's preamble in v2.46; from v2.46 on, history lives
 here alone (PLAN.md carries only the current version stamp).
 
+**Tooling hardening (v2.59)**: PLAN.md's own § cross-references join the machine-checked
+surface — check 7 now scans PLAN.md's body alongside the specs, so a renumbered section or
+decision list dangles loudly instead of silently, and the nine §14.N decision references
+(14.2 auth, 14.3 shape, 14.7 embeddings, 14.8 name, 14.9 tier-2, 14.11 budgets, 14.13
+strictness, 14.15 routing, 14.16 leases — hand-verified against §14's list during this
+pass) are covered by construction: a section whose body is a numbered list with no numbered
+subsections of its own carries its items as valid § targets (§2's nine principles, §14's
+seventeen decisions; fenced code blocks stripped so schema lines can't pose as items).
+Three self-test scenarios join the suite (a dangling PLAN-internal reference, a valid
+list-item address, an out-of-range item — 19 scenarios plus the clean corpus), and the
+README's lint paragraph extends. The change is preceded by a full-suite review pass: all
+21 modules and PLAN.md read end to end, and every cross-reference, default value, version
+pin, terminal enumeration, open-enumeration marker, and both schema blocks (PLAN §7 vs
+SPEC-16, field by field) verified consistent — no requirement text changed; the one
+hand-held invariant the review surfaced is the one this pass enforces. The three version
+pins move to v2.59.
+
 **Open decisions closed (v2.58)**: two decisions resolved. CFG-020 is decided — human auth v1
 rides the deployment's own Keycloak over OIDC: Summa stores no human credentials (SEC-001
 rewritten; `humans.auth` carries the Keycloak subject link, never credential material),

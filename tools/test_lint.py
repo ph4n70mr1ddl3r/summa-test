@@ -188,6 +188,36 @@ SCENARIOS = [
         [("specs/01-vision.md", "per §1", "per §2.1–1.9")],
         fragment="malformed section range",
     ),
+    # --- check 7, PLAN.md's own body and list-item addresses ---
+    Scenario(
+        "plan-section-dangling",
+        [("PLAN.md", "Refusals are loud.", "Refusals are loud. See §1.5.")],
+        fragment="PLAN.md: dangling PLAN section references: §1.5",
+    ),
+    Scenario(
+        "plan-item-ref-ok",
+        [
+            (
+                "PLAN.md",
+                "Refusals are loud.\n",
+                "Refusals are loud.\n\n## 3. Decisions\n\n1. First.\n",
+            ),
+            ("specs/01-vision.md", "per §1", "per §1 and §3.1"),
+        ],
+        expect_ok=True,
+    ),
+    Scenario(
+        "plan-item-ref-dangling",
+        [
+            (
+                "PLAN.md",
+                "Refusals are loud.\n",
+                "Refusals are loud.\n\n## 3. Decisions\n\n1. First.\n",
+            ),
+            ("specs/01-vision.md", "per §1", "per §1 and §3.2"),
+        ],
+        fragment="dangling PLAN section references: §3.2",
+    ),
 ]
 
 

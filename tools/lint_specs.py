@@ -16,8 +16,11 @@ Checks (errors exit 1):
      each of which must actually appear in two or more rows (no stale entries);
   6. the three version pins agree: PLAN.md's `*Version vX.Y*` line, README's
      "derived from `PLAN.md` (vX.Y)", and TRACEABILITY.md's header;
-  7. every `§N[.N]` section reference in specs/*.md — ranges like `§8.1–8.9`
-     expanded — resolves to a numbered heading of PLAN.md.
+  7. every `§N[.N]` section reference in specs/*.md and in PLAN.md's own body —
+     ranges like `§8.1–8.9` expanded — resolves to a numbered heading of
+     PLAN.md or, for a section whose body is a numbered list carrying no
+     numbered subsections of its own, to one of its items (`§2.9` = principle
+     nine, `§14.3` = decision three).
 
 Warnings (do not fail): definitions whose text carries no RFC-2119-style verb.
 
@@ -152,13 +155,30 @@ def check_version_pins(root: Path, errors: list[str]) -> None:
         errors.append(f"version pins disagree: {detail}")
 
 
+def plan_sections(root: Path) -> set[str]:
+    """Valid § targets in PLAN.md: numbered headings, plus the items of a
+    top-level section's numbered list when the section carries no numbered
+    `### N.M` subsections of its own — §2's principles and §14's decisions
+    are addressable as §2.9 / §14.3 without being headings. Fenced code
+    blocks are stripped first so schema lines can't pose as list items.
+    """
+    text = (root / "PLAN.md").read_text(encoding="utf-8")
+    secs: set[str] = set(PLAN_SEC_RE.findall(text))
+    for m in re.finditer(r"^## (\d+)\.?[ \t].*?(?=^## \d+\.?[ \t]|\Z)", text, re.M | re.S):
+        num, body = m.group(1), re.sub(r"```.*?```", "", m.group(0), flags=re.S)
+        if re.search(rf"^### {num}\.\d+", body, re.M):
+            continue
+        secs.update(f"{num}.{i}" for i in re.findall(r"^(\d+)\.[ \t]", body, re.M))
+    return secs
+
+
 def check_section_refs(root: Path, specs: Path, errors: list[str]) -> None:
-    plan_secs = set(PLAN_SEC_RE.findall((root / "PLAN.md").read_text(encoding="utf-8")))
+    plan_secs = plan_sections(root)
 
     def sec_key(s: str) -> tuple[int, ...]:
         return tuple(int(p) for p in s.split("."))
 
-    for path in sorted(specs.glob("*.md")):
+    for path in sorted(specs.glob("*.md")) + [root / "PLAN.md"]:
         text = path.read_text(encoding="utf-8")
         dangling = sections_in(text, path.name, errors) - plan_secs
         if dangling:

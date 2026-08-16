@@ -1,7 +1,7 @@
 # Summa — SDD Specification Suite
 
 This directory is the **normative requirements corpus** for the Summa platform, derived from
-`PLAN.md` (v2.58). `PLAN.md` is the design rationale — the "why", with history;
+`PLAN.md` (v2.59). `PLAN.md` is the design rationale — the "why", with history;
 these specs are the implementation contract — the "what", discrete and testable. When the two
 disagree, fix one of them in the same change; never implement against a discrepancy silently.
 
@@ -83,8 +83,10 @@ completeness proof for this suite.
 
 The suite's structural invariants are machine-checked by `tools/lint_specs.py`, run in CI on
 every push: ID uniqueness, one home module per prefix, no dangling citations (ranges
-expanded), no dangling PLAN `§` references (ranges expanded), agreement of the three version
-pins (PLAN's version stamp, this README's header, TRACEABILITY's header), and TRACEABILITY
+expanded), no dangling PLAN `§` references (ranges expanded) — checked in the specs and in
+PLAN.md's own body, with §2's principles and §14's decisions addressable by list item
+(`§14.3` = decision three) — agreement of the three version pins (PLAN's version stamp, this
+README's header, TRACEABILITY's header), and TRACEABILITY
 exact in both directions — plus per-row partition: every coverage row cites only IDs homed in
 the modules it names, and no ID belongs to two rows outside the "Intentional cross-listings"
 table in TRACEABILITY.md. A spec change that breaks any of them fails the build; the
