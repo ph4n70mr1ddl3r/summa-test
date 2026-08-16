@@ -1,7 +1,7 @@
 # Summa — SDD Specification Suite
 
 This directory is the **normative requirements corpus** for the Summa platform, derived from
-`PLAN.md` (v2.59). `PLAN.md` is the design rationale — the "why", with history;
+`PLAN.md` (v2.60). `PLAN.md` is the design rationale — the "why", with history;
 these specs are the implementation contract — the "what", discrete and testable. When the two
 disagree, fix one of them in the same change; never implement against a discrepancy silently.
 
@@ -25,10 +25,13 @@ disagree, fix one of them in the same change; never implement against a discrepa
 - **Keywords** follow RFC 2119: *shall* (mandatory), *should* (default, tunable), *may*
   (optional). "The system shall not" is an absolute prohibition. "Shall refuse" always means:
   reject the write/action, record an audit entry, and where a human decision is needed raise an
-  ask — never a silent failure (principle PRN-009).
-- **Requirement IDs** are `<PREFIX>-<NNN>`, unique across the suite, one prefix per module
-  (module 01 carries the two prefixes of its source sections, VIS and PRN) — e.g. `ASK-041`.
-  Cross-file references always cite the ID, never paraphrase.
+  ask — never a silent failure (principle PRN-009). Many requirements are instead written in the
+  indicative mood ("the ask reassigns up the chain"); that is a register choice, not a weaker
+  grade — an ID'd requirement is mandatory however it is phrased, the keyword marking modality
+  (mandatory vs. default-tunable vs. optional), never normativity.
+- **Requirement IDs** are `<PREFIX>-<NNN>`, unique across the suite; every prefix has exactly
+  one home module (module 01 carries two — VIS and PRN, the prefixes of its source sections) —
+  e.g. `ASK-041`. Cross-file references always cite the ID, never paraphrase.
 - **Single home rule**: every behavior has exactly one normative home module. Other modules
    reference it by ID. If two modules seem to state one rule, the more specific one is
    authoritative and the other is a pointer.

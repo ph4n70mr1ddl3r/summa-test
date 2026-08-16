@@ -4,6 +4,23 @@ Version history for PLAN.md and the `specs/` suite. Newest first. Entries v2.1�
 were extracted verbatim from PLAN.md's preamble in v2.46; from v2.46 on, history lives
 here alone (PLAN.md carries only the current version stamp).
 
+**Errata pass (v2.60)**: a full-suite review — PLAN.md and all 21 modules read against each
+other for correctness, consistency, completeness, and unambiguity — closed three residues:
+DAT-120's keyed-union rule said `system` is "the one non-member value a member-typed column
+may carry" while its own next sentence parks the reserved addressee `admins` in `asks.to` —
+itself a member-typed column — leaving the parser's exception list to hang on a
+value-vs-addressee word distinction; the requirement now names both reserved spellings
+exhaustively and the columns each may occupy (`system` on `asks.from` and
+`audit_events.actor`; `admins` on `asks.to` alone) · the README's ID convention stated "one
+prefix per module" — the inverse of the invariant the linter enforces (every prefix has
+exactly one home module, with module 01 hosting two); the convention now states the enforced
+direction · the README's RFC-2119 paragraph left the grade of the suite's indicative-mood
+requirements (the 141 the linter reports as advisory) unstated — a first-time implementer
+could read a missing *shall* as optional; the conventions now pin that an ID'd requirement is
+mandatory however phrased, the keyword marking modality (mandatory vs. default-tunable vs.
+optional), never normativity. No requirement text changed meaning; the three version pins
+move to v2.60.
+
 **Tooling hardening (v2.59)**: PLAN.md's own § cross-references join the machine-checked
 surface — check 7 now scans PLAN.md's body alongside the specs, so a renumbered section or
 decision list dangles loudly instead of silently, and the nine §14.N decision references
