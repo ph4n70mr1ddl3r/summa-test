@@ -62,3 +62,10 @@ trigger; the mechanism it tunes is already designed (NFR-022). Defaults live beh
   than truncating (DRP-004).
 - **CFG-021** — PAT default lifetime: default 90 days — the expiry SEC-004 names when a
   create sets none; per-token expiry, rotation, and revocation stay row-level (DAT-124).
+- **CFG-022** — External-write grace window & reconciliation cadence: both default 5 minutes
+  — how long the TTL reaper lets a worker run between prepare and commit before halting it
+  (SPW-071), and the age at which the scheduled pass walks a stranded `prepared` row
+  (SUB-022).
+- **CFG-023** — Sustained-outage ask threshold: default 15 minutes — how long provider
+  degradation queues with backoff before the single critical admin ask fires (SUB-005);
+  the routing policy around it is CFG-150's decision.

@@ -13,7 +13,7 @@ is promoted to a central, governed **Company DNA** with proposals and review; ag
 agents (governed); topology becomes a **control plane + execution nodes**, with a single-process
 mode so small teams start simple.
 
-*Version v2.51 · 2026-08-16 — change history: [CHANGELOG.md](CHANGELOG.md)*
+*Version v2.52 · 2026-08-16 — change history: [CHANGELOG.md](CHANGELOG.md)*
 
 > **Provenance & completion status**: the v1 design document that §7, §8, and §9 delta
 > against is not part of this repository. The normative, testable statement of every
@@ -1463,9 +1463,10 @@ dna_goals      (id, domain_id?, quarter?, statement_md, owner member, status 'ac
                 -- that scope: 'always' reaches every run that can read the domain, 'linked'
                 -- only initiative-bound workspaces (§4.2)
                 -- terminal statuses are immutable: post-terminal updates refused at every
-                -- surface (§9) — re-base and re-target create a new goal row; the §5 walks
-                -- clamp to active goals, a terminal owner reference staying pinned to the
-                -- departed identity — severable only by §4.5 erasure, never by a walk
+                -- surface (§9) — re-base creates a new goal row and re-target swaps the
+                -- reference to a different live goal (§5.1); the §5 walks clamp to active
+                -- goals, a terminal owner reference staying pinned to the departed identity
+                -- — severable only by §4.5 erasure, never by a walk
 dna_proposals  (id, kind 'card'|'rule'|'decision'|'goal'|'glossary'|'edit', payload json, revision int
                  default 1, proposed_by member,
                  provenance json, status 'open'|'published'|'rejected'|'withdrawn', reviewed_by?, created_at,
@@ -2042,8 +2043,8 @@ wrote and the ask it raised (SPEC-17 API-061).
   route through the control plane / gateway rather than node-local code. The console surfaces each
   node's trust level explicitly — nodes are trusted compute, and admins should see that stated.
 - Secrets in OS-encrypted storage (OS keyring / Tauri stronghold — note `safeStorage` is
-  Electron's API; the exact mechanism is a Phase-0 spike); redaction before any egress to
-  providers covers secrets *and* PII.
+  Electron's API; the exact mechanism is the §11 Phase-0 spike); redaction before any egress
+  to providers covers secrets *and* PII.
 - Webhooks signature-verified; console served over localhost or TLS behind the company's reverse
   proxy in server mode.
 - DNA repo integrity: the control plane is the only direct writer, commits and refs are signed,

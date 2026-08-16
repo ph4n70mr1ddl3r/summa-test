@@ -72,7 +72,8 @@ Source: PLAN.md §4.1, §7 (item tables). Data representation: SPEC-16.
   `effective_to`; a goal not yet at `effective_from` has not entered the slice; one past
   `effective_to` leaves it.
 - **DNC-052** — Terminal statuses are immutable: post-terminal updates are refused at every
-  surface; re-base and re-target create a new goal row.
+  surface; re-base creates a new goal row and re-target swaps the reference to a different
+  live goal (INT-051).
 - **DNC-053** — Goal owner: any member but an ephemeral worker; a viewer human is refused at
   write; an agent owner keeps the admin-routing fallback (DRP-022); walks clamp to active
   goals — a terminal goal's owner reference is pinned history, severable only by erasure

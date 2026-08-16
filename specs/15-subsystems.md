@@ -17,8 +17,8 @@ owns no SUB IDs (TRACEABILITY's §8.4 row).
   `machine_hint`s gate external writes exactly like scopes — a write the current applicable
   slice forbids is blocked and raises an ask; purely narrative rules stay advisory context.
 - **SUB-005** — Provider degradation: the model gateway queues with backoff instead of
-  failing fast; headless runs wait out a bounded outage; a sustained one raises a single
-  critical admin ask (routing policy is CFG-150).
+  failing fast; headless runs wait out a bounded outage (the bound is CFG-023); a sustained
+  one raises a single critical admin ask (routing policy is CFG-150).
 
 ## 8.2 Tools, MCP, staged writes (SUB-0xx)
 
@@ -37,8 +37,8 @@ owns no SUB IDs (TRACEABILITY's §8.4 row).
   the wire degrades to an ask with the attempt audited — at-most-once delivery where
   idempotency cannot be engineered.
 - **SUB-022** — Reconciliation is scheduled: a periodic pass walks `prepared` rows past the
-  grace window to a terminal state or an admin ask — a stranded write cannot wait forever on
-  a reaper that has moved on.
+  grace window (window and cadence both CFG-022) to a terminal state or an admin ask —
+  a stranded write cannot wait forever on a reaper that has moved on.
 
 ## 8.3 Memory service (SUB-0xx)
 

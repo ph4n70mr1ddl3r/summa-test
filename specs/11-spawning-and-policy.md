@@ -132,9 +132,10 @@ Source: PLAN.md §6.1, §6.2.
   on persistent hires; ephemeral workers get connector-sandboxed, task-scoped workspaces
   only.
 - **SPW-071** — The TTL reaper never kills between prepare and commit of an external write:
-  it grants a grace window and leaves a reconcilable `external_writes` row (SUB-020). A TTL
-  lapsing while its worker is suspended halts-then-reaps: fold-back and reconciliation
-  first, archive after — suspension defers the reaper's trigger, never its semantics.
+  it grants a grace window (CFG-022) and leaves a reconcilable `external_writes` row
+  (SUB-020). A TTL lapsing while its worker is suspended halts-then-reaps: fold-back and
+  reconciliation first, archive after — suspension defers the reaper's trigger, never its
+  semantics.
 
 ## Key acceptance scenarios
 

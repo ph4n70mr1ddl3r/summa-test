@@ -4,6 +4,22 @@ Version history for PLAN.md and the `specs/` suite. Newest first. Entries v2.1�
 were extracted verbatim from PLAN.md's preamble in v2.46; from v2.46 on, history lives
 here alone (PLAN.md carries only the current version stamp).
 
+**Errata pass (v2.52)**: a full-suite review — PLAN.md and all 21 modules read against each
+other for consistency, completeness, and unambiguity — closed five residues: the v2.48
+re-base/re-target distinction had reached INT-051 and §5.1 but not its two other statements —
+DNC-052 and §7's `dna_goals` comment still said "re-base and re-target create a new goal
+row," which the swap-to-a-different-goal half of the distinction contradicts; both now carry
+it · the external-write grace window — granted by the TTL reaper (SPW-071) and awaited by
+the scheduled reconciliation pass (SUB-022) — was a stated bound with no value and no home:
+CFG-022 (window and cadence both default 5 minutes), cited from both · SUB-005's "bounded
+outage" had the same shape — the bound between queueing and the single critical admin ask
+unnamed: CFG-023 (default 15 minutes), cited from SUB-005, routing itself staying CFG-150's
+decision · SEC-040 names its Phase-0 spike (DLV-043), the citation every other spike
+reference in the suite already carries (ARC-005, SUB-060, NFR-010), with §10's checklist
+bullet gaining the §11 pointer · API-060's stale-epoch refusal cited its acceptance demo
+(DLV-053) where the suite's convention is the mechanism home — ARC-024 now cited, DLV-053
+kept as the demo pointer. Lint green: 480 requirements, TRACEABILITY exact both directions.
+
 **Errata pass (v2.51)**: a full-suite review — PLAN.md and all 21 modules read against each
 other for consistency, completeness, and unambiguity — closed five residues: SPEC-01's
 actor-eligibility summary claimed to enumerate the recurring guards but missed one — the

@@ -44,8 +44,8 @@ Source: PLAN.md §10.
 ## Secrets storage & transport
 
 - **SEC-040** — Secrets in OS-encrypted storage (OS keyring / Tauri stronghold; exact
-  mechanism is a Phase-0 spike); redaction before any egress to providers covers secrets
-  *and* PII.
+  mechanism is the Phase-0 spike DLV-043); redaction before any egress to providers covers
+  secrets *and* PII.
 - **SEC-041** — Webhooks are signature-verified; the console is served over localhost or TLS
   behind the company's reverse proxy in server mode.
 - **SEC-042** — DNA repo integrity per STG-020/021: single direct writer, signed commits and

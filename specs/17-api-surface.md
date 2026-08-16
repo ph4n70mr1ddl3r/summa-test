@@ -28,7 +28,8 @@ is the PRN-009 form — refuse, audit, ask where a human decision is needed.
 - **API-060** — Node runtime surface (node-authenticated via its enrolled keypair, SEC-012):
   `POST /nodes/:id/heartbeat` writes `last_heartbeat` and capability state (ARC-014) ·
   `POST /nodes/:id/claims` acquires or renews a workspace claim as an epoch-fenced lease
-  (ARC-020; a stale epoch is refused at this mediated boundary, DLV-053) ·
+  (ARC-020; a stale epoch is refused at this mediated boundary per ARC-024, demoed at
+  DLV-053) ·
   `POST /nodes/:id/work/pull` fetches queued runs for workspaces the node holds a live
   claim on · `POST /nodes/:id/runs/:runId/report` lands results, artifacts, and spend
   ledger lines. Every endpoint refuses a revoked node (ARC-016); refusals take the PRN-009
