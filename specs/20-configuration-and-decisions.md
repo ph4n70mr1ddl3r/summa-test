@@ -60,3 +60,5 @@ trigger; the mechanism it tunes is already designed (NFR-022). Defaults live beh
 - **CFG-019** — Injection layer token budgets: org snapshot ~1k, glossary ~2k, rules ~4k,
   goal slice ~1k (defaults) — soft budgets; overflow demotes per the DRP-007 order rather
   than truncating (DRP-004).
+- **CFG-021** — PAT default lifetime: default 90 days — the expiry SEC-004 names when a
+  create sets none; per-token expiry, rotation, and revocation stay row-level (DAT-124).

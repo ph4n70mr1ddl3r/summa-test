@@ -38,8 +38,9 @@ Source: PLAN.md §3.
   whose advertisement no longer satisfies a bound workspace shall surface the same
   rebind-or-starvation ask as affinity loss — drift is a scheduling event, never a per-run
   failure.
-- **ARC-015** — The console node surface shall edit region and metadata only, never
-  capabilities; a capability change reaches the plane as drift with its ask (ARC-014).
+- **ARC-015** — The console node surface shall edit `region` and descriptive metadata
+  (the `name` row) only, never capabilities; a capability change reaches the plane as
+  drift with its ask (ARC-014).
 - **ARC-016** — Revoking a node shall (a) refuse its keypair at every connection thereafter,
   (b) surface a rebind ask for every workspace still bound to it, at revocation time, (c) halt
   its in-flight runs as suspension halts them — partial results fold back through the memory

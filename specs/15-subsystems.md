@@ -47,7 +47,8 @@ owns no SUB IDs (TRACEABILITY's §8.4 row).
 - **SUB-041** — Taint propagates through the tiers: memory written by a tainted run carries
   the flag, renders with its provenance when retrieved, is barred from digest pre-fills, and
   is cleared only by explicit review — the spawner's owner for personal memory, the domain
-  owner for project memory — never by the passage of time.
+  owner for project memory, and the proposal review itself for proposal-tier rows (DWP-003)
+  — never by the passage of time.
 - **SUB-042** — A tainted memory item cannot be the sole support for an external write: pair
   it with an untainted source, or ask.
 

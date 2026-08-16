@@ -31,7 +31,10 @@ Source: PLAN.md §4.4.
   events: items move with ids stable (citations and supersession chains survive), access
   policies re-evaluate, workspace domain tags remap.
 - **DGV-011** — An op declares its result: split names owner, access, `store`, `sod`,
-  residency (and inherits the parent's `named_readers` list) for each resulting domain.
+  residency (and inherits the parent's `named_readers` list) for each resulting domain;
+  undeclared attributes inherit from the parent — `review_sla_days` among them — the
+  inherit-by-default rule merge states as persist-from-the-survivor (DGV-014), so a split
+  result's queue SLA is never undefined.
 - **DGV-012** — A split's declared mapping is total — every item, workspace binding, and open
   proposal names its result — or the op refuses at declare; the emptied parent archives inside
   the same event (division is dissolve-by-split).

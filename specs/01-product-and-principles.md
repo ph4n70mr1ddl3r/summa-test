@@ -57,8 +57,8 @@ The following guards recur across modules and are specified once:
 
 - Viewer humans are never ask targets, assignees, deputies, sponsors, leads, goal owners,
   domain owners, group Leaders, proposers, or spawn requesters (ORG-020).
-- Ephemeral workers are never leads, goal owners, named delegation agents, initiative
-  originators, DNA proposers, or persistent-hire requesters (INT-001, INT-010, DNC-053,
-  DWP-010, SPW-010, ASK-092).
+- Ephemeral workers are never leads, goal owners, named delegation agents, group Leaders,
+  initiative originators, DNA proposers, or persistent-hire requesters (INT-001, INT-010,
+  DNC-053, DWP-010, SPW-010, ORG-042, ASK-092).
 - Non-active members (any status other than `active`) are refused every answerable post at
   write and reassign up the chain when targeted mid-life (ASK-060…061, ORG-021).

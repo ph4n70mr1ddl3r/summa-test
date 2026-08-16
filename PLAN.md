@@ -13,7 +13,7 @@ is promoted to a central, governed **Company DNA** with proposals and review; ag
 agents (governed); topology becomes a **control plane + execution nodes**, with a single-process
 mode so small teams start simple.
 
-*Version v2.50 · 2026-08-16 — change history: [CHANGELOG.md](CHANGELOG.md)*
+*Version v2.51 · 2026-08-16 — change history: [CHANGELOG.md](CHANGELOG.md)*
 
 > **Provenance & completion status**: the v1 design document that §7, §8, and §9 delta
 > against is not part of this repository. The normative, testable statement of every
@@ -156,9 +156,9 @@ boundaries — with a sixth raised to the top: **shared, governed context**.
   de-authorized — surfaces the same rebind-or-starvation ask the affinity-loss path raises,
   rather than failing run after run; drift is a scheduling event, not a per-run surprise. The
   advertisement is the node's own — heartbeat-owned, not console-editable: the admin surface
-  edits region and metadata, never capabilities, because a console edit there would be a
-  silent no-op the next heartbeat overwrites; a capability change reaches the plane as drift,
-  with its ask — the one door that fact has.
+  edits region and metadata (the node's `name`), never capabilities, because a console edit
+  there would be a silent no-op the next heartbeat overwrites; a capability change reaches
+  the plane as drift, with its ask — the one door that fact has.
 - **Node trust model**: remote nodes are *trusted compute*, not enforcement boundaries — scope,
   egress, and audit code runs on the node, so a compromised node can bypass it. Nodes enroll via
   one-time tokens, authenticate with a keypair identity on every connection, are revocable from
@@ -1360,7 +1360,7 @@ nodes          (id, name, kind 'local'|'remote', capabilities json, region?, cla
                  -- capabilities re-advertise on every heartbeat: drift against a bound
                  -- workspace surfaces the §3 rebind-or-starvation ask, not per-run failures
                  -- the advertisement is heartbeat-owned: console edits touch region and
-                 -- metadata only, never capabilities (§3, §9)
+                 -- metadata (the name row) only, never capabilities (§3, §9)
 dna_domains    (id, name, owner_human_id, access 'public'|'domain'|'named',
                  named_readers json, store 'git'|'db-only', sod 'off'|'reviewer-distinct',
                  review_sla_days int default 7,
@@ -1922,10 +1922,10 @@ POST /nodes/enroll (one-time token exchange) · GET /nodes · POST /nodes/:id/re
                (revocation surfaces the §3 rebind ask for every workspace bound to the node —
                a deliberate act is never a silent queue; in-flight runs halt with fold-back
                and §8.2 reconciliation; the node's claims die with the row)
-               · PUT /nodes/:id (admin; region and metadata — capabilities are heartbeat-owned
-               advertisements, not console-editable, §3; a region edit re-validates every
-               residency-constrained placement bound to the node — §3, the node-side twin of
-               §4.4's domain-edit rule)
+               · PUT /nodes/:id (admin; region and metadata — the node's name; capabilities
+               are heartbeat-owned advertisements, not console-editable, §3; a region edit
+               re-validates every residency-constrained placement bound to the node — §3,
+               the node-side twin of §4.4's domain-edit rule)
 POST /nodes/:id/heartbeat · POST /nodes/:id/claims · POST /nodes/:id/work/pull ·
                POST /nodes/:id/runs/:runId/report
                (the node runtime surface — keypair-authenticated per §10's node trust;

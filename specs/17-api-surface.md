@@ -22,9 +22,9 @@ is the PRN-009 form — refuse, audit, ask where a human decision is needed.
 - **API-010** — `POST /nodes/enroll` (one-time token exchange) · `GET /nodes` ·
   `POST /nodes/:id/revoke` — revocation surfaces the rebind ask for every bound workspace at
   revocation time, halts in-flight runs with fold-back and reconciliation, kills claims
-  (ARC-016) · `PUT /nodes/:id` — admin; region and metadata only, never capabilities
-  (ARC-015); a region edit re-validates every residency-constrained placement bound to the
-  node (ARC-042).
+  (ARC-016) · `PUT /nodes/:id` — admin; `region` and metadata (the `name` row) only, never
+  capabilities (ARC-015); a region edit re-validates every residency-constrained placement
+  bound to the node (ARC-042).
 - **API-060** — Node runtime surface (node-authenticated via its enrolled keypair, SEC-012):
   `POST /nodes/:id/heartbeat` writes `last_heartbeat` and capability state (ARC-014) ·
   `POST /nodes/:id/claims` acquires or renews a workspace claim as an epoch-fenced lease

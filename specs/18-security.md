@@ -10,11 +10,11 @@ Source: PLAN.md §10.
   the host; physical/filesystem access is the recovery root of trust for self-hosted)
   restores access, and every reset writes an audit entry — degrade to a documented recovery,
   never to silence.
-- **SEC-003** — agent credentials are status-fenced on top of mortal: they authenticate
+- **SEC-003** — Agent credentials are status-fenced on top of mortal: they authenticate
   only while the agent is `active`, re-validated at every use (CLC-033).
-- **SEC-004** — PATs are hashed, shown once, scoped — and mortal: expiry (default 90d),
-  rotation (create-replacement + revoke-old in one flow), a revoke endpoint, and last-used
-  stamps for compromise detection.
+- **SEC-004** — PATs are hashed, shown once, scoped — and mortal: expiry (default 90d,
+  CFG-021), rotation (create-replacement + revoke-old in one flow), a revoke endpoint, and
+  last-used stamps for compromise detection.
 - **SEC-005** — Human PATs and sessions authorize against live authority: effective scopes
   are the grant intersected with the principal's current RBAC, re-evaluated at every use —
   a demotion narrows a standing credential at its next call.

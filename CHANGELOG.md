@@ -4,6 +4,23 @@ Version history for PLAN.md and the `specs/` suite. Newest first. Entries v2.1�
 were extracted verbatim from PLAN.md's preamble in v2.46; from v2.46 on, history lives
 here alone (PLAN.md carries only the current version stamp).
 
+**Errata pass (v2.51)**: a full-suite review — PLAN.md and all 21 modules read against each
+other for consistency, completeness, and unambiguity — closed five residues: SPEC-01's
+actor-eligibility summary claimed to enumerate the recurring guards but missed one — the
+ephemeral group-Leader pin (ORG-042, §5's groups bullet's mortality clause) joins the
+ephemeral facet list · DGV-011 gains the split-door inherit-by-default rule — undeclared
+attributes (`review_sla_days` among them) inherit from the parent, the rule PLAN §4.4/§7
+state and DGV-014 already carried for merge's persist-from-the-survivor, so a split result's
+queue SLA is never undefined · the console node-edit surface's "metadata" names no column of
+the ground-truth schema — anchored to the `name` row in ARC-015 and API-010, with PLAN
+§3/§7/§9 carrying the same anchor · SEC-004's PAT default expiry (90d) gains the parameter
+home every other stated default has — CFG-021, cited from SEC-004, listed in TRACEABILITY's
+§14 row (the residue class v2.48's parameter-citation pass closed; DAT-123 makes the CFG
+catalog governance_settings' key space) · SUB-041 named taint-clearance reviewers for the
+personal and project tiers only — a proposal-tier row's review is the proposal review itself
+(DWP-003), the third enum value of `memory_items.tier` now covered. Lint green: 478
+requirements, TRACEABILITY exact both directions.
+
 **Errata pass (v2.50)**: a full-suite review — PLAN.md and all 21 modules read against each
 other for consistency, completeness, and unambiguity — closed six residues: DGV-014's
 merge-access comparison is made total — `domain` vs `domain` joins the compared pairings
