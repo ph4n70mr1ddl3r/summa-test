@@ -4,6 +4,23 @@ Version history for PLAN.md and the `specs/` suite. Newest first. Entries v2.1�
 were extracted verbatim from PLAN.md's preamble in v2.46; from v2.46 on, history lives
 here alone (PLAN.md carries only the current version stamp).
 
+**Errata pass (v2.50)**: a full-suite review — PLAN.md and all 21 modules read against each
+other for consistency, completeness, and unambiguity — closed six residues: DGV-014's
+merge-access comparison is made total — `domain` vs `domain` joins the compared pairings
+(two `domain`-access sides carry different participant sets), and a pair with no strictly
+smaller side (each admitting members the other excludes, *or* the two evaluating equal)
+refuses the default and demands a declared access — the equal-set outcome the
+"strictly smaller wins" rule left undefined · the injection layer budgets gain their
+parameter home — DRP-004's "soft, configurable" now names CFG-019 (org snapshot ~1k,
+glossary ~2k, rules ~4k, goal slice ~1k), the residue class v2.48's parameter-citation
+pass closed · DAT-120's `system` reservation names its second column — `audit_events.actor`
+carries `member|'system'` per SPEC-16's own table, so "`asks.from` alone" was one short ·
+SPEC-15's source line states §8.4 (Skills) as reference-only — the header skip 8.3 → 8.5
+now explains itself in-module, where only TRACEABILITY's row did · two decision defaults
+gained the citations PLAN already pointed at on its side (STG-001 → CFG-001; SUB-071 →
+CFG-070, PLAN §8.7's §14.7 pointer). Lint green: 477 requirements, TRACEABILITY exact
+both directions.
+
 **Stack re-host (v2.49)**: the backend moves from Node 22 + TypeScript to **Java 25 LTS +
 Spring Boot 4** (current major, fat-jar — one artifact) — a decided change landing as PLAN
 amendment + spec delta per the change-control rule: ARC-005 and §3's stack bullet re-state

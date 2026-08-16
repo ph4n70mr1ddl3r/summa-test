@@ -4,7 +4,8 @@ Source: PLAN.md §4.5.
 
 ## Stores
 
-- **STG-001** — The canonical DNA store is git-backed markdown with frontmatter (id,
+- **STG-001** — The canonical DNA store is git-backed markdown (CFG-001's default) with
+  frontmatter (id,
   version, effective dates, provenance, access): `domains/<domain>/{cards,rules,decisions,
   goals}/*.md`, `glossary.md`; org-wide goals under `goals/` and the org-wide glossary in the
   root `glossary.md`. The control plane maintains the

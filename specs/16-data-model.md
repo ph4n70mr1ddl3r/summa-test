@@ -131,8 +131,9 @@ memory_items   (id, tier 'personal'|'project'|'proposal', member_id?, workspace_
   `groups.leader_member_id`, `pats.member_id`, `group_memberships.member_id`, among others)
   carries `h:<humans.id>` or `a:<agents.id>` — never a bare integer — and resolves against
   the live row of its keyed kind (ORG-001's shared namespace, given a representation). The
-  reserved `system` originator is the one non-member value a member-typed column may carry,
-  `asks.from` alone (DAT-080); `asks.to` carries the suite's one reserved addressee —
+  reserved `system` value is the one non-member value a member-typed column may carry —
+  `asks.from` (the system originator, DAT-080) and `audit_events.actor` (DAT-121);
+  `asks.to` carries the suite's one reserved addressee —
   `admins`, the live-evaluated admin broadcast (DAT-080).
 - **DAT-121** — `audit_events` is append-only: rows are inserted, never updated or deleted;
   every refusal, write door, credential use, and admin act lands one row (SEC-009,

@@ -39,9 +39,10 @@ Source: PLAN.md §4.4.
   to one result; a mapping that would divide a chain is refused at declare.
 - **DGV-014** — Merge declares the surviving domain's attributes: access defaults to the
   narrower of the pair, computed at declare time against live reader sets (DGV-002) —
-  `public` is the widest; `domain` vs `named`, and `named` vs `named`, compare their
-  evaluated member sets with the strictly smaller set winning, and an incomparable pair
-  (each admitting members the other excludes) refuses the default and demands a declared
+  `public` is the widest; every other pairing — `domain` vs `domain` included — compares
+  the two sides' evaluated member sets with the strictly smaller set winning, and a pair
+  with no strictly smaller side (each admitting members the other excludes, or the two
+  evaluating equal) refuses the default and demands a declared
   access; undeclared attributes persist from the survivor; the `named` list keeps the
   survivor's unless the op declares the union — a merge never silently widens access, and
   a narrowed list shows in the event's access re-evaluation.

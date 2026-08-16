@@ -57,3 +57,6 @@ trigger; the mechanism it tunes is already designed (NFR-022). Defaults live beh
   exhaustion (SPW-031).
 - **CFG-018** — Spawn depth cap: default 2 — the global lineage depth SPW-031 enforces
   and the playbook instantiation depth mirrors (SUB-062).
+- **CFG-019** — Injection layer token budgets: org snapshot ~1k, glossary ~2k, rules ~4k,
+  goal slice ~1k (defaults) — soft budgets; overflow demotes per the DRP-007 order rather
+  than truncating (DRP-004).

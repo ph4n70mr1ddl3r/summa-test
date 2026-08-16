@@ -13,7 +13,7 @@ is promoted to a central, governed **Company DNA** with proposals and review; ag
 agents (governed); topology becomes a **control plane + execution nodes**, with a single-process
 mode so small teams start simple.
 
-*Version v2.49 · 2026-08-16 — change history: [CHANGELOG.md](CHANGELOG.md)*
+*Version v2.50 · 2026-08-16 — change history: [CHANGELOG.md](CHANGELOG.md)*
 
 > **Provenance & completion status**: the v1 design document that §7, §8, and §9 delta
 > against is not part of this repository. The normative, testable statement of every

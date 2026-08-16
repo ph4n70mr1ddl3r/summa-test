@@ -1,6 +1,8 @@
 # SPEC-15 — Subsystems
 
-Source: PLAN.md §8.1–8.9, §8.11.
+Source: PLAN.md §8.1–8.9, §8.11. §8.4 (Skills) is reference-only here — v1 behavior
+carries over and its uninstall-dependency idiom is reused by TPL-030 and SUB-064 — so it
+owns no SUB IDs (TRACEABILITY's §8.4 row).
 
 ## 8.1 Agent runtime (SUB-0xx)
 
@@ -94,7 +96,8 @@ Source: PLAN.md §8.1–8.9, §8.11.
   injection.
 - **SUB-071** — An embedding-model switch is a migration, not a reset: the index records its
   model, the new index builds alongside the old, a recall-parity sample gates the cutover,
-  and the old index serves until the new one passes — search never blinks.
+  and the old index serves until the new one passes — search never blinks (the provider
+  default itself is CFG-070).
 - **SUB-072** — A repeatedly failing parity gate surfaces an admin ask carrying the deltas —
   roll forward, retune the sample, or stay on the old index — never an eternal silent shadow
   index.

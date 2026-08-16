@@ -16,8 +16,8 @@ Source: PLAN.md §4.2, §4.6.
 - **DRP-003** — Injection shall be deterministic per (reader access, domain set,
   linked-goal set, DNA version) so it is testable.
 - **DRP-004** — Each layer carries a token budget (org snapshot ~1k, glossary ~2k, rules ~4k,
-  goal slice ~1k — soft, configurable); overflow demotes items to retrieval (rules overflow
-  into the searchable index) rather than truncating silently.
+  goal slice ~1k — soft, per-layer tunables, CFG-019); overflow demotes items to retrieval
+  (rules overflow into the searchable index) rather than truncating silently.
 - **DRP-005** — Injected layers pass the same compartment access check as retrieval: a domain
   the run's member cannot read contributes no rules, glossary entries, or domain-scoped goals;
   injection never bypasses compartments.
