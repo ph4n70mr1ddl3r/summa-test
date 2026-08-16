@@ -1,6 +1,6 @@
 # Traceability — PLAN.md ⇄ Specification Suite
 
-Completeness proof for the SDD suite: every section of `PLAN.md` (v2.55) maps to requirements
+Completeness proof for the SDD suite: every section of `PLAN.md` (v2.56) maps to requirements
 in these specs, and every requirement traces back to a PLAN source. The coverage column lists
 exact ID ranges generated from the defined requirements (no elided prefixes, no implied gaps).
 Both directions — every defined ID listed, every listed ID defined — are verified by
@@ -45,6 +45,22 @@ Both directions — every defined ID listed, every listed ID defined — are ver
 | §13 Risks & mitigations | 19 | NFR-030…035; the table's remaining rows carry mitigations specified by their cited modules (SPW, DGV, ARC, SUB, CLC, DLV) |
 | §13.1 Residual risk / accepted boundaries | 19 | NFR-001, NFR-020…022 |
 | §14 Key open decisions 1–16 + named parameters | 20 | CFG-001, CFG-010…019, CFG-020…024, CFG-030, CFG-040, CFG-050, CFG-060, CFG-070, CFG-080, CFG-090, CFG-100, CFG-110, CFG-120, CFG-130, CFG-140, CFG-150, CFG-160 |
+
+## Intentional cross-listings
+
+Eight IDs are cited by more than one coverage row — or by a row whose module column does not
+name their home — on purpose. `tools/lint_specs.py` reads this table and exempts exactly these
+IDs from the partition rule; every other ID belongs to exactly one coverage row and must be
+homed in a module that row's module column names. An ID listed here must actually appear in
+two or more rows, so a table entry cannot outlive the cross-listing it explains.
+
+| ID | Why it is cross-listed |
+|---|---|
+| CLC-040 | the workspace-archival walk: homed under §6.3 lineage, named again by §7's data-model row |
+| NFR-001 | §2 restates it as the universal fallback (PRN-009's twin); §13.1 is its residual-risk home |
+| ORG-040…043 | groups & IM specified under §5 (org model), coverage-counted again under §8.8 |
+| SUB-064 | §8.4 names its skills uninstall-check reuse (ref-only); §8.6 is its home |
+| TPL-030 | §8.4 names its skills reference (ref-only); §6.5 is its home |
 
 ## Maintenance rule
 

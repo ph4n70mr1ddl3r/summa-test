@@ -4,6 +4,24 @@ Version history for PLAN.md and the `specs/` suite. Newest first. Entries v2.1�
 were extracted verbatim from PLAN.md's preamble in v2.46; from v2.46 on, history lives
 here alone (PLAN.md carries only the current version stamp).
 
+**Tooling hardening (v2.56)**: three invariants the errata passes had been holding by hand are
+now machine-checked by `tools/lint_specs.py` — TRACEABILITY coverage is partitioned per row: a
+coverage row citing an ID homed in a module its module column does not name fails the build,
+an ID cited by two rows outside TRACEABILITY.md's new "Intentional cross-listings" table fails
+it, and a table entry whose ID no longer appears in two or more rows fails it too, so the
+exemption list cannot go stale (the table names the eight existing cross-listings — CLC-040,
+NFR-001, ORG-040…043, SUB-064, TPL-030 — with the reason each is double-counted) · the three
+version pins — PLAN.md's version stamp, README's "derived from" line, TRACEABILITY's header —
+must agree · every `§N[.N]` section reference in `specs/` (ranges like `§8.1–8.9` expanded)
+must resolve to a numbered PLAN.md heading; §8.1–8.11 were promoted from bold list items to
+real `###` subsection headings to make the section inventory machine-extractable — prose
+byte-identical, the Contents now lists them. The linter itself gained a fixture-based
+self-test — `tools/test_lint.py`, a clean fixture corpus plus one mutated copy per failure
+mode across all seven checks, run as a second CI step — so a regression in the checker (like
+the v2.54 range holes) cannot pass silently. `lint_specs.py` also accepts an optional root
+argument, which is how the self-tests point it at fixture corpora. No requirement text
+changed.
+
 **Errata pass (v2.55)**: a full-suite review — PLAN.md and all 21 modules read against each
 other for consistency, completeness, and unambiguity — closed six residues: DGV-046 carried
 the domain-list half of the spawn-gate re-key alone — §4.4, §6.2, §7, and §12's test line all

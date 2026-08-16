@@ -13,7 +13,7 @@ is promoted to a central, governed **Company DNA** with proposals and review; ag
 agents (governed); topology becomes a **control plane + execution nodes**, with a single-process
 mode so small teams start simple.
 
-*Version v2.55 · 2026-08-16 — change history: [CHANGELOG.md](CHANGELOG.md)*
+*Version v2.56 · 2026-08-16 — change history: [CHANGELOG.md](CHANGELOG.md)*
 
 > **Provenance & completion status**: the v1 design document that §7, §8, and §9 delta
 > against is not part of this repository. The normative, testable statement of every
@@ -45,6 +45,17 @@ mode so small teams start simple.
   - [6.5 Role & template evolution](#65-role--template-evolution)
 - [7. Data model (v2 delta)](#7-data-model-v2-delta)
 - [8. Subsystem designs (carried from v1, updated)](#8-subsystem-designs-carried-from-v1-updated)
+  - [8.1 Agent runtime](#81-agent-runtime)
+  - [8.2 Tools & MCP](#82-tools--mcp)
+  - [8.3 Memory service](#83-memory-service)
+  - [8.4 Skills](#84-skills)
+  - [8.5 Trigger engine](#85-trigger-engine)
+  - [8.6 Playbook engine](#86-playbook-engine)
+  - [8.7 DNA engine](#87-dna-engine)
+  - [8.8 Groups & IM](#88-groups--im)
+  - [8.9 Console screens](#89-console-screens)
+  - [8.10 Asks — the human-attention subsystem](#810-asks--the-human-attention-subsystem)
+  - [8.11 Inter-agent communication](#811-inter-agent-communication)
 - [9. API surface (delta)](#9-api-surface-delta)
 - [10. Security & governance checklist](#10-security--governance-checklist)
 - [11. Delivery plan (rephased)](#11-delivery-plan-rephased)
@@ -1659,104 +1670,133 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
 
 ## 8. Subsystem designs (carried from v1, updated)
 
-- **8.1 Agent runtime** — unchanged core (prompt assembly → guarded loop → structured result), with
-  four v2 changes: (a) the always-injected DNA layer (org snapshot, glossary slice, applicable
-  rules, goal slice) precedes per-agent context; (b) headless approval policy now routes into **Asks** —
-  `auto_deny` (default) | `queue_until_morning` (Task Board digest) | `escalate_im`. These are
-  Ask tiers in disguise (§8.10): `escalate_im` → `critical`, `queue_until_morning` → `standard`
-  (next digest), `auto_deny` → expiry behavior `deny`; the configuration surface is the ask
-  policy, not a separate one. Scope
-  enforcement, egress guard, write-lock, stop semantics, cost metering as in v1. (c) Scope
-  changes — revocations, §6.4 role-change refreshes — take effect at the next run's prompt
-  assembly; a long-running run re-checks its scopes before each external write, so a mid-run
-  revocation gates the next side effect rather than lingering to the run's end. Rules re-check at
-  the same gate: rules carrying enforcement-bearing `machine_hint`s gate external writes exactly
-  like scopes — a write the current applicable slice forbids is blocked and raises an ask, while
-  purely narrative rules stay advisory context (§4.2 precedence). (d) Provider degradation: the
-  model gateway queues with backoff instead of failing fast; headless runs wait out a bounded
-  outage, and a sustained one raises a single critical admin ask — routing policy stays decision
-  15 (§14), but no 24/7 run dies on a vendor blip.
-- **8.2 Tools & MCP** — built-ins (`fs.*`, guarded `shell.exec`, `web.*`, `kb.search` → `dna.search`,
-  `memory.write`) plus **`spawn`** as a guarded tool. Egress guard unchanged. Connector tiers:
-  tier 1 = email/calendar/docs; **tier 2 = enterprise systems of record** (ERP/WMS/HRIS/CRM) —
-  read-only first, writes gated behind `critical`-tier Asks (§8.10); per-connector scoped
-  credentials via PATs, never shared service accounts; §4.6 governs what may enter the DNA.
-  Write-capable tier-2 connectors implement staged writes — prepare → confirm → commit — every
-  stage keyed by the idempotency key of its `external_writes` ledger row (§7): playbook retries
-  and node retries reuse the key and cannot duplicate side effects, and a crashed or reaped run
-  leaves a `prepared` row that reconciliation resolves — confirm or compensate per connector, or
-  escalate to an admin ask where no compensation exists. Stage-less targets — an email send has
-  no prepare — get send-once semantics: retry only on transport failure before the remote
-  acknowledges; an ambiguous timeout after the wire degrades to an ask with the attempt audited,
-  never a blind resend — at-most-once delivery where idempotency cannot be engineered. Reconciliation is scheduled, not
-  improvised: a periodic pass — the steady-state twin of the §11 restore runbook — walks
-  `prepared` rows past the grace window to a terminal state or an admin ask, so a stranded write
-  cannot wait forever on a reaper that has already moved on.
-- **8.3 Memory service** — now three-tier classifier (personal / project / DNA proposal) with the
-  v1 machinery (dedupe, timeline, versions, secrets scanner) under it. Taint propagates through
-  the tiers: memory written by a tainted run (§13) carries the flag, renders with its provenance
-  when retrieved, is barred from digest pre-fills like tainted asks (§8.10), and is cleared only
-  by explicit review — the spawner's owner for personal memory, the domain owner for project
-  memory, and the proposal review itself for proposal-tier rows (§4.3) — never by the
-  passage of time. A tainted memory item cannot be the sole support for an
-  external write: pair it with an untainted source, or ask.
-- **8.4 Skills** — unchanged; domain-organized packs; uninstall dependency checks.
-- **8.5 Trigger engine** — schedule/API/event triggers unchanged; every firing is a run of the same
-  session worker; API triggers gain PAT scopes for external callers. Missed schedules neither
-  replay nor vanish: firings elapsing during an agent suspension, an initiative pause (§5.1),
-  the §6.2 spend halt, or control-plane downtime coalesce into one catch-up run per trigger when
-  the halt holding them lifts (resume, un-pause, or the trip ask's resolution), carrying a
-  missed-schedule summary (count, window) — per-trigger policy `replay|coalesce|skip`, default coalesce, with §6.2 rate limits
-  bounding a large backlog. Firings are idempotent at the boundary: every firing carries a
-  deterministic key — schedule: trigger + scheduled time; webhook/API: event id or
-  caller-supplied `Idempotency-Key`; event: source event id — and the `trigger_firings` table
-  (§7) refuses duplicates within a configurable window (default 7 days), returning the original
-  run — a default sized for redelivery, not just instant replay: webhook providers that back up
-  during a control-plane outage redeliver on recovery, and the late copies meet the same dedupe
-  as the immediate ones — an outage never converts one event into two side effects. A replayed
-  webhook is one run, not two invoices.
-- **8.6 Playbook engine** — DSL unchanged from v1; the sandbox re-hosts per §3 — sealed
-  GraalJS context, host access denied, child-process fallback; `worker()` targets any member (human targets
-  create an assignment Ask; a viewer is refused at write like every ask target, §5); spawn-class playbooks (fan-out workers) built on §6 ephemeral workers
-  · **initiative playbooks** (§5.1): an SOP instantiated under an initiative becomes the
-  cross-domain spine — nodes route asks into each domain's escalation chain (§8.10) and artifacts
-  land on the initiative's board slice. Instantiation is bounded like spawning: playbooks carry
-  an instantiation depth cap (default 2, mirroring §6.2) and are cycle-checked at both
-  authoring doors — direct or transitive self-instantiation is refused at save and again at
-  publish (a new version can close a cycle the saved graph left open), and the runtime
-  depth cap is the backstop; an orchestration loop cannot starve sandbox quotas underneath
-  the spawn policy.
-  Versioned references are pinned, not dangling: a run launches from the exact playbook
-  version it was instantiated against, so in-flight instantiations complete on their pin
-  through a later publication or retirement — the template-row rule's shape (§6.5) — and
-  retiring a version refuses while live references hold it: triggers and schedules pointing
-  at the version re-point or disable first, the §8.4 skill-uninstall dependency check applied
-  to playbooks. An SOP pointer card left citing a retired version does not block retirement —
-  it rides the §4.4 freshness pass and flags stale, a dangling reference surfaced to its
-  owner, never silently followed into a ghost.
-- **8.7 DNA engine** — inherits v1 KB machinery (ingest → chunk → embed → cards → hybrid retrieval →
-  citations) extended with domains, proposals, review queue, and glossary/rule/goal-slice
-  injection. An embedding-model switch (§14.7) is a migration, not a reset: the index records its
-  model, the new index builds alongside the old, a recall-parity sample gates the cutover, and
-  the old index serves until the new one passes — search never blinks. A gate that keeps
-  failing is a decision, not a limbo: the stall surfaces as an admin ask carrying the parity
-  deltas — roll forward, retune the sample, or stay on the old index — so a failed migration
-  never becomes an eternal, silent shadow.
-- **8.8 Groups & IM** — unified human+agent teams; IM pairing routes to an agent whose asks
-  escalate to the channel.
-- **8.9 Console screens** — v1 screens 1–9, plus five new: **10. Org & People** (members, RBAC, lineage graph,
-  retirement flows, the custom-hire promotion action §6.5) · **11. DNA console** (browse cards/rules/decisions per domain, review queue
-  with diffs and provenance, proposal history, glossary editor) · **12. Governance** (policies,
-  quotas, spend dashboard, spawn audit) · **13. Ask inbox** (SLA indicators, batched digests,
-  one-line accept/deny with diff links) · **14. Initiatives** (goal-linked execution: status, ask
-  burndown, task/playbook progress, spend vs. budget, delegated-authority grants).
-- **8.10 Asks — the human-attention subsystem** — system throughput is bounded by ask-response
-  latency, so asks are engineered, not merely routed. **SLA tiers**: `critical` (blocks a
-  customer-facing or money-moving run — interrupt-grade push, console + IM), `standard` (blocks a
-  run — next digest), `bulk` (non-blocking — daily digest, batched). **Expiry semantics** are
-  explicit per ask: `deny` (default for approvals and spawn requests — an expired approval is a
-  no), `escalate` (route up the chain — default for questions), `reassign` (fall back to a named
-  deputy — default for assignments); a run blocked on an expired ask
+### 8.1 Agent runtime
+
+unchanged core (prompt assembly → guarded loop → structured result), with
+four v2 changes: (a) the always-injected DNA layer (org snapshot, glossary slice, applicable
+rules, goal slice) precedes per-agent context; (b) headless approval policy now routes into **Asks** —
+`auto_deny` (default) | `queue_until_morning` (Task Board digest) | `escalate_im`. These are
+Ask tiers in disguise (§8.10): `escalate_im` → `critical`, `queue_until_morning` → `standard`
+(next digest), `auto_deny` → expiry behavior `deny`; the configuration surface is the ask
+policy, not a separate one. Scope
+enforcement, egress guard, write-lock, stop semantics, cost metering as in v1. (c) Scope
+changes — revocations, §6.4 role-change refreshes — take effect at the next run's prompt
+assembly; a long-running run re-checks its scopes before each external write, so a mid-run
+revocation gates the next side effect rather than lingering to the run's end. Rules re-check at
+the same gate: rules carrying enforcement-bearing `machine_hint`s gate external writes exactly
+like scopes — a write the current applicable slice forbids is blocked and raises an ask, while
+purely narrative rules stay advisory context (§4.2 precedence). (d) Provider degradation: the
+model gateway queues with backoff instead of failing fast; headless runs wait out a bounded
+outage, and a sustained one raises a single critical admin ask — routing policy stays decision
+15 (§14), but no 24/7 run dies on a vendor blip.
+
+### 8.2 Tools & MCP
+
+built-ins (`fs.*`, guarded `shell.exec`, `web.*`, `kb.search` → `dna.search`,
+`memory.write`) plus **`spawn`** as a guarded tool. Egress guard unchanged. Connector tiers:
+tier 1 = email/calendar/docs; **tier 2 = enterprise systems of record** (ERP/WMS/HRIS/CRM) —
+read-only first, writes gated behind `critical`-tier Asks (§8.10); per-connector scoped
+credentials via PATs, never shared service accounts; §4.6 governs what may enter the DNA.
+Write-capable tier-2 connectors implement staged writes — prepare → confirm → commit — every
+stage keyed by the idempotency key of its `external_writes` ledger row (§7): playbook retries
+and node retries reuse the key and cannot duplicate side effects, and a crashed or reaped run
+leaves a `prepared` row that reconciliation resolves — confirm or compensate per connector, or
+escalate to an admin ask where no compensation exists. Stage-less targets — an email send has
+no prepare — get send-once semantics: retry only on transport failure before the remote
+acknowledges; an ambiguous timeout after the wire degrades to an ask with the attempt audited,
+never a blind resend — at-most-once delivery where idempotency cannot be engineered. Reconciliation is scheduled, not
+improvised: a periodic pass — the steady-state twin of the §11 restore runbook — walks
+`prepared` rows past the grace window to a terminal state or an admin ask, so a stranded write
+cannot wait forever on a reaper that has already moved on.
+
+### 8.3 Memory service
+
+now three-tier classifier (personal / project / DNA proposal) with the
+v1 machinery (dedupe, timeline, versions, secrets scanner) under it. Taint propagates through
+the tiers: memory written by a tainted run (§13) carries the flag, renders with its provenance
+when retrieved, is barred from digest pre-fills like tainted asks (§8.10), and is cleared only
+by explicit review — the spawner's owner for personal memory, the domain owner for project
+memory, and the proposal review itself for proposal-tier rows (§4.3) — never by the
+passage of time. A tainted memory item cannot be the sole support for an
+external write: pair it with an untainted source, or ask.
+
+### 8.4 Skills
+
+unchanged; domain-organized packs; uninstall dependency checks.
+
+### 8.5 Trigger engine
+
+schedule/API/event triggers unchanged; every firing is a run of the same
+session worker; API triggers gain PAT scopes for external callers. Missed schedules neither
+replay nor vanish: firings elapsing during an agent suspension, an initiative pause (§5.1),
+the §6.2 spend halt, or control-plane downtime coalesce into one catch-up run per trigger when
+the halt holding them lifts (resume, un-pause, or the trip ask's resolution), carrying a
+missed-schedule summary (count, window) — per-trigger policy `replay|coalesce|skip`, default coalesce, with §6.2 rate limits
+bounding a large backlog. Firings are idempotent at the boundary: every firing carries a
+deterministic key — schedule: trigger + scheduled time; webhook/API: event id or
+caller-supplied `Idempotency-Key`; event: source event id — and the `trigger_firings` table
+(§7) refuses duplicates within a configurable window (default 7 days), returning the original
+run — a default sized for redelivery, not just instant replay: webhook providers that back up
+during a control-plane outage redeliver on recovery, and the late copies meet the same dedupe
+as the immediate ones — an outage never converts one event into two side effects. A replayed
+webhook is one run, not two invoices.
+
+### 8.6 Playbook engine
+
+DSL unchanged from v1; the sandbox re-hosts per §3 — sealed
+GraalJS context, host access denied, child-process fallback; `worker()` targets any member (human targets
+create an assignment Ask; a viewer is refused at write like every ask target, §5); spawn-class playbooks (fan-out workers) built on §6 ephemeral workers
+· **initiative playbooks** (§5.1): an SOP instantiated under an initiative becomes the
+cross-domain spine — nodes route asks into each domain's escalation chain (§8.10) and artifacts
+land on the initiative's board slice. Instantiation is bounded like spawning: playbooks carry
+an instantiation depth cap (default 2, mirroring §6.2) and are cycle-checked at both
+authoring doors — direct or transitive self-instantiation is refused at save and again at
+publish (a new version can close a cycle the saved graph left open), and the runtime
+depth cap is the backstop; an orchestration loop cannot starve sandbox quotas underneath
+the spawn policy.
+Versioned references are pinned, not dangling: a run launches from the exact playbook
+version it was instantiated against, so in-flight instantiations complete on their pin
+through a later publication or retirement — the template-row rule's shape (§6.5) — and
+retiring a version refuses while live references hold it: triggers and schedules pointing
+at the version re-point or disable first, the §8.4 skill-uninstall dependency check applied
+to playbooks. An SOP pointer card left citing a retired version does not block retirement —
+it rides the §4.4 freshness pass and flags stale, a dangling reference surfaced to its
+owner, never silently followed into a ghost.
+
+### 8.7 DNA engine
+
+inherits v1 KB machinery (ingest → chunk → embed → cards → hybrid retrieval →
+citations) extended with domains, proposals, review queue, and glossary/rule/goal-slice
+injection. An embedding-model switch (§14.7) is a migration, not a reset: the index records its
+model, the new index builds alongside the old, a recall-parity sample gates the cutover, and
+the old index serves until the new one passes — search never blinks. A gate that keeps
+failing is a decision, not a limbo: the stall surfaces as an admin ask carrying the parity
+deltas — roll forward, retune the sample, or stay on the old index — so a failed migration
+never becomes an eternal, silent shadow.
+
+### 8.8 Groups & IM
+
+unified human+agent teams; IM pairing routes to an agent whose asks
+escalate to the channel.
+
+### 8.9 Console screens
+
+v1 screens 1–9, plus five new: **10. Org & People** (members, RBAC, lineage graph,
+retirement flows, the custom-hire promotion action §6.5) · **11. DNA console** (browse cards/rules/decisions per domain, review queue
+with diffs and provenance, proposal history, glossary editor) · **12. Governance** (policies,
+quotas, spend dashboard, spawn audit) · **13. Ask inbox** (SLA indicators, batched digests,
+one-line accept/deny with diff links) · **14. Initiatives** (goal-linked execution: status, ask
+burndown, task/playbook progress, spend vs. budget, delegated-authority grants).
+
+### 8.10 Asks — the human-attention subsystem
+
+system throughput is bounded by ask-response
+latency, so asks are engineered, not merely routed. **SLA tiers**: `critical` (blocks a
+customer-facing or money-moving run — interrupt-grade push, console + IM), `standard` (blocks a
+run — next digest), `bulk` (non-blocking — daily digest, batched). **Expiry semantics** are
+explicit per ask: `deny` (default for approvals and spawn requests — an expired approval is a
+no), `escalate` (route up the chain — default for questions), `reassign` (fall back to a named
+deputy — default for assignments); a run blocked on an expired ask
 never hangs indefinitely. Withdrawal is the originator's side of the same coin: `from` may
 retract a pending ask before it closes — and the retraction is originator-scoped, never
 communal: it resolves the retracting originator's own waiters per the ask's expiry behavior
@@ -1779,52 +1819,52 @@ aggregate's recovery-or-ack, expiry per behavior — while a member's withdraw o
 refused at the door and the system retracts no member's ask: each side's retraction is its own.
 A quorum-1 ask (the default) closes on the first response received — later
 responses (member and deputy racing) are audit-only; a response to an expired ask is recorded but has no
-  effect: the successor ask, if any, carries the decision — and a withdrawn ask is terminal the
-  same way, a response racing the originator's retraction audit-only like one racing expiry.
-  Eligibility is checked at the door itself: a response tendered by a member with no standing
-  on the ask — neither the addressee, nor the addressee's deputy, nor, for a quorum ask, a
-  member of the evaluated pool or a pool member's deputy — is refused at the respond endpoint
-  with the attempt audited, never recorded as an answer; who may answer is part of the ask's
-  contract, checked like what it answers.
-  Responses re-validate before they bind:
-  at respond time the ask's payload assumptions are recomputed — the diff still applies, the
-  referenced DNA item is still live, the scope still holds — and a spawn approval names five
-  more assumptions of its own: the initiative it files under still accepts launches (§5.1),
-  the workspace it binds still accepts bindings and remains readable for the member it
-  would publish — §4.2's spawn-time refusal, re-checked at the door the approval finally
-  answers — and the requester itself is still `active`: an approval publishes a worker into
-  its requester's live context, and lineage, fold-back, and quota all key on a spawner that
-  can still receive them — and the ceiling it names still derives: `scopeCeiling` lands at
-  activation as requested ∩ the requester's live scopes, an empty intersection archiving the
-  request with pin and claims released (§6.2), the child never published above a narrowed
-  parent — and the spend halt is not holding: a §6.2 trip refuses launches,
-  and publishing a worker is one. So an accept racing a pause, a close, a workspace archival,
-  the requester's own suspension, a narrowing that emptied the ceiling, or the breaker's trip
-  is audit-only and the request archives
-  with its template pin
-  drained and its cap claims released, never a worker published into a frozen slice, onto an
-  archived row, under a halted subtree, or past a tripped ceiling (§7's walk settles the pending request at archival;
-  this is its racing half). Retirement and offboarding settle the request inside their walks
-  (§6.3, §5); suspension — which resolves no dependents — is the case the walks deliberately
-  leave standing, so the gate closes it at the door: the suspended spawner re-requests on
-  resume, for resume never resurrects what the halt archived (§6.3). And a response against
-  a superseded
+effect: the successor ask, if any, carries the decision — and a withdrawn ask is terminal the
+same way, a response racing the originator's retraction audit-only like one racing expiry.
+Eligibility is checked at the door itself: a response tendered by a member with no standing
+on the ask — neither the addressee, nor the addressee's deputy, nor, for a quorum ask, a
+member of the evaluated pool or a pool member's deputy — is refused at the respond endpoint
+with the attempt audited, never recorded as an answer; who may answer is part of the ask's
+contract, checked like what it answers.
+Responses re-validate before they bind:
+at respond time the ask's payload assumptions are recomputed — the diff still applies, the
+referenced DNA item is still live, the scope still holds — and a spawn approval names five
+more assumptions of its own: the initiative it files under still accepts launches (§5.1),
+the workspace it binds still accepts bindings and remains readable for the member it
+would publish — §4.2's spawn-time refusal, re-checked at the door the approval finally
+answers — and the requester itself is still `active`: an approval publishes a worker into
+its requester's live context, and lineage, fold-back, and quota all key on a spawner that
+can still receive them — and the ceiling it names still derives: `scopeCeiling` lands at
+activation as requested ∩ the requester's live scopes, an empty intersection archiving the
+request with pin and claims released (§6.2), the child never published above a narrowed
+parent — and the spend halt is not holding: a §6.2 trip refuses launches,
+and publishing a worker is one. So an accept racing a pause, a close, a workspace archival,
+the requester's own suspension, a narrowing that emptied the ceiling, or the breaker's trip
+is audit-only and the request archives
+with its template pin
+drained and its cap claims released, never a worker published into a frozen slice, onto an
+archived row, under a halted subtree, or past a tripped ceiling (§7's walk settles the pending request at archival;
+this is its racing half). Retirement and offboarding settle the request inside their walks
+(§6.3, §5); suspension — which resolves no dependents — is the case the walks deliberately
+leave standing, so the gate closes it at the door: the suspended spawner re-requests on
+resume, for resume never resurrects what the halt archived (§6.3). And a response against
+a superseded
 world is audit-only like a late response, with a successor ask opened against current state (the
 same machinery expiry uses). Settlement has an event-side twin: the respond door is not the
-  only place a broken assumption is discovered — the event that terminally breaks one settles
-  the ask at the event, the walks' leave-no-waiters contract applied to attention. A quorum
-  ask whose rule went terminal mid-wait — superseded, lapsed, or close-lapsed with its
-  initiative — resolves per its expiry behavior the moment the premise dies (an approval
-  denies, fail-safe), partial accepts staying audit-only, the withdrawal algebra (§7), and
-  the successor-ask machinery carries any decision the action still needs against current
-  rules, the live slice re-derived: a pending ask is attention owed on a live question, and a
-  question whose premise has died must not linger in every digest as answerable. Non-terminal
-  states keep the deadline their resolver — suspension's request rule (§6.2) stands exactly
-  as written, and a pool shrunk below N (below) denies at expiry rather than at the event
-  precisely because a live pool can grow back; a terminal premise cannot, and that is the
-  line: settle at the event only what the event ended. A domain's archive settles the same
-  way — no resulting owner exists to re-key onto, so owner-addressed asks pending against it
-  close with an audit note inside the event (§4.4). Provenance re-validates with them: an accept originating in a
+only place a broken assumption is discovered — the event that terminally breaks one settles
+the ask at the event, the walks' leave-no-waiters contract applied to attention. A quorum
+ask whose rule went terminal mid-wait — superseded, lapsed, or close-lapsed with its
+initiative — resolves per its expiry behavior the moment the premise dies (an approval
+denies, fail-safe), partial accepts staying audit-only, the withdrawal algebra (§7), and
+the successor-ask machinery carries any decision the action still needs against current
+rules, the live slice re-derived: a pending ask is attention owed on a live question, and a
+question whose premise has died must not linger in every digest as answerable. Non-terminal
+states keep the deadline their resolver — suspension's request rule (§6.2) stands exactly
+as written, and a pool shrunk below N (below) denies at expiry rather than at the event
+precisely because a live pool can grow back; a terminal premise cannot, and that is the
+line: settle at the event only what the event ended. A domain's archive settles the same
+way — no resulting owner exists to re-key onto, so owner-addressed asks pending against it
+close with an audit note inside the event (§4.4). Provenance re-validates with them: an accept originating in a
 tainted run (§13) is audit-only the same way — taint never becomes approval authority — and the
 successor ask renders without a pre-fill (below) while it carries the decision to an untainted
 reader. **Quorum asks**: rules may require N distinct approvals
@@ -1854,70 +1894,70 @@ flags at proposal time like any contradiction (§4.4), and a pool that later shr
 (offboarding) leaves the ask unanswerable — it denies at expiry, fail-safe, with the breach
 escalation naming the shortfall: an impossible quorum degrades to a visible no, never a hang.
 **Escalation chains**: every ask to a human carries member → deputy (set per member in the org
-  registry; humans only — an agent deputy is refused at write, because standing approval authority
-  for agents is exactly what the reviewed, windowed delegated rules below exist for; self-deputy,
-  deputy cycles, and viewer deputies are refused the same way — a read-only member is never a
-  standing answer hop) → domain owner (of the domain the ask's workspace
-  belongs to; asks with no domain skip the hop; multi-domain workspaces hop to the primary domain
-  — first-bound, admin-editable: one deterministic hop, not a fan-out to every owner) → admin,
-  walked on SLA breach (inactive members are skipped; the walk carries a visited-set, so a
-  mis-configured cycle ends the hop, not the walk — the §5 last-admin guard and the exhaustion
-  broadcast remain the backstops). The admin hop is a broadcast, not a pick: every path that
-  routes to "an admin" — this terminal hop, the §4.3 review-SLA escalation and sod publish
-  routing, the §6.2 spawn gate's fallback — addresses all active admins at once and the first
-  valid response wins (sod publish resolves inside the domain write lock, so racing admins see
-  one winner). The broadcast's recipient set is itself live-derived, the quorum pool's rule:
-  it renders and admits responses against the current active-admin set, so an admin added
-  mid-wait joins pending broadcasts, and one departed mid-wait contributes nothing — the §5
-  walk owes no reassignment for an ask no single member holds, the last-admin guard keeps the
-  set from emptying, and a former admin's late response is refused at the eligibility door
-  like any out-of-set answer (§7). A single-admin org is the one-recipient degenerate case,
-  and the broadcast is not ambient authority — a member-addressed ask stays member-addressed
-  until its own chain escalates. `deadline` derives from the tier unless set
-  explicitly — and an explicit deadline earlier than the ask's creation is refused at write:
-  a past deadline is a contradiction, not a tier, and never an instantly-expired ask (the §9
-  window-sanity rule's attention-side twin). Chain exhaustion — the admin broadcast finds no active recipient, or breaches — expires the ask
-  per its expiry behavior (an unanswered approval is a no, never a hang; an exhausted assignment
-  returns the task to the board pool with a digest line — the board is an assignment's fallback
-  surface, never a hang either) and broadcasts a
-  critical-tier org-stall alert to every active human: the §5 last-admin guard keeps an admin
-  from being *deactivated*, not from being *absent*; the broadcast is the backstop. The
-  broadcast is an alert, not an ask: it renders to every active human — viewers included,
-  read-only — because the never-an-ask-target guard (§5) governs members the org waits on for
-  an answer and an awareness blast waits on no one; the ask-shaped exhaustion record behind it
-  addresses answerable members only. **Batching**: the digest composer groups by initiative, then workspace, then an ungrouped tail — an ask carrying neither link (org-level admin asks, member-direct questions) still renders there, so no ask falls out of every digest — and pre-fills recommended
-  answers — recommendations compute only from re-validated, untainted payloads: an ask originating
-  in a tainted run (§13) renders without a pre-fill, so one-click accept is a convenience for
-  trusted provenance, not an injection surface; approvals render as one-line accept/deny with diff links — reviewers see raw diffs,
-  never agent-authored summaries alone. Storms collapse: identical pending asks — same kind,
-  target set, payload hash — attach to one canonical ask as a `collapsed_count` within a window
-  (default 1h),
-  the digest renders "37 identical escalations" as one line, and the canonical ask's answer
-  resolves every collapsed waiter — the answer communal, one decision for identical
-  questions, where the retraction is originator-scoped (above), one change of heart per
-  originator; a per-source ask-creation rate limit (per run, trigger,
-  agent; default 60 per hour) sheds overflow into a single aggregate admin ask — the attention-side twin of the
-  §6.2 circuit-breaker — and the aggregate has a lifecycle, not a permanent residence: it
-  closes resolved when its source's creation rate falls back under the limit for a full window
-  or an admin acknowledges it, the shed count preserved in the audit — the line that surfaces
-  a storm never outlives the storm it surfaced. Digests compute per recipient: each human's timezone and working hours
-  (§7) define their morning — `queue_until_morning` means the recipient's, not the server's (§3
-  time authority). An unset calendar is still a calendar: humans with no timezone or working
-  hours fall back to the control plane's zone and 09:00–17:00 weekdays — the digest always has
-  a definite morning to compute. **Agent targets**: an ask routed to an agent queues into
-  its next run (or wakes a session worker); if the target is anything but `active` — requested,
-  retiring, suspended, or archived, the ephemeral states included via the §7 mapping — or is
-  busy past SLA, the ask reassigns up the chain (§6.3 suspend re-routing included). The agent
-  chain is the lineage chain: the first hop is the agent's `owner_human_id` (§2 — the chain
-  always terminates at a human, so the hop is never undefined), and from there it continues down
-  the human chain — deputy → domain owner → admin — with the same visited-set; an ask to an
-  agent never lacks a human next hop. **Delegated authority** — a directive can push authority,
-  not just work: the sponsor proposes a DNA rule scoped by `machine_hint` (initiative, ceiling,
-  window) — "initiative X: store invoices ≤ $25k need one approval, by the lead, until
-  2026-12-31" — reviewed like any rule. The ask router evaluates applicable rules, delegations
-  included, when choosing approvers, so a static approval matrix doesn't route six months of store
-  invoices through the same two people. When several delegated rules match one ask, the most
-  restrictive ceiling wins and a contradiction report goes to the sponsoring owners. A
+registry; humans only — an agent deputy is refused at write, because standing approval authority
+for agents is exactly what the reviewed, windowed delegated rules below exist for; self-deputy,
+deputy cycles, and viewer deputies are refused the same way — a read-only member is never a
+standing answer hop) → domain owner (of the domain the ask's workspace
+belongs to; asks with no domain skip the hop; multi-domain workspaces hop to the primary domain
+— first-bound, admin-editable: one deterministic hop, not a fan-out to every owner) → admin,
+walked on SLA breach (inactive members are skipped; the walk carries a visited-set, so a
+mis-configured cycle ends the hop, not the walk — the §5 last-admin guard and the exhaustion
+broadcast remain the backstops). The admin hop is a broadcast, not a pick: every path that
+routes to "an admin" — this terminal hop, the §4.3 review-SLA escalation and sod publish
+routing, the §6.2 spawn gate's fallback — addresses all active admins at once and the first
+valid response wins (sod publish resolves inside the domain write lock, so racing admins see
+one winner). The broadcast's recipient set is itself live-derived, the quorum pool's rule:
+it renders and admits responses against the current active-admin set, so an admin added
+mid-wait joins pending broadcasts, and one departed mid-wait contributes nothing — the §5
+walk owes no reassignment for an ask no single member holds, the last-admin guard keeps the
+set from emptying, and a former admin's late response is refused at the eligibility door
+like any out-of-set answer (§7). A single-admin org is the one-recipient degenerate case,
+and the broadcast is not ambient authority — a member-addressed ask stays member-addressed
+until its own chain escalates. `deadline` derives from the tier unless set
+explicitly — and an explicit deadline earlier than the ask's creation is refused at write:
+a past deadline is a contradiction, not a tier, and never an instantly-expired ask (the §9
+window-sanity rule's attention-side twin). Chain exhaustion — the admin broadcast finds no active recipient, or breaches — expires the ask
+per its expiry behavior (an unanswered approval is a no, never a hang; an exhausted assignment
+returns the task to the board pool with a digest line — the board is an assignment's fallback
+surface, never a hang either) and broadcasts a
+critical-tier org-stall alert to every active human: the §5 last-admin guard keeps an admin
+from being *deactivated*, not from being *absent*; the broadcast is the backstop. The
+broadcast is an alert, not an ask: it renders to every active human — viewers included,
+read-only — because the never-an-ask-target guard (§5) governs members the org waits on for
+an answer and an awareness blast waits on no one; the ask-shaped exhaustion record behind it
+addresses answerable members only. **Batching**: the digest composer groups by initiative, then workspace, then an ungrouped tail — an ask carrying neither link (org-level admin asks, member-direct questions) still renders there, so no ask falls out of every digest — and pre-fills recommended
+answers — recommendations compute only from re-validated, untainted payloads: an ask originating
+in a tainted run (§13) renders without a pre-fill, so one-click accept is a convenience for
+trusted provenance, not an injection surface; approvals render as one-line accept/deny with diff links — reviewers see raw diffs,
+never agent-authored summaries alone. Storms collapse: identical pending asks — same kind,
+target set, payload hash — attach to one canonical ask as a `collapsed_count` within a window
+(default 1h),
+the digest renders "37 identical escalations" as one line, and the canonical ask's answer
+resolves every collapsed waiter — the answer communal, one decision for identical
+questions, where the retraction is originator-scoped (above), one change of heart per
+originator; a per-source ask-creation rate limit (per run, trigger,
+agent; default 60 per hour) sheds overflow into a single aggregate admin ask — the attention-side twin of the
+§6.2 circuit-breaker — and the aggregate has a lifecycle, not a permanent residence: it
+closes resolved when its source's creation rate falls back under the limit for a full window
+or an admin acknowledges it, the shed count preserved in the audit — the line that surfaces
+a storm never outlives the storm it surfaced. Digests compute per recipient: each human's timezone and working hours
+(§7) define their morning — `queue_until_morning` means the recipient's, not the server's (§3
+time authority). An unset calendar is still a calendar: humans with no timezone or working
+hours fall back to the control plane's zone and 09:00–17:00 weekdays — the digest always has
+a definite morning to compute. **Agent targets**: an ask routed to an agent queues into
+its next run (or wakes a session worker); if the target is anything but `active` — requested,
+retiring, suspended, or archived, the ephemeral states included via the §7 mapping — or is
+busy past SLA, the ask reassigns up the chain (§6.3 suspend re-routing included). The agent
+chain is the lineage chain: the first hop is the agent's `owner_human_id` (§2 — the chain
+always terminates at a human, so the hop is never undefined), and from there it continues down
+the human chain — deputy → domain owner → admin — with the same visited-set; an ask to an
+agent never lacks a human next hop. **Delegated authority** — a directive can push authority,
+not just work: the sponsor proposes a DNA rule scoped by `machine_hint` (initiative, ceiling,
+window) — "initiative X: store invoices ≤ $25k need one approval, by the lead, until
+2026-12-31" — reviewed like any rule. The ask router evaluates applicable rules, delegations
+included, when choosing approvers, so a static approval matrix doesn't route six months of store
+invoices through the same two people. When several delegated rules match one ask, the most
+restrictive ceiling wins and a contradiction report goes to the sponsoring owners. A
 delegation may name an agent — persistent only: an ephemeral worker is refused at propose, the
 §5.1 mortality guard (a reviewed grant never runs to a dying-by-schedule identity) — and
 "by the lead" where the lead is one is precisely the reviewed,
@@ -1930,20 +1970,23 @@ there, exactly like a deputy's — a single signature may be delegated to a revi
 quorum may not. The named recipient resolves at ask-creation time — the grant runs to the
 post's current holder, and a non-active delegate reassigns by the standing chain rules,
 never to a departed identity. Delegations end by window, supersession, or initiative
-  close — rule semantics, not bespoke state: closing an initiative lapses every rule whose
-  `machine_hint` scopes it to that initiative (status → `lapsed`, dropped from injection and routing).
-  The grantee's own retirement is the fourth end: the §6.3 walk lapses an agent-named
-  delegate edge with its grantee — the rule stands, routing reverting to its owner, the
-  digest line the notice — while a post-named grant rides the post's re-pointing and
-  suspension remains the transient the non-active reassignment covers. A reviewed grant
-  never runs to a departed identity, exactly as no routing surface does.
-- **8.11 Inter-agent communication** — agents exchange **state, not chatter**. Agent→agent requests
-  are Asks with an agent target (§8.10); shared context lives on the task board as tasks and
-  artifacts, not repeated in-context explanation; deliberate multi-agent fan-out is a playbook
-  with `worker()` targets (§8.6); disputes between agents escalate to humans as DNA decision
-  proposals — never agent-vs-agent argument loops. No free-form agent-to-agent chat channels; every
-  cross-agent interaction is an auditable ledger entry (ask, task, or run artifact). Rationale:
-  unbounded agent conversation amplifies shared errors, burns tokens, and resists audit.
+close — rule semantics, not bespoke state: closing an initiative lapses every rule whose
+`machine_hint` scopes it to that initiative (status → `lapsed`, dropped from injection and routing).
+The grantee's own retirement is the fourth end: the §6.3 walk lapses an agent-named
+delegate edge with its grantee — the rule stands, routing reverting to its owner, the
+digest line the notice — while a post-named grant rides the post's re-pointing and
+suspension remains the transient the non-active reassignment covers. A reviewed grant
+never runs to a departed identity, exactly as no routing surface does.
+
+### 8.11 Inter-agent communication
+
+agents exchange **state, not chatter**. Agent→agent requests
+are Asks with an agent target (§8.10); shared context lives on the task board as tasks and
+artifacts, not repeated in-context explanation; deliberate multi-agent fan-out is a playbook
+with `worker()` targets (§8.6); disputes between agents escalate to humans as DNA decision
+proposals — never agent-vs-agent argument loops. No free-form agent-to-agent chat channels; every
+cross-agent interaction is an auditable ledger entry (ask, task, or run artifact). Rationale:
+unbounded agent conversation amplifies shared errors, burns tokens, and resists audit.
 
 ---
 
