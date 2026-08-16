@@ -42,7 +42,10 @@ Source: PLAN.md §5.
 ## Groups
 
 - **ORG-040** — Groups mix humans and agents; a local agent may act as Leader for
-  execution routing.
+  execution routing. A group ends by a named act, never abandonment: archival — an admin
+  act — leaves the row as read-only history (routing dead, no new members admitted), the
+  name reusable among non-archived groups (DAT-122, DNC-060's idiom at the team axis); no
+  bare delete exists.
 - **ORG-041** — Group membership derives from live state: the offboard walk clears a departed
   human, the retire walk a retired agent — execution routing never addresses a dead
   identity.

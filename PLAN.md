@@ -13,7 +13,7 @@ is promoted to a central, governed **Company DNA** with proposals and review; ag
 agents (governed); topology becomes a **control plane + execution nodes**, with a single-process
 mode so small teams start simple.
 
-*Version v2.52 · 2026-08-16 — change history: [CHANGELOG.md](CHANGELOG.md)*
+*Version v2.53 · 2026-08-16 — change history: [CHANGELOG.md](CHANGELOG.md)*
 
 > **Provenance & completion status**: the v1 design document that §7, §8, and §9 delta
 > against is not part of this repository. The normative, testable statement of every
@@ -434,9 +434,14 @@ keeps governing strictness separately.
   enumerated up front — and the emptied parent archives inside the same audited event:
   division is dissolve-by-split, merge-away-then-archive's algebra with N receivers, the
   results new rows while items keep the stable ids citations depend on. Merge
-  declares the surviving domain's attributes — access defaults to the most restrictive of the
-  merged pair, undeclared attributes persist from the surviving domain, and the `named` reader
-  list keeps the same floor: the survivor's list stands unless the op declares the union, so a
+  declares the surviving domain's attributes — access defaults to the narrower of the pair,
+  computed at declare time against live reader sets: `public` is the widest; every other
+  pairing — `domain` vs `domain` included — is won by the strictly smaller evaluated member
+  set, and a pair with no strictly smaller side (each admitting members the other excludes,
+  or the two evaluating equal) refuses the default and demands a declared access
+  (SPEC-06 DGV-014) — undeclared attributes persist from the surviving domain, and the
+  `named` reader list keeps the same floor: the survivor's list stands unless the op
+  declares the union, so a
   merge never silently widens access — and a narrowed list shows in the event's access
   re-evaluation, never a quiet lockout. A `store` change migrates content inside the same audited
   event (git→db-only
@@ -671,7 +676,10 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
   the demotion walk carries the post with the authority: a human demoted to viewer sheds the
   Leader post the way they shed deputy references and led initiatives — re-pointed inside the
   walk, a named successor else the admin-ask degradation — never left addressing a member who
-  can no longer answer.
+  can no longer answer. And groups end by a named act, never by abandonment: a group
+  archives rather than bare-deletes (§7's status enum) — an admin act leaving the row as
+  read-only history, routing dead and no new members admitted, the name reusable among
+  non-archived groups (§7), the domain-name reuse idiom (§4.4) at the team axis.
 - **Accountability invariant**: every agent row carries `owner_human_id`; spawned workers carry
   `spawned_by`; the chain must terminate at a human. Enforced at spawn time — and derived there,
   not configured: §6.2 names the row's first owner (the gate's accepting human for a persistent
@@ -998,10 +1006,11 @@ not only from what was pre-authored.
   reserved+settled is the breaker's trip condition — the halt lands, the trip ask raises
   below, and the edit is a loud act, never a silent contradiction between a cap row and its
   ledger.
-- **Approval gates**: persistent hires → Ask to the owner of the domain the hire's primary
-  workspace is bound to (or an admin) — a primary workspace with no bound domain routes the ask
-  to an admin outright, as does a hire with no workspace binding at all: no primary workspace
-  is no primary domain, the same deterministic hop — and a multi-domain one routes to the
+- **Approval gates**: persistent hires → Ask (kind `spawn_request`, §7) to the owner of the
+  domain the hire's primary workspace is bound to (or an admin) — a primary workspace with
+  no bound domain routes the ask to an admin outright, as does a hire with no workspace
+  binding at all: no primary workspace is no primary domain, the same deterministic hop —
+  and a multi-domain one routes to the
   primary domain (first-bound,
   admin-editable, §8.10): one deterministic hop, never an undefined gate — and a gate may
   address its own originator: the domain owner hiring into their own domain accepts in one
@@ -1099,8 +1108,8 @@ back into the workspace's project memory, not the departed personal one — plus
 assignments returned to the pool or reassigned, the retiree's workspace bindings and group
 memberships dropped and group Leader posts re-pointed or degraded to an admin ask
 (reader sets and execution routing re-deriving — the §5 participants
-scrub's retiree twin, §4.4), owned goals re-owned or retired (narrowing to
-the new owner's ceiling, the §5 rule — an empty intersection retiring), delegation grants
+scrub's retiree twin, §4.4), owned goals re-owned or retired (the §5 goal rule: successor
+or admin custody, else retire — the active-goal clamp), delegation grants
 naming the retiree as their agent approver resolved with it — the `machine_hint`'s delegate
 edge lapses inside the walk, the rule's normative content standing while its routing
 reverts to the domain owner, a digest line noting the grant that died with its grantee
@@ -1616,7 +1625,9 @@ data_holds     (id, kind 'member'|'domain', subject_id, reason_md, created_by, r
                  -- legal hold freezes §4.5 erasure until admin release, audited;
                  -- kind 'domain' freezes the §4.5 history-rewrite remediation and db-only
                  -- export/deletion for that domain: sensitive material found in git cannot be
-                 -- scrubbed out from under litigation
+                 -- scrubbed out from under litigation; the freeze binds the removal-adjacent
+                 -- doors alone — the §4.5 topology-manifest export snapshot a db-only op
+                 -- triggers is preservation, the hold's own record, never frozen
 ```
 
 v1's per-agent knowledge bases are subsumed: a "KB" is now a DNA domain import (sources are
@@ -1664,7 +1675,8 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
   the tiers: memory written by a tainted run (§13) carries the flag, renders with its provenance
   when retrieved, is barred from digest pre-fills like tainted asks (§8.10), and is cleared only
   by explicit review — the spawner's owner for personal memory, the domain owner for project
-  memory — never by the passage of time. A tainted memory item cannot be the sole support for an
+  memory, and the proposal review itself for proposal-tier rows (§4.3) — never by the
+  passage of time. A tainted memory item cannot be the sole support for an
   external write: pair it with an untainted source, or ask.
 - **8.4 Skills** — unchanged; domain-organized packs; uninstall dependency checks.
 - **8.5 Trigger engine** — schedule/API/event triggers unchanged; every firing is a run of the same
@@ -1687,9 +1699,11 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
   · **initiative playbooks** (§5.1): an SOP instantiated under an initiative becomes the
   cross-domain spine — nodes route asks into each domain's escalation chain (§8.10) and artifacts
   land on the initiative's board slice. Instantiation is bounded like spawning: playbooks carry
-  an instantiation depth cap (default 2, mirroring §6.2) and are cycle-checked at publish —
-  direct or transitive self-instantiation is refused at save, and the runtime depth cap is the
-  backstop; an orchestration loop cannot starve sandbox quotas underneath the spawn policy.
+  an instantiation depth cap (default 2, mirroring §6.2) and are cycle-checked at both
+  authoring doors — direct or transitive self-instantiation is refused at save and again at
+  publish (a new version can close a cycle the saved graph left open), and the runtime
+  depth cap is the backstop; an orchestration loop cannot starve sandbox quotas underneath
+  the spawn policy.
   Versioned references are pinned, not dangling: a run launches from the exact playbook
   version it was instantiated against, so in-flight instantiations complete on their pin
   through a later publication or retirement — the template-row rule's shape (§6.5) — and
@@ -2126,8 +2140,9 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   in ask routing, egress/path guards, scheduler math, memory 3-tier classifier, offboarding dependency walk (last-admin guard incl.
   racing offboards and self-demotion refusal, initiative reassignment, deputy clearing, session/PAT revocation, asks-from
   closure), domain split/merge id-and-chain invariants, merge attribute resolution
-  (most-restrictive access, declared store, hold-refused migration) + post-op contradiction
-  re-check + archive-refuses-items,
+  (narrower-of-pair access via evaluated reader sets — incomparable or equal pairs
+  demanding a declared access — declared store, hold-refused migration) + post-op
+  contradiction re-check + archive-refuses-items,
   template-upgrade scope re-derivation, escalation-walk visited-set (deputy cycles), deputy
   guard (agent, self, viewer, and cycle refusals), trigger catch-up coalescing, atomic quota claims under racing spawners, DNA
   store ingestion quarantine, topology-op write-lock serialization, ask respond-time
@@ -2290,6 +2305,8 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   audited edit to the gate the edited `domain_ids` derives — the new primary's owner or the
   admin fallback — ids and deadlines stable), group-Leader write guards (viewer and
   non-active members refused at set, the ephemeral mortality pin) with demotion re-pointing,
+  group archival (the admin door, the row left as read-only history, name reuse among
+  non-archived),
   and cap-edit non-retroactivity (a tightened count cap refusing new claims while live
   claims run out, a spend ceiling tightened below live reserved+settled tripping the breaker
   with its ask), spend-halt launch-gating (runs in flight at a trip completing and settling,

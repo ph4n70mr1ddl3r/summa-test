@@ -31,7 +31,8 @@ forever.
   workspace's project memory, not the departed personal one); board-task assignments
   returned to the pool or reassigned; workspace bindings and group memberships dropped with
   Leader posts re-pointed or degraded to an admin ask; owned goals re-owned or retired
-  (narrowing to the new owner's ceiling; empty intersection retires); initiative lead/sponsor
+  (the OFB-013 rule: successor or admin custody, else retire — the active-goal clamp);
+  initiative lead/sponsor
   posts reassigned or closed with their pending sponsor-addressed asks re-keying inside the
   walk; the retiree's own pending asks closed with an audit note — pending spawn requests
   included, draining the template pins (a terminal act leaves no waiters).

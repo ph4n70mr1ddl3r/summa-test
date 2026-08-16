@@ -7,7 +7,9 @@ Source: PLAN.md §8.10.
 - **ASK-001** — Ask kinds: `approval | question | assignment | spawn_request`; fields per
   SPEC-16. Asks carry payload, deadline, SLA tier (`critical | standard | bulk`), escalation
   policy, expiry behavior (`deny | escalate | reassign`), optional initiative/workspace
-  linkage, quorum count, responses ledger, collapsed count.
+  linkage, quorum count, responses ledger, collapsed count. The spawn gates file their
+  asks as kind `spawn_request` (SPW-040/043); `approval` is the generic write-approval
+  kind (ORG-025's v1 mapping).
 - **ASK-010** — SLA tiers: `critical` (blocks a customer-facing or money-moving run —
   interrupt-grade push, console + IM), `standard` (blocks a run — next digest), `bulk`
   (non-blocking — daily digest, batched). The headless approval policy maps onto them:

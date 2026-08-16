@@ -4,6 +4,32 @@ Version history for PLAN.md and the `specs/` suite. Newest first. Entries v2.1�
 were extracted verbatim from PLAN.md's preamble in v2.46; from v2.46 on, history lives
 here alone (PLAN.md carries only the current version stamp).
 
+**Errata pass (v2.53)**: a full-suite review — PLAN.md and all 21 modules read against each
+other for consistency, completeness, and unambiguity — closed seven residues: PLAN §4.4's
+merge-access shorthand ("most restrictive of the merged pair") predated DGV-014's v2.50
+totality and left `domain` vs `domain` undefined on the PLAN side — §4.4 and §12's test
+wording now carry the narrower-of-pair rule (evaluated reader sets, strictly smaller wins,
+incomparable-or-equal pairs demanding a declared access) · PLAN §8.3's taint-clearance list
+predated SUB-041's v2.51 completion — the proposal tier's reviewer (the proposal review
+itself, DWP-003) now mirrored · the kind-`domain` hold's db-only export freeze (DAT-110, §7)
+read as freezing the STG-040 export snapshot a topology op triggers — but DGV-017 keeps
+rename open under a hold, so a held db-only rename would both fire and freeze its own
+preservation snapshot; the freeze is now scoped to the removal-adjacent doors, the snapshot
+named as the hold's own record (DAT-110, STG-040, §7) · CLC-020/§6.3's goal re-owning
+carried the staff rule's scope language ("narrowing to the new owner's ceiling; empty
+intersection retires") onto goals, which hold no scopes — both now name the actual goal rule
+(OFB-013: successor or admin custody, else retire, the active-goal clamp) · SUB-062/§8.6's
+cycle check named two doors for one check ("cycle-checked at publish … refused at save") —
+now refused at save and again at publish, a new version being able to close a cycle the
+saved graph left open · ask kind `spawn_request` had no pinned producer while the gate
+prose said "approval ask" — ASK-001 pins the spawn gates (SPW-040/043) to kind
+`spawn_request`, `approval` staying the generic write-approval kind, with §6.2's gate
+bullet carrying the kind tag · `groups.status 'archived'` was the model's one terminal
+state with no producing door — ORG-040 completes it (admin act, read-only history, name
+reusable among non-archived — DAT-122's uniqueness rule gaining its door), mirrored in §5's
+groups bullet with a §12 test line. Lint green: 480 requirements, TRACEABILITY exact both
+directions.
+
 **Errata pass (v2.52)**: a full-suite review — PLAN.md and all 21 modules read against each
 other for consistency, completeness, and unambiguity — closed five residues: the v2.48
 re-base/re-target distinction had reached INT-051 and §5.1 but not its two other statements —

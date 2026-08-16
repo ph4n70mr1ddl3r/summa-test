@@ -121,8 +121,10 @@ memory_items   (id, tier 'personal'|'project'|'proposal', member_id?, workspace_
   window (default 7d, CFG-013); replays return the original run (SUB-052).
 - **DAT-102** — `external_writes` staged lifecycle per SUB-020/022.
 - **DAT-110** — `data_holds`: kind `member` freezes erasure; kind `domain` freezes
-  history-rewrite remediation and db-only export/deletion, and the hold-refused topology ops
-  check it (DGV-017, STG-034); created/released through the admin endpoints, audited.
+  history-rewrite remediation and db-only export/deletion at the removal-adjacent doors
+  alone — the STG-040 preservation snapshots a topology op triggers are the hold's own
+  record and never freeze — and the hold-refused topology ops check it (DGV-017, STG-034);
+  created/released through the admin endpoints, audited.
 
 ## Completion tables (v2.46)
 
@@ -142,7 +144,7 @@ memory_items   (id, tier 'personal'|'project'|'proposal', member_id?, workspace_
   without deleting the row (STG-030).
 - **DAT-122** — `groups` is unique on name among non-archived; `group_memberships` evaluate
   against live state with the walks writing the removals (ORG-041); the Leader-post write
-  guard is ORG-042's.
+  guard is ORG-042's; the archival door is ORG-040's (admin act, read-only history).
 - **DAT-123** — `governance_settings` is the single persistence home for the policy and
   quota values behind API-050 — one row per named parameter, the CFG catalog its key space;
   edits are admin, audited; a fresh deployment ships the documented defaults as its initial

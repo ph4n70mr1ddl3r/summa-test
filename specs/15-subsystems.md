@@ -79,8 +79,9 @@ owns no SUB IDs (TRACEABILITY's §8.4 row).
   cross-domain spine — nodes route asks into each domain's escalation chain and artifacts
   land on the initiative's board slice.
 - **SUB-062** — Instantiation is bounded: depth cap (default 2, mirroring spawn depth,
-  CFG-018) and cycle-checked at publish — direct or transitive self-instantiation refused
-  at save; the runtime depth cap is the backstop.
+  CFG-018) and cycle-checked at both authoring doors — direct or transitive
+  self-instantiation refused at save and again at publish (a new version can close a cycle
+  the saved graph left open); the runtime depth cap is the backstop.
 - **SUB-063** — Versioned references are pinned: a run launches from the exact playbook
   version it was instantiated against; in-flight instantiations complete on their pin
   through a later publication or retirement.

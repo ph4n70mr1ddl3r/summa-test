@@ -76,7 +76,9 @@ Source: PLAN.md §4.5.
 
 - **STG-040** — Topology history for db-only domains rests on the audit log, not git:
   split/merge/rename/archive writes a full manifest and triggers an export snapshot;
-  scheduled exports back the history the git timeline never held.
+  scheduled exports back the history the git timeline never held. The snapshot is
+  preservation: a kind-`domain` hold freezes the removal-adjacent doors (DAT-110),
+  never the hold's own record.
 
 ## Key acceptance scenarios
 
