@@ -36,10 +36,14 @@ Source: PLAN.md §4.4.
   the same event (division is dissolve-by-split).
 - **DGV-013** — The declared mapping respects chain integrity: a supersession chain maps whole
   to one result; a mapping that would divide a chain is refused at declare.
-- **DGV-014** — Merge declares the surviving domain's attributes: access defaults to the most
-  restrictive of the pair; undeclared attributes persist from the survivor; the `named` list
-  keeps the survivor's unless the op declares the union — a merge never silently widens
-  access, and a narrowed list shows in the event's access re-evaluation.
+- **DGV-014** — Merge declares the surviving domain's attributes: access defaults to the
+  narrower of the pair, computed at declare time against live reader sets (DGV-002) —
+  `public` is the widest; `domain` vs `named`, and `named` vs `named`, compare their
+  evaluated member sets with the strictly smaller set winning, and an incomparable pair
+  (each admitting members the other excludes) refuses the default and demands a declared
+  access; undeclared attributes persist from the survivor; the `named` list keeps the
+  survivor's unless the op declares the union — a merge never silently widens access, and
+  a narrowed list shows in the event's access re-evaluation.
 - **DGV-015** — A `store` change migrates content inside the same audited event: git→db-only
   sweeps the files from the tree in one commit; db-only→git demands an explicit confirm
   (immutable history is published); both are refused while either side sits under a
@@ -107,7 +111,7 @@ Source: PLAN.md §4.4.
   writer re-reads the list inside the lock it queued behind — no lost update either way.
 - **DGV-053** — Prior states stay reconstructible from git history and audit; for db-only
   domains, topology ops write full manifests (item ids, from/to, access re-evaluations) to
-  the audit log and trigger an export snapshot (STG-032).
+  the audit log and trigger an export snapshot (STG-040).
 
 ## Key acceptance scenarios
 

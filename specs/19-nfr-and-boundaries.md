@@ -14,7 +14,7 @@ Source: PLAN.md §2, §13, §13.1.
 
 - **NFR-010** — Injection is deterministic per (reader access, domain set, linked-goal set,
   DNA version) (DRP-003); hybrid-ranking determinism (same query → same blend, across index
-  rebuilds) is a Phase-0 spike gate (DLV-040).
+  rebuilds) is a Phase-0 spike gate (DLV-041).
 - **NFR-011** — Time is monotonic in effect (ARC-031); no backward clock step un-expires
   anything or reverses a terminal transition.
 

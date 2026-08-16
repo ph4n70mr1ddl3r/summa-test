@@ -47,3 +47,11 @@ trigger; the mechanism it tunes is already designed (NFR-022). Defaults live beh
   (SUB-052).
 - **CFG-014** — Persistent-hire budget window: default monthly, admin-configurable
   (SPW-032).
+- **CFG-015** — Storm-collapse window: identical pending asks collapse into one canonical
+  ask within this window (default 1h) (ASK-100).
+- **CFG-016** — Per-source ask-creation rate limit: default 60 asks/hour per run, trigger,
+  or agent; the storm aggregate closes after one full window back under the limit
+  (ASK-101).
+- **CFG-017** — Org-wide concurrent agent cap: default 100 active agents (persistent +
+  ephemeral combined) — a runaway-spawn backstop sized to trip well before resource
+  exhaustion (SPW-031).

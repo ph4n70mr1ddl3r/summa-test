@@ -25,6 +25,14 @@ is the PRN-009 form — refuse, audit, ask where a human decision is needed.
   (ARC-016) · `PUT /nodes/:id` — admin; region and metadata only, never capabilities
   (ARC-015); a region edit re-validates every residency-constrained placement bound to the
   node (ARC-042).
+- **API-060** — Node runtime surface (node-authenticated via its enrolled keypair, SEC-012):
+  `POST /nodes/:id/heartbeat` writes `last_heartbeat` and capability state (ARC-014) ·
+  `POST /nodes/:id/claims` acquires or renews a workspace claim as an epoch-fenced lease
+  (ARC-020; a stale epoch is refused at this mediated boundary, DLV-053) ·
+  `POST /nodes/:id/work/pull` fetches queued runs for workspaces the node holds a live
+  claim on · `POST /nodes/:id/runs/:runId/report` lands results, artifacts, and spend
+  ledger lines. Every endpoint refuses a revoked node (ARC-016); refusals take the PRN-009
+  form like any other.
 
 ## DNA
 
@@ -77,3 +85,15 @@ is the PRN-009 form — refuse, audit, ask where a human decision is needed.
   gate (`:id` = the overshot settle's spend-ledger row).
 - **API-052** — `POST /governance/holds` · `POST /governance/holds/:id/release` — admin,
   audited; `data_holds` lifecycle (DAT-110).
+
+## Refusal envelope
+
+- **API-061** — One refusal envelope on the whole surface: every refused write or action
+  responds 4xx with the machine-parseable body `{code, message, audit_event_id, ask_id?}`.
+  `code` is a stable enum — `validation | eligibility | not_found | conflict |
+  rate_limited | gate` — mapped per family: 422 validation, 403 eligibility (the write-door
+  guards), 404 not_found, 409 conflict (lock serialization, racing transitions, stale
+  epoch), 429 rate_limited (ASK-101), with `gate` covering guard refusals that carry policy
+  context (quota, depth, spend halt). `audit_event_id` links the row the refusal wrote and
+  `ask_id` the ask a PRN-009/NFR-001 refusal raised — a refusal without an audit row is a
+  bug, not a response.

@@ -66,7 +66,7 @@ Source: PLAN.md §4.2, §4.6.
   candidates render tagged with their domains — never a silent coin flip.
 - **DRP-034** — A draft (owner-staged, cards and glossary) is visible to its owner alone.
 - **DRP-035** — Decisions are always live in search within their domain's corpus; an archived
-  domain's decisions leave search with the corpus and resolve by citation (DGV-040).
+  domain's decisions leave search with the corpus and resolve by citation (DGV-041).
 - **DRP-036** — Responses shall reference cards; the console and IM render citations that open
   the source card with its provenance.
 

@@ -34,8 +34,9 @@ Source: PLAN.md §6.1, §6.2.
 
 - **SPW-030** — Scope delegation: child's file/tool/connector scopes ⊆ parent's, enforced by
   the policy engine.
-- **SPW-031** — Quotas: max concurrent ephemeral workers per spawner, global spawn depth
-  (default 2), org-wide concurrent agents, per-spawn and org-wide spend caps metered by
+- **SPW-031** — Quotas: max concurrent ephemeral workers per spawner (CFG-040), global
+  spawn depth (default 2), org-wide concurrent agents (default 100 active agents,
+  persistent + ephemeral combined, CFG-017), per-spawn and org-wide spend caps metered by
   the spend ledger. Count caps are *claimed*, not checked: the engine increments atomically
   inside the spawn transaction — two spawners racing the last slot see one success and one
   refusal.
@@ -120,7 +121,7 @@ Source: PLAN.md §6.1, §6.2.
 - **SPW-063** — The critical floor carries critical-tagged firings only, never a hire: spawn
   approvals carry no criticality tag and never ride the floor.
 - **SPW-064** — The halt is a timetable state as well: schedules elapsing while it holds
-  coalesce per the SUB-050 machinery and play on the trip ask's resolution — the critical
+  coalesce per the SUB-051 machinery and play on the trip ask's resolution — the critical
   floor launching critical-class throughout, total exhaustion coalescing everything — never
   a silent drop nor a lift storm.
 

@@ -30,7 +30,7 @@ Source: PLAN.md §5.1.
   landing after a close is audit-only — terminal beats activation.
 - **INT-022** — Pause and resume belong to the lead or the sponsor; an admin holds both as
   emergency backstop. Close belongs to either (and to a lead or sponsor shutting down a
-  `proposed` directive that never won activation) and always runs the CLC-010 dependency
+  `proposed` directive that never won activation) and always runs the CLC-020 dependency
   check; close unbinds workspaces with the goal slice re-deriving at once.
 - **INT-023** — `closed` is terminal — initiatives never reopen; revival opens a new
   initiative referencing the old one's decision (`decision_ref`), so burndown and history
@@ -48,7 +48,7 @@ Source: PLAN.md §5.1.
   (context, not execution), the delegation's own window stays the bound — pausing past a
   deadline still raises the sponsor ask — and resume unfreezes in place. Close, not pause,
   unbinds.
-- **INT-033** — Schedules elapsing under pause coalesce per SUB-050 and play their catch-up
+- **INT-033** — Schedules elapsing under pause coalesce per SUB-051 and play their catch-up
   run on resume; pause defers timetables, never drops them.
 
 ## Close semantics
@@ -63,7 +63,11 @@ Source: PLAN.md §5.1.
   under the initiative are refused (a task that still needs filing belongs to a successor
   initiative); ephemeral workers finish their bounded task and fold back. A sponsor needing
   mid-flight stops suspends or retires the specific agents (CLC-015).
-- **INT-042** — The retrospective files DNA proposals — the §1 loop closes.
+- **INT-042** — When an initiative transitions to `closed`, the close event shall file a
+  retrospective ask (kind `question`, tier `standard`, expiry `escalate`) to the lead —
+  the sponsor when the lead is unset or non-active — directing DNA proposals through the
+  normal write path (DWP-010): a decision record of the outcome, plus the lessons worth
+  keeping. The ask's resolution is the filing; the §1 loop closes.
 
 ## Direction asks (goal linkage)
 
@@ -78,7 +82,7 @@ Source: PLAN.md §5.1.
   check — a re-point onto a goal that died while the ask waited is audit-only, the successor
   ask carrying a live choice.
 - **INT-052** — Direction asks are questions: unanswered, they escalate sponsor → admin and
-  stay pending in every digest (ASK-011) — never a silent no.
+  stay pending in every digest (ASK-110) — never a silent no.
 
 ## Stall detection
 

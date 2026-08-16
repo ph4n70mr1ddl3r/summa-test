@@ -56,13 +56,23 @@ trigger_firings (id, trigger_id, idempotency_key, fired_at, run_id?)
 external_writes (id, run_id, connector, op, idempotency_key,
                 status 'prepared'|'committed'|'compensated'|'failed', prepared_at, resolved_at?)
 data_holds     (id, kind 'member'|'domain', subject_id, reason_md, created_by, released_at?)
+groups         (id, name, leader_member_id?, status 'active'|'archived', created_at)
+group_memberships (group_id, member_id, added_by member, added_at, removed_at?)
+audit_events   (id, at, actor member|'system', action, object_type, object_id, detail json,
+                node_id?, origin 'live'|'replay' default 'live')
+pats           (id, member_id, name, token_hash, scopes json, created_at, expires_at,
+                revoked_at?, last_used_at?)
+governance_settings (key, value json, edited_by member, edited_at)
+memory_items   (id, tier 'personal'|'project'|'proposal', member_id?, workspace_id?,
+                content_md, provenance json, tainted bool default false, created_at,
+                reviewed_by?, reviewed_at?)
 ```
 
 ## Representational invariants (DAT)
 
 - **DAT-010** — `humans.deactivated_at` is offboarding's whole terminal marker: ask-chain
   walks skip deactivated members; the last-admin guard counts admins with
-  `deactivated_at IS NULL`; rehire is a new row (OFB-022).
+  `deactivated_at IS NULL`; rehire is a new row (ORG-022).
 - **DAT-011** — `humans.deputy_member_id` must reference a humans row that is neither the
   member nor a viewer; agent, self, and viewer deputies are refused at write (ORG-060/061).
 - **DAT-020** — `agents.owner_human_id` is derived at spawn per ORG-051 and carried by the
@@ -74,7 +84,7 @@ data_holds     (id, kind 'member'|'domain', subject_id, reason_md, created_by, r
 - **DAT-030** — `role_templates` unique on (class, name, version); class stable across a
   name's versions — live and retired rows alike, a reused name carrying its class (TPL-002/
   003/045); catalog writes are admin, audited (TPL-004).
-- **DAT-040** — `nodes.capabilities` is heartbeat-owned (ARC-015); `claim` carries the
+- **DAT-040** — `nodes.capabilities` is heartbeat-owned (ARC-014); `claim` carries the
   epoch-fenced lease (ARC-020); `status 'revoked'` is terminal with the keypair refused
   everywhere (ARC-016).
 - **DAT-050** — `dna_domains`: row-write authority split per DGV-005; name unique among
@@ -109,3 +119,32 @@ data_holds     (id, kind 'member'|'domain', subject_id, reason_md, created_by, r
 - **DAT-110** — `data_holds`: kind `member` freezes erasure; kind `domain` freezes
   history-rewrite remediation and db-only export/deletion, and the hold-refused topology ops
   check it (DGV-017, STG-034); created/released through the admin endpoints, audited.
+
+## Completion tables (v2.46)
+
+- **DAT-120** — Member references are one keyed union: every member-typed column
+  (`asks.from/to`, `initiatives.sponsor/lead`, `board_tasks.assignee_member_id`,
+  `groups.leader_member_id`, `pats.member_id`, `group_memberships.member_id`, among others)
+  carries `h:<humans.id>` or `a:<agents.id>` — never a bare integer — and resolves against
+  the live row of its keyed kind (ORG-001's shared namespace, given a representation). The
+  reserved `system` originator is the one non-member value a member-typed column may carry,
+  `asks.from` alone (DAT-080).
+- **DAT-121** — `audit_events` is append-only: rows are inserted, never updated or deleted;
+  every refusal, write door, credential use, and admin act lands one row (SEC-009,
+  NFR-001); `node_id` stamps the acting node where one exists (SEC-012); restore re-appends
+  pre-restore segments with `origin 'replay'` (DLV-055); erasure pseudonymizes `actor`
+  without deleting the row (STG-030).
+- **DAT-122** — `groups` is unique on name among non-archived; `group_memberships` evaluate
+  against live state with the walks writing the removals (ORG-041); the Leader-post write
+  guard is ORG-042's.
+- **DAT-123** — `governance_settings` is the single persistence home for the policy and
+  quota values behind API-050 — one row per named parameter, the CFG catalog its key space;
+  edits are admin, audited; a fresh deployment ships the documented defaults as its initial
+  key set.
+- **DAT-124** — `pats` stores `token_hash` only, never plaintext (SEC-004); status-fencing
+  and live-authority intersection evaluate at use, never on the row (SEC-003/005); expiry,
+  rotation, revocation, and last-used are row-writes on the one live row per token.
+- **DAT-125** — `memory_items`: tier per the SUB-040 classifier; `tainted` propagates per
+  SUB-041 and clears only through `reviewed_by/at` — never by passage of time; personal-tier
+  rows archive inert with their member (CLC-023) — the member's archived status is the
+  inertness, no row rewrite needed.

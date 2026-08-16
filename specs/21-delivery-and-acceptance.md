@@ -46,9 +46,12 @@ Source: PLAN.md §11, §12.
 
 - **DLV-050** — **P1**: agent edits a repo file through a gated approval; audit trail
   complete end to end.
-- **DLV-051** — **P3**: fixed task battery run with/without DNA injection shows measurable
-  improvement (citation accuracy, rule compliance) — the product's core hypothesis, tested,
-  not assumed.
+- **DLV-051** — **P3**: a fixed, version-controlled task battery (≥ 20 tasks spanning
+  retrieval, rule compliance, and citation, committed to the repo at P3 start) run with and
+  without DNA injection, three paired trials per arm; the demo passes when the with-DNA arm
+  wins a majority of the battery's scored metrics — citation accuracy, rule compliance,
+  task completion, each a rate over the battery — in at least two of the three trials:
+  the product's core hypothesis, tested, not assumed.
 - **DLV-052** — **P4**: headless trigger fires overnight; a blocked approval auto-denies at
   expiry; the morning digest renders correctly, grouped by initiative.
 - **DLV-053** — **P6**: two humans + two nodes; heartbeat loss mid-run recovers with no

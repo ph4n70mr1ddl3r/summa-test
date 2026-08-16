@@ -12,7 +12,7 @@ forever.
 - **CLC-002** — Denial is terminal for a `requested` row: a denied or expired spawn request
   transitions `requested`→`archived` without ever activating, draining its template pin
   (SPW-044).
-- **CLC-003** — `template_id` null marks a customRole hire; promotion (TPL-030) is its
+- **CLC-003** — `template_id` null marks a customRole hire; promotion (TPL-040) is its
   catalog door.
 
 ## Lifecycle act authority
@@ -36,7 +36,7 @@ forever.
   walk; the retiree's own pending asks closed with an audit note — pending spawn requests
   included, draining the template pins (a terminal act leaves no waiters).
 - **CLC-021** — Asks *to* the retiree need no walk entry: the non-active target rule
-  (ASK-060) reassigns them up the lineage chain.
+  (ASK-061) reassigns them up the lineage chain.
 - **CLC-022** — Upgrade asks settle with the agent they name: an owner-upgrade ask closes
   unresolved with an audit note inside the walk; a response racing the retirement is
   audit-only with no successor ask.
@@ -76,7 +76,7 @@ forever.
 - **CLC-031** — The halt gates its own publishing: a spawn request pending *from* the
   suspended worker is a launch the halt refuses — an approval landing during suspension is
   audit-only and the request archives.
-- **CLC-032** — Resume re-arms triggers (missed schedules coalesce, SUB-050) and launches
+- **CLC-032** — Resume re-arms triggers (missed schedules coalesce, SUB-051) and launches
   new runs, but never resurrects a halted one — a run suspended mid-flight is terminal:
   partial results fold back, interrupted work re-enters as new runs or board tasks, staged
   writes resolve through reconciliation — no half-replayed side effect.

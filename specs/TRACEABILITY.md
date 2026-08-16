@@ -1,9 +1,10 @@
 # Traceability — PLAN.md ⇄ Specification Suite
 
-Completeness proof for the SDD suite: every section of `PLAN.md` (v2.45) maps to requirements
+Completeness proof for the SDD suite: every section of `PLAN.md` (v2.46) maps to requirements
 in these specs, and every requirement traces back to a PLAN source. The coverage column lists
-exact, machine-checkable ID ranges generated from the defined requirements (no elided
-prefixes, no implied gaps). Reading direction for implementation: PLAN section → spec module
+exact ID ranges generated from the defined requirements (no elided prefixes, no implied gaps).
+Both directions — every defined ID listed, every listed ID defined — are verified by
+`tools/lint_specs.py` in CI. Reading direction for implementation: PLAN section → spec module
 → REQ IDs → tasks/tests.
 
 | PLAN.md section | Spec module(s) | Requirement coverage |
@@ -25,7 +26,7 @@ prefixes, no implied gaps). Reading direction for implementation: PLAN section �
 | §6.3 Lineage (authority, retire/suspend/resume, re-role, fencing) | 12 | CLC-001…003, CLC-010, CLC-015, CLC-020…027, CLC-030…034, CLC-040 |
 | §6.4 Personal assistants | 12 | CLC-050…053 |
 | §6.5 Templates & catalog (versioning, upgrades, promotion) | 13 | TPL-001…004, TPL-010…011, TPL-020…023, TPL-030, TPL-040…046 |
-| §7 Data model (all tables + inline invariants) | 16 (+03; workspaces archival walk: 12, CLC-040) | DAT-010…011, DAT-020…022, DAT-030, DAT-040, DAT-050, DAT-060…061, DAT-070, DAT-080…081, DAT-090…091, DAT-100…102, DAT-110 |
+| §7 Data model (all tables + inline invariants) | 16 (+03; workspaces archival walk: 12, CLC-040) | DAT-010…011, DAT-020…022, DAT-030, DAT-040, DAT-050, DAT-060…061, DAT-070, DAT-080…081, DAT-090…091, DAT-100…102, DAT-110, DAT-120…125 |
 | §8.1 Agent runtime | 15 | SUB-001…005 |
 | §8.2 Tools & MCP (staged writes, send-once, reconciliation) | 15 | SUB-010…011, SUB-020…022 |
 | §8.3 Memory service (taint) | 15 | SUB-040…042 |
@@ -37,16 +38,17 @@ prefixes, no implied gaps). Reading direction for implementation: PLAN section �
 | §8.9 Console screens | 15 | SUB-090 |
 | §8.10 Asks (tiers, expiry, withdrawal, quorum, chains, delegation, storms, digests) | 14 | ASK-001, ASK-010…012, ASK-015, ASK-030…033, ASK-040…044, ASK-050…058, ASK-060…061, ASK-090…095, ASK-100…101, ASK-110…111 |
 | §8.11 Inter-agent communication | 15 | SUB-100…101 |
-| §9 API surface | 17 | API-001…006, API-010, API-020…024, API-030…033, API-040…044, API-050…052 |
+| §9 API surface | 17 | API-001…006, API-010, API-020…024, API-030…033, API-040…044, API-050…052, API-060…061 |
 | §10 Security & governance checklist | 18 | SEC-001…005, SEC-009…012, SEC-020, SEC-030, SEC-040…042, SEC-050 |
 | §11 Delivery plan (phases, spikes, acceptance, restore) | 21 | DLV-010…013, DLV-040…043, DLV-050…055 |
 | §12 Testing & quality | 21, README, 19 | DLV-060…061; NFR-010…011 (determinism); README verification conventions |
 | §13 Risks & mitigations | 19 | NFR-030…035 |
 | §13.1 Residual risk / accepted boundaries | 19 | NFR-001, NFR-020…022 |
-| §14 Key open decisions 1–16 + named parameters | 20 | CFG-001, CFG-010…014, CFG-020, CFG-030, CFG-040, CFG-050, CFG-060, CFG-070, CFG-080, CFG-090, CFG-100, CFG-110, CFG-120, CFG-130, CFG-140, CFG-150, CFG-160 |
+| §14 Key open decisions 1–16 + named parameters | 20 | CFG-001, CFG-010…017, CFG-020, CFG-030, CFG-040, CFG-050, CFG-060, CFG-070, CFG-080, CFG-090, CFG-100, CFG-110, CFG-120, CFG-130, CFG-140, CFG-150, CFG-160 |
 
 ## Maintenance rule
 
 When PLAN.md gains an amendment (an edge-case sweep or a new pass), the delta must land here
 in the same change: new REQs in the host module, an updated coverage range above, and tests
-citing the new IDs. A PLAN change without a spec delta is an incomplete change.
+citing the new IDs. A PLAN change without a spec delta is an incomplete change — and
+`tools/lint_specs.py` (CI) fails the build if the ranges above drift from the definitions.

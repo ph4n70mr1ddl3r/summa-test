@@ -18,8 +18,8 @@ Source: PLAN.md §8.10.
   `reassign` (default for assignments); a run blocked on an expired ask never hangs. `deny`
   closes the expired ask; `escalate` and `reassign` close it and open a linked successor ask
   (up the chain / to the named deputy).
-- **ASK-012** — `deadline` derives from the tier unless set explicitly; an explicit deadline
-  earlier than the ask's creation is refused at write.
+- **ASK-012** — `deadline` derives from the tier (tier defaults: CFG-140) unless set
+  explicitly; an explicit deadline earlier than the ask's creation is refused at write.
 - **ASK-015** — A quorum-1 ask closes on the first response received; later responses
   (member and deputy racing) are audit-only; a response to an expired ask — or to a withdrawn
   one, terminal the same way (ASK-030) — is recorded with no effect: the successor ask, if
@@ -106,10 +106,11 @@ Source: PLAN.md §8.10.
   skipped; the walk carries a visited-set so a mis-configured cycle ends the hop, not the
   walk.
 - **ASK-061** — Agent targets: an ask routed to an agent queues into its next run (or
-  wakes a session worker); if the target is anything but `active`, or is busy past SLA, the
-  ask reassigns up the chain; the agent chain is the lineage chain — first hop the agent's
-  `owner_human_id`, then the human chain with the same visited-set; an ask to an agent never
-  lacks a human next hop.
+  wakes a session worker); if the target is anything but `active`, or is busy past SLA —
+  an ask queued into the agent's next run sitting past its own deadline (ASK-012) without
+  a run pickup — the ask reassigns up the chain; the agent chain is the lineage chain —
+  first hop the agent's `owner_human_id`, then the human chain with the same visited-set;
+  an ask to an agent never lacks a human next hop.
 - **ASK-055** — The admin hop is a broadcast: every path routing to "an admin" — the
   terminal hop, review-SLA escalation, sod publish routing, the spawn gate's fallback —
   addresses all active admins at once and the first valid response wins; the broadcast
@@ -154,14 +155,15 @@ Source: PLAN.md §8.10.
 ## Storms and digests
 
 - **ASK-100** — Storms collapse: identical pending asks — same kind, target set, payload
-  hash — attach to one canonical ask as a `collapsed_count` within a window; the digest
-  renders "37 identical escalations" as one line; the canonical ask's answer resolves every
-  collapsed waiter — the answer communal, one decision for identical questions, where the
-  retraction is originator-scoped (ASK-033).
-- **ASK-101** — A per-source ask-creation rate limit (per run, trigger, agent) sheds
-  overflow into a single aggregate admin ask; the aggregate has a lifecycle: it closes
-  resolved when its source's rate falls back under the limit for a full window or an admin
-  acknowledges it, the shed count preserved in audit.
+  hash — attach to one canonical ask as a `collapsed_count` within a window (default 1h,
+  CFG-015); the digest renders "37 identical escalations" as one line; the canonical ask's
+  answer resolves every collapsed waiter — the answer communal, one decision for identical
+  questions, where the retraction is originator-scoped (ASK-033).
+- **ASK-101** — A per-source ask-creation rate limit (per run, trigger, agent — default 60
+  per hour, CFG-016) sheds overflow into a single aggregate admin ask; the aggregate has a
+  lifecycle: it closes resolved when its source's rate falls back under the limit for a
+  full window (one limit window, CFG-016) or an admin acknowledges it, the shed count
+  preserved in audit.
 - **ASK-110** — Digests compute per recipient: each human's timezone and working hours define
   their morning (unset calendars fall back per ARC-032); the composer groups by initiative,
   then workspace, then an ungrouped tail — every ask renders somewhere.

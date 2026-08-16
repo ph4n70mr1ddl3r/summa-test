@@ -19,7 +19,7 @@ Source: PLAN.md §5 (offboarding, demotion, last-admin guard).
   the worker. The attention the ownership derives re-keys with it: a pending owner-upgrade
   ask addressed to the departing owner follows the staff to the re-derived owner — successor
   or custody — inside the same transfer, ids stable, deadlines untouched (CLC-027). Personal
-  assistants are always retired (mirrored scopes die with the member, CLC-050).
+  assistants are always retired (mirrored scopes die with the member, CLC-051).
 - **OFB-012** — Sponsored/led initiatives are reassigned or closed, with their pending
   sponsor-addressed asks re-keying to the re-pointed sponsor inside the walk, ids stable,
   deadlines untouched.
