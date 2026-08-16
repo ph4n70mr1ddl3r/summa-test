@@ -5,7 +5,8 @@ Checks (errors exit 1):
   1. every requirement ID (PREFIX-NNN) is defined exactly once across the suite;
   2. every prefix has exactly one home module file;
   3. every REQ-ID citation in specs/*.md and PLAN.md resolves to a definition
-     (ranges like `ARC-020…024` are expanded);
+     (ranges like `ARC-020…024` and `ARC-020…ARC-024` are expanded; cross-prefix
+     and reversed ranges are errors);
   4. TRACEABILITY.md coverage is exact in both directions: every defined ID is
      listed, every listed ID is defined.
 
@@ -27,7 +28,7 @@ SPECS = ROOT / "specs"
 
 DEF_RE = re.compile(r"^- \*\*([A-Z]{3})-(\d{3})\*\*")
 TOKEN_RE = re.compile(r"\b([A-Z]{3})-(\d{3})\b")
-RANGE_RE = re.compile(r"\b([A-Z]{3})-(\d{3})\s*(?:…|\.\.)\s*(\d{3})\b")
+RANGE_RE = re.compile(r"\b([A-Z]{3})-(\d{3})\s*(?:…|\.\.)\s*(?:([A-Z]{3})-)?(\d{3})\b")
 KEYWORD_RE = re.compile(
     r"\b(shall|should|may|must|never|refus|forbid|denied?|carries|is|are|derives|evaluates)\b",
     re.IGNORECASE,
@@ -38,6 +39,26 @@ def expand(prefix: str, lo: int, hi: int) -> list[str]:
     if hi < lo or hi - lo > 999:
         return []
     return [f"{prefix}-{i:03d}" for i in range(lo, hi + 1)]
+
+
+def scan_ranges(text: str, where: str, errors: list[str]) -> set[str]:
+    """Expand every `PFX-001…003` / `PFX-001…PFX-003` range in `text`.
+
+    A repeated end prefix must match the start prefix, and a reversed range is
+    a typo — both are errors, not silently skipped scans.
+    """
+    ids: set[str] = set()
+    for m in RANGE_RE.finditer(text):
+        prefix, lo = m.group(1), int(m.group(2))
+        end_prefix, hi = m.group(3), int(m.group(4))
+        if end_prefix and end_prefix != prefix:
+            errors.append(f"{where}: cross-prefix range {m.group(0)!r}")
+            continue
+        if hi < lo:
+            errors.append(f"{where}: reversed range {m.group(0)!r}")
+            continue
+        ids.update(expand(prefix, lo, hi))
+    return ids
 
 
 def module_number(path: Path) -> int:
@@ -87,9 +108,7 @@ def main() -> int:
     check_files = sorted(SPECS.glob("*.md")) + [ROOT / "PLAN.md"]
     for path in check_files:
         text = path.read_text(encoding="utf-8")
-        covered: set[str] = set()
-        for m in RANGE_RE.finditer(text):
-            covered.update(expand(m.group(1), int(m.group(2)), int(m.group(3))))
+        covered: set[str] = scan_ranges(text, path.name, errors)
         for m in TOKEN_RE.finditer(text):
             covered.add(f"{m.group(1)}-{m.group(2)}")
         covered -= set(defined)
@@ -100,9 +119,7 @@ def main() -> int:
 
     # --- 4. TRACEABILITY exact coverage, both directions ---
     trace = (SPECS / "TRACEABILITY.md").read_text(encoding="utf-8")
-    listed: set[str] = set()
-    for m in RANGE_RE.finditer(trace):
-        listed.update(expand(m.group(1), int(m.group(2)), int(m.group(3))))
+    listed: set[str] = scan_ranges(trace, "TRACEABILITY.md", errors)
     for m in TOKEN_RE.finditer(trace):
         listed.add(f"{m.group(1)}-{m.group(2)}")
 

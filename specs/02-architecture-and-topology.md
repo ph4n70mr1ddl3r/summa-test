@@ -6,10 +6,11 @@ Source: PLAN.md §3.
 
 - **ARC-001** — The system shall run in single-process mode (control plane + one node, console
   at `localhost`) as the MVP path, and in control-plane + execution-node mode with no
-  functional divergence between the shapes.
+  functional divergence between the shapes (the first-deployment default is CFG-030's
+  decision).
 - **ARC-002** — Nodes enroll via one-time token exchange, authenticate with a keypair identity
   on every connection, and are revocable from the console; every audit event shall record the
-  executing node id.
+  executing node id where one exists (DAT-121 — plane-originated events carry none).
 - **ARC-003** — Remote nodes are trusted compute, not enforcement boundaries: enforcement that
   must survive a hostile node (egress allowlisting, secret handling) shall route through the
   control plane / model gateway for remote nodes; single-process mode has no such exposure.

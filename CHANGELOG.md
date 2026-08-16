@@ -4,6 +4,63 @@ Version history for PLAN.md and the `specs/` suite. Newest first. Entries v2.1�
 were extracted verbatim from PLAN.md's preamble in v2.46; from v2.46 on, history lives
 here alone (PLAN.md carries only the current version stamp).
 
+**Errata pass (v2.54)**: a full-suite review — PLAN.md and all 21 modules read against each
+other for consistency, completeness, and unambiguity — closed nineteen residues: §13.1's
+deferred-parameter pairing inverted the milestones its own decisions name ("lands with Phase 6
+and the first 24/7 rollout respectively" — §14.15 routes with the 24/7 rollout, §14.16 with
+Phase 6 node registration); the targets now land in that order · DGV-017 said a held domain's
+"store migration" queues behind release while DGV-015/DGV-054 — and PLAN §4.4, §12 — refuse
+store changes under a hold outright; the stray word is dropped (held splits still queue, their
+carried migrations riding the queued op) · ASK-050's "N distinct human members have accepted"
+contradicted ASK-092's delegated-agent accept binding the quorum-1 asks its rule routes — the
+close rule now names human-principals as the N>1 case with quorum-1 closable by any eligible
+responder (deputy or delegated agent standing in for the one signature), ASK-052/§8.10/§7
+mirroring · the hire gate keyed on "the hire's primary workspace" without a selection rule
+for a multi-workspace hire — SPW-040/§6.2 define it (first-bound of the ordered
+`workspaceBindings`, admin-editable after activation — the primary-domain rule one level up),
+and the re-key doors (DGV-046, §4.4, §7) gain the primary-workspace demotion/unbind alongside
+the domain-list edits, with §12 test lines joining · NFR-030's "spawns from tainted runs
+auto-gated" — a mitigation PLAN §13 states and §12's injection suite tests — had no home
+requirement: SPW-049 completes it (an otherwise-ungated ephemeral spawn from a tainted run
+routes an approval ask to the spawner's owner, pre-fill barred, the human accept the only
+key), cited from NFR-030 and mirrored in §6.2 · the v2.46 `groups` tables and the §8.3
+taint-clearance review door had no API surface — API-007 (groups CRUD + archival, the ORG-040
+door) and API-045 (`POST /memory/:id/review`, SUB-041's reviewers) join SPEC-17, mirrored in
+§9 (which also names memory among the carried-over v1 endpoint families) · DRP-022's expiry
+ask covered org-wide goals only, leaving a domain-scoped goal with no live initiative no
+recipient against its own "no goal expires silently" — the qualifier dropped, PLAN §4.2
+mirrored · SEC-030's scanner enumeration omitted the item-CRUD door DWP-060 cites it for —
+item-level DNA writes join the list (PLAN §10 mirrored, §12's item-CRUD line gaining the
+scan) · DWP-022's "the global default" named a value with no home — CFG-024 (default 7 days)
+gives it its parameter home (DAT-123's key space) · DGV-054/§4.4's split clause "confirm on
+the db-only bound, sweep on the git bound" could be read inverted against its own subject —
+both spell out the parent side now (db-only parent → confirm, content entering git; git
+parent → sweep) · ARC-002/SEC-012 demanded a node id on *every* audit event against DAT-121's
+nullable ground truth — qualified "where one exists" (PLAN §3/§10 mirrored) · DAT-020
+compressed the owner derivation to "at spawn" — persistent hires derive at the gate's
+accepting human (ORG-051/SPW-046), and DAT-020 now says so · the plane-filed sponsor asks'
+metadata was pinned only where defaults would mislead: the activation ask gains kind
+`approval`, tier `standard` (INT-020/§5.1 — its `deny` expiry the approval default), the
+stall, close-out, and dependency asks pin kind `question`, expiry `escalate` (INT-060/063/
+071, §5.1's direction-ask enumeration gaining the dependency ask), and the retrospective
+ask's tier corrects to `bulk` (INT-042 — it blocks nothing, ASK-010's tier semantics) ·
+INT-032's "pausing past a deadline still raises the sponsor ask" was readable against
+INT-030's suspension of the stalled-work escalation — it names the direction ask, filed with
+its escalation suspended (INT-050), §5.1 mirrored · SPW-034/SPW-047's "every terminal"
+enumerations missed two doors the suite itself defines — the halt's archive (SPW-062) and
+the emptied-ceiling refusal (SPW-048) join both lists (§6.2 mirrored) · INT-001's sponsor
+guard carried the agent pin alone — viewer and non-active refusals join it (PLAN §5.1's
+both-posts rule) · CFG-140's tier defaults were examples where ASK-012 derives every default
+deadline from them — now firm defaults (PLAN §14.14 mirrored) · citation and vocabulary
+corrections: PRN-003 → SUB-002 (the guarded-tool rule's home), ORG-051 → SPW-046 (ownership
+follows approval), INT-041 → CLC-010 (the stop authority), API-040 → ASK-030/032 (the
+retract's enabling rule joins its exclusion), ORG-042's "ephemeral agent" → the README's
+"ephemeral worker", and four decision defaults gained the mechanism citations their peers
+carry (ARC-001 → CFG-030, SUB-011 → CFG-050, SUB-080 → CFG-060, CLC-050 → CFG-100) · the
+linter's range scan now expands repeated-prefix ranges (`ARC-020…ARC-024`) and errors on
+cross-prefix and reversed ranges instead of silently skipping them. Lint green: 484
+requirements (+SPW-049, +API-007, +API-045, +CFG-024), TRACEABILITY exact both directions.
+
 **Errata pass (v2.53)**: a full-suite review — PLAN.md and all 21 modules read against each
 other for consistency, completeness, and unambiguity — closed seven residues: PLAN §4.4's
 merge-access shorthand ("most restrictive of the merged pair") predated DGV-014's v2.50

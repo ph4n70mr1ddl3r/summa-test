@@ -33,7 +33,7 @@ module says so explicitly.
 - **PRN-002** — One process runs a small team; the same services split into control plane +
   nodes as the company grows. The split is a deployment change, not a rewrite (ARC-001…004).
 - **PRN-003** — Every capability is a guarded tool: file scope, tool scope, egress guard, and
-  audit are enforced in code, never in prompts (SEC-009, SUB-001).
+  audit are enforced in code, never in prompts (SEC-009, SUB-002).
 - **PRN-004** — Agents are accountable to humans: every agent carries `owner_human_id`;
   ephemeral workers roll up to their spawner; every chain terminates at a human (ORG-050…051, SPW-046).
 - **PRN-005** — Spawning is delegation, not reproduction: child scopes ⊆ parent scopes, budgets

@@ -77,7 +77,8 @@ memory_items   (id, tier 'personal'|'project'|'proposal', member_id?, workspace_
   `deactivated_at IS NULL`; rehire is a new row (ORG-022).
 - **DAT-011** — `humans.deputy_member_id` must reference a humans row that is neither the
   member nor a viewer; agent, self, and viewer deputies are refused at write (ORG-060/061).
-- **DAT-020** — `agents.owner_human_id` is derived at spawn per ORG-051 and carried by the
+- **DAT-020** — `agents.owner_human_id` is derived per ORG-051 — the gate's accepting human
+  at activation for persistent hires, pinned at spawn for ephemerals — and carried by the
   walks; the chain terminates at a human (PRN-004).
 - **DAT-021** — `budget_cap` null = worker-uncapped (org-wide caps and the breaker still
   bind); the window matches class per SPW-032.

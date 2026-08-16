@@ -40,11 +40,11 @@ deployment model, not a gap:
 ## Risk mitigations (selected, normative)
 
 - **NFR-030** — Prompt injection via external content: taint-tracking for off-platform
-  content; provenance + raw diffs in the review UI; spawns from tainted runs auto-gated;
-  tainted context barred from external writes (SUB-042); tainted-origin asks lose digest
-  pre-fills and tainted-run accepts are audit-only (ASK-043); taint survives publication as
-  a provenance flag and propagates through memory until explicitly reviewed (DWP-023,
-  SUB-041).
+  content; provenance + raw diffs in the review UI; spawns from tainted runs auto-gated
+  (SPW-049); tainted context barred from external writes (SUB-042); tainted-origin asks lose
+  digest pre-fills and tainted-run accepts are audit-only (ASK-043); taint survives
+  publication as a provenance flag and propagates through memory until explicitly reviewed
+  (DWP-023, SUB-041).
 - **NFR-031** — DNA quality drift / gaming: human-owned review, provenance on every item,
   reviewer-agent contradiction reports, compartment isolation.
 - **NFR-032** — Governance overhead vs. small-team speed: proportional governance (PRN-008);

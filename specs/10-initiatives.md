@@ -5,7 +5,8 @@ Source: PLAN.md §5.1.
 ## Structure
 
 - **INT-001** — An initiative is the execution spine linking goal → work: title, optional
-  `goal_ref` and `decision_ref`, sponsor (pinned human, refused at write if agent), lead
+  `goal_ref` and `decision_ref`, sponsor (pinned human, refused at write if agent, viewer,
+  or non-active), lead
   (any member but an ephemeral worker; viewer and non-active members refused at write),
   optional deadline, optional business budget (display-only until CFG-110), status
   `proposed|active|paused|closed`, optional `depends_on`.
@@ -21,7 +22,8 @@ Source: PLAN.md §5.1.
 ## Transitions and authority
 
 - **INT-020** — `proposed` → `active` is the sponsor's acceptance: an initiative opened by
-  anyone other than its sponsor routes an activation ask to the sponsor with expiry `deny` —
+  anyone other than its sponsor routes an activation ask (kind `approval`, tier `standard`)
+  to the sponsor with expiry `deny` —
   a directive that never won its authority never executes; the denied initiative stays
   `proposed`, inert (no bindings, no runs, no escalations) until its sponsor or lead closes
   it; org state is never silently evaporated. A sponsor's own opens active.
@@ -45,9 +47,9 @@ Source: PLAN.md §5.1.
   complete onto the paused slice; stopping work mid-flight stays suspend/retire's job
   (CLC-020).
 - **INT-032** — Pause retains workspace bindings frozen: linked goals keep injecting
-  (context, not execution), the delegation's own window stays the bound — pausing past a
-  deadline still raises the sponsor ask — and resume unfreezes in place. Close, not pause,
-  unbinds.
+  (context, not execution), the delegation's own window stays the bound — a window ending
+  under pause still files the sponsor's direction ask, its escalation suspended with the
+  stall clock (INT-050) — and resume unfreezes in place. Close, not pause, unbinds.
 - **INT-033** — Schedules elapsing under pause coalesce per SUB-051 and play their catch-up
   run on resume; pause defers timetables, never drops them.
 
@@ -62,9 +64,9 @@ Source: PLAN.md §5.1.
   with artifacts landing on the closed slice as history; new runs, spawns, and task filings
   under the initiative are refused (a task that still needs filing belongs to a successor
   initiative); ephemeral workers finish their bounded task and fold back. A sponsor needing
-  mid-flight stops suspends or retires the specific agents (CLC-015).
+  mid-flight stops suspends or retires the specific agents (CLC-010).
 - **INT-042** — When an initiative transitions to `closed`, the close event shall file a
-  retrospective ask (kind `question`, tier `standard`, expiry `escalate`) to the lead —
+  retrospective ask (kind `question`, tier `bulk`, expiry `escalate`) to the lead —
   the sponsor when the lead is non-active (a lead is required at write, INT-001; the walks
   re-point or close the post before it can sit unheld) — directing DNA proposals through the
   normal write path (DWP-010): a decision record of the outcome, plus the lessons worth
@@ -88,7 +90,8 @@ Source: PLAN.md §5.1.
 
 ## Stall detection
 
-- **INT-060** — A stalled initiative — deadline passed with open work — raises an ask to its
+- **INT-060** — A stalled initiative — deadline passed with open work — raises an ask
+  (kind `question`, expiry `escalate`) to its
   sponsor (then admin) reusing the escalation machinery.
 - **INT-061** — The stall clock is defined without a deadline: keyed to the linked goal's
   window when there is one, else a bulk-tier staleness line in the sponsor's digest after a
@@ -97,7 +100,8 @@ Source: PLAN.md §5.1.
   directive that never won activation is decay in its purest form — the activation deny ends
   the wait, not the watch; the bulk line keeps rendering); `paused` suspends it with resume
   restarting it; `closed` stops it for good.
-- **INT-063** — A deadline passed with *no* open work raises a bulk-tier close-out ask to the
+- **INT-063** — A deadline passed with *no* open work raises a close-out ask (kind
+  `question`, tier `bulk`, expiry `escalate`) to the
   sponsor — close, or extend if more is coming — so a finished initiative cannot linger
   holding workspace bindings and injecting goals nobody is driving.
 
@@ -107,7 +111,8 @@ Source: PLAN.md §5.1.
   name non-closed rows — a dependency on a closed initiative is refused at write; the only
   way an edge addresses a terminal row is the upstream closing under it, exactly the case
   the close-ask exists for.
-- **INT-071** — Closing an upstream initiative with active dependents raises an ask to each
+- **INT-071** — Closing an upstream initiative with active dependents raises an ask (kind
+  `question`, expiry `escalate`) to each
   dependent's sponsor — proceed, re-base (the dependency edge re-pointed), or pause: a
   coordination signal, not a block.
 

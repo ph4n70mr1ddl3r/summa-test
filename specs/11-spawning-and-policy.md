@@ -52,9 +52,10 @@ Source: PLAN.md §6.1, §6.2.
 - **SPW-034** — Claims are lifecycle-pinned to the request row: count-cap claims and budget
   reserves attach at request creation inside the spawn transaction, transfer to the live
   worker at activation, and release at every terminal a pending request has — denial,
-  approval expiry, close-/archive-time settlements, the requester-state archive, and the
-  requester's own retraction (SPW-047) — so an approval never publishes into an exhausted
-  cap and cap space never leaks on a dead request.
+  approval expiry, close-/archive-time settlements, the requester-state archive, the
+  requester's own retraction (SPW-047), the halt's archive (SPW-062), and the emptied-
+  ceiling refusal (SPW-048) — so an approval never publishes into an exhausted cap and cap
+  space never leaks on a dead request.
 - **SPW-035** — A settle may overshoot its reserve: the overrun settles in full, surfaces on
   the spend dashboard and the owner's digest, and further reserves against that cap are
   refused until an admin acknowledges through the overrun-ack endpoint — the refusal itself
@@ -70,7 +71,10 @@ Source: PLAN.md §6.1, §6.2.
 - **SPW-040** — Persistent hires route an approval ask to the owner of the domain the hire's
   primary workspace is bound to; a primary workspace with no bound domain, a workspaceless
   hire, and a domainless primary all route to an admin outright; a multi-domain workspace
-  routes to the primary domain (first-bound, admin-editable). One deterministic hop, never an
+  routes to the primary domain (first-bound, admin-editable). The primary workspace is
+  itself the first-bound entry of the hire's ordered `workspaceBindings`, admin-editable
+  after activation — the primary-domain rule one level up, so a multi-workspace hire's gate
+  is as deterministic as a multi-domain workspace's. One deterministic hop, never an
   undefined gate.
 - **SPW-041** — A gate may address its own originator: the domain owner hiring into their own
   domain accepts in one click, the ask itself the audit record (sod governs DNA publish, not
@@ -95,7 +99,8 @@ Source: PLAN.md §6.1, §6.2.
 - **SPW-047** — The requester's withdraw on a pending spawn-approval ask is the request's
   own retraction: the ask resolves per the withdrawal algebra (ASK-030 — a withdrawn
   approval is a no), and the request archives with its template pin drained and cap claims
-  released — denial, expiry, the walks' settlements, the requester-state archive, and the
+  released — denial, expiry, the walks' settlements, the requester-state archive, the halt
+  and emptied-ceiling archives (SPW-062, SPW-048), and the
   retract: one settlement, every terminal; a pending hire never outlives the live intent
   that filed it.
 - **SPW-048** — The requested `scopeCeiling` is a respond-time assumption of the same rank:
@@ -104,6 +109,13 @@ Source: PLAN.md §6.1, §6.2.
   template pin drained and cap claims released. Child ⊆ parent binds the parent the accept
   finds, never the snapshot the request filed — a demoted or de-scoped requester cannot
   publish a child above the ceiling they now hold (ASK-041's re-validation family).
+- **SPW-049** — Taint gates the ungated class: a spawn request filed by a tainted run is
+  approval-gated regardless of class defaults — persistent hires keep the SPW-040 gate, and
+  an otherwise-ungated ephemeral spawn routes a spawn-gate ask (kind `spawn_request`,
+  ASK-001) to the spawner's owner human.
+  A tainted run cannot spawn ungated (NFR-030); the gate ask renders without a pre-fill
+  (ASK-111), and its answer is the owner's human decision on raw provenance — taint never
+  becomes approval authority (ASK-043).
 
 ## Spend circuit-breaker
 

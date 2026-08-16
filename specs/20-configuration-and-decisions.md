@@ -28,8 +28,8 @@ trigger; the mechanism it tunes is already designed (NFR-022). Defaults live beh
   opt-in auto-publish for low-blast-radius domains (audited, retro-reviewable) — revisit
   when proposal volume drowns owners.
 - **CFG-140** — Ask SLA tier defaults: how long each tier runs before breach-and-escalate
-  (e.g. critical 1h, standard to next digest, bulk 24h) — tuned with the first real org;
-  ask deadlines derive from these unless set per ask (ASK-012).
+  (defaults: `critical` 1h, `standard` to next digest, `bulk` 24h) — tuned with the first
+  real org; ask deadlines derive from these unless set per ask (ASK-012).
 - **CFG-150** — Model-provider degradation: single provider (default) with manual fallback
   vs. automatic multi-provider routing — decide before the first 24/7 deployment leans on one
   vendor's uptime (SUB-005).
@@ -69,3 +69,6 @@ trigger; the mechanism it tunes is already designed (NFR-022). Defaults live beh
 - **CFG-023** — Sustained-outage ask threshold: default 15 minutes — how long provider
   degradation queues with backoff before the single critical admin ask fires (SUB-005);
   the routing policy around it is CFG-150's decision.
+- **CFG-024** — Org-scoped review SLA: default 7 days — the `review_by` source for
+  org-scoped proposals when no domain row governs the admin queue (DWP-022); PLAN §4.3's
+  global default, given its parameter home (DAT-123's key space).

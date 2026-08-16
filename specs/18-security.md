@@ -29,7 +29,8 @@ Source: PLAN.md §10.
   (default 2, CFG-018), TTL reaper, spend circuit-breaker, approval gates on persistent
   hires; ephemeral workers get connector-sandboxed, task-scoped workspaces only.
 - **SEC-012** — Node trust: enrollment via one-time tokens + keypair identity, revocation
-  from the console, node id stamped on every audit event; for remote nodes, egress
+  from the console, node id stamped on every audit event where one exists (DAT-121);
+  for remote nodes, egress
   allowlisting and secret handling route through the control plane / gateway; the console
   surfaces each node's trust level explicitly (ARC-002/003).
 
@@ -37,7 +38,8 @@ Source: PLAN.md §10.
 
 - **SEC-020** — Agents propose, owners publish; compartment access enforced on retrieval and
   injection (DRP-005, DGV-002).
-- **SEC-030** — The secrets scanner covers all proposals, memory, and ingested direct edits
+- **SEC-030** — The secrets scanner covers all proposals, item-level DNA writes (DWP-060),
+  memory, and ingested direct edits
   (STG-010); scanner hits quarantine to the owner with an audited admin override — a false
   positive is a visible ask, never a silent wedge in the write path.
 

@@ -57,8 +57,9 @@ Source: PLAN.md §4.4.
 - **DGV-016** — Residency edits re-validate placements: a tightened constraint re-validates
   every bound workspace's placement — conforming leases stand, nonconforming ones rebind via
   ARC-012 or starve into ARC-011's ask; an attribute edit is never silently grandfathered.
-- **DGV-017** — Legal holds freeze removal, not addition: archive, merge-away, split, and
-  store migration of a held domain queue behind the hold's release; rename and merge-into
+- **DGV-017** — Legal holds freeze removal, not addition: archive, merge-away, and split of a
+  held domain queue behind the hold's release; standalone store flips and cross-store
+  topology ops refuse outright (DGV-015/054); rename and merge-into
   stay open — a cross-store merge-into being the exception DGV-054 names, the addition a
   hold permits never doubling as an unconfirmed publication into immutable history.
 - **DGV-018** — The commit re-runs contradiction checks against post-op state inside the
@@ -71,8 +72,9 @@ Source: PLAN.md §4.4.
   confirm (the op refusing until confirmed), a git side merging into a db-only survivor runs
   the one-commit sweep, and either direction refuses while either side sits under a
   kind-`domain` hold; a split result whose declared `store` differs from its parent migrates
-  its mapped items by the same rules — confirm on the db-only bound, sweep on the git bound
-  (held splits already queue behind release, DGV-017).
+  its mapped items by the same rules — confirm when the parent is db-only (content entering
+  git), sweep when the parent is git (content leaving it) —
+  held splits already queue behind release (DGV-017).
 
 ## Archive semantics
 

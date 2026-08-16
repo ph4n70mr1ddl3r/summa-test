@@ -1,8 +1,8 @@
 # SPEC-17 — API Surface
 
-Source: PLAN.md §9 (delta over v1 endpoints for agents, sessions, messages, workspaces,
-automated-tasks, triggers, playbooks, runs). General contract: every refusal on this surface
-is the PRN-009 form — refuse, audit, ask where a human decision is needed.
+Source: PLAN.md §9 (delta over v1 endpoints for agents, sessions, messages, memory,
+workspaces, automated-tasks, triggers, playbooks, runs). General contract: every refusal on
+this surface is the PRN-009 form — refuse, audit, ask where a human decision is needed.
 
 ## Auth & org
 
@@ -16,6 +16,10 @@ is the PRN-009 form — refuse, audit, ask where a human decision is needed.
   (STG-030…034).
 - **API-006** — `POST /org/humans/:id/offboard` — admin; runs the OFB-001 walk; transactional
   last-admin guard (OFB-020).
+- **API-007** — `CRUD /org/groups` · `POST /org/groups/:id/archive` — the groups write
+  surface: archival is ORG-040's admin door (read-only history, DAT-122); membership
+  add/remove derives from live state per ORG-041; the Leader set rides the ORG-042 write
+  guards; every write audited.
 
 ## Nodes
 
@@ -68,7 +72,7 @@ is the PRN-009 form — refuse, audit, ask where a human decision is needed.
 ## Work, initiatives, workspaces
 
 - **API-040** — `CRUD /asks` · `POST /asks/:id/respond` · `POST /asks/:id/withdraw`
-  (originator retract; the ASK-032 door rules apply) · `WS: ask.requested, ask.answered`.
+  (originator retract; the ASK-030/032 door rules apply) · `WS: ask.requested, ask.answered`.
 - **API-041** — `CRUD /initiatives` · `POST /initiatives/:id/activate|pause|resume|close` —
   transition authority per INT-020…023; close runs the dependency check.
 - **API-042** — `CRUD /board-tasks` — assign to any ask-eligible member (viewer and
@@ -76,6 +80,12 @@ is the PRN-009 form — refuse, audit, ask where a human decision is needed.
 - **API-043** — `POST /workspaces/:id/rebind` — admin affinity failover; refuses a target
   node lacking required capabilities (ARC-012).
 - **API-044** — `POST /workspaces/:id/archive` — admin; runs the CLC-040 walked transition.
+
+## Memory
+
+- **API-045** — `POST /memory/:id/review` — the taint-clearance door (SUB-041): the
+  spawner's owner for personal-tier rows, the domain owner for project-tier rows —
+  DAT-125's `reviewed_by/at`; proposal-tier rows clear through the review itself (DWP-003).
 
 ## Governance
 

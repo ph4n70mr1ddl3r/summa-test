@@ -108,7 +108,8 @@ forever.
 - **CLC-050** — One persistent assistant per human employee as a deployment of the existing
   model: a `personal-assistant` persistent template bound 1:1 (`owner_human_id` = the
   assisted employee); the 1:1 is policy-enforced — a second spawn for a human with a live
-  assistant is refused; retirement closes the deployment, a fresh spawn reopens it.
+  assistant is refused; retirement closes the deployment, a fresh spawn reopens it
+  (rollout: CFG-100).
 - **CLC-051** — Scope mirroring: assistant scopes derive from the human's RBAC role at
   spawn, refreshed on role change, revoked on offboarding; a demotion to viewer retires the
   assistant (mirrored viewer scopes are read-only and a never-ask-target owns no staff);

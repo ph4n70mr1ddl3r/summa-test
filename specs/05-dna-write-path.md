@@ -25,8 +25,8 @@ Source: PLAN.md §4.3.
   holds `owner_human_id`, and owner re-pointing at any door (topology op, domain edit, the
   SPEC-09 walks) re-keys the rendering with `review_by` clocks untouched.
 - **DWP-022** — Org-scoped items (org-wide goals, org-wide glossary; `domain_id` null) route
-  to the admin review queue; their `review_by` derives from the global default — no domain row
-  governs them.
+  to the admin review queue; their `review_by` derives from the global default (CFG-024,
+  7 days) — no domain row governs them.
 - **DWP-023** — Taint survives publication as provenance residue: an item accepted from a
   tainted run keeps its flag, renders with an indicator wherever cited, and heads the scheduled
   quality reviews — the owner's accept is informed consent, not a laundering step.

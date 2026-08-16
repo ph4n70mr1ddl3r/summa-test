@@ -82,17 +82,19 @@ Source: PLAN.md §8.10.
 ## Quorum
 
 - **ASK-050** — Rules may require N distinct approvals (`machine_hint.requires_approvals`):
-  the ask carries `quorum_required` and closes answered once N distinct human members have
-  accepted; a deny closes it denied immediately; expiry denies; a stale acceptance is
-  audit-only and does not count.
+  the ask carries `quorum_required` and closes answered once N distinct accepts land — human
+  members only toward N > 1 (ASK-052; a deputy's or delegated agent's accept is audit-only
+  there, ASK-092), the first eligible responder toward quorum-1 (ASK-015, ASK-092 — a deputy
+  or delegated agent standing in for the one signature); a deny closes it denied immediately;
+  expiry denies; a stale acceptance is audit-only and does not count.
 - **ASK-051** — Quorum addressing: `to` = the pool's primary recipient — the rule's domain
   owner, or its delegate (who joins the pool) when a delegation routes the rule; the eligible
   pool is that owner plus every active admin, evaluated at respond time: a pool that grows
   mid-ask admits new acceptors; an acceptance that already counted stands — the ask closes
   the moment the Nth valid accept lands.
-- **ASK-052** — When N > 1, only pool principals' accepts count: a deputy's accept is
-  audit-only there (N approvals means N pool principals); toward quorum-1 a deputy may stand
-  in for the one signature.
+- **ASK-052** — When N > 1, only pool principals' accepts count: a deputy's — or a delegated
+  agent's (ASK-092) — accept is audit-only there (N approvals means N pool principals);
+  toward quorum-1 a deputy or delegated agent may stand in for the one signature.
 - **ASK-053** — N is bounded below (`requires_approvals` ≥ 1) and pool-checked at every
   write door: N exceeding the eligible approver pool flags at proposal time like any
   contradiction; a pool that later shrinks below N leaves the ask unanswerable — it denies

@@ -26,7 +26,8 @@ owns no SUB IDs (TRACEABILITY's §8.4 row).
   `memory.write`, plus `spawn` as a guarded tool; egress guard unchanged.
 - **SUB-011** — Connector tiers: tier 1 = email/calendar/docs; tier 2 = enterprise systems of
   record (ERP/WMS/HRIS/CRM) — read-only first, writes gated behind `critical`-tier asks;
-  per-connector scoped credentials via PATs, never shared service accounts.
+  per-connector scoped credentials via PATs, never shared service accounts (the default
+  tier-1 suite is CFG-050's decision).
 - **SUB-020** — Write-capable tier-2 connectors implement staged writes — prepare → confirm
   → commit — every stage keyed by the idempotency key of its `external_writes` ledger row:
   playbook and node retries reuse the key and cannot duplicate side effects; a crashed or
@@ -107,7 +108,7 @@ owns no SUB IDs (TRACEABILITY's §8.4 row).
 ## 8.8 Groups & IM (SUB-0xx)
 
 - **SUB-080** — Unified human+agent teams; IM pairing routes to an agent whose asks
-  escalate to the channel.
+  escalate to the channel (the first channel is CFG-060's decision).
 
 ## 8.9 Console (SUB-0xx)
 

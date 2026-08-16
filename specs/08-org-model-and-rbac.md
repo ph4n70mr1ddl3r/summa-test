@@ -51,7 +51,7 @@ Source: PLAN.md §5.
   identity.
 - **ORG-042** — The Leader post is guarded at write: a viewer human or any non-active member
   is refused at set (routing addresses the Leader; the Leader must be answerable); an
-  ephemeral agent is refused by the mortality pin.
+  ephemeral worker is refused by the mortality pin.
 - **ORG-043** — Leadership re-points on departure, retirement, or demotion inside the walks —
   a named successor, else the group's routing degrades to an admin ask; no routing surface
   outlives its holder un-asked.
@@ -61,7 +61,7 @@ Source: PLAN.md §5.
 - **ORG-050** — Every agent row carries `owner_human_id`; spawned workers carry
   `spawned_by`; the chain must terminate at a human.
 - **ORG-051** — Ownership is derived, not configured: a persistent hire's first owner is the
-  gate's accepting human at activation (SPW-040); an ephemeral's is the first human up the
+  gate's accepting human at activation (SPW-046); an ephemeral's is the first human up the
   `spawned_by` line, pinned at spawn; the SPEC-09/12 walks carry it from there.
 
 ## Deputies

@@ -13,7 +13,7 @@ is promoted to a central, governed **Company DNA** with proposals and review; ag
 agents (governed); topology becomes a **control plane + execution nodes**, with a single-process
 mode so small teams start simple.
 
-*Version v2.53 · 2026-08-16 — change history: [CHANGELOG.md](CHANGELOG.md)*
+*Version v2.54 · 2026-08-16 — change history: [CHANGELOG.md](CHANGELOG.md)*
 
 > **Provenance & completion status**: the v1 design document that §7, §8, and §9 delta
 > against is not part of this repository. The normative, testable statement of every
@@ -162,7 +162,8 @@ boundaries — with a sixth raised to the top: **shared, governed context**.
 - **Node trust model**: remote nodes are *trusted compute*, not enforcement boundaries — scope,
   egress, and audit code runs on the node, so a compromised node can bypass it. Nodes enroll via
   one-time tokens, authenticate with a keypair identity on every connection, are revocable from
-  the console, and every audit event records the executing node id. Enforcement that must survive
+  the console, and every audit event records the executing node id where one exists
+  (plane-originated events have none — §7's nullable `node_id`). Enforcement that must survive
   a hostile node (egress allowlisting, secret handling) routes through the control plane / model
   gateway for remote nodes; single-process mode has no such exposure. 24/7 automations require an
   always-on node — workspace affinity on a sleeping dev machine is for interactive work only.
@@ -253,8 +254,9 @@ Every run's system prompt is assembled with:
   `effective_to` leaves
   the slice at window end — a stale deadline is never injected forever — and the §5.1 sponsor ask
   carries the outcome: extend re-adds it under a new window, a terminal status (`met`/`missed`/
-  `retired`, set through the §4.3 write path) ends it for good, and an org-wide goal with no live
-  initiative routes the same ask to its owner — the admin, when the owner is an agent or departed
+  `retired`, set through the §4.3 write path) ends it for good, and a goal with no live
+  initiative — org-wide or domain-scoped alike — routes the same ask to its owner — the admin,
+  when the owner is an agent or departed
   (§8.10 chain) — so no goal expires silently. "Applicable" has defined
   semantics: a rule applies when its domain intersects the workspace's domains and its effective
   window (`effective_from`…`effective_to`) covers the run (superseded rules drop out of injection
@@ -458,7 +460,8 @@ keeps governing strictness separately.
   side's hold, so merge-into a held domain stays open (above) exactly when it moves no
   content across stores, the addition a hold permits never doubling as an unconfirmed
   publication; a split result whose declared `store` differs from its parent migrates its
-  mapped items by the same rules — confirm on the db-only bound, sweep on the git bound —
+  mapped items by the same rules — confirm when the parent is db-only (content entering git),
+  sweep when the parent is git (content leaving it) —
   and held splits already queue behind release (§4.5). Residency edits carry the same
   visibility: a tightened constraint re-validates every bound workspace's placement — conforming
   leases stand, nonconforming ones rebind through the §3 capability-and-region check or starve
@@ -508,9 +511,10 @@ keeps governing strictness separately.
   re-pointing has three doors (this topology op, the §9 domain edit, the §5 walks' transfer),
   and a pending approval or quorum ask never outlives the act at any of them. The gate hop
   carries a derivation of its own beyond the owner, so a fourth door joins the three: the §6.2
-  approval keys on the hire workspace's primary domain, and an admin edit of that binding (§7
-  — primary demoted, unbound, or emptied to domainless) re-keys a pending spawn approval to
-  the gate the edited binding derives — the new primary's owner or an admin once domainless —
+  approval keys on the hire's primary workspace's primary domain, and an admin edit of that
+  binding (§7 — primary demoted, unbound, or emptied to domainless) — or of the binding list
+  that demotes or unbinds the primary workspace itself — re-keys a pending spawn approval to
+  the gate the edited bindings derive — the new primary's owner or an admin once domainless —
   inside the audited edit, ids stable and deadlines untouched: creation-time addressing never
   outlives the row it was read from, on the binding surface any more than on the owner
   surface. And archive, which has no resulting owner to re-key onto, settles instead:
@@ -670,7 +674,7 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
   un-asked. The post is guarded at write like every routing surface it kinships with: a
   viewer human — or any non-active member — is refused the Leader post at set, routing
   addresses the Leader and the Leader must be answerable, the never-an-ask-target guard's
-  facet; an ephemeral agent is refused by the mortality pin (§5.1), the lead/goal-owner/
+  facet; an ephemeral worker is refused by the mortality pin (§5.1), the lead/goal-owner/
   delegate guard's twin — a member dying by schedule must not hold a post built to outlive
   it, the reap walk's re-point (§6.3) the drain for what slipped past, never the design. And
   the demotion walk carries the post with the authority: a human demoted to viewer sheds the
@@ -837,7 +841,8 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
  rules (§8.10) or drop its workspace bindings: the binding list keeps the paused initiative, linked
  goals keep injecting (context, not execution), and resume unfreezes in place — close, not pause, is
  the transition that unbinds (§7). Pause freezes execution, not authority; the delegation's own window (§4.2
-  `effective_to`) stays the bound, and pausing past the deadline still raises the sponsor ask —
+  `effective_to`) stays the bound, and a window ending under pause still files the sponsor's
+  direction ask with its escalation suspended (below) —
   pause is a state, not a way to outlive a deadline silently. Closing runs the same dependency
    check as retiring an agent (§6.3) over the initiative's durable state — open asks
    and tasks resolved or reassigned, pending spawn requests archived with their template pins
@@ -867,7 +872,8 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
    exists for.
 
 **Transitions are owned, not ambient**: `proposed` → `active` is the sponsor's acceptance — an
-initiative opened by anyone other than its sponsor routes an activation ask to the sponsor
+initiative opened by anyone other than its sponsor routes an activation ask (kind `approval`,
+tier `standard`) to the sponsor
 (expiry `deny`: a directive that never won its authority never gets execution — the denied
 initiative stays `proposed`, inert — no bindings, no runs, no escalations — until its sponsor or
 lead closes it; org state is never silently evaporated), a sponsor's own
@@ -884,7 +890,8 @@ authority pattern applied to the initiative itself, so the org's halt authority 
 hand on the switch — and close belongs to either and always runs the §6.3
 dependency check (§9) — and unbinds: workspaces drop the closed initiative from their binding
 list (§7), the goal slice re-derives at once, and no workspace keeps reading a closed spine.
-The sponsor's other direction asks — stalled-work escalation, the close-out ask, goal-window and
+The sponsor's other direction asks — stalled-work escalation, the close-out ask, the
+dependency ask, goal-window and
 terminal-goal asks — carry the opposite expiry from activation: they are questions (§8.10), so an
 unanswered one escalates sponsor → admin and stays pending in every digest rather than dying as a
 silent no — an unanswered question may never decide an initiative's fate by disappearing, which
@@ -991,7 +998,8 @@ not only from what was pre-authored.
   creation — inside the spawn transaction, where the racing-claim guarantee lives — transfers
   to the live worker at activation, and releases at every terminal a pending request has:
   denial, approval expiry, the close-/archive-time settlements that drain template pins
-  (§5.1, §7), the requester-state archive the approval gate names (below), and the
+  (§5.1, §7), the requester-state archive the approval gate names (below), the halt's archive
+  and the emptied-ceiling refusal (below), and the
   requester's own retraction (below) — the pin-drain's budget twin, every terminal covered. An approval can never publish into an exhausted
   cap (the accept-time re-validation family, §8.10), and cap space never leaks on a request
   that died waiting. A settle may overshoot its reserve — the final
@@ -1012,19 +1020,29 @@ not only from what was pre-authored.
   binding at all: no primary workspace is no primary domain, the same deterministic hop —
   and a multi-domain one routes to the
   primary domain (first-bound,
-  admin-editable, §8.10): one deterministic hop, never an undefined gate — and a gate may
+  admin-editable, §8.10): one deterministic hop, never an undefined gate — and the primary
+  workspace itself is defined the same way one level up: the first-bound entry of the hire's
+  ordered workspace bindings (the request's `workspaceBindings` order, admin-editable after
+  activation — the primary-domain rule's idiom), so a multi-workspace hire's gate is as
+  deterministic as a multi-domain workspace's — and a gate may
   address its own originator: the domain owner hiring into their own domain accepts in one
   click, the ask itself the audit record of the self-approval (sod governs DNA publish, §4.3,
   not hire, and the quota, depth, and budget gates still bind); the hop's addressee rides
   owner re-pointing wherever it happens — topology op, §9 domain edit, or the §5 walk — a
   pending approval re-keying to the resulting owner with its deadline untouched, and it rides
   the binding too: an admin edit of the hire workspace's `domain_ids` (§7 — primary demoted,
-  unbound, or emptied to domainless) re-keys a pending approval to the gate the edited binding
-  derives, the new primary domain's owner or an admin once domainless, inside the audited edit
+  unbound, or emptied to domainless), or of the binding list that demotes or unbinds the
+  primary workspace itself, re-keys a pending approval to the gate the edited bindings
+  derive — the new primary domain's owner, the re-pointed primary workspace's, or an admin
+  once domainless — inside the audited edit
   with ids stable and deadlines untouched — the creation-time hop never outliving the binding
   row it was read from (§4.4);
   agent-spawned
-  ephemeral workers exceeding quota → Ask to the spawner's owner human. An approval ask that
+  ephemeral workers exceeding quota → Ask to the spawner's owner human. Taint gates the
+  ungated class regardless: a spawn request filed by a tainted run routes an approval ask
+  (kind `spawn_request`, §7) to the spawner's owner even under quota — a tainted run cannot
+  spawn ungated (§13; §12's injection suite) — the ask rendered without a pre-fill (§8.10),
+  the owner's human accept the only key. An approval ask that
   expires is the denial's twin — deny is the spawn request's expiry default (§8.10): the
   request transitions `requested`→`archived` (§7) and drains its template pin, the expiry the
   record exactly as the deny is (§6.5). The requester's own state is an assumption of the same
@@ -1501,7 +1519,9 @@ asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request', fro
                  -- with `from` re-keyed and `collapsed_count` adjusted, and only the last
                  -- originator's retraction closes the ask; the §5/§6.3 walks'
                  -- close-with-audit-note is this mechanism system-applied (§8.10);
-                 -- quorum: N distinct human accepts close it answered, deny wins immediately (§8.10);
+                 -- quorum: N distinct accepts close it answered — human pool principals
+                 -- toward N>1, any eligible responder (deputy or delegated agent) toward
+                 -- quorum-1 — deny wins immediately (§8.10);
                  -- quorum addressing: to = the rule's domain owner (primary recipient); the
                  -- eligible pool — that owner + active admins — evaluates at respond time (§8.10)
                  -- responses: the accept ledger behind N-of-M; collapsed_count: identical asks
@@ -1574,7 +1594,8 @@ workspaces     + initiative_ids json?, domain_ids json?, node_id?, claim_epoch i
                  -- empty list is a domainless workspace with the defined fallbacks (§6.2,
                   -- §8.10), and topology ops remap the list with ids stable (§4.4);
                   -- a pending §6.2 spawn approval keyed on this binding re-keys at the edit —
-                  -- the gate the new primary derives, an admin once domainless — ids and
+                  -- the gate the new primary derives, an admin once domainless, the primary
+                  -- workspace's own demotion or unbind re-keying alike (§6.2) — ids and
                   -- deadlines stable, creation-time addressing never stale (§4.4);
                   -- and binding writes serialize behind the affected domains' write locks
                   -- (§4.4): the admin edit and the archive walk join topology remaps and
@@ -1808,7 +1829,9 @@ successor ask renders without a pre-fill (below) while it carries the decision t
 reader. **Quorum asks**: rules may require N distinct approvals
 (`machine_hint.requires_approvals` — §4.1's flagship "invoices > $10k require two approvals"
 becomes expressible): the ask carries `quorum_required` (§7) and closes answered once N
-distinct human members have accepted. Addressing is precise, not ambient: `to` names the pool's
+distinct accepts land — human members only toward N > 1 (below); toward quorum-1, the first
+eligible response, a deputy or delegated agent standing in for the one
+signature (§8.10's delegation rule). Addressing is precise, not ambient: `to` names the pool's
 primary recipient — the rule's domain owner, or its delegate (who joins the pool) when a
 delegation routes the rule — and the eligible pool is that owner plus every
 active admin (`deactivated_at` IS NULL, §7), evaluated at respond time: a pool that grows
@@ -1818,7 +1841,8 @@ the Nth valid accept lands, so a later offboarding cannot reopen a closed decisi
 only pool members' accepts count: a deputy's accept is audit-only there — for multi-approval
 quorums the pool's own redundancy (owner plus admins) is the absence mechanism, and N approvals
 means N pool principals, never one principal answering through two doors; a quorum-1 ask keeps
-first-response-wins above, where a deputy may stand in for the one signature. A deny
+first-response-wins above, where a deputy — or a delegated agent (§8.10 below) — may stand
+in for the one signature. A deny
 still closes it denied immediately, expiry still denies, and a stale acceptance is audit-only
 and does not count toward N. SLA breach escalates to the admin, who may contribute one of the
 required approvals. N is bounded below and pool-checked at every write door:
@@ -1930,7 +1954,9 @@ POST /auth/pats · POST /auth/pats/:id/revoke  (PAT lifecycle: scoped create, ex
                + last-used stamps, §10)
 POST /org/bootstrap (first-run: create company + first admin; refused once any human exists —
                a transactional singleton guard, not check-then-act)
-CRUD /org/humans · /org/members · GET /org/lineage
+CRUD /org/humans · /org/members · GET /org/lineage · CRUD /org/groups
+               (+ POST /org/groups/:id/archive — admin, the §5 groups bullet's archival door;
+               membership adds/removes and the Leader set ride the same write guards)
 POST /org/humans/:id/erasure (admin; audited; honors data_holds — §4.5)
 POST /org/humans/:id/offboard (admin; runs the §5 dependency walk; transactional last-admin guard)
 POST /nodes/enroll (one-time token exchange) · GET /nodes · POST /nodes/:id/revoke
@@ -2004,6 +2030,9 @@ POST /workspaces/:id/archive (admin; runs the §7 walked transition — initiati
                killed, pending spawn requests archived with their template pins drained,
                runtime drained, project memory inert — the endpoint and authority the walk
                presupposes)
+POST /memory/:id/review (taint clearance — the §8.3 reviewers' door: the spawner's owner
+               for personal-tier rows, the domain owner for project-tier ones; proposal-tier
+               rows clear through the review itself)
 GET /governance/policies|quotas|spend  (console screens 12 & 14)
                · PUT /governance/policies|quotas  (admin; audited — the org-global tunables'
                write surface; per-object settings ride their own CRUD — §4.3's SLA on the
@@ -2015,7 +2044,7 @@ POST /governance/spend/overruns/:id/ack (admin; lifts the §6.2 reserve gate an 
                settle overrun raised — :id is the overshot settle's spend-ledger row)
 POST /governance/holds · POST /governance/holds/:id/release  (admin; audited — data_holds
                lifecycle; erasure (§4.5) and the hold-refused topology ops (§4.4) check it)
-(v1 endpoints for agents, sessions, messages, workspaces, automated-tasks, triggers, playbooks, runs carry over)
+(v1 endpoints for agents, sessions, messages, memory, workspaces, automated-tasks, triggers, playbooks, runs carry over)
 ```
 
 Refusal envelope: every 4xx on this surface answers in one machine-parseable shape —
@@ -2045,7 +2074,8 @@ wrote and the ask it raised (SPEC-17 API-061).
   every call audited; append-only audit log.
 - **Scope delegation invariant** at spawn: child ⊆ parent, enforced by the policy engine.
 - **DNA write policy**: agents propose, owners publish; compartment access enforced on retrieval;
-  secrets scanner over all proposals, memory, and ingested direct edits (§4.5) — scanner hits
+  secrets scanner over all proposals, item-level DNA writes (§9), memory, and ingested direct
+  edits (§4.5) — scanner hits
   quarantine to the owner with an
   audited admin override, so a false positive is a visible ask, never a silent wedge in the write
   path.
@@ -2053,7 +2083,8 @@ wrote and the ask it raised (SPEC-17 API-061).
   approval gates on persistent hires; ephemeral workers get connector-sandboxed,
   task-scoped workspaces only.
 - **Node trust**: enrollment via one-time tokens + keypair identity, revocation from the console,
-  node id stamped on every audit event; for remote nodes, egress allowlisting and secret handling
+  node id stamped on every audit event where one exists (§7's nullable `node_id`); for remote
+  nodes, egress allowlisting and secret handling
   route through the control plane / gateway rather than node-local code. The console surfaces each
   node's trust level explicitly — nodes are trusted compute, and admins should see that stated.
 - Secrets in OS-encrypted storage (OS keyring / Tauri stronghold — note `safeStorage` is
@@ -2147,7 +2178,8 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   guard (agent, self, viewer, and cycle refusals), trigger catch-up coalescing, atomic quota claims under racing spawners, DNA
   store ingestion quarantine, topology-op write-lock serialization, ask respond-time
   re-validation, quorum accumulation (N distinct accepts, deny-wins, stale accepts don't count,
-  pool-shortfall denial, pool-eligibility at respond time, deputy accepts audit-only toward N>1),
+  pool-shortfall denial, pool-eligibility at respond time, deputy and delegated-agent accepts
+  audit-only toward N>1, a delegated agent's accept binding its quorum-1 ask),
   spend reservation under racing runs, settle-overrun gating, separation-of-duties refusal, playbook cycle detection,
   alias-collision resolution order, injected-layer compartment filtering (rules/glossary/goals),
   org-scoped proposal routing to the admin queue, PAT expiry enforcement, erasure
@@ -2155,13 +2187,16 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   authority (sponsor activation ask, lead/sponsor pause-close, admin pause backstop,
   viewer/non-active sponsor-lead refusal, close-time workspace unbinding, depends_on cycle
   refusal), goal window-end slice drop and
-  terminal-status exit, viewer assignee refusal,
+  terminal-status exit, the unlinked-goal expiry ask firing for domain-scoped rows no less
+  than org-wide ones, viewer assignee refusal,
   RBAC demotion walk (scoped eligibility shedding: asks reassigned and closed, assignments
   returned, deputies cleared both directions, goals and initiative posts re-pointed, domains and
   agents transferred, personal assistants retired — transactional with the last-admin guard),
   write-time owner guards (viewer goal owner, non-owner/admin domain owner),
   glossary proposal routing (org-wide → admin queue), item-CRUD publish-path guarantees
-  (lock serialization, sod routing, contradiction re-check), persistent-cap window rollover,
+  (lock serialization, sod routing, contradiction re-check, secrets scan), persistent-cap window rollover,
+  primary-workspace gate derivation (first-bound of the hire's ordered workspace bindings,
+  admin-editable — the primary-domain rule one level up),
   domainless/multi-domain spawn-gate routing, workspace-domain binding semantics (ordered
   list, primary promotion on unbind, topology remap, archive refusing live bindings),
   cross-domain item-edit refusal at propose and write, amendment re-routing between
@@ -2193,7 +2228,8 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   schema), close-out ask on a deadline passed with no open work, retire archiving personal
   memory inert, db-only tree-path quarantine on ingest, hold-refused dissolution/archive/
   store-migration with rename and merge-into open, tainted-run accepts audit-only with an
-  untainted successor ask, draft staging confined to cards and glossary, trigger/playbook
+  untainted successor ask, taint-gated spawning (an under-quota ephemeral spawn from a
+  tainted run routing the owner approval ask, pre-fill barred), draft staging confined to cards and glossary, trigger/playbook
   criticality defaults, named-reader derivation (list-backed `named` access, ignored under the
   other policies, dead entries contributing nothing, §5 walk removal), spawn refusal of `draft`
   and `retired` templates, sponsor direction asks escalating on expiry — never denying — with
@@ -2283,7 +2319,8 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   retired agent's binding contributing nothing to domain-access reads, the walks
   scrubbing participants entries and group memberships), spawn-claim lifecycle (count-cap
   claims and budget reserves attaching at request creation, riding the pending row,
-  releasing at denial, expiry, and archive-time settlement — an approval never publishing
+  releasing at denial, expiry, the halt and emptied-ceiling archives, and archive-time
+  settlement — an approval never publishing
   into an exhausted cap), the workspaceless hire gate (admin-routed like a domainless
   primary), supersession fork refusal (a second live edge onto a superseded predecessor
   refused at propose, amend, and item write, a head-naming successor landing), breaker
@@ -2302,8 +2339,8 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   resolving per its expiry behavior the moment its rule goes terminal mid-wait, the
   successor ask carrying the decision; archive closing owner-addressed asks with an audit
   note), spawn-gate re-key on workspace-binding edits (a pending approval re-keyed inside the
-  audited edit to the gate the edited `domain_ids` derives — the new primary's owner or the
-  admin fallback — ids and deadlines stable), group-Leader write guards (viewer and
+  audited edit to the gate the edited binding derives — the new primary domain's owner, the
+  re-pointed primary workspace's, or the admin fallback — ids and deadlines stable), group-Leader write guards (viewer and
   non-active members refused at set, the ephemeral mortality pin) with demotion re-pointing,
   group archival (the admin door, the row left as read-only history, name reuse among
   non-archived),
@@ -2574,8 +2611,8 @@ statement of those mechanisms. What remains is stated, not hidden:
   stated so nobody expects it silently.
 - **Deferred parameters, not deferred designs.** Provider routing (§14.15) and lease intervals
   (§14.16) are decisions *over* designed mechanisms — §8.1(d)'s queue-and-ask, §3's fenced
-  leases: the behavior exists; the tuning is organizational and lands with Phase 6 and the first
-  24/7 rollout respectively.
+  leases: the behavior exists; the tuning is organizational and lands with the first 24/7
+  rollout and Phase 6 respectively.
 - **The universal fallback.** For the space no enumeration covers, §2's ninth principle is the
   contract: refuse the effect, write the audit, raise an ask — no subsystem may fail silently or
   improvise a side effect. Handling every scenario does not mean predicting every scenario; it
@@ -2596,6 +2633,7 @@ statement of those mechanisms. What remains is stated, not hidden:
 11. **Business budgets**: display-only field on initiatives (default) vs enforcement tied into the §8.2 tier-2 write gates — revisit with the first write-capable ERP/WMS connector.
 12. **Deployment perimeter**: one deployment per company (default) — M&A-style consolidation of two deployments is a migration project, not a runtime feature.
 13. **Per-domain proposal strictness**: every proposal reviewed (default) vs opt-in auto-publish for low-blast-radius domains (audited, retro-reviewable) — revisit when proposal volume drowns owners.
-14. **Ask SLA tier defaults**: how long each tier runs before breach-and-escalate (e.g. `critical` 1h, `standard` to next digest, `bulk` 24h) — defaults tuned with the first real org; ask deadlines derive from these unless set per ask (§8.10).
+14. **Ask SLA tier defaults**: how long each tier runs before breach-and-escalate (defaults:
+   `critical` 1h, `standard` to next digest, `bulk` 24h) — defaults tuned with the first real org; ask deadlines derive from these unless set per ask (§8.10).
 15. **Model-provider degradation**: single provider (default) with manual fallback vs. automatic multi-provider routing — queueing, bounded wait, and the single-outage critical ask are designed (§8.1(d)); the decision is the routing policy, to be made before the first 24/7 deployment leans on one vendor's uptime.
 16. **Partitioned-node authority**: how long a node may act on cached scopes/DNA without a control-plane heartbeat — the fenced-lease mechanism (epoch claims, pause-and-resync, reconnect reconciliation) is designed (§3); the lease interval and reconciliation depth are the tunables — decide with Phase 6 node registration.
