@@ -1,7 +1,7 @@
 # Summa — SDD Specification Suite
 
 This directory is the **normative requirements corpus** for the Summa platform, derived from
-`PLAN.md` (v2.45). `PLAN.md` is the design rationale — the "why", with history;
+`PLAN.md` (v2.46). `PLAN.md` is the design rationale — the "why", with history;
 these specs are the implementation contract — the "what", discrete and testable. When the two
 disagree, fix one of them in the same change; never implement against a discrepancy silently.
 
@@ -27,7 +27,8 @@ disagree, fix one of them in the same change; never implement against a discrepa
   reject the write/action, record an audit entry, and where a human decision is needed raise an
   ask — never a silent failure (principle PRN-009).
 - **Requirement IDs** are `<PREFIX>-<NNN>`, unique across the suite, one prefix per module
-  (e.g. `ASK-041`). Cross-file references always cite the ID, never paraphrase.
+  (module 01 carries the two prefixes of its source sections, VIS and PRN) — e.g. `ASK-041`.
+  Cross-file references always cite the ID, never paraphrase.
 - **Single home rule**: every behavior has exactly one normative home module. Other modules
    reference it by ID. If two modules seem to state one rule, the more specific one is
    authoritative and the other is a pointer.
@@ -77,6 +78,13 @@ disagree, fix one of them in the same change; never implement against a discrepa
 
 `TRACEABILITY.md` maps every PLAN.md section to the requirements that specify it and is the
 completeness proof for this suite.
+
+## Structural lint
+
+The suite's structural invariants — ID uniqueness, one home module per prefix, no dangling
+citations (ranges expanded), and TRACEABILITY exact in both directions — are machine-checked
+by `tools/lint_specs.py`, run in CI on every push. A spec change that breaks any of them fails
+the build; the maintenance rule below is enforced, not aspirational.
 
 ## Verification conventions
 
