@@ -4,6 +4,25 @@ Version history for PLAN.md and the `specs/` suite. Newest first. Entries v2.1�
 were extracted verbatim from PLAN.md's preamble in v2.46; from v2.46 on, history lives
 here alone (PLAN.md carries only the current version stamp).
 
+**Errata pass (v2.48)**: a full-suite review — PLAN.md and all 21 modules read against each
+other for consistency, completeness, and unambiguity — closed eight residues: `restricted`
+gains the definition its four uses leaned on — DGV-002 names a restricted domain (access ≠
+`public`), the term DGV-004's admin-read audit, CLC-052's rate limits, and §13's rows all
+use — with §4.4 carrying the same parenthetical · the org-wide glossary gains a storage
+home — the root `glossary.md`, git-backed alongside `goals/` because no domain row exists to
+carry a `store` flag for org-scoped content (STG-001/002, §4.5's tree) · SPEC-16's
+`workspaces` row gains `archived_at?` — the archive walk's terminal marker, DAT-010's
+`deactivated_at` timestamp-is-the-whole-state pattern (CLC-040, §7) · `dna_proposals`'
+ambiguous bare `at` splits into `created_at, reviewed_at?` — the filed date DWP-025
+recomputes `review_by` from is now a named column (§7) · re-base and re-target, one
+mechanism until now, gain their distinction — re-base re-issues the ended objective as a
+new goal row, re-target swaps to a different goal (INT-051, §5.1) — and INT-071's
+dependency re-base names its object (the edge re-pointed) · API-061's `gate` refusal code
+gains the HTTP status its five siblings already had — 403 alongside eligibility, the status
+coarse and `code` the fine grain · four parameter citations completed (SPW-001's TTL →
+CFG-040; SPW-032's budget window → CFG-014; SUB-052's and DAT-101's dedupe window →
+CFG-013). Lint green: 476 requirements, TRACEABILITY exact both directions.
+
 **Errata pass (v2.47)**: a full-suite review — PLAN.md and all 21 modules read against each
 other for consistency, completeness, and unambiguity — closed nine residues: the spawn
 depth cap is one tunable, not two rules — SEC-011 and §10's checklist said "depth ≤ 2"

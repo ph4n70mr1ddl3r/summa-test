@@ -1,6 +1,6 @@
 # Traceability — PLAN.md ⇄ Specification Suite
 
-Completeness proof for the SDD suite: every section of `PLAN.md` (v2.47) maps to requirements
+Completeness proof for the SDD suite: every section of `PLAN.md` (v2.48) maps to requirements
 in these specs, and every requirement traces back to a PLAN source. The coverage column lists
 exact ID ranges generated from the defined requirements (no elided prefixes, no implied gaps).
 Both directions — every defined ID listed, every listed ID defined — are verified by

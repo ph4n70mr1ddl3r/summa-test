@@ -36,7 +36,8 @@ dna_goals      (id, domain_id?, quarter?, statement_md, owner member,
                 effective_from, effective_to?)
 dna_proposals  (id, kind 'card'|'rule'|'decision'|'goal'|'glossary'|'edit', payload json,
                 revision int default 1, proposed_by member, provenance json,
-                status 'open'|'published'|'rejected'|'withdrawn', reviewed_by?, at, review_by?)
+                status 'open'|'published'|'rejected'|'withdrawn', reviewed_by?, created_at,
+                reviewed_at?, review_by?)
 asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request', from member,
                 to member, payload json, initiative_id?, workspace_id?,
                 status 'pending'|'answered'|'expired'|'withdrawn', deadline, created_at,
@@ -48,7 +49,7 @@ initiatives    (id, title, goal_ref?, decision_ref?, sponsor member, lead member
                 deadline?, closed_at?, depends_on json?)
 board_tasks    + assignee_member_id?, initiative_id?   (runs carry initiative_id? likewise)
 workspaces     + initiative_ids json?, domain_ids json?, node_id?, claim_epoch int default 0,
-                lease_expires_at?, participants json
+                lease_expires_at?, participants json, archived_at?
 triggers       + criticality 'standard'|'critical' default 'standard'
 playbooks      + criticality 'standard'|'critical' default 'standard'
 spend_ledger   (id, member_id, run_id?, spawn_id?, kind 'reserve'|'settle'|'release',
@@ -117,7 +118,7 @@ memory_items   (id, tier 'personal'|'project'|'proposal', member_id?, workspace_
 - **DAT-100** — `spend_ledger` kinds reserve|settle|release meter caps as reserved + settled
   (SPW-033/034).
 - **DAT-101** — `trigger_firings` unique on (trigger_id, idempotency_key) within the dedupe
-  window (default 7d); replays return the original run (SUB-052).
+  window (default 7d, CFG-013); replays return the original run (SUB-052).
 - **DAT-102** — `external_writes` staged lifecycle per SUB-020/022.
 - **DAT-110** — `data_holds`: kind `member` freezes erasure; kind `domain` freezes
   history-rewrite remediation and db-only export/deletion, and the hold-refused topology ops

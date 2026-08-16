@@ -7,7 +7,8 @@ Source: PLAN.md §6.1, §6.2.
 - **SPW-001** — Two spawn classes: **persistent hire** (long-lived org member; full identity
   files; memory accrual; proposes via review; bounds: budget policy, `owner_human_id`) and
   **ephemeral worker** (bounded subtask delegation; minimal identity; read-only DNA; folds
-  results back then dies; bounds: TTL default 24h, spend cap, task-scoped workspaces).
+  results back then dies; bounds: TTL default 24h (CFG-040), spend cap, task-scoped
+  workspaces).
 - **SPW-002** — Spawn request shape: `spawn({ from: templateId | customRole, class,
   purpose, workspaceBindings, scopeCeiling, budgetCap, ttl? })` — a guarded tool and console
   action.
@@ -41,9 +42,9 @@ Source: PLAN.md §6.1, §6.2.
   inside the spawn transaction — two spawners racing the last slot see one success and one
   refusal.
 - **SPW-032** — Cap windows match worker class: an ephemeral's cap spans its lifetime; a
-  persistent hire's is a periodic window (default monthly, admin-configurable) evaluating
-  reserved + settled — a long-lived hire is neither bankrupted in week two nor free forever
-  after one exhausted reserve.
+  persistent hire's is a periodic window (default monthly, admin-configurable, CFG-014)
+  evaluating reserved + settled — a long-lived hire is neither bankrupted in week two nor
+  free forever after one exhausted reserve.
 - **SPW-033** — The money side reserves atomically: a spawn or run reserves against
   (reserved + settled) in the spend ledger, settles to actual cost at completion, releases on
   failure or reaping; two runs at 49% of a ceiling cannot both spend past it;

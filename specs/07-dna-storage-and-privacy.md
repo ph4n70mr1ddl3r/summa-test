@@ -6,12 +6,14 @@ Source: PLAN.md §4.5.
 
 - **STG-001** — The canonical DNA store is git-backed markdown with frontmatter (id,
   version, effective dates, provenance, access): `domains/<domain>/{cards,rules,decisions,
-  goals}/*.md`, `glossary.md`; org-wide goals under `goals/`. The control plane maintains the
+  goals}/*.md`, `glossary.md`; org-wide goals under `goals/` and the org-wide glossary in the
+  root `glossary.md`. The control plane maintains the
   SQLite/FTS/vector index over it. Humans can read and edit their company's brain with any
   editor; git history *is* the DNA timeline.
 - **STG-002** — The tree holds `store: 'git'` domains only; a db-only domain's whole content
   set lives in SQLite per the privacy carve-out; domain-scoped goals follow their domain's
-  `store` flag; org-wide goals are git-backed.
+  `store` flag; org-wide goals and the org-wide glossary are git-backed — no domain row
+  exists to carry a `store` flag for org-scoped content, so the carve-out cannot reach it.
 - **STG-003** — Domains may declare `store: 'db-only'` (HR and Finance default to it):
   content lives in SQLite with export-on-demand and never enters the git store.
 - **STG-004** — Frontmatter carries a `schema_version`; product upgrades run in-place content

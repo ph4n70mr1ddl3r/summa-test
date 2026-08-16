@@ -62,8 +62,8 @@ Source: PLAN.md §8.1–8.9, §8.11.
 - **SUB-052** — Firings are idempotent at the boundary: every firing carries a deterministic
   key (schedule: trigger + scheduled time; webhook/API: event id or caller-supplied
   `Idempotency-Key`; event: source event id); the `trigger_firings` table refuses duplicates
-  within a configurable window (default 7 days, sized for provider redelivery) and returns
-  the original run — an outage never converts one event into two side effects.
+  within a configurable window (default 7 days, sized for provider redelivery; CFG-013) and
+  returns the original run — an outage never converts one event into two side effects.
 
 ## 8.6 Playbook engine (SUB-0xx)
 

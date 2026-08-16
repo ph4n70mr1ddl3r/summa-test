@@ -93,7 +93,8 @@ is the PRN-009 form — refuse, audit, ask where a human decision is needed.
   `code` is a stable enum — `validation | eligibility | not_found | conflict |
   rate_limited | gate` — mapped per family: 422 validation, 403 eligibility (the write-door
   guards), 404 not_found, 409 conflict (lock serialization, racing transitions, stale
-  epoch), 429 rate_limited (ASK-101), with `gate` covering guard refusals that carry policy
-  context (quota, depth, spend halt). `audit_event_id` links the row the refusal wrote and
+  epoch), 429 rate_limited (ASK-101), with `gate` — guard refusals that carry policy
+  context (quota, depth, spend halt) — mapping to 403 alongside eligibility: the status is
+  coarse, `code` the fine grain. `audit_event_id` links the row the refusal wrote and
   `ask_id` the ask a PRN-009/NFR-001 refusal raised — a refusal without an audit row is a
   bug, not a response.

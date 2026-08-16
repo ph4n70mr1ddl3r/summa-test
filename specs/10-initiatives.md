@@ -78,10 +78,11 @@ Source: PLAN.md §5.1.
   pause its escalation is suspended with the stall clock (playing on resume); under
   `proposed` it joins the activation ask on the sponsor's desk.
 - **INT-051** — The answered choice moves the linkage atomically with the answer: extend
-  re-windows the same goal row; re-base/re-target swap `goal_ref` onto the new goal with the
-  goal slice re-deriving at once; the swap's target rides the same respond-time liveness
-  check — a re-point onto a goal that died while the ask waited is audit-only, the successor
-  ask carrying a live choice.
+  re-windows the same goal row; re-base re-issues the ended objective as a new goal row
+  (statement carried, window fresh) and re-target swaps to a different goal — both moving
+  `goal_ref` — with the goal slice re-deriving at once; the swap's target rides the same
+  respond-time liveness check — a re-point onto a goal that died while the ask waited is
+  audit-only, the successor ask carrying a live choice.
 - **INT-052** — Direction asks are questions: unanswered, they escalate sponsor → admin and
   stay pending in every digest (ASK-110) — never a silent no.
 
@@ -107,7 +108,8 @@ Source: PLAN.md §5.1.
   way an edge addresses a terminal row is the upstream closing under it, exactly the case
   the close-ask exists for.
 - **INT-071** — Closing an upstream initiative with active dependents raises an ask to each
-  dependent's sponsor — proceed, re-base, or pause: a coordination signal, not a block.
+  dependent's sponsor — proceed, re-base (the dependency edge re-pointed), or pause: a
+  coordination signal, not a block.
 
 ## Launch gates
 

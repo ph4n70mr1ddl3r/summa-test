@@ -90,8 +90,10 @@ forever.
 
 ## Workspace archival
 
-- **CLC-040** — Workspaces archive, never bare-delete: runs and artifacts are history.
-  Archival is a walked transition: initiative bindings drop (goal slice re-derives), domain
+- **CLC-040** — Workspaces archive, never bare-delete: runs and artifacts are history —
+  `workspaces.archived_at` the terminal marker (DAT-010's `deactivated_at` pattern: a
+  timestamp is the whole state). Archival is a walked transition: initiative bindings drop
+  (goal slice re-derives), domain
   reader sets re-derive, the node claim dies with the row (the lease's terminal case), new
   spawn bindings are refused, workspace-keyed asks degrade to the domainless fallback (hop
   skipped, digest tail), pending spawn requests binding to it archive with their pins
@@ -110,9 +112,9 @@ forever.
   spawn, refreshed on role change, revoked on offboarding; a demotion to viewer retires the
   assistant (mirrored viewer scopes are read-only and a never-ask-target owns no staff);
   the delegation invariant holds with the employee's role as ceiling.
-- **CLC-052** — Mirrored access ≠ mirrored behavior: restricted-domain reads carry
-  rate/volume limits in addition to permission checks, and every read of a restricted
-  domain is audited.
+- **CLC-052** — Mirrored access ≠ mirrored behavior: restricted-domain reads (DGV-002's
+  *restricted*: access ≠ `public`) carry rate/volume limits in addition to permission
+  checks, and every read of a restricted domain is audited.
 - **CLC-053** — Identity separation: the assistant acts under its own member identity (own
   PAT, audit trail, spend-ledger line), never the employee's credentials.
 

@@ -13,7 +13,7 @@ is promoted to a central, governed **Company DNA** with proposals and review; ag
 agents (governed); topology becomes a **control plane + execution nodes**, with a single-process
 mode so small teams start simple.
 
-*Version v2.47 · 2026-08-16 — change history: [CHANGELOG.md](CHANGELOG.md)*
+*Version v2.48 · 2026-08-16 — change history: [CHANGELOG.md](CHANGELOG.md)*
 
 > **Provenance & completion status**: the v1 design document that §7, §8, and §9 delta
 > against is not part of this repository. The normative, testable statement of every
@@ -394,8 +394,9 @@ keeps governing strictness separately.
   review is ownership's job, and §5's admin custody reads through the ownership it holds — and
   active admins read every domain: the §4.3 SLA escalation, sod routing, and §5 custody paths
   all hand admins domain content, so the role carries governance reads — audited on restricted
-  domains like any other read (§13) — rather than a second, smaller map of what an admin may
-  happen to see. Access re-evaluates with its inputs: a topology remap or a workspace unbind
+  domains (access `domain` or `named`, not `public`) like any other read (§13) — rather than
+  a second, smaller map of what an admin may happen to see. Access re-evaluates with its
+  inputs: a topology remap or a workspace unbind
   re-derives the reader set, and §4.2's no-readable-domains rule — next run refused, admin
   asked — is the same rule seen from the domain side. Retrieval
   respects the reader's access — the HR intern's agent never sees salary cards.
@@ -536,13 +537,16 @@ Topology ops serialize behind a domain-level write lock (§4.5):
 ~/.agent/dna/            (or a company git repo — the canonical store)
   domains/<domain>/cards/*.md, rules/*.md, decisions/*.md, glossary.md, goals/*.md
   goals/<quarter>.md          (org-wide — domain_id null)
+  glossary.md                 (org-wide glossary — domain_id null)
 ```
 Markdown + frontmatter (id, version, effective dates, provenance, access); the control plane
 maintains the SQLite/FTS/vector index over it. Humans can read and edit their company's brain with
 any editor; git history *is* the DNA timeline. The tree holds `store: 'git'` domains only: a
 db-only domain's whole content set — cards, rules, decisions, glossary, goals included — lives in
 SQLite per the carve-out below; domain-scoped goals file under their domain and follow its `store`
-flag, org-wide goals under `goals/` are git-backed. Frontmatter carries a `schema_version`: product
+flag; org-wide goals under `goals/` and org-wide glossary entries in the root `glossary.md` are
+git-backed — no domain row exists to carry a `store` flag for org-scoped content, so the
+carve-out cannot reach it. Frontmatter carries a `schema_version`: product
 upgrades run in-place content migrations (post-backup) — an old store is never stranded. Direct
 human edits are welcomed, not trusted: the control plane validates every ingested change
 (frontmatter schema, unique ids, effective-window sanity, and a secrets scan — §10's scanner
@@ -800,8 +804,9 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
    linkage is guarded at birth: a new initiative's `goal_ref` names a live goal at write
    (§7) — an initiative is never born pointed at history; the only way it comes to address a
    terminal row is the goal dying under it, which is exactly the case the ask exists for. The answered choice moves the linkage with it,
-   atomically with the answer: extend re-windows the same row, re-base and re-target swap
-   `goal_ref` onto the new goal, and the goal slice re-derives at once (§7) — the re-point is
+   atomically with the answer: extend re-windows the same row, re-base re-issues the ended
+   objective as a new goal row (statement carried, window fresh), re-target swaps to a
+   different goal — both moving `goal_ref` — and the goal slice re-derives at once (§7) — the re-point is
    part of the ask's effect, never a manual afterthought that leaves the spine addressing a
    terminal row — and the swap's target rides the same respond-time liveness check (§8.10):
    a re-point onto a goal that itself died while the ask waited is audit-only, the successor
@@ -836,8 +841,9 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
    (§6.3) rather than closing under them. The retrospective files DNA proposals — the §1 loop
    closes.
    Initiatives may declare dependencies (`depends_on`, §7): closing an upstream initiative with
-   active dependents raises an ask to each dependent's sponsor — proceed, re-base, or pause — a
-   coordination signal, not a hard block; the humans who own the downstream calls make them. The
+   active dependents raises an ask to each dependent's sponsor — proceed, re-base (the
+   dependency edge re-pointed), or pause — a coordination signal, not a hard block; the
+   humans who own the downstream calls make them. The
    graph stays a DAG: dependency cycles are refused at write — the §8.10 deputy-cycle guard
    applied to initiatives; a malformed web of directives is rejected at the door, not discovered
    mid-close. Edges name live rows, the `goal_ref` rule on the graph axis: a dependency
@@ -1457,8 +1463,10 @@ dna_goals      (id, domain_id?, quarter?, statement_md, owner member, status 'ac
                 -- departed identity — severable only by §4.5 erasure, never by a walk
 dna_proposals  (id, kind 'card'|'rule'|'decision'|'goal'|'glossary'|'edit', payload json, revision int
                  default 1, proposed_by member,
-                 provenance json, status 'open'|'published'|'rejected'|'withdrawn', reviewed_by?, at,
-                 review_by?)  -- review_by: queue SLA deadline; breach escalates to admin (§4.3);
+                 provenance json, status 'open'|'published'|'rejected'|'withdrawn', reviewed_by?, created_at,
+                 reviewed_at?, review_by?)  -- review_by: queue SLA deadline; breach escalates to admin (§4.3);
+                 -- created_at: the filed date review_by derives and re-derives from (§4.3);
+                 -- reviewed_at: when reviewed_by decided
                  -- revision: amendable in review — history retained, publish binds latest (§4.3);
                  -- amendment and publish serialize behind the domain write lock, racing
                  -- amendments landing as sequential revisions (§4.3);
@@ -1533,7 +1541,7 @@ board_tasks    + assignee_member_id?, initiative_id?  (runs carry initiative_id?
                  -- guard (§5.1) extended to assignments; suspension freezes an assignee's tasks
                  -- (resume re-arms them), retire/offboard walks return them (§5, §6.3)
 workspaces     + initiative_ids json?, domain_ids json?, node_id?, claim_epoch int default 0,
-                 lease_expires_at?, participants json
+                 lease_expires_at?, participants json, archived_at?
                  -- participants: the member ids on this workspace's collaboration surface —
                  -- §4.4 'domain' DNA access derives its human reader set from the binding
                  -- through this list (an agent's reads derive from its workspaces directly);
@@ -1559,7 +1567,9 @@ workspaces     + initiative_ids json?, domain_ids json?, node_id?, claim_epoch i
                   -- door for the binding rows, as for the content
                  -- node/epoch/lease: affinity placement + the fenced claim (§3)
                  -- lifecycle: workspaces archive, never bare-delete — runs and artifacts
-                 -- are history; archival is a walked transition (§3, §4.4, §5.1, §8.10):
+                 -- are history (archived_at is the terminal marker, deactivated_at's
+                 -- timestamp-is-the-whole-state pattern); archival is a walked
+                 -- transition (§3, §4.4, §5.1, §8.10):
                  -- initiative bindings drop (the goal slice re-derives), domain reader
                  -- sets re-derive, the node claim dies with the row (the lease's terminal
                  -- case), new spawn bindings are refused (the domain-archive rule), and

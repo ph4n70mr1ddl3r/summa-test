@@ -10,7 +10,8 @@ Source: PLAN.md §4.4.
 - **DGV-002** — Reader sets are defined, not ambient: `public` admits every member; `domain`
   admits the owner plus every member tied in through an active workspace binding (an agent
   via its workspaces' `domain_ids`, a human via workspace participation); `named` admits the
-  owner plus the named list.
+  owner plus the named list. A domain whose access policy is not `public` is **restricted** —
+  the read-audit and rate-limit surface (DGV-004, CLC-052).
 - **DGV-003** — Every reader-set input evaluates against live state: a deactivated human, a
   retired agent, or a dead `named_readers` entry contributes nothing; access re-evaluates
   with its inputs, and rehire's fresh row re-admits no one until named again. The SPEC-09
