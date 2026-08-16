@@ -8,7 +8,7 @@ Source: PLAN.md §8.10.
   SPEC-16. Asks carry payload, deadline, SLA tier (`critical | standard | bulk`), escalation
   policy, expiry behavior (`deny | escalate | reassign`), optional initiative/workspace
   linkage, quorum count, responses ledger, collapsed count. The spawn gates file their
-  asks as kind `spawn_request` (SPW-040/043); `approval` is the generic write-approval
+  asks as kind `spawn_request` (SPW-040/043/049); `approval` is the generic write-approval
   kind (ORG-025's v1 mapping).
 - **ASK-010** — SLA tiers: `critical` (blocks a customer-facing or money-moving run —
   interrupt-grade push, console + IM), `standard` (blocks a run — next digest), `bulk`
@@ -34,10 +34,11 @@ Source: PLAN.md §8.10.
   retraction originator-scoped per ASK-033 — partial quorum accepts stay audit-only; the
   SPEC-09/12 walks' close-with-audit-note is this mechanism applied by the system.
 - **ASK-031** — The system files asks as well as settling them: plane-originated asks —
-  goal-window, stall, close-out, dependency, starvation, rebind, trip, upgrade, activation,
-  contradiction, quarantine, parity, the storm aggregate, among others (the filing event is
-  the rule, not the enumeration) — carry a reserved **system originator**: not a member row,
-  never a target, never response-eligible, rendered 'System'.
+  goal-window, stall, close-out, dependency, retrospective, starvation, rebind, trip,
+  upgrade, activation, contradiction, quarantine, parity, the storm aggregate, among others
+  (the filing event is the rule, not the enumeration) — carry a reserved **system
+  originator**: not a member row, never a target, never response-eligible, rendered
+  'System'.
 - **ASK-032** — A system ask's withdrawal belongs to the system's named closures alone —
   the walks' audit-note settlement, the aggregate's recovery-or-ack close, expiry per
   behavior; a member's withdraw on a system ask is refused at the door, and the system

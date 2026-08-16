@@ -9,9 +9,9 @@ forever.
 - **CLC-001** — Persistent status enum: `requested | active | suspended | retiring |
   archived`; ephemeral lifecycle maps 1:1: spawned→requested, running→active, done→retiring
   (fold-back pending), reaped→archived.
-- **CLC-002** — Denial is terminal for a `requested` row: a denied or expired spawn request
-  transitions `requested`→`archived` without ever activating, draining its template pin
-  (SPW-044).
+- **CLC-002** — Denial is terminal for a `requested` row: a denied, expired, or retracted
+  spawn request transitions `requested`→`archived` without ever activating, draining its
+  template pin (SPW-044, SPW-047 — the retract the denial's twin).
 - **CLC-003** — `template_id` null marks a customRole hire; promotion (TPL-040) is its
   catalog door.
 

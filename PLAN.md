@@ -13,7 +13,7 @@ is promoted to a central, governed **Company DNA** with proposals and review; ag
 agents (governed); topology becomes a **control plane + execution nodes**, with a single-process
 mode so small teams start simple.
 
-*Version v2.54 · 2026-08-16 — change history: [CHANGELOG.md](CHANGELOG.md)*
+*Version v2.55 · 2026-08-16 — change history: [CHANGELOG.md](CHANGELOG.md)*
 
 > **Provenance & completion status**: the v1 design document that §7, §8, and §9 delta
 > against is not part of this repository. The normative, testable statement of every
@@ -892,7 +892,8 @@ dependency check (§9) — and unbinds: workspaces drop the closed initiative fr
 list (§7), the goal slice re-derives at once, and no workspace keeps reading a closed spine.
 The sponsor's other direction asks — stalled-work escalation, the close-out ask, the
 dependency ask, goal-window and
-terminal-goal asks — carry the opposite expiry from activation: they are questions (§8.10), so an
+terminal-goal asks — carry the opposite expiry from activation: they are questions (§8.10) at
+`bulk` tier — none of the five gates execution, the §8.10 tier semantics — so an
 unanswered one escalates sponsor → admin and stays pending in every digest rather than dying as a
 silent no — an unanswered question may never decide an initiative's fate by disappearing, which
 is precisely what the activation ask's `deny` reserves for itself: a directive that never won its
@@ -1541,9 +1542,9 @@ asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request', fro
                  -- the terminal admin hop is a broadcast: every active admin addressed at once,
                  -- first valid response wins — a single-admin org the degenerate case (§8.10)
                  -- from: member-filed asks name their filer; plane-filed asks — goal-window,
-                 -- stall, close-out, dependency, starvation, rebind, trip, upgrade,
-                 -- activation, contradiction, quarantine, parity, storm-aggregate among
-                 -- them, the filing event the rule, not the enumeration — carry the
+                 -- stall, close-out, dependency, retrospective, starvation, rebind, trip,
+                 -- upgrade, activation, contradiction, quarantine, parity, storm-aggregate
+                 -- among them, the filing event the rule, not the enumeration — carry the
                  -- reserved system originator: not a member row, never a target, never
                  -- response-eligible, rendered 'System'
                  -- (§8.10); withdrawal of a system ask belongs to the system's named closures
@@ -1768,9 +1769,9 @@ close-with-audit-note is this mechanism applied by the system, not a parallel on
 departing member's waiters close inside the walk while every other originator's identical
 question stands — one member's change of heart never answers another's. The system files asks as well as
 settling them: the plane-originated asks the design leans on — goal-window, stall, close-out,
-dependency, starvation, rebind, trip, upgrade, activation, contradiction, quarantine,
-parity, the storm aggregate, among others, the filing event the rule rather than the
-enumeration — carry a reserved system originator rather than borrowing a member's identity (a compliance ask filed
+dependency, retrospective, starvation, rebind, trip, upgrade, activation, contradiction,
+quarantine, parity, the storm aggregate, among others, the filing event the rule rather than
+the enumeration — carry a reserved system originator rather than borrowing a member's identity (a compliance ask filed
 `from` the owner it watches would hand them the retract). The system originator is never a
 target and never response-eligible, renders as 'System' in every digest, and its withdrawal is
 only ever a mechanism that names its own closure — the walks' audit-note settlement, the

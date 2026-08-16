@@ -4,6 +4,28 @@ Version history for PLAN.md and the `specs/` suite. Newest first. Entries v2.1�
 were extracted verbatim from PLAN.md's preamble in v2.46; from v2.46 on, history lives
 here alone (PLAN.md carries only the current version stamp).
 
+**Errata pass (v2.55)**: a full-suite review — PLAN.md and all 21 modules read against each
+other for consistency, completeness, and unambiguity — closed six residues: DGV-046 carried
+the domain-list half of the spawn-gate re-key alone — §4.4, §6.2, §7, and §12's test line all
+name the binding-list edit that demotes or unbinds the primary workspace itself as the door's
+second trigger (re-keying to the re-pointed primary workspace's gate), and the requirement now
+names both edits and all three derived gates · ASK-001 pinned the spawn gates to kind
+`spawn_request` naming SPW-040/043 only — the taint gate (SPW-049, added v2.54) files the same
+kind by its own text, and the producer list now reads SPW-040/043/049 · the plane-originator
+enumeration — ASK-031's list, §7's asks comment, §8.10's — named every sponsor ask v2.54
+pinned except the retrospective; "retrospective" joins all three lists (the enumeration stays
+explicitly non-exhaustive) · the sponsor-ask family's tier pins were partial — the
+retrospective (INT-042) and close-out (INT-063) asks carry tier `bulk` while the stall
+(INT-060), dependency (INT-071), and direction (INT-052) asks named no tier, leaving
+ASK-012/CFG-140's deadline derivation with no input; all three now pin `bulk` — none gates
+execution, ASK-010's tier semantics — with §5.1's family sentence mirrored · CLC-002's
+terminal rule for a `requested` spawn row said "denied or expired" — SPW-047 made the
+requester's retract the denial's twin and §7's agents comment lists all three; "retracted"
+joins the rule with SPW-047 cited · VIS-002 cited the SPEC-05/06 write paths alone, omitting
+SPEC-07's validated ingest door (STG-010, DWP-063's no-door-softer rule); the citation now
+reads SPEC-05/06/07 with the four doors named. Lint green: 484 requirements (no new IDs),
+TRACEABILITY exact both directions.
+
 **Errata pass (v2.54)**: a full-suite review — PLAN.md and all 21 modules read against each
 other for consistency, completeness, and unambiguity — closed nineteen residues: §13.1's
 deferred-parameter pairing inverted the milestones its own decisions name ("lands with Phase 6

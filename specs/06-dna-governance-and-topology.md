@@ -96,9 +96,11 @@ Source: PLAN.md §4.4.
   resulting owner inside topology ops — ask ids stable, deadlines untouched — and at every
   other owner-re-pointing door: the domain edit and the SPEC-09 walks.
 - **DGV-046** — The spawn gate's hop keys on the hire workspace's primary domain: an admin
-  edit of that binding (primary demoted, unbound, emptied to domainless) re-keys a pending
-  spawn approval to the gate the edited binding derives (new primary's owner, or an admin
-  once domainless), inside the audited edit, ids and deadlines stable.
+  edit of that binding (primary demoted, unbound, emptied to domainless) — or of the
+  binding list that demotes or unbinds the primary workspace itself (SPW-040's first-bound
+  rule) — re-keys a pending spawn approval to the gate the edited bindings derive (the new
+  primary domain's owner, the re-pointed primary workspace's, or an admin once domainless),
+  inside the audited edit, ids and deadlines stable.
 - **DGV-047** — Archive, having no resulting owner to re-key onto, settles instead:
   owner-addressed asks pending against the archiving domain close with an audit note inside
   the event (ASK-044).

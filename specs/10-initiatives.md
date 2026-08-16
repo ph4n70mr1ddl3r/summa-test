@@ -85,14 +85,15 @@ Source: PLAN.md §5.1.
   `goal_ref` — with the goal slice re-deriving at once; the swap's target rides the same
   respond-time liveness check — a re-point onto a goal that died while the ask waited is
   audit-only, the successor ask carrying a live choice.
-- **INT-052** — Direction asks are questions: unanswered, they escalate sponsor → admin and
-  stay pending in every digest (ASK-110) — never a silent no.
+- **INT-052** — Direction asks are `bulk`-tier questions — the linkage waits, execution
+  does not (ASK-010): unanswered, they escalate sponsor → admin and stay pending in every
+  digest (ASK-110) — never a silent no.
 
 ## Stall detection
 
 - **INT-060** — A stalled initiative — deadline passed with open work — raises an ask
-  (kind `question`, expiry `escalate`) to its
-  sponsor (then admin) reusing the escalation machinery.
+  (kind `question`, tier `bulk`, expiry `escalate`) to its sponsor (then admin) reusing the
+  escalation machinery — the stall gates no execution, the close-out ask's tier semantics.
 - **INT-061** — The stall clock is defined without a deadline: keyed to the linked goal's
   window when there is one, else a bulk-tier staleness line in the sponsor's digest after a
   configurable window (default 30 days, CFG-011).
@@ -112,9 +113,9 @@ Source: PLAN.md §5.1.
   way an edge addresses a terminal row is the upstream closing under it, exactly the case
   the close-ask exists for.
 - **INT-071** — Closing an upstream initiative with active dependents raises an ask (kind
-  `question`, expiry `escalate`) to each
-  dependent's sponsor — proceed, re-base (the dependency edge re-pointed), or pause: a
-  coordination signal, not a block.
+  `question`, tier `bulk`, expiry `escalate`) to each dependent's sponsor — proceed, re-base
+  (the dependency edge re-pointed), or pause: a coordination signal, not a block, is a
+  bulk-tier question (ASK-010).
 
 ## Launch gates
 
