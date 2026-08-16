@@ -13,7 +13,7 @@ is promoted to a central, governed **Company DNA** with proposals and review; ag
 agents (governed); topology becomes a **control plane + execution nodes**, with a single-process
 mode so small teams start simple.
 
-*Version v2.57 · 2026-08-16 — change history: [CHANGELOG.md](CHANGELOG.md)*
+*Version v2.58 · 2026-08-16 — change history: [CHANGELOG.md](CHANGELOG.md)*
 
 > **Provenance & completion status**: the v1 design document that §7, §8, and §9 delta
 > against is not part of this repository. The normative, testable statement of every
@@ -143,6 +143,14 @@ boundaries — with a sixth raised to the top: **shared, governed context**.
 
 - **Single-process mode**: control plane + one node in one process, console at `localhost` — this is
   the MVP path; nothing is lost when scaling out later.
+- **Containerized deployment** (§14.3, decided v2.58): every artifact ships as an OCI image,
+  built and run rootless under Podman, with Kubernetes as the orchestration target; the control
+  plane decomposes into services along the seams this section already defines — plane
+  API/console backend, model gateway, execution nodes, plus the deployment's Keycloak (§14.2)
+  as the human-IdP service — creating no second writer for any single-owner store (the SQLite
+  WAL owner; §4.5's single direct DNA writer). Single-process mode survives as one container
+  for the small-team case; the decomposition is gated by the DLV-044 spike (§11), and none of
+  this is an HA license (§13.1).
 - **Workspace affinity**: runs are scheduled to the node where the workspace's files/connectors
   live (an engineer agent runs on the machine with the repo; the secretary's mailbox connector
   lives wherever it was authorized). Affinity is a scheduling preference, not a marriage: when the
@@ -211,7 +219,8 @@ boundaries — with a sixth raised to the top: **shared, governed context**.
   keep is surfaced at declaration, never discovered at audit time.
 - **Stack** (v2.49 re-host: the backend moves Node 22/TypeScript → Java 25 LTS + Spring Boot 4;
   console, data plane, and every §8 behavior unchanged): Java 25 LTS + Spring Boot 4 daemon
-  (current major, fat-jar — one artifact), React + Vite + Tailwind + shadcn console
+  (current major, fat-jar — one artifact per service, each shipped as an OCI image — §14.3),
+  React + Vite + Tailwind + shadcn console
   (TypeScript), SQLite (WAL) + sqlite-vec + FTS5 (sqlite-jdbc, the vector extension loaded
   from the JVM), GraalJS playbook sandbox (sealed polyglot context, host access denied),
   Spring-scheduled cron triggers, MCP connectors (official Java SDK), Tauri shell as Phase-8b
@@ -681,8 +690,8 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
   propose DNA, spawn within policy), `viewer` (read-only in full — never an ask target, never an assignee, and
   never an originator: proposing or amending DNA, filing asks, creating board tasks or initiatives, and spawning
   are all refused at write; the deputy, target, assignee, sponsor, lead, owner, group-Leader, and proposer guards in this plan
-  are facets of one total no-write surface, not a checklist to dodge one item at a time). Auth starts as local accounts; SSO/OIDC
-  later.
+  are facets of one total no-write surface, not a checklist to dodge one item at a time). Human authn rides the deployment's own
+  Keycloak over OIDC (§14.2); RBAC is Summa's own.
 - **Asks — the universal interrupt**: approvals, questions, assignments, and spawn requests are all
   *Asks*: routed to a member (human or agent) with payload, deadline, and escalation policy —
   SLA tiers, expiry semantics, and escalation chains are a designed subsystem (§8.10), not just a
@@ -2119,7 +2128,8 @@ wrote and the ask it raised (SPEC-17 API-061).
 
 ## 10. Security & governance checklist
 
-- Human authn (local accounts → SSO later) + RBAC; PATs hashed, shown once, scoped — and mortal:
+- Human authn rides the deployment's own Keycloak over OIDC (§14.2) + RBAC — Summa stores no
+  human passwords; PATs hashed, shown once, scoped — and mortal:
   expiry (default 90d), rotation (create-replacement + revoke-old in one flow), a revoke
   endpoint (§9), and last-used stamps for compromise detection. They also authorize against
   live authority: a PAT's — or session's — effective scopes are the grant intersected with the
@@ -2129,10 +2139,12 @@ wrote and the ask it raised (SPEC-17 API-061).
   status-fenced on top of mortal: they authenticate only while the agent is `active`,
   re-validated at every use (§6.3).
 - **Admin lockout is recoverable by design**: a single-admin self-hosted org whose admin loses
-  their credentials is not a bricked org — a server-local CLI reset flow (run on the host;
-  physical/filesystem access is the recovery root of trust for self-hosted, mirroring §4.5's
-  git-integrity stance) restores access, and every reset writes an audit entry. Degrade to a
-  documented recovery, never to silence (§2).
+  their credentials is not a bricked org — human credentials live in Keycloak (§14.2), and
+  recovery rides Keycloak's realm-admin access on the host (physical/filesystem access is the
+  recovery root of trust for self-hosted, mirroring §4.5's git-integrity stance; an IdP-side
+  reset is outside Summa's audit log by construction — the restored principal's next
+  credential use is audited like any other). Degrade to a documented recovery, never to
+  silence (§2).
 - Agent scopes enforced in code (file scope realpath checks, tool allowlists, egress CIDR guard);
   every call audited; append-only audit log.
 - **Scope delegation invariant** at spawn: child ⊆ parent, enforced by the policy engine.
@@ -2154,7 +2166,7 @@ wrote and the ask it raised (SPEC-17 API-061).
   Electron's API; the exact mechanism is the §11 Phase-0 spike); redaction before any egress
   to providers covers secrets *and* PII.
 - Webhooks signature-verified; console served over localhost or TLS behind the company's reverse
-  proxy in server mode.
+  proxy / cluster ingress (§14.3) in server mode.
 - DNA repo integrity: the control plane is the only direct writer, commits and refs are signed,
   non-fast-forward updates are refused, and PR workflows require protected branches (§4.5).
 - Erasure & residency: erasure requests pseudonymize the append-only ledgers under legal-hold
@@ -2166,7 +2178,7 @@ wrote and the ask it raised (SPEC-17 API-061).
 
 | Phase | Deliverable | Key work | Est. (1 dev) |
 |---|---|---|---|
-| **0. Foundations** | Repo, CI, single-process skeleton | Monorepo, Java 25 + Spring Boot 4 skeleton (fat jar), sqlite-jdbc SQLite (WAL), React+Vite console shell (TS strict), REST+WS, 3-OS CI matrix | 1 wk |
+| **0. Foundations** | Repo, CI, single-process skeleton | Monorepo, Java 25 + Spring Boot 4 skeleton (fat jar), sqlite-jdbc SQLite (WAL), React+Vite console shell (TS strict), REST+WS, 3-OS CI matrix, OCI images under rootless Podman + kind-on-Podman Kubernetes CI (§14.3) | 1 wk |
 | **1. MVP agent** | Chat with an agent doing real local work | Model gateway, agent loop, guarded fs/shell/web tools, approval cards, audit, streaming chat UI, first-run bootstrap (company + seed admin) | 4–5 wks |
 | **2. Identity, memory, skills, connectors** | agents feel like employees | Role catalog across departments, IDENTITY/STYLE/HANDBOOK, memory tiers 1–2 (personal/project), skills + market, MCP client + tier-1 connectors, workspace kinds, versioned role-template catalog (§6.5) | 3–4 wks |
 | **3. Company DNA v1** | The coherence core | DNA store (git-backed markdown) + domains/index, cards compilation from sources, glossary + applicable-rules + goal-slice injection into every prompt (org-wide goals first; linked goals wire up with initiatives in P4), proposals + owner review queue, citations in answers | 3–4 wks |
@@ -2211,6 +2223,10 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
 - Git-backed DNA store concurrency: concurrent proposal publishes, direct edits vs. publish,
   index staleness, and which component holds the write lock in multi-node mode.
 - Secrets API for the Tauri shell (stronghold / OS keyring — `safeStorage` is Electron's).
+- Container baseline for §14.3's shape: rootless Podman builds of the per-service fat-jar
+  images, a kind-on-Podman Kubernetes environment in CI, and proof that the microservices
+  decomposition preserves the single-writer invariants — exactly one SQLite owner (§13.1), one
+  direct DNA writer (§4.5).
 
 **Acceptance criteria** (a phase isn't done until its demo passes):
 - **P1**: agent edits a repo file through a gated approval; audit trail complete end to end.
@@ -2646,7 +2662,7 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
 | Spawn runaway / cost explosion | Depth cap, quotas, TTL reaper, spend circuit-breaker, approval gates on persistent hires |
 | Governance overhead kills small-team speed | Proportional governance: single-admin mode collapses review of own proposals to one click; compartments optional at start; auto-publish itself stays behind the §14.13 decision |
 | Privacy leakage across departments | DNA compartments enforced at retrieval; access scopes on domains; audit on every read of restricted domains |
-| Multi-human/multi-node complexity landing too early | Single-process mode is the default until Phase 6; the split is a deployment change, not a rewrite |
+| Multi-human/multi-node complexity landing too early | The dev loop stays single-process and the plane/node split still lands at Phase 6, even though the container/Kubernetes packaging arrives with Phase 0 (§14.3) — the split is a deployment change, not a rewrite |
 | Agent reliability unattended | Conservative scopes, Ask gates before external writes, run-now dry tests, explicit success criteria |
 | Native-module fragility across OSes | 3-OS CI from Phase 0; prebuilt binaries; child-process fallback for the playbook sandbox |
 | Scope creep | Phase ladder above; DNA and spawning are the only new pillars — resist others until v1 ships |
@@ -2668,7 +2684,9 @@ statement of those mechanisms. What remains is stated, not hidden:
   sits above the owner short of admin. The §4.3 separation-of-duties knob raises the cost; the
   boundary itself is the trust model, stated so nobody is surprised.
 - **Single control plane — accepted boundary.** One control-plane instance is the design (§3's
-  stack: one process, SQLite WAL); its downtime is survived, not eliminated — runs queue, triggers
+  stack: a single logical instance over SQLite WAL — §14.3's microservices may split the plane
+  into services, but exactly one service owns the store; no replication); its downtime is
+  survived, not eliminated — runs queue, triggers
   coalesce (§8.5), leases hold to their fence and pause-and-resync on reconnect (§3), and
   recovery rides the §11 restore runbook. Multi-instance HA is a redesign beyond this plan,
   stated so nobody expects it silently.
@@ -2689,8 +2707,18 @@ statement of those mechanisms. What remains is stated, not hidden:
    principle), and git concurrency is what the DLV-042 spike gates before the ladder
    commits. DB-with-export remains the per-domain carve-out (`store: 'db-only'`), not
    the default.
-2. **Human auth v1**: local accounts (default) vs. OIDC-only for companies with SSO.
-3. **First deployment shape**: single-process on an office machine (default) vs. containerized server from day one.
+2. **Human auth v1**: the deployment's own Keycloak over OIDC — decided (v2.58): Summa stores
+   no human credentials (§10); "local accounts" are Keycloak realm accounts, and company SSO
+   is Keycloak brokering the company's IdP — the same OIDC surface to Summa either way, which
+   collapses the original local-vs-SSO either/or. RBAC, PATs, and sessions stay Summa's own.
+3. **First deployment shape**: microservices on Kubernetes under rootless Podman,
+   containerized from day one — decided (v2.58): every artifact ships as an OCI image (§3),
+   the decomposition follows §3's existing seams (plane API/console backend, model gateway,
+   execution nodes, plus the Keycloak service item 2 adds) without creating a second writer
+   for any single-owner store, and single-process mode survives as one container for the
+   small-team case. The packaging is not an HA license — §13.1's single-plane-instance
+   boundary stands — and the DLV-044 spike (§11) gates the decomposition before the ladder
+   commits.
 4. **Ephemeral worker default TTL & quota**: 24h / 3 concurrent (default) — tune with use.
 5. **Tier-1 business suite**: Microsoft 365/Graph (default) vs Google Workspace.
 6. **First IM channel**: Slack (default) vs Discord vs Telegram.

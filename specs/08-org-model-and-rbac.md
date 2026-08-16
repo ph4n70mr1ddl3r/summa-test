@@ -8,7 +8,8 @@ Source: PLAN.md §5.
   one member namespace; the task board, asks, groups, and lineage reference members.
 - **ORG-002** — Human RBAC roles: `admin` (everything), `owner` (one or more DNA domains +
   their agents), `member` (work, propose DNA, spawn within policy), `viewer` (read-only in
-  full). Auth starts as local accounts; SSO/OIDC later (CFG-020).
+  full). Human authn rides the deployment's Keycloak over OIDC (CFG-020, decided v2.58);
+  RBAC is Summa's own.
 - **ORG-020** — **Viewer total no-write surface**: a viewer is never an ask target, assignee,
   deputy, sponsor, lead, owner, group Leader, or originator — proposing or amending DNA,
   filing asks, creating board tasks or initiatives, and spawning are all refused at write;

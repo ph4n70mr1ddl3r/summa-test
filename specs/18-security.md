@@ -4,12 +4,15 @@ Source: PLAN.md §10.
 
 ## Authentication & credentials
 
-- **SEC-001** — Human authn via local accounts (SSO/OIDC later, CFG-020) + RBAC; agent authn
-  via status-fenced PATs and sessions.
-- **SEC-002** — Admin lockout is recoverable by design: a server-local CLI reset flow (run on
-  the host; physical/filesystem access is the recovery root of trust for self-hosted)
-  restores access, and every reset writes an audit entry — degrade to a documented recovery,
-  never to silence.
+- **SEC-001** — Human authn rides the deployment's own Keycloak over OIDC (CFG-020, decided
+  v2.58) + RBAC — Summa stores no human credentials: realm accounts and any SSO brokering
+  are Keycloak's; agent authn via status-fenced PATs and sessions.
+- **SEC-002** — Admin lockout is recoverable by design: human credentials live in Keycloak
+  (SEC-001), and recovery rides Keycloak's realm-admin access on the host —
+  physical/filesystem access is the recovery root of trust for self-hosted — with the
+  restored principal's next credential use audited like any other (an IdP-side reset is
+  outside Summa's audit log by construction): degrade to a documented recovery, never to
+  silence.
 - **SEC-003** — Agent credentials are status-fenced on top of mortal: they authenticate
   only while the agent is `active`, re-validated at every use (CLC-033).
 - **SEC-004** — PATs are hashed, shown once, scoped — and mortal: expiry (default 90d,
@@ -49,7 +52,7 @@ Source: PLAN.md §10.
   mechanism is the Phase-0 spike DLV-043); redaction before any egress to providers covers
   secrets *and* PII.
 - **SEC-041** — Webhooks are signature-verified; the console is served over localhost or TLS
-  behind the company's reverse proxy in server mode.
+  behind the company's reverse proxy / cluster ingress (ARC-006) in server mode.
 - **SEC-042** — DNA repo integrity per STG-020/021: single direct writer, signed commits and
   refs, non-fast-forward refusal, protected-branch prerequisites verified at startup.
 

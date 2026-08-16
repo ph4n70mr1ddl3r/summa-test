@@ -9,9 +9,20 @@ trigger; the mechanism it tunes is already designed (NFR-022). Defaults live beh
   human legibility is load-bearing (PRN-006), and git concurrency is what the DLV-042
   spike gates before the ladder commits. DB-with-export remains the per-domain carve-out,
   not the default.
-- **CFG-020** — Human auth v1: local accounts (default) vs. OIDC-only for SSO companies.
-- **CFG-030** — First deployment shape: single-process on an office machine (default) vs.
-  containerized server from day one.
+- **CFG-020** — Human auth v1: the deployment's own Keycloak over OIDC — decided (v2.58):
+  Summa stores no human credentials (SEC-001) — `humans.auth` carries the Keycloak subject
+  link, never credential material — "local accounts" are Keycloak realm accounts, and company
+  SSO is Keycloak brokering the company's IdP: the same OIDC surface to Summa either way,
+  which is why the original local-vs-SSO either/or collapsed. RBAC, PATs, and sessions stay
+  Summa's own (SEC-004/005); lockout recovery rides Keycloak's realm-admin paths (SEC-002).
+- **CFG-030** — First deployment shape: microservices on Kubernetes under rootless Podman,
+  containerized from day one — decided (v2.58): every artifact ships as an OCI image
+  (ARC-006), the decomposition follows §3's existing seams (plane API/console backend, model
+  gateway, execution nodes, plus the Keycloak service CFG-020 adds) without creating a second
+  writer for any single-owner store, and single-process mode (ARC-001) survives as one
+  container for the small-team case. The packaging is not an HA license — NFR-021's
+  single-instance boundary and the single-writer invariants (STG-020) stand — and the
+  DLV-044 spike gates the decomposition before the ladder commits.
 - **CFG-040** — Ephemeral default TTL & quota: 24h / 3 concurrent per spawner (default) —
   tune with use.
 - **CFG-050** — Tier-1 business suite: Microsoft 365/Graph (default) vs. Google Workspace.

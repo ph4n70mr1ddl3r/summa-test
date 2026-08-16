@@ -28,8 +28,10 @@ deployment model, not a gap:
   nothing sits above the owner short of admin. The sod knob raises the cost (DWP-050); the
   boundary itself is the trust model. Single-admin mode collapses review of own proposals to
   one click — the accepted degenerate case (CFG-130 keeps strictness separate).
-- **NFR-021** — **Single control plane**: one control-plane instance is the design (one
-  process, SQLite WAL); its downtime is survived, not eliminated — runs queue, triggers
+- **NFR-021** — **Single control plane**: one control-plane instance is the design (a single
+  logical instance over SQLite WAL — CFG-030's microservices packaging may split the plane
+  into services, but exactly one service owns the store; no replication); its downtime is
+  survived, not eliminated — runs queue, triggers
   coalesce (SUB-051), leases hold to their fence and pause-and-resync on reconnect
   (ARC-022), and recovery rides the restore runbook (DLV-055). Multi-instance HA is a
   redesign beyond this plan.

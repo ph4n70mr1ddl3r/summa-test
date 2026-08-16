@@ -17,11 +17,19 @@ Source: PLAN.md §3.
 - **ARC-004** — 24/7 automations shall require an always-on node; workspace affinity on a
   sleeping machine is for interactive work only.
 - **ARC-005** — The stack shall be: Java 25 LTS + Spring Boot 4 daemon (current major,
-  fat-jar — one artifact); React + Vite + Tailwind + shadcn console (TypeScript); SQLite
+  fat-jar — one artifact per service, each shipped as an OCI image, ARC-006); React + Vite +
+  Tailwind + shadcn console (TypeScript); SQLite
   (WAL) via sqlite-jdbc + sqlite-vec as a loadable extension (DLV-041 validates the JVM
   load) + FTS5; GraalJS playbook sandbox — a sealed polyglot context, host access denied
   (with the Phase-0 spike's child-process fallback, DLV-040); Spring-scheduled cron
   triggers; MCP connectors (official Java SDK); Tauri shell as Phase-8b polish.
+- **ARC-006** — Every artifact shall ship as an OCI image, built and run rootless under
+  Podman, with Kubernetes as the orchestration target (CFG-030, decided v2.58): the control
+  plane decomposes into services along the seams this section already defines — plane
+  API/console backend, model gateway, execution nodes, plus the deployment's Keycloak
+  (CFG-020) as the human-IdP service — creating no second writer for any single-owner store
+  (NFR-021's SQLite owner, STG-020's single direct DNA writer); single-process mode (ARC-001)
+  remains deployable as one container. The decomposition is gated by the DLV-044 spike.
 
 ## Workspace affinity & placement
 

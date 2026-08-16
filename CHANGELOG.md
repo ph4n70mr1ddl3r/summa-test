@@ -4,6 +4,30 @@ Version history for PLAN.md and the `specs/` suite. Newest first. Entries v2.1�
 were extracted verbatim from PLAN.md's preamble in v2.46; from v2.46 on, history lives
 here alone (PLAN.md carries only the current version stamp).
 
+**Open decisions closed (v2.58)**: two decisions resolved. CFG-020 is decided — human auth v1
+rides the deployment's own Keycloak over OIDC: Summa stores no human credentials (SEC-001
+rewritten; `humans.auth` carries the Keycloak subject link, never credential material),
+"local accounts" are Keycloak realm accounts, and company SSO is Keycloak brokering the
+company's IdP — the same OIDC surface to Summa either way, which is why the original
+local-vs-SSO either/or collapsed. RBAC, PATs, and sessions stay Summa's own (SEC-004/005);
+the login endpoint is the OIDC token exchange (API-001) and bootstrap provisions the seed
+admin in the realm (API-003); admin-lockout recovery moves to Keycloak's realm-admin access
+on the host (SEC-002, §10 — an IdP-side reset is outside Summa's audit log by construction;
+the restored principal's next credential use is audited like any other). CFG-030 is decided
+— containerized from day one: microservices on Kubernetes under rootless Podman; every
+artifact ships as an OCI image (new ARC-006; ARC-005 and §3's stack now say one fat-jar
+artifact per service, each shipped as an OCI image), the decomposition follows §3's existing
+seams (plane API/console backend, model gateway, execution nodes, plus the Keycloak service)
+creating no second writer for any single-owner store, and single-process mode survives as one
+container for the small-team case. The packaging is not an HA license — NFR-021 and §13.1's
+single-control-plane boundary now read "a single logical instance over SQLite WAL — exactly
+one service owns the store" instead of "one process" — and the new DLV-044 spike (rootless
+Podman builds, kind-on-Podman CI, single-writer proof) gates the decomposition before the
+ladder commits, with Phase 0 gaining the container baseline. SEC-041 names the cluster
+ingress; the §13 single-process risk row is re-anchored (containers at Phase 0, dev loop
+single-process, split still at Phase 6); TRACEABILITY's §3 and §11 rows extend; the three
+version pins move to v2.58.
+
 **Open decisions closed (v2.57)**: two decisions resolved, one new mechanism specified. CFG-001
 is decided — the DNA canonical store stays git-backed markdown: the erasure collision is already
 contained by the §4.5 carve-out (db-only domains, the pseudonymization sweep, the

@@ -6,7 +6,7 @@ Source: PLAN.md §11, §12.
 
 | Phase | Deliverable | Est. (1 dev) |
 |---|---|---|
-| **0. Foundations** | Repo, CI, single-process skeleton — monorepo, Java 25 + Spring Boot 4 (fat jar), sqlite-jdbc SQLite (WAL), React+Vite console shell (TS strict), REST+WS, 3-OS CI matrix | 1 wk |
+| **0. Foundations** | Repo, CI, single-process skeleton — monorepo, Java 25 + Spring Boot 4 (fat jar), sqlite-jdbc SQLite (WAL), React+Vite console shell (TS strict), REST+WS, 3-OS CI matrix, OCI images under rootless Podman + kind-on-Podman Kubernetes CI (CFG-030) | 1 wk |
 | **1. MVP agent** | Chat with an agent doing real local work — model gateway, agent loop, guarded fs/shell/web tools, approval cards, audit, streaming chat UI, first-run bootstrap | 4–5 wks |
 | **2. Identity, memory, skills, connectors** | agents feel like employees — role catalog, IDENTITY/STYLE/HANDBOOK, memory tiers 1–2, skills + market, MCP client + tier-1 connectors, workspace kinds, versioned role-template catalog | 3–4 wks |
 | **3. Company DNA v1** | The coherence core — DNA store + domains/index, cards compilation, glossary + applicable-rules + goal-slice injection (org-wide goals first; linked goals wire up with initiatives in P4), proposals + owner review queue, citations | 3–4 wks |
@@ -43,6 +43,10 @@ Source: PLAN.md §11, §12.
 - **DLV-042** — Git-backed DNA store concurrency: concurrent publishes, direct edits vs.
   publish, index staleness, and which component holds the write lock in multi-node mode.
 - **DLV-043** — Secrets API for the Tauri shell (stronghold / OS keyring).
+- **DLV-044** — Container baseline for CFG-030's shape: rootless Podman builds of the
+  per-service fat-jar images, a kind-on-Podman Kubernetes environment in CI, and proof that
+  the microservices decomposition preserves the single-writer invariants — exactly one
+  SQLite owner (NFR-021), one direct DNA writer (STG-020) — before the ladder commits.
 
 ## Acceptance criteria (a phase isn't done until its demo passes)
 

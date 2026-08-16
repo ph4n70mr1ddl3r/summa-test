@@ -1,6 +1,6 @@
 # Traceability — PLAN.md ⇄ Specification Suite
 
-Completeness proof for the SDD suite: every section of `PLAN.md` (v2.57) maps to requirements
+Completeness proof for the SDD suite: every section of `PLAN.md` (v2.58) maps to requirements
 in these specs, and every requirement traces back to a PLAN source. The coverage column lists
 exact ID ranges generated from the defined requirements (no elided prefixes, no implied gaps).
 Both directions — every defined ID listed, every listed ID defined — are verified by
@@ -11,7 +11,7 @@ Both directions — every defined ID listed, every listed ID defined — are ver
 |---|---|---|
 | §1 Product vision | 01 | VIS-001…007 |
 | §2 Principles (incl. universal fallback) | 01, 19 | PRN-001…009; NFR-001 restates PRN-009 |
-| §3 Architecture (topology, trust, leases, time, residency, stack) | 02 | ARC-001…005, ARC-010…016, ARC-020…024, ARC-030…032, ARC-040…043 |
+| §3 Architecture (topology, trust, leases, time, residency, stack) | 02 | ARC-001…006, ARC-010…016, ARC-020…024, ARC-030…032, ARC-040…043 |
 | §4.1 Content model + item lifecycles (derived w/ §7, §4.2/§4.4/§9 closure semantics) | 03 | DNC-001…005, DNC-010…011, DNC-020…026, DNC-030…032, DNC-040…042, DNC-050…054, DNC-060…061 |
 | §4.2 Read path (injection, retrieval, precedence, aliasing) | 04 | DRP-001…007, DRP-010…011, DRP-020…022, DRP-030…036, DRP-040 |
 | §4.3 Write path (proposals, SLA, amendment, publish, sod) | 05 | DWP-001…003, DWP-010, DWP-020…025, DWP-030…033, DWP-040…042, DWP-050…051, DWP-060…064 |
@@ -40,7 +40,7 @@ Both directions — every defined ID listed, every listed ID defined — are ver
 | §8.11 Inter-agent communication | 15 | SUB-100…101 |
 | §9 API surface | 17 | API-001…007, API-010, API-020…024, API-030…033, API-040…045, API-050…052, API-060…061 |
 | §10 Security & governance checklist | 18 | SEC-001…005, SEC-009…012, SEC-020, SEC-030, SEC-040…042, SEC-050 |
-| §11 Delivery plan (phases, spikes, acceptance, restore) | 21 | DLV-010…013, DLV-040…043, DLV-050…055 |
+| §11 Delivery plan (phases, spikes, acceptance, restore) | 21 | DLV-010…013, DLV-040…044, DLV-050…055 |
 | §12 Testing & quality | 21, README, 19 | DLV-060…061; NFR-010…011 (determinism); README verification conventions |
 | §13 Risks & mitigations | 19 | NFR-030…035; the table's remaining rows carry mitigations specified by their cited modules (SPW, DGV, ARC, SUB, CLC, DLV) |
 | §13.1 Residual risk / accepted boundaries | 19 | NFR-001, NFR-020…022 |
