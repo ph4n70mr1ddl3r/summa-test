@@ -67,7 +67,8 @@ Source: PLAN.md §8.1–8.9, §8.11.
 
 ## 8.6 Playbook engine (SUB-0xx)
 
-- **SUB-060** — DSL and sandbox unchanged; `worker()` targets any member (human targets
+- **SUB-060** — DSL unchanged from v1, the sandbox re-hosted as ARC-005's sealed GraalJS
+  context (child-process fallback, DLV-040); `worker()` targets any member (human targets
   create an assignment ask; a viewer is refused at write); spawn-class playbooks (fan-out
   workers) build on ephemeral workers; SOPs instantiate as versioned playbooks with DNA
   pointer cards (DNC-002).

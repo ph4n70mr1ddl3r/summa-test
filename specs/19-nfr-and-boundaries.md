@@ -29,7 +29,7 @@ deployment model, not a gap:
   boundary itself is the trust model. Single-admin mode collapses review of own proposals to
   one click — the accepted degenerate case (CFG-130 keeps strictness separate).
 - **NFR-021** — **Single control plane**: one control-plane instance is the design (one
-  binary, SQLite WAL); its downtime is survived, not eliminated — runs queue, triggers
+  process, SQLite WAL); its downtime is survived, not eliminated — runs queue, triggers
   coalesce (SUB-051), leases hold to their fence and pause-and-resync on reconnect
   (ARC-022), and recovery rides the restore runbook (DLV-055). Multi-instance HA is a
   redesign beyond this plan.

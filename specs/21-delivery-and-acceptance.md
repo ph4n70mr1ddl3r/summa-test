@@ -6,7 +6,7 @@ Source: PLAN.md §11, §12.
 
 | Phase | Deliverable | Est. (1 dev) |
 |---|---|---|
-| **0. Foundations** | Repo, CI, single-process skeleton — monorepo, TS strict, Drizzle+SQLite (WAL), REST+WS, console shell, 3-OS CI matrix | 1 wk |
+| **0. Foundations** | Repo, CI, single-process skeleton — monorepo, Java 25 + Spring Boot 4 (fat jar), sqlite-jdbc SQLite (WAL), React+Vite console shell (TS strict), REST+WS, 3-OS CI matrix | 1 wk |
 | **1. MVP agent** | Chat with an agent doing real local work — model gateway, agent loop, guarded fs/shell/web tools, approval cards, audit, streaming chat UI, first-run bootstrap | 4–5 wks |
 | **2. Identity, memory, skills, connectors** | agents feel like employees — role catalog, IDENTITY/STYLE/HANDBOOK, memory tiers 1–2, skills + market, MCP client + tier-1 connectors, workspace kinds, versioned role-template catalog | 3–4 wks |
 | **3. Company DNA v1** | The coherence core — DNA store + domains/index, cards compilation, glossary + applicable-rules + goal-slice injection (org-wide goals first; linked goals wire up with initiatives in P4), proposals + owner review queue, citations | 3–4 wks |
@@ -35,9 +35,11 @@ Source: PLAN.md §11, §12.
 
 ## Phase-0 spikes (the ladder isn't committed until they pass)
 
-- **DLV-040** — `isolated-vm` on Node 22: maintenance status, compatibility, child-process
-  fallback prototype.
-- **DLV-041** — sqlite-vec + FTS5 hybrid-ranking determinism (NFR-010).
+- **DLV-040** — GraalJS playbook sandbox on the JVM: sealed-polyglot escape surface
+  (host-access denial), stock-JDK vs GraalVM JIT performance, child-process fallback
+  prototype.
+- **DLV-041** — sqlite-vec (JVM loadable extension via sqlite-jdbc) + FTS5 hybrid-ranking
+  determinism (NFR-010).
 - **DLV-042** — Git-backed DNA store concurrency: concurrent publishes, direct edits vs.
   publish, index staleness, and which component holds the write lock in multi-node mode.
 - **DLV-043** — Secrets API for the Tauri shell (stronghold / OS keyring).

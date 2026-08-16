@@ -15,10 +15,12 @@ Source: PLAN.md §3.
   control plane / model gateway for remote nodes; single-process mode has no such exposure.
 - **ARC-004** — 24/7 automations shall require an always-on node; workspace affinity on a
   sleeping machine is for interactive work only.
-- **ARC-005** — The stack shall be: Node 22 + TypeScript daemon; React + Vite + Tailwind +
-  shadcn console; SQLite (WAL) + sqlite-vec + FTS5; `isolated-vm` playbook sandbox (with the
-  Phase-0 spike's child-process fallback); croner triggers; MCP connectors; Tauri shell as
-  Phase-8b polish.
+- **ARC-005** — The stack shall be: Java 25 LTS + Spring Boot 4 daemon (current major,
+  fat-jar — one artifact); React + Vite + Tailwind + shadcn console (TypeScript); SQLite
+  (WAL) via sqlite-jdbc + sqlite-vec as a loadable extension (DLV-041 validates the JVM
+  load) + FTS5; GraalJS playbook sandbox — a sealed polyglot context, host access denied
+  (with the Phase-0 spike's child-process fallback, DLV-040); Spring-scheduled cron
+  triggers; MCP connectors (official Java SDK); Tauri shell as Phase-8b polish.
 
 ## Workspace affinity & placement
 

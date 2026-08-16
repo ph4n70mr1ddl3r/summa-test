@@ -20,7 +20,7 @@ Source: PLAN.md §1, §2. Actors defined here are used uniformly across the suit
   classified (personal / project / DNA proposal, SUB-040), DNA changes are reviewed by owners,
   and the updated DNA guides subsequent runs.
 - **VIS-007** — The system shall support a single-process deployment (control plane + one node
-  in one binary, console at localhost) with no feature loss relative to the multi-node shape
+  in one process, console at localhost) with no feature loss relative to the multi-node shape
   (ARC-001).
 
 ## Governing principles (PRN)
@@ -30,7 +30,7 @@ module says so explicitly.
 
 - **PRN-001** — DNA is the source of coherence: agents shall not silently fork DNA into private
   stores; durable knowledge lives only in the governed store (STG-001).
-- **PRN-002** — One binary runs a small team; the same services split into control plane +
+- **PRN-002** — One process runs a small team; the same services split into control plane +
   nodes as the company grows. The split is a deployment change, not a rewrite (ARC-001…004).
 - **PRN-003** — Every capability is a guarded tool: file scope, tool scope, egress guard, and
   audit are enforced in code, never in prompts (SEC-009, SUB-001).

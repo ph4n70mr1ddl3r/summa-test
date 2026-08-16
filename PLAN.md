@@ -13,7 +13,7 @@ is promoted to a central, governed **Company DNA** with proposals and review; ag
 agents (governed); topology becomes a **control plane + execution nodes**, with a single-process
 mode so small teams start simple.
 
-*Version v2.48 · 2026-08-16 — change history: [CHANGELOG.md](CHANGELOG.md)*
+*Version v2.49 · 2026-08-16 — change history: [CHANGELOG.md](CHANGELOG.md)*
 
 > **Provenance & completion status**: the v1 design document that §7, §8, and §9 delta
 > against is not part of this repository. The normative, testable statement of every
@@ -92,7 +92,7 @@ boundaries — with a sixth raised to the top: **shared, governed context**.
 ## 2. Principles
 
 1. **DNA is the source of coherence**: all durable company knowledge lives in one governed place; agents never silently fork it into private stores.
-2. **Local-capable, company-first**: one binary runs everything for a small team; the same services split into control plane + nodes as the company grows.
+2. **Local-capable, company-first**: one process runs everything for a small team; the same services split into control plane + nodes as the company grows.
 3. **Every capability is a guarded tool**: file scope, tool scope, egress guard, and audit enforced in code, never in prompts.
 4. **Agents are accountable to humans**: every agent has a human owner in its lineage chain; ephemeral workers roll up to their spawner, whose chain terminates at a human.
 5. **Spawning is delegation, not reproduction**: a spawned agent's permissions are a subset of its spawner's; budgets and TTLs bound it; policy gates it.
@@ -197,9 +197,14 @@ boundaries — with a sixth raised to the top: **shared, governed context**.
   constraint takes an audited admin attestation that the control plane's own hosting satisfies
   it — the db-only→git confirm's pattern (§4.5) — so a placement promise the deployment cannot
   keep is surfaced at declaration, never discovered at audit time.
-- **Stack** (unchanged from v1): Node 22 + TS daemon, React + Vite + Tailwind + shadcn console,
-  SQLite (WAL) + sqlite-vec + FTS5, `isolated-vm` playbook sandbox, croner triggers, MCP connectors,
-  Tauri shell as Phase-8b polish.
+- **Stack** (v2.49 re-host: the backend moves Node 22/TypeScript → Java 25 LTS + Spring Boot 4;
+  console, data plane, and every §8 behavior unchanged): Java 25 LTS + Spring Boot 4 daemon
+  (current major, fat-jar — one artifact), React + Vite + Tailwind + shadcn console
+  (TypeScript), SQLite (WAL) + sqlite-vec + FTS5 (sqlite-jdbc, the vector extension loaded
+  from the JVM), GraalJS playbook sandbox (sealed polyglot context, host access denied),
+  Spring-scheduled cron triggers, MCP connectors (official Java SDK), Tauri shell as Phase-8b
+  polish. The §8 subsystem designs carry over behaviorally — "unchanged from v1" below names
+  behavior, and the runtime beneath it is this stack's to change.
 
 ---
 
@@ -1675,7 +1680,8 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
   during a control-plane outage redeliver on recovery, and the late copies meet the same dedupe
   as the immediate ones — an outage never converts one event into two side effects. A replayed
   webhook is one run, not two invoices.
-- **8.6 Playbook engine** — DSL and sandbox unchanged; `worker()` targets any member (human targets
+- **8.6 Playbook engine** — DSL unchanged from v1; the sandbox re-hosts per §3 — sealed
+  GraalJS context, host access denied, child-process fallback; `worker()` targets any member (human targets
   create an assignment Ask; a viewer is refused at write like every ask target, §5); spawn-class playbooks (fan-out workers) built on §6 ephemeral workers
   · **initiative playbooks** (§5.1): an SOP instantiated under an initiative becomes the
   cross-domain spine — nodes route asks into each domain's escalation chain (§8.10) and artifacts
@@ -2051,7 +2057,7 @@ wrote and the ask it raised (SPEC-17 API-061).
 
 | Phase | Deliverable | Key work | Est. (1 dev) |
 |---|---|---|---|
-| **0. Foundations** | Repo, CI, single-process skeleton | Monorepo, TS strict, Drizzle+SQLite (WAL), REST+WS, console shell, 3-OS CI matrix | 1 wk |
+| **0. Foundations** | Repo, CI, single-process skeleton | Monorepo, Java 25 + Spring Boot 4 skeleton (fat jar), sqlite-jdbc SQLite (WAL), React+Vite console shell (TS strict), REST+WS, 3-OS CI matrix | 1 wk |
 | **1. MVP agent** | Chat with an agent doing real local work | Model gateway, agent loop, guarded fs/shell/web tools, approval cards, audit, streaming chat UI, first-run bootstrap (company + seed admin) | 4–5 wks |
 | **2. Identity, memory, skills, connectors** | agents feel like employees | Role catalog across departments, IDENTITY/STYLE/HANDBOOK, memory tiers 1–2 (personal/project), skills + market, MCP client + tier-1 connectors, workspace kinds, versioned role-template catalog (§6.5) | 3–4 wks |
 | **3. Company DNA v1** | The coherence core | DNA store (git-backed markdown) + domains/index, cards compilation from sources, glossary + applicable-rules + goal-slice injection into every prompt (org-wide goals first; linked goals wire up with initiatives in P4), proposals + owner review queue, citations in answers | 3–4 wks |
@@ -2089,8 +2095,10 @@ where supported; erasure events in the replayed segment re-apply, so a restore c
 erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12).
 
 **Phase-0 spikes** (timeboxed; the ladder isn't committed until they pass):
-- `isolated-vm` on Node 22: maintenance status, compatibility, child-process fallback prototype.
-- sqlite-vec + FTS5 hybrid-ranking determinism: same query → same blend, across index rebuilds.
+- GraalJS playbook sandbox on the JVM: sealed-polyglot escape surface (host-access denial),
+  stock-JDK vs GraalVM JIT performance, child-process fallback prototype.
+- sqlite-vec (JVM loadable extension via sqlite-jdbc) + FTS5 hybrid-ranking determinism:
+  same query → same blend, across index rebuilds.
 - Git-backed DNA store concurrency: concurrent proposal publishes, direct edits vs. publish,
   index staleness, and which component holds the write lock in multi-node mode.
 - Secrets API for the Tauri shell (stronghold / OS keyring — `safeStorage` is Electron's).
@@ -2542,7 +2550,7 @@ statement of those mechanisms. What remains is stated, not hidden:
   sits above the owner short of admin. The §4.3 separation-of-duties knob raises the cost; the
   boundary itself is the trust model, stated so nobody is surprised.
 - **Single control plane — accepted boundary.** One control-plane instance is the design (§3's
-  stack: one binary, SQLite WAL); its downtime is survived, not eliminated — runs queue, triggers
+  stack: one process, SQLite WAL); its downtime is survived, not eliminated — runs queue, triggers
   coalesce (§8.5), leases hold to their fence and pause-and-resync on reconnect (§3), and
   recovery rides the §11 restore runbook. Multi-instance HA is a redesign beyond this plan,
   stated so nobody expects it silently.

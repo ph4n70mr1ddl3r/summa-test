@@ -4,6 +4,24 @@ Version history for PLAN.md and the `specs/` suite. Newest first. Entries v2.1�
 were extracted verbatim from PLAN.md's preamble in v2.46; from v2.46 on, history lives
 here alone (PLAN.md carries only the current version stamp).
 
+**Stack re-host (v2.49)**: the backend moves from Node 22 + TypeScript to **Java 25 LTS +
+Spring Boot 4** (current major, fat-jar — one artifact) — a decided change landing as PLAN
+amendment + spec delta per the change-control rule: ARC-005 and §3's stack bullet re-state
+the spine — Java 25 LTS + Spring Boot daemon; React + Vite + Tailwind + shadcn console
+(TypeScript) unchanged; SQLite (WAL) reached through sqlite-jdbc with sqlite-vec as a JVM
+loadable extension; the playbook sandbox re-hosts `isolated-vm` → a sealed GraalJS polyglot
+context (host access denied), the DSL unchanged and the child-process fallback kept; croner
+→ Spring-scheduled cron triggers; MCP connectors via the official Java SDK; Tauri shell
+unchanged · §3's "(unchanged from v1)" stack framing replaced with the re-host note, and
+§8's "unchanged from v1" now names behavior over the new runtime (§8.6/SUB-060 carry the
+sandbox clause) · DLV-040 re-aimed at the GraalJS sandbox (escape surface, stock-JDK vs
+GraalVM JIT performance, child-process fallback); DLV-041 names the JVM extension load it
+now validates · Phase 0's deliverable re-worded in both ladder tables (monorepo, Spring
+Boot skeleton, sqlite-jdbc, TS-strict console) · "one binary" → "one process" wherever the
+single-process shape is named (§2.2/PRN-002, VIS-007, NFR-021/§13.1) — a fat jar + JVM is
+one process, not one binary, and the principle's meaning is the process shape. Lint green:
+476 requirements, TRACEABILITY exact both directions.
+
 **Errata pass (v2.48)**: a full-suite review — PLAN.md and all 21 modules read against each
 other for consistency, completeness, and unambiguity — closed eight residues: `restricted`
 gains the definition its four uses leaned on — DGV-002 names a restricted domain (access ≠
