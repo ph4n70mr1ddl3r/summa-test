@@ -39,7 +39,7 @@ module says so explicitly.
 - **PRN-005** — Spawning is delegation, not reproduction: child scopes ⊆ parent scopes, budgets
   and TTLs bind, policy gates (SPW-010).
 - **PRN-006** — Files for humans, database for machines: DNA, identity, memory are git-friendly
-  markdown except where the privacy carve-out applies (STG-002…006); runs, audit, and indexes
+  markdown except where the privacy carve-out applies (STG-001…005); runs, audit, and indexes
   live in SQLite.
 - **PRN-007** — Role-agnostic core: roles are data (templates, skills, connectors, scopes);
   one runtime serves all roles (TPL-001).
@@ -58,7 +58,7 @@ The following guards recur across modules and are specified once:
 - Viewer humans are never ask targets, assignees, deputies, sponsors, leads, goal owners,
   domain owners, group Leaders, proposers, or spawn requesters (ORG-020).
 - Ephemeral workers are never leads, goal owners, named delegation agents, initiative
-  originators, DNA proposers, or persistent-hire requesters (INT-010, DWP-010, SPW-011,
-  ASK-092).
+  originators, DNA proposers, or persistent-hire requesters (INT-001, INT-010, DNC-053,
+  DWP-010, SPW-010, ASK-092).
 - Non-active members (any status other than `active`) are refused every answerable post at
   write and reassign up the chain when targeted mid-life (ASK-060…061, ORG-021).

@@ -12,7 +12,7 @@ Source: PLAN.md §4.1, §7 (item tables). Data representation: SPEC-16.
 - **DNC-003** — Org facts (who exists, teams, domain ownership) shall be generated read-only
   from the org registry and shall not be directly writable.
 - **DNC-004** — Every card, rule, and decision shall record provenance; uncited claims shall be
-  flagged during review (DWP-050).
+  flagged during review (DWP-003).
 - **DNC-005** — Items carry freshness metadata: review cadence and stale flags; scheduled DNA
   quality checks re-validate provenance refs — moved documents and rotated systems flag the
   card stale rather than letting citations rot silently.
@@ -41,7 +41,7 @@ Source: PLAN.md §4.1, §7 (item tables). Data representation: SPEC-16.
   onto an already-superseded row is refused at propose, amend, and item write; displacing a
   superseded rule means naming the chain's live head.
 - **DNC-026** — Ordinary expiring rules transition `lapsed` at `effective_to`, dropping out of
-  injection and routing; initiative close lapses its scoped rules identically (ASK-090).
+  injection and routing; initiative close lapses its scoped rules identically (ASK-094).
 
 ## Decisions
 

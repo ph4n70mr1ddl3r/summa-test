@@ -16,7 +16,8 @@ Source: PLAN.md §8.10.
 - **ASK-011** — Expiry semantics are explicit per ask: `deny` (default for approvals and
   spawn requests — an expired approval is a no), `escalate` (default for questions),
   `reassign` (default for assignments); a run blocked on an expired ask never hangs. `deny`
-  and `reassign` close the expired ask; `escalate` closes it and opens a linked successor.
+  closes the expired ask; `escalate` and `reassign` close it and open a linked successor ask
+  (up the chain / to the named deputy).
 - **ASK-012** — `deadline` derives from the tier unless set explicitly; an explicit deadline
   earlier than the ask's creation is refused at write.
 - **ASK-015** — A quorum-1 ask closes on the first response received; later responses
@@ -99,9 +100,10 @@ Source: PLAN.md §8.10.
 ## Escalation chains
 
 - **ASK-060** — Every ask to a human carries member → deputy → domain owner (of the domain
-  the ask's workspace belongs to; no domain skips the hop; multi-domain workspaces hop to
-  the primary domain) → admin, walked on SLA breach; inactive members are skipped; the walk
-  carries a visited-set so a mis-configured cycle ends the hop, not the walk.
+  the ask's workspace belongs to; an ask with no domain skips this hop; multi-domain
+  workspaces hop to the primary domain) → admin, walked on SLA breach; inactive members are
+  skipped; the walk carries a visited-set so a mis-configured cycle ends the hop, not the
+  walk.
 - **ASK-061** — Agent targets: an ask routed to a Coworker queues into its next run (or
   wakes a session worker); if the target is anything but `active`, or is busy past SLA, the
   ask reassigns up the chain; the agent chain is the lineage chain — first hop the Coworker's

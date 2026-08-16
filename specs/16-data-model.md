@@ -72,7 +72,8 @@ data_holds     (id, kind 'member'|'domain', subject_id, reason_md, created_by, r
 - **DAT-022** — Ephemeral status mapping is 1:1 (CLC-001); `template_id` null marks a
   customRole hire (CLC-003).
 - **DAT-030** — `role_templates` unique on (class, name, version); class stable across a
-  name's versions (TPL-002/003); catalog writes are admin, audited (TPL-004).
+  name's versions — live and retired rows alike, a reused name carrying its class (TPL-002/
+  003/045); catalog writes are admin, audited (TPL-004).
 - **DAT-040** — `nodes.capabilities` is heartbeat-owned (ARC-015); `claim` carries the
   epoch-fenced lease (ARC-020); `status 'revoked'` is terminal with the keypair refused
   everywhere (ARC-016).

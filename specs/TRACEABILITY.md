@@ -14,7 +14,7 @@ prefixes, no implied gaps). Reading direction for implementation: PLAN section �
 | §4.1 Content model + item lifecycles (derived w/ §7, §4.2/§4.4/§9 closure semantics) | 03 | DNC-001…005, DNC-010…011, DNC-020…026, DNC-030…032, DNC-040…042, DNC-050…054, DNC-060…061 |
 | §4.2 Read path (injection, retrieval, precedence, aliasing) | 04 | DRP-001…007, DRP-010…011, DRP-020…022, DRP-030…036, DRP-040 |
 | §4.3 Write path (proposals, SLA, amendment, publish, sod) | 05 | DWP-001…003, DWP-010, DWP-020…025, DWP-030…033, DWP-040…042, DWP-050…051, DWP-060…064 |
-| §4.4 Governance (domains, reader sets, topology ops, locks) | 06 | DGV-001…006, DGV-010…019, DGV-054, DGV-040…042, DGV-045…047, DGV-050…053 |
+| §4.4 Governance (domains, reader sets, topology ops, locks) | 06 | DGV-001…006, DGV-010…019, DGV-040…042, DGV-045…047, DGV-050…054 |
 | §4.5 Storage (git/db-only, ingest, integrity, erasure) | 07 | STG-001…005, STG-010…012, STG-020…021, STG-030…036, STG-040 |
 | §4.6 Knowledge vs. operational data | 04 | DRP-050…052 |
 | §5 Org model (members, RBAC, board, groups, invariant, deputies) | 08 | ORG-001…002, ORG-020…022, ORG-025, ORG-030…033, ORG-040…043, ORG-050…051, ORG-060…061 |

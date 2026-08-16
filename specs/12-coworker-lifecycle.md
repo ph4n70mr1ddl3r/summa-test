@@ -96,7 +96,7 @@ Source: PLAN.md §6.3, §6.4.
   drained, in-flight runs complete onto the archived slice as history, queued-but-unlaunched
   runs close with an audit note, bound triggers and playbook schedules re-point or disable,
   and project memory archives inert — never transferred, never injected. Authority: admin
-  (API-040).
+  (API-044).
 
 ## Personal assistants
 

@@ -47,7 +47,7 @@ Source: PLAN.md §4.2.
 - **DRP-020** — The slice contains active goals linked to the workspace through its
   initiatives, plus goals flagged org-wide `always` (statement, owner, deadline, status).
 - **DRP-021** — Window semantics per DNC-051 apply to the slice; a goal past `effective_to`
-  leaves the slice and the sponsor ask carries the outcome (INT-030): extend re-adds it under
+  leaves the slice and the sponsor ask carries the outcome (INT-050): extend re-adds it under
   a new window; a terminal status ends it for good.
 - **DRP-022** — An org-wide goal with no live initiative whose window ends routes the same ask
   to its owner — the admin when the owner is an agent or departed. No goal expires silently.
