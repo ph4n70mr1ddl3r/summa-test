@@ -13,7 +13,7 @@ is promoted to a central, governed **Company DNA** with proposals and review; ag
 agents (governed); topology becomes a **control plane + execution nodes**, with a single-process
 mode so small teams start simple.
 
-*Version v2.56 · 2026-08-16 — change history: [CHANGELOG.md](CHANGELOG.md)*
+*Version v2.57 · 2026-08-16 — change history: [CHANGELOG.md](CHANGELOG.md)*
 
 > **Provenance & completion status**: the v1 design document that §7, §8, and §9 delta
 > against is not part of this repository. The normative, testable statement of every
@@ -633,6 +633,25 @@ has run. Topology history for db-only domains rests on the audit log, not git: s
 on a db-only domain writes a full manifest — item ids, from/to domain, access re-evaluations — to
 the audit log and triggers an export snapshot, with scheduled exports backing the history the git
 timeline never held (§4.4's reconstructibility promise, restated per store kind).
+
+**Interchange (OKF)**: the store speaks the Open Knowledge Format at its boundaries —
+Google Cloud's vendor-neutral markdown+frontmatter interchange spec (v0.2) — as an
+exchange profile, never as the canon: OKF's trust signals are advisory by its own
+design, its consumers must tolerate broken links (the opposite of a
+citation/supersession canon), and it has no access model or governance write path, so it
+cannot carry reader sets, locks, or the single-writer door. Export is a mechanical
+mapping — item kind → `type`, provenance → `sources`/`generated`, owner-review events →
+`verified` entries whose actors carry the `human:` prefix (OKF's human-reviewed tier),
+lifecycle state → `status` — that respects the requester's reads (a restricted card the
+exporter cannot read is not in the bundle) and covers db-only domains too, riding the
+export machinery that already backs them. Import rides the validated ingest door like
+any hand-merge — frontmatter schema, unique ids, effective-window sanity, secrets scan,
+quarantine-to-owner, write-lock serialization — with accepted items recording the bundle
+in provenance and entering under the taint discipline (§13) until reviewed:
+off-platform content is off-platform content, whichever format it arrives in. The
+mapping is lossy in both directions — OKF carries no effective windows, quorum, or
+access model — and interchange-grade fidelity is the contract; canonical fidelity stays
+with this section's own schema.
 
 ### 4.6 Knowledge vs. operational data (systems of record)
 
@@ -2664,7 +2683,12 @@ statement of those mechanisms. What remains is stated, not hidden:
 
 ## 14. Key open decisions
 
-1. **DNA canonical store**: plain git repo vs. DB-with-export (default: git-backed markdown).
+1. **DNA canonical store**: git-backed markdown — decided (v2.57): the erasure collision
+   is contained by §4.5's carve-out (db-only domains, the pseudonymization sweep, the
+   history-rewrite remediation), human legibility is load-bearing (§2's sixth
+   principle), and git concurrency is what the DLV-042 spike gates before the ladder
+   commits. DB-with-export remains the per-domain carve-out (`store: 'db-only'`), not
+   the default.
 2. **Human auth v1**: local accounts (default) vs. OIDC-only for companies with SSO.
 3. **First deployment shape**: single-process on an office machine (default) vs. containerized server from day one.
 4. **Ephemeral worker default TTL & quota**: 24h / 3 concurrent (default) — tune with use.
@@ -2681,3 +2705,7 @@ statement of those mechanisms. What remains is stated, not hidden:
    `critical` 1h, `standard` to next digest, `bulk` 24h) — defaults tuned with the first real org; ask deadlines derive from these unless set per ask (§8.10).
 15. **Model-provider degradation**: single provider (default) with manual fallback vs. automatic multi-provider routing — queueing, bounded wait, and the single-outage critical ask are designed (§8.1(d)); the decision is the routing policy, to be made before the first 24/7 deployment leans on one vendor's uptime.
 16. **Partitioned-node authority**: how long a node may act on cached scopes/DNA without a control-plane heartbeat — the fenced-lease mechanism (epoch claims, pause-and-resync, reconnect reconciliation) is designed (§3); the lease interval and reconciliation depth are the tunables — decide with Phase 6 node registration.
+17. **OKF interchange profile**: the Open Knowledge Format (v0.2) is the DNA store's
+   exchange profile — export target and ingest source (§4.5 Interchange, STG-050…052) —
+   never the canonical schema — decided (v2.57); revisit only on an OKF major-version
+   break (v0.x has already shipped one: v0.1→v0.2 moved `timestamp`→`generated.at`).

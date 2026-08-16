@@ -4,6 +4,30 @@ Version history for PLAN.md and the `specs/` suite. Newest first. Entries v2.1�
 were extracted verbatim from PLAN.md's preamble in v2.46; from v2.46 on, history lives
 here alone (PLAN.md carries only the current version stamp).
 
+**Open decisions closed (v2.57)**: two decisions resolved, one new mechanism specified. CFG-001
+is decided — the DNA canonical store stays git-backed markdown: the erasure collision is already
+contained by the §4.5 carve-out (db-only domains, the pseudonymization sweep, the
+history-rewrite remediation), human legibility is load-bearing (§2's sixth principle), and git
+concurrency is what the DLV-042 spike gates before the ladder commits; DB-with-export remains
+the per-domain carve-out, not the default (recorded per the CFG-080 decided-in-place precedent —
+the default was already git, so no behavior changed). The store gains an OKF interchange
+profile: §4.5 adds an Interchange paragraph and SPEC-07 adds STG-050…052 — the Open Knowledge
+Format (Google Cloud's vendor-neutral markdown+frontmatter interchange spec, v0.2) is spoken at
+the boundaries, never as the canon. Export (STG-050) is a mechanical mapping — item kind →
+`type`, provenance → `sources`/`generated`, owner-review events → `verified` entries with
+`human:` actors, lifecycle → `status` — that respects the requester's reader set (DGV-002) and
+covers db-only domains via the STG-003/STG-040 export machinery. Import (STG-051) rides the
+validated ingest door like any hand-merge — same schema/id/window/secrets validation, same
+quarantine-to-owner, same write-lock serialization — with accepted items recording the bundle in
+provenance and entering under the taint discipline (NFR-030) until reviewed. STG-052 pins the
+boundary: OKF is never authoritative — its advisory trust signals, mandatory broken-link
+tolerance, and absent access model cannot carry reader sets, locks, or the citation/supersession
+canon, and the mapping is lossy in both directions, so interchange-grade fidelity is the
+contract. §14 item 17 / CFG-170 records the profile decision (revisit only on an OKF
+major-version break — v0.x has already shipped one); TRACEABILITY's §4.5 and §14 rows extend,
+the module index says 17 key decisions, and the three version pins move to v2.57. Two
+acceptance scenarios join SPEC-07 (poisoned-bundle quarantine; reader-set-respecting export).
+
 **Tooling hardening (v2.56)**: three invariants the errata passes had been holding by hand are
 now machine-checked by `tools/lint_specs.py` — TRACEABILITY coverage is partitioned per row: a
 coverage row citing an ID homed in a module its module column does not name fails the build,

@@ -80,6 +80,26 @@ Source: PLAN.md §4.5.
   preservation: a kind-`domain` hold freezes the removal-adjacent doors (DAT-110),
   never the hold's own record.
 
+## Interchange (OKF)
+
+- **STG-050** — The system shall export DNA content as Open Knowledge Format (OKF v0.2)
+  bundles — an exchange profile, never the canonical schema. The mapping is mechanical:
+  item kind → `type`, provenance → `sources`/`generated`, owner-review events → `verified`
+  entries whose actors carry the `human:` prefix, lifecycle state → `status`. An export
+  contains only content its requester may read — the domain's reader set governs (DGV-002)
+  — and covers db-only domains too, riding the STG-003/STG-040 export machinery.
+- **STG-051** — An arriving OKF bundle is external content and shall enter only through
+  the validated ingest door (STG-010…012): the same frontmatter-schema, unique-id,
+  effective-window, and secrets-scan validation; the same quarantine-to-owner on failure;
+  the same write-lock serialization (STG-011). Accepted items record the bundle in
+  provenance and carry the taint discipline of off-platform content (NFR-030) until
+  reviewed.
+- **STG-052** — OKF shall never be authoritative: the canonical store keeps STG-001's
+  schema and frontmatter; OKF's advisory trust signals and mandatory broken-link
+  tolerance never relax the citation and supersession canon; and the mapping is lossy in
+  both directions — OKF carries no effective windows, quorum, or access model — so
+  interchange-grade fidelity, not canonical fidelity, is the contract (CFG-170).
+
 ## Key acceptance scenarios
 
 ```gherkin
@@ -94,4 +114,15 @@ Scenario: Erasure keeps lessons, severs identity
   When an admin runs erasure (no legal hold)
   Then ledgers, provenance, memory attribution, ask rows, and assignments pseudonymize
   And an annex lists every free-text mention for human judgment
+
+Scenario: A poisoned OKF bundle cannot corrupt the canon
+  Given an OKF bundle whose concept collides an existing item id
+  When the control plane ingests the bundle
+  Then the colliding file quarantines to the domain owner's review queue with the reason attached
+  And the canonical store and index are unchanged
+
+Scenario: An OKF export respects the reader set
+  Given a domain holding restricted cards and a requester outside their reader set
+  When the requester exports the domain as an OKF bundle
+  Then the bundle omits every card the requester cannot read
 ```

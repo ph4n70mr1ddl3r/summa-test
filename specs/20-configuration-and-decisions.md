@@ -4,7 +4,11 @@ Source: PLAN.md §14. Each decision is a named parameter with a default and a de
 trigger; the mechanism it tunes is already designed (NFR-022). Defaults live behind the
 `PUT /governance/policies|quotas` surface (API-050) unless they ride their own object.
 
-- **CFG-001** — DNA canonical store: git-backed markdown (default) vs. DB-with-export.
+- **CFG-001** — DNA canonical store: git-backed markdown — decided (v2.57): the erasure
+  collision is contained by the db-only carve-out (STG-002…003, STG-030…033, STG-005),
+  human legibility is load-bearing (PRN-006), and git concurrency is what the DLV-042
+  spike gates before the ladder commits. DB-with-export remains the per-domain carve-out,
+  not the default.
 - **CFG-020** — Human auth v1: local accounts (default) vs. OIDC-only for SSO companies.
 - **CFG-030** — First deployment shape: single-process on an office machine (default) vs.
   containerized server from day one.
@@ -36,6 +40,9 @@ trigger; the mechanism it tunes is already designed (NFR-022). Defaults live beh
 - **CFG-160** — Partitioned-node authority: how long a node may act on cached scopes/DNA
   without a heartbeat — the fenced-lease mechanism is designed (ARC-020…024); the lease
   interval and reconciliation depth are the tunables — decide with Phase 6 node registration.
+- **CFG-170** — OKF interchange profile: the Open Knowledge Format (v0.2) is the DNA
+  store's exchange profile — export target and ingest source (STG-050…052) — never the
+  canonical schema — decided (v2.57); revisit only on an OKF major-version break.
 
 ## Additional named parameters (from the body of the plan)
 

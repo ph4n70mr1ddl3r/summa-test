@@ -1,7 +1,7 @@
 # Summa — SDD Specification Suite
 
 This directory is the **normative requirements corpus** for the Summa platform, derived from
-`PLAN.md` (v2.56). `PLAN.md` is the design rationale — the "why", with history;
+`PLAN.md` (v2.57). `PLAN.md` is the design rationale — the "why", with history;
 these specs are the implementation contract — the "what", discrete and testable. When the two
 disagree, fix one of them in the same change; never implement against a discrepancy silently.
 
@@ -73,7 +73,7 @@ disagree, fix one of them in the same change; never implement against a discrepa
 | `17-api-surface.md` | API | Endpoints, authority, refusals | §9 |
 | `18-security.md` | SEC | Authn, PATs, scopes, secrets, audit | §10 |
 | `19-nfr-and-boundaries.md` | NFR | Determinism, boundaries, universal fallback | §2, §13, §13.1 |
-| `20-configuration-and-decisions.md` | CFG | Tunables and the 16 open decisions | §14 |
+| `20-configuration-and-decisions.md` | CFG | Tunables and the 17 key decisions | §14 |
 | `21-delivery-and-acceptance.md` | DLV | Phases, spikes, acceptance demos | §11, §12 |
 
 `TRACEABILITY.md` maps every PLAN.md section to the requirements that specify it and is the
