@@ -5,7 +5,7 @@ Source: PLAN.md §4.3.
 ## Tiers and proposal basics
 
 - **DWP-001** — The memory service classifies run learning into three tiers: personal memory
-  (one Coworker, automatic), project memory (one workspace, automatic), and DNA proposals
+  (one agent, automatic), project memory (one workspace, automatic), and DNA proposals
   (company-wide, always proposed, never auto-published).
 - **DWP-002** — A DNA proposal carries the change (new card / rule / decision / goal /
   glossary / edit), its provenance (source session, docs, or observation), and the proposing
@@ -13,7 +13,7 @@ Source: PLAN.md §4.3.
 - **DWP-003** — Domain owners review from a queue in the DNA console (diff view, provenance,
   impact hints); publish creates a version and an effective date; reject leaves an audit trail.
 - **DWP-010** — `proposed_by` must hold a write surface: humans of any role but viewer and
-  persistent Coworkers only — an ephemeral worker's propose is refused at write; its learning
+  persistent agents only — an ephemeral worker's propose is refused at write; its learning
   folds back and the spawner or a human proposes from it.
 
 ## Review queue and SLA

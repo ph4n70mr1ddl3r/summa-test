@@ -7,7 +7,7 @@ Source: PLAN.md §6.5.
 - **TPL-001** — Roles are data: templates carry identity/style/handbook (`body`), scopes
   (`default_scopes`), class, and status; one runtime serves all roles.
 - **TPL-002** — `role_templates` are keyed unique on (class, name, version); a new version is
-  a new row, never an in-place rewrite of one a Coworker pins; every persistent Coworker pins
+  a new row, never an in-place rewrite of one an agent pins; every persistent agent pins
   the version it was spawned from.
 - **TPL-003** — A template's class is immutable across its name's versions: a class-flipping
   version is refused at publish — a role that changed class is a new template and the
@@ -26,21 +26,21 @@ Source: PLAN.md §6.5.
   `active` version — an approval publishes the version the requester saw, never whichever row
   appeared or retired in between.
 - **TPL-011** — Publishing a new `active` version files an upgrade ask to each pinned
-  Coworker's owner; nothing auto-applies; publication supersedes but never retires — a denied
+  agent's owner; nothing auto-applies; publication supersedes but never retires — a denied
   or expired upgrade leaves the pin on its still-legitimate `active` row, and the next bump
   re-asks.
 
 ## Upgrades
 
 - **TPL-020** — An upgrade is proposal-shaped: the diff (IDENTITY/HANDBOOK changes, scope
-  deltas) goes to the Coworker's owner as an ask; on accept, files rebase and scopes
+  deltas) goes to the agent's owner as an ask; on accept, files rebase and scopes
   re-derive as new-template ∩ owner's-current-scopes, never widening; an empty intersection
   refuses to land — the upgrade closes unresolved with the empty re-derivation surfaced
   (retire-and-respawn is the path when the role has genuinely moved past the owner).
 - **TPL-021** — The accept re-validates its target version's status at the door: a version
   retired mid-wait leaves the accept audit-only, the pin standing, the next publication
   re-asking.
-- **TPL-022** — Suspension strands no upgrade: an accept landing on a suspended Coworker is
+- **TPL-022** — Suspension strands no upgrade: an accept landing on a suspended agent is
   a data rebase (files and scopes, not execution) and resume re-arms under the rebased
   template.
 - **TPL-023** — Ephemeral subagent templates upgrade in place — workers are short-lived, so
@@ -49,8 +49,8 @@ Source: PLAN.md §6.5.
 ## Retirement
 
 - **TPL-030** — Retiring a template with live pins is refused; pins count pending spawn
-  requests as well as running Coworkers — a request awaiting approval references its template
-  exactly as a live worker does. Upgrade or retire-and-respawn the pinned Coworkers and
+  requests as well as running agents — a request awaiting approval references its template
+  exactly as a live worker does. Upgrade or retire-and-respawn the pinned agents and
   resolve the pending requests first (the skill-uninstall dependency check, applied to
   templates).
 
@@ -95,7 +95,7 @@ Scenario: A custom hire that worked joins the catalog
   And the hire's personal memory stays its own
 
 Scenario: Retirement waits for pins
-  Given a template with two running Coworkers and one pending spawn request
+  Given a template with two running agents and one pending spawn request
   When an admin retires it
   Then the retirement is refused until the pins drain
 ```

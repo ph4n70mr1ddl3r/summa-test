@@ -14,7 +14,7 @@ Source: PLAN.md §5 (offboarding, demotion, last-admin guard).
 - **OFB-003** — Open asks *to* the member reassign up the chain; asks *from* the member close
   with an audit note (a departed member's pending spawn requests no longer gate anything).
 - **OFB-010** — Board-task assignments are reassigned or returned to the pool.
-- **OFB-011** — Dependent Coworkers are re-owned or retired. Re-owning narrows, never widens:
+- **OFB-011** — Dependent agents are re-owned or retired. Re-owning narrows, never widens:
   scopes re-derive as current ∩ the new owner's live ceiling; an empty intersection retires
   the worker. The attention the ownership derives re-keys with it: a pending owner-upgrade
   ask addressed to the departing owner follows the staff to the re-derived owner — successor
@@ -58,7 +58,7 @@ Source: PLAN.md §5 (offboarding, demotion, last-admin guard).
   close with an audit note; assignments return to the pool or reassign; deputy references
   clear in both directions; group Leader posts re-point; owned goals re-own or retire (the
   active-goal clamp applies); sponsored/led initiatives re-point; shed authority transfers as
-  at offboarding (domains, Coworkers — with assistants always retiring: a never-ask-target
+  at offboarding (domains, agents — with assistants always retiring: a never-ask-target
   owns no staff).
 - **OFB-032** — Authored proposals travel with the authority: transferred to the successor
   for shed domains, withdrawn with an audit note when the new role can no longer propose (to
@@ -78,8 +78,8 @@ Scenario: Racing offboards cannot behead the org
   And the org retains exactly one active admin
 
 Scenario: Custody never widens scopes
-  Given a departing owner's Coworker with scopes S, successor ceiling C
+  Given a departing owner's agent with scopes S, successor ceiling C
   When the walk re-owns it to the successor
   Then its scopes become S ∩ C
-  And if S ∩ C = ∅ the Coworker retires
+  And if S ∩ C = ∅ the agent retires
 ```

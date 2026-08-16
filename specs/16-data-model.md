@@ -6,14 +6,14 @@ carry over and are out of scope here.
 
 > **Self-containedness debt** (from PLAN §7): before Phase 0, inline or link the carried-over
 > v1 specs; if any v1 deployment exists, add migrations (v1 `approvals` → asks of kind
-> `approval`; per-Coworker KBs → DNA domain imports).
+> `approval`; per-agent KBs → DNA domain imports).
 
 ## Tables
 
 ```
 humans         (id, name, email, rbac 'admin'|'owner'|'member'|'viewer', auth json,
                 deputy_member_id?, timezone?, working_hours json?, created_at, deactivated_at?)
-coworkers      + owner_human_id, class 'persistent'|'ephemeral', spawned_by member?, ttl_at,
+agents         + owner_human_id, class 'persistent'|'ephemeral', spawned_by member?, ttl_at,
                 budget_cap, lineage_depth, template_id?, template_version?,
                 status 'requested'|'active'|'suspended'|'retiring'|'archived'
 role_templates (id, name, version, class 'persistent'|'ephemeral-subagent', body json,
@@ -65,7 +65,7 @@ data_holds     (id, kind 'member'|'domain', subject_id, reason_md, created_by, r
   `deactivated_at IS NULL`; rehire is a new row (OFB-022).
 - **DAT-011** — `humans.deputy_member_id` must reference a humans row that is neither the
   member nor a viewer; agent, self, and viewer deputies are refused at write (ORG-060/061).
-- **DAT-020** — `coworkers.owner_human_id` is derived at spawn per ORG-051 and carried by the
+- **DAT-020** — `agents.owner_human_id` is derived at spawn per ORG-051 and carried by the
   walks; the chain terminates at a human (PRN-004).
 - **DAT-021** — `budget_cap` null = worker-uncapped (org-wide caps and the breaker still
   bind); the window matches class per SPW-032.

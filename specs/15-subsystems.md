@@ -5,7 +5,7 @@ Source: PLAN.md §8.1–8.9, §8.11.
 ## 8.1 Agent runtime (SUB-0xx)
 
 - **SUB-001** — Core loop unchanged from v1 (prompt assembly → guarded loop → structured
-  result) with the always-injected DNA layer preceding per-Coworker context (DRP-001).
+  result) with the always-injected DNA layer preceding per-agent context (DRP-001).
 - **SUB-002** — Scope enforcement, egress guard, write-lock, stop semantics, cost metering as
   in v1; every capability is a guarded tool enforced in code (PRN-003).
 - **SUB-003** — Scope changes — revocations, role-change refreshes — take effect at the next
@@ -54,7 +54,7 @@ Source: PLAN.md §8.1–8.9, §8.11.
 - **SUB-050** — Schedule/API/event triggers; every firing is a run of the same session
   worker; API triggers gain PAT scopes for external callers.
 - **SUB-051** — Missed schedules neither replay nor vanish: firings elapsing during a
-  Coworker suspension, an initiative pause (INT-033), the spend halt (SPW-064), or
+  agent suspension, an initiative pause (INT-033), the spend halt (SPW-064), or
   control-plane downtime coalesce into one catch-up run per trigger when the halt holding
   them lifts, carrying a missed-schedule summary (count, window) — per-trigger policy
   `replay|coalesce|skip`, default coalesce, with rate limits bounding a large backlog.
@@ -99,7 +99,7 @@ Source: PLAN.md §8.1–8.9, §8.11.
 
 ## 8.8 Groups & IM (SUB-0xx)
 
-- **SUB-080** — Unified human+agent teams; IM pairing routes to a Coworker whose asks
+- **SUB-080** — Unified human+agent teams; IM pairing routes to an agent whose asks
   escalate to the channel.
 
 ## 8.9 Console (SUB-0xx)

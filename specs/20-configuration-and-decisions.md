@@ -13,7 +13,8 @@ trigger; the mechanism it tunes is already designed (NFR-022). Defaults live beh
 - **CFG-050** — Tier-1 business suite: Microsoft 365/Graph (default) vs. Google Workspace.
 - **CFG-060** — First IM channel: Slack (default) vs. Discord vs. Telegram.
 - **CFG-070** — Embeddings: API (default) with local fallback.
-- **CFG-080** — Name/branding: working title pending trademark + domain search.
+- **CFG-080** — Name/branding: **Summa** — decided (PLAN v2.44); formal trademark + domain
+  confirmation pending. The AI members are *agents*; the former working title was "Coworker".
 - **CFG-090** — Tier-2 connector priority: which enterprise system first (ERP vs. HRIS vs.
   CRM) — decide when the first company deployment names its pain; not before v1 ships.
 - **CFG-100** — Personal-assistant rollout: opt-in per employee (default) vs. org-wide

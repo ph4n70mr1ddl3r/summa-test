@@ -1,6 +1,6 @@
 # SPEC-17 — API Surface
 
-Source: PLAN.md §9 (delta over v1 endpoints for coworkers, sessions, messages, workspaces,
+Source: PLAN.md §9 (delta over v1 endpoints for agents, sessions, messages, workspaces,
 automated-tasks, triggers, playbooks, runs). General contract: every refusal on this surface
 is the PRN-009 form — refuse, audit, ask where a human decision is needed.
 
@@ -49,9 +49,9 @@ is the PRN-009 form — refuse, audit, ask where a human decision is needed.
 - **API-031** — `POST /spawn` · `GET /spawn/:id` — spawn requests with approval and
   spawn-storm monitoring (SPEC-11); the requester's retraction rides the approval ask's
   withdraw endpoint (API-040, SPW-047).
-- **API-032** — `POST /coworkers/:id/retire · /suspend · /resume` — lifecycle acts on the
-  coworker (not the spawn request); authority per CLC-010.
-- **API-033** — `POST /coworkers/:id/promote` — files the promotion ask for a customRole
+- **API-032** — `POST /agents/:id/retire · /suspend · /resume` — lifecycle acts on the
+  agent (not the spawn request); authority per CLC-010.
+- **API-033** — `POST /agents/:id/promote` — files the promotion ask for a customRole
   hire; authority: the hire's owner human or an admin; the ask snapshots identity files and
   effective scopes at creation; the accept names the placement and publishes per
   TPL-040…044; one live promotion ask per hire — a second is refused at filing (TPL-046).

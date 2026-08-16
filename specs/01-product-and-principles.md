@@ -5,7 +5,7 @@ Source: PLAN.md §1, §2. Actors defined here are used uniformly across the suit
 ## Product requirements (VIS)
 
 - **VIS-001** — The system shall be a self-hosted platform in which human employees and AI
-  Coworkers operate as one organization with a shared member namespace, task board, and
+  agents operate as one organization with a shared member namespace, task board, and
   attention surface.
 - **VIS-002** — The system shall maintain a governed **Company DNA** — knowledge cards, rules,
   decision records, SOPs, glossary, org facts, goals — as the single source of organizational
@@ -15,7 +15,7 @@ Source: PLAN.md §1, §2. Actors defined here are used uniformly across the suit
 - **VIS-004** — The system shall carry directives from decision records and goals through
   **initiatives** to coordinated execution (SPEC-10).
 - **VIS-005** — The system shall provide governed spawning: a human or agent member spawns
-  Coworkers under policy, budget, and lineage constraints (SPEC-11).
+  agents under policy, budget, and lineage constraints (SPEC-11).
 - **VIS-006** — The system shall implement the improvement loop: every run's learning is
   classified (personal / project / DNA proposal, SUB-040), DNA changes are reviewed by owners,
   and the updated DNA guides subsequent runs.
@@ -34,7 +34,7 @@ module says so explicitly.
   nodes as the company grows. The split is a deployment change, not a rewrite (ARC-001…004).
 - **PRN-003** — Every capability is a guarded tool: file scope, tool scope, egress guard, and
   audit are enforced in code, never in prompts (SEC-009, SUB-001).
-- **PRN-004** — Agents are accountable to humans: every Coworker carries `owner_human_id`;
+- **PRN-004** — Agents are accountable to humans: every agent carries `owner_human_id`;
   ephemeral workers roll up to their spawner; every chain terminates at a human (ORG-050…051, SPW-046).
 - **PRN-005** — Spawning is delegation, not reproduction: child scopes ⊆ parent scopes, budgets
   and TTLs bind, policy gates (SPW-010).

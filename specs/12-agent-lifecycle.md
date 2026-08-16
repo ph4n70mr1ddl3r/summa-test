@@ -1,6 +1,8 @@
-# SPEC-12 — Coworker Lifecycle
+# SPEC-12 — Agent Lifecycle
 
-Source: PLAN.md §6.3, §6.4.
+Source: PLAN.md §6.3, §6.4. The member type this module governs is the *agent* (formerly
+"Coworker", renamed PLAN v2.44); the CLC prefix is retained — requirement IDs are stable
+forever.
 
 ## Status machine
 
@@ -15,10 +17,10 @@ Source: PLAN.md §6.3, §6.4.
 
 ## Lifecycle act authority
 
-- **CLC-010** — Suspend, retire, and resume belong to the Coworker's owner human, an admin,
-  or the sponsor of an initiative the Coworker is bound to — §5.1's sponsor stop routes
+- **CLC-010** — Suspend, retire, and resume belong to the agent's owner human, an admin,
+  or the sponsor of an initiative the agent is bound to — §5.1's sponsor stop routes
   through this authority, not around it.
-- **CLC-015** — Retiring a persistent Coworker is a halt, not a drain: in-flight runs stop
+- **CLC-015** — Retiring a persistent agent is a halt, not a drain: in-flight runs stop
   exactly as under suspension — partial results fold back through the memory tiers, staged
   writes go to reconciliation, never killed mid-commit — before dependents resolve.
 
@@ -35,7 +37,7 @@ Source: PLAN.md §6.3, §6.4.
   included, draining the template pins (a terminal act leaves no waiters).
 - **CLC-021** — Asks *to* the retiree need no walk entry: the non-active target rule
   (ASK-060) reassigns them up the lineage chain.
-- **CLC-022** — Upgrade asks settle with the Coworker they name: an owner-upgrade ask closes
+- **CLC-022** — Upgrade asks settle with the agent they name: an owner-upgrade ask closes
   unresolved with an audit note inside the walk; a response racing the retirement is
   audit-only with no successor ask.
 - **CLC-023** — The retiree's personal memory archives with it: inert history under the
@@ -49,9 +51,9 @@ Source: PLAN.md §6.3, §6.4.
   content stands, its routing reverting to the domain owner, a digest line noting the grant
   that died with its grantee (ASK-095). A post-named grant ("by the lead") rides the post's
   re-pointing instead, and suspension keeps the non-active reassignment as its transient.
-- **CLC-026** — Authored proposals ride the retire walk: a persistent Coworker's open DNA
+- **CLC-026** — Authored proposals ride the retire walk: a persistent agent's open DNA
   proposals withdraw with an audit note inside the retirement — the SPEC-09 member-proposal
-  rule's agent twin (a Coworker never owns domains, so there is no transfer branch), the
+  rule's agent twin (an agent never owns domains, so there is no transfer branch), the
   folded-back learning staying available to its owner for a fresh proposal, and the review
   queue never waiting on a departed proposer whatever member shape the proposer was.
   Suspension leaves them standing (non-terminal): the reviewing owner may still publish;
@@ -78,7 +80,7 @@ Source: PLAN.md §6.3, §6.4.
   new runs, but never resurrects a halted one — a run suspended mid-flight is terminal:
   partial results fold back, interrupted work re-enters as new runs or board tasks, staged
   writes resolve through reconciliation — no half-replayed side effect.
-- **CLC-033** — Lifecycle acts are credential fences: a Coworker's PATs and sessions
+- **CLC-033** — Lifecycle acts are credential fences: an agent's PATs and sessions
   authenticate only while its status is `active` — auth re-validates status at every use;
   retire revokes PATs and terminates sessions outright (credential-death, as human
   offboarding); resume re-arms what suspension made inert, never deleted.
@@ -119,20 +121,20 @@ Source: PLAN.md §6.3, §6.4.
 ```gherkin
 Scenario: Resume never resurrects a halted run
   Given a run halted mid-flight by suspension with a staged external write
-  When the owner resumes the Coworker
+  When the owner resumes the agent
   Then the halted run stays terminal with results folded back
   And the staged write resolves through reconciliation
   And missed trigger schedules coalesce into one catch-up run
 
 Scenario: Terminal act leaves no waiters
-  Given a Coworker with a pending spawn request and pending asks it filed
+  Given an agent with a pending spawn request and pending asks it filed
   When it retires
   Then the spawn request closes with an audit note and drains its pin
   And asks to it re-route up the chain
 
 Scenario: Re-owning carries the upgrade decision
-  Given a pending owner-upgrade ask addressed to a Coworker's departing owner
-  When the offboard walk re-owns the Coworker to a successor
+  Given a pending owner-upgrade ask addressed to an agent's departing owner
+  When the offboard walk re-owns the agent to a successor
   Then the ask re-keys to the successor with its deadline untouched
   And the departed owner's racing response is refused at the eligibility door
   And the successor's accept rebases at the successor's own ceiling

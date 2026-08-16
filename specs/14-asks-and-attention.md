@@ -104,9 +104,9 @@ Source: PLAN.md §8.10.
   workspaces hop to the primary domain) → admin, walked on SLA breach; inactive members are
   skipped; the walk carries a visited-set so a mis-configured cycle ends the hop, not the
   walk.
-- **ASK-061** — Agent targets: an ask routed to a Coworker queues into its next run (or
+- **ASK-061** — Agent targets: an ask routed to an agent queues into its next run (or
   wakes a session worker); if the target is anything but `active`, or is busy past SLA, the
-  ask reassigns up the chain; the agent chain is the lineage chain — first hop the Coworker's
+  ask reassigns up the chain; the agent chain is the lineage chain — first hop the agent's
   `owner_human_id`, then the human chain with the same visited-set; an ask to an agent never
   lacks a human next hop.
 - **ASK-055** — The admin hop is a broadcast: every path routing to "an admin" — the
@@ -157,7 +157,7 @@ Source: PLAN.md §8.10.
   renders "37 identical escalations" as one line; the canonical ask's answer resolves every
   collapsed waiter — the answer communal, one decision for identical questions, where the
   retraction is originator-scoped (ASK-033).
-- **ASK-101** — A per-source ask-creation rate limit (per run, trigger, Coworker) sheds
+- **ASK-101** — A per-source ask-creation rate limit (per run, trigger, agent) sheds
   overflow into a single aggregate admin ask; the aggregate has a lifecycle: it closes
   resolved when its source's rate falls back under the limit for a full window or an admin
   acknowledges it, the shed count preserved in audit.

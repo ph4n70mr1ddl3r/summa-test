@@ -12,7 +12,7 @@ Source: PLAN.md §5.1.
 - **INT-002** — DNA first: the directive lands as a decision record and (usually) a goal
   through the normal write path; the initiative references them.
 - **INT-010** — Ephemeral-origin initiatives are refused at write: a bounded worker's
-  directive-deserving output folds back to its spawner; a human or persistent Coworker opens
+  directive-deserving output folds back to its spawner; a human or persistent agent opens
   the initiative.
 - **INT-011** — A new initiative's `goal_ref` names a live goal at write — an initiative is
   never born pointed at history; the only way it comes to address a terminal row is the goal
@@ -53,7 +53,7 @@ Source: PLAN.md §5.1.
 
 ## Close semantics
 
-- **INT-040** — Closing runs the same dependency check as retiring a Coworker over the
+- **INT-040** — Closing runs the same dependency check as retiring an agent over the
   initiative's durable state: open asks and tasks resolved or reassigned; pending spawn
   requests archived with their template pins drained (a terminal act leaves no waiters);
   triggers and playbook schedules whose runs launch under it re-pointed to a successor
@@ -62,7 +62,7 @@ Source: PLAN.md §5.1.
   with artifacts landing on the closed slice as history; new runs, spawns, and task filings
   under the initiative are refused (a task that still needs filing belongs to a successor
   initiative); ephemeral workers finish their bounded task and fold back. A sponsor needing
-  mid-flight stops suspends or retires the specific Coworkers (CLC-015).
+  mid-flight stops suspends or retires the specific agents (CLC-015).
 - **INT-042** — The retrospective files DNA proposals — the §1 loop closes.
 
 ## Direction asks (goal linkage)

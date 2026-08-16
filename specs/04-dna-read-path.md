@@ -8,7 +8,7 @@ Source: PLAN.md §4.2.
   org snapshot, the glossary slice for the task's domain(s), all applicable rules for the
   workspace's domains, and the goal slice.
 - **DRP-002** — The org snapshot shall render the live member set: a deactivated human or
-  retired Coworker is absent (records live on in decisions and audit); and it shall carry
+  retired agent is absent (records live on in decisions and audit); and it shall carry
   state, not just membership — `active` renders available, `suspended` renders
   present-but-halted (never offered as a destination), `retiring` renders terminal-bound, and
   a `requested` hire is absent until activation publishes it. What a prompt presents as

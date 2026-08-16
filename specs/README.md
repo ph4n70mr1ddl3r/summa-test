@@ -1,7 +1,7 @@
-# Coworker — SDD Specification Suite
+# Summa — SDD Specification Suite
 
-This directory is the **normative requirements corpus** for the Coworker platform, derived from
-`PLAN.md` (v2.43). `PLAN.md` is the design rationale — the "why", with history;
+This directory is the **normative requirements corpus** for the Summa platform, derived from
+`PLAN.md` (v2.44). `PLAN.md` is the design rationale — the "why", with history;
 these specs are the implementation contract — the "what", discrete and testable. When the two
 disagree, fix one of them in the same change; never implement against a discrepancy silently.
 
@@ -36,7 +36,8 @@ disagree, fix one of them in the same change; never implement against a discrepa
   - *Owner* — human holding `dna_domains.owner_human_id` for ≥1 domain.
   - *Member* — human with role `member` or above.
   - *Viewer* — human with role `viewer`; a total read-only surface (ORG-020).
-  - *Coworker* — persistent agent member; *ephemeral worker* — TTL-bounded agent.
+  - *Agent* — persistent AI member (the type formerly named "Coworker"; SPEC-12 keeps the CLC
+    prefix for ID stability); *ephemeral worker* — TTL-bounded agent.
   - *Control plane* — the self-hosted server; *Node* — enrolled execution host.
   - *System originator* — the reserved non-member principal that files plane-originated asks
     (ASK-031…032).
@@ -60,7 +61,7 @@ disagree, fix one of them in the same change; never implement against a discrepa
 | `09-offboarding-and-demotion.md` | OFB | Departure walks, last-admin guard | §5 |
 | `10-initiatives.md` | INT | Initiative spine, transitions, dependencies | §5.1 |
 | `11-spawning-and-policy.md` | SPW | Spawn requests, gates, caps, breaker | §6.1, §6.2 |
-| `12-coworker-lifecycle.md` | CLC | Suspend/retire/resume/reap, assistants | §6.3, §6.4 |
+| `12-agent-lifecycle.md` | CLC | Suspend/retire/resume/reap, assistants | §6.3, §6.4 |
 | `13-templates-and-catalog.md` | TPL | Versioned catalog, upgrades, promotion | §6.5 |
 | `14-asks-and-attention.md` | ASK | Tiers, expiry, quorum, escalation, digests | §8.10 |
 | `15-subsystems.md` | SUB | Runtime, tools, memory, triggers, playbooks | §8.1–8.9, §8.11 |

@@ -4,10 +4,10 @@ Source: PLAN.md §5.
 
 ## Members and roles
 
-- **ORG-001** — `humans` (identity, RBAC role) and `coworkers` (identity files, scopes) share
+- **ORG-001** — `humans` (identity, RBAC role) and `agents` (identity files, scopes) share
   one member namespace; the task board, asks, groups, and lineage reference members.
 - **ORG-002** — Human RBAC roles: `admin` (everything), `owner` (one or more DNA domains +
-  their Coworkers), `member` (work, propose DNA, spawn within policy), `viewer` (read-only in
+  their agents), `member` (work, propose DNA, spawn within policy), `viewer` (read-only in
   full). Auth starts as local accounts; SSO/OIDC later (CFG-020).
 - **ORG-020** — **Viewer total no-write surface**: a viewer is never an ask target, assignee,
   deputy, sponsor, lead, owner, group Leader, or originator — proposing or amending DNA,
@@ -31,7 +31,7 @@ Source: PLAN.md §5.
 
 - **ORG-030** — To-dos come from run results, playbook nodes, or any member with a write
   surface; a viewer reads the board, never writes it.
-- **ORG-031** — Tasks are assignable to humans or Coworkers, never viewers, and the assignee
+- **ORG-031** — Tasks are assignable to humans or agents, never viewers, and the assignee
   must be active at write; suspension freezes an assignee's tasks (resume re-arms them);
   retire/offboard walks return them (OFB-010, CLC-020).
 - **ORG-032** — Tasks are groupable under initiatives (SPEC-10) and visible org-wide within
@@ -41,21 +41,21 @@ Source: PLAN.md §5.
 
 ## Groups
 
-- **ORG-040** — Groups mix humans and Coworkers; a local Coworker may act as Leader for
+- **ORG-040** — Groups mix humans and agents; a local agent may act as Leader for
   execution routing.
 - **ORG-041** — Group membership derives from live state: the offboard walk clears a departed
-  human, the retire walk a retired Coworker — execution routing never addresses a dead
+  human, the retire walk a retired agent — execution routing never addresses a dead
   identity.
 - **ORG-042** — The Leader post is guarded at write: a viewer human or any non-active member
   is refused at set (routing addresses the Leader; the Leader must be answerable); an
-  ephemeral Coworker is refused by the mortality pin.
+  ephemeral agent is refused by the mortality pin.
 - **ORG-043** — Leadership re-points on departure, retirement, or demotion inside the walks —
   a named successor, else the group's routing degrades to an admin ask; no routing surface
   outlives its holder un-asked.
 
 ## Accountability invariant
 
-- **ORG-050** — Every Coworker row carries `owner_human_id`; spawned workers carry
+- **ORG-050** — Every agent row carries `owner_human_id`; spawned workers carry
   `spawned_by`; the chain must terminate at a human.
 - **ORG-051** — Ownership is derived, not configured: a persistent hire's first owner is the
   gate's accepting human at activation (SPW-040); an ephemeral's is the first human up the

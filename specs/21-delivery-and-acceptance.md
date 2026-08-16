@@ -7,8 +7,8 @@ Source: PLAN.md §11, §12.
 | Phase | Deliverable | Est. (1 dev) |
 |---|---|---|
 | **0. Foundations** | Repo, CI, single-process skeleton — monorepo, TS strict, Drizzle+SQLite (WAL), REST+WS, console shell, 3-OS CI matrix | 1 wk |
-| **1. MVP agent** | Chat with a Coworker doing real local work — model gateway, agent loop, guarded fs/shell/web tools, approval cards, audit, streaming chat UI, first-run bootstrap | 4–5 wks |
-| **2. Identity, memory, skills, connectors** | Coworkers feel like employees — role catalog, IDENTITY/STYLE/HANDBOOK, memory tiers 1–2, skills + market, MCP client + tier-1 connectors, workspace kinds, versioned role-template catalog | 3–4 wks |
+| **1. MVP agent** | Chat with an agent doing real local work — model gateway, agent loop, guarded fs/shell/web tools, approval cards, audit, streaming chat UI, first-run bootstrap | 4–5 wks |
+| **2. Identity, memory, skills, connectors** | agents feel like employees — role catalog, IDENTITY/STYLE/HANDBOOK, memory tiers 1–2, skills + market, MCP client + tier-1 connectors, workspace kinds, versioned role-template catalog | 3–4 wks |
 | **3. Company DNA v1** | The coherence core — DNA store + domains/index, cards compilation, glossary + applicable-rules + goal-slice injection (org-wide goals first; linked goals wire up with initiatives in P4), proposals + owner review queue, citations | 3–4 wks |
 | **4. Automation** | 24/7 operation — triggers, PATs, templating, headless Ask policy, shared task board, initiatives v0 (goal + lead + deadline + task grouping) | 2–3 wks |
 | — | **v1 cut line**: Phases 0–4 + 8a are shippable v1 | — |

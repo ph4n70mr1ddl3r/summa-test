@@ -1,11 +1,11 @@
-# Coworker — the operating system for a hybrid human + AI company
+# Summa — the operating system for a hybrid human + AI company
 
-> A self-hosted platform where human employees and AI coworkers ("Coworkers") work as one
+> A self-hosted platform where human employees and AI agents work as one
 > organization. A governed **Company DNA** — the shared knowledge, rules, decisions, and goals of
 > the company — keeps every member coherent. Any member, human or agent, can spawn new agents under
 > explicit governance. Work compounds: every task leaves behind learning; learning improves the DNA;
 > the DNA makes the next task better.
-> ("Coworker" is a working title — see §14.)
+> ("Summa" is the chosen brand — see §14.8.)
 
 **What changed in v2** (vs. the local-first single-operator plan): the company is the unit of
 deployment, not the individual. Humans are first-class members alongside agents; the knowledge base
@@ -36,11 +36,11 @@ mode so small teams start simple.
 >
 > **Review pass (v2.5)**: goal slice wired through the runtime + DNA-engine read path (§8.1, §8.7) · proposal kinds cover goals; SOPs pinned as playbooks + pointer cards (§4.1, §7) · ask-digest grouping unified (§8.10, §11 P4) · schema gaps closed: ask→initiative link, domain `store` flag, human deputy, ephemeral status mapping, proposal withdraw (§7, §9) · new API: `/dna/goals`, `/initiatives`, governance reads (§9) · tier-2 connectors explicitly post-v1 (§11).
 >
-> **Org-change pass (v2.6)**: first-run bootstrap (§9, §11 P1) · domain split/merge/rename as governed topology ops (§4.4) · offboarding closed out — initiatives, board tasks, deputy refs, admin-custody fallback, last-admin guard (§5) · Coworker suspend + re-role = retire-and-respawn (§6.3) · role-template versioning with owner-approved upgrades (§6.5) · affinity-node loss → queue-or-rebind (§3) · initiative close lapses delegated rules (§8.10) · status enums pinned; viewers never ask targets (§5, §7) · deployment perimeter + proposal strictness parked as decisions (§14.12–13).
+> **Org-change pass (v2.6)**: first-run bootstrap (§9, §11 P1) · domain split/merge/rename as governed topology ops (§4.4) · offboarding closed out — initiatives, board tasks, deputy refs, admin-custody fallback, last-admin guard (§5) · agent suspend + re-role = retire-and-respawn (§6.3) · role-template versioning with owner-approved upgrades (§6.5) · affinity-node loss → queue-or-rebind (§3) · initiative close lapses delegated rules (§8.10) · status enums pinned; viewers never ask targets (§5, §7) · deployment perimeter + proposal strictness parked as decisions (§14.12–13).
 
 > **Consistency audit (v2.7)**: delegated rules get `effective_to` so "end by window" (§8.10) is representable (§7) · goal-slice "deadline" pinned to `dna_goals.effective_to` (§4.2, §7) · per-kind expiry defaults, the domain-owner escalation hop, and suspended ask targets specified (§8.10) · workspace rebind endpoint added (§9, §3) · digest ownership P4 (single-admin) vs P6 (per-human) disambiguated (§11) · single-admin "auto-approve" softened to one-click review, deferring to §14.13 (§13) · personal assistants retire — never re-own — on offboarding (§5) · viewer never-an-ask-target guard pinned in the schema (§7) · SLA-tier breach defaults parked as decision 14 (§14).
 >
-> **Consistency review (v2.8)**: workspace↔initiative binding added so the goal slice has a defined source (§4.2, §7) · asks carry `workspace_id`, keying the domain-owner escalation hop and digest grouping (§7, §8.10) · ephemeral→Coworker status mapping made 1:1 — `done` maps to `retiring` (§7) · domain `rename` joins split/merge as a governed endpoint (§9, §4.4) · retire/suspend/resume moved off `/spawn` onto the coworker they act on (§9) · stalled-initiative escalation specified — the §13 directive-decay row now has a mechanism (§5.1) · P3 goal slice scoped to org-wide goals until initiatives land in P4 (§11).
+> **Consistency review (v2.8)**: workspace↔initiative binding added so the goal slice has a defined source (§4.2, §7) · asks carry `workspace_id`, keying the domain-owner escalation hop and digest grouping (§7, §8.10) · ephemeral→agent status mapping made 1:1 — `done` maps to `retiring` (§7) · domain `rename` joins split/merge as a governed endpoint (§9, §4.4) · retire/suspend/resume moved off `/spawn` onto the agent they act on (§9) · stalled-initiative escalation specified — the §13 directive-decay row now has a mechanism (§5.1) · P3 goal slice scoped to org-wide goals until initiatives land in P4 (§11).
 >
 > **Edge-case pass (v2.9)**: escalation-chain exhaustion pinned — expire-per-behavior plus a critical org-stall broadcast (§8.10) · first-response-wins and expired-response = audit-only close the late/racing-answer seam (§8.10) · conflicting delegations resolve most-restrictive with a contradiction report (§8.10) · scope revocations re-checked before external writes (§8.1) · template retirement refuses live pins (§6.5) · spawner death retargets ephemeral fold-back to project memory (§6.3) · goal-window expiry under a live initiative raises a sponsor ask (§5.1) · goal-vs-goal contradictions join proposal-time checks (§4.4) · residual unhandled edge cases documented as §13.1; provider degradation and partitioned-node authority parked as decisions 15–16 (§14).
 >
@@ -166,7 +166,7 @@ mode so small teams start simple.
 > **Edge-case closure (v2.20)**: twelfth sweep — lifecycle seams at the surfaces' edges closed
 > inline: open proposals travel with their domain — merge/split/rename remap in-review proposals
 > to the resulting queues inside the audited event with `review_by` clocks running, and archive
-> counts them among the holdings it refuses (§4.4, §9) · coworker lifecycle acts are credential
+> counts them among the holdings it refuses (§4.4, §9) · agent lifecycle acts are credential
 > fences — PATs and sessions authenticate only while `active`, re-validated at every use; retire
 > revokes outright, the §5 credential-death (§6.3, §10) · pause freezes execution, not
 > deliberation — tasks may be filed and edited on the frozen slice as planning, runs and spawns
@@ -207,7 +207,7 @@ mode so small teams start simple.
 > accepts are audit-only with an untainted successor — taint never becomes approval authority
 > (§8.10, §13) · draft staging is pinned to the schemas that carry it — cards and glossary stage
 > as drafts, rules and goals through future effective windows, decisions never (§4.2) · trigger
-> and playbook criticality default `standard` (§7) · a retired Coworker's personal memory
+> and playbook criticality default `standard` (§7) · a retired agent's personal memory
 > archives inert with it, never transferred (§6.3) · paths under a db-only domain's tree
 > quarantine on ingest — one canon, not two (§4.5).
 
@@ -293,7 +293,7 @@ mode so small teams start simple.
 > mid-life walk is asked to re-point what a dying-by-schedule member should never have held,
 > while the reap walk's task-and-ask returns stay the drain for what an ephemeral may
 > legitimately hold (§5.1, §7, §8.10) · ephemeral-origin initiatives join ephemeral-origin DNA
-> proposals in folding back to the spawner — a human or persistent Coworker opens the
+> proposals in folding back to the spawner — a human or persistent agent opens the
 > directive (§5.1) · topology ops touching several domains acquire every affected write lock
 > up front, in domain-id order — overlapping merges serialize deadlock-free, "queue behind
 > each other" gains its mechanism (§4.4) · a spawn-approval ask that expires is the denial's
@@ -351,7 +351,7 @@ mode so small teams start simple.
 > primary recipient) is re-keyed to the resulting owner inside the audited event, ask ids
 > stable and deadlines untouched, the open-proposals rule extended to the attention surface,
 > while hops and pools already evaluate against live state (§4.4, §6.2, §8.10) · upgrade
-> asks settle with the Coworker they name — the retire walk closes an in-flight owner-upgrade
+> asks settle with the agent they name — the retire walk closes an in-flight owner-upgrade
 > ask unresolved with an audit note, a racing accept is audit-only with no successor, and
 > suspension strands nothing: the rebase lands and resume re-arms (§6.3, §6.5, §8.10) · a
 > template's class is immutable across its versions — a class-flipping version refused at
@@ -377,7 +377,7 @@ mode so small teams start simple.
 > supersession takes effect at the superseder's window opening — a future-windowed successor
 > is a scheduled replacement, never a normative gap (§4.2, §7) · an ephemeral worker is
 > refused the persistent-hire request at write, its recommendation folding back to the
-> spawner (§6.1, §6.2) · re-owning is scope-narrowing — transferred Coworkers re-derive
+> spawner (§6.1, §6.2) · re-owning is scope-narrowing — transferred agents re-derive
 > against the new owner's ceiling, an empty intersection retiring (§5, §6.3, §6.5) · an
 > approval gate may address its own originator — the owner hiring into their own domain — the
 > ask the audit record (§6.2); and an ask deadline before its creation is refused at write
@@ -403,7 +403,7 @@ mode so small teams start simple.
 
 > **Edge-case closure (v2.34)**: twenty-sixth sweep — reader-set-liveness, spawn-claim, and
 > chain-linearity seams closed inline: every reader-set input evaluates against live state —
-> a `participants` entry or Coworker binding of a deactivated human or retired Coworker
+> a `participants` entry or agent binding of a deactivated human or retired agent
 > contributes nothing to `domain`-access reads, and the §5/§6.3 walks scrub the lists
 > (participants removal, retiree bindings, group memberships) the way they scrub
 > `named_readers` (§4.4, §5, §6.3, §7) · spawn-request claims are lifecycle-pinned —
@@ -546,9 +546,9 @@ mode so small teams start simple.
 > degrading to its routing spine plus the org-facts directory rather than truncating (§4.2).
 >
 > **Edge-case closure (v2.42)**: thirty-fourth sweep — proposer-mortality, ceiling-liveness,
-> catalog-naming, and erasure-prose seams closed inline: a retiring persistent Coworker's open
+> catalog-naming, and erasure-prose seams closed inline: a retiring persistent agent's open
 > DNA proposals settle in the walk — withdrawn with an audit note, the §5 member-proposal
-> rule's agent twin (a Coworker never owns domains, so no transfer branch exists), the
+> rule's agent twin (an agent never owns domains, so no transfer branch exists), the
 > folded-back learning available to the owner for re-proposal, and suspension leaving them
 > standing per the non-terminal rule — the review queue never waits on a departed proposer,
 > whatever member shape the proposer was (§6.3, §4.3) · the spawn approval's respond-time
@@ -566,7 +566,7 @@ mode so small teams start simple.
 >
 > **Edge-case closure (v2.43)**: thirty-fifth sweep — staff-rekey, collapsed-retraction,
 > adoption-exclusivity, and cross-store seams closed inline: a pending owner-upgrade ask is
-> derived from the Coworker's `owner_human_id` — the staff-ownership post — and the §5
+> derived from the agent's `owner_human_id` — the staff-ownership post — and the §5
 > walks' re-owning re-keys it to the successor or admin custody inside the transfer, ids
 > stable and deadlines untouched, a response from the departing owner racing the transfer
 > refused at the eligibility door, the accept intersecting the re-derived owner's ceiling —
@@ -585,17 +585,26 @@ mode so small teams start simple.
 > under either side's kind-`domain` hold, merge-into a held domain staying open exactly when
 > it moves no content across stores, a split result differing in `store` migrating its
 > mapped items the same way (§4.4, §4.5).
+>
+> **Rebrand (v2.44)**: the platform is **Summa**, and the AI members are **agents** — the term
+> the prose already leaned on ("a human or agent member") now the name itself: every former
+> "Coworker" in the plan and the spec suite becomes an agent, the schema with it (`coworkers`
+> table → `agents`, `/coworkers/:id/...` endpoints → `/agents/:id/...`), ephemeral workers
+> keeping their name, the spec suite's actors and module 12 retitled, and decision §14.8
+> resolved to the chosen brand. No requirement IDs change — CLC keeps its prefix (SPEC-12 is
+> the agent-lifecycle module), IDs being stable forever — and no semantics move: a rename, not
+> a redesign.
 
 ---
 
 ## 1. Product vision
 
 A company runs on shared context: what we know, how we work, what we decided, what we're trying to
-achieve. Today that context lives in people's heads, chat scrolls, and stale wikis. **Coworker**
+achieve. Today that context lives in people's heads, chat scrolls, and stale wikis. **Summa**
 makes it explicit and operational:
 
-- **Members** — humans and Coworkers in one org chart. Humans direct, approve, review, and own
-  domains; Coworkers execute, learn, and propose.
+- **Members** — humans and agents in one org chart. Humans direct, approve, review, and own
+  domains; agents execute, learn, and propose.
 - **Company DNA** — the single source of coherence: knowledge cards, rules, decision records,
   SOPs/playbooks, glossary, org facts, goals and metrics. Every member reads it; changes to it are
   governed.
@@ -603,7 +612,7 @@ makes it explicit and operational:
   and to-dos on a shared Task Board any member can hold or assign (a viewer reads it — §5's
   read-only surface). A directive becomes an
   **initiative** — a goal, a lead, and the tasks/playbooks/spawns that carry it to done (§5.1).
-- **Governed spawning** — delegation by hiring: a human or agent can spawn a new Coworker for a
+- **Governed spawning** — delegation by hiring: a human or agent can spawn a new agent for a
   role or a task, inside policy, budget, and lineage constraints.
 
 The core loop that makes the company improve itself:
@@ -611,7 +620,7 @@ The core loop that makes the company improve itself:
 ```
    ┌──────────────────── work (chat · automation · playbook) ───────────────────┐
    │                                                                            │
- humans & Coworkers ── learning ──► memory service ── classifies ──┐            │
+ humans & agents    ── learning ──► memory service ── classifies ──┐            │
    ▲                                    personal / project         │            │
    │                                                    DNA proposals ▼            │
    └── guided by ── DNA (rules · glossary · cards · decisions) ◄── review ── owners ──┘
@@ -627,8 +636,8 @@ boundaries — with a sixth raised to the top: **shared, governed context**.
 1. **DNA is the source of coherence**: all durable company knowledge lives in one governed place; agents never silently fork it into private stores.
 2. **Local-capable, company-first**: one binary runs everything for a small team; the same services split into control plane + nodes as the company grows.
 3. **Every capability is a guarded tool**: file scope, tool scope, egress guard, and audit enforced in code, never in prompts.
-4. **Agents are accountable to humans**: every Coworker has a human owner in its lineage chain; ephemeral workers roll up to their spawner, whose chain terminates at a human.
-5. **Spawning is delegation, not reproduction**: a spawned Coworker's permissions are a subset of its spawner's; budgets and TTLs bound it; policy gates it.
+4. **Agents are accountable to humans**: every agent has a human owner in its lineage chain; ephemeral workers roll up to their spawner, whose chain terminates at a human.
+5. **Spawning is delegation, not reproduction**: a spawned agent's permissions are a subset of its spawner's; budgets and TTLs bound it; policy gates it.
 6. **Files for humans, database for machines**: DNA, identity, and memory are git-friendly markdown humans can read, edit, and review (sensitive domains excepted — §4.5 carve-out); runs, audit, and indexes live in SQLite.
 7. **Role-agnostic core**: roles are data (templates, skills, connectors, scopes) — engineer, secretary, HR, finance, all the same runtime.
 8. **Governance proportional to blast radius**: ephemeral task workers need quotas, not paperwork; persistent hires and DNA changes need review.
@@ -666,7 +675,7 @@ boundaries — with a sixth raised to the top: **shared, governed context**.
 - **Single-process mode**: control plane + one node in one process, console at `localhost` — this is
   the MVP path; nothing is lost when scaling out later.
 - **Workspace affinity**: runs are scheduled to the node where the workspace's files/connectors
-  live (an engineer Coworker runs on the machine with the repo; the secretary's mailbox connector
+  live (an engineer agent runs on the machine with the repo; the secretary's mailbox connector
   lives wherever it was authorized). Affinity is a scheduling preference, not a marriage: when the
   affinity node goes offline, new runs queue until its heartbeat returns or an admin rebinds the
   workspace to another node — a rebind that first validates the target node actually
@@ -750,7 +759,7 @@ documents; it is curated, structured, versioned context.
 | **Decisions** | Decision records: context, options chosen, outcome, owner, date | "We chose Postgres over Mongo for billing (2026-05-12, Alice)" |
 | **SOPs** | Process definitions — versioned playbooks plus a pointer card (note below the table) | "Onboarding checklist → onboarding playbook" |
 | **Glossary** | Canonical terminology, mapped to aliases | "ARR = annual recurring revenue (not 'annual revenue')" |
-| **Org facts** | Who exists (humans + Coworkers), teams, domain ownership | generated from the org registry, read-only |
+| **Org facts** | Who exists (humans + agents), teams, domain ownership | generated from the org registry, read-only |
 | **Goals & metrics** | Company/quarterly objectives and KPIs; work links to them through initiatives (§5.1) | "Q3: cut support first-response to < 2h" |
 
 **SOP representation** (pinned — §4.5 and §7 deliberately carry no `dna_sops`): the executable
@@ -762,10 +771,10 @@ card; playbook changes ride the playbook engine's own versioning.
 
 Every run's system prompt is assembled with:
 - **Always injected**: the org snapshot (who's who — the live member set: a deactivated human
-  or retired Coworker leaves the snapshot at the walk, their record living on in decisions and
+  or retired agent leaves the snapshot at the walk, their record living on in decisions and
   audit, the §4.4 reader-set liveness rule applied to the injected layer's own source — no
   prompt carries a departed member as present — and membership is not the whole render: the
-  snapshot carries state, so an `active` member renders available, a `suspended` Coworker
+  snapshot carries state, so an `active` member renders available, a `suspended` agent
   renders present-but-halted — never offered as a destination, the §8.10 non-active
   reassignment's rendering twin — a `retiring` one terminal-bound, and a `requested` hire is
   absent until activation publishes it; what a prompt presents as answerable matches what the
@@ -849,7 +858,7 @@ The memory service classifies what a run learned into three tiers:
 
 | Tier | Scope | Write path |
 |---|---|---|
-| Personal memory | One Coworker | automatic (dedupe + timeline + versions, as v1) |
+| Personal memory | One agent | automatic (dedupe + timeline + versions, as v1) |
 | Project memory | One workspace/project | automatic, same machinery |
 | **DNA proposal** | The company | **always proposed, never auto-published** |
 
@@ -911,14 +920,14 @@ keeps governing strictness separately.
 - **Domains & compartments**: DNA is partitioned into domains (Engineering, Finance, HR…) each with
   a human owner and an access policy (`public` | `members of domain` | `named members`). The
   reader set is defined, not ambient: `public` admits every member; `members of domain` admits
-  the owner plus every member tied in through an active workspace binding — a Coworker through
+  the owner plus every member tied in through an active workspace binding — an agent through
   its workspaces' `domain_ids`, a human through workspace participation (`participants`, §7) —
   and `named` admits the owner plus the named list — a list with a schema home (`named_readers`,
   §7: member ids, ignored unless access is `named`) that derives from live state like every other
-  reader set: a deactivated human or retired Coworker on it contributes nothing — access
+  reader set: a deactivated human or retired agent on it contributes nothing — access
   re-evaluates with its inputs, and rehire's fresh row re-admits no one until named again.
   Liveness is a property of every input, not just the named list: a `participants` entry or a
-  Coworker workspace binding whose member is deactivated — or whose Coworker is retired —
+  agent workspace binding whose member is deactivated — or whose agent is retired —
   contributes nothing to a `domain`-access reader set, the same live-state derivation
   `named_readers` gets (§7), and the §5/§6.3 walks scrub the lists anyway, so a departing
   member loses compartment reads at the walk and again at the derive — defense in depth, not
@@ -931,7 +940,7 @@ keeps governing strictness separately.
   happen to see. Access re-evaluates with its inputs: a topology remap or a workspace unbind
   re-derives the reader set, and §4.2's no-readable-domains rule — next run refused, admin
   asked — is the same rule seen from the domain side. Retrieval
-  respects the reader's access — the HR intern's Coworker never sees salary cards.
+  respects the reader's access — the HR intern's agent never sees salary cards.
 - **Provenance**: every card/rule/decision records where it came from; uncited claims are flagged
   during review.
 - **Freshness**: review cadence and stale flags per item; scheduled DNA quality checks (a reviewer
@@ -1066,7 +1075,7 @@ Topology ops serialize behind a domain-level write lock (§4.5):
 ### 4.5 Storage
 
 ```
-~/.coworker/dna/            (or a company git repo — the canonical store)
+~/.agent/dna/            (or a company git repo — the canonical store)
   domains/<domain>/cards/*.md, rules/*.md, decisions/*.md, glossary.md, goals/*.md
   goals/<quarter>.md          (org-wide — domain_id null)
 ```
@@ -1158,11 +1167,11 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
 
 ---
 
-## 5. The org model: humans + Coworkers as members
+## 5. The org model: humans + agents as members
 
-- **Members**: `humans` (identity, RBAC role) and `coworkers` (identity files, scopes) share one
+- **Members**: `humans` (identity, RBAC role) and `agents` (identity files, scopes) share one
   member namespace — the task board, asks, groups, and lineage all reference members.
-- **Human RBAC**: `admin` (everything), `owner` (one or more DNA domains + their Coworkers), `member` (work,
+- **Human RBAC**: `admin` (everything), `owner` (one or more DNA domains + their agents), `member` (work,
   propose DNA, spawn within policy), `viewer` (read-only in full — never an ask target, never an assignee, and
   never an originator: proposing or amending DNA, filing asks, creating board tasks or initiatives, and spawning
   are all refused at write; the deputy, target, assignee, sponsor, lead, owner, group-Leader, and proposer guards in this plan
@@ -1176,27 +1185,27 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
   Approvals from v1 become Asks of kind `approval`.
 - **Shared Task Board**: to-dos come from run results, playbook nodes, or any member with a write
   surface (a viewer reads the board, never writes it — §5's role bullet); assignable to
-  humans or Coworkers — never viewers: the never-an-ask-target guard extends to assignments, a
+  humans or agents — never viewers: the never-an-ask-target guard extends to assignments, a
   read-only member is not a worker, refused at write (§7) — groupable under initiatives (§5.1);
   visible org-wide within access scopes.
-- **Groups/teams** mix humans and Coworkers (v1 kept agent-only groups; v2 unifies — a local
-  Coworker still acts as Leader for execution routing). Membership derives from live state
+- **Groups/teams** mix humans and agents (v1 kept agent-only groups; v2 unifies — a local
+  agent still acts as Leader for execution routing). Membership derives from live state
   like every reader set: the offboard walk clears a departed human, the retire walk a retired
-  Coworker — execution routing never addresses a dead identity. Leadership derives the same
+  agent — execution routing never addresses a dead identity. Leadership derives the same
   way: a group whose Leader departs or retires re-points the post inside the walk — a named
   successor, else the group's routing degrades to an admin ask (§2) rather than addressing a
   dead identity — the post is a routing surface, and no routing surface outlives its holder
   un-asked. The post is guarded at write like every routing surface it kinships with: a
   viewer human — or any non-active member — is refused the Leader post at set, routing
   addresses the Leader and the Leader must be answerable, the never-an-ask-target guard's
-  facet; an ephemeral Coworker is refused by the mortality pin (§5.1), the lead/goal-owner/
+  facet; an ephemeral agent is refused by the mortality pin (§5.1), the lead/goal-owner/
   delegate guard's twin — a member dying by schedule must not hold a post built to outlive
   it, the reap walk's re-point (§6.3) the drain for what slipped past, never the design. And
   the demotion walk carries the post with the authority: a human demoted to viewer sheds the
   Leader post the way they shed deputy references and led initiatives — re-pointed inside the
   walk, a named successor else the admin-ask degradation — never left addressing a member who
   can no longer answer.
-- **Accountability invariant**: every Coworker row carries `owner_human_id`; spawned workers carry
+- **Accountability invariant**: every agent row carries `owner_human_id`; spawned workers carry
   `spawned_by`; the chain must terminate at a human. Enforced at spawn time — and derived there,
   not configured: §6.2 names the row's first owner (the gate's accepting human for a persistent
   hire, the first human up the chain for an ephemeral), and the §5/§6.3 walks carry it from there.
@@ -1209,8 +1218,8 @@ never a *copy of their data*. ERP, WMS, HRIS, CRM remain live systems of record:
   owner-upgrade ask following the re-owned staff below; from the member: closed with an audit
   note — a departed member's pending spawn requests no longer gate anything) and board-task
   assignments
-  (reassigned or returned to the pool), dependent Coworkers
-  (re-owned or retired — re-owning narrows, never widens: a transferred Coworker's scopes
+  (reassigned or returned to the pool), dependent agents
+  (re-owned or retired — re-owning narrows, never widens: a transferred agent's scopes
   re-derive as current ∩ the new owner's live ceiling at the walk, the §6.5 upgrade algebra
   applied to custody, and a transfer whose intersection comes back empty retires the worker —
   custody is never a scope widening, and the attention the ownership derives re-keys with it:
@@ -1265,7 +1274,7 @@ identity link is not), and email addresses are not reused.
   goals re-own via successor or admin custody or retire — active goals, the same clamp as
   offboarding: terminal ones are frozen history (§7) — sponsored/led initiatives re-point,
   and owned authority the role no longer carries transfers the way offboarding transfers it —
-  owned domains to a successor or admin custody, owned Coworkers re-owned or retired, with
+  owned domains to a successor or admin custody, owned agents re-owned or retired, with
   personal assistants always retiring: a never-ask-target cannot own staff, and viewer-mirrored
   scopes (§6.4) would make the assistant read-only anyway. The re-key rules ride identically —
   sponsor-addressed asks re-point with the posts, owner-addressed asks with the domains,
@@ -1291,7 +1300,7 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
    authority behind the directive — pinned human, like every accountability chain §2), a **lead**
    (accountable member, human by default), a deadline,
    status (`proposed` → `active` → `paused`/`closed`), and an optional business budget (§14.11).
-3. **Decomposition is work, not talk**: the lead creates board tasks (human or Coworker assignees),
+3. **Decomposition is work, not talk**: the lead creates board tasks (human or agent assignees),
    instantiates the relevant SOP as a playbook, requests spawns — all tagged with the initiative
    and visible on its slice of the shared board.
 4. **Cross-domain coordination runs through the playbook spine**: an initiative playbook's nodes
@@ -1354,7 +1363,7 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
  the transition that unbinds (§7). Pause freezes execution, not authority; the delegation's own window (§4.2
   `effective_to`) stays the bound, and pausing past the deadline still raises the sponsor ask —
   pause is a state, not a way to outlive a deadline silently. Closing runs the same dependency
-   check as retiring a Coworker (§6.3) over the initiative's durable state — open asks
+   check as retiring an agent (§6.3) over the initiative's durable state — open asks
    and tasks resolved or reassigned, pending spawn requests archived with their template pins
    drained (the retire walk's spawn-request settlement applied at close, §6.3, §6.5: an
    approval landing after close would publish a worker into a slice that refuses launches,
@@ -1365,7 +1374,7 @@ A CEO-level directive ("let's open the Austin store") must not die in a chat scr
    runs already launched complete (staged external writes are never killed mid-commit, §8.2)
    with artifacts landing on the closed slice as history, new runs and spawns under the
    initiative are refused, and its ephemeral workers finish their bounded task and fold back;
-   a sponsor who needs work stopped mid-flight suspends or retires the specific Coworkers
+   a sponsor who needs work stopped mid-flight suspends or retires the specific agents
    (§6.3) rather than closing under them. The retrospective files DNA proposals — the §1 loop
    closes.
    Initiatives may declare dependencies (`depends_on`, §7): closing an upstream initiative with
@@ -1420,7 +1429,7 @@ applied to TTL: a member dying by schedule must not hold a post built to outlive
 legitimately leave — is never asked to re-point what the write gate should have refused. The
 origin matches the holder: ephemeral-origin initiatives are refused at write, the
 ephemeral-origin DNA-proposal rule (§7) generalized to directives — a bounded worker's
-directive-deserving output folds back to its spawner, and a human or persistent Coworker opens
+directive-deserving output folds back to its spawner, and a human or persistent agent opens
 the initiative.
 
 An initiative is an org entity (visible, accountable); **project memory** (§8.3) stays the
@@ -1454,7 +1463,7 @@ spawn({ from: templateId | customRole, class: 'persistent'|'ephemeral',
         budgetCap, ttl? })
 ```
 
-`customRole` is for persistent hires (proposed by humans or persistent Coworkers behind an
+`customRole` is for persistent hires (proposed by humans or persistent agents behind an
 approval gate — the requester gate is class-matched like the §6.2 template gate: an ephemeral
 worker is refused a persistent-hire request at write, template or customRole, its
 recommendation folding back to the spawner, the §5.1/§7 ephemeral-origin rule applied to the
@@ -1487,7 +1496,7 @@ not only from what was pre-authored.
   request's own fields, so a hire cannot arrive half-persistent, mortal by a field nobody
   reviews.
 - **Quotas & caps**: max concurrent ephemeral workers per spawner, global spawn depth (default 2),
-  org-wide concurrent Coworkers, per-spawn and org-wide spend caps metered by the spend ledger.
+  org-wide concurrent agents, per-spawn and org-wide spend caps metered by the spend ledger.
   Cap windows match worker class: an ephemeral worker's cap spans its lifetime, a persistent
   hire's cap is a periodic window (default monthly, admin-configurable) inside which reserved +
   settled evaluate — a long-lived hire is neither bankrupted in week two by a lifetime cap nor
@@ -1604,13 +1613,13 @@ not only from what was pre-authored.
 
 ### 6.3 Lineage
 
-Lifecycle acts carry named authority: suspend, retire, and resume belong to the Coworker's owner
-human, an admin, or the sponsor of an initiative the Coworker is bound to — §5.1's "a sponsor who
+Lifecycle acts carry named authority: suspend, retire, and resume belong to the agent's owner
+human, an admin, or the sponsor of an initiative the agent is bound to — §5.1's "a sponsor who
 needs work stopped mid-flight suspends or retires" routes through this authority, not around it,
 and an owner's staff stop at the owner's hand.
 
 `spawned_by` chains render as an org graph in the console: who created whom, why (purpose), spend,
-and current status. Retiring a persistent Coworker is a halt, not a drain: in-flight runs stop
+and current status. Retiring a persistent agent is a halt, not a drain: in-flight runs stop
 exactly as under suspension — partial results fold back through the memory tiers, staged writes go
 to §8.2 reconciliation, never killed mid-commit — before dependents resolve. Retiring requires
 resolving its dependents (automations,
@@ -1633,8 +1642,8 @@ twin — and the retiree's own pending asks closed with
 an audit note — pending spawn requests included, draining the template pins they hold (§6.5):
 their originating runs are halted and folded, so an answer would have no consumer, and a
 terminal act must not leave state waiting on a member who will never respond) — and authored
-proposals join the settlement: a persistent Coworker's open DNA proposals withdraw with an
-audit note inside the walk, the §5 member-proposal rule's agent twin (a Coworker never owns
+proposals join the settlement: a persistent agent's open DNA proposals withdraw with an
+audit note inside the walk, the §5 member-proposal rule's agent twin (an agent never owns
 domains, so there is no transfer branch), the folded-back learning staying available to its
 owner for a fresh proposal, and the review queue never waiting on a departed proposer
 whatever member shape the proposer was — while suspension leaves them standing, the
@@ -1642,10 +1651,10 @@ non-terminal rule: the reviewing owner may still publish, amendment alone waits 
 proposer. The whole requirement is the same dependency check as deleting a skill, applied to
 staff; the §5 offboarding walk is its superset for humans. Upgrade asks about the retiree
 settle with it: an owner-upgrade ask
-pinned to this Coworker (§6.5) closes unresolved with an audit note inside the walk — the
+pinned to this agent (§6.5) closes unresolved with an audit note inside the walk — the
 pin dies with the row — and a response racing the retirement is audit-only with no
 successor ask, the respond-time re-validation's terminal case (§8.10). Suspension strands
-no upgrade either way: an accept landing on a suspended Coworker is a data rebase — files
+no upgrade either way: an accept landing on a suspended agent is a data rebase — files
 and scopes, not execution — and resume re-arms under the rebased template, the halt
 freezing execution without freezing identity. Re-owning is the re-key door between the
 terminals: a pending owner-upgrade ask is derived from the row's `owner_human_id` — the
@@ -1680,13 +1689,13 @@ coalesce, §8.5) and launches new
 runs, but never resurrects a halted one — a run suspended mid-flight is terminal: partial
 results fold back through the memory tiers, interrupted work re-enters as new runs or board
 tasks, and staged writes resolve through §8.2 reconciliation, so resume cannot half-replay a
-side effect. Lifecycle acts are credential fences: a Coworker's PATs and sessions authenticate
+side effect. Lifecycle acts are credential fences: an agent's PATs and sessions authenticate
 only while its status is `active` — auth re-validates status at every use, so a suspended
 worker's PAT cannot fire an API trigger and a retiring one's credentials die with the halt
 (retire revokes PATs and terminates sessions outright, the same credential-death §5 gives
 human offboarding); resume re-arms what suspension made inert, and suspension made it inert —
 never deleted — so nothing re-authenticates from a stale grant. The second state change is **re-role** —
-re-tasking a Coworker to a different role is retire-and-respawn (identities are role-shaped;
+re-tasking an agent to a different role is retire-and-respawn (identities are role-shaped;
 project memory stays with the workspace, lessons go to DNA), never an in-place IDENTITY rewrite.
 In-place evolution of the *same* role is the template upgrade path (§6.5).
 
@@ -1716,10 +1725,10 @@ architecture:
 ### 6.5 Role & template evolution
 
 Roles change as the company does; running staff must track the change without a respawn stampede.
-Templates are versioned (§7 `role_templates`); every persistent Coworker pins the version it was
+Templates are versioned (§7 `role_templates`); every persistent agent pins the version it was
 spawned from. A template's class is its identity across those versions: a version declaring
 a class different from its name's predecessors is refused at publish — the (class, name,
-version) key names rows, but the name keys the lineage — so a persistent Coworker's
+version) key names rows, but the name keys the lineage — so a persistent agent's
 upgrade ask can never point at an ephemeral-class row; a role that has genuinely changed
 class is a new template and the retire-and-respawn path (§6.3), not a version bump. And the
 name carries that lineage past retirement: a new template may reuse a fully retired name,
@@ -1732,26 +1741,26 @@ adoption of what lands, never authorship of it. Version selection is explicit at
 a spawn request names the exact
 catalog row — the console defaults to the newest `active` version — so an approval publishes
 into the version the requester saw, never whichever row appeared or retired in between.
-Publishing a new `active` version files the upgrade ask to each pinned Coworker's owner — the
+Publishing a new `active` version files the upgrade ask to each pinned agent's owner — the
 company-wide bump-plus-queue below, made literal — and nothing auto-applies: a denied or expired
-upgrade leaves the Coworker pinned to its current version, which remains a legitimate `active`
+upgrade leaves the agent pinned to its current version, which remains a legitimate `active`
 row, because publication supersedes but never retires — retirement stays the explicit, pin-gated
 act (below), and the next bump re-asks. The accept re-validates what it would apply: an
 upgrade accept re-checks its target version's status at the door — a new version holds no pins
 of its own, so it can retire while its upgrade asks wait, and a retirement that beat the
 accept leaves it audit-only, the pin standing on its still-legitimate row, the next
 publication re-asking — the §8.10 respond-time family applied to the catalog, so no answer
-rebases a Coworker onto a version the catalog has buried. An **upgrade** is proposal-shaped: the diff — IDENTITY/HANDBOOK changes, scope
-deltas — goes to the Coworker's owner as an Ask; on accept, files rebase and scopes re-derive as
+rebases an agent onto a version the catalog has buried. An **upgrade** is proposal-shaped: the diff — IDENTITY/HANDBOOK changes, scope
+deltas — goes to the agent's owner as an Ask; on accept, files rebase and scopes re-derive as
 new-template ∩ owner's-current-scopes, never widening — and an intersection that comes back
 empty refuses to land: the upgrade closes unresolved with the empty re-derivation surfaced in
-the ask, because a scope-less Coworker is not an upgraded hire (retire-and-respawn is the path
+the ask, because a scope-less agent is not an upgraded hire (retire-and-respawn is the path
 when the role has genuinely moved past what the owner can carry). Ephemeral subagent templates
 upgrade in place — workers are short-lived, so new spawns simply get the new version. Retiring a
 template with live pins is refused, and pins count pending spawn requests as well as running
-Coworkers: a request awaiting approval references its template exactly as a live worker does,
+agents: a request awaiting approval references its template exactly as a live worker does,
 and retiring underneath it would let the approval publish into a ghost — upgrade or
-retire-and-respawn the pinned Coworkers and resolve or reject the pending requests first (the
+retire-and-respawn the pinned agents and resolve or reject the pending requests first (the
 §8.4 skill-uninstall dependency check, applied to templates). A company-wide role
 overhaul is one template bump plus a queue of owner asks, not a rehire.
 
@@ -1761,7 +1770,7 @@ promotion ask (the §9 endpoint snapshots identity files and effective scopes at
 payload is the proposal's, §4.3's pattern, never a live view), addressed to the admin broadcast
 (§8.10): catalog authorship stays an admin surface, and the owner's ask is the adoption door. The
 accept publishes the row `active` with the placement it names — a new template, or a new version
-of an existing one, the version path filing upgrade asks to that template's pinned Coworkers'
+of an existing one, the version path filing upgrade asks to that template's pinned agents'
 owners exactly as a hand-authored publication does — and the placement validates like every
 catalog write: a name colliding at the named version refuses the accept with the ask standing
 (a bad answer, not a dead ask), and a class flip refuses outright — §7's class immutability at
@@ -1770,7 +1779,7 @@ ephemeral row. The accept pins the hire it promotes, and the adoption names its 
 exactly: a hire in a live, activated state at accept — `active`, or `suspended` (the §6.3
 rebase rule; a pin is data, not execution) — becomes the template's founding instance,
 identity continuity exact (the body is its own) and later versions' upgrade asks reaching it like
-every pinned Coworker, while the pin itself re-derives nothing — the hire's live scopes stand,
+every pinned agent, while the pin itself re-derives nothing — the hire's live scopes stand,
 already ∩ its owner (§6.2); the upgrade algebra first applies at the next version's accept.
 Every other state publishes its template unpinned: a hire still `requested` would pin a row
 its own approval could yet archive — denial and expiry are terminal for a pending request
@@ -1803,7 +1812,7 @@ New/changed tables (v1 session/run/message/skill/connector tables carry over):
 > **Self-containedness**: this section, §8, and §9 are deltas against a v1 design doc that is not
 > in this repo. Before Phase 0 starts, inline or link the carried-over v1 specs here. If any v1
 > deployment exists, add a migration section: v1 `approvals` rows → `asks` of kind `approval`;
-> per-Coworker KBs → DNA domain imports.
+> per-agent KBs → DNA domain imports.
 
 ```
 humans         (id, name, email, rbac 'admin'|'owner'|'member'|'viewer', auth json,
@@ -1817,7 +1826,7 @@ humans         (id, name, email, rbac 'admin'|'owner'|'member'|'viewer', auth js
                  -- viewers are read-only and never valid ask targets (§5)
                  -- timezone/working_hours: per-human calendar — digests and queue_until_morning
                  -- compute against it (§8.10, §3)
-coworkers      + owner_human_id, class 'persistent'|'ephemeral', spawned_by member?, ttl_at,
+agents         + owner_human_id, class 'persistent'|'ephemeral', spawned_by member?, ttl_at,
                  budget_cap, lineage_depth, template_id?, template_version?,
                  status 'requested'|'active'|'suspended'|'retiring'|'archived'
                  -- owner_human_id derivation (§6.2): a persistent hire's owner is the gate's
@@ -1849,19 +1858,19 @@ coworkers      + owner_human_id, class 'persistent'|'ephemeral', spawned_by memb
                  -- publishes unpinned, the founding reference audit and citation
 role_templates (id, name, version, class 'persistent'|'ephemeral-subagent', body json
                  (identity/style/handbook), default_scopes json, status 'draft'|'active'|'retired')
-                 -- versioned catalog; persistent Coworkers pin (template_id, template_version) (§6.5)
+                 -- versioned catalog; persistent agents pin (template_id, template_version) (§6.5)
                  -- (class, name, version) unique — the catalog's deterministic key: a new
-                 -- version is a new row, never an in-place rewrite of one a Coworker pins;
+                 -- version is a new row, never an in-place rewrite of one an agent pins;
                  -- class is stable across a name's versions — a class-flipping version is
                  -- refused at publish (§6.5), so a pinned lineage never changes shape
-                 -- under the Coworkers holding it — and the name keys the lineage past
+                 -- under the agents holding it — and the name keys the lineage past
                  -- retirement: a new template reusing a fully retired name must carry that
                  -- name's class, class immutability spanning the lineage's live and retired
                  -- rows alike, so a catalog name never changes shape over time; a role whose
                  -- class genuinely changed takes a new name (§6.5), the domain-name reuse
                  -- rule's catalog twin (§4.4)
                  -- spawn requests name the exact row (newest active the console default, §6.5);
-                 -- publishing a new active version files owner-upgrade asks to pinned Coworkers —
+                 -- publishing a new active version files owner-upgrade asks to pinned agents —
                  -- publication supersedes, never retires: a denied upgrade's pin stands on a
                  -- still-active row until explicitly retired (§6.5); an upgrade accept
                  -- re-validates the target row's status — a version retired mid-wait makes
@@ -1988,7 +1997,7 @@ dna_proposals  (id, kind 'card'|'rule'|'decision'|'goal'|'glossary'|'edit', payl
                  -- revision: amendable in review — history retained, publish binds latest (§4.3);
                  -- amendment and publish serialize behind the domain write lock, racing
                  -- amendments landing as sequential revisions (§4.3);
-                 -- proposed_by must hold a write surface: humans and persistent Coworkers only —
+                 -- proposed_by must hold a write surface: humans and persistent agents only —
                  -- an ephemeral worker is refused at propose (§6); its learning folds back, and
                  -- the spawner or a human proposes from it. Viewers are refused the same way (§5)
 asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request', from member, to member,
@@ -2062,9 +2071,9 @@ workspaces     + initiative_ids json?, domain_ids json?, node_id?, claim_epoch i
                  lease_expires_at?, participants json
                  -- participants: the member ids on this workspace's collaboration surface —
                  -- §4.4 'domain' DNA access derives its human reader set from the binding
-                 -- through this list (a Coworker's reads derive from its workspaces directly);
+                 -- through this list (an agent's reads derive from its workspaces directly);
                  -- the list evaluates against live state like named_readers (§4.4) — a
-                 -- deactivated human or retired Coworker contributes nothing — and the walks
+                 -- deactivated human or retired agent contributes nothing — and the walks
                  -- scrub it: §5 removes a departing human's entries, §6.3 drops a retiree's
                  -- bindings, defense in depth at both surfaces
                  -- initiatives bound here from activation (bound at spawn under an initiative,
@@ -2129,7 +2138,7 @@ data_holds     (id, kind 'member'|'domain', subject_id, reason_md, created_by, r
                  -- scrubbed out from under litigation
 ```
 
-v1's per-Coworker knowledge bases are subsumed: a "KB" is now a DNA domain import (sources are
+v1's per-agent knowledge bases are subsumed: a "KB" is now a DNA domain import (sources are
 ingested and compiled into cards inside a domain), plus retained per-project reference folders.
 
 ---
@@ -2138,7 +2147,7 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
 
 - **8.1 Agent runtime** — unchanged core (prompt assembly → guarded loop → structured result), with
   two v2 changes: (a) the always-injected DNA layer (org snapshot, glossary slice, applicable
-  rules, goal slice) precedes per-Coworker context; (b) headless approval policy now routes into **Asks** —
+  rules, goal slice) precedes per-agent context; (b) headless approval policy now routes into **Asks** —
   `auto_deny` (default) | `queue_until_morning` (Task Board digest) | `escalate_im`. These are
   Ask tiers in disguise (§8.10): `escalate_im` → `critical`, `queue_until_morning` → `standard`
   (next digest), `auto_deny` → expiry behavior `deny`; the configuration surface is the ask
@@ -2179,7 +2188,7 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
 - **8.4 Skills** — unchanged; domain-organized packs; uninstall dependency checks.
 - **8.5 Trigger engine** — schedule/API/event triggers unchanged; every firing is a run of the same
   session worker; API triggers gain PAT scopes for external callers. Missed schedules neither
-  replay nor vanish: firings elapsing during a Coworker suspension, an initiative pause (§5.1),
+  replay nor vanish: firings elapsing during an agent suspension, an initiative pause (§5.1),
   the §6.2 spend halt, or control-plane downtime coalesce into one catch-up run per trigger when
   the halt holding them lifts (resume, un-pause, or the trip ask's resolution), carrying a
   missed-schedule summary (count, window) — per-trigger policy `replay|coalesce|skip`, default coalesce, with §6.2 rate limits
@@ -2215,7 +2224,7 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
   failing is a decision, not a limbo: the stall surfaces as an admin ask carrying the parity
   deltas — roll forward, retune the sample, or stay on the old index — so a failed migration
   never becomes an eternal, silent shadow.
-- **8.8 Groups & IM** — unified human+agent teams; IM pairing routes to a Coworker whose asks
+- **8.8 Groups & IM** — unified human+agent teams; IM pairing routes to an agent whose asks
   escalate to the channel.
 - **8.9 Console screens** — v1 screens 1–9, plus five new: **10. Org & People** (members, RBAC, lineage graph,
   retirement flows, the custom-hire promotion action §6.5) · **11. DNA console** (browse cards/rules/decisions per domain, review queue
@@ -2365,7 +2374,7 @@ escalation naming the shortfall: an impossible quorum degrades to a visible no, 
   resolves every collapsed waiter — the answer communal, one decision for identical
   questions, where the retraction is originator-scoped (above), one change of heart per
   originator; a per-source ask-creation rate limit (per run, trigger,
-  Coworker) sheds overflow into a single aggregate admin ask — the attention-side twin of the
+  agent) sheds overflow into a single aggregate admin ask — the attention-side twin of the
   §6.2 circuit-breaker — and the aggregate has a lifecycle, not a permanent residence: it
   closes resolved when its source's creation rate falls back under the limit for a full window
   or an admin acknowledges it, the shed count preserved in the audit — the line that surfaces
@@ -2373,11 +2382,11 @@ escalation naming the shortfall: an impossible quorum degrades to a visible no, 
   (§7) define their morning — `queue_until_morning` means the recipient's, not the server's (§3
   time authority). An unset calendar is still a calendar: humans with no timezone or working
   hours fall back to the control plane's zone and 09:00–17:00 weekdays — the digest always has
-  a definite morning to compute. **Agent targets**: an ask routed to a Coworker queues into
+  a definite morning to compute. **Agent targets**: an ask routed to an agent queues into
   its next run (or wakes a session worker); if the target is anything but `active` — requested,
   retiring, suspended, or archived, the ephemeral states included via the §7 mapping — or is
   busy past SLA, the ask reassigns up the chain (§6.3 suspend re-routing included). The agent
-  chain is the lineage chain: the first hop is the Coworker's `owner_human_id` (§2 — the chain
+  chain is the lineage chain: the first hop is the agent's `owner_human_id` (§2 — the chain
   always terminates at a human, so the hop is never undefined), and from there it continues down
   the human chain — deputy → domain owner → admin — with the same visited-set; an ask to an
   agent never lacks a human next hop. **Delegated authority** — a directive can push authority,
@@ -2470,10 +2479,10 @@ CRUD /role-templates (versioned catalog, §6.5; create/publish/retire are admin 
                audited — authorship is infrastructure, adoption rides the §6.5 owner asks)
 POST /spawn          GET /spawn/:id   (spawn requests; approval + spawn-storm monitoring; the
                requester's retraction rides the approval ask's withdraw endpoint, §6.2, §8.10)
-POST /coworkers/:id/retire · /suspend · /resume   (lifecycle acts on the coworker, §6.3 — not the
-               spawn request; authority: the Coworker's owner human, an admin, or a
+POST /agents/:id/retire · /suspend · /resume   (lifecycle acts on the agent, §6.3 — not the
+               spawn request; authority: the agent's owner human, an admin, or a
                bound-initiative sponsor)
-POST /coworkers/:id/promote  (catalog act, §6.5 — files the promotion ask for a customRole hire;
+POST /agents/:id/promote  (catalog act, §6.5 — files the promotion ask for a customRole hire;
                authority: the hire's owner human or an admin; one live promotion ask per hire —
                a second refused at filing, §6.5; the ask snapshots identity files
                and effective scopes at creation, the accept names the placement — a new template
@@ -2502,7 +2511,7 @@ POST /governance/spend/overruns/:id/ack (admin; lifts the §6.2 reserve gate an 
                settle overrun raised — :id is the overshot settle's spend-ledger row)
 POST /governance/holds · POST /governance/holds/:id/release  (admin; audited — data_holds
                lifecycle; erasure (§4.5) and the hold-refused topology ops (§4.4) check it)
-(v1 endpoints for coworkers, sessions, messages, workspaces, automated-tasks, triggers, playbooks, runs carry over)
+(v1 endpoints for agents, sessions, messages, workspaces, automated-tasks, triggers, playbooks, runs carry over)
 ```
 
 ---
@@ -2515,8 +2524,8 @@ POST /governance/holds · POST /governance/holds/:id/release  (admin; audited �
   live authority: a PAT's — or session's — effective scopes are the grant intersected with the
   principal's current RBAC, re-evaluated at every use, so a demotion narrows a standing
   credential at its next call instead of letting it outlive the role that authorized it — the
-  credential-side twin of §6.3's status fence. Coworker credentials are
-  status-fenced on top of mortal: they authenticate only while the Coworker is `active`,
+  credential-side twin of §6.3's status fence. Agent credentials are
+  status-fenced on top of mortal: they authenticate only while the agent is `active`,
   re-validated at every use (§6.3).
 - **Admin lockout is recoverable by design**: a single-admin self-hosted org whose admin loses
   their credentials is not a bricked org — a server-local CLI reset flow (run on the host;
@@ -2554,13 +2563,13 @@ POST /governance/holds · POST /governance/holds/:id/release  (admin; audited �
 | Phase | Deliverable | Key work | Est. (1 dev) |
 |---|---|---|---|
 | **0. Foundations** | Repo, CI, single-process skeleton | Monorepo, TS strict, Drizzle+SQLite (WAL), REST+WS, console shell, 3-OS CI matrix | 1 wk |
-| **1. MVP agent** | Chat with a Coworker doing real local work | Model gateway, agent loop, guarded fs/shell/web tools, approval cards, audit, streaming chat UI, first-run bootstrap (company + seed admin) | 4–5 wks |
-| **2. Identity, memory, skills, connectors** | Coworkers feel like employees | Role catalog across departments, IDENTITY/STYLE/HANDBOOK, memory tiers 1–2 (personal/project), skills + market, MCP client + tier-1 connectors, workspace kinds, versioned role-template catalog (§6.5) | 3–4 wks |
+| **1. MVP agent** | Chat with an agent doing real local work | Model gateway, agent loop, guarded fs/shell/web tools, approval cards, audit, streaming chat UI, first-run bootstrap (company + seed admin) | 4–5 wks |
+| **2. Identity, memory, skills, connectors** | agents feel like employees | Role catalog across departments, IDENTITY/STYLE/HANDBOOK, memory tiers 1–2 (personal/project), skills + market, MCP client + tier-1 connectors, workspace kinds, versioned role-template catalog (§6.5) | 3–4 wks |
 | **3. Company DNA v1** | The coherence core | DNA store (git-backed markdown) + domains/index, cards compilation from sources, glossary + applicable-rules + goal-slice injection into every prompt (org-wide goals first; linked goals wire up with initiatives in P4), proposals + owner review queue, citations in answers | 3–4 wks |
 | **4. Automation** | 24/7 operation | Schedule/API/event triggers, PATs, `{{field}}` templating, headless Ask policy, shared task board, initiatives v0 (goal + lead + deadline + task grouping) | 2–3 wks |
-| — | **v1 cut line** | Phases 0–4 + 8a are shippable v1: a DNA-coherent, automated company run by one admin + Coworkers | — |
+| — | **v1 cut line** | Phases 0–4 + 8a are shippable v1: a DNA-coherent, automated company run by one admin + agents | — |
 | **5. Playbooks** *(v2 track)* | Multi-stage orchestration | DSL + sandbox, statuses, askUser → Asks, read-only canvas, versions, playbook triggers | 3–4 wks |
-| **6. Multi-human org** *(v2 track)* | A company, not a person | Server deployment, human accounts + RBAC, asks routing + per-human digests (P4 shipped the single-admin digest), shared board, node registration & workspace-affinity scheduling, delegated authority + initiative budgets, offboarding flows + last-admin guard, Coworker suspend/resume, template upgrades, domain split/merge (§4.4) | 3–4 wks |
+| **6. Multi-human org** *(v2 track)* | A company, not a person | Server deployment, human accounts + RBAC, asks routing + per-human digests (P4 shipped the single-admin digest), shared board, node registration & workspace-affinity scheduling, delegated authority + initiative budgets, offboarding flows + last-admin guard, agent suspend/resume, template upgrades, domain split/merge (§4.4) | 3–4 wks |
 | **7. Spawning** *(v2 track)* | The org flexes | Ephemeral workers (quota, TTL, fold-back memory), then persistent hires (owner approval), policy engine, lineage graph, spend ledger + circuit-breaker | 2–3 wks |
 | **8a. v1 hardening** | v1 production-ready | Backup/restore with a reconciliation runbook (audit replay + node re-registration), encrypted secrets, docs, security review | 1 wk |
 | **8b. v1.1 polish** | Distribution | Tauri shell, installers, telemetry (opt-in) | 1–2 wks |
@@ -2636,7 +2645,7 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   terminal-status exit, viewer assignee refusal,
   RBAC demotion walk (scoped eligibility shedding: asks reassigned and closed, assignments
   returned, deputies cleared both directions, goals and initiative posts re-pointed, domains and
-  Coworkers transferred, personal assistants retired — transactional with the last-admin guard),
+  agents transferred, personal assistants retired — transactional with the last-admin guard),
   write-time owner guards (viewer goal owner, non-owner/admin domain owner),
   glossary proposal routing (org-wide → admin queue), item-CRUD publish-path guarantees
   (lock serialization, sod routing, contradiction re-check), persistent-cap window rollover,
@@ -2650,11 +2659,11 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   and spawn refusals at write), demotion transfer/withdrawal of authored proposals, agent-ask
   chain rooted at the lineage owner, ephemeral-origin proposal refusal, active-assignee guard
   (suspend freezes, retire/offboard walks return), pause-retained workspace binding (linked
-  goals inject, runs and spawns refuse, close drops), denied-activation inertness, coworker
+  goals inject, runs and spawns refuse, close drops), denied-activation inertness, agent
   lifecycle authority (owner human, admin, bound-initiative sponsor), firing-criticality
   composition (stricter of trigger and playbook), topology-op proposal remap (queues
   re-pointed inside the event, `review_by` clocks kept, archive counting open proposals),
-  coworker credential fences (non-`active` PAT refused at auth, retire revocation,
+  agent credential fences (non-`active` PAT refused at auth, retire revocation,
   resume re-arm), paused-slice planning writes (task file/edit allowed, run/spawn
   refusal unchanged), amendment kind immutability, initiative reopen refusal (closed
   terminal, revive-as-new), item-CRUD delete refusal (retire only), glossary lifecycle (retire
@@ -2732,7 +2741,7 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   topology remap of owner-addressed asks (spawn-approval and quorum primary recipients
   re-keyed to the resulting owner, ids and deadlines stable), retire-walk upgrade-ask
   settlement (closed unresolved with an audit note, a racing accept audit-only with no
-  successor, an accept on a suspended Coworker rebasing inertly), template class
+  successor, an accept on a suspended agent rebasing inertly), template class
   immutability (a class-flipping version refused at publish), workspace archival walk
   (initiative bindings dropped with the goal slice re-derived, reader sets re-derived,
   node claim death, spawn-binding refusal, workspace-keyed asks degraded to the
@@ -2758,7 +2767,7 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   (runs pinning their launched version, SOP pointer cards flagging stale through the
   freshness pass instead of blocking), workspace-archive endpoint authority (admin,
   running the full §7 walk), reader-set input liveness (a deactivated participant or a
-  retired Coworker's binding contributing nothing to domain-access reads, the walks
+  retired agent's binding contributing nothing to domain-access reads, the walks
   scrubbing participants entries and group memberships), spawn-claim lifecycle (count-cap
   claims and budget reserves attaching at request creation, riding the pending row,
   releasing at denial, expiry, and archive-time settlement — an approval never publishing
@@ -2814,14 +2823,14 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   persistent-hire request refused at write), admin-broadcast live-set rendering (a mid-wait
   admin addition joining pending broadcasts, a departed admin contributing nothing, a former
   admin's late response refused at the eligibility door), org-snapshot liveness (a
-  deactivated human and a retired Coworker absent from the injected layer, their records
+  deactivated human and a retired agent absent from the injected layer, their records
   resolvable through decisions and audit), spend-halt timetable coalescing (an elapsing
   trigger deferring under the trip as one catch-up run per trigger, playing on the trip
   ask's resolution, critical-class launching in the floor's headroom throughout, total
   exhaustion coalescing everything), the system originator (plane-filed asks carrying the
   reserved principal, refused as a target and as a responder, the walks' closures its only
   withdrawal, a member's withdraw attempt on a system ask refused at the door, the system
-  retracting no member's ask), org-snapshot state rendering (a suspended Coworker
+  retracting no member's ask), org-snapshot state rendering (a suspended agent
   present-but-halted, a retiring one terminal-bound, a requested hire absent until
   activation publishes it), spawn-request retraction (the requester's withdraw on the
   approval ask archiving the request with its template pin drained and cap claims released —
@@ -2836,7 +2845,7 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   truncating), and erasure's operational-history sweep (resolved asks —
   `from`/`to` and quorum response ledgers — and completed assignments pseudonymized with
   the event shape kept, pending state resolved by the prerequisite walk), retire-walk
-  proposal settlement (a persistent Coworker's open DNA proposals withdrawn with an audit
+  proposal settlement (a persistent agent's open DNA proposals withdrawn with an audit
   note inside the retirement, the folded-back learning available to the owner, suspension
   leaving them standing — publish open, amendment waiting), spawn-approval ceiling
   re-derivation (requested ∩ the requester's live scopes at the accept, a narrowing landing
@@ -2876,7 +2885,7 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   while new runs under it are refused; pause keeps the binding frozen — linked goals still
   inject while new runs and spawns are refused, and resume unfreezes in place; retire halts an
   in-flight run with fold-back and reconciliation, never mid-commit; a quarantined direct edit
-  lands in the affected domain owner's queue; a suspended Coworker's PAT firing an API trigger
+  lands in the affected domain owner's queue; a suspended agent's PAT firing an API trigger
   is refused at auth, not at the run; a domain merge re-queues its open proposals to the
   survivor's owner with the SLA clock untouched; a webhook redelivered after control-plane
   downtime lands one run inside the 7-day dedupe window; an erasure sweep files its free-text
@@ -2886,7 +2895,7 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   raises the sponsor's close-or-re-target ask while runs under the initiative wind down; a
   domain residency tightened under live placements rebinds conforming workspaces and surfaces
   the starvation ask for the rest; a standalone `store` flip sweeps the tree in one audited
-  commit and is refused under a kind-'domain' hold; a retiring Coworker's pending spawn request
+  commit and is refused under a kind-'domain' hold; a retiring agent's pending spawn request
   closes with an audit note and releases its template pin; a valid hand-merge landing
   mid-topology-op serializes behind the domain lock; a split whose declared mapping divides a
   supersession chain is refused at declare; a node whose heartbeat drops a workspace-required
@@ -2912,7 +2921,7 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   mid-wait is audit-only with the re-point successor ask carrying the decision; a spawn
   approval racing its initiative's close is audit-only, the request archiving with its
   template pin drained; a merge re-keys a pending spawn-approval ask to the surviving
-  domain's owner with its deadline untouched; an owner-upgrade ask racing its Coworker's
+  domain's owner with its deadline untouched; an owner-upgrade ask racing its agent's
   retirement closes unresolved while a racing accept stays audit-only; archiving a
   workspace drops its initiative bindings, kills its node claim, and degrades its keyed
   asks to the domainless fallback; runs in flight at an initiative pause complete onto
@@ -2922,7 +2931,7 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   departing sponsor's pending activation ask re-keys to the re-pointed sponsor with its
   deadline untouched; a superseding rule published with a future window leaves its
   predecessor injecting until the window opens; an ephemeral worker's persistent-hire
-  request is refused at write and folds back to its spawner; a re-owned Coworker's scopes
+  request is refused at write and folds back to its spawner; a re-owned agent's scopes
   narrow to the new owner's ceiling, an empty intersection retiring it; a domain owner's
   self-addressed hire approval closes on their own accept; an ask filed with a past deadline
   is refused at creation; archiving a workspace archives a pending spawn request bound to it
@@ -2932,7 +2941,7 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   playbook version with a live trigger is refused until the trigger re-points, an in-flight
   run completing on its pinned version meanwhile; offboarding a human removes their
   participants entries and group memberships with domain reader sets re-derived, and
-  retiring a Coworker drops its workspace bindings; a denied or expired spawn request
+  retiring an agent drops its workspace bindings; a denied or expired spawn request
   releases its quota claim and budget reserve for the next spawner; a proposal naming an
   already-superseded predecessor is refused while one naming the chain's live head
   publishes; the spend breaker's trip ask resolves the halt — an accept lifting it, a deny
@@ -2940,7 +2949,7 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   requester sits suspended is audit-only, the request archiving with its template pin
   drained and quota claim released; a domain holding only terminal history archives
   directly, its citations resolving read-only; a hire published on a domain owner's accept
-  carries the accepter as its owner_human_id; and a group led by a retiring Coworker
+  carries the accepter as its owner_human_id; and a group led by a retiring agent
   re-points its Leader inside the walk, an unnamed successor degrading routing to an admin
   ask; a quorum ask whose rule is superseded mid-wait closes at the event, its successor ask
   carrying the decision against current rules; archiving a domain closes its owner-addressed
@@ -2958,7 +2967,7 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   a storm's aggregate admin ask closes resolved when its source's rate falls back under the
   limit; and a console node edit attempting capabilities is refused, the advertisement
   re-stating on heartbeat; a promoted custom hire pinned at its accept receives the next
-  version's upgrade ask like any pinned Coworker, its personal memory staying its own; an
+  version's upgrade ask like any pinned agent, its personal memory staying its own; an
   admin binding edit racing a domain merge serializes behind id-ordered domain locks, the
   merge remapping the list it re-read inside the lock; a hand-merge touching two domains'
   trees acquires both locks id-ordered before applying a line; a promotion accept landing on
@@ -2971,7 +2980,7 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   breaker plays its coalesced catch-up run when the trip ask's accept lifts the halt, while
   a critical-tagged trigger keeps firing in the floor's headroom throughout; a plane-filed
   goal-window ask renders 'System' as its originator and a member's withdraw attempt on it
-  is refused at the door; a suspended Coworker renders present-but-halted in every org
+  is refused at the door; a suspended agent renders present-but-halted in every org
   snapshot assembled while the suspension holds, and a requested hire renders nowhere until
   activation; a requester withdrawing their pending spawn-approval ask archives the request
   and releases its claims for the next spawner; retiring an agent named as a delegation's
@@ -2982,7 +2991,7 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   injected, and an org snapshot past its budget renders the routing spine with members
   demoted to the org-facts directory; and erasing a departed member pseudonymizes their
   resolved asks and completed
-  assignments while the walks have already resolved the pending ones; retiring a Coworker
+  assignments while the walks have already resolved the pending ones; retiring an agent
   mid-review withdraws its open proposals with an audit note and the reviewing owner's queue
   moves on, a suspended retiree-to-be's proposals still publishable meanwhile; a spawn
   approval landing after its requester's scopes were narrowed publishes the child at the
@@ -2991,7 +3000,7 @@ erased data; conflicts become admin asks. Tested in CI as a chaos scenario (§12
   refused at the door while a same-class reuse lands as a new version row; erasing a
   departed member lists their name inside ask payloads and task descriptions in the annex —
   sponsor- or admin-owned per surface — while the addressing pseudonymizes; offboarding a
-  Coworker owner mid-upgrade-wait re-keys the pending upgrade ask to the successor inside
+  agent owner mid-upgrade-wait re-keys the pending upgrade ask to the successor inside
   the walk, the departed owner's racing response refused at the door while the successor's
   accept rebases at their own ceiling; one of two members whose identical questions
   collapsed retracts and the other's question stands, answered by the canonical row's
@@ -3062,7 +3071,7 @@ ephemeral-origin proposal refusal (§7), retire's halt semantics and named lifec
 (§6.3, §9), playbook criticality in the schema (§7), quarantine routing (§4.5), the domainless
 read-path layer (§4.2), org-wide glossary duplicate refusal (§4.2), and the active-assignee
 guard (§7); v2.20's twelfth sweep closed the lifecycle seams at the surfaces' edges — open
-proposals across topology ops (§4.4), credential fences on coworker suspend/retire (§6.3, §10),
+proposals across topology ops (§4.4), credential fences on agent suspend/retire (§6.3, §10),
 paused-slice planning vs. execution (§5.1), amendment kind immutability (§4.3), terminal close
 with revive-as-new (§5.1), and retire-not-delete item CRUD (§9); v2.21's thirteenth sweep
 closed the corpus-state and post-hoc seams beneath those — glossary lifecycle with
@@ -3128,7 +3137,7 @@ activation re-validating the goal_ref and the linkage guarded live-at-write (§5
 respond-time assumptions (§5.1, §6.2, §8.10); v2.31's twenty-third sweep closed the
 attention-remap, holder-racing, and workspace-mortality seams beneath those — topology
 remaps re-keying owner-addressed pending asks with ids and deadlines stable (§4.4, §8.10),
-upgrade asks settling with the Coworker they name — closed unresolved at retirement,
+upgrade asks settling with the agent they name — closed unresolved at retirement,
 rebased inertly under suspension (§6.3, §6.5) — template class immutability across a
 name's versions (§6.5, §7), workspace archival as a walked transition degrading keyed
 asks to the domainless fallback (§7, §3), pause as a launch gate that drains in-flight
@@ -3156,7 +3165,7 @@ playbook-version retirement refusing live trigger references with runs pinning t
 launched version and SOP pointer cards riding the freshness flags (§8.6, §4.4), and the
 workspace-archive endpoint with admin authority naming the walk's door (§9); v2.34's
 twenty-sixth sweep closed the reader-set-liveness, spawn-claim, and chain-linearity seams
-beneath those — participants and Coworker-binding inputs evaluated against live state with
+beneath those — participants and agent-binding inputs evaluated against live state with
 the walks scrubbing participants entries, retiree bindings, and group memberships (§4.4, §5,
 §6.3, §7), spawn-request quota claims and budget reserves pinned to the request row's
 lifecycle with the workspaceless approval gate and the breaker's ask-borne lift named
@@ -3210,7 +3219,7 @@ while post-named grants ride re-pointing (§6.3, §8.10), review-SLA edits re-de
 standing clocks monotonically with the ≥1 bound at every door (§4.3, §7), and the injection
 overflow's ordered demotion with the org snapshot degrading to spine-plus-org-facts (§4.2);
 v2.42's thirty-fourth sweep closed the proposer-mortality, ceiling-liveness, catalog-naming,
-and erasure-prose seams beneath those — the retire walk withdrawing a persistent Coworker's
+and erasure-prose seams beneath those — the retire walk withdrawing a persistent agent's
 open DNA proposals with an audit note, the §5 member-proposal rule's agent twin (§6.3, §4.3),
 the spawn approval's ceiling re-derived against the requester's live scopes at the door,
 landing requested ∩ current with an empty intersection archiving (§6.2, §8.10), template
@@ -3260,7 +3269,7 @@ mechanisms in the sections the sweep changelogs cite. What remains is stated, no
 5. **Tier-1 business suite**: Microsoft 365/Graph (default) vs Google Workspace.
 6. **First IM channel**: Slack (default) vs Discord vs Telegram.
 7. **Embeddings**: API (default) with local fallback.
-8. **Name/branding**: working title pending trademark + domain search.
+8. **Name/branding**: **Summa** — decided (v2.44); formal trademark and domain confirmation pending. The AI members are *agents* throughout; the former working title was "Coworker".
 9. **Tier-2 connector priority**: which enterprise system first (ERP vs HRIS vs CRM) — decide when the first company deployment names its pain; not before v1 ships.
 10. **Personal-assistant rollout**: opt-in per employee (default) vs org-wide mandate.
 11. **Business budgets**: display-only field on initiatives (default) vs enforcement tied into the §8.2 tier-2 write gates — revisit with the first write-capable ERP/WMS connector.

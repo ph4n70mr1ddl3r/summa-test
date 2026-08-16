@@ -12,7 +12,7 @@ Source: PLAN.md §6.1, §6.2.
   purpose, workspaceBindings, scopeCeiling, budgetCap, ttl? })` — a guarded tool and console
   action.
 - **SPW-010** — `customRole` is for persistent hires, proposed by humans or persistent
-  Coworkers behind an approval gate; an ephemeral requester is refused a persistent-hire
+  agents behind an approval gate; an ephemeral requester is refused a persistent-hire
   request at write (template or customRole), its recommendation folding back to the spawner.
 - **SPW-011** — Ephemeral workers must instantiate whitelisted subagent templates — no
   free-form ephemeral roles; ephemeral spawning is an agent/playbook capability only (a human
@@ -35,7 +35,7 @@ Source: PLAN.md §6.1, §6.2.
 - **SPW-030** — Scope delegation: child's file/tool/connector scopes ⊆ parent's, enforced by
   the policy engine.
 - **SPW-031** — Quotas: max concurrent ephemeral workers per spawner, global spawn depth
-  (default 2), org-wide concurrent Coworkers, per-spawn and org-wide spend caps metered by
+  (default 2), org-wide concurrent agents, per-spawn and org-wide spend caps metered by
   the spend ledger. Count caps are *claimed*, not checked: the engine increments atomically
   inside the spawn transaction — two spawners racing the last slot see one success and one
   refusal.
