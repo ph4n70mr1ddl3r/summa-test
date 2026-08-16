@@ -50,7 +50,7 @@ Source: PLAN.md §4.3.
   publish binds the latest revision that preceded it into the lock.
 - **DWP-032** — An amendment re-routes with its payload: a revision moving an item between
   org-wide and domain-scoped re-routes review to the queue governing the amended scope;
-  cross-domain moves are refused outright (DNC-024).
+  cross-domain moves are refused outright (DWP-064).
 - **DWP-033** — Revisions never change `kind`: scope re-routes, kind does not; a card revision
   that should be a rule is a new proposal.
 

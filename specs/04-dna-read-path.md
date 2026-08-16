@@ -1,6 +1,6 @@
 # SPEC-04 — DNA Read Path
 
-Source: PLAN.md §4.2.
+Source: PLAN.md §4.2, §4.6.
 
 ## Always-injected layers
 

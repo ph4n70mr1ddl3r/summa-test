@@ -1,7 +1,7 @@
 # Summa — SDD Specification Suite
 
 This directory is the **normative requirements corpus** for the Summa platform, derived from
-`PLAN.md` (v2.44). `PLAN.md` is the design rationale — the "why", with history;
+`PLAN.md` (v2.45). `PLAN.md` is the design rationale — the "why", with history;
 these specs are the implementation contract — the "what", discrete and testable. When the two
 disagree, fix one of them in the same change; never implement against a discrepancy silently.
 
@@ -41,6 +41,9 @@ disagree, fix one of them in the same change; never implement against a discrepa
   - *Control plane* — the self-hosted server; *Node* — enrolled execution host.
   - *System originator* — the reserved non-member principal that files plane-originated asks
     (ASK-031…032).
+- Lower-case *member* in requirement prose (e.g. "any member but an ephemeral worker") means a
+  row of the shared member namespace — human or agent, any role (ORG-001); the capitalized
+  *Member* actor above is the RBAC role. Requirements name excluded classes explicitly.
 - **State names** (`active`, `suspended`, `requested`, …) are the enum values of
   `16-data-model.md`; the data model is the representational ground truth.
 - **Testability**: every requirement is written to be falsifiable by a test. Event-driven
@@ -53,22 +56,22 @@ disagree, fix one of them in the same change; never implement against a discrepa
 | `01-product-and-principles.md` | VIS/PRN | Vision, actors, governing principles | §1, §2 |
 | `02-architecture-and-topology.md` | ARC | Deployment, nodes, leases, time, residency | §3 |
 | `03-dna-content-and-lifecycles.md` | DNC | Content model, item lifecycles | §4.1, §7 |
-| `04-dna-read-path.md` | DRP | Injection, retrieval, citation, precedence | §4.2 |
+| `04-dna-read-path.md` | DRP | Injection, retrieval, citation, precedence | §4.2, §4.6 |
 | `05-dna-write-path.md` | DWP | Proposals, review, amendment, publish | §4.3 |
 | `06-dna-governance-and-topology.md` | DGV | Domains, reader sets, topology ops, locks | §4.4 |
-| `07-dna-storage-and-privacy.md` | STG | Git/db-only stores, ingest, erasure | §4.5, §4.6 |
+| `07-dna-storage-and-privacy.md` | STG | Git/db-only stores, ingest, erasure | §4.5 |
 | `08-org-model-and-rbac.md` | ORG | Members, roles, board, groups, deputies | §5 |
 | `09-offboarding-and-demotion.md` | OFB | Departure walks, last-admin guard | §5 |
 | `10-initiatives.md` | INT | Initiative spine, transitions, dependencies | §5.1 |
 | `11-spawning-and-policy.md` | SPW | Spawn requests, gates, caps, breaker | §6.1, §6.2 |
-| `12-agent-lifecycle.md` | CLC | Suspend/retire/resume/reap, assistants | §6.3, §6.4 |
+| `12-agent-lifecycle.md` | CLC | Suspend/retire/resume/reap, assistants, workspace archival | §6.3, §6.4, §7 (workspaces) |
 | `13-templates-and-catalog.md` | TPL | Versioned catalog, upgrades, promotion | §6.5 |
 | `14-asks-and-attention.md` | ASK | Tiers, expiry, quorum, escalation, digests | §8.10 |
 | `15-subsystems.md` | SUB | Runtime, tools, memory, triggers, playbooks | §8.1–8.9, §8.11 |
 | `16-data-model.md` | DAT | Tables, enums, invariants | §7 |
 | `17-api-surface.md` | API | Endpoints, authority, refusals | §9 |
 | `18-security.md` | SEC | Authn, PATs, scopes, secrets, audit | §10 |
-| `19-nfr-and-boundaries.md` | NFR | Determinism, boundaries, universal fallback | §2, §13.1 |
+| `19-nfr-and-boundaries.md` | NFR | Determinism, boundaries, universal fallback | §2, §13, §13.1 |
 | `20-configuration-and-decisions.md` | CFG | Tunables and the 16 open decisions | §14 |
 | `21-delivery-and-acceptance.md` | DLV | Phases, spikes, acceptance demos | §11, §12 |
 

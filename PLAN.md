@@ -595,6 +595,18 @@ mode so small teams start simple.
 > the agent-lifecycle module), IDs being stable forever — and no semantics move: a rename, not
 > a redesign.
 
+> **Errata pass (v2.45)**: a full-suite consistency and completeness review — all 464
+> requirement IDs mechanically re-verified against TRACEABILITY (no dangling citations, no
+> duplicates, coverage exact) — closed the close-reading residue: §8.1's change count corrected
+> — the runtime's v2 changes run (a)–(d), not two · the suite's §4.6 attribution aligned —
+> module 04 is its home (DRP-050…052), so SPEC-07's header and the suite README no longer claim
+> it · two citations repointed to their normative homes (PRN-005 → SPW-030; DWP-032 → DWP-064) ·
+> SPW-034's claim-release enumeration completed with the requester's retraction, §6.2's list in
+> full · ASK-015's no-effect rule extended to withdrawn asks — a response racing the
+> originator's retraction is audit-only like one racing expiry (§8.10's rule) · TRACEABILITY's
+> §7 row now points to CLC-040's workspace-archival walk, and the suite README disambiguates
+> the lower-case namespace sense of "member".
+
 ---
 
 ## 1. Product vision
@@ -2146,7 +2158,7 @@ ingested and compiled into cards inside a domain), plus retained per-project ref
 ## 8. Subsystem designs (carried from v1, updated)
 
 - **8.1 Agent runtime** — unchanged core (prompt assembly → guarded loop → structured result), with
-  two v2 changes: (a) the always-injected DNA layer (org snapshot, glossary slice, applicable
+  four v2 changes: (a) the always-injected DNA layer (org snapshot, glossary slice, applicable
   rules, goal slice) precedes per-agent context; (b) headless approval policy now routes into **Asks** —
   `auto_deny` (default) | `queue_until_morning` (Task Board digest) | `escalate_im`. These are
   Ask tiers in disguise (§8.10): `escalate_im` → `critical`, `queue_until_morning` → `standard`

@@ -21,8 +21,9 @@ Source: PLAN.md §8.10.
 - **ASK-012** — `deadline` derives from the tier unless set explicitly; an explicit deadline
   earlier than the ask's creation is refused at write.
 - **ASK-015** — A quorum-1 ask closes on the first response received; later responses
-  (member and deputy racing) are audit-only; a response to an expired ask is recorded with
-  no effect — the successor ask, if any, carries the decision.
+  (member and deputy racing) are audit-only; a response to an expired ask — or to a withdrawn
+  one, terminal the same way (ASK-030) — is recorded with no effect: the successor ask, if
+  any, carries the decision.
 
 ## Withdrawal and the system originator
 

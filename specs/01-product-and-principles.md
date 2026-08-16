@@ -37,7 +37,7 @@ module says so explicitly.
 - **PRN-004** — Agents are accountable to humans: every agent carries `owner_human_id`;
   ephemeral workers roll up to their spawner; every chain terminates at a human (ORG-050…051, SPW-046).
 - **PRN-005** — Spawning is delegation, not reproduction: child scopes ⊆ parent scopes, budgets
-  and TTLs bind, policy gates (SPW-010).
+  and TTLs bind, policy gates (SPW-030).
 - **PRN-006** — Files for humans, database for machines: DNA, identity, memory are git-friendly
   markdown except where the privacy carve-out applies (STG-001…005); runs, audit, and indexes
   live in SQLite.

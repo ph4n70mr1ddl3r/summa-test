@@ -50,8 +50,9 @@ Source: PLAN.md §6.1, §6.2.
 - **SPW-034** — Claims are lifecycle-pinned to the request row: count-cap claims and budget
   reserves attach at request creation inside the spawn transaction, transfer to the live
   worker at activation, and release at every terminal a pending request has — denial,
-  approval expiry, close-/archive-time settlements, and the requester-state archive — so an
-  approval never publishes into an exhausted cap and cap space never leaks on a dead request.
+  approval expiry, close-/archive-time settlements, the requester-state archive, and the
+  requester's own retraction (SPW-047) — so an approval never publishes into an exhausted
+  cap and cap space never leaks on a dead request.
 - **SPW-035** — A settle may overshoot its reserve: the overrun settles in full, surfaces on
   the spend dashboard and the owner's digest, and further reserves against that cap are
   refused until an admin acknowledges through the overrun-ack endpoint — the refusal itself

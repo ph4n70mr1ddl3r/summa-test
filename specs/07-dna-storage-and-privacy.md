@@ -1,6 +1,6 @@
 # SPEC-07 — DNA Storage & Privacy
 
-Source: PLAN.md §4.5, §4.6.
+Source: PLAN.md §4.5.
 
 ## Stores
 
