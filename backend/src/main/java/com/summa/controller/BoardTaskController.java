@@ -4,6 +4,7 @@ import com.summa.service.BoardTaskService;
 import com.summa.model.BoardTask;
 import com.summa.service.AuditService;
 import com.summa.model.AuditEvent;
+import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
@@ -15,10 +16,12 @@ import java.util.Map;
 public class BoardTaskController {
     private final BoardTaskService taskService;
     private final AuditService auditService;
+    private final WriteGate writeGate;
 
-    public BoardTaskController(BoardTaskService taskService, AuditService auditService) {
+    public BoardTaskController(BoardTaskService taskService, AuditService auditService, WriteGate writeGate) {
         this.taskService = taskService;
         this.auditService = auditService;
+        this.writeGate = writeGate;
     }
 
     @GetMapping
@@ -49,7 +52,9 @@ public class BoardTaskController {
 
     @PostMapping
     public ResponseEntity<?> createTask(@RequestBody Map<String, String> body,
-                                         @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                          @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Integer priority = body.containsKey("priority") ? Integer.parseInt(body.get("priority")) : null;
             Instant dueAt = body.containsKey("dueAt") ? Instant.parse(body.get("dueAt")) : null;
@@ -77,7 +82,9 @@ public class BoardTaskController {
 
     @PostMapping("/{id}/assign")
     public ResponseEntity<?> assign(@PathVariable String id, @RequestBody Map<String, String> body,
-                                     @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                      @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             BoardTask task = taskService.assign(id, body.get("assigneeMemberId"), actor);
             return ResponseEntity.ok(task);
@@ -90,7 +97,9 @@ public class BoardTaskController {
 
     @PostMapping("/{id}/complete")
     public ResponseEntity<?> complete(@PathVariable String id,
-                                       @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                        @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             BoardTask task = taskService.complete(id, actor);
             return ResponseEntity.ok(task);
@@ -103,7 +112,9 @@ public class BoardTaskController {
 
     @PostMapping("/{id}/unassign")
     public ResponseEntity<?> unassign(@PathVariable String id,
-                                       @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                        @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             BoardTask task = taskService.unassign(id, actor);
             return ResponseEntity.ok(task);

@@ -50,7 +50,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
-        // Reject requests without valid JWT — no X-Actor fallback
+        // Reject requests without valid JWT
         response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing or invalid authentication");
         return;
     }

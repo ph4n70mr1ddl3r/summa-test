@@ -4,6 +4,7 @@ import com.summa.service.AgentService;
 import com.summa.model.Agent;
 import com.summa.service.AuditService;
 import com.summa.model.AuditEvent;
+import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
@@ -16,10 +17,12 @@ import java.util.Optional;
 public class AgentController {
     private final AgentService agentService;
     private final AuditService auditService;
+    private final WriteGate writeGate;
 
-    public AgentController(AgentService agentService, AuditService auditService) {
+    public AgentController(AgentService agentService, AuditService auditService, WriteGate writeGate) {
         this.agentService = agentService;
         this.auditService = auditService;
+        this.writeGate = writeGate;
     }
 
     @GetMapping
@@ -63,6 +66,8 @@ public class AgentController {
     @PostMapping("/{id}/suspend")
     public ResponseEntity<?> suspend(@PathVariable String id,
                                        @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Agent agent = agentService.suspend(id, actor);
             return ResponseEntity.ok(agent);
@@ -80,6 +85,8 @@ public class AgentController {
     @PostMapping("/{id}/resume")
     public ResponseEntity<?> resume(@PathVariable String id,
                                       @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Agent agent = agentService.resume(id, actor);
             return ResponseEntity.ok(agent);
@@ -97,6 +104,8 @@ public class AgentController {
     @PostMapping("/{id}/retire")
     public ResponseEntity<?> retire(@PathVariable String id,
                                        @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Agent agent = agentService.retire(id, actor);
             return ResponseEntity.ok(agent);

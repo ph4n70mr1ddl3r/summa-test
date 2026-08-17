@@ -4,6 +4,7 @@ import com.summa.service.RoleTemplateService;
 import com.summa.model.RoleTemplate;
 import com.summa.service.AuditService;
 import com.summa.model.AuditEvent;
+import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -14,10 +15,12 @@ import java.util.Map;
 public class RoleTemplateController {
     private final RoleTemplateService templateService;
     private final AuditService auditService;
+    private final WriteGate writeGate;
 
-    public RoleTemplateController(RoleTemplateService templateService, AuditService auditService) {
+    public RoleTemplateController(RoleTemplateService templateService, AuditService auditService, WriteGate writeGate) {
         this.templateService = templateService;
         this.auditService = auditService;
+        this.writeGate = writeGate;
     }
 
     @GetMapping
@@ -34,7 +37,9 @@ public class RoleTemplateController {
 
     @PostMapping
     public ResponseEntity<?> createTemplate(@RequestBody Map<String, String> body,
-                                             @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                              @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             RoleTemplate template = templateService.create(
                 body.get("name"),
@@ -56,7 +61,9 @@ public class RoleTemplateController {
 
     @PostMapping("/{id}/publish")
     public ResponseEntity<?> publish(@PathVariable String id,
-                                      @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                       @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             RoleTemplate template = templateService.publish(id, actor);
             return ResponseEntity.ok(template);
@@ -69,7 +76,9 @@ public class RoleTemplateController {
 
     @PostMapping("/{id}/retire")
     public ResponseEntity<?> retire(@PathVariable String id,
-                                     @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                      @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             RoleTemplate template = templateService.retire(id, actor);
             return ResponseEntity.ok(template);

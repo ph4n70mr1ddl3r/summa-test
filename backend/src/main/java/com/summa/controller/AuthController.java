@@ -42,10 +42,7 @@ public class AuthController {
         }
 
         // Find human by email
-        var humans = orgService.findAllHumans();
-        var humanOpt = humans.stream()
-            .filter(h -> email.equals(h.getEmail()))
-            .findFirst();
+        var humanOpt = orgService.findHumanByEmail(email);
 
         if (humanOpt.isEmpty()) {
             return ResponseEntity.status(401).body(Map.of(
@@ -86,10 +83,5 @@ public class AuthController {
             "rbac", human.getRbac(),
             "name", human.getName()
         ));
-    }
-
-    @GetMapping("/health")
-    public ResponseEntity<Map<String, String>> health() {
-        return ResponseEntity.ok(Map.of("status", "healthy", "service", "summa"));
     }
 }

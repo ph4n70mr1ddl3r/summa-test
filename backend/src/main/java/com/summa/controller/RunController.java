@@ -4,6 +4,7 @@ import com.summa.service.RunService;
 import com.summa.model.Run;
 import com.summa.service.AuditService;
 import com.summa.model.AuditEvent;
+import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -14,10 +15,12 @@ import java.util.Map;
 public class RunController {
     private final RunService runService;
     private final AuditService auditService;
+    private final WriteGate writeGate;
 
-    public RunController(RunService runService, AuditService auditService) {
+    public RunController(RunService runService, AuditService auditService, WriteGate writeGate) {
         this.runService = runService;
         this.auditService = auditService;
+        this.writeGate = writeGate;
     }
 
     @GetMapping
@@ -49,7 +52,9 @@ public class RunController {
 
     @PostMapping
     public ResponseEntity<?> createRun(@RequestBody Map<String, String> body,
-                                        @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                         @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Run run = runService.create(
                 body.get("agentId"),
@@ -72,7 +77,10 @@ public class RunController {
     }
 
     @PostMapping("/{id}/start")
-    public ResponseEntity<?> startRun(@PathVariable String id) {
+    public ResponseEntity<?> startRun(@PathVariable String id,
+                                       @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Run run = runService.start(id);
             return ResponseEntity.ok(run);
@@ -84,7 +92,10 @@ public class RunController {
     }
 
     @PostMapping("/{id}/complete")
-    public ResponseEntity<?> completeRun(@PathVariable String id, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<?> completeRun(@PathVariable String id, @RequestBody Map<String, Object> body,
+                                          @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             String result = (String) body.get("result");
             Long costTokens = body.get("costTokens") != null ? 
@@ -102,7 +113,10 @@ public class RunController {
     }
 
     @PostMapping("/{id}/fail")
-    public ResponseEntity<?> failRun(@PathVariable String id, @RequestBody Map<String, String> body) {
+    public ResponseEntity<?> failRun(@PathVariable String id, @RequestBody Map<String, String> body,
+                                      @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Run run = runService.fail(id, body.get("errorMessage"));
             return ResponseEntity.ok(run);
@@ -114,7 +128,10 @@ public class RunController {
     }
 
     @PostMapping("/{id}/cancel")
-    public ResponseEntity<?> cancelRun(@PathVariable String id) {
+    public ResponseEntity<?> cancelRun(@PathVariable String id,
+                                        @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Run run = runService.cancel(id);
             return ResponseEntity.ok(run);

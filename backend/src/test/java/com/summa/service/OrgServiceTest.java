@@ -2,6 +2,7 @@ package com.summa.service;
 
 import com.summa.repository.HumanRepository;
 import com.summa.model.Human;
+import com.summa.security.PasswordUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -24,6 +25,9 @@ class OrgServiceTest {
 
     @Mock
     private OffboardingWalkService offboardingWalkService;
+
+    @Mock
+    private PasswordUtil passwordUtil;
 
     @InjectMocks
     private OrgService orgService;

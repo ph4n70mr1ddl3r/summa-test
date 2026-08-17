@@ -3,11 +3,13 @@ package com.summa.service;
 import com.summa.repository.AuditEventRepository;
 import com.summa.model.AuditEvent;
 import org.springframework.stereotype.Service;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 
 @Service
 public class AuditService {
     private final AuditEventRepository auditEventRepository;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public AuditService(AuditEventRepository auditEventRepository) {
         this.auditEventRepository = auditEventRepository;
@@ -20,7 +22,7 @@ public class AuditService {
         event.setAction(action);
         event.setObjectType(objectType);
         event.setObjectId(objectId);
-        event.setDetail(detail != null ? detail : "{}");
+        event.setDetail(detail != null ? sanitizeJson(detail) : "{}");
         event.setOrigin("live");
         return auditEventRepository.save(event);
     }
@@ -37,9 +39,21 @@ public class AuditService {
         event.setAction(action);
         event.setObjectType(objectType);
         event.setObjectId(objectId);
-        event.setDetail(detail != null ? detail : "{}");
+        event.setDetail(detail != null ? sanitizeJson(detail) : "{}");
         event.setOrigin("live");
         event.setNodeId(nodeId);
         return auditEventRepository.save(event);
+    }
+
+    private String sanitizeJson(String detail) {
+        if (detail == null || detail.isBlank()) {
+            return "{}";
+        }
+        try {
+            objectMapper.readTree(detail);
+            return detail;
+        } catch (Exception e) {
+            return "{}";
+        }
     }
 }

@@ -153,17 +153,11 @@ public class OffboardingWalkService {
             membershipsCleared++;
         }
 
-        // OFB-016: Transfer or withdraw authored proposals
+        // OFB-016: Transfer authored proposals; leave others untouched
         for (DnaProposal prop : proposalService.findAllOpen()) {
             if (humanId.equals(prop.getProposedBy())) {
                 prop.setProposedBy(finalTargetOwner);
                 proposalRepository.save(prop);
-                proposalsTransferred++;
-            } else {
-                prop.setStatus("withdrawn");
-                proposalRepository.save(prop);
-                auditService.logSystem("OFFBOARD_WITHDRAW_PROPOSAL", "dna_proposal", prop.getId(),
-                    String.format("{\"reason\":\"member_departed\"}"));
                 proposalsTransferred++;
             }
         }

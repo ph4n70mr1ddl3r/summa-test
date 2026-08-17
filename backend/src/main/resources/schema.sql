@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS humans (
     email TEXT UNIQUE NOT NULL,
     rbac TEXT NOT NULL CHECK (rbac IN ('admin', 'owner', 'member', 'viewer')),
     auth TEXT NOT NULL DEFAULT '{}',
+    password_hash TEXT,
     deputy_member_id TEXT,
     timezone TEXT,
     working_hours TEXT,

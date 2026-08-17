@@ -1,6 +1,6 @@
 package com.summa.controller;
 
-import com.summa.service.DNAReadService;
+import com.summa.service.DnaReadService;
 import com.summa.service.AuditService;
 import com.summa.model.AuditEvent;
 import org.springframework.http.ResponseEntity;
@@ -11,10 +11,10 @@ import java.util.Map;
 @RestController
 @RequestMapping("/dna/search")
 public class DnaSearchController {
-    private final DNAReadService dnaReadService;
+    private final DnaReadService dnaReadService;
     private final AuditService auditService;
 
-    public DnaSearchController(DNAReadService dnaReadService, AuditService auditService) {
+    public DnaSearchController(DnaReadService dnaReadService, AuditService auditService) {
         this.dnaReadService = dnaReadService;
         this.auditService = auditService;
     }

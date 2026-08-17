@@ -72,6 +72,10 @@ public class OrgService {
         return humanRepository.findById(id);
     }
 
+    public Optional<Human> findHumanByEmail(String email) {
+        return humanRepository.findByEmail(email);
+    }
+
     public List<Human> findAllHumans() {
         return humanRepository.findAll();
     }

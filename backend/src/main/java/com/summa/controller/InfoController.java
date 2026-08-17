@@ -1,5 +1,6 @@
 package com.summa.controller;
 
+import org.springframework.boot.SpringBootVersion;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
@@ -16,7 +17,7 @@ public class InfoController {
             "version", "0.1.0",
             "buildTime", System.currentTimeMillis(),
             "javaVersion", System.getProperty("java.version"),
-            "springBootVersion", "3.4.1"
+            "springBootVersion", SpringBootVersion.getVersion()
         ));
     }
 }

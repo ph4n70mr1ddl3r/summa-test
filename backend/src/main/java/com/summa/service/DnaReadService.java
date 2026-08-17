@@ -9,13 +9,13 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class DNAReadService {
+public class DnaReadService {
     private final DnaDomainRepository domainRepository;
     private final DnaProposalRepository proposalRepository;
     private final MemberService memberService;
     private final JdbcTemplate jdbcTemplate;
 
-    public DNAReadService(DnaDomainRepository domainRepository,
+    public DnaReadService(DnaDomainRepository domainRepository,
                           DnaProposalRepository proposalRepository,
                           MemberService memberService,
                           org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
