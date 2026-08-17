@@ -89,8 +89,8 @@ public class OffboardingWalkService {
         int tasksReassigned = 0;
         int patsRevoked = 0;
 
-        // OFB-002: Transfer owned DNA domains
-        for (DnaDomain domain : domainService.findAll()) {
+        // OFB-002: Transfer owned DNA domains (include archived — ownership references persist)
+        for (DnaDomain domain : domainService.findAllIncludingArchived()) {
             if (humanId.equals(domain.getOwnerHumanId())) {
                 String newOwner = targetOwner != null ? targetOwner : humanId;
                 domainService.updateOwner(domain.getId(), newOwner, actor);

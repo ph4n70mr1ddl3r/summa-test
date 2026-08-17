@@ -94,11 +94,15 @@ public class GovernanceService {
     public Map<String, Object> getSpendView() {
         Double ceiling = getSetting("spend-org-ceiling", Double.class);
         if (ceiling == null) ceiling = 1000000.0;
+        Instant thirtyDaysAgo = Instant.now().minus(30, ChronoUnit.DAYS);
+        Double totalCostObj = spendLedgerRepository.sumSettleCostSince(thirtyDaysAgo);
+        double totalCost = totalCostObj != null ? totalCostObj : 0.0;
+        double utilization = totalCost / ceiling;
         java.util.Map<String, Object> view = new java.util.LinkedHashMap<>();
-        view.put("totalCost30d", 0.0);
+        view.put("totalCost30d", totalCost);
         view.put("ceiling", ceiling);
-        view.put("utilization", 0.0);
-        view.put("halted", false);
+        view.put("utilization", String.format("%.2f%%", utilization * 100));
+        view.put("halted", isSpendHaltTripped());
         return view;
     }
 

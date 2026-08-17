@@ -14,9 +14,6 @@ spring:
     hibernate:
       ddl-auto: none
     show-sql: false
-    properties:
-      hibernate:
-        dialect: org.eclipse.persistence.platform.database.SQLiteDialect
         jdbc:
           batch_size: 50
         cache:

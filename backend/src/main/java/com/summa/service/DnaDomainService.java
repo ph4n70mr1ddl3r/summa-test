@@ -46,6 +46,10 @@ public class DnaDomainService {
         return domainRepository.findAllActive();
     }
 
+    public List<DnaDomain> findAllIncludingArchived() {
+        return domainRepository.findAll();
+    }
+
     @Transactional
     public DnaDomain archive(String id, String actor) {
         DnaDomain domain = domainRepository.findById(id)

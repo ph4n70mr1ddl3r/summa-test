@@ -60,7 +60,8 @@ public class SpawnController {
             return ResponseEntity.ok(request);
         } catch (IllegalStateException e) {
             AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(503).body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ResponseEntity.status(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
         } catch (Exception e) {
             AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
             return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));

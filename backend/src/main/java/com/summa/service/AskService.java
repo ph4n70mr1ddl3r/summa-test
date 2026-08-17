@@ -135,18 +135,19 @@ public class AskService {
                 expire(ask.getId());
             } else if ("escalate".equals(behavior) || "reassign".equals(behavior)) {
                 expire(ask.getId());
-                // File successor ask per the behavior
                 try {
                     String successorTo = "admins";
                     Optional<Human> target = memberService.findHuman(ask.getTo());
                     if (target.isPresent() && target.get().getDeputyMemberId() != null) {
                         successorTo = target.get().getDeputyMemberId();
                     }
-                    create(ask.getKind(), ask.getFrom(), successorTo,
-                        ask.getPayload(), ask.getSlaTier(), behavior,
+                    Ask successor = create(ask.getKind(), ask.getFrom(), successorTo,
+                        ask.getPayload(), ask.getSlaTier(), "deny",
                         ask.getQuorumRequired(),
                         Instant.now().plusSeconds(24 * 3600L),
                         ask.getInitiativeId(), ask.getWorkspaceId());
+                    auditService.logSystem("EXPIRE_SUCCESSOR_CREATED", "ask", successor.getId(),
+                        String.format("{\"originalId\":\"%s\",\"behavior\":\"%s\"}", ask.getId(), behavior));
                 } catch (Exception e) {
                     auditService.logSystem("EXPIRE_SUCCESSOR_FAIL", "ask", ask.getId(),
                         String.format("{\"behavior\":\"%s\",\"error\":\"%s\"}", behavior, e.getMessage()));

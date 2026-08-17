@@ -2,6 +2,7 @@ package com.summa.service;
 
 import com.summa.repository.DnaProposalRepository;
 import com.summa.model.DnaProposal;
+import com.summa.model.DnaDomain;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -34,9 +35,13 @@ public class DnaProposalService {
         
         // Set review_by based on domain
         if (domainId != null) {
-            domainService.findById(domainId).ifPresent(domain -> {
-                proposal.setReviewBy(Instant.now().plusSeconds(domain.getReviewSlaDays() * 86400L));
-            });
+            Optional<DnaDomain> domainOpt = domainService.findById(domainId);
+            if (domainOpt.isPresent()) {
+                proposal.setReviewBy(Instant.now().plusSeconds(domainOpt.get().getReviewSlaDays() * 86400L));
+            } else {
+                // Domain not found — use default 7 days
+                proposal.setReviewBy(Instant.now().plusSeconds(7 * 86400L));
+            }
         } else {
             // Org-scoped: use default 7 days
             proposal.setReviewBy(Instant.now().plusSeconds(7 * 86400L));
