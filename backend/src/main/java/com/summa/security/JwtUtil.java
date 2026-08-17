@@ -1,15 +1,17 @@
 package com.summa.security;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.Map;
 
 public class JwtUtil {
 
     private static final String ALGORITHM = "HmacSHA256";
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private JwtUtil() {}
 
@@ -17,14 +19,22 @@ public class JwtUtil {
         long nowMillis = System.currentTimeMillis();
         long expMillis = nowMillis + expirationMillis;
 
-        String header = base64UrlEncode("{\"alg\":\"HS256\",\"typ\":\"JWT\"}".getBytes(StandardCharsets.UTF_8));
-        String payload = base64UrlEncode(("{" +
-            "\"sub\":\"" + escapeJson(subject) + "\"," +
-            "\"iat\":" + (nowMillis / 1000) + "," +
-            "\"exp\":" + (expMillis / 1000) +
-            "}").getBytes(StandardCharsets.UTF_8));
+        Map<String, Object> payload = Map.of(
+            "sub", subject,
+            "iat", nowMillis / 1000,
+            "exp", expMillis / 1000
+        );
 
-        String signatureInput = header + "." + payload;
+        String header = base64UrlEncode("{\"alg\":\"HS256\",\"typ\":\"JWT\"}".getBytes(StandardCharsets.UTF_8));
+        String payloadJson;
+        try {
+            payloadJson = MAPPER.writeValueAsString(payload);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to serialize JWT payload", e);
+        }
+        String encodedPayload = base64UrlEncode(payloadJson.getBytes(StandardCharsets.UTF_8));
+
+        String signatureInput = header + "." + encodedPayload;
         String signature = base64UrlEncode(hmacSha256(signatureInput, secret));
 
         return signatureInput + "." + signature;
@@ -44,9 +54,9 @@ public class JwtUtil {
 
         try {
             String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
-            Map<String, Object> payload = parseJson(payloadJson);
-            Long exp = (Long) payload.get("exp");
-            if (exp != null && exp * 1000L < System.currentTimeMillis()) {
+            Map<String, Object> payload = MAPPER.readValue(payloadJson, new TypeReference<Map<String, Object>>() {});
+            Long exp = ((Number) payload.get("exp")).longValue();
+            if (exp * 1000L < System.currentTimeMillis()) {
                 return null;
             }
             return payload;
@@ -68,34 +78,5 @@ public class JwtUtil {
     private static String base64UrlEncode(byte[] bytes) {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
-
-    private static String escapeJson(String s) {
-        if (s == null) return "";
-        return s.replace("\\", "\\\\").replace("\"", "\\\"");
-    }
-
-    private static Map<String, Object> parseJson(String json) {
-        Map<String, Object> map = new HashMap<>();
-        json = json.trim();
-        if (!json.startsWith("{") || !json.endsWith("}")) return map;
-        json = json.substring(1, json.length() - 1);
-        String[] pairs = json.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
-        for (String pair : pairs) {
-            String[] kv = pair.split(": ", 2);
-            if (kv.length == 2) {
-                String key = kv[0].trim().replaceAll("^\"|\"$", "");
-                String value = kv[1].trim();
-                if (value.startsWith("\"") && value.endsWith("\"")) {
-                    map.put(key, value.substring(1, value.length() - 1));
-                } else {
-                    try {
-                        map.put(key, Long.parseLong(value));
-                    } catch (NumberFormatException e) {
-                        map.put(key, value);
-                    }
-                }
-            }
-        }
-        return map;
-    }
 }
+

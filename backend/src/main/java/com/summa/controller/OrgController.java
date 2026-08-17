@@ -36,7 +36,8 @@ public class OrgController {
             Human human = orgService.bootstrap(
                 body.get("name"),
                 body.get("email"),
-                body.get("rbac")
+                body.get("rbac"),
+                body.get("password")
             );
             return ResponseEntity.ok(Map.of("id", human.getId(), "email", human.getEmail(), "rbac", human.getRbac()));
         } catch (IllegalStateException e) {

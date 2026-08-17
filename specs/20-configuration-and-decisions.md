@@ -9,6 +9,24 @@ trigger; the mechanism it tunes is already designed (NFR-022). Defaults live beh
   human legibility is load-bearing (PRN-006), and git concurrency is what the DLV-042
   spike gates before the ladder commits. DB-with-export remains the per-domain carve-out,
   not the default.
+- **CFG-002** — Human auth v1: the deployment's own Keycloak over OIDC — Summa stores no
+  human credentials (SEC-001); `humans.auth` carries the Keycloak subject link, never
+  credential material — "local accounts" are Keycloak realm accounts (SEC-002).
+- **CFG-003** — SQLite as single-process default: WAL mode with FTS5, chosen for the
+  MVP path where a single owner holds both control plane and node (ARC-001); remote-node
+  deployments layer on a replicated store (CFG-030).
+- **CFG-004** — Audit log retention: append-only, retained indefinitely in SQLite; export
+  to cold storage is admin-configured (STG-030).
+- **CFG-005** — Plan file encoding: UTF-8 markdown with ASCII requirement IDs; no binary
+  assets in the DNA store (STG-001).
+- **CFG-006** — Console dev server: Vite on port 3000, proxying /api to :8080; production
+  serves the built SPA from the same Spring Boot process under /api (no separate CORS).
+- **CFG-007** — Node heartbeat cadence: 30 s interval, 90 s timeout — the fence lease
+  interval (ARC-020) is a function of these, see CFG-160 for tunability.
+- **CFG-008** — FTS5 ngram tokenizer: default for DNA search (DRP-030); configured at
+  database creation time via SchemaInitializer.
+- **CFG-009** — GraalJS sandbox isolation: sealed polyglot context, no host access;
+  child-process fallback when GraalVM is unavailable (DLV-040).
 - **CFG-020** — Human auth v1: the deployment's own Keycloak over OIDC — decided (v2.58):
   Summa stores no human credentials (SEC-001) — `humans.auth` carries the Keycloak subject
   link, never credential material — "local accounts" are Keycloak realm accounts, and company
@@ -37,8 +55,9 @@ trigger; the mechanism it tunes is already designed (NFR-022). Defaults live beh
 - **CFG-110** — Business budgets: display-only field on initiatives (default) vs.
   enforcement tied into tier-2 write gates — revisit with the first write-capable
   ERP/WMS connector.
-- **CFG-120** — Deployment perimeter: one deployment per company (default) — M&A-style
-  consolidation of two deployments is a migration project, not a runtime feature.
+- **CFG-120** — Name/branding: **Summa** — decided (PLAN v2.44); formal trademark + domain
+  confirmation pending. The AI members are *agents*; the former working title was "Coworker".
+  The deployment perimeter is CFG-020's Keycloak choice and CFG-030's shape decision.
 - **CFG-130** — Per-domain proposal strictness: every proposal reviewed (default) vs.
   opt-in auto-publish for low-blast-radius domains (audited, retro-reviewable) — revisit
   when proposal volume drowns owners.

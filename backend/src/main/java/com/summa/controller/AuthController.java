@@ -3,6 +3,7 @@ package com.summa.controller;
 import com.summa.service.OrgService;
 import com.summa.service.AuditService;
 import com.summa.security.JwtUtil;
+import com.summa.security.PasswordUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -56,6 +57,21 @@ public class AuthController {
             return ResponseEntity.status(403).body(Map.of(
                 "code", "forbidden",
                 "message", "Account is deactivated"
+            ));
+        }
+
+        if (password == null || password.isBlank()) {
+            return ResponseEntity.status(401).body(Map.of(
+                "code", "unauthorized",
+                "message", "Invalid credentials"
+            ));
+        }
+
+        String storedHash = human.getPasswordHash();
+        if (storedHash == null || !PasswordUtil.verify(password, storedHash)) {
+            return ResponseEntity.status(401).body(Map.of(
+                "code", "unauthorized",
+                "message", "Invalid credentials"
             ));
         }
 

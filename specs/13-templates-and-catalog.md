@@ -13,12 +13,7 @@ Source: PLAN.md §6.5.
   version is refused at publish — a role that changed class is a new template and the
   retire-and-respawn path.
 - **TPL-004** — Catalog writes — create, publish, retire — are admin-governed and audited:
-  authorship is infrastructure; owner asks govern adoption, never authoring.
-- **TPL-045** — A template name keys its lineage across live and retired rows: a new
-  template reusing a fully retired name shall carry that name's class — class immutability
-  spans the lineage, not the live set, so a catalog name never changes shape over time — and
-  a role whose class genuinely changed takes a new name; the domain-name reuse rule
-  (DAT-050/DNC-060) applied to the catalog.
+   authorship is infrastructure; owner asks govern adoption, never authoring.
 
 ## Version selection and publication
 
@@ -76,8 +71,13 @@ Source: PLAN.md §6.5.
   personal memory never rides; the founding pin re-derives nothing (the hire's live scopes
   stand; the upgrade algebra first applies at the next version's accept).
 - **TPL-044** — The hire's own sense that it has become a role routes to its owner as an ask
-  (the fold-back shape) — self-promotion is an adoption question, not a catalog door; a
-  denied or expired promotion ask is record only: the ask is adoption, not alteration.
+   (the fold-back shape) — self-promotion is an adoption question, not a catalog door; a
+   denied or expired promotion ask is record only: the ask is adoption, not alteration.
+- **TPL-045** — A template name keys its lineage across live and retired rows: a new
+  template reusing a fully retired name shall carry that name's class — class immutability
+  spans the lineage, not the live set, so a catalog name never changes shape over time — and
+  a role whose class genuinely changed takes a new name; the domain-name reuse rule
+  (DAT-050/DNC-060) applied to the catalog.
 - **TPL-046** — Adoption is one question at a time: a hire with a live promotion ask refuses
   a second at filing — the CLC-050 assistant-1:1 pattern at the catalog door — so two
   accepts can never race to pin one hire (TPL-042 names the founding instance one row's to

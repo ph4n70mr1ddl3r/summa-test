@@ -21,7 +21,7 @@ public class BackupController {
             String path = backupService.createBackup(backupDir);
             return ResponseEntity.ok(Map.of("path", path));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.internalServerError().body(Map.of("error", "backup failed"));
         }
     }
 
@@ -31,7 +31,7 @@ public class BackupController {
             backupService.restore(body.get("backupPath"));
             return ResponseEntity.ok(Map.of("status", "restored"));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.internalServerError().body(Map.of("error", "restore failed"));
         }
     }
 }

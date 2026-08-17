@@ -39,7 +39,7 @@ class OrgServiceTest {
         human.setRbac("admin");
         when(humanRepository.save(any())).thenReturn(human);
 
-        Human result = orgService.bootstrap("Test Admin", "admin@test.com", "admin");
+        Human result = orgService.bootstrap("Test Admin", "admin@test.com", "admin", "testpass");
 
         assertNotNull(result);
         assertEquals("admin", result.getRbac());
@@ -50,7 +50,7 @@ class OrgServiceTest {
         when(humanRepository.count()).thenReturn(1L);
 
         assertThrows(IllegalStateException.class, () -> {
-            orgService.bootstrap("Another Admin", "other@test.com", "admin");
+            orgService.bootstrap("Another Admin", "other@test.com", "admin", null);
         });
     }
 

@@ -129,6 +129,7 @@ public class InitiativeService {
      * - Goal window ended without initiative action → direction ask (INT-050)
      */
     @Scheduled(fixedRate = 300000) // every 5 minutes
+    @Transactional
     public void checkStallsAndDirections() {
         Instant now = Instant.now();
         List<Initiative> active = initiativeRepository.findByStatus("active");

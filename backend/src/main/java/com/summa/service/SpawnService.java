@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class SpawnService {
@@ -48,7 +49,9 @@ public class SpawnService {
             throw new IllegalStateException("Spend halt is active - spawns are blocked");
         }
 
-        // SPW-020/021: Validate template if named
+        // SPW-021: Class must match — persistent hire needs persistent template,
+        // ephemeral needs ephemeral-subagent template
+        String effectiveSpawnClass = spawnClass != null ? spawnClass : "ephemeral";
         if (templateId != null && !templateId.isBlank()) {
             Optional<RoleTemplate> templateOpt = templateRepository.findById(templateId);
             if (templateOpt.isEmpty()) {
@@ -59,12 +62,10 @@ public class SpawnService {
                 throw new IllegalStateException("Template is not active: " + templateId
                     + " (status: " + template.getStatus() + ")");
             }
-            // SPW-021: Class must match — persistent hire needs persistent template,
-            // ephemeral needs ephemeral-subagent template
-            String requiredClass = "ephemeral".equals(spawnClass) ? "ephemeral-subagent" : "persistent";
+            String requiredClass = "ephemeral".equals(effectiveSpawnClass) ? "ephemeral-subagent" : "persistent";
             if (!requiredClass.equals(template.getAgentClass())) {
                 throw new IllegalStateException("Template class mismatch: request class="
-                    + spawnClass + " but template class=" + template.getAgentClass());
+                    + effectiveSpawnClass + " but template class=" + template.getAgentClass());
             }
         }
 
@@ -73,7 +74,7 @@ public class SpawnService {
         request.setRequesterId(requesterId);
         request.setTemplateId(templateId);
         request.setCustomRole(customRole);
-        request.setSpawnClass(spawnClass != null ? spawnClass : "ephemeral");
+        request.setSpawnClass(effectiveSpawnClass);
         request.setPurpose(purpose);
         request.setWorkspaceBindings(workspaceBindings != null ? workspaceBindings : "[]");
         request.setScopeCeiling(scopeCeiling != null ? scopeCeiling : "{}");
@@ -124,9 +125,42 @@ public class SpawnService {
         request.setApprovedBy(approvedBy);
         request.setApprovedAt(Instant.now());
 
+        // SPW-011: Approved spawn creates an active agent
+        Agent agent = activateAgent(request, actor);
+        request.setAgentId(agent.getId());
+
         SpawnRequest saved = spawnRepository.save(request);
         auditService.log(actor, "APPROVE_SPAWN", "spawn_request", id,
-            String.format("{\"approvedBy\":\"%s\"}", approvedBy));
+            String.format("{\"approvedBy\":\"%s\",\"agentId\":\"%s\"}", approvedBy, agent.getId()));
+        return saved;
+    }
+
+    @Transactional
+    public Agent activateAgent(SpawnRequest request, String actor) {
+        String agentId = UUID.randomUUID().toString();
+        String name = request.getCustomRole() != null ? request.getCustomRole()
+            : (request.getPurpose() != null ? request.getPurpose() : "agent-" + agentId.substring(0, 8));
+
+        Integer depth = 0;
+        if (request.getRequestedByHumanId() != null) {
+            depth = 1;
+        }
+
+        Agent agent = new Agent();
+        agent.setId(agentId);
+        agent.setName(name);
+        agent.setOwnerHumanId(request.getRequestedByHumanId() != null ? request.getRequestedByHumanId() : request.getRequesterId());
+        agent.setAgentClass(request.getSpawnClass());
+        agent.setSpawnedBy(request.getRequesterId());
+        agent.setLineageDepth(depth);
+        agent.setTemplateId(request.getTemplateId());
+        agent.setTemplateVersion(request.getTemplateId() != null ? "v1" : null);
+        agent.setBudgetCap(request.getBudgetCap());
+        agent.setStatus("active");
+
+        Agent saved = agentRepository.save(agent);
+        auditService.log(actor, "SPAWN_AGENT", "agent", agentId,
+            String.format("{\"requestId\":\"%s\",\"class\":\"%s\"}", request.getId(), request.getSpawnClass()));
         return saved;
     }
 

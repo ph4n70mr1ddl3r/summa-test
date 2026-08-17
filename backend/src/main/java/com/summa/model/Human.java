@@ -22,6 +22,9 @@ public class Human {
     @Column(name = "auth", nullable = false, columnDefinition = "TEXT")
     private String auth;
 
+    @Column(name = "password_hash", length = 64)
+    private String passwordHash;
+
     @Column(name = "deputy_member_id", length = 36)
     private String deputyMemberId;
 
@@ -65,5 +68,7 @@ public class Human {
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     public Instant getDeactivatedAt() { return deactivatedAt; }
     public void setDeactivatedAt(Instant deactivatedAt) { this.deactivatedAt = deactivatedAt; }
+    public String getPasswordHash() { return passwordHash; }
+    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
     public boolean isActive() { return deactivatedAt == null; }
 }

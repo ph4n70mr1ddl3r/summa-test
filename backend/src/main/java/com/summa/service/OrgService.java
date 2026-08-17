@@ -4,6 +4,7 @@ import com.summa.repository.HumanRepository;
 import com.summa.repository.AuditEventRepository;
 import com.summa.model.Human;
 import com.summa.model.AuditEvent;
+import com.summa.security.PasswordUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -29,7 +30,7 @@ public class OrgService {
         this.offboardingWalkService = offboardingWalkService;
     }
 
-    public Human bootstrap(String name, String email, String rbac) {
+    public Human bootstrap(String name, String email, String rbac, String password) {
         // Check if any human exists
         long count = humanRepository.count();
         if (count > 0) {
@@ -42,6 +43,7 @@ public class OrgService {
         human.setEmail(email);
         human.setRbac(rbac != null ? rbac : "admin");
         human.setAuth("{}");
+        human.setPasswordHash(password != null && !password.isBlank() ? PasswordUtil.hash(password) : null);
 
         Human saved = humanRepository.save(human);
         auditService.log("system", "BOOTSTRAP", "human", saved.getId(),
@@ -49,13 +51,14 @@ public class OrgService {
         return saved;
     }
 
-    public Human createHuman(String name, String email, String rbac, String auth) {
+    public Human createHuman(String name, String email, String rbac, String auth, String password) {
         Human human = new Human();
         human.setId(UUID.randomUUID().toString());
         human.setName(name);
         human.setEmail(email);
         human.setRbac(rbac != null ? rbac : "member");
         human.setAuth(auth != null ? auth : "{}");
+        human.setPasswordHash(password != null && !password.isBlank() ? PasswordUtil.hash(password) : null);
 
         Human saved = humanRepository.save(human);
         auditService.log("system", "CREATE_HUMAN", "human", saved.getId(),

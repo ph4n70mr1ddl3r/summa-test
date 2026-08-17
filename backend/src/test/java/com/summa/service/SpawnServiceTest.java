@@ -63,12 +63,17 @@ class SpawnServiceTest {
         request.setId("spawn-1");
         request.setStatus("requested");
         when(spawnRepository.findById("spawn-1")).thenReturn(Optional.of(request));
+
+        Agent agent = new Agent();
+        agent.setId("agent-new");
+        when(agentRepository.save(any())).thenReturn(agent);
         when(spawnRepository.save(any())).thenReturn(request);
 
         SpawnRequest result = spawnService.approve("spawn-1", "admin", "actor");
 
         assertEquals("approved", result.getStatus());
         assertNotNull(result.getApprovedAt());
+        assertEquals("agent-new", result.getAgentId());
     }
 
     @Test
