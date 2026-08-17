@@ -60,7 +60,7 @@ public class MemoryController {
 
     @PostMapping("/{id}/review")
     public ResponseEntity<?> review(@PathVariable String id,
-                                     @RequestHeader(value = "X-Actor") String actor) {
+                                      @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
         try {
             MemoryItem item = memoryService.review(id, actor);
             return ResponseEntity.ok(item);

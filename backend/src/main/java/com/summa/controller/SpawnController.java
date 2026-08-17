@@ -63,7 +63,7 @@ public class SpawnController {
 
     @PostMapping("/{id}/approve")
     public ResponseEntity<?> approve(@PathVariable String id,
-                                      @RequestHeader(value = "X-Actor") String actor) {
+                                       @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
         try {
             SpawnRequest request = spawnService.approve(id, actor, actor);
             return ResponseEntity.ok(request);

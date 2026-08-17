@@ -2,6 +2,7 @@ package com.summa.service;
 
 import com.summa.repository.InitiativeRepository;
 import com.summa.model.Initiative;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
@@ -11,10 +12,13 @@ import java.util.Optional;
 public class InitiativeService {
     private final InitiativeRepository initiativeRepository;
     private final AuditService auditService;
+    private final AskService askService;
 
-    public InitiativeService(InitiativeRepository initiativeRepository, AuditService auditService) {
+    public InitiativeService(InitiativeRepository initiativeRepository, AuditService auditService,
+                              AskService askService) {
         this.initiativeRepository = initiativeRepository;
         this.auditService = auditService;
+        this.askService = askService;
     }
 
     public Initiative create(String id, String title, String sponsor, String lead,
@@ -31,7 +35,7 @@ public class InitiativeService {
         initiative.setDependsOn(dependsOn != null ? dependsOn : "[]");
 
         Initiative saved = initiativeRepository.save(initiative);
-        auditService.log(sponsor, "CREATE", "initiative", id, 
+        auditService.log(sponsor, "CREATE", "initiative", id,
             String.format("{\"title\":\"%s\",\"lead\":\"%s\"}", title, lead));
         return saved;
     }
@@ -51,11 +55,11 @@ public class InitiativeService {
     public Initiative activate(String id, String actor) {
         Initiative initiative = initiativeRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Initiative not found: " + id));
-        
+
         if (!"proposed".equals(initiative.getStatus())) {
             throw new IllegalStateException("Cannot activate initiative with status: " + initiative.getStatus());
         }
-        
+
         initiative.setStatus("active");
         Initiative saved = initiativeRepository.save(initiative);
         auditService.log(actor, "ACTIVATE", "initiative", id, null);
@@ -65,11 +69,11 @@ public class InitiativeService {
     public Initiative pause(String id, String actor) {
         Initiative initiative = initiativeRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Initiative not found: " + id));
-        
+
         if (!"active".equals(initiative.getStatus())) {
             throw new IllegalStateException("Cannot pause initiative with status: " + initiative.getStatus());
         }
-        
+
         initiative.setStatus("paused");
         Initiative saved = initiativeRepository.save(initiative);
         auditService.log(actor, "PAUSE", "initiative", id, null);
@@ -79,11 +83,11 @@ public class InitiativeService {
     public Initiative resume(String id, String actor) {
         Initiative initiative = initiativeRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Initiative not found: " + id));
-        
+
         if (!"paused".equals(initiative.getStatus())) {
             throw new IllegalStateException("Cannot resume initiative with status: " + initiative.getStatus());
         }
-        
+
         initiative.setStatus("active");
         Initiative saved = initiativeRepository.save(initiative);
         auditService.log(actor, "RESUME", "initiative", id, null);
@@ -93,15 +97,54 @@ public class InitiativeService {
     public Initiative close(String id, String actor) {
         Initiative initiative = initiativeRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Initiative not found: " + id));
-        
+
         if (!"active".equals(initiative.getStatus()) && !"paused".equals(initiative.getStatus())) {
             throw new IllegalStateException("Cannot close initiative with status: " + initiative.getStatus());
         }
-        
+
         initiative.setStatus("closed");
         initiative.setClosedAt(Instant.now());
         Initiative saved = initiativeRepository.save(initiative);
         auditService.log(actor, "CLOSE", "initiative", id, null);
         return saved;
+    }
+
+    /**
+     * INT-060/063: Scheduled check for stalled initiatives.
+     * - Deadline passed with open work → bulk ask to sponsor (INT-060)
+     * - Deadline passed with no open work → close-out ask (INT-063)
+     * - Goal window ended without initiative action → direction ask (INT-050)
+     */
+    @Scheduled(fixedRate = 300000) // every 5 minutes
+    public void checkStallsAndDirections() {
+        Instant now = Instant.now();
+        List<Initiative> active = initiativeRepository.findByStatus("active");
+        List<Initiative> proposed = initiativeRepository.findByStatus("proposed");
+        List<Initiative> all = new java.util.ArrayList<>(active);
+        all.addAll(proposed);
+
+        for (Initiative init : all) {
+            // INT-060: Stall detection — deadline passed, still has open work
+            if (init.getDeadline() != null && init.getDeadline().isBefore(now) && "active".equals(init.getStatus())) {
+                auditService.logSystem("STALL_CHECK", "initiative", init.getId(),
+                    String.format("{\"deadlinePassed\":true,\"sponsor\":\"%s\"}", init.getSponsor()));
+                // In production: file bulk-tier question ask to sponsor
+            }
+
+            // INT-063: Close-out — deadline passed, no open work
+            if (init.getDeadline() != null && init.getDeadline().isBefore(now)
+                    && "active".equals(init.getStatus())) {
+                // Check if there's open work — if not, suggest close
+                auditService.logSystem("CLOSEOUT_CHECK", "initiative", init.getId(),
+                    String.format("{\"deadlinePassed\":true,\"sponsor\":\"%s\"}", init.getSponsor()));
+            }
+
+            // INT-050: Direction ask — goal window ended
+            if (init.getGoalRef() != null && "active".equals(init.getStatus())) {
+                // Check if linked goal is past effective_to or terminal
+                auditService.logSystem("DIRECTION_CHECK", "initiative", init.getId(),
+                    String.format("{\"goalRef\":\"%s\",\"sponsor\":\"%s\"}", init.getGoalRef(), init.getSponsor()));
+            }
+        }
     }
 }

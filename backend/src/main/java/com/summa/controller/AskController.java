@@ -62,7 +62,7 @@ public class AskController {
 
     @PostMapping("/{id}/respond")
     public ResponseEntity<?> respond(@PathVariable String id, @RequestBody Map<String, String> body,
-                                      @RequestHeader(value = "X-Actor") String actor) {
+                                       @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
         try {
             Ask ask = askService.respond(id, actor, body.get("response"));
             return ResponseEntity.ok(ask);
@@ -73,7 +73,7 @@ public class AskController {
 
     @PostMapping("/{id}/withdraw")
     public ResponseEntity<?> withdraw(@PathVariable String id,
-                                       @RequestHeader(value = "X-Actor") String actor) {
+                                       @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
         try {
             Ask ask = askService.withdraw(id, actor);
             return ResponseEntity.ok(ask);

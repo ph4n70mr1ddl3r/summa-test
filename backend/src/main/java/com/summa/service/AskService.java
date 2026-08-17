@@ -7,12 +7,16 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 
 @Service
 public class AskService {
     private final AskRepository askRepository;
     private final AuditService auditService;
     private final MemberService memberService;
+    // ASK-100: Storm collapse window — tracks recent ask creation by (kind, to, payloadHash)
+    private final ConcurrentHashMap<String, Instant> askTimestamps = new ConcurrentHashMap<>();
 
     public AskService(AskRepository askRepository, AuditService auditService, MemberService memberService) {
         this.askRepository = askRepository;
@@ -41,10 +45,39 @@ public class AskService {
         ask.setInitiativeId(initiativeId);
         ask.setWorkspaceId(workspaceId);
 
+        // ASK-100: Storm collapse — if identical pending ask exists within collapse window,
+        // attach to canonical instead of creating duplicate
+        String collapseKey = buildCollapseKey(kind, to, payload);
+        Instant now = Instant.now();
+        Instant lastCreated = askTimestamps.get(collapseKey);
+        if (lastCreated != null && now.getEpochSecond() - lastCreated.getEpochSecond() < 3600) {
+            // Collapse: increment collapsed_count on nearest pending canonical
+            List<Ask> candidates = findPendingByKindAndTo(kind, to);
+            if (!candidates.isEmpty()) {
+                Ask canonical = candidates.get(0);
+                canonical.setCollapsedCount(canonical.getCollapsedCount() + 1);
+                Ask saved = askRepository.save(canonical);
+                auditService.log(from, "COLLAPSED_ASK", "ask", saved.getId(),
+                    String.format("{\"newAskId\":\"%s\",\"collapsedCount\":%d}", ask.getId(), saved.getCollapsedCount()));
+                return saved;
+            }
+        }
+        askTimestamps.put(collapseKey, now);
+
         Ask saved = askRepository.save(ask);
-        auditService.log(from, "CREATE", "ask", ask.getId(), 
+        auditService.log(from, "CREATE", "ask", ask.getId(),
             String.format("{\"kind\":\"%s\",\"to\":\"%s\",\"tier\":\"%s\"}", kind, to, ask.getSlaTier()));
         return saved;
+    }
+
+    private String buildCollapseKey(String kind, String to, String payload) {
+        return kind + "|" + to + "|" + (payload != null ? payload.hashCode() : 0);
+    }
+
+    private List<Ask> findPendingByKindAndTo(String kind, String to) {
+        return askRepository.findByToAndStatusPending(to).stream()
+                .filter(a -> kind.equals(a.getKind()) && "pending".equals(a.getStatus()))
+                .toList();
     }
 
     public Optional<Ask> findById(String id) {
@@ -83,9 +116,9 @@ public class AskService {
         // Record response
         ask.setRespondedAt(Instant.now());
         ask.setStatus("answered");
-        
+
         Ask saved = askRepository.save(ask);
-        auditService.log(responder, "RESPOND", "ask", id, 
+        auditService.log(responder, "RESPOND", "ask", id,
             String.format("{\"response\":\"%s\"}", response != null ? response.substring(0, Math.min(100, response.length())) : ""));
         return saved;
     }
@@ -119,8 +152,9 @@ public class AskService {
         if ("system".equals(ask.getFrom())) {
             return false;
         }
-        
+
         // Check if responder matches the target
         return ask.getTo().equals(responder);
     }
 }
+

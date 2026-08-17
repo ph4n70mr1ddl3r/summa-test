@@ -1,7 +1,9 @@
 package com.summa.service;
 
 import com.summa.repository.TriggerRepository;
+import com.summa.repository.TriggerFiringRepository;
 import com.summa.model.Trigger;
+import com.summa.model.TriggerFiring;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,11 +21,14 @@ import java.util.stream.Collectors;
 @Service
 public class TriggerService {
     private final TriggerRepository triggerRepository;
+    private final TriggerFiringRepository firingRepository;
     private final AuditService auditService;
     private final Map<String, Instant> lastFireTimes = new ConcurrentHashMap<>();
 
-    public TriggerService(TriggerRepository triggerRepository, AuditService auditService) {
+    public TriggerService(TriggerRepository triggerRepository, TriggerFiringRepository firingRepository,
+                           AuditService auditService) {
         this.triggerRepository = triggerRepository;
+        this.firingRepository = firingRepository;
         this.auditService = auditService;
     }
 
@@ -93,21 +98,40 @@ public class TriggerService {
     }
 
     /**
-     * Scheduled check for schedule-based triggers.
-     * Implements SUB-051: missed schedules coalesce on resume.
+     * SUB-052: Scheduled check for schedule-based triggers with idempotency.
+     * Every firing carries a deterministic key; duplicates within the dedupe window
+     * are refused and return the original run.
      */
     @Scheduled(fixedRate = 60000)
     public void checkScheduledTriggers() {
         List<Trigger> activeTriggers = triggerRepository.findByStatus("active");
         Instant now = Instant.now();
-        
+
         for (Trigger trigger : activeTriggers) {
             if (!"schedule".equals(trigger.getKind())) continue;
-            
+
             // Simple cron-like check: every minute for "*" expressions
             if ("*".equals(trigger.getExpression()) || "*/1 * * * *".equals(trigger.getExpression())) {
                 Instant lastFire = lastFireTimes.getOrDefault(trigger.getId(), Instant.MIN);
                 if (ChronoUnit.MINUTES.between(lastFire, now) >= 1) {
+                    // SUB-052: Idempotency key = trigger_id + scheduled_time
+                    String idempotencyKey = trigger.getId() + ":" + now.truncatedTo(ChronoUnit.MINUTES);
+                    Optional<TriggerFiring> existing = firingRepository
+                            .findByTriggerIdAndIdempotencyKey(trigger.getId(), idempotencyKey);
+                    if (existing.isPresent()) {
+                        // Already fired — return original run (SUB-052 replay)
+                        auditService.logSystem("REPLAY_FIRING", "trigger_firing", existing.get().getId(), null);
+                        continue;
+                    }
+
+                    // Record firing
+                    TriggerFiring firing = new TriggerFiring();
+                    firing.setId(UUID.randomUUID().toString());
+                    firing.setTriggerId(trigger.getId());
+                    firing.setIdempotencyKey(idempotencyKey);
+                    firing.setFiredAt(now);
+                    firingRepository.save(firing);
+
                     lastFireTimes.put(trigger.getId(), now);
                     trigger.setLastFiredAt(now);
                     triggerRepository.save(trigger);
