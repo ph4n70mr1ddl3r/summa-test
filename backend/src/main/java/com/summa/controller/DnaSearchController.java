@@ -33,11 +33,6 @@ public class DnaSearchController {
         return ResponseEntity.ok(dnaReadService.getOrgSnapshot(actor));
     }
 
-    @GetMapping("/review-queue")
-    public ResponseEntity<?> reviewQueue(@RequestParam(required = false) String domainId) {
-        return ResponseEntity.ok(dnaReadService.getReviewQueue(domainId));
-    }
-
     @GetMapping("/domains")
     public ResponseEntity<?> listDomains() {
         return ResponseEntity.ok(dnaReadService.listDomains());

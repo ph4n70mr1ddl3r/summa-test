@@ -3,6 +3,7 @@ package com.summa.service;
 import com.summa.repository.DnaDecisionRepository;
 import com.summa.model.DnaDecision;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -17,6 +18,7 @@ public class DnaDecisionService {
         this.auditService = auditService;
     }
 
+    @Transactional
     public DnaDecision create(String id, String domainId, String contextMd, String outcomeMd,
                                String decidedBy, String provenance, String actor) {
         DnaDecision decision = new DnaDecision();

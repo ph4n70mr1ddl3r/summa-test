@@ -18,6 +18,7 @@ public class DnaCardService {
         this.auditService = auditService;
     }
 
+    @Transactional
     public DnaCard create(String id, String domainId, String title, String definitionMd,
                           String provenance, String actor) {
         DnaCard card = new DnaCard();

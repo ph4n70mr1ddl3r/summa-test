@@ -3,6 +3,7 @@ package com.summa.service;
 import com.summa.repository.GroupRepository;
 import com.summa.model.Group;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,6 +18,7 @@ public class GroupService {
         this.auditService = auditService;
     }
 
+    @Transactional
     public Group create(String name, String leaderMemberId) {
         // Check uniqueness
         Optional<Group> existing = groupRepository.findByNameAndStatusNot(name, "archived");
@@ -43,6 +45,7 @@ public class GroupService {
         return groupRepository.findAll();
     }
 
+    @Transactional
     public Group archive(String id, String actor) {
         Group group = groupRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Group not found: " + id));
@@ -53,6 +56,7 @@ public class GroupService {
         return saved;
     }
 
+    @Transactional
     public Group setLeader(String id, String leaderMemberId, String actor) {
         Group group = groupRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Group not found: " + id));

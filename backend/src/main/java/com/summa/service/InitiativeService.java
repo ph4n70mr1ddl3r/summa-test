@@ -4,6 +4,7 @@ import com.summa.repository.InitiativeRepository;
 import com.summa.model.Initiative;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +22,7 @@ public class InitiativeService {
         this.askService = askService;
     }
 
+    @Transactional
     public Initiative create(String id, String title, String sponsor, String lead,
                               String goalRef, String decisionRef, Instant deadline,
                               String dependsOn) {

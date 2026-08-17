@@ -21,6 +21,7 @@ public class DnaRuleService {
         this.domainService = domainService;
     }
 
+    @Transactional
     public DnaRule create(String id, String domainId, String statementMd, String machineHint,
                           Instant effectiveFrom, Instant effectiveTo, String supersedesId,
                           String actor) {

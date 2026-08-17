@@ -17,6 +17,7 @@ public class DnaGlossaryService {
         this.auditService = auditService;
     }
 
+    @Transactional
     public DnaGlossary create(String id, String domainId, String term, String definition,
                                String aliases, String actor) {
         // Check for duplicate term
