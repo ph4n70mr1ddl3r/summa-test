@@ -77,8 +77,8 @@ public class OrgService {
                 .orElseThrow(() -> new IllegalArgumentException("Human not found: " + id));
 
         // Check last admin guard
-        long adminCount = humanRepository.countByDeactivatedAtIsNull();
-        if (adminCount <= 1 && "admin".equals(human.getRbac())) {
+        long activeAdminCount = humanRepository.countByDeactivatedAtIsNullAndRbac("admin");
+        if (activeAdminCount <= 1 && "admin".equals(human.getRbac())) {
             throw new IllegalStateException("Cannot offboard the last admin");
         }
 

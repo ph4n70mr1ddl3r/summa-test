@@ -2,6 +2,7 @@ package com.summa.service;
 
 import com.summa.repository.AskRepository;
 import com.summa.model.Ask;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
@@ -9,19 +10,25 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
+import java.security.MessageDigest;
+import java.nio.charset.StandardCharsets;
 
 @Service
 public class AskService {
     private final AskRepository askRepository;
     private final AuditService auditService;
     private final MemberService memberService;
-    // ASK-100: Storm collapse window — tracks recent ask creation by (kind, to, payloadHash)
-    private final ConcurrentHashMap<String, Instant> askTimestamps = new ConcurrentHashMap<>();
+    private final long stormCollapseWindowSeconds;
 
-    public AskService(AskRepository askRepository, AuditService auditService, MemberService memberService) {
+    // ASK-100: Storm collapse window — tracks recent ask creation by (kind, to, payloadHash)
+    private final ConcurrentHashMap<String, Instant> collapseWindowTimestamps = new ConcurrentHashMap<>();
+
+    public AskService(AskRepository askRepository, AuditService auditService, MemberService memberService,
+                      @Value("${summa.asks.storm-collapse-window-hours:1}") long stormCollapseWindowHours) {
         this.askRepository = askRepository;
         this.auditService = auditService;
         this.memberService = memberService;
+        this.stormCollapseWindowSeconds = stormCollapseWindowHours * 3600L;
     }
 
     public Ask create(String kind, String from, String to, String payload, String slaTier,
@@ -49,8 +56,8 @@ public class AskService {
         // attach to canonical instead of creating duplicate
         String collapseKey = buildCollapseKey(kind, to, payload);
         Instant now = Instant.now();
-        Instant lastCreated = askTimestamps.get(collapseKey);
-        if (lastCreated != null && now.getEpochSecond() - lastCreated.getEpochSecond() < 3600) {
+        Instant lastCreated = collapseWindowTimestamps.get(collapseKey);
+        if (lastCreated != null && now.getEpochSecond() - lastCreated.getEpochSecond() < stormCollapseWindowSeconds) {
             // Collapse: increment collapsed_count on nearest pending canonical
             List<Ask> candidates = findPendingByKindAndTo(kind, to);
             if (!candidates.isEmpty()) {
@@ -62,7 +69,7 @@ public class AskService {
                 return saved;
             }
         }
-        askTimestamps.put(collapseKey, now);
+        collapseWindowTimestamps.put(collapseKey, now);
 
         Ask saved = askRepository.save(ask);
         auditService.log(from, "CREATE", "ask", ask.getId(),
@@ -71,7 +78,13 @@ public class AskService {
     }
 
     private String buildCollapseKey(String kind, String to, String payload) {
-        return kind + "|" + to + "|" + (payload != null ? payload.hashCode() : 0);
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest((kind + "|" + to + "|" + (payload != null ? payload : "")).getBytes(StandardCharsets.UTF_8));
+            return java.util.Base64.getEncoder().encodeToString(hash);
+        } catch (Exception e) {
+            return kind + "|" + to + "|" + java.util.Objects.hash(payload);
+        }
     }
 
     private List<Ask> findPendingByKindAndTo(String kind, String to) {
@@ -127,7 +140,7 @@ public class AskService {
         Ask ask = askRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Ask not found: " + id));
 
-        if (!ask.getFrom().equals(originator) && !"system".equals(originator)) {
+        if (!ask.getFrom().equals(originator)) {
             throw new IllegalArgumentException("Only the originator can withdraw");
         }
 

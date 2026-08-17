@@ -27,15 +27,18 @@ public class DnaRuleService {
                           String actor) {
         // Validate supersedes_id is in same domain
         if (supersedesId != null) {
-            ruleRepository.findById(supersedesId).ifPresent(existing -> {
-                if (!existing.getDomainId().equals(domainId)) {
-                    throw new IllegalArgumentException("Supersedes rule must be in the same domain");
-                }
-                if (!"active".equals(existing.getStatus()) && !"superseded".equals(existing.getStatus())) {
-                    throw new IllegalArgumentException("Cannot supersede a lapsed rule");
-                }
-            });
-            
+            ruleRepository.findById(supersedesId).ifPresentOrElse(
+                existing -> {
+                    if (!existing.getDomainId().equals(domainId)) {
+                        throw new IllegalArgumentException("Supersedes rule must be in the same domain");
+                    }
+                    if (!"active".equals(existing.getStatus()) && !"superseded".equals(existing.getStatus())) {
+                        throw new IllegalArgumentException("Cannot supersede a lapsed rule");
+                    }
+                },
+                () -> { /* supersedesId does not exist — allow it as a forward reference; the FK handles enforcement */ }
+            );
+
             // Check for forked supersession
             long successorCount = ruleRepository.findBySupersedesId(supersedesId).size();
             if (successorCount > 0) {
@@ -114,9 +117,11 @@ public class DnaRuleService {
 
         predecessor.setStatus("superseded");
         rule.setSupersedesId(supersedesId);
-        
-        DnaRule saved = ruleRepository.save(rule);
-        ruleRepository.save(predecessor);
+
+        // Save successor first, then predecessor, within the same transaction
+        // If predecessor save fails, the transaction rolls back entirely
+        ruleRepository.save(rule);
+        DnaRule saved = ruleRepository.save(predecessor);
         auditService.log(actor, "SUPERSEDE_RULE", "dna_rule", id,
             String.format("{\"supersedes\":\"%s\"}", supersedesId));
         return saved;

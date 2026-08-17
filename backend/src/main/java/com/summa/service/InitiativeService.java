@@ -50,6 +50,10 @@ public class InitiativeService {
         return initiativeRepository.findAll();
     }
 
+    public List<Initiative> findAllActive() {
+        return initiativeRepository.findByStatus("active");
+    }
+
     public List<Initiative> findByStatus(String status) {
         return initiativeRepository.findByStatus(status);
     }

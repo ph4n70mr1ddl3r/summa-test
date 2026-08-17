@@ -2,6 +2,7 @@ package com.summa.service;
 
 import com.summa.repository.AgentRepository;
 import com.summa.model.Agent;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -14,11 +15,15 @@ public class AgentService {
     private final AgentRepository agentRepository;
     private final AuditService auditService;
     private final MemberService memberService;
+    private final int depthCap;
 
-    public AgentService(AgentRepository agentRepository, AuditService auditService, MemberService memberService) {
+    public AgentService(AgentRepository agentRepository, AuditService auditService,
+                        MemberService memberService,
+                        @Value("${summa.spawn.depth-cap:2}") int depthCap) {
         this.agentRepository = agentRepository;
         this.auditService = auditService;
         this.memberService = memberService;
+        this.depthCap = depthCap;
     }
 
     public Agent create(String id, String name, String ownerHumanId, String agentClass,
@@ -126,7 +131,7 @@ public class AgentService {
     public Optional<Human> findFirstHumanUpChain(String agentId) {
         String currentId = agentId;
         int depth = 0;
-        while (depth < 10) {
+        while (depth < depthCap) {
             Optional<Agent> agent = agentRepository.findById(currentId);
             if (agent.isEmpty()) break;
             Optional<Human> owner = memberService.findHuman(agent.get().getOwnerHumanId());

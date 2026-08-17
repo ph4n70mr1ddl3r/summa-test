@@ -2,6 +2,8 @@ package com.summa.controller;
 
 import com.summa.service.RunService;
 import com.summa.model.Run;
+import com.summa.service.AuditService;
+import com.summa.model.AuditEvent;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -11,9 +13,11 @@ import java.util.Map;
 @RequestMapping("/runs")
 public class RunController {
     private final RunService runService;
+    private final AuditService auditService;
 
-    public RunController(RunService runService) {
+    public RunController(RunService runService, AuditService auditService) {
         this.runService = runService;
+        this.auditService = auditService;
     }
 
     @GetMapping
@@ -57,7 +61,8 @@ public class RunController {
             );
             return ResponseEntity.ok(run);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 

@@ -1,6 +1,8 @@
 package com.summa.controller;
 
 import com.summa.service.DNAReadService;
+import com.summa.service.AuditService;
+import com.summa.model.AuditEvent;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -10,9 +12,11 @@ import java.util.Map;
 @RequestMapping("/dna/search")
 public class DnaSearchController {
     private final DNAReadService dnaReadService;
+    private final AuditService auditService;
 
-    public DnaSearchController(DNAReadService dnaReadService) {
+    public DnaSearchController(DNAReadService dnaReadService, AuditService auditService) {
         this.dnaReadService = dnaReadService;
+        this.auditService = auditService;
     }
 
     @GetMapping
@@ -24,7 +28,9 @@ public class DnaSearchController {
             List<Map<String, Object>> results = dnaReadService.search(q, domainId, limit);
             return ResponseEntity.ok(Map.of("results", results, "count", results.size()));
         } catch (Exception e) {
-            return ResponseEntity.ok(Map.of("results", List.of(), "count", 0, "error", e.getMessage()));
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.ok(Map.of("results", List.of(), "count", 0,
+                "code", "internal", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 

@@ -36,7 +36,14 @@ public class DNAReadService {
                      "WHERE kind MATCH ? AND status = 'active' " +
                      (domainId != null ? "AND domain_id = ? " : "") +
                      "ORDER BY rank LIMIT ?";
-        
+
+        Object[] params;
+        if (domainId != null) {
+            params = new Object[]{query + "*", domainId, limit};
+        } else {
+            params = new Object[]{query + "*", limit};
+        }
+
         return jdbcTemplate.query(sql, rs -> {
             List<Map<String, Object>> results = new java.util.ArrayList<>();
             while (rs.next()) {
@@ -49,7 +56,7 @@ public class DNAReadService {
                 results.add(row);
             }
             return results;
-        }, query + "*", domainId, limit);
+        }, params);
     }
 
     /**

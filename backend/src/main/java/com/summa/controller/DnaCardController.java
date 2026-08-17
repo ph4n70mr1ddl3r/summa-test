@@ -2,6 +2,8 @@ package com.summa.controller;
 
 import com.summa.service.DnaCardService;
 import com.summa.model.DnaCard;
+import com.summa.service.AuditService;
+import com.summa.model.AuditEvent;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -11,9 +13,11 @@ import java.util.Map;
 @RequestMapping("/dna/cards")
 public class DnaCardController {
     private final DnaCardService cardService;
+    private final AuditService auditService;
 
-    public DnaCardController(DnaCardService cardService) {
+    public DnaCardController(DnaCardService cardService, AuditService auditService) {
         this.cardService = cardService;
+        this.auditService = auditService;
     }
 
     @GetMapping
@@ -46,13 +50,14 @@ public class DnaCardController {
             );
             return ResponseEntity.ok(card);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 
     @PostMapping("/drafts")
     public ResponseEntity<?> createDraft(@RequestBody Map<String, String> body,
-                                          @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                           @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
         try {
             DnaCard card = cardService.createDraft(
                 body.get("id"),
@@ -64,7 +69,8 @@ public class DnaCardController {
             );
             return ResponseEntity.ok(card);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 
@@ -81,9 +87,13 @@ public class DnaCardController {
             );
             return ResponseEntity.ok(card);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
         } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 

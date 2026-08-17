@@ -97,8 +97,8 @@ public class OffboardingWalkService {
             }
         }
 
-        // OFB-012: Reassign initiatives (sponsor/lead)
-        for (Initiative init : initiativeService.findAll()) {
+        // OFB-012: Reassign initiatives (sponsor/lead) — only active ones
+        for (Initiative init : initiativeService.findAllActive()) {
             boolean changed = false;
             if (humanId.equals(init.getSponsor()) && targetOwner != null) {
                 init.setSponsor(targetOwner);

@@ -114,7 +114,12 @@ public class BackupService {
         Files.walk(dir).forEach(file -> {
             try {
                 String entryName = baseName + "/" + dir.relativize(file).toString().replace('\\', '/');
-                zos.putNextEntry(new ZipEntry(entryName + "/"));
+                if (Files.isDirectory(file)) {
+                    zos.putNextEntry(new ZipEntry(entryName + "/"));
+                } else {
+                    zos.putNextEntry(new ZipEntry(entryName));
+                    Files.copy(file, zos);
+                }
                 zos.closeEntry();
             } catch (IOException e) {
                 throw new RuntimeException(e);

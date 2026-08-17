@@ -55,7 +55,7 @@ class OffboardingWalkServiceTest {
         when(memberService.findAdmins()).thenReturn(java.util.List.of());
         when(domainService.findAll()).thenReturn(java.util.List.of());
         when(agentService.findByOwner("h1")).thenReturn(java.util.List.of());
-        when(initiativeService.findAll()).thenReturn(java.util.List.of());
+        when(initiativeService.findAllActive()).thenReturn(java.util.List.of());
         when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of());
         when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
         when(proposalService.findAllOpen()).thenReturn(java.util.List.of());

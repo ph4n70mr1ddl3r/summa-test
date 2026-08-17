@@ -4,7 +4,6 @@ import com.summa.repository.AskRepository;
 import com.summa.model.Ask;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
@@ -25,8 +24,9 @@ class AskServiceTest {
     @Mock
     private MemberService memberService;
 
-    @InjectMocks
-    private AskService askService;
+    private AskService buildService() {
+        return new AskService(askRepository, auditService, memberService, 1L);
+    }
 
     @Test
     void createAsk_withDefaultValues() {
@@ -40,7 +40,8 @@ class AskServiceTest {
         
         when(askRepository.save(any())).thenReturn(ask);
         
-        Ask result = askService.create(
+        AskService svc = buildService();
+        Ask result = svc.create(
             "approval", "agent-1", "human-1", "{}", 
             "standard", "deny", 1, 
             Instant.now().plusSeconds(3600), null, null
@@ -52,8 +53,9 @@ class AskServiceTest {
 
     @Test
     void createAsk_refusesPastDeadline() {
+        AskService svc = buildService();
         assertThrows(IllegalArgumentException.class, () -> {
-            askService.create(
+            svc.create(
                 "approval", "agent-1", "human-1", "{}",
                 "standard", "deny", 1,
                 Instant.now().minusSeconds(3600), null, null
@@ -71,7 +73,8 @@ class AskServiceTest {
         when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
         when(askRepository.save(any())).thenReturn(ask);
         
-        Ask result = askService.respond("ask-1", "human-1", "approved");
+        AskService svc = buildService();
+        Ask result = svc.respond("ask-1", "human-1", "approved");
         
         assertEquals("answered", result.getStatus());
         assertNotNull(result.getRespondedAt());
@@ -87,7 +90,8 @@ class AskServiceTest {
         when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
         when(askRepository.save(any())).thenReturn(ask);
         
-        Ask result = askService.expire("ask-1");
+        AskService svc = buildService();
+        Ask result = svc.expire("ask-1");
         
         assertEquals("expired", result.getStatus());
     }
