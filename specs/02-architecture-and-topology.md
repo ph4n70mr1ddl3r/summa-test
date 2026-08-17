@@ -16,7 +16,7 @@ Source: PLAN.md §3.
   control plane / model gateway for remote nodes; single-process mode has no such exposure.
 - **ARC-004** — 24/7 automations shall require an always-on node; workspace affinity on a
   sleeping machine is for interactive work only.
-- **ARC-005** — The stack shall be: Java 21 LTS + Spring Boot 3.4 daemon (current major,
+- **ARC-005** — The stack shall be: Java 25 LTS + Spring Boot 4 daemon (current major,
   fat-jar — one artifact per service, each shipped as an OCI image, ARC-006); React + Vite +
   Tailwind + shadcn console (TypeScript); SQLite
   (WAL) via sqlite-jdbc + sqlite-vec as a loadable extension (DLV-041 validates the JVM
