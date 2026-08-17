@@ -57,4 +57,8 @@ public class MemberService {
     public boolean hasWriteSurfaceAgent(Agent agent) {
         return agent != null && agent.isActive() && !"ephemeral".equals(agent.getAgentClass());
     }
+
+    public Human saveHuman(Human human) {
+        return humanRepository.save(human);
+    }
 }
