@@ -79,7 +79,7 @@ public class GovernanceService {
     }
 
     public Map<String, Object> getSpendView() {
-        Double ceiling = getSetting("spend.org_ceiling", Double.class);
+        Double ceiling = getSetting("spend-org-ceiling", Double.class);
         if (ceiling == null) ceiling = 1000000.0;
         java.util.Map<String, Object> view = new java.util.LinkedHashMap<>();
         view.put("totalCost30d", 0.0);
@@ -90,19 +90,19 @@ public class GovernanceService {
     }
 
     private void applyDefaults(Map<String, Object> settings) {
-        settings.putIfAbsent("spawn.ephemeral.default_ttl_hours", 24);
-        settings.putIfAbsent("spawn.ephemeral.max_concurrent_per_spawner", 3);
-        settings.putIfAbsent("spawn.org_wide_max_active_agents", 100);
-        settings.putIfAbsent("spawn.depth_cap", 2);
-        settings.putIfAbsent("spawn.budget_window_days", 30);
-        settings.putIfAbsent("asks.tier_critical_deadline_hours", 1);
-        settings.putIfAbsent("asks.tier_standard_deadline", "next-digest");
-        settings.putIfAbsent("asks.tier_bulk_deadline_hours", 24);
-        settings.putIfAbsent("asks.storm_collapse_window_hours", 1);
-        settings.putIfAbsent("asks.rate_limit_per_source_per_hour", 60);
-        settings.putIfAbsent("dna.default_review_sla_days", 7);
-        settings.putIfAbsent("spend.org_ceiling", 1000000.0);
-        settings.putIfAbsent("spend.critical_floor_percent", 5.0);
+        settings.putIfAbsent("spawn-ephemeral-default-ttl-hours", 24);
+        settings.putIfAbsent("spawn-ephemeral-max-concurrent-per-spawner", 3);
+        settings.putIfAbsent("spawn-org-wide-max-active-agents", 100);
+        settings.putIfAbsent("spawn-depth-cap", 2);
+        settings.putIfAbsent("spawn-budget-window-days", 30);
+        settings.putIfAbsent("asks-tier-critical-deadline-hours", 1);
+        settings.putIfAbsent("asks-tier-standard-deadline", "next-digest");
+        settings.putIfAbsent("asks-tier-bulk-deadline-hours", 24);
+        settings.putIfAbsent("asks-storm-collapse-window-hours", 1);
+        settings.putIfAbsent("asks-rate-limit-per-source-per-hour", 60);
+        settings.putIfAbsent("dna-default-review-sla-days", 7);
+        settings.putIfAbsent("spend-org-ceiling", 1000000.0);
+        settings.putIfAbsent("spend-critical-floor-percent", 5.0);
     }
 
     private Object parseValue(String value) {

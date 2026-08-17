@@ -1,6 +1,9 @@
 package com.summa.service;
 
 import com.summa.repository.GroupMembershipRepository;
+import com.summa.repository.AskRepository;
+import com.summa.repository.BoardTaskRepository;
+import com.summa.repository.PatRepository;
 import com.summa.model.Human;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +29,9 @@ class OffboardingWalkServiceTest {
     @Mock private DnaDomainService domainService;
     @Mock private DnaGoalService goalService;
     @Mock private GroupMembershipRepository groupMembershipRepository;
+    @Mock private AskRepository askRepository;
+    @Mock private BoardTaskRepository boardTaskRepository;
+    @Mock private PatRepository patRepository;
 
     @InjectMocks
     private OffboardingWalkService walkService;
@@ -60,6 +66,9 @@ class OffboardingWalkServiceTest {
         when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
         when(proposalService.findAllOpen()).thenReturn(java.util.List.of());
         when(groupMembershipRepository.findById_MemberId("h1")).thenReturn(java.util.List.of());
+        when(askRepository.findByStatus("pending")).thenReturn(java.util.List.of());
+        when(boardTaskRepository.findByAssigneeMemberId("h1")).thenReturn(java.util.List.of());
+        when(patRepository.findByMemberId("h1")).thenReturn(java.util.List.of());
 
         var result = walkService.walkOffboard("h1", null, "admin1");
 

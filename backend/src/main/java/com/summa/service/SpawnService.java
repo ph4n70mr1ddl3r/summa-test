@@ -2,6 +2,8 @@ package com.summa.service;
 
 import com.summa.repository.SpawnRequestRepository;
 import com.summa.model.SpawnRequest;
+import com.summa.repository.RoleTemplateRepository;
+import com.summa.model.RoleTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -13,21 +15,43 @@ public class SpawnService {
     private final SpawnRequestRepository spawnRepository;
     private final AuditService auditService;
     private final GovernanceService governanceService;
+    private final RoleTemplateRepository templateRepository;
 
     public SpawnService(SpawnRequestRepository spawnRepository, AuditService auditService,
-                          GovernanceService governanceService) {
+                          GovernanceService governanceService, RoleTemplateRepository templateRepository) {
         this.spawnRepository = spawnRepository;
         this.auditService = auditService;
         this.governanceService = governanceService;
+        this.templateRepository = templateRepository;
     }
 
     public SpawnRequest create(String requesterId, String templateId, String customRole,
-                                String spawnClass, String purpose, String workspaceBindings,
-                                String scopeCeiling, Double budgetCap, Integer ttlHours,
-                                String requestedByHumanId, String actor) {
+                                 String spawnClass, String purpose, String workspaceBindings,
+                                 String scopeCeiling, Double budgetCap, Integer ttlHours,
+                                 String requestedByHumanId, String actor) {
         // SPW-060: Check spend halt
         if (governanceService.isSpendHaltTripped()) {
             throw new IllegalStateException("Spend halt is active - spawns are blocked");
+        }
+
+        // SPW-020/021: Validate template if named
+        if (templateId != null && !templateId.isBlank()) {
+            Optional<RoleTemplate> templateOpt = templateRepository.findById(templateId);
+            if (templateOpt.isEmpty()) {
+                throw new IllegalArgumentException("Template not found: " + templateId);
+            }
+            RoleTemplate template = templateOpt.get();
+            if (!template.isActive()) {
+                throw new IllegalStateException("Template is not active: " + templateId
+                    + " (status: " + template.getStatus() + ")");
+            }
+            // SPW-021: Class must match — persistent hire needs persistent template,
+            // ephemeral needs ephemeral-subagent template
+            String requiredClass = "ephemeral".equals(spawnClass) ? "ephemeral-subagent" : "persistent";
+            if (!requiredClass.equals(template.getAgentClass())) {
+                throw new IllegalStateException("Template class mismatch: request class="
+                    + spawnClass + " but template class=" + template.getAgentClass());
+            }
         }
 
         SpawnRequest request = new SpawnRequest();

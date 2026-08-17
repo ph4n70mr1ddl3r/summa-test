@@ -58,11 +58,15 @@ public class BoardTaskService {
     public BoardTask assign(String id, String assigneeMemberId, String actor) {
         BoardTask task = taskRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Task not found: " + id));
-        
+
+        if (!"open".equals(task.getStatus())) {
+            throw new IllegalStateException("Task is not open: " + task.getStatus());
+        }
+
         task.setAssigneeMemberId(assigneeMemberId);
         task.setStatus("in_progress");
         BoardTask saved = taskRepository.save(task);
-        auditService.log(actor, "ASSIGN", "board_task", id, 
+        auditService.log(actor, "ASSIGN", "board_task", id,
             String.format("{\"assignee\":\"%s\"}", assigneeMemberId));
         return saved;
     }

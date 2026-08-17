@@ -2,6 +2,8 @@ package com.summa.service;
 
 import com.summa.repository.AgentRepository;
 import com.summa.model.Agent;
+import com.summa.repository.AskRepository;
+import com.summa.model.Ask;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,14 +17,16 @@ public class AgentService {
     private final AgentRepository agentRepository;
     private final AuditService auditService;
     private final MemberService memberService;
+    private final AskRepository askRepository;
     private final int depthCap;
 
     public AgentService(AgentRepository agentRepository, AuditService auditService,
-                        MemberService memberService,
+                        MemberService memberService, AskRepository askRepository,
                         @Value("${summa.spawn.depth-cap:2}") int depthCap) {
         this.agentRepository = agentRepository;
         this.auditService = auditService;
         this.memberService = memberService;
+        this.askRepository = askRepository;
         this.depthCap = depthCap;
     }
 
@@ -96,6 +100,16 @@ public class AgentService {
     public Agent retire(String id, String actor) {
         Agent agent = agentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Agent not found: " + id));
+
+        // CLC-020: Resolve pending asks from the retiring agent — close with audit note
+        for (Ask ask : askRepository.findByStatus("pending")) {
+            if (id.equals(ask.getFrom())) {
+                ask.setStatus("withdrawn");
+                askRepository.save(ask);
+                auditService.logSystem("RETIRE_CLOSE_ASK_FROM", "ask", ask.getId(),
+                    String.format("{\"agentId\":\"%s\",\"reason\":\"agent_retiring\"}", id));
+            }
+        }
 
         agent.setStatus("retiring");
         agent.setRetiredAt(Instant.now());

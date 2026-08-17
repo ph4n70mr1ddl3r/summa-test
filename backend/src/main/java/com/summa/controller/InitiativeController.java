@@ -42,7 +42,7 @@ public class InitiativeController {
             Initiative initiative = initiativeService.create(
                 body.get("id"),
                 body.get("title"),
-                actor,
+                body.get("sponsor"),
                 body.get("lead"),
                 body.get("goalRef"),
                 body.get("decisionRef"),

@@ -23,14 +23,14 @@ public class GovernanceController {
     public ResponseEntity<Map<String, Object>> getQuotas() {
         Map<String, Object> all = governanceService.getAllSettings();
         Map<String, Object> quotas = new java.util.HashMap<>();
-        quotas.put("spawn.ephemeral.default_ttl_hours", all.get("spawn.ephemeral.default_ttl_hours"));
-        quotas.put("spawn.ephemeral.max_concurrent_per_spawner", all.get("spawn.ephemeral.max_concurrent_per_spawner"));
-        quotas.put("spawn.org_wide_max_active_agents", all.get("spawn.org_wide_max_active_agents"));
-        quotas.put("spawn.depth_cap", all.get("spawn.depth_cap"));
-        quotas.put("asks.tier_critical_deadline_hours", all.get("asks.tier_critical_deadline_hours"));
-        quotas.put("asks.tier_bulk_deadline_hours", all.get("asks.tier_bulk_deadline_hours"));
-        quotas.put("asks.storm_collapse_window_hours", all.get("asks.storm_collapse_window_hours"));
-        quotas.put("asks.rate_limit_per_source_per_hour", all.get("asks.rate_limit_per_source_per_hour"));
+        quotas.put("spawn-ephemeral-default-ttl-hours", all.get("spawn-ephemeral-default-ttl-hours"));
+        quotas.put("spawn-ephemeral-max-concurrent-per-spawner", all.get("spawn-ephemeral-max-concurrent-per-spawner"));
+        quotas.put("spawn-org-wide-max-active-agents", all.get("spawn-org-wide-max-active-agents"));
+        quotas.put("spawn-depth-cap", all.get("spawn-depth-cap"));
+        quotas.put("asks-tier-critical-deadline-hours", all.get("asks-tier-critical-deadline-hours"));
+        quotas.put("asks-tier-bulk-deadline-hours", all.get("asks-tier-bulk-deadline-hours"));
+        quotas.put("asks-storm-collapse-window-hours", all.get("asks-storm-collapse-window-hours"));
+        quotas.put("asks-rate-limit-per-source-per-hour", all.get("asks-rate-limit-per-source-per-hour"));
         return ResponseEntity.ok(quotas);
     }
 
@@ -38,8 +38,8 @@ public class GovernanceController {
     public ResponseEntity<Map<String, Object>> getSpend() {
         // Simplified spend view
         return ResponseEntity.ok(Map.of(
-            "orgCeiling", governanceService.getSetting("spend.org_ceiling"),
-            "criticalFloorPercent", governanceService.getSetting("spend.critical_floor_percent"),
+            "orgCeiling", governanceService.getSetting("spend-org-ceiling"),
+            "criticalFloorPercent", governanceService.getSetting("spend-critical-floor-percent"),
             "halted", governanceService.isSpendHaltTripped()
         ));
     }

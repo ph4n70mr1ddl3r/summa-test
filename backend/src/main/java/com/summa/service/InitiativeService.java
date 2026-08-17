@@ -138,15 +138,34 @@ public class InitiativeService {
             if (init.getDeadline() != null && init.getDeadline().isBefore(now) && "active".equals(init.getStatus())) {
                 auditService.logSystem("STALL_CHECK", "initiative", init.getId(),
                     String.format("{\"deadlinePassed\":true,\"sponsor\":\"%s\"}", init.getSponsor()));
-                // In production: file bulk-tier question ask to sponsor
+                // File bulk-tier question ask to sponsor per INT-060
+                try {
+                    askService.create("question", "system", init.getSponsor(),
+                        String.format("{\"initiativeId\":\"%s\",\"reason\":\"stall\"}", init.getId()),
+                        "bulk", "escalate", 1,
+                        Instant.now().plusSeconds(7 * 86400L), null, null);
+                } catch (Exception e) {
+                    auditService.logSystem("STALL_ASK_FAIL", "initiative", init.getId(),
+                        String.format("{\"error\":\"%s\"}", e.getMessage()));
+                }
             }
 
-            // INT-063: Close-out — deadline passed, no open work
+            // INT-063: Close-out — deadline passed, check for open work
             if (init.getDeadline() != null && init.getDeadline().isBefore(now)
                     && "active".equals(init.getStatus())) {
                 // Check if there's open work — if not, suggest close
                 auditService.logSystem("CLOSEOUT_CHECK", "initiative", init.getId(),
                     String.format("{\"deadlinePassed\":true,\"sponsor\":\"%s\"}", init.getSponsor()));
+                // File bulk-tier question ask to sponsor per INT-063
+                try {
+                    askService.create("question", "system", init.getSponsor(),
+                        String.format("{\"initiativeId\":\"%s\",\"reason\":\"closeout\"}", init.getId()),
+                        "bulk", "escalate", 1,
+                        Instant.now().plusSeconds(7 * 86400L), null, null);
+                } catch (Exception e) {
+                    auditService.logSystem("CLOSEOUT_ASK_FAIL", "initiative", init.getId(),
+                        String.format("{\"error\":\"%s\"}", e.getMessage()));
+                }
             }
 
             // INT-050: Direction ask — goal window ended

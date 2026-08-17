@@ -1,6 +1,7 @@
 package com.summa.service;
 
 import com.summa.repository.SpawnRequestRepository;
+import com.summa.repository.RoleTemplateRepository;
 import com.summa.model.SpawnRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,19 +25,22 @@ class SpawnServiceTest {
     @Mock
     private GovernanceService governanceService;
 
+    @Mock
+    private RoleTemplateRepository templateRepository;
+
     @InjectMocks
     private SpawnService spawnService;
 
     @Test
     void create_requestWithDefaults() {
         when(governanceService.isSpendHaltTripped()).thenReturn(false);
-        
+
         SpawnRequest request = new SpawnRequest();
         request.setId("spawn-1");
         request.setSpawnClass("ephemeral");
         when(spawnRepository.save(any())).thenReturn(request);
 
-        SpawnRequest result = spawnService.create("agent-1", "template-1", null, "ephemeral",
+        SpawnRequest result = spawnService.create("agent-1", null, null, "ephemeral",
             "Do task", "[]", "{}", null, 24, "human-1", "actor");
 
         assertNotNull(result);

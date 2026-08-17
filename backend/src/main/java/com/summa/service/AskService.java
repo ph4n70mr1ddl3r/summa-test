@@ -4,6 +4,7 @@ import com.summa.repository.AskRepository;
 import com.summa.model.Ask;
 import com.summa.model.Human;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
@@ -13,6 +14,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 import java.security.MessageDigest;
 import java.nio.charset.StandardCharsets;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 @Service
 public class AskService {
@@ -23,6 +26,7 @@ public class AskService {
 
     // ASK-100: Storm collapse window — tracks recent ask creation by (kind, to, payloadHash)
     private final ConcurrentHashMap<String, Instant> collapseWindowTimestamps = new ConcurrentHashMap<>();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public AskService(AskRepository askRepository, AuditService auditService, MemberService memberService,
                       @Value("${summa.asks.storm-collapse-window-hours:1}") long stormCollapseWindowHours) {
@@ -115,6 +119,43 @@ public class AskService {
     }
 
     /**
+     * ASK-011: Periodically expire asks whose deadline has passed.
+     * Processes each expired ask according to its expiry_behavior:
+     * - deny: closes as expired
+     * - escalate: closes as expired, files successor to escalation target
+     * - reassign: closes as expired, files successor to deputy/admin
+     */
+    @Scheduled(fixedRate = 60000)
+    public void processExpiredAsks() {
+        List<Ask> expired = askRepository.findExpiredBefore(Instant.now());
+        for (Ask ask : expired) {
+            if (!"pending".equals(ask.getStatus())) continue;
+            String behavior = ask.getExpiryBehavior() != null ? ask.getExpiryBehavior() : "deny";
+            if ("deny".equals(behavior)) {
+                expire(ask.getId());
+            } else if ("escalate".equals(behavior) || "reassign".equals(behavior)) {
+                expire(ask.getId());
+                // File successor ask per the behavior
+                try {
+                    String successorTo = "admins";
+                    Optional<Human> target = memberService.findHuman(ask.getTo());
+                    if (target.isPresent() && target.get().getDeputyMemberId() != null) {
+                        successorTo = target.get().getDeputyMemberId();
+                    }
+                    create(ask.getKind(), ask.getFrom(), successorTo,
+                        ask.getPayload(), ask.getSlaTier(), behavior,
+                        ask.getQuorumRequired(),
+                        Instant.now().plusSeconds(24 * 3600L),
+                        ask.getInitiativeId(), ask.getWorkspaceId());
+                } catch (Exception e) {
+                    auditService.logSystem("EXPIRE_SUCCESSOR_FAIL", "ask", ask.getId(),
+                        String.format("{\"behavior\":\"%s\",\"error\":\"%s\"}", behavior, e.getMessage()));
+                }
+            }
+        }
+    }
+
+    /**
      * ASK-015/040/050: Respond to an ask with eligibility, quorum, and re-validation checks.
      */
     public Ask respond(String id, String responder, String response) {
@@ -153,14 +194,12 @@ public class AskService {
 
         existingResponses.add(responder);
         ask.setResponses(toJsonResponseList(existingResponses, response));
-        Ask saved = askRepository.save(ask);
-
-        // Check if quorum reached
-        if (existingResponses.size() >= ask.getQuorumRequired()) {
-            saved.setStatus("answered");
-            saved.setRespondedAt(Instant.now());
-            saved = askRepository.save(saved);
+        boolean quorumReached = existingResponses.size() >= ask.getQuorumRequired();
+        if (quorumReached) {
+            ask.setStatus("answered");
+            ask.setRespondedAt(Instant.now());
         }
+        Ask saved = askRepository.save(ask);
 
         auditService.log(responder, "RESPOND", "ask", id,
             String.format("{\"response\":\"%s\",\"quorumProgress\":%d/%d}",
@@ -179,20 +218,30 @@ public class AskService {
         try {
             String resp = ask.getResponses();
             if (resp == null || resp.isBlank() || resp.equals("[]")) return new java.util.ArrayList<>();
-            return new java.util.ArrayList<>(java.util.List.of(resp.replaceAll("[\\[\\]]", "").split(",")));
+            return objectMapper.readValue(resp, new TypeReference<List<String>>() {});
         } catch (Exception e) {
             return new java.util.ArrayList<>();
         }
     }
 
     private String toJsonResponseList(List<String> ids, String response) {
-        StringBuilder sb = new StringBuilder("[");
-        for (int i = 0; i < ids.size(); i++) {
-            if (i > 0) sb.append(",");
-            sb.append("\"").append(ids.get(i)).append("\"");
+        try {
+            List<Map<String, String>> list = new java.util.ArrayList<>();
+            for (String id : ids) {
+                Map<String, String> entry = new java.util.HashMap<>();
+                entry.put("responder", id);
+                list.add(entry);
+            }
+            return objectMapper.writeValueAsString(list);
+        } catch (Exception e) {
+            StringBuilder sb = new StringBuilder("[");
+            for (int i = 0; i < ids.size(); i++) {
+                if (i > 0) sb.append(",");
+                sb.append("\"").append(ids.get(i)).append("\"");
+            }
+            sb.append("]");
+            return sb.toString();
         }
-        sb.append("]");
-        return sb.toString();
     }
 
     public Ask withdraw(String id, String originator) {
