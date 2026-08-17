@@ -34,11 +34,11 @@ public class DnaProposalService {
         // Set review_by based on domain
         if (domainId != null) {
             domainService.findById(domainId).ifPresent(domain -> {
-                proposal.setReviewBy(Instant.now().plusSeconds(domain.getReviewSlaDays() * 86400L).getEpochSecond());
+                proposal.setReviewBy(Instant.now().plusSeconds(domain.getReviewSlaDays() * 86400L));
             });
         } else {
             // Org-scoped: use default 7 days
-            proposal.setReviewBy(Instant.now().plusSeconds(7 * 86400L).getEpochSecond());
+            proposal.setReviewBy(Instant.now().plusSeconds(7 * 86400L));
         }
         
         DnaProposal saved = proposalRepository.save(proposal);

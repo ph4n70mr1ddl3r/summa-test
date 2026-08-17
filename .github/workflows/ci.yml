@@ -21,9 +21,9 @@ services:
           distribution: 'temurin'
           cache: maven
       - name: Build backend
-        run: cd backend && ./mvnw -q -DskipTests package
+        run: cd backend && mvn -q -DskipTests package
       - name: Run backend tests
-        run: cd backend && ./mvnw test
+        run: cd backend && mvn test
 
   console-build:
     runs-on: ubuntu-latest

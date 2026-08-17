@@ -11,8 +11,8 @@ import java.util.Optional;
 public interface AgentRepository extends JpaRepository<Agent, String> {
     Optional<Agent> findByName(String name);
     
-    @Query("SELECT a FROM Agent a WHERE a.status = 'active' AND a.agentClass = :class")
-    List<Agent> findActiveByClass(String classs);
+    @Query("SELECT a FROM Agent a WHERE a.status = 'active' AND a.agentClass = :clazz")
+    List<Agent> findActiveByClass(String clazz);
     
     @Query("SELECT a FROM Agent a WHERE a.status = 'active'")
     List<Agent> findAllActive();

@@ -129,7 +129,10 @@ public class AgentService {
         while (depth < 10) {
             Optional<Agent> agent = agentRepository.findById(currentId);
             if (agent.isEmpty()) break;
-            return memberService.findHuman(agent.get().getOwnerHumanId());
+            Optional<Human> owner = memberService.findHuman(agent.get().getOwnerHumanId());
+            if (owner.isPresent()) return owner;
+            currentId = agent.get().getSpawnedBy();
+            depth++;
         }
         return Optional.empty();
     }

@@ -217,8 +217,8 @@ boundaries — with a sixth raised to the top: **shared, governed context**.
   constraint takes an audited admin attestation that the control plane's own hosting satisfies
   it — the db-only→git confirm's pattern (§4.5) — so a placement promise the deployment cannot
   keep is surfaced at declaration, never discovered at audit time.
-- **Stack** (v2.49 re-host: the backend moves Node 22/TypeScript → Java 25 LTS + Spring Boot 4;
-  console, data plane, and every §8 behavior unchanged): Java 25 LTS + Spring Boot 4 daemon
+- **Stack** (v2.49 re-host: the backend moves Node 22/TypeScript → Java 21 LTS + Spring Boot 3.4;
+  console, data plane, and every §8 behavior unchanged): Java 21 LTS + Spring Boot 3.4 daemon
   (current major, fat-jar — one artifact per service, each shipped as an OCI image — §14.3),
   React + Vite + Tailwind + shadcn console
   (TypeScript), SQLite (WAL) + sqlite-vec + FTS5 (sqlite-jdbc, the vector extension loaded
@@ -2178,7 +2178,7 @@ wrote and the ask it raised (SPEC-17 API-061).
 
 | Phase | Deliverable | Key work | Est. (1 dev) |
 |---|---|---|---|
-| **0. Foundations** | Repo, CI, single-process skeleton | Monorepo, Java 25 + Spring Boot 4 skeleton (fat jar), sqlite-jdbc SQLite (WAL), React+Vite console shell (TS strict), REST+WS, 3-OS CI matrix, OCI images under rootless Podman + kind-on-Podman Kubernetes CI (§14.3) | 1 wk |
+| **0. Foundations** | Repo, CI, single-process skeleton | Monorepo, Java 21 + Spring Boot 3.4 skeleton (fat jar), sqlite-jdbc SQLite (WAL), React+Vite console shell (TS strict), REST+WS, 3-OS CI matrix, OCI images under rootless Podman + kind-on-Podman Kubernetes CI (§14.3) | 1 wk |
 | **1. MVP agent** | Chat with an agent doing real local work | Model gateway, agent loop, guarded fs/shell/web tools, approval cards, audit, streaming chat UI, first-run bootstrap (company + seed admin) | 4–5 wks |
 | **2. Identity, memory, skills, connectors** | agents feel like employees | Role catalog across departments, IDENTITY/STYLE/HANDBOOK, memory tiers 1–2 (personal/project), skills + market, MCP client + tier-1 connectors, workspace kinds, versioned role-template catalog (§6.5) | 3–4 wks |
 | **3. Company DNA v1** | The coherence core | DNA store (git-backed markdown) + domains/index, cards compilation from sources, glossary + applicable-rules + goal-slice injection into every prompt (org-wide goals first; linked goals wire up with initiatives in P4), proposals + owner review queue, citations in answers | 3–4 wks |

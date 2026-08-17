@@ -38,7 +38,7 @@ public class DnaProposal {
     private Instant reviewedAt;
 
     @Column(name = "review_by")
-    private Long reviewBy;
+    private Instant reviewBy;
 
     @Column(name = "domain_id", length = 36)
     private String domainId;
@@ -72,8 +72,8 @@ public class DnaProposal {
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     public Instant getReviewedAt() { return reviewedAt; }
     public void setReviewedAt(Instant reviewedAt) { this.reviewedAt = reviewedAt; }
-    public Long getReviewBy() { return reviewBy; }
-    public void setReviewBy(Long reviewBy) { this.reviewBy = reviewBy; }
+    public Instant getReviewBy() { return reviewBy; }
+    public void setReviewBy(Instant reviewBy) { this.reviewBy = reviewBy; }
     public String getDomainId() { return domainId; }
     public void setDomainId(String domainId) { this.domainId = domainId; }
     public boolean isOpen() { return "open".equals(status); }
