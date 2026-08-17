@@ -1,0 +1,106 @@
+package com.summa.controller;
+
+import com.summa.service.AgentService;
+import com.summa.model.Agent;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/agents")
+public class AgentController {
+    private final AgentService agentService;
+
+    public AgentController(AgentService agentService) {
+        this.agentService = agentService;
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Agent>> listAgents(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String ownerId) {
+        if (status != null) {
+            return ResponseEntity.ok(agentService.findAll().stream()
+                .filter(a -> status.equals(a.getStatus()))
+                .toList());
+        }
+        if (ownerId != null) {
+            return ResponseEntity.ok(agentService.findByOwner(ownerId));
+        }
+        return ResponseEntity.ok(agentService.findAllActive());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getAgent(@PathVariable String id) {
+        return agentService.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{id}/lineage")
+    public ResponseEntity<List<String>> getLineage(@PathVariable String id) {
+        List<String> lineage = new java.util.ArrayList<>();
+        String currentId = id;
+        while (currentId != null && lineage.size() < 10) {
+            lineage.add(currentId);
+            Optional<Agent> agentOpt = agentService.findById(currentId);
+            if (agentOpt.isPresent()) {
+                currentId = agentOpt.get().getSpawnedBy();
+            } else {
+                currentId = null;
+            }
+        }
+        return ResponseEntity.ok(lineage);
+    }
+
+    @PostMapping("/{id}/suspend")
+    public ResponseEntity<?> suspend(@PathVariable String id,
+                                       @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        try {
+            Agent agent = agentService.suspend(id, actor);
+            return ResponseEntity.ok(agent);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/resume")
+    public ResponseEntity<?> resume(@PathVariable String id,
+                                      @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        try {
+            Agent agent = agentService.resume(id, actor);
+            return ResponseEntity.ok(agent);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/retire")
+    public ResponseEntity<?> retire(@PathVariable String id,
+                                      @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        try {
+            Agent agent = agentService.retire(id, actor);
+            return ResponseEntity.ok(agent);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PostMapping("/{id}/archive")
+    public ResponseEntity<?> archive(@PathVariable String id,
+                                       @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        try {
+            Agent agent = agentService.archive(id, actor);
+            return ResponseEntity.ok(agent);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+}
