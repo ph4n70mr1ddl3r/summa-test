@@ -2,6 +2,8 @@ package com.summa.controller;
 
 import com.summa.service.PatService;
 import com.summa.model.Pat;
+import com.summa.service.AuditService;
+import com.summa.model.AuditEvent;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -11,9 +13,11 @@ import java.util.Map;
 @RequestMapping("/auth/pats")
 public class PatController {
     private final PatService patService;
+    private final AuditService auditService;
 
-    public PatController(PatService patService) {
+    public PatController(PatService patService, AuditService auditService) {
         this.patService = patService;
+        this.auditService = auditService;
     }
 
     @GetMapping
@@ -52,7 +56,8 @@ public class PatController {
                 "expiresAt", result.pat().getExpiresAt().toString()
             ));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 

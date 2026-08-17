@@ -80,7 +80,7 @@ public class DnaCardService {
 
     @Transactional
     public DnaCard createDraft(String id, String domainId, String title, String definitionMd,
-                                String provenance, String actor) {
+                                 String provenance, String actor) {
         DnaCard card = new DnaCard();
         card.setId(id);
         card.setDomainId(domainId);

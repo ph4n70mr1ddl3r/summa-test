@@ -103,6 +103,7 @@ public class TriggerService {
      * are refused and return the original run.
      */
     @Scheduled(fixedRate = 60000)
+    @Transactional
     public void checkScheduledTriggers() {
         List<Trigger> activeTriggers = triggerRepository.findByStatus("active");
         Instant now = Instant.now();

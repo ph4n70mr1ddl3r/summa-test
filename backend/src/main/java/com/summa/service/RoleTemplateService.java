@@ -3,6 +3,7 @@ package com.summa.service;
 import com.summa.repository.RoleTemplateRepository;
 import com.summa.model.RoleTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -40,6 +41,7 @@ public class RoleTemplateService {
         return templateRepository.findAll();
     }
 
+    @Transactional
     public RoleTemplate publish(String id, String actor) {
         RoleTemplate template = templateRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Template not found: " + id));
@@ -50,6 +52,7 @@ public class RoleTemplateService {
         return saved;
     }
 
+    @Transactional
     public RoleTemplate retire(String id, String actor) {
         RoleTemplate template = templateRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Template not found: " + id));

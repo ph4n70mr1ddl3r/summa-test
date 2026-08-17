@@ -2,6 +2,8 @@ package com.summa.controller;
 
 import com.summa.service.TriggerService;
 import com.summa.model.Trigger;
+import com.summa.service.AuditService;
+import com.summa.model.AuditEvent;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -11,9 +13,11 @@ import java.util.Map;
 @RequestMapping("/triggers")
 public class TriggerController {
     private final TriggerService triggerService;
+    private final AuditService auditService;
 
-    public TriggerController(TriggerService triggerService) {
+    public TriggerController(TriggerService triggerService, AuditService auditService) {
         this.triggerService = triggerService;
+        this.auditService = auditService;
     }
 
     @GetMapping
@@ -48,7 +52,8 @@ public class TriggerController {
             );
             return ResponseEntity.ok(trigger);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 

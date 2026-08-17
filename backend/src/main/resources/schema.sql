@@ -147,7 +147,6 @@ CREATE TABLE IF NOT EXISTS dna_goals (
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
     FOREIGN KEY (domain_id) REFERENCES dna_domains(id) ON DELETE CASCADE
-    -- owner is a keyed union per DAT-120: h:<humans.id> or a:<agents.id>
 );
 
 CREATE TABLE IF NOT EXISTS dna_proposals (

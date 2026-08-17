@@ -18,9 +18,10 @@ public class DnaGoalService {
         this.auditService = auditService;
     }
 
+    @Transactional
     public DnaGoal create(String id, String domainId, String quarter, String statementMd,
-                           String owner, String inject, Instant effectiveFrom,
-                           Instant effectiveTo, String actor) {
+                            String owner, String inject, Instant effectiveFrom,
+                            Instant effectiveTo, String actor) {
         DnaGoal goal = new DnaGoal();
         goal.setId(id);
         goal.setDomainId(domainId);

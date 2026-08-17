@@ -134,14 +134,18 @@ public class InitiativeService {
         all.addAll(proposed);
 
         for (Initiative init : all) {
-            // INT-060: Stall detection — deadline passed, still has open work
+            // INT-060/063: Stall and close-out detection — deadline passed, still active
             if (init.getDeadline() != null && init.getDeadline().isBefore(now) && "active".equals(init.getStatus())) {
                 auditService.logSystem("STALL_CHECK", "initiative", init.getId(),
                     String.format("{\"deadlinePassed\":true,\"sponsor\":\"%s\"}", init.getSponsor()));
-                // File bulk-tier question ask to sponsor per INT-060
+                // File bulk-tier question ask to sponsor per INT-060 (stall) and INT-063 (close-out)
                 try {
                     askService.create("question", "system", init.getSponsor(),
                         String.format("{\"initiativeId\":\"%s\",\"reason\":\"stall\"}", init.getId()),
+                        "bulk", "escalate", 1,
+                        Instant.now().plusSeconds(7 * 86400L), null, null);
+                    askService.create("question", "system", init.getSponsor(),
+                        String.format("{\"initiativeId\":\"%s\",\"reason\":\"closeout\"}", init.getId()),
                         "bulk", "escalate", 1,
                         Instant.now().plusSeconds(7 * 86400L), null, null);
                 } catch (Exception e) {
@@ -150,27 +154,8 @@ public class InitiativeService {
                 }
             }
 
-            // INT-063: Close-out — deadline passed, check for open work
-            if (init.getDeadline() != null && init.getDeadline().isBefore(now)
-                    && "active".equals(init.getStatus())) {
-                // Check if there's open work — if not, suggest close
-                auditService.logSystem("CLOSEOUT_CHECK", "initiative", init.getId(),
-                    String.format("{\"deadlinePassed\":true,\"sponsor\":\"%s\"}", init.getSponsor()));
-                // File bulk-tier question ask to sponsor per INT-063
-                try {
-                    askService.create("question", "system", init.getSponsor(),
-                        String.format("{\"initiativeId\":\"%s\",\"reason\":\"closeout\"}", init.getId()),
-                        "bulk", "escalate", 1,
-                        Instant.now().plusSeconds(7 * 86400L), null, null);
-                } catch (Exception e) {
-                    auditService.logSystem("CLOSEOUT_ASK_FAIL", "initiative", init.getId(),
-                        String.format("{\"error\":\"%s\"}", e.getMessage()));
-                }
-            }
-
             // INT-050: Direction ask — goal window ended
             if (init.getGoalRef() != null && "active".equals(init.getStatus())) {
-                // Check if linked goal is past effective_to or terminal
                 auditService.logSystem("DIRECTION_CHECK", "initiative", init.getId(),
                     String.format("{\"goalRef\":\"%s\",\"sponsor\":\"%s\"}", init.getGoalRef(), init.getSponsor()));
             }

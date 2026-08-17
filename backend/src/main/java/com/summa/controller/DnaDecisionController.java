@@ -2,6 +2,8 @@ package com.summa.controller;
 
 import com.summa.service.DnaDecisionService;
 import com.summa.model.DnaDecision;
+import com.summa.service.AuditService;
+import com.summa.model.AuditEvent;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -11,9 +13,11 @@ import java.util.Map;
 @RequestMapping("/dna/decisions")
 public class DnaDecisionController {
     private final DnaDecisionService decisionService;
+    private final AuditService auditService;
 
-    public DnaDecisionController(DnaDecisionService decisionService) {
+    public DnaDecisionController(DnaDecisionService decisionService, AuditService auditService) {
         this.decisionService = decisionService;
+        this.auditService = auditService;
     }
 
     @GetMapping
@@ -47,7 +51,8 @@ public class DnaDecisionController {
             );
             return ResponseEntity.ok(decision);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 }

@@ -2,6 +2,8 @@ package com.summa.controller;
 
 import com.summa.service.WorkspaceService;
 import com.summa.model.Workspace;
+import com.summa.service.AuditService;
+import com.summa.model.AuditEvent;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -11,9 +13,11 @@ import java.util.Map;
 @RequestMapping("/workspaces")
 public class WorkspaceController {
     private final WorkspaceService workspaceService;
+    private final AuditService auditService;
 
-    public WorkspaceController(WorkspaceService workspaceService) {
+    public WorkspaceController(WorkspaceService workspaceService, AuditService auditService) {
         this.workspaceService = workspaceService;
+        this.auditService = auditService;
     }
 
     @GetMapping
@@ -43,7 +47,8 @@ public class WorkspaceController {
             );
             return ResponseEntity.ok(ws);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 

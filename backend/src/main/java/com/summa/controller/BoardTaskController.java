@@ -2,6 +2,8 @@ package com.summa.controller;
 
 import com.summa.service.BoardTaskService;
 import com.summa.model.BoardTask;
+import com.summa.service.AuditService;
+import com.summa.model.AuditEvent;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
@@ -12,9 +14,11 @@ import java.util.Map;
 @RequestMapping("/board-tasks")
 public class BoardTaskController {
     private final BoardTaskService taskService;
+    private final AuditService auditService;
 
-    public BoardTaskController(BoardTaskService taskService) {
+    public BoardTaskController(BoardTaskService taskService, AuditService auditService) {
         this.taskService = taskService;
+        this.auditService = auditService;
     }
 
     @GetMapping
@@ -61,7 +65,8 @@ public class BoardTaskController {
             );
             return ResponseEntity.ok(task);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 

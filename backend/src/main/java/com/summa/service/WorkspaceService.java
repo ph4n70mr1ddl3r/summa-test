@@ -18,8 +18,9 @@ public class WorkspaceService {
         this.auditService = auditService;
     }
 
+    @Transactional
     public Workspace create(String id, String name, String kind, String domainIds,
-                             String initiativeIds, String nodeId, String participants) {
+                              String initiativeIds, String nodeId, String participants) {
         Workspace ws = new Workspace();
         ws.setId(id);
         ws.setName(name);

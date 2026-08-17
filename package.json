@@ -15,10 +15,10 @@
     "build:backend": "cd backend && mvn clean package -DskipTests",
     "build:console": "cd console && npm run build",
     "lint": "npm run lint:specs && npm run lint:console",
-    "lint:specs": "python tools/lint_specs.py",
+    "lint:specs": "python3 tools/lint_specs.py",
     "lint:console": "cd console && npm run lint",
     "test": "npm run test:specs && npm run test:console",
-    "test:specs": "python tools/test_lint.py",
+    "test:specs": "python3 tools/test_lint.py",
     "test:console": "cd console && npm test",
     "ci": "npm run lint && npm run test && npm run build"
   },

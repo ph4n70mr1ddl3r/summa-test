@@ -45,7 +45,16 @@ public class AskController {
     public ResponseEntity<?> createAsk(@RequestBody Map<String, String> body,
                                         @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
         try {
-            Instant deadline = Instant.now().plusSeconds(Long.parseLong(body.getOrDefault("deadlineSeconds", "86400")));
+            String deadlineStr = body.get("deadlineSeconds");
+            long deadlineSeconds = 86400L;
+            if (deadlineStr != null && !deadlineStr.isBlank()) {
+                try {
+                    deadlineSeconds = Long.parseLong(deadlineStr);
+                } catch (NumberFormatException e) {
+                    return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", "Invalid deadlineSeconds value"));
+                }
+            }
+            Instant deadline = Instant.now().plusSeconds(deadlineSeconds);
             Ask ask = askService.create(
                 body.get("kind"),
                 actor,

@@ -2,6 +2,8 @@ package com.summa.controller;
 
 import com.summa.service.InitiativeService;
 import com.summa.model.Initiative;
+import com.summa.service.AuditService;
+import com.summa.model.AuditEvent;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
@@ -12,9 +14,11 @@ import java.util.Map;
 @RequestMapping("/initiatives")
 public class InitiativeController {
     private final InitiativeService initiativeService;
+    private final AuditService auditService;
 
-    public InitiativeController(InitiativeService initiativeService) {
+    public InitiativeController(InitiativeService initiativeService, AuditService auditService) {
         this.initiativeService = initiativeService;
+        this.auditService = auditService;
     }
 
     @GetMapping
@@ -51,7 +55,8 @@ public class InitiativeController {
             );
             return ResponseEntity.ok(initiative);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 

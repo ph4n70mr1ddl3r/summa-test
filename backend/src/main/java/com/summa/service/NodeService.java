@@ -3,6 +3,7 @@ package com.summa.service;
 import com.summa.repository.NodeRepository;
 import com.summa.model.Node;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -44,6 +45,7 @@ public class NodeService {
         return nodeRepository.findAll();
     }
 
+    @Transactional
     public Node heartbeat(String id, String capabilities) {
         Node node = nodeRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Node not found: " + id));
@@ -57,6 +59,7 @@ public class NodeService {
         return saved;
     }
 
+    @Transactional
     public Node revoke(String id, String actor) {
         Node node = nodeRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Node not found: " + id));
@@ -69,6 +72,7 @@ public class NodeService {
         return saved;
     }
 
+    @Transactional
     public Node updateMetadata(String id, String name, String region, String actor) {
         Node node = nodeRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Node not found: " + id));

@@ -2,6 +2,8 @@ package com.summa.controller;
 
 import com.summa.service.MemoryService;
 import com.summa.model.MemoryItem;
+import com.summa.service.AuditService;
+import com.summa.model.AuditEvent;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -11,9 +13,11 @@ import java.util.Map;
 @RequestMapping("/memory")
 public class MemoryController {
     private final MemoryService memoryService;
+    private final AuditService auditService;
 
-    public MemoryController(MemoryService memoryService) {
+    public MemoryController(MemoryService memoryService, AuditService auditService) {
         this.memoryService = memoryService;
+        this.auditService = auditService;
     }
 
     @GetMapping
@@ -54,7 +58,8 @@ public class MemoryController {
             );
             return ResponseEntity.ok(item);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 

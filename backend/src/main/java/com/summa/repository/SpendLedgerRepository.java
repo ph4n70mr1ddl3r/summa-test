@@ -18,4 +18,7 @@ public interface SpendLedgerRepository extends JpaRepository<SpendLedger, String
     Double sumTotalCostSince(Instant since);
     
     List<SpendLedger> findByKind(String kind);
+
+    @Query("SELECT COALESCE(SUM(s.cost), 0.0) FROM SpendLedger s WHERE s.kind = 'settle' AND s.at >= :since")
+    double sumSettleCostSince(Instant since);
 }

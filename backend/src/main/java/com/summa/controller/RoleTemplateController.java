@@ -2,6 +2,8 @@ package com.summa.controller;
 
 import com.summa.service.RoleTemplateService;
 import com.summa.model.RoleTemplate;
+import com.summa.service.AuditService;
+import com.summa.model.AuditEvent;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -11,9 +13,11 @@ import java.util.Map;
 @RequestMapping("/role-templates")
 public class RoleTemplateController {
     private final RoleTemplateService templateService;
+    private final AuditService auditService;
 
-    public RoleTemplateController(RoleTemplateService templateService) {
+    public RoleTemplateController(RoleTemplateService templateService, AuditService auditService) {
         this.templateService = templateService;
+        this.auditService = auditService;
     }
 
     @GetMapping
@@ -40,7 +44,8 @@ public class RoleTemplateController {
             );
             return ResponseEntity.ok(template);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 

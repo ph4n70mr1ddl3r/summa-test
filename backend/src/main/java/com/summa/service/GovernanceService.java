@@ -1,9 +1,11 @@
 package com.summa.service;
 
 import com.summa.repository.GovernanceSettingRepository;
+import com.summa.repository.SpendLedgerRepository;
 import com.summa.model.GovernanceSetting;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Optional;
@@ -11,9 +13,12 @@ import java.util.Optional;
 @Service
 public class GovernanceService {
     private final GovernanceSettingRepository settingRepository;
+    private final SpendLedgerRepository spendLedgerRepository;
 
-    public GovernanceService(GovernanceSettingRepository settingRepository) {
+    public GovernanceService(GovernanceSettingRepository settingRepository,
+                              SpendLedgerRepository spendLedgerRepository) {
         this.settingRepository = settingRepository;
+        this.spendLedgerRepository = spendLedgerRepository;
     }
 
     public Map<String, Object> getAllSettings() {
@@ -71,11 +76,19 @@ public class GovernanceService {
 
     /**
      * SPW-060: Check if the spend circuit-breaker should trip.
-     * Compares total spend (last 30 days) against the org ceiling.
+     * Compares total settle cost (last 30 days) against the org ceiling.
      */
     public boolean isSpendHaltTripped() {
-        // Stub: delegate to SpendLedgerRepository when available
-        return false;
+        try {
+            Double ceiling = getSetting("spend-org-ceiling", Double.class);
+            if (ceiling == null) ceiling = 1000000.0;
+            Instant thirtyDaysAgo = Instant.now().minus(30, ChronoUnit.DAYS);
+            Double totalCostObj = spendLedgerRepository.sumSettleCostSince(thirtyDaysAgo);
+            double totalCost = totalCostObj != null ? totalCostObj : 0.0;
+            return totalCost >= ceiling;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public Map<String, Object> getSpendView() {

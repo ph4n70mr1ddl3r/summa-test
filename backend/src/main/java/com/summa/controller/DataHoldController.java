@@ -2,6 +2,8 @@ package com.summa.controller;
 
 import com.summa.service.DataHoldService;
 import com.summa.model.DataHold;
+import com.summa.service.AuditService;
+import com.summa.model.AuditEvent;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -11,9 +13,11 @@ import java.util.Map;
 @RequestMapping("/governance/holds")
 public class DataHoldController {
     private final DataHoldService holdService;
+    private final AuditService auditService;
 
-    public DataHoldController(DataHoldService holdService) {
+    public DataHoldController(DataHoldService holdService, AuditService auditService) {
         this.holdService = holdService;
+        this.auditService = auditService;
     }
 
     @GetMapping
@@ -33,7 +37,8 @@ public class DataHoldController {
             );
             return ResponseEntity.ok(hold);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 

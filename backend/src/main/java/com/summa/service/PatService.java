@@ -3,6 +3,7 @@ package com.summa.service;
 import com.summa.repository.PatRepository;
 import com.summa.model.Pat;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.Base64;
@@ -20,6 +21,7 @@ public class PatService {
         this.auditService = auditService;
     }
 
+    @Transactional
     public PatWithToken create(String memberId, String name, List<String> scopes, int expiryDays) {
         String rawToken = generateToken();
         String tokenHash = hashToken(rawToken);
@@ -51,6 +53,7 @@ public class PatService {
         return patRepository.findByMemberId(memberId);
     }
 
+    @Transactional
     public Pat revoke(String id, String actor) {
         Pat pat = patRepository.findByIdAndRevokedAtIsNull(id)
                 .orElseThrow(() -> new IllegalArgumentException("PAT not found: " + id));

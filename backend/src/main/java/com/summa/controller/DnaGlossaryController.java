@@ -2,6 +2,8 @@ package com.summa.controller;
 
 import com.summa.service.DnaGlossaryService;
 import com.summa.model.DnaGlossary;
+import com.summa.service.AuditService;
+import com.summa.model.AuditEvent;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -11,9 +13,11 @@ import java.util.Map;
 @RequestMapping("/dna/glossary")
 public class DnaGlossaryController {
     private final DnaGlossaryService glossaryService;
+    private final AuditService auditService;
 
-    public DnaGlossaryController(DnaGlossaryService glossaryService) {
+    public DnaGlossaryController(DnaGlossaryService glossaryService, AuditService auditService) {
         this.glossaryService = glossaryService;
+        this.auditService = auditService;
     }
 
     @GetMapping
@@ -50,7 +54,8 @@ public class DnaGlossaryController {
             );
             return ResponseEntity.ok(entry);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 

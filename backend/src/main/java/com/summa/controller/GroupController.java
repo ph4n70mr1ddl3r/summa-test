@@ -2,6 +2,8 @@ package com.summa.controller;
 
 import com.summa.service.GroupService;
 import com.summa.model.Group;
+import com.summa.service.AuditService;
+import com.summa.model.AuditEvent;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -11,9 +13,11 @@ import java.util.Map;
 @RequestMapping("/org/groups")
 public class GroupController {
     private final GroupService groupService;
+    private final AuditService auditService;
 
-    public GroupController(GroupService groupService) {
+    public GroupController(GroupService groupService, AuditService auditService) {
         this.groupService = groupService;
+        this.auditService = auditService;
     }
 
     @GetMapping
@@ -38,7 +42,8 @@ public class GroupController {
             );
             return ResponseEntity.ok(group);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 

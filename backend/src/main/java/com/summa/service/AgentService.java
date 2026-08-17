@@ -102,13 +102,11 @@ public class AgentService {
                 .orElseThrow(() -> new IllegalArgumentException("Agent not found: " + id));
 
         // CLC-020: Resolve pending asks from the retiring agent — close with audit note
-        for (Ask ask : askRepository.findByStatus("pending")) {
-            if (id.equals(ask.getFrom())) {
-                ask.setStatus("withdrawn");
-                askRepository.save(ask);
-                auditService.logSystem("RETIRE_CLOSE_ASK_FROM", "ask", ask.getId(),
-                    String.format("{\"agentId\":\"%s\",\"reason\":\"agent_retiring\"}", id));
-            }
+        for (Ask ask : askRepository.findByFromAndStatusPending(id)) {
+            ask.setStatus("withdrawn");
+            askRepository.save(ask);
+            auditService.logSystem("RETIRE_CLOSE_ASK_FROM", "ask", ask.getId(),
+                String.format("{\"agentId\":\"%s\",\"reason\":\"agent_retiring\"}", id));
         }
 
         agent.setStatus("retiring");

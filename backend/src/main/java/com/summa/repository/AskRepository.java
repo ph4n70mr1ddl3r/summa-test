@@ -20,4 +20,7 @@ public interface AskRepository extends JpaRepository<Ask, String> {
     
     @Query("SELECT a FROM Ask a WHERE a.status = 'pending' AND a.deadline < :now")
     List<Ask> findExpiredBefore(java.time.Instant now);
+
+    @Query("SELECT a FROM Ask a WHERE a.from = :agentId AND a.status = 'pending'")
+    List<Ask> findByFromAndStatusPending(String agentId);
 }
