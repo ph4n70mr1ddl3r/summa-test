@@ -1,0 +1,61 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+  compression:
+    enabled: true
+    mime-types: application/json,text/html,application/xml
+    min-response-size: 1024
+
+spring:
+  datasource:
+    url: jdbc:sqlite:${SUMMA_DB_PATH:/data/db/summa.db}
+    driver-class-name: org.sqlite.JDBC
+  jpa:
+    database-platform: org.hibernate.dialect.SQLiteDialect
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+  sql:
+    init:
+      mode: never
+
+summa:
+  database:
+    path: ${SUMMA_DB_PATH:/data/db/summa.db}
+    wal-mode: true
+  git:
+    dna-repo-path: ${SUMMA_DNA_REPO:/data/dna}
+    branch: main
+    commit-author: summa <summa@local>
+  auth:
+    jwt-secret: ${SUMMA_JWT_SECRET}
+    jwt-expiration: 86400000
+    pat-default-expiry-days: 90
+  node:
+    lease-interval-seconds: 30
+    heartbeat-timeout-seconds: 90
+    affinity-starvation-hours: 24
+  spend:
+    org-ceiling: ${SUMMA_SPEND_CEILING:1000000}
+    critical-floor-percent: 5
+  security:
+    max-request-size: 10MB
+    rate-limit-enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.summa: INFO
+    org.springframework.security: WARN
+    org.hibernate: ERROR
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ} [%thread] %-5level %logger{36} - %msg%n"
