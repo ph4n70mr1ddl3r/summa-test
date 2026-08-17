@@ -2,6 +2,8 @@ package com.summa.controller;
 
 import com.summa.service.AskService;
 import com.summa.model.Ask;
+import com.summa.model.AuditEvent;
+import com.summa.service.AuditService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
@@ -12,9 +14,11 @@ import java.util.Map;
 @RequestMapping("/asks")
 public class AskController {
     private final AskService askService;
+    private final AuditService auditService;
 
-    public AskController(AskService askService) {
+    public AskController(AskService askService, AuditService auditService) {
         this.askService = askService;
+        this.auditService = auditService;
     }
 
     @GetMapping
@@ -55,30 +59,44 @@ public class AskController {
                 body.get("workspaceId")
             );
             return ResponseEntity.ok(ask);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
+        } catch (IllegalStateException e) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 
     @PostMapping("/{id}/respond")
     public ResponseEntity<?> respond(@PathVariable String id, @RequestBody Map<String, String> body,
-                                       @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                        @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
         try {
             Ask ask = askService.respond(id, actor, body.get("response"));
             return ResponseEntity.ok(ask);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
+        } catch (IllegalStateException e) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 
     @PostMapping("/{id}/withdraw")
     public ResponseEntity<?> withdraw(@PathVariable String id,
-                                       @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                        @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
         try {
             Ask ask = askService.withdraw(id, actor);
             return ResponseEntity.ok(ask);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 
@@ -88,7 +106,9 @@ public class AskController {
             Ask ask = askService.expire(id);
             return ResponseEntity.ok(ask);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 }

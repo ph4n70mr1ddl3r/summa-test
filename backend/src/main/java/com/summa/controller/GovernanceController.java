@@ -47,14 +47,14 @@ public class GovernanceController {
     @PutMapping("/policies")
     public ResponseEntity<?> updatePolicy(@RequestBody Map<String, Object> body,
                                            @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
-        body.forEach((key, value) -> governanceService.setSetting(key, value));
+        body.forEach((key, value) -> governanceService.setSetting(key, value, actor));
         return ResponseEntity.ok(governanceService.getAllSettings());
     }
 
     @PutMapping("/quotas")
     public ResponseEntity<?> updateQuotas(@RequestBody Map<String, Object> body,
                                            @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
-        body.forEach((key, value) -> governanceService.setSetting(key, value));
+        body.forEach((key, value) -> governanceService.setSetting(key, value, actor));
         return ResponseEntity.ok(governanceService.getAllSettings());
     }
 

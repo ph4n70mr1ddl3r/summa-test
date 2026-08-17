@@ -28,7 +28,7 @@ public class SecurityConfig {
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/health").permitAll()
                 .requestMatchers("/info").permitAll()
-                .requestMatchers("/nodes/**").permitAll()
+                .requestMatchers("/nodes/enroll").permitAll()
                 .requestMatchers("/dna/search").permitAll()
                 .anyRequest().authenticated()
             )

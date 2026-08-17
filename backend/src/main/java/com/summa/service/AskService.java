@@ -2,6 +2,7 @@ package com.summa.service;
 
 import com.summa.repository.AskRepository;
 import com.summa.model.Ask;
+import com.summa.model.Human;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
@@ -34,7 +35,7 @@ public class AskService {
     public Ask create(String kind, String from, String to, String payload, String slaTier,
                       String expiryBehavior, Integer quorumRequired, Instant deadline,
                       String initiativeId, String workspaceId) {
-        // Validate deadline is in the future
+        // ASK-012: explicit deadline earlier than creation is refused
         if (deadline.isBefore(Instant.now())) {
             throw new IllegalArgumentException("Deadline must be in the future");
         }
@@ -113,6 +114,9 @@ public class AskService {
         return askRepository.findExpiredBefore(Instant.now());
     }
 
+    /**
+     * ASK-015/040/050: Respond to an ask with eligibility, quorum, and re-validation checks.
+     */
     public Ask respond(String id, String responder, String response) {
         Ask ask = askRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Ask not found: " + id));
@@ -121,19 +125,74 @@ public class AskService {
             throw new IllegalStateException("Ask is not pending: " + ask.getStatus());
         }
 
-        // Check eligibility
+        // ASK-040: Check eligibility at the door
         if (!isEligibleResponder(ask, responder)) {
             throw new IllegalArgumentException("Responder is not eligible: " + responder);
         }
 
-        // Record response
-        ask.setRespondedAt(Instant.now());
-        ask.setStatus("answered");
+        // ASK-015: quorum-1 closes on first response; later responses are audit-only
+        int quorum = ask.getQuorumRequired() != null ? ask.getQuorumRequired() : 1;
+        if (quorum == 1) {
+            recordResponse(ask, responder, response);
+            ask.setRespondedAt(Instant.now());
+            ask.setStatus("answered");
+            Ask saved = askRepository.save(ask);
+            auditService.log(responder, "RESPOND", "ask", id,
+                String.format("{\"response\":\"%s\"}", response != null ? response.substring(0, Math.min(100, response.length())) : ""));
+            return saved;
+        }
 
+        // ASK-050: N > 1 quorum — collect responses until N distinct principals answered
+        List<String> existingResponses = parseResponseIds(ask);
+        if (existingResponses.contains(responder)) {
+            // Already responded — audit-only duplicate
+            auditService.logSystem("AUDIT_ONLY_RESPONSE", "ask", id,
+                String.format("{\"responder\":\"%s\"}", responder));
+            return ask;
+        }
+
+        existingResponses.add(responder);
+        ask.setResponses(toJsonResponseList(existingResponses, response));
         Ask saved = askRepository.save(ask);
+
+        // Check if quorum reached
+        if (existingResponses.size() >= ask.getQuorumRequired()) {
+            saved.setStatus("answered");
+            saved.setRespondedAt(Instant.now());
+            saved = askRepository.save(saved);
+        }
+
         auditService.log(responder, "RESPOND", "ask", id,
-            String.format("{\"response\":\"%s\"}", response != null ? response.substring(0, Math.min(100, response.length())) : ""));
+            String.format("{\"response\":\"%s\",\"quorumProgress\":%d/%d}",
+                response != null ? response.substring(0, Math.min(100, response.length())) : "",
+                existingResponses.size(), ask.getQuorumRequired()));
         return saved;
+    }
+
+    private void recordResponse(Ask ask, String responder, String response) {
+        List<String> ids = parseResponseIds(ask);
+        ids.add(responder);
+        ask.setResponses(toJsonResponseList(ids, response));
+    }
+
+    private List<String> parseResponseIds(Ask ask) {
+        try {
+            String resp = ask.getResponses();
+            if (resp == null || resp.isBlank() || resp.equals("[]")) return new java.util.ArrayList<>();
+            return new java.util.ArrayList<>(java.util.List.of(resp.replaceAll("[\\[\\]]", "").split(",")));
+        } catch (Exception e) {
+            return new java.util.ArrayList<>();
+        }
+    }
+
+    private String toJsonResponseList(List<String> ids, String response) {
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < ids.size(); i++) {
+            if (i > 0) sb.append(",");
+            sb.append("\"").append(ids.get(i)).append("\"");
+        }
+        sb.append("]");
+        return sb.toString();
     }
 
     public Ask withdraw(String id, String originator) {
@@ -160,14 +219,36 @@ public class AskService {
         return saved;
     }
 
+    /**
+     * ASK-040: Check if responder is eligible — matches target, deputy, or admin broadcast.
+     */
     private boolean isEligibleResponder(Ask ask, String responder) {
-        // System originator cannot respond
+        // System originator cannot respond (ASK-031)
         if ("system".equals(ask.getFrom())) {
             return false;
         }
 
-        // Check if responder matches the target
-        return ask.getTo().equals(responder);
+        // Direct match
+        if (ask.getTo().equals(responder)) {
+            return true;
+        }
+
+        // Admin broadcast: any active admin can respond to `admins` target
+        if ("admins".equals(ask.getTo())) {
+            return memberService.findAdmins().stream()
+                    .anyMatch(h -> h.getId().equals(responder));
+        }
+
+        // Deputy check: responder is the deputy of the target human
+        Optional<Human> targetHuman = memberService.findHuman(ask.getTo());
+        if (targetHuman.isPresent()) {
+            String deputyId = targetHuman.get().getDeputyMemberId();
+            if (deputyId != null && deputyId.equals(responder)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 

@@ -6,8 +6,9 @@ WORKDIR /app
 
 COPY backend/target/summa-backend-*.jar app.jar
 
-# Create data directories
-RUN mkdir -p /data/dna /data/db && chown -R 1000:1000 /data
+# Create data directories and non-root user
+RUN addgroup -g 1000 -S summa && adduser -u 1000 -S summa -G summa && \
+    mkdir -p /data/dna /data/db && chown -R 1000:1000 /data
 
 ENV SUMMA_DB_PATH=/data/db/summa.db \
     SUMMA_DNA_REPO=/data/dna \
@@ -15,4 +16,5 @@ ENV SUMMA_DB_PATH=/data/db/summa.db \
 
 EXPOSE 8080
 
+USER 1000
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

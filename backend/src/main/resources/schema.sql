@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS agents (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     owner_human_id TEXT NOT NULL,
-    class TEXT NOT NULL CHECK (class IN ('persistent', 'ephemeral')),
+    "class" TEXT NOT NULL CHECK ("class" IN ('persistent', 'ephemeral')),
     spawned_by TEXT,
     ttl_at INTEGER,
     budget_cap REAL,
@@ -146,8 +146,8 @@ CREATE TABLE IF NOT EXISTS dna_goals (
     effective_to INTEGER,
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
-    FOREIGN KEY (domain_id) REFERENCES dna_domains(id) ON DELETE CASCADE,
-    FOREIGN KEY (owner) REFERENCES agents(id) ON DELETE SET NULL
+    FOREIGN KEY (domain_id) REFERENCES dna_domains(id) ON DELETE CASCADE
+    -- owner is a keyed union per DAT-120: h:<humans.id> or a:<agents.id>
 );
 
 CREATE TABLE IF NOT EXISTS dna_proposals (
@@ -205,9 +205,8 @@ CREATE TABLE IF NOT EXISTS initiatives (
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
     FOREIGN KEY (goal_ref) REFERENCES dna_goals(id) ON DELETE SET NULL,
-    FOREIGN KEY (decision_ref) REFERENCES dna_decisions(id) ON DELETE SET NULL,
-    FOREIGN KEY (sponsor) REFERENCES agents(id) ON DELETE SET NULL,
-    FOREIGN KEY (lead) REFERENCES agents(id) ON DELETE SET NULL
+    FOREIGN KEY (decision_ref) REFERENCES dna_decisions(id) ON DELETE SET NULL
+    -- sponsor and lead are keyed unions per DAT-120: h:<humans.id> or a:<agents.id>
 );
 
 CREATE TABLE IF NOT EXISTS board_tasks (
@@ -222,9 +221,8 @@ CREATE TABLE IF NOT EXISTS board_tasks (
     created_by TEXT NOT NULL,
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     completed_at INTEGER,
-    FOREIGN KEY (assignee_member_id) REFERENCES agents(id) ON DELETE SET NULL,
-    FOREIGN KEY (initiative_id) REFERENCES initiatives(id) ON DELETE SET NULL,
-    FOREIGN KEY (created_by) REFERENCES agents(id) ON DELETE SET NULL
+    FOREIGN KEY (initiative_id) REFERENCES initiatives(id) ON DELETE SET NULL
+    -- assignee_member_id and created_by are keyed unions per DAT-120: h:<humans.id> or a:<agents.id>
 );
 
 CREATE TABLE IF NOT EXISTS workspaces (
@@ -330,8 +328,8 @@ CREATE TABLE IF NOT EXISTS groups (
     leader_member_id TEXT,
     status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'archived')),
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
-    UNIQUE(name) WHERE status != 'archived',
-    FOREIGN KEY (leader_member_id) REFERENCES agents(id) ON DELETE SET NULL
+    UNIQUE(name) WHERE status != 'archived'
+    -- leader_member_id is a keyed union per DAT-120: h:<humans.id> or a:<agents.id>
 );
 
 CREATE TABLE IF NOT EXISTS group_memberships (
@@ -341,9 +339,8 @@ CREATE TABLE IF NOT EXISTS group_memberships (
     added_at INTEGER NOT NULL DEFAULT (unixepoch()),
     removed_at INTEGER,
     PRIMARY KEY (group_id, member_id),
-    FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE,
-    FOREIGN KEY (member_id) REFERENCES agents(id) ON DELETE CASCADE,
-    FOREIGN KEY (added_by) REFERENCES agents(id) ON DELETE SET NULL
+    FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE
+    -- member_id and added_by are keyed unions per DAT-120: h:<humans.id> or a:<agents.id>
 );
 
 CREATE TABLE IF NOT EXISTS audit_events (
@@ -373,8 +370,8 @@ CREATE TABLE IF NOT EXISTS pats (
     expires_at INTEGER NOT NULL,
     revoked_at INTEGER,
     last_used_at INTEGER,
-    UNIQUE(token_hash),
-    FOREIGN KEY (member_id) REFERENCES agents(id) ON DELETE CASCADE
+    UNIQUE(token_hash)
+    -- member_id is a keyed union per DAT-120: h:<humans.id> or a:<agents.id>
 );
 
 CREATE TABLE IF NOT EXISTS governance_settings (
@@ -437,7 +434,7 @@ CREATE TABLE IF NOT EXISTS spawn_requests (
     requester_id TEXT NOT NULL,
     template_id TEXT,
     custom_role TEXT,
-    class TEXT NOT NULL CHECK (class IN ('persistent', 'ephemeral')),
+    "class" TEXT NOT NULL CHECK ("class" IN ('persistent', 'ephemeral')),
     purpose TEXT NOT NULL,
     workspace_bindings TEXT NOT NULL DEFAULT '[]',
     scope_ceiling TEXT NOT NULL DEFAULT '{}',
