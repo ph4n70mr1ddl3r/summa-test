@@ -7,6 +7,7 @@ vi.mock('../services/api', () => ({
   api: {
     asks: {
       list: vi.fn(),
+      listByStatus: vi.fn(),
     },
   },
 }))
@@ -17,7 +18,7 @@ describe('AskInbox page', () => {
   })
 
   it('renders the Ask Inbox heading', async () => {
-    vi.mocked(apiModule.api.asks.list).mockResolvedValue([])
+    vi.mocked(apiModule.api.asks.listByStatus).mockResolvedValue([])
     const { container } = render(<AskInbox />)
     await waitFor(() => {
       expect(container.textContent).toContain('Ask Inbox')
@@ -25,7 +26,7 @@ describe('AskInbox page', () => {
   })
 
   it('shows ask kinds and SLA tiers after load', async () => {
-    vi.mocked(apiModule.api.asks.list).mockResolvedValue([])
+    vi.mocked(apiModule.api.asks.listByStatus).mockResolvedValue([])
     const { container } = render(<AskInbox />)
     await waitFor(() => {
       expect(container.textContent).toContain('approval')

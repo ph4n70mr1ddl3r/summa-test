@@ -82,8 +82,10 @@ export const api = {
       }),
   },
   asks: {
-    list: (status?: string) =>
-      request<unknown[]>(withQuery('/asks', status ? { status } : undefined)),
+    list: () =>
+      request<unknown[]>('/asks'),
+    listByStatus: (status: string) =>
+      request<unknown[]>(withQuery('/asks', { status })),
     respond: (id: string, response: string, actor: string) =>
       request(`/asks/${id}/respond`, {
         method: 'POST',

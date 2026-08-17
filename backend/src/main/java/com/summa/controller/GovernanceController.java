@@ -1,6 +1,7 @@
 package com.summa.controller;
 
 import com.summa.service.GovernanceService;
+import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
@@ -9,9 +10,11 @@ import java.util.Map;
 @RequestMapping("/governance")
 public class GovernanceController {
     private final GovernanceService governanceService;
+    private final WriteGate writeGate;
 
-    public GovernanceController(GovernanceService governanceService) {
+    public GovernanceController(GovernanceService governanceService, WriteGate writeGate) {
         this.governanceService = governanceService;
+        this.writeGate = writeGate;
     }
 
     @GetMapping("/policies")
@@ -46,14 +49,18 @@ public class GovernanceController {
 
     @PutMapping("/policies")
     public ResponseEntity<?> updatePolicy(@RequestBody Map<String, Object> body,
-                                           @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                            @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         body.forEach((key, value) -> governanceService.setSetting(key, value, actor));
         return ResponseEntity.ok(governanceService.getAllSettings());
     }
 
     @PutMapping("/quotas")
     public ResponseEntity<?> updateQuotas(@RequestBody Map<String, Object> body,
-                                           @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                            @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         body.forEach((key, value) -> governanceService.setSetting(key, value, actor));
         return ResponseEntity.ok(governanceService.getAllSettings());
     }

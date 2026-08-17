@@ -53,7 +53,7 @@ public class SpawnController {
                 body.get("requesterId"),
                 body.get("templateId"),
                 body.get("customRole"),
-                body.get("class"),
+                body.get("spawnClass") != null ? body.get("spawnClass") : body.get("class"),
                 body.get("purpose"),
                 body.get("workspaceBindings"),
                 body.get("scopeCeiling"),

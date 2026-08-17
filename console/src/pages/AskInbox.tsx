@@ -20,7 +20,7 @@ export default function AskInbox() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    api.asks.list('pending')
+    api.asks.listByStatus('pending')
       .then((data) => {
         setAsks(data as Ask[])
         setLoading(false)

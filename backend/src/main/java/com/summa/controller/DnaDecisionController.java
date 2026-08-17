@@ -4,6 +4,7 @@ import com.summa.service.DnaDecisionService;
 import com.summa.model.DnaDecision;
 import com.summa.service.AuditService;
 import com.summa.model.AuditEvent;
+import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -14,10 +15,12 @@ import java.util.Map;
 public class DnaDecisionController {
     private final DnaDecisionService decisionService;
     private final AuditService auditService;
+    private final WriteGate writeGate;
 
-    public DnaDecisionController(DnaDecisionService decisionService, AuditService auditService) {
+    public DnaDecisionController(DnaDecisionService decisionService, AuditService auditService, WriteGate writeGate) {
         this.decisionService = decisionService;
         this.auditService = auditService;
+        this.writeGate = writeGate;
     }
 
     @GetMapping
@@ -39,6 +42,8 @@ public class DnaDecisionController {
     @PostMapping
     public ResponseEntity<?> createDecision(@RequestBody Map<String, String> body,
                                              @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             DnaDecision decision = decisionService.create(
                 body.get("id"),

@@ -4,6 +4,7 @@ import com.summa.service.DnaRuleService;
 import com.summa.model.DnaRule;
 import com.summa.service.AuditService;
 import com.summa.model.AuditEvent;
+import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
@@ -15,10 +16,12 @@ import java.util.Map;
 public class DnaRuleController {
     private final DnaRuleService ruleService;
     private final AuditService auditService;
+    private final WriteGate writeGate;
 
-    public DnaRuleController(DnaRuleService ruleService, AuditService auditService) {
+    public DnaRuleController(DnaRuleService ruleService, AuditService auditService, WriteGate writeGate) {
         this.ruleService = ruleService;
         this.auditService = auditService;
+        this.writeGate = writeGate;
     }
 
     @GetMapping
@@ -39,7 +42,9 @@ public class DnaRuleController {
 
     @PostMapping
     public ResponseEntity<?> createRule(@RequestBody Map<String, String> body,
-                                         @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                          @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Instant effectiveFrom = body.containsKey("effectiveFrom") ? 
                 Instant.parse(body.get("effectiveFrom")) : Instant.now();
@@ -65,7 +70,9 @@ public class DnaRuleController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<?> updateRule(@PathVariable String id, @RequestBody Map<String, String> body,
-                                         @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                          @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Instant effectiveTo = body.containsKey("effectiveTo") ? 
                 Instant.parse(body.get("effectiveTo")) : null;
@@ -91,7 +98,9 @@ public class DnaRuleController {
 
     @PostMapping("/{id}/supersede/{supersedesId}")
     public ResponseEntity<?> supersede(@PathVariable String id, @PathVariable String supersedesId,
-                                        @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                         @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             DnaRule rule = ruleService.supersede(id, supersedesId, actor);
             return ResponseEntity.ok(rule);

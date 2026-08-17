@@ -87,7 +87,8 @@ public class GovernanceService {
             double totalCost = totalCostObj != null ? totalCostObj : 0.0;
             return totalCost >= ceiling;
         } catch (Exception e) {
-            return false;
+            // Fail-closed: any error in spend calculation trips the breaker
+            return true;
         }
     }
 

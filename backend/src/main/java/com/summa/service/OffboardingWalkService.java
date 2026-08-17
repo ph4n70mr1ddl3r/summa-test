@@ -80,6 +80,11 @@ public class OffboardingWalkService {
         }
 
         String targetOwner = successorId != null ? successorId : findAnyAdminId();
+        if (targetOwner == null) {
+            throw new IllegalStateException("No successor specified and no active admin found for custody transfer");
+        }
+        String finalTargetOwner = targetOwner;
+
         int domainsTransferred = 0;
         int agentsReowned = 0;
         int goalsReowned = 0;
@@ -92,35 +97,32 @@ public class OffboardingWalkService {
         // OFB-002: Transfer owned DNA domains (include archived — ownership references persist)
         for (DnaDomain domain : domainService.findAllIncludingArchived()) {
             if (humanId.equals(domain.getOwnerHumanId())) {
-                String newOwner = targetOwner != null ? targetOwner : humanId;
-                domainService.updateOwner(domain.getId(), newOwner, actor);
+                domainService.updateOwner(domain.getId(), finalTargetOwner, actor);
                 domainsTransferred++;
             }
         }
 
         // OFB-011: Re-own or retire dependent agents
         for (Agent agent : agentService.findByOwner(humanId)) {
-            if (targetOwner != null) {
-                agent.setOwnerHumanId(targetOwner);
-                // Retire personal assistants (CLC-051: mirrored scopes die with member)
-                if (agent.getTemplateId() != null && agent.getTemplateId().contains("personal-assistant")) {
-                    agentService.retire(agent.getId(), actor);
-                } else {
-                    agentRepository.save(agent);
-                }
-                agentsReowned++;
+            agent.setOwnerHumanId(finalTargetOwner);
+            // Retire personal assistants (CLC-051: mirrored scopes die with member)
+            if (agent.getTemplateId() != null && agent.getTemplateId().contains("personal-assistant")) {
+                agentService.retire(agent.getId(), actor);
+            } else {
+                agentRepository.save(agent);
             }
+            agentsReowned++;
         }
 
         // OFB-012: Reassign initiatives (sponsor/lead) — only active ones
         for (Initiative init : initiativeService.findAllActive()) {
             boolean changed = false;
-            if (humanId.equals(init.getSponsor()) && targetOwner != null) {
-                init.setSponsor(targetOwner);
+            if (humanId.equals(init.getSponsor())) {
+                init.setSponsor(finalTargetOwner);
                 changed = true;
             }
-            if (humanId.equals(init.getLead()) && targetOwner != null) {
-                init.setLead(targetOwner);
+            if (humanId.equals(init.getLead())) {
+                init.setLead(finalTargetOwner);
                 changed = true;
             }
             if (changed) {
@@ -130,8 +132,8 @@ public class OffboardingWalkService {
 
         // OFB-013: Re-own or retire owned goals (active only)
         for (DnaGoal goal : goalService.findAllActiveWindowed(Instant.now())) {
-            if (humanId.equals(goal.getOwner()) && "active".equals(goal.getStatus()) && targetOwner != null) {
-                goal.setOwner(targetOwner);
+            if (humanId.equals(goal.getOwner()) && "active".equals(goal.getStatus())) {
+                goal.setOwner(finalTargetOwner);
                 goalRepository.save(goal);
                 goalsReowned++;
             }
@@ -153,8 +155,8 @@ public class OffboardingWalkService {
 
         // OFB-016: Transfer or withdraw authored proposals
         for (DnaProposal prop : proposalService.findAllOpen()) {
-            if (humanId.equals(prop.getProposedBy()) && targetOwner != null) {
-                prop.setProposedBy(targetOwner);
+            if (humanId.equals(prop.getProposedBy())) {
+                prop.setProposedBy(finalTargetOwner);
                 proposalRepository.save(prop);
                 proposalsTransferred++;
             } else if (humanId.equals(prop.getProposedBy())) {
@@ -195,19 +197,11 @@ public class OffboardingWalkService {
 
         // OFB-010: Reassign board tasks or return to pool
         for (BoardTask task : boardTaskRepository.findByAssigneeMemberId(humanId)) {
-            if (targetOwner != null) {
-                task.setAssigneeMemberId(targetOwner);
-                boardTaskRepository.save(task);
-                tasksReassigned++;
-            } else {
-                task.setAssigneeMemberId(null);
-                task.setStatus("open");
-                boardTaskRepository.save(task);
-                tasksReassigned++;
-            }
+            task.setAssigneeMemberId(finalTargetOwner);
+            boardTaskRepository.save(task);
+            tasksReassigned++;
             auditService.logSystem("OFFBOARD_REASSIGN_TASK", "board_task", task.getId(),
-                String.format("{\"newAssignee\":\"%s\",\"reason\":\"member_departed\"}",
-                    targetOwner != null ? targetOwner : "pool"));
+                String.format("{\"newAssignee\":\"%s\",\"reason\":\"member_departed\"}", finalTargetOwner));
         }
 
         // OFB-015: Revoke PATs and terminate sessions
@@ -229,7 +223,7 @@ public class OffboardingWalkService {
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("humanId", humanId);
-        result.put("successorId", targetOwner);
+        result.put("successorId", finalTargetOwner);
         result.put("domainsTransferred", domainsTransferred);
         result.put("agentsReowned", agentsReowned);
         result.put("goalsReowned", goalsReowned);
@@ -240,8 +234,7 @@ public class OffboardingWalkService {
         result.put("patsRevoked", patsRevoked);
 
         auditService.log(actor, "OFFBOARD_WALK", "human", humanId,
-            String.format("{\"successorId\":\"%s\",\"result\":%s}",
-                targetOwner != null ? targetOwner : "admin-custody", result));
+            String.format("{\"successorId\":\"%s\",\"result\":%s}", finalTargetOwner, result));
 
         return result;
     }

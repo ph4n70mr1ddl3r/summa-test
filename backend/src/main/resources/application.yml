@@ -35,7 +35,7 @@ summa:
     branch: main
     commit-author: summa <summa@local>
   auth:
-    jwt-secret: ${SUMMA_JWT_SECRET:summa-dev-secret-not-for-production-use-only}
+    jwt-secret: ${SUMMA_JWT_SECRET}
     jwt-expiration: 86400000
     pat-default-expiry-days: 90
   node:

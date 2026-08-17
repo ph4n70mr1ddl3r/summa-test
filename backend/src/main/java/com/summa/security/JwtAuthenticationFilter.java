@@ -44,18 +44,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (payload != null) {
                 String subject = (String) payload.get("sub");
                 request.setAttribute("authSubject", subject);
-                // Set X-Actor from JWT subject for consistent downstream handling
                 request.setAttribute("actor", subject);
+                filterChain.doFilter(request, response);
+                return;
             }
         }
 
-        // Fall back to X-Actor header if no valid JWT
-        String actor = request.getHeader("X-Actor");
-        if (actor != null && !actor.isEmpty()) {
-            request.setAttribute("actor", actor);
-        }
-
-        filterChain.doFilter(request, response);
+        // Reject requests without valid JWT — no X-Actor fallback
+        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing or invalid authentication");
+        return;
     }
 
     private boolean isPublicPath(String path) {
