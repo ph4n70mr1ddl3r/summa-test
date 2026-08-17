@@ -1,0 +1,28 @@
+{
+  "name": "summa",
+  "version": "0.1.0",
+  "description": "Summa — the operating system for a hybrid human + AI company",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "console"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:console\"",
+    "dev:backend": "cd backend && mvn spring-boot:run",
+    "dev:console": "cd console && npm run dev",
+    "build": "npm run build:backend && npm run build:console",
+    "build:backend": "cd backend && mvn clean package -DskipTests",
+    "build:console": "cd console && npm run build",
+    "lint": "npm run lint:specs && npm run lint:console",
+    "lint:specs": "python tools/lint_specs.py",
+    "lint:console": "cd console && npm run lint",
+    "test": "npm run test:specs && npm run test:console",
+    "test:specs": "python tools/test_lint.py",
+    "test:console": "cd console && npm test",
+    "ci": "npm run lint && npm run test && npm run build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

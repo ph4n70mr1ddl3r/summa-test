@@ -1,0 +1,21 @@
+package com.summa.repository;
+
+import com.summa.model.Human;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+import java.util.Optional;
+
+@Repository
+public interface HumanRepository extends JpaRepository<Human, String> {
+    Optional<Human> findByEmail(String email);
+    Optional<Human> findByName(String name);
+    
+    @Query("SELECT h FROM Human h WHERE h.deactivatedAt IS NULL AND h.rbac = :role")
+    java.util.List<Human> findActiveByRole(String role);
+    
+    @Query("SELECT h FROM Human h WHERE h.deactivatedAt IS NULL")
+    java.util.List<Human> findAllActive();
+    
+    long countByDeactivatedAtIsNull();
+}

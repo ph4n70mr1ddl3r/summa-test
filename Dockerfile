@@ -1,0 +1,18 @@
+FROM eclipse-temurin:21-jre-alpine
+LABEL maintainer="summa-team"
+LABEL org.opencontainers.image.source="https://github.com/summa-org/summa"
+
+WORKDIR /app
+
+COPY backend/target/summa-backend-*.jar app.jar
+
+# Create data directories
+RUN mkdir -p /data/dna /data/db && chown -R 1000:1000 /data
+
+ENV SUMMA_DB_PATH=/data/db/summa.db \
+    SUMMA_DNA_REPO=/data/dna \
+    JAVA_OPTS="-Xmx512m -Xms256m"
+
+EXPOSE 8080
+
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

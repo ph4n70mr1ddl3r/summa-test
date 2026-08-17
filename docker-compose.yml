@@ -1,0 +1,36 @@
+version: '3.9'
+
+services:
+  summa:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+      - "3000:3000"
+    volumes:
+      - summa-data:/data
+      - summa-dna:/data/dna
+    environment:
+      - SUMMA_DB_PATH=/data/db/summa.db
+      - SUMMA_DNA_REPO=/data/dna
+      - SUMMA_JWT_SECRET=${SUMMA_JWT_SECRET:-change-me}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/auth/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  console:
+    build:
+      context: console
+      dockerfile: ../Dockerfile.console
+    ports:
+      - "3000:3000"
+    depends_on:
+      summa:
+        condition: service_healthy
+
+volumes:
+  summa-data:
+  summa-dna:
