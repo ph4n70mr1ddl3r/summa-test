@@ -1,6 +1,7 @@
 package com.summa.service;
 
 import com.summa.repository.InitiativeRepository;
+import com.summa.repository.BoardTaskRepository;
 import com.summa.model.Initiative;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -12,12 +13,14 @@ import java.util.Optional;
 @Service
 public class InitiativeService {
     private final InitiativeRepository initiativeRepository;
+    private final BoardTaskRepository boardTaskRepository;
     private final AuditService auditService;
     private final AskService askService;
 
-    public InitiativeService(InitiativeRepository initiativeRepository, AuditService auditService,
-                              AskService askService) {
+    public InitiativeService(InitiativeRepository initiativeRepository, BoardTaskRepository boardTaskRepository,
+                              AuditService auditService, AskService askService) {
         this.initiativeRepository = initiativeRepository;
+        this.boardTaskRepository = boardTaskRepository;
         this.auditService = auditService;
         this.askService = askService;
     }
@@ -139,7 +142,8 @@ public class InitiativeService {
                 auditService.logSystem("STALL_CHECK", "initiative", init.getId(),
                     String.format("{\"deadlinePassed\":true,\"sponsor\":\"%s\"}", init.getSponsor()));
                 // INT-060: File stall ask when open work exists; INT-063: close-out ask when none
-                boolean hasOpenWork = initiativeRepository.existsByStatusAndDeadlineBefore("active", now);
+                boolean hasOpenWork = boardTaskRepository.findByInitiativeId(init.getId()).stream()
+                        .anyMatch(t -> !"done".equals(t.getStatus()));
                 try {
                     if (hasOpenWork) {
                         askService.create("question", "system", init.getSponsor(),

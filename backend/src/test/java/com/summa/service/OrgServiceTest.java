@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -20,6 +21,9 @@ class OrgServiceTest {
 
     @Mock
     private AuditService auditService;
+
+    @Mock
+    private OffboardingWalkService offboardingWalkService;
 
     @InjectMocks
     private OrgService orgService;
@@ -65,12 +69,12 @@ class OrgServiceTest {
         Human human = createHuman("human-1", "member");
         when(humanRepository.findById("human-1")).thenReturn(Optional.of(human));
         when(humanRepository.countByDeactivatedAtIsNullAndRbac("admin")).thenReturn(2L);
-        when(humanRepository.save(any())).thenReturn(human);
+        when(offboardingWalkService.walkOffboard(eq("human-1"), eq(null), eq("admin-2")))
+            .thenReturn(Map.of("humanId", "human-1"));
 
         Human result = orgService.offboard("human-1", "admin-2");
 
         assertNotNull(result);
-        assertNotNull(result.getDeactivatedAt());
     }
 
     private Human createHuman(String id, String rbac) {

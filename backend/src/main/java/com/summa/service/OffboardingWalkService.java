@@ -159,7 +159,7 @@ public class OffboardingWalkService {
                 prop.setProposedBy(finalTargetOwner);
                 proposalRepository.save(prop);
                 proposalsTransferred++;
-            } else if (humanId.equals(prop.getProposedBy())) {
+            } else {
                 prop.setStatus("withdrawn");
                 proposalRepository.save(prop);
                 auditService.logSystem("OFFBOARD_WITHDRAW_PROPOSAL", "dna_proposal", prop.getId(),

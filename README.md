@@ -5,7 +5,7 @@ A self-hosted platform where human employees and AI agents work as one organizat
 ## Quick Start
 
 ### Prerequisites
-- Java 21+
+- Java 25+
 - Node.js 22+
 - Maven 3.9+
 

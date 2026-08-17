@@ -11,18 +11,22 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.Map;
 
 @Service
 public class OrgService {
     private final HumanRepository humanRepository;
     private final AuditService auditService;
     private final AuditEventRepository auditEventRepository;
+    private final OffboardingWalkService offboardingWalkService;
 
     public OrgService(HumanRepository humanRepository, AuditService auditService,
-                      AuditEventRepository auditEventRepository) {
+                      AuditEventRepository auditEventRepository,
+                      OffboardingWalkService offboardingWalkService) {
         this.humanRepository = humanRepository;
         this.auditService = auditService;
         this.auditEventRepository = auditEventRepository;
+        this.offboardingWalkService = offboardingWalkService;
     }
 
     public Human bootstrap(String name, String email, String rbac) {
@@ -82,10 +86,12 @@ public class OrgService {
             throw new IllegalStateException("Cannot offboard the last admin");
         }
 
-        human.setDeactivatedAt(Instant.now());
-        Human saved = humanRepository.save(human);
-        auditService.log(actor, "OFFBOARD", "human", id, null);
-        return saved;
+        // Run the full dependency walk per OFB-001
+        Map<String, Object> result = offboardingWalkService.walkOffboard(id, null, actor);
+
+        auditService.log(actor, "OFFBOARD", "human", id,
+            String.format("{\"result\":%s}", result));
+        return human;
     }
 
     @Transactional

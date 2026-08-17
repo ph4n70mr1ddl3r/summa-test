@@ -76,16 +76,17 @@ public class GovernanceService {
 
     /**
      * SPW-060: Check if the spend circuit-breaker should trip.
-     * Compares total settle cost (last 30 days) against the org ceiling.
+     * Compares (reserved + settled) against the org ceiling per SPW-033.
      */
     public boolean isSpendHaltTripped() {
         try {
             Double ceiling = getSetting("spend-org-ceiling", Double.class);
             if (ceiling == null) ceiling = 1000000.0;
-            Instant thirtyDaysAgo = Instant.now().minus(30, ChronoUnit.DAYS);
-            Double totalCostObj = spendLedgerRepository.sumSettleCostSince(thirtyDaysAgo);
-            double totalCost = totalCostObj != null ? totalCostObj : 0.0;
-            return totalCost >= ceiling;
+            Double reservedObj = spendLedgerRepository.sumReservedSince(Instant.now().minus(30, ChronoUnit.DAYS));
+            Double settledObj = spendLedgerRepository.sumSettleCostSince(Instant.now().minus(30, ChronoUnit.DAYS));
+            double reserved = reservedObj != null ? reservedObj : 0.0;
+            double settled = settledObj != null ? settledObj : 0.0;
+            return (reserved + settled) >= ceiling;
         } catch (Exception e) {
             // Fail-closed: any error in spend calculation trips the breaker
             return true;
@@ -95,12 +96,15 @@ public class GovernanceService {
     public Map<String, Object> getSpendView() {
         Double ceiling = getSetting("spend-org-ceiling", Double.class);
         if (ceiling == null) ceiling = 1000000.0;
-        Instant thirtyDaysAgo = Instant.now().minus(30, ChronoUnit.DAYS);
-        Double totalCostObj = spendLedgerRepository.sumSettleCostSince(thirtyDaysAgo);
-        double totalCost = totalCostObj != null ? totalCostObj : 0.0;
-        double utilization = totalCost / ceiling;
+        Instant window = Instant.now().minus(30, ChronoUnit.DAYS);
+        Double reservedObj = spendLedgerRepository.sumReservedSince(window);
+        Double settledObj = spendLedgerRepository.sumSettleCostSince(window);
+        double reserved = reservedObj != null ? reservedObj : 0.0;
+        double settled = settledObj != null ? settledObj : 0.0;
+        double utilization = (reserved + settled) / ceiling;
         java.util.Map<String, Object> view = new java.util.LinkedHashMap<>();
-        view.put("totalCost30d", totalCost);
+        view.put("reserved", reserved);
+        view.put("settled", settled);
         view.put("ceiling", ceiling);
         view.put("utilization", String.format("%.2f%%", utilization * 100));
         view.put("halted", isSpendHaltTripped());

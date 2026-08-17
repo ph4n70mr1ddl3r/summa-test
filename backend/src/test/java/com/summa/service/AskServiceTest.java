@@ -24,8 +24,11 @@ class AskServiceTest {
     @Mock
     private MemberService memberService;
 
+    @Mock
+    private GovernanceService governanceService;
+
     private AskService buildService() {
-        return new AskService(askRepository, auditService, memberService, 1L);
+        return new AskService(askRepository, auditService, memberService, governanceService, 1L);
     }
 
     @Test

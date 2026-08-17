@@ -17,4 +17,5 @@ public interface DnaProposalRepository extends JpaRepository<DnaProposal, String
     List<DnaProposal> findAllOpen();
     
     long countByStatus(String status);
+    long countByDomainIdAndStatus(String domainId, String status);
 }

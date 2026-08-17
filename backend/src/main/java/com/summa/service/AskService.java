@@ -22,6 +22,7 @@ public class AskService {
     private final AskRepository askRepository;
     private final AuditService auditService;
     private final MemberService memberService;
+    private final GovernanceService governanceService;
     private final long stormCollapseWindowSeconds;
 
     // ASK-100: Storm collapse window — tracks recent ask creation by (kind, to, payloadHash)
@@ -29,10 +30,12 @@ public class AskService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public AskService(AskRepository askRepository, AuditService auditService, MemberService memberService,
+                      GovernanceService governanceService,
                       @Value("${summa.asks.storm-collapse-window-hours:1}") long stormCollapseWindowHours) {
         this.askRepository = askRepository;
         this.auditService = auditService;
         this.memberService = memberService;
+        this.governanceService = governanceService;
         this.stormCollapseWindowSeconds = stormCollapseWindowHours * 3600L;
     }
 
@@ -142,10 +145,12 @@ public class AskService {
                     if (target.isPresent() && target.get().getDeputyMemberId() != null) {
                         successorTo = target.get().getDeputyMemberId();
                     }
+                    // ASK-012/CFG-140: derive deadline from tier defaults
+                    long successorDeadlineSeconds = deriveDeadlineFromTier(ask.getSlaTier());
                     Ask successor = create(ask.getKind(), ask.getFrom(), successorTo,
                         ask.getPayload(), ask.getSlaTier(), "deny",
                         ask.getQuorumRequired(),
-                        Instant.now().plusSeconds(24 * 3600L),
+                        Instant.now().plusSeconds(successorDeadlineSeconds),
                         ask.getInitiativeId(), ask.getWorkspaceId());
                     auditService.logSystem("EXPIRE_SUCCESSOR_CREATED", "ask", successor.getId(),
                         String.format("{\"originalId\":\"%s\",\"behavior\":\"%s\"}", ask.getId(), behavior));
@@ -208,6 +213,24 @@ public class AskService {
                 response != null ? response.substring(0, Math.min(100, response.length())) : "",
                 existingResponses.size(), ask.getQuorumRequired()));
         return saved;
+    }
+
+    /**
+     * ASK-012/CFG-140: Derive deadline seconds from SLA tier defaults.
+     */
+    private long deriveDeadlineFromTier(String tier) {
+        if ("critical".equals(tier)) {
+            Object val = governanceService.getSetting("asks-tier-critical-deadline-hours");
+            if (val instanceof Number) return ((Number) val).longValue() * 3600L;
+            return 1L * 3600L;
+        }
+        if ("bulk".equals(tier)) {
+            Object val = governanceService.getSetting("asks-tier-bulk-deadline-hours");
+            if (val instanceof Number) return ((Number) val).longValue() * 3600L;
+            return 24L * 3600L;
+        }
+        // standard tier: next digest is not a fixed deadline — use 24h as safe upper bound
+        return 24L * 3600L;
     }
 
     private void recordResponse(Ask ask, String responder, String response) {

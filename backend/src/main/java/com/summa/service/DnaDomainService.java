@@ -2,6 +2,9 @@ package com.summa.service;
 
 import com.summa.repository.DnaDomainRepository;
 import com.summa.model.DnaDomain;
+import com.summa.repository.DnaCardRepository;
+import com.summa.repository.DnaProposalRepository;
+import com.summa.repository.WorkspaceRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -10,10 +13,18 @@ import java.util.Optional;
 @Service
 public class DnaDomainService {
     private final DnaDomainRepository domainRepository;
+    private final DnaCardRepository cardRepository;
+    private final DnaProposalRepository proposalRepository;
+    private final WorkspaceRepository workspaceRepository;
     private final AuditService auditService;
 
-    public DnaDomainService(DnaDomainRepository domainRepository, AuditService auditService) {
+    public DnaDomainService(DnaDomainRepository domainRepository, DnaCardRepository cardRepository,
+                            DnaProposalRepository proposalRepository, WorkspaceRepository workspaceRepository,
+                            AuditService auditService) {
         this.domainRepository = domainRepository;
+        this.cardRepository = cardRepository;
+        this.proposalRepository = proposalRepository;
+        this.workspaceRepository = workspaceRepository;
         this.auditService = auditService;
     }
 
@@ -56,11 +67,15 @@ public class DnaDomainService {
                 .orElseThrow(() -> new IllegalArgumentException("Domain not found: " + id));
 
         // DGV-040: Archive refuses a domain still holding live-set state
-        // Simplified: check that domain exists and is active
-        if (!"active".equals(domain.getStatus())) {
-            throw new IllegalStateException("Domain is not active: " + domain.getStatus());
+        long liveCards = cardRepository.countByDomainIdAndStatusNot(id, "retired");
+        long openProposals = proposalRepository.countByDomainIdAndStatus(id, "open");
+        long liveBindings = workspaceRepository.countByDomainIdsContaining(id);
+        if (liveCards > 0 || openProposals > 0 || liveBindings > 0) {
+            throw new IllegalStateException(
+                String.format("Domain holds live state: cards=%d proposals=%d bindings=%d",
+                    liveCards, openProposals, liveBindings));
         }
-        
+
         domain.setStatus("archived");
         DnaDomain saved = domainRepository.save(domain);
         auditService.log(actor, "ARCHIVE", "dna_domain", id, null);
