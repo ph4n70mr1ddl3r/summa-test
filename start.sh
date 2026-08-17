@@ -21,6 +21,12 @@ fi
 
 echo "Java version: $(java -version 2>&1 | head -n 1)"
 
+# Check for JWT secret
+if [ -z "$SUMMA_JWT_SECRET" ]; then
+    echo "ERROR: SUMMA_JWT_SECRET environment variable is required"
+    exit 1
+fi
+
 # Create data directories
 mkdir -p ~/.summa/db ~/.summa/dna
 

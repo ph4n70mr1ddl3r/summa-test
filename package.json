@@ -4,7 +4,6 @@
   "description": "Summa — the operating system for a hybrid human + AI company",
   "private": true,
   "workspaces": [
-    "backend",
     "console"
   ],
   "scripts": {

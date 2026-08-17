@@ -17,3 +17,5 @@ coverage/
 backend/target/
 console/node_modules/
 console/.vite/
+.opencode/node_modules/
+.opencode/package-lock.json

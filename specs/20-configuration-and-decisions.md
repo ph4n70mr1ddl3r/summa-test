@@ -55,9 +55,6 @@ trigger; the mechanism it tunes is already designed (NFR-022). Defaults live beh
 - **CFG-110** — Business budgets: display-only field on initiatives (default) vs.
   enforcement tied into tier-2 write gates — revisit with the first write-capable
   ERP/WMS connector.
-- **CFG-120** — Name/branding: **Summa** — decided (PLAN v2.44); formal trademark + domain
-  confirmation pending. The AI members are *agents*; the former working title was "Coworker".
-  The deployment perimeter is CFG-020's Keycloak choice and CFG-030's shape decision.
 - **CFG-130** — Per-domain proposal strictness: every proposal reviewed (default) vs.
   opt-in auto-publish for low-blast-radius domains (audited, retro-reviewable) — revisit
   when proposal volume drowns owners.
