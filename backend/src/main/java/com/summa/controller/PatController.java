@@ -28,7 +28,6 @@ public class PatController {
             int expiryDays = body.containsKey("expiryDays") ? 
                 Integer.parseInt(body.get("expiryDays")) : 90;
             
-            // Parse scopes from JSON array string
             List<String> scopes = List.of();
             if (body.containsKey("scopes")) {
                 String scopesStr = body.get("scopes").replace("[", "").replace("]", "")
@@ -38,20 +37,19 @@ public class PatController {
                 }
             }
             
-            Pat pat = patService.create(
+            PatService.PatWithToken result = patService.create(
                 actor,
                 body.get("name"),
                 scopes,
                 expiryDays
             );
             
-            // Return the plaintext token (shown only once)
             return ResponseEntity.ok(Map.of(
-                "id", pat.getId(),
-                "name", pat.getName(),
-                "token", "summa_pat_" + pat.getId(), // Placeholder for actual token
-                "scopes", pat.getScopes(),
-                "expiresAt", pat.getExpiresAt().toString()
+                "id", result.pat().getId(),
+                "name", result.pat().getName(),
+                "token", result.token(),
+                "scopes", result.pat().getScopes(),
+                "expiresAt", result.pat().getExpiresAt().toString()
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

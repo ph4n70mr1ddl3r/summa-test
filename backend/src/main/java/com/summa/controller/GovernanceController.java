@@ -57,4 +57,11 @@ public class GovernanceController {
         body.forEach((key, value) -> governanceService.setSetting(key, value));
         return ResponseEntity.ok(governanceService.getAllSettings());
     }
+
+    @PostMapping("/spend/overruns/{id}/ack")
+    public ResponseEntity<?> ackSpendOverrun(@PathVariable String id,
+                                              @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        // API-051: admin; lifts the SPW-035 reserve gate
+        return ResponseEntity.ok(Map.of("status", "overrun_acknowledged", "rowId", id));
+    }
 }

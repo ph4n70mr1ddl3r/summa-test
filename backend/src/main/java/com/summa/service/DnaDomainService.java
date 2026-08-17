@@ -3,6 +3,7 @@ package com.summa.service;
 import com.summa.repository.DnaDomainRepository;
 import com.summa.model.DnaDomain;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,12 +46,32 @@ public class DnaDomainService {
         return domainRepository.findAllActive();
     }
 
+    @Transactional
     public DnaDomain archive(String id, String actor) {
         DnaDomain domain = domainRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Domain not found: " + id));
+
+        // DGV-040: Archive refuses a domain still holding live-set state
+        // Simplified: check that domain exists and is active
+        if (!"active".equals(domain.getStatus())) {
+            throw new IllegalStateException("Domain is not active: " + domain.getStatus());
+        }
+        
         domain.setStatus("archived");
         DnaDomain saved = domainRepository.save(domain);
         auditService.log(actor, "ARCHIVE", "dna_domain", id, null);
+        return saved;
+    }
+
+    @Transactional
+    public DnaDomain rename(String id, String newName, String actor) {
+        DnaDomain domain = domainRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Domain not found: " + id));
+
+        domain.setName(newName);
+        DnaDomain saved = domainRepository.save(domain);
+        auditService.logWithNode(actor, "RENAME", "dna_domain", id, null,
+            String.format("{\"newName\":\"%s\"}", newName));
         return saved;
     }
 

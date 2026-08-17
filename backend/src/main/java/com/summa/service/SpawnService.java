@@ -1,12 +1,12 @@
 package com.summa.service;
 
 import com.summa.repository.SpawnRequestRepository;
+import com.summa.repository.SpendLedgerRepository;
 import com.summa.model.SpawnRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -14,19 +14,22 @@ public class SpawnService {
     private final SpawnRequestRepository spawnRepository;
     private final AuditService auditService;
     private final GovernanceService governanceService;
+    private final SpendLedgerRepository spendLedgerRepository;
 
     public SpawnService(SpawnRequestRepository spawnRepository, AuditService auditService,
-                         GovernanceService governanceService) {
+                         GovernanceService governanceService,
+                         SpendLedgerRepository spendLedgerRepository) {
         this.spawnRepository = spawnRepository;
         this.auditService = auditService;
         this.governanceService = governanceService;
+        this.spendLedgerRepository = spendLedgerRepository;
     }
 
     public SpawnRequest create(String requesterId, String templateId, String customRole,
                                 String spawnClass, String purpose, String workspaceBindings,
                                 String scopeCeiling, Double budgetCap, Integer ttlHours,
                                 String requestedByHumanId, String actor) {
-        // Check spend halt
+        // SPW-060: Check spend halt
         if (governanceService.isSpendHaltTripped()) {
             throw new IllegalStateException("Spend halt is active - spawns are blocked");
         }
@@ -72,10 +75,19 @@ public class SpawnService {
             throw new IllegalStateException("Cannot approve non-requested spawn: " + request.getStatus());
         }
 
+        // SPW-062: Check spend halt — accept under halt is audit-only
+        if (governanceService.isSpendHaltTripped()) {
+            request.setStatus("archived");
+            SpawnRequest saved = spawnRepository.save(request);
+            auditService.log(actor, "AUDIT_ONLY_SPAWN_APPROVE", "spawn_request", id,
+                "Rejected: spend halt active");
+            return saved;
+        }
+
         request.setStatus("approved");
         request.setApprovedBy(approvedBy);
         request.setApprovedAt(Instant.now());
-        
+
         SpawnRequest saved = spawnRepository.save(request);
         auditService.log(actor, "APPROVE_SPAWN", "spawn_request", id,
             String.format("{\"approvedBy\":\"%s\"}", approvedBy));
@@ -104,10 +116,24 @@ public class SpawnService {
         return saved;
     }
 
-    public Map<String, Object> getStats() {
+    public java.util.Map<String, Object> getStats() {
         long requested = spawnRepository.countByStatus("requested");
         long approved = spawnRepository.countByStatus("approved");
         long archived = spawnRepository.countByStatus("archived");
-        return Map.of("requested", requested, "approved", approved, "archived", archived);
+        return java.util.Map.of("requested", requested, "approved", approved, "archived", archived);
+    }
+
+    /**
+     * Check if spend ceiling is breached per SPW-060.
+     */
+    public boolean isSpendHaltTripped() {
+        Double totalCost = spendLedgerRepository.sumTotalCostSince(
+            Instant.now().minusSeconds(30 * 86400L)); // last 30 days
+        if (totalCost == null) totalCost = 0.0;
+        
+        Double ceiling = governanceService.getSetting("spend.org_ceiling", Double.class);
+        if (ceiling == null) ceiling = 1000000.0;
+        
+        return totalCost >= ceiling;
     }
 }

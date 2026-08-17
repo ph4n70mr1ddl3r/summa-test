@@ -103,4 +103,12 @@ public class AgentController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @PostMapping("/{id}/promote")
+    public ResponseEntity<?> promote(@PathVariable String id, @RequestBody Map<String, String> body,
+                                      @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        // API-033: files promotion ask for customRole hire
+        // Stub: in production this creates a proposal-shaped ask per TPL-040..046
+        return ResponseEntity.ok(Map.of("status", "promotion_ask_filed", "agentId", id));
+    }
 }

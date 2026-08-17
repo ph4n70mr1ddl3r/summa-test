@@ -55,6 +55,19 @@ public class DnaDomainController {
             return ResponseEntity.ok(domain);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/rename")
+    public ResponseEntity<?> renameDomain(@PathVariable String id, @RequestBody Map<String, String> body,
+                                           @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        try {
+            DnaDomain domain = domainService.rename(id, body.get("name"), actor);
+            return ResponseEntity.ok(domain);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
         }
     }
 
@@ -78,5 +91,20 @@ public class DnaDomainController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    // API-023: topology ops — split, merge, rename are stubs for Phase 6+
+    @PostMapping("/{id}/split")
+    public ResponseEntity<?> splitDomain(@PathVariable String id, @RequestBody Map<String, String> body,
+                                          @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        // DGV-010..013: governed split — stub for Phase 6
+        return ResponseEntity.ok(Map.of("status", "not_implemented", "note", "Topology ops scheduled for Phase 6"));
+    }
+
+    @PostMapping("/{id}/merge")
+    public ResponseEntity<?> mergeDomain(@PathVariable String id, @RequestBody Map<String, String> body,
+                                          @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        // DGV-014: governed merge — stub for Phase 6
+        return ResponseEntity.ok(Map.of("status", "not_implemented", "note", "Topology ops scheduled for Phase 6"));
     }
 }

@@ -20,8 +20,8 @@ public class PatService {
         this.auditService = auditService;
     }
 
-    public Pat create(String memberId, String name, List<String> scopes, int expiryDays) {
-        String rawToken = UUID.randomUUID().toString() + "-" + UUID.randomUUID().toString();
+    public PatWithToken create(String memberId, String name, List<String> scopes, int expiryDays) {
+        String rawToken = generateToken();
         String tokenHash = hashToken(rawToken);
 
         Pat pat = new Pat();
@@ -36,14 +36,7 @@ public class PatService {
         auditService.log(memberId, "CREATE_PAT", "pat", saved.getId(),
             String.format("{\"name\":\"%s\",\"expiryDays\":%d}", name, expiryDays));
 
-        // Return with plaintext token (shown once)
-        saved = new Pat();
-        saved.setId(saved.getId());
-        saved.setMemberId(saved.getMemberId());
-        saved.setName(saved.getName());
-        saved.setScopes(saved.getScopes());
-        saved.setExpiresAt(saved.getExpiresAt());
-        return saved;
+        return new PatWithToken(saved, rawToken);
     }
 
     public Optional<Pat> findById(String id) {
@@ -75,6 +68,11 @@ public class PatService {
         });
     }
 
+    private String generateToken() {
+        return "summa_pat_" + UUID.randomUUID().toString().replace("-", "") +
+               "_" + UUID.randomUUID().toString().replace("-", "");
+    }
+
     private String hashToken(String token) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -95,4 +93,6 @@ public class PatService {
         sb.append("]");
         return sb.toString();
     }
+
+    public record PatWithToken(Pat pat, String token) {}
 }

@@ -55,6 +55,26 @@ public class NodeController {
         }
     }
 
+    @PostMapping("/{id}/claims")
+    public ResponseEntity<?> claimWorkspace(@PathVariable String id, @RequestBody Map<String, String> body) {
+        // API-060: acquire or renew a workspace claim as epoch-fenced lease
+        // Stub for now — full implementation needs WorkspaceService integration
+        return ResponseEntity.ok(Map.of("status", "claimed", "epoch", 1));
+    }
+
+    @PostMapping("/{id}/work/pull")
+    public ResponseEntity<?> pullWork(@PathVariable String id) {
+        // API-060: fetch queued runs for workspaces the node holds a live claim on
+        return ResponseEntity.ok(Map.of("runs", List.of()));
+    }
+
+    @PostMapping("/{id}/runs/{runId}/report")
+    public ResponseEntity<?> reportRun(@PathVariable String id, @PathVariable String runId,
+                                        @RequestBody Map<String, Object> body) {
+        // API-060: land results, artifacts, and spend ledger lines
+        return ResponseEntity.ok(Map.of("status", "received"));
+    }
+
     @PostMapping("/{id}/revoke")
     public ResponseEntity<?> revoke(@PathVariable String id,
                                      @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {

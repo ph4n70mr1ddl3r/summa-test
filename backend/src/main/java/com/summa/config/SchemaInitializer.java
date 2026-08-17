@@ -24,17 +24,7 @@ public class SchemaInitializer {
             ClassPathResource resource = new ClassPathResource("schema.sql");
             String sql = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
             
-            List<String> statements = new ArrayList<>();
-            StringBuilder current = new StringBuilder();
-            
-            for (String line : sql.split(";")) {
-                current.append(line).append(";");
-                String trimmed = current.toString().trim();
-                if (!trimmed.isEmpty() && trimmed.endsWith(";")) {
-                    statements.add(trimmed);
-                    current = new StringBuilder();
-                }
-            }
+            List<String> statements = parseSqlStatements(sql);
             
             for (String statement : statements) {
                 String s = statement.trim();
@@ -51,5 +41,47 @@ public class SchemaInitializer {
         } catch (Exception e) {
             throw new RuntimeException("Failed to initialize database schema", e);
         }
+    }
+
+    /**
+     * Parse SQL into statements respecting string literals (single quotes) so that
+     * semicolons inside FTS5 expressions and trigger bodies are not split.
+     */
+    private List<String> parseSqlStatements(String sql) {
+        List<String> statements = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        boolean inSingleQuote = false;
+        
+        for (int i = 0; i < sql.length(); i++) {
+            char c = sql.charAt(i);
+            
+            if (c == '\'' && !inSingleQuote) {
+                inSingleQuote = true;
+                current.append(c);
+            } else if (c == '\'' && inSingleQuote) {
+                // Check for escaped quote ''
+                if (i + 1 < sql.length() && sql.charAt(i + 1) == '\'') {
+                    current.append(c).append(sql.charAt(++i));
+                } else {
+                    inSingleQuote = false;
+                    current.append(c);
+                }
+            } else if (c == ';' && !inSingleQuote) {
+                String stmt = current.toString().trim();
+                if (!stmt.isEmpty()) {
+                    statements.add(stmt);
+                }
+                current = new StringBuilder();
+            } else {
+                current.append(c);
+            }
+        }
+        
+        String remaining = current.toString().trim();
+        if (!remaining.isEmpty()) {
+            statements.add(remaining);
+        }
+        
+        return statements;
     }
 }

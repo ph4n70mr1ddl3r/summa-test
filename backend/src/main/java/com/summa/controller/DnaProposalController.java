@@ -54,33 +54,35 @@ public class DnaProposalController {
         }
     }
 
-    @PostMapping("/{id}/review/publish")
-    public ResponseEntity<?> publishProposal(@PathVariable String id,
-                                              @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
-        try {
-            DnaProposal proposal = proposalService.publish(id, actor, actor);
-            return ResponseEntity.ok(proposal);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
-
-    @PostMapping("/{id}/review/reject")
-    public ResponseEntity<?> rejectProposal(@PathVariable String id,
+    @PostMapping("/{id}/review")
+    public ResponseEntity<?> reviewProposal(@PathVariable String id, @RequestBody Map<String, String> body,
                                              @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
-        try {
-            DnaProposal proposal = proposalService.reject(id, actor, actor);
-            return ResponseEntity.ok(proposal);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+        // API-022: single review endpoint with action in body
+        String action = body.get("action");
+        if ("publish".equals(action)) {
+            try {
+                DnaProposal proposal = proposalService.publish(id, actor, actor);
+                return ResponseEntity.ok(proposal);
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.notFound().build();
+            } catch (IllegalStateException e) {
+                return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            }
+        } else if ("reject".equals(action)) {
+            try {
+                DnaProposal proposal = proposalService.reject(id, actor, actor);
+                return ResponseEntity.ok(proposal);
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.notFound().build();
+            }
+        } else {
+            return ResponseEntity.badRequest().body(Map.of("error", "action must be 'publish' or 'reject'"));
         }
     }
 
     @PostMapping("/{id}/withdraw")
     public ResponseEntity<?> withdrawProposal(@PathVariable String id,
-                                               @RequestHeader(value = "X-Actor") String actor) {
+                                               @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
         try {
             DnaProposal proposal = proposalService.withdraw(id, actor);
             return ResponseEntity.ok(proposal);
@@ -100,5 +102,14 @@ public class DnaProposalController {
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
+    }
+
+    @GetMapping("/review-queue")
+    public ResponseEntity<List<DnaProposal>> reviewQueue(@RequestParam(required = false) String domainId) {
+        // API-022: GET /dna/review-queue
+        if (domainId != null) {
+            return ResponseEntity.ok(proposalService.findOpenByDomain(domainId));
+        }
+        return ResponseEntity.ok(proposalService.findAllOpen());
     }
 }
