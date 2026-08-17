@@ -4,6 +4,7 @@ import com.summa.service.DnaCardService;
 import com.summa.model.DnaCard;
 import com.summa.service.AuditService;
 import com.summa.model.AuditEvent;
+import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -14,10 +15,12 @@ import java.util.Map;
 public class DnaCardController {
     private final DnaCardService cardService;
     private final AuditService auditService;
+    private final WriteGate writeGate;
 
-    public DnaCardController(DnaCardService cardService, AuditService auditService) {
+    public DnaCardController(DnaCardService cardService, AuditService auditService, WriteGate writeGate) {
         this.cardService = cardService;
         this.auditService = auditService;
+        this.writeGate = writeGate;
     }
 
     @GetMapping
@@ -38,7 +41,9 @@ public class DnaCardController {
 
     @PostMapping
     public ResponseEntity<?> createCard(@RequestBody Map<String, String> body,
-                                         @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                          @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             DnaCard card = cardService.create(
                 body.get("id"),
@@ -57,7 +62,9 @@ public class DnaCardController {
 
     @PostMapping("/drafts")
     public ResponseEntity<?> createDraft(@RequestBody Map<String, String> body,
-                                           @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                            @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             DnaCard card = cardService.createDraft(
                 body.get("id"),
@@ -76,7 +83,9 @@ public class DnaCardController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<?> updateCard(@PathVariable String id, @RequestBody Map<String, String> body,
-                                         @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                          @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             DnaCard card = cardService.update(
                 id,
@@ -99,7 +108,9 @@ public class DnaCardController {
 
     @PostMapping("/{id}/retire")
     public ResponseEntity<?> retireCard(@PathVariable String id,
-                                         @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                          @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             DnaCard card = cardService.retire(id, actor);
             return ResponseEntity.ok(card);

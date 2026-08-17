@@ -29,8 +29,8 @@ public class DnaSearchController {
             return ResponseEntity.ok(Map.of("results", results, "count", results.size()));
         } catch (Exception e) {
             AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.ok(Map.of("results", List.of(), "count", 0,
-                "code", "internal", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ResponseEntity.status(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("code", "internal", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 

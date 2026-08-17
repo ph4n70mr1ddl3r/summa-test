@@ -4,6 +4,7 @@ import com.summa.service.SpawnService;
 import com.summa.model.SpawnRequest;
 import com.summa.service.AuditService;
 import com.summa.model.AuditEvent;
+import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -14,10 +15,12 @@ import java.util.Map;
 public class SpawnController {
     private final SpawnService spawnService;
     private final AuditService auditService;
+    private final WriteGate writeGate;
 
-    public SpawnController(SpawnService spawnService, AuditService auditService) {
+    public SpawnController(SpawnService spawnService, AuditService auditService, WriteGate writeGate) {
         this.spawnService = spawnService;
         this.auditService = auditService;
+        this.writeGate = writeGate;
     }
 
     @GetMapping
@@ -42,7 +45,9 @@ public class SpawnController {
 
     @PostMapping
     public ResponseEntity<?> createRequest(@RequestBody Map<String, String> body,
-                                            @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                             @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             SpawnRequest request = spawnService.create(
                 body.get("requesterId"),
@@ -70,7 +75,9 @@ public class SpawnController {
 
     @PostMapping("/{id}/approve")
     public ResponseEntity<?> approve(@PathVariable String id,
-                                       @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                        @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             SpawnRequest request = spawnService.approve(id, actor, actor);
             return ResponseEntity.ok(request);
@@ -87,7 +94,9 @@ public class SpawnController {
 
     @PostMapping("/{id}/deny")
     public ResponseEntity<?> deny(@PathVariable String id,
-                                    @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                     @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             SpawnRequest request = spawnService.deny(id, actor);
             return ResponseEntity.ok(request);

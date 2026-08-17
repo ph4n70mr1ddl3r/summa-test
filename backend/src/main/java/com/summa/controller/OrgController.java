@@ -6,6 +6,7 @@ import com.summa.service.MemberService;
 import com.summa.model.Human;
 import com.summa.model.AuditEvent;
 import com.summa.model.Agent;
+import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
@@ -20,11 +21,13 @@ public class OrgController {
     private final OrgService orgService;
     private final AuditService auditService;
     private final MemberService memberService;
+    private final WriteGate writeGate;
 
-    public OrgController(OrgService orgService, AuditService auditService, MemberService memberService) {
+    public OrgController(OrgService orgService, AuditService auditService, MemberService memberService, WriteGate writeGate) {
         this.orgService = orgService;
         this.auditService = auditService;
         this.memberService = memberService;
+        this.writeGate = writeGate;
     }
 
     @PostMapping("/bootstrap")
@@ -63,6 +66,8 @@ public class OrgController {
     @PutMapping("/humans/{id}/rbac")
     public ResponseEntity<?> updateRbac(@PathVariable String id, @RequestBody Map<String, String> body,
                                           @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Human human = orgService.updateRbac(id, body.get("rbac"), actor);
             return ResponseEntity.ok(human);
@@ -79,7 +84,9 @@ public class OrgController {
 
     @PutMapping("/humans/{id}/deputy")
     public ResponseEntity<?> setDeputy(@PathVariable String id, @RequestBody Map<String, String> body,
-                                        @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                         @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Human human = orgService.setDeputy(id, body.get("deputyMemberId"), actor);
             return ResponseEntity.ok(human);
@@ -92,7 +99,9 @@ public class OrgController {
 
     @PostMapping("/humans/{id}/offboard")
     public ResponseEntity<?> offboard(@PathVariable String id,
-                                       @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                        @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Human human = orgService.offboard(id, actor);
             return ResponseEntity.ok(human);
@@ -109,7 +118,9 @@ public class OrgController {
 
     @PostMapping("/humans/{id}/erasure")
     public ResponseEntity<?> erasure(@PathVariable String id,
-                                      @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                       @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         // API-005: admin, audited, honors data_holds (STG-030..034)
         try {
             orgService.findHuman(id).orElseThrow(() -> new IllegalArgumentException("Human not found: " + id));

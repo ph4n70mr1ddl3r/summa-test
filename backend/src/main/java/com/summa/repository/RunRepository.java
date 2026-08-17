@@ -18,4 +18,7 @@ public interface RunRepository extends JpaRepository<Run, String> {
     
     long countByStatus(String status);
     long countByAgentId(String agentId);
+
+    @Query("SELECT r FROM Run r ORDER BY r.createdAt DESC")
+    List<Run> findByOrderByCreatedAtDesc();
 }

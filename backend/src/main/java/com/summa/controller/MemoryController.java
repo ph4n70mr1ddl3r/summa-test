@@ -34,7 +34,7 @@ public class MemoryController {
         if (Boolean.TRUE.equals(tainted)) {
             return ResponseEntity.ok(memoryService.findTainted());
         }
-        return ResponseEntity.ok(List.of());
+        return ResponseEntity.ok(memoryService.findAll());
     }
 
     @GetMapping("/{id}")

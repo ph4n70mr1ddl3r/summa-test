@@ -138,16 +138,20 @@ public class InitiativeService {
             if (init.getDeadline() != null && init.getDeadline().isBefore(now) && "active".equals(init.getStatus())) {
                 auditService.logSystem("STALL_CHECK", "initiative", init.getId(),
                     String.format("{\"deadlinePassed\":true,\"sponsor\":\"%s\"}", init.getSponsor()));
-                // File bulk-tier question ask to sponsor per INT-060 (stall) and INT-063 (close-out)
+                // INT-060: File stall ask when open work exists; INT-063: close-out ask when none
+                boolean hasOpenWork = initiativeRepository.existsByStatusAndDeadlineBefore("active", now);
                 try {
-                    askService.create("question", "system", init.getSponsor(),
-                        String.format("{\"initiativeId\":\"%s\",\"reason\":\"stall\"}", init.getId()),
-                        "bulk", "escalate", 1,
-                        Instant.now().plusSeconds(7 * 86400L), null, null);
-                    askService.create("question", "system", init.getSponsor(),
-                        String.format("{\"initiativeId\":\"%s\",\"reason\":\"closeout\"}", init.getId()),
-                        "bulk", "escalate", 1,
-                        Instant.now().plusSeconds(7 * 86400L), null, null);
+                    if (hasOpenWork) {
+                        askService.create("question", "system", init.getSponsor(),
+                            String.format("{\"initiativeId\":\"%s\",\"reason\":\"stall\"}", init.getId()),
+                            "bulk", "escalate", 1,
+                            Instant.now().plusSeconds(7 * 86400L), null, null);
+                    } else {
+                        askService.create("question", "system", init.getSponsor(),
+                            String.format("{\"initiativeId\":\"%s\",\"reason\":\"closeout\"}", init.getId()),
+                            "bulk", "escalate", 1,
+                            Instant.now().plusSeconds(7 * 86400L), null, null);
+                    }
                 } catch (Exception e) {
                     auditService.logSystem("STALL_ASK_FAIL", "initiative", init.getId(),
                         String.format("{\"error\":\"%s\"}", e.getMessage()));

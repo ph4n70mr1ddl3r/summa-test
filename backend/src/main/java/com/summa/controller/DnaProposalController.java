@@ -4,6 +4,7 @@ import com.summa.service.DnaProposalService;
 import com.summa.model.DnaProposal;
 import com.summa.service.AuditService;
 import com.summa.model.AuditEvent;
+import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -14,10 +15,12 @@ import java.util.Map;
 public class DnaProposalController {
     private final DnaProposalService proposalService;
     private final AuditService auditService;
+    private final WriteGate writeGate;
 
-    public DnaProposalController(DnaProposalService proposalService, AuditService auditService) {
+    public DnaProposalController(DnaProposalService proposalService, AuditService auditService, WriteGate writeGate) {
         this.proposalService = proposalService;
         this.auditService = auditService;
+        this.writeGate = writeGate;
     }
 
     @GetMapping
@@ -42,7 +45,9 @@ public class DnaProposalController {
 
     @PostMapping
     public ResponseEntity<?> createProposal(@RequestBody Map<String, String> body,
-                                             @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                              @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             DnaProposal proposal = proposalService.create(
                 body.get("id"),
@@ -61,7 +66,9 @@ public class DnaProposalController {
 
     @PostMapping("/{id}/review")
     public ResponseEntity<?> reviewProposal(@PathVariable String id, @RequestBody Map<String, String> body,
-                                             @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                              @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         // API-022: single review endpoint with action in body
         String action = body.get("action");
         if ("publish".equals(action)) {
@@ -95,7 +102,9 @@ public class DnaProposalController {
 
     @PostMapping("/{id}/withdraw")
     public ResponseEntity<?> withdrawProposal(@PathVariable String id,
-                                               @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                                @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             DnaProposal proposal = proposalService.withdraw(id, actor);
             return ResponseEntity.ok(proposal);
@@ -109,6 +118,8 @@ public class DnaProposalController {
     @PostMapping("/{id}/amend")
     public ResponseEntity<?> amendProposal(@PathVariable String id, @RequestBody Map<String, String> body,
                                             @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             DnaProposal proposal = proposalService.amend(id, body.get("payload"), actor);
             return ResponseEntity.ok(proposal);

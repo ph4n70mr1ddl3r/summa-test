@@ -1,0 +1,77 @@
+package com.summa.security;
+
+import com.summa.service.MemberService;
+import com.summa.model.Human;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpMethod;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+import java.io.IOException;
+import java.util.Map;
+import java.util.Optional;
+
+@Component
+public class RbacAuthorizationFilter extends OncePerRequestFilter {
+
+    private static final Map<String, String> WRITE_METHODS = Map.of(
+        "POST", "write",
+        "PUT", "write",
+        "PATCH", "write",
+        "DELETE", "write"
+    );
+
+    private static final ThreadLocal<String> ACTOR_CONTEXT = new ThreadLocal<>();
+    private static final ThreadLocal<Boolean> WRITES_ALLOWED = new ThreadLocal<>();
+
+    public static String getCurrentActor() {
+        return ACTOR_CONTEXT.get();
+    }
+
+    public static boolean isWriteAllowed() {
+        Boolean val = WRITES_ALLOWED.get();
+        return val != null && val;
+    }
+
+    private final MemberService memberService;
+
+    public RbacAuthorizationFilter(MemberService memberService) {
+        this.memberService = memberService;
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+                                     FilterChain filterChain) throws ServletException, IOException {
+        String actor = (String) request.getAttribute("actor");
+        if (actor == null) {
+            actor = request.getHeader("X-Actor");
+        }
+        if (actor == null) {
+            actor = "system";
+        }
+        ACTOR_CONTEXT.set(actor);
+
+        boolean writeAllowed = true;
+        if (WRITE_METHODS.containsKey(request.getMethod())) {
+            Optional<Human> humanOpt = memberService.findHuman(actor);
+            if (humanOpt.isPresent()) {
+                writeAllowed = memberService.hasWriteSurface(humanOpt.get());
+            }
+            // Agents are allowed to write (they are system actors)
+            var agentOpt = memberService.findAgent(actor);
+            if (agentOpt.isPresent()) {
+                writeAllowed = memberService.hasWriteSurfaceAgent(agentOpt.get());
+            }
+        }
+        WRITES_ALLOWED.set(writeAllowed);
+
+        try {
+            filterChain.doFilter(request, response);
+        } finally {
+            ACTOR_CONTEXT.remove();
+            WRITES_ALLOWED.remove();
+        }
+    }
+}

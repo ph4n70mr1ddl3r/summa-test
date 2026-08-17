@@ -4,28 +4,61 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    @Value("${summa.auth.jwt-secret}")
+    private String jwtSecret;
+
+    @Value("${summa.auth.jwt-expiration:86400000}")
+    private long jwtExpiration;
+
+    private static final List<String> PUBLIC_PATHS = List.of(
+        "/auth/login", "/auth/health", "/health", "/info",
+        "/nodes/enroll", "/dna/search"
+    );
+
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request, 
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
                                      @NonNull HttpServletResponse response,
                                      @NonNull FilterChain filterChain) throws ServletException, IOException {
+        String path = request.getRequestURI();
+
+        if (isPublicPath(path)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String authHeader = request.getHeader("Authorization");
-        
-        // In production, validate JWT and set SecurityContext
-        // For now, allow requests through and let services handle auth via X-Actor header
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
-            request.setAttribute("authToken", token);
+            Map<String, Object> payload = JwtUtil.parseToken(token, jwtSecret);
+            if (payload != null) {
+                String subject = (String) payload.get("sub");
+                request.setAttribute("authSubject", subject);
+                // Set X-Actor from JWT subject for consistent downstream handling
+                request.setAttribute("actor", subject);
+            }
         }
-        
+
+        // Fall back to X-Actor header if no valid JWT
+        String actor = request.getHeader("X-Actor");
+        if (actor != null && !actor.isEmpty()) {
+            request.setAttribute("actor", actor);
+        }
+
         filterChain.doFilter(request, response);
+    }
+
+    private boolean isPublicPath(String path) {
+        return PUBLIC_PATHS.stream().anyMatch(path::startsWith);
     }
 }

@@ -2,7 +2,9 @@ package com.summa.service;
 
 import com.summa.repository.SpawnRequestRepository;
 import com.summa.repository.RoleTemplateRepository;
+import com.summa.repository.AgentRepository;
 import com.summa.model.SpawnRequest;
+import com.summa.model.Agent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,12 +30,20 @@ class SpawnServiceTest {
     @Mock
     private RoleTemplateRepository templateRepository;
 
+    @Mock
+    private AgentRepository agentRepository;
+
     @InjectMocks
     private SpawnService spawnService;
 
     @Test
     void create_requestWithDefaults() {
         when(governanceService.isSpendHaltTripped()).thenReturn(false);
+
+        Agent agent = new Agent();
+        agent.setId("agent-1");
+        agent.setStatus("active");
+        when(agentRepository.findById("agent-1")).thenReturn(Optional.of(agent));
 
         SpawnRequest request = new SpawnRequest();
         request.setId("spawn-1");

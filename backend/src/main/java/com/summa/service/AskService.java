@@ -58,8 +58,9 @@ public class AskService {
         ask.setWorkspaceId(workspaceId);
 
         // ASK-100: Storm collapse — if identical pending ask exists within collapse window,
-        // attach to canonical instead of creating duplicate
-        String collapseKey = buildCollapseKey(kind, to, payload);
+        // attach to canonical instead of creating duplicate. Key includes originator to prevent
+        // cross-user collision.
+        String collapseKey = buildCollapseKey(kind, from, to, payload);
         Instant now = Instant.now();
         Instant lastCreated = collapseWindowTimestamps.get(collapseKey);
         if (lastCreated != null && now.getEpochSecond() - lastCreated.getEpochSecond() < stormCollapseWindowSeconds) {
@@ -82,13 +83,13 @@ public class AskService {
         return saved;
     }
 
-    private String buildCollapseKey(String kind, String to, String payload) {
+    private String buildCollapseKey(String kind, String from, String to, String payload) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest((kind + "|" + to + "|" + (payload != null ? payload : "")).getBytes(StandardCharsets.UTF_8));
+            byte[] hash = digest.digest((kind + "|" + from + "|" + to + "|" + (payload != null ? payload : "")).getBytes(StandardCharsets.UTF_8));
             return java.util.Base64.getEncoder().encodeToString(hash);
         } catch (Exception e) {
-            return kind + "|" + to + "|" + java.util.Objects.hash(payload);
+            return kind + "|" + from + "|" + to + "|" + java.util.Objects.hash(payload);
         }
     }
 

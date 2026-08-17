@@ -12,4 +12,6 @@ public interface InitiativeRepository extends JpaRepository<Initiative, String> 
     List<Initiative> findBySponsor(String sponsor);
     
     List<Initiative> findByLead(String lead);
+
+    boolean existsByStatusAndDeadlineBefore(String status, java.time.Instant deadline);
 }

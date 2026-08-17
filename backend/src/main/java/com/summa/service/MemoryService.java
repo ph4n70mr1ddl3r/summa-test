@@ -48,6 +48,10 @@ public class MemoryService {
         return memoryItemRepository.findByWorkspaceId(workspaceId);
     }
 
+    public List<MemoryItem> findAll() {
+        return memoryItemRepository.findAll();
+    }
+
     public List<MemoryItem> findTainted() {
         return memoryItemRepository.findByTaintedTrue();
     }

@@ -4,6 +4,8 @@ import com.summa.repository.SpawnRequestRepository;
 import com.summa.model.SpawnRequest;
 import com.summa.repository.RoleTemplateRepository;
 import com.summa.model.RoleTemplate;
+import com.summa.repository.AgentRepository;
+import com.summa.model.Agent;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -16,19 +18,31 @@ public class SpawnService {
     private final AuditService auditService;
     private final GovernanceService governanceService;
     private final RoleTemplateRepository templateRepository;
+    private final AgentRepository agentRepository;
 
     public SpawnService(SpawnRequestRepository spawnRepository, AuditService auditService,
-                          GovernanceService governanceService, RoleTemplateRepository templateRepository) {
+                          GovernanceService governanceService, RoleTemplateRepository templateRepository,
+                          AgentRepository agentRepository) {
         this.spawnRepository = spawnRepository;
         this.auditService = auditService;
         this.governanceService = governanceService;
         this.templateRepository = templateRepository;
+        this.agentRepository = agentRepository;
     }
 
     public SpawnRequest create(String requesterId, String templateId, String customRole,
-                                 String spawnClass, String purpose, String workspaceBindings,
-                                 String scopeCeiling, Double budgetCap, Integer ttlHours,
-                                 String requestedByHumanId, String actor) {
+                                  String spawnClass, String purpose, String workspaceBindings,
+                                  String scopeCeiling, Double budgetCap, Integer ttlHours,
+                                  String requestedByHumanId, String actor) {
+        // SPW-001: Validate requester is an existing active agent
+        Optional<Agent> requesterOpt = agentRepository.findById(requesterId);
+        if (requesterOpt.isEmpty()) {
+            throw new IllegalArgumentException("Requester agent not found: " + requesterId);
+        }
+        if (!"active".equals(requesterOpt.get().getStatus())) {
+            throw new IllegalStateException("Requester agent is not active: " + requesterId);
+        }
+
         // SPW-060: Check spend halt
         if (governanceService.isSpendHaltTripped()) {
             throw new IllegalStateException("Spend halt is active - spawns are blocked");
@@ -95,9 +109,11 @@ public class SpawnService {
             throw new IllegalStateException("Cannot approve non-requested spawn: " + request.getStatus());
         }
 
-        // SPW-062: Check spend halt — accept under halt is audit-only
+        // SPW-062: Check spend halt — accept under halt is audit-only, return with distinct status
         if (governanceService.isSpendHaltTripped()) {
             request.setStatus("archived");
+            request.setApprovedBy(approvedBy);
+            request.setApprovedAt(Instant.now());
             SpawnRequest saved = spawnRepository.save(request);
             auditService.log(actor, "AUDIT_ONLY_SPAWN_APPROVE", "spawn_request", id,
                 "Rejected: spend halt active");

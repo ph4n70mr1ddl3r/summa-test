@@ -57,8 +57,7 @@ public class RunService {
     }
 
     public List<Run> findRecent(int limit) {
-        return runRepository.findAll().stream()
-                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+        return runRepository.findByOrderByCreatedAtDesc().stream()
                 .limit(limit)
                 .toList();
     }

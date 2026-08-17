@@ -4,6 +4,8 @@ import com.summa.service.AskService;
 import com.summa.model.Ask;
 import com.summa.model.AuditEvent;
 import com.summa.service.AuditService;
+import com.summa.security.WriteGate;
+import com.summa.security.RbacAuthorizationFilter;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
@@ -15,10 +17,12 @@ import java.util.Map;
 public class AskController {
     private final AskService askService;
     private final AuditService auditService;
+    private final WriteGate writeGate;
 
-    public AskController(AskService askService, AuditService auditService) {
+    public AskController(AskService askService, AuditService auditService, WriteGate writeGate) {
         this.askService = askService;
         this.auditService = auditService;
+        this.writeGate = writeGate;
     }
 
     @GetMapping
@@ -43,7 +47,9 @@ public class AskController {
 
     @PostMapping
     public ResponseEntity<?> createAsk(@RequestBody Map<String, String> body,
-                                        @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                         @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             String deadlineStr = body.get("deadlineSeconds");
             long deadlineSeconds = 86400L;
@@ -83,7 +89,9 @@ public class AskController {
 
     @PostMapping("/{id}/respond")
     public ResponseEntity<?> respond(@PathVariable String id, @RequestBody Map<String, String> body,
-                                        @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                         @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Ask ask = askService.respond(id, actor, body.get("response"));
             return ResponseEntity.ok(ask);
@@ -100,7 +108,9 @@ public class AskController {
 
     @PostMapping("/{id}/withdraw")
     public ResponseEntity<?> withdraw(@PathVariable String id,
-                                        @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                         @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Ask ask = askService.withdraw(id, actor);
             return ResponseEntity.ok(ask);
@@ -113,6 +123,9 @@ public class AskController {
 
     @PostMapping("/{id}/expire")
     public ResponseEntity<?> expire(@PathVariable String id) {
+        String actor = RbacAuthorizationFilter.getCurrentActor();
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor != null ? actor : "system");
+        if (gate != null) return gate;
         try {
             Ask ask = askService.expire(id);
             return ResponseEntity.ok(ask);
