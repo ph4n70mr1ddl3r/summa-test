@@ -56,7 +56,7 @@ public class Agent {
     public void prePersist() {
         if (createdAt == null) createdAt = Instant.now();
         if (lineageDepth == null) lineageDepth = 0;
-        if (status == null) status = "active";
+        if (status == null) status = "requested";
     }
 
     public String getId() { return id; }

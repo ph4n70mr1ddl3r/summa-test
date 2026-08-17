@@ -2,6 +2,8 @@ package com.summa.controller;
 
 import com.summa.service.NodeService;
 import com.summa.model.Node;
+import com.summa.service.AuditService;
+import com.summa.model.AuditEvent;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -11,9 +13,11 @@ import java.util.Map;
 @RequestMapping("/nodes")
 public class NodeController {
     private final NodeService nodeService;
+    private final AuditService auditService;
 
-    public NodeController(NodeService nodeService) {
+    public NodeController(NodeService nodeService, AuditService auditService) {
         this.nodeService = nodeService;
+        this.auditService = auditService;
     }
 
     @GetMapping
@@ -41,7 +45,8 @@ public class NodeController {
                 "enrollmentToken", "temp-token-" + node.getId()
             ));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 
@@ -51,7 +56,9 @@ public class NodeController {
             Node node = nodeService.heartbeat(id, body.get("capabilities"));
             return ResponseEntity.ok(node);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 
@@ -82,7 +89,9 @@ public class NodeController {
             Node node = nodeService.revoke(id, actor);
             return ResponseEntity.ok(node);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 
@@ -98,7 +107,9 @@ public class NodeController {
             );
             return ResponseEntity.ok(node);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 }

@@ -71,9 +71,13 @@ public class DnaGlossaryController {
             );
             return ResponseEntity.ok(entry);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
         } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 
@@ -84,7 +88,9 @@ public class DnaGlossaryController {
             DnaGlossary entry = glossaryService.retire(id, actor);
             return ResponseEntity.ok(entry);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 }

@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/org")
@@ -36,7 +37,9 @@ public class OrgController {
             );
             return ResponseEntity.ok(Map.of("id", human.getId(), "email", human.getEmail(), "rbac", human.getRbac()));
         } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 
@@ -48,9 +51,13 @@ public class OrgController {
 
     @GetMapping("/humans/{id}")
     public ResponseEntity<?> getHuman(@PathVariable String id) {
-        return orgService.findHuman(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<Human> humanOpt = orgService.findHuman(id);
+        if (humanOpt.isPresent()) {
+            return ResponseEntity.ok(humanOpt.get());
+        }
+        AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", "Human not found: " + id, null);
+        return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                .body(Map.of("code", "not_found", "message", "Human not found: " + id, "audit_event_id", audit.getId()));
     }
 
     @PutMapping("/humans/{id}/rbac")

@@ -54,7 +54,9 @@ public class GroupController {
             Group group = groupService.archive(id, actor);
             return ResponseEntity.ok(group);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 
@@ -65,7 +67,9 @@ public class GroupController {
             Group group = groupService.setLeader(id, body.get("leaderMemberId"), actor);
             return ResponseEntity.ok(group);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 }

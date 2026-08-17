@@ -51,7 +51,9 @@ public class AskController {
                 try {
                     deadlineSeconds = Long.parseLong(deadlineStr);
                 } catch (NumberFormatException e) {
-                    return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", "Invalid deadlineSeconds value"));
+                    AuditEvent audit = auditService.logSystem("REFUSAL", "validation", "Invalid deadlineSeconds value", null);
+                    return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
+                            .body(Map.of("code", "validation", "message", "Invalid deadlineSeconds value", "audit_event_id", audit.getId()));
                 }
             }
             Instant deadline = Instant.now().plusSeconds(deadlineSeconds);

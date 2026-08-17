@@ -116,8 +116,8 @@ CREATE TABLE IF NOT EXISTS dna_decisions (
     decided_at INTEGER NOT NULL DEFAULT (unixepoch()),
     refs TEXT NOT NULL DEFAULT '[]',
     provenance TEXT NOT NULL DEFAULT '{}',
-    FOREIGN KEY (domain_id) REFERENCES dna_domains(id) ON DELETE CASCADE,
-    FOREIGN KEY (decided_by) REFERENCES agents(id) ON DELETE SET NULL
+    FOREIGN KEY (domain_id) REFERENCES dna_domains(id) ON DELETE CASCADE
+    -- decided_by is a keyed union per DAT-120: h:<humans.id> or a:<agents.id>
 );
 
 CREATE TABLE IF NOT EXISTS dna_glossary (
@@ -162,9 +162,9 @@ CREATE TABLE IF NOT EXISTS dna_proposals (
     reviewed_at INTEGER,
     review_by INTEGER,
     domain_id TEXT,
-    FOREIGN KEY (proposed_by) REFERENCES agents(id) ON DELETE SET NULL,
     FOREIGN KEY (reviewed_by) REFERENCES humans(id) ON DELETE SET NULL,
     FOREIGN KEY (domain_id) REFERENCES dna_domains(id) ON DELETE SET NULL
+    -- proposed_by is a keyed union per DAT-120: h:<humans.id> or a:<agents.id>
 );
 
 CREATE TABLE IF NOT EXISTS asks (

@@ -13,6 +13,7 @@ spring:
     database-platform: org.eclipse.persistence.platform.database.SQLiteDialect
     hibernate:
       ddl-auto: none
+      show-sql: false
       properties:
         jdbc:
           batch_size: 50
