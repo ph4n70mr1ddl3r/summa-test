@@ -34,12 +34,24 @@ export default function App() {
                 >
                   Asks
                 </NavLink>
-                <NavLink 
-                  to="/governance" 
-                  className={({ isActive }) => isActive ? 'text-white border-b-2 border-blue-400 px-1 py-2' : 'text-gray-400 hover:text-white px-1 py-2'}
-                >
-                  Governance
-                </NavLink>
+              <NavLink 
+                to="/spawn" 
+                className={({ isActive }) => isActive ? 'text-white border-b-2 border-blue-400 px-1 py-2' : 'text-gray-400 hover:text-white px-1 py-2'}
+              >
+                Spawn
+              </NavLink>
+              <NavLink 
+                to="/runs" 
+                className={({ isActive }) => isActive ? 'text-white border-b-2 border-blue-400 px-1 py-2' : 'text-gray-400 hover:text-white px-1 py-2'}
+              >
+                Runs
+              </NavLink>
+              <NavLink 
+                to="/governance" 
+                className={({ isActive }) => isActive ? 'text-white border-b-2 border-blue-400 px-1 py-2' : 'text-gray-400 hover:text-white px-1 py-2'}
+              >
+                Governance
+              </NavLink>
               </nav>
             </div>
             <div className="flex items-center space-x-4">
