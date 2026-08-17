@@ -1,18 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api } from '../services/api'
-
-interface Ask {
-  id: string
-  kind: string
-  from: string
-  to: string
-  payload: string
-  status: string
-  deadline: string
-  slaTier: string
-  quorumRequired: number
-  collapsedCount: number
-}
+import { api, type Ask } from '../services/api'
 
 export default function AskInbox() {
   const [asks, setAsks] = useState<Ask[]>([])

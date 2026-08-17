@@ -19,7 +19,7 @@ cd ..
 # Wait for backend to start
 echo "      Waiting for backend on :8080..."
 for i in $(seq 1 30); do
-    if curl -s http://localhost:8080/api/auth/health > /dev/null 2>&1; then
+    if curl -s http://localhost:8080/api/health > /dev/null 2>&1; then
         echo "      Backend ready!"
         break
     fi

@@ -26,7 +26,7 @@ public class DnaGoalService {
         goal.setId(id);
         goal.setDomainId(domainId);
         goal.setQuarter(quarter);
-        goal.setStatementMd(statementMd);
+        goal.setStatementMd(statementMd != null ? statementMd : "");
         goal.setOwner(owner);
         goal.setInject(inject != null ? inject : "linked");
         goal.setEffectiveFrom(effectiveFrom);

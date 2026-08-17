@@ -1,3 +1,7 @@
+import { NavLink } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { api } from '../services/api'
+
 export default function Home() {
   return (
     <div className="space-y-8">
@@ -7,9 +11,12 @@ export default function Home() {
           The operating system for a hybrid human + AI company
         </p>
         <div className="flex justify-center space-x-4">
-          <a href="/api/org/humans" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white">
-            View API
-          </a>
+          <NavLink
+            to="/dna"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white"
+          >
+            Get Started
+          </NavLink>
         </div>
       </div>
 
@@ -19,9 +26,9 @@ export default function Home() {
           <p className="text-gray-400">
             Browse and review the Company DNA — knowledge cards, rules, decisions, and glossary.
           </p>
-          <a href="/dna" className="mt-4 inline-block text-blue-400 hover:text-blue-300">
+          <NavLink to="/dna" className="mt-4 inline-block text-blue-400 hover:text-blue-300">
             Open DNA →
-          </a>
+          </NavLink>
         </div>
 
         <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
@@ -29,9 +36,9 @@ export default function Home() {
           <p className="text-gray-400">
             Manage humans, agents, groups, and RBAC roles across the organization.
           </p>
-          <a href="/org" className="mt-4 inline-block text-green-400 hover:text-green-300">
+          <NavLink to="/org" className="mt-4 inline-block text-green-400 hover:text-green-300">
             Open Org →
-          </a>
+          </NavLink>
         </div>
 
         <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
@@ -39,9 +46,9 @@ export default function Home() {
           <p className="text-gray-400">
             Review pending approvals, questions, and assignments from agents and the system.
           </p>
-          <a href="/asks" className="mt-4 inline-block text-yellow-400 hover:text-yellow-300">
+          <NavLink to="/asks" className="mt-4 inline-block text-yellow-400 hover:text-yellow-300">
             Open Asks →
-          </a>
+          </NavLink>
         </div>
       </div>
 
@@ -54,10 +61,22 @@ export default function Home() {
 }
 
 function ApiStatusCheck() {
+  const [status, setStatus] = useState<'ok' | 'error' | 'loading'>('loading')
+
+  useEffect(() => {
+    api.health()
+      .then(() => setStatus('ok'))
+      .catch(() => setStatus('error'))
+  }, [])
+
   return (
     <div className="flex items-center space-x-2 text-sm">
-      <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-      <span className="text-gray-400">Backend: Running on port 8080</span>
+      <span className={`w-2 h-2 rounded-full ${
+        status === 'ok' ? 'bg-green-400' : status === 'error' ? 'bg-red-400' : 'bg-yellow-400'
+      }`}></span>
+      <span className="text-gray-400">
+        {status === 'ok' ? 'Backend: Running' : status === 'error' ? 'Backend: Unreachable' : 'Backend: Checking...'}
+      </span>
     </div>
   )
 }

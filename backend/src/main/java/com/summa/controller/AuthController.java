@@ -15,6 +15,7 @@ public class AuthController {
 
     private final OrgService orgService;
     private final AuditService auditService;
+    private final PasswordUtil passwordUtil;
 
     @Value("${summa.auth.jwt-secret}")
     private String jwtSecret;
@@ -22,9 +23,10 @@ public class AuthController {
     @Value("${summa.auth.jwt-expiration:86400000}")
     private long jwtExpiration;
 
-    public AuthController(OrgService orgService, AuditService auditService) {
+    public AuthController(OrgService orgService, AuditService auditService, PasswordUtil passwordUtil) {
         this.orgService = orgService;
         this.auditService = auditService;
+        this.passwordUtil = passwordUtil;
     }
 
     @PostMapping("/login")
@@ -68,7 +70,7 @@ public class AuthController {
         }
 
         String storedHash = human.getPasswordHash();
-        if (storedHash == null || !PasswordUtil.verify(password, storedHash)) {
+        if (storedHash == null || !passwordUtil.verify(password, storedHash)) {
             return ResponseEntity.status(401).body(Map.of(
                 "code", "unauthorized",
                 "message", "Invalid credentials"

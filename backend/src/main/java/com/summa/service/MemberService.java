@@ -5,6 +5,7 @@ import com.summa.repository.AgentRepository;
 import com.summa.model.Human;
 import com.summa.model.Agent;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 import java.util.List;
 
@@ -58,6 +59,7 @@ public class MemberService {
         return agent != null && agent.isActive() && !"ephemeral".equals(agent.getAgentClass());
     }
 
+    @Transactional
     public Human saveHuman(Human human) {
         return humanRepository.save(human);
     }

@@ -4,6 +4,7 @@ import com.summa.repository.GovernanceSettingRepository;
 import com.summa.repository.SpendLedgerRepository;
 import com.summa.model.GovernanceSetting;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
@@ -57,6 +58,7 @@ public class GovernanceService {
         return settings.get(key);
     }
 
+    @Transactional
     public void setSetting(String key, Object value, String editedBy) {
         String serialized = serializeValue(value);
         Optional<GovernanceSetting> existing = settingRepository.findById(key);

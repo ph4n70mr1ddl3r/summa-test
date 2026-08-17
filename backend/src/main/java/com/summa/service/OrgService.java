@@ -11,7 +11,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.Map;
 
 @Service
@@ -20,14 +19,17 @@ public class OrgService {
     private final AuditService auditService;
     private final AuditEventRepository auditEventRepository;
     private final OffboardingWalkService offboardingWalkService;
+    private final PasswordUtil passwordUtil;
 
     public OrgService(HumanRepository humanRepository, AuditService auditService,
                       AuditEventRepository auditEventRepository,
-                      OffboardingWalkService offboardingWalkService) {
+                      OffboardingWalkService offboardingWalkService,
+                      PasswordUtil passwordUtil) {
         this.humanRepository = humanRepository;
         this.auditService = auditService;
         this.auditEventRepository = auditEventRepository;
         this.offboardingWalkService = offboardingWalkService;
+        this.passwordUtil = passwordUtil;
     }
 
     public Human bootstrap(String name, String email, String rbac, String password) {
@@ -43,7 +45,7 @@ public class OrgService {
         human.setEmail(email);
         human.setRbac(rbac != null ? rbac : "admin");
         human.setAuth("{}");
-        human.setPasswordHash(password != null && !password.isBlank() ? PasswordUtil.hash(password) : null);
+        human.setPasswordHash(password != null && !password.isBlank() ? passwordUtil.hash(password) : null);
 
         Human saved = humanRepository.save(human);
         auditService.log("system", "BOOTSTRAP", "human", saved.getId(),
@@ -58,7 +60,7 @@ public class OrgService {
         human.setEmail(email);
         human.setRbac(rbac != null ? rbac : "member");
         human.setAuth(auth != null ? auth : "{}");
-        human.setPasswordHash(password != null && !password.isBlank() ? PasswordUtil.hash(password) : null);
+        human.setPasswordHash(password != null && !password.isBlank() ? passwordUtil.hash(password) : null);
 
         Human saved = humanRepository.save(human);
         auditService.log("system", "CREATE_HUMAN", "human", saved.getId(),

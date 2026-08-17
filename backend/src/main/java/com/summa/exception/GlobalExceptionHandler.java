@@ -19,7 +19,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException e) {
-        AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+        AuditEvent audit = auditService.logSystem("REFUSAL", "http_request", e.getMessage(), null);
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
                 .body(Map.of(
                     "code", "validation",
@@ -30,7 +30,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalState(IllegalStateException e) {
-        AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+        AuditEvent audit = auditService.logSystem("REFUSAL", "http_request", e.getMessage(), null);
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(Map.of(
                     "code", "gate",
@@ -41,7 +41,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(EntityNotFoundException e) {
-        AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
+        AuditEvent audit = auditService.logSystem("REFUSAL", "http_request", e.getMessage(), null);
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(Map.of(
                     "code", "not_found",
@@ -52,7 +52,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneric(Exception e) {
-        AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+        AuditEvent audit = auditService.logSystem("REFUSAL", "http_request", e.getMessage(), null);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of(
                     "code", "internal",

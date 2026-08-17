@@ -44,7 +44,6 @@ public class AgentService {
         agent.setTemplateVersion(templateVersion);
         agent.setBudgetCap(budgetCap);
         agent.setTtlAt(ttlAt);
-        agent.setStatus("active");
 
         Agent saved = agentRepository.save(agent);
         auditService.log(ownerHumanId, "CREATE_AGENT", "agent", id,

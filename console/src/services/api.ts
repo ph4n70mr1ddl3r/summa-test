@@ -204,7 +204,7 @@ export const api = {
       }),
   },
   org: {
-    health: () => request<{ status: string; service: string }>('/auth/health'),
+    health: () => request<{ status: string; service: string }>('/health'),
     bootstrap: (body?: Record<string, string>) =>
       request('/org/bootstrap', { method: 'POST', body: body ? JSON.stringify(body) : undefined }),
     humans: (active?: boolean) =>

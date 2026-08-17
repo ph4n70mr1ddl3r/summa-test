@@ -56,8 +56,10 @@ VERSION_PINS = (
 
 
 def expand(prefix: str, lo: int, hi: int) -> list[str]:
-    if hi < lo or hi - lo > 999:
+    if hi < lo:
         return []
+    if hi - lo > 999:
+        raise ValueError(f"range {prefix}-{lo:03d}…{prefix}-{hi:03d} spans {hi - lo + 1} IDs (max 1000)")
     return [f"{prefix}-{i:03d}" for i in range(lo, hi + 1)]
 
 
@@ -77,7 +79,10 @@ def scan_ranges(text: str, where: str, errors: list[str]) -> set[str]:
         if hi < lo:
             errors.append(f"{where}: reversed range {m.group(0)!r}")
             continue
-        ids.update(expand(prefix, lo, hi))
+        try:
+            ids.update(expand(prefix, lo, hi))
+        except ValueError as ve:
+            errors.append(f"{where}: {ve}")
     return ids
 
 
