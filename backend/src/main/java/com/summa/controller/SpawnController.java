@@ -87,12 +87,14 @@ public class SpawnController {
 
     @PostMapping("/{id}/deny")
     public ResponseEntity<?> deny(@PathVariable String id,
-                                   @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                    @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
         try {
             SpawnRequest request = spawnService.deny(id, actor);
             return ResponseEntity.ok(request);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 

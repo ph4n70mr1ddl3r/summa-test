@@ -11,7 +11,7 @@ echo ""
 # Start backend in background
 echo "[1/2] Starting backend..."
 cd backend
-nohup ./mvnw spring-boot:run > /tmp/summa-backend.log 2>&1 &
+nohup mvn spring-boot:run > /tmp/summa-backend.log 2>&1 &
 BACKEND_PID=$!
 echo "      Backend PID: $BACKEND_PID"
 cd ..

@@ -54,14 +54,18 @@ public class DnaDomainController {
 
     @PostMapping("/{id}/archive")
     public ResponseEntity<?> archiveDomain(@PathVariable String id,
-                                            @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                             @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
         try {
             DnaDomain domain = domainService.archive(id, actor);
             return ResponseEntity.ok(domain);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
         } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 
@@ -72,7 +76,9 @@ public class DnaDomainController {
             DnaDomain domain = domainService.rename(id, body.get("name"), actor);
             return ResponseEntity.ok(domain);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 
@@ -83,7 +89,9 @@ public class DnaDomainController {
             DnaDomain domain = domainService.updateOwner(id, body.get("ownerHumanId"), actor);
             return ResponseEntity.ok(domain);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 
@@ -94,7 +102,9 @@ public class DnaDomainController {
             DnaDomain domain = domainService.updateAccess(id, body.get("access"), actor);
             return ResponseEntity.ok(domain);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 

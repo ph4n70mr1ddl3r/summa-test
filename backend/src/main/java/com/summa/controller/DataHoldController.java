@@ -44,12 +44,14 @@ public class DataHoldController {
 
     @PostMapping("/{id}/release")
     public ResponseEntity<?> releaseHold(@PathVariable String id,
-                                           @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                          @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
         try {
             DataHold hold = holdService.release(id, actor);
             return ResponseEntity.ok(hold);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 }

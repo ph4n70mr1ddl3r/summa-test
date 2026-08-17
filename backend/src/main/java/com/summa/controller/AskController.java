@@ -115,7 +115,7 @@ public class AskController {
             Ask ask = askService.expire(id);
             return ResponseEntity.ok(ask);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
+            AuditEvent audit = auditService.logSystem("REFUSAL", "EXPIRE", e.getMessage(), null);
             return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
                     .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }

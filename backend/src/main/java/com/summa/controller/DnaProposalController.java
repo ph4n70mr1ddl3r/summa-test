@@ -69,19 +69,27 @@ public class DnaProposalController {
                 DnaProposal proposal = proposalService.publish(id, actor, actor);
                 return ResponseEntity.ok(proposal);
             } catch (IllegalArgumentException e) {
-                return ResponseEntity.notFound().build();
+                AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+                return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
+                        .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
             } catch (IllegalStateException e) {
-                return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+                AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                        .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
             }
         } else if ("reject".equals(action)) {
             try {
                 DnaProposal proposal = proposalService.reject(id, actor, actor);
                 return ResponseEntity.ok(proposal);
             } catch (IllegalArgumentException e) {
-                return ResponseEntity.notFound().build();
+                AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+                return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
+                        .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
             }
         } else {
-            return ResponseEntity.badRequest().body(Map.of("error", "action must be 'publish' or 'reject'"));
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", "action must be 'publish' or 'reject'", null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body(Map.of("code", "validation", "message", "action must be 'publish' or 'reject'", "audit_event_id", audit.getId()));
         }
     }
 
