@@ -3,6 +3,7 @@ package com.summa.service;
 import com.summa.repository.DnaProposalRepository;
 import com.summa.model.DnaProposal;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -63,6 +64,7 @@ public class DnaProposalService {
         return proposalRepository.findAllOpen();
     }
 
+    @Transactional
     public DnaProposal publish(String id, String reviewedBy, String actor) {
         DnaProposal proposal = proposalRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Proposal not found: " + id));
@@ -81,6 +83,7 @@ public class DnaProposalService {
         return saved;
     }
 
+    @Transactional
     public DnaProposal reject(String id, String reviewedBy, String actor) {
         DnaProposal proposal = proposalRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Proposal not found: " + id));
@@ -94,6 +97,7 @@ public class DnaProposalService {
         return saved;
     }
 
+    @Transactional
     public DnaProposal withdraw(String id, String actor) {
         DnaProposal proposal = proposalRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Proposal not found: " + id));
@@ -108,6 +112,7 @@ public class DnaProposalService {
         return saved;
     }
 
+    @Transactional
     public DnaProposal amend(String id, String payload, String actor) {
         DnaProposal proposal = proposalRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Proposal not found: " + id));

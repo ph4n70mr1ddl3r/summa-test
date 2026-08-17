@@ -539,3 +539,44 @@ CREATE TRIGGER IF NOT EXISTS dna_goals_ai AFTER INSERT ON dna_goals BEGIN
     INSERT INTO dna_search_index (rowid, statement_md, domain_id, kind, status)
     VALUES (new.id, new.statement_md, new.domain_id, 'goal', new.status);
 END;
+
+CREATE TRIGGER IF NOT EXISTS dna_decisions_ad AFTER DELETE ON dna_decisions BEGIN
+    DELETE FROM dna_search_index WHERE rowid = old.id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS dna_decisions_au AFTER UPDATE ON dna_decisions BEGIN
+    UPDATE dna_search_index SET
+        context_md = new.context_md,
+        outcome_md = new.outcome_md,
+        domain_id = new.domain_id,
+        kind = 'decision',
+        status = 'active'
+    WHERE rowid = old.id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS dna_glossary_ad AFTER DELETE ON dna_glossary BEGIN
+    DELETE FROM dna_search_index WHERE rowid = old.id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS dna_glossary_au AFTER UPDATE ON dna_glossary BEGIN
+    UPDATE dna_search_index SET
+        term = new.term,
+        definition = new.definition,
+        domain_id = new.domain_id,
+        kind = 'glossary',
+        status = new.status
+    WHERE rowid = old.id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS dna_goals_ad AFTER DELETE ON dna_goals BEGIN
+    DELETE FROM dna_search_index WHERE rowid = old.id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS dna_goals_au AFTER UPDATE ON dna_goals BEGIN
+    UPDATE dna_search_index SET
+        statement_md = new.statement_md,
+        domain_id = new.domain_id,
+        kind = 'goal',
+        status = new.status
+    WHERE rowid = old.id;
+END;

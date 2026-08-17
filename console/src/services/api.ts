@@ -58,10 +58,10 @@ export const api = {
     proposals: (status?: string) =>
       request<unknown[]>(withQuery('/dna/proposals', status ? { status } : undefined)),
     publishProposal: (id: string, reviewedBy: string, actor: string) =>
-      request(`/dna/proposals/${id}/review/publish`, {
+      request(`/dna/proposals/${id}/review`, {
         method: 'POST',
         headers: { 'X-Actor': actor },
-        body: JSON.stringify({ reviewedBy }),
+        body: JSON.stringify({ action: 'publish', reviewedBy }),
       }),
   },
   asks: {

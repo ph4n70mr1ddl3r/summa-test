@@ -54,6 +54,7 @@ public class InitiativeService {
         return initiativeRepository.findByStatus(status);
     }
 
+    @Transactional
     public Initiative activate(String id, String actor) {
         Initiative initiative = initiativeRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Initiative not found: " + id));
@@ -68,6 +69,7 @@ public class InitiativeService {
         return saved;
     }
 
+    @Transactional
     public Initiative pause(String id, String actor) {
         Initiative initiative = initiativeRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Initiative not found: " + id));
@@ -82,6 +84,7 @@ public class InitiativeService {
         return saved;
     }
 
+    @Transactional
     public Initiative resume(String id, String actor) {
         Initiative initiative = initiativeRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Initiative not found: " + id));
@@ -96,6 +99,7 @@ public class InitiativeService {
         return saved;
     }
 
+    @Transactional
     public Initiative close(String id, String actor) {
         Initiative initiative = initiativeRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Initiative not found: " + id));

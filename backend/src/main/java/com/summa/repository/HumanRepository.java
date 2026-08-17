@@ -18,4 +18,6 @@ public interface HumanRepository extends JpaRepository<Human, String> {
     java.util.List<Human> findAllActive();
     
     long countByDeactivatedAtIsNull();
+    
+    long countByDeactivatedAtIsNullAndRbac(String rbac);
 }

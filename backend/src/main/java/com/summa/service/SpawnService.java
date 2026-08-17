@@ -1,7 +1,6 @@
 package com.summa.service;
 
 import com.summa.repository.SpawnRequestRepository;
-import com.summa.repository.SpendLedgerRepository;
 import com.summa.model.SpawnRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,15 +13,12 @@ public class SpawnService {
     private final SpawnRequestRepository spawnRepository;
     private final AuditService auditService;
     private final GovernanceService governanceService;
-    private final SpendLedgerRepository spendLedgerRepository;
 
     public SpawnService(SpawnRequestRepository spawnRepository, AuditService auditService,
-                         GovernanceService governanceService,
-                         SpendLedgerRepository spendLedgerRepository) {
+                          GovernanceService governanceService) {
         this.spawnRepository = spawnRepository;
         this.auditService = auditService;
         this.governanceService = governanceService;
-        this.spendLedgerRepository = spendLedgerRepository;
     }
 
     public SpawnRequest create(String requesterId, String templateId, String customRole,
@@ -125,15 +121,9 @@ public class SpawnService {
 
     /**
      * Check if spend ceiling is breached per SPW-060.
+     * Delegates to GovernanceService to avoid duplication.
      */
     public boolean isSpendHaltTripped() {
-        Double totalCost = spendLedgerRepository.sumTotalCostSince(
-            Instant.now().minusSeconds(30 * 86400L)); // last 30 days
-        if (totalCost == null) totalCost = 0.0;
-        
-        Double ceiling = governanceService.getSetting("spend.org_ceiling", Double.class);
-        if (ceiling == null) ceiling = 1000000.0;
-        
-        return totalCost >= ceiling;
+        return governanceService.isSpendHaltTripped();
     }
 }

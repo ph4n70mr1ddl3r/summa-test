@@ -43,7 +43,7 @@ public class MemberService {
     }
 
     public long countActiveAdmins() {
-        return humanRepository.countByDeactivatedAtIsNull();
+        return humanRepository.countByDeactivatedAtIsNullAndRbac("admin");
     }
 
     public boolean isViewer(Human human) {

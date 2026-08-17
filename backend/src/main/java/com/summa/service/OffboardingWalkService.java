@@ -20,13 +20,21 @@ public class OffboardingWalkService {
     private final DnaDomainService domainService;
     private final DnaGoalService goalService;
     private final GroupMembershipRepository groupMembershipRepository;
+    private final AgentRepository agentRepository;
+    private final InitiativeRepository initiativeRepository;
+    private final DnaGoalRepository goalRepository;
+    private final DnaProposalRepository proposalRepository;
 
     public OffboardingWalkService(MemberService memberService, AgentService agentService,
-                                   InitiativeService initiativeService, BoardTaskService boardTaskService,
-                                   DnaProposalService proposalService, AuditService auditService,
-                                   AskService askService, SpawnService spawnService,
-                                   DnaDomainService domainService, DnaGoalService goalService,
-                                   GroupMembershipRepository groupMembershipRepository) {
+                                    InitiativeService initiativeService, BoardTaskService boardTaskService,
+                                    DnaProposalService proposalService, AuditService auditService,
+                                    AskService askService, SpawnService spawnService,
+                                    DnaDomainService domainService, DnaGoalService goalService,
+                                    GroupMembershipRepository groupMembershipRepository,
+                                    AgentRepository agentRepository,
+                                    InitiativeRepository initiativeRepository,
+                                    DnaGoalRepository goalRepository,
+                                    DnaProposalRepository proposalRepository) {
         this.memberService = memberService;
         this.agentService = agentService;
         this.initiativeService = initiativeService;
@@ -38,6 +46,10 @@ public class OffboardingWalkService {
         this.domainService = domainService;
         this.goalService = goalService;
         this.groupMembershipRepository = groupMembershipRepository;
+        this.agentRepository = agentRepository;
+        this.initiativeRepository = initiativeRepository;
+        this.goalRepository = goalRepository;
+        this.proposalRepository = proposalRepository;
     }
 
     /**
@@ -75,14 +87,12 @@ public class OffboardingWalkService {
         for (Agent agent : agentService.findByOwner(humanId)) {
             if (targetOwner != null) {
                 agent.setOwnerHumanId(targetOwner);
-                agentService.findById(agent.getId()).ifPresent(a -> {
-                    // Retire personal assistants (CLC-051: mirrored scopes die with member)
-                    if (a.getTemplateId() != null && a.getTemplateId().contains("personal-assistant")) {
-                        agentService.retire(a.getId(), actor);
-                    } else {
-                        agentService.findById(a.getId()).ifPresent(saved -> {});
-                    }
-                });
+                // Retire personal assistants (CLC-051: mirrored scopes die with member)
+                if (agent.getTemplateId() != null && agent.getTemplateId().contains("personal-assistant")) {
+                    agentService.retire(agent.getId(), actor);
+                } else {
+                    agentRepository.save(agent);
+                }
                 agentsReowned++;
             }
         }
@@ -99,7 +109,7 @@ public class OffboardingWalkService {
                 changed = true;
             }
             if (changed) {
-                initiativeService.findById(init.getId()).ifPresent(i -> {});
+                initiativeRepository.save(init);
             }
         }
 
@@ -107,7 +117,7 @@ public class OffboardingWalkService {
         for (DnaGoal goal : goalService.findAllActiveWindowed(Instant.now())) {
             if (humanId.equals(goal.getOwner()) && "active".equals(goal.getStatus()) && targetOwner != null) {
                 goal.setOwner(targetOwner);
-                goalService.findById(goal.getId()).ifPresent(g -> {});
+                goalRepository.save(goal);
                 goalsReowned++;
             }
         }
@@ -130,7 +140,7 @@ public class OffboardingWalkService {
         for (DnaProposal prop : proposalService.findAllOpen()) {
             if (humanId.equals(prop.getProposedBy()) && targetOwner != null) {
                 prop.setProposedBy(targetOwner);
-                proposalService.findById(prop.getId()).ifPresent(p -> {});
+                proposalRepository.save(prop);
                 proposalsTransferred++;
             }
         }

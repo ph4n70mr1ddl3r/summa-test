@@ -3,6 +3,7 @@ package com.summa.service;
 import com.summa.repository.BoardTaskRepository;
 import com.summa.model.BoardTask;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -53,6 +54,7 @@ public class BoardTaskService {
         return taskRepository.findByInitiativeId(initiativeId);
     }
 
+    @Transactional
     public BoardTask assign(String id, String assigneeMemberId, String actor) {
         BoardTask task = taskRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Task not found: " + id));
@@ -65,6 +67,7 @@ public class BoardTaskService {
         return saved;
     }
 
+    @Transactional
     public BoardTask complete(String id, String actor) {
         BoardTask task = taskRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Task not found: " + id));
@@ -76,6 +79,7 @@ public class BoardTaskService {
         return saved;
     }
 
+    @Transactional
     public BoardTask unassign(String id, String actor) {
         BoardTask task = taskRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Task not found: " + id));
