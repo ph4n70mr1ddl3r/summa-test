@@ -53,7 +53,7 @@ forever.
   that died with its grantee (ASK-095). A post-named grant ("by the lead") rides the post's
   re-pointing instead, and suspension keeps the non-active reassignment as its transient.
 - **CLC-026** — Authored proposals ride the retire walk: a persistent agent's open DNA
-  proposals withdraw with an audit note inside the retirement — the SPEC-09 member-proposal
+  proposals withdraw with an audit note inside the retirement — the OFB-001 member-proposal
   rule's agent twin (an agent never owns domains, so there is no transfer branch), the
   folded-back learning staying available to its owner for a fresh proposal, and the review
   queue never waiting on a departed proposer whatever member shape the proposer was.

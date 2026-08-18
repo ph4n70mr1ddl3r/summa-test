@@ -6,7 +6,7 @@ Source: PLAN.md §4.4.
 
 - **DGV-001** — DNA is partitioned into domains, each with a human owner and an access policy
   `public` | `domain` | `named`; attributes `store`, `sod`, `residency`, `review_sla_days`,
-  `named_readers`, `status` per SPEC-16.
+  `named_readers`, `status` per DAT-010.
 - **DGV-002** — Reader sets are defined, not ambient: `public` admits every member; `domain`
   admits the owner plus every member tied in through an active workspace binding (an agent
   via its workspaces' `domain_ids`, a human via workspace participation); `named` admits the
@@ -14,7 +14,7 @@ Source: PLAN.md §4.4.
   the read-audit and rate-limit surface (DGV-004, CLC-052).
 - **DGV-003** — Every reader-set input evaluates against live state: a deactivated human, a
   retired agent, or a dead `named_readers` entry contributes nothing; access re-evaluates
-  with its inputs, and rehire's fresh row re-admits no one until named again. The SPEC-09
+  with its inputs, and rehire's fresh row re-admits no one until named again. The OFB-001
   walks scrub the lists as defense in depth.
 - **DGV-004** — The owner always reads the domain they own; active admins hold governance
   reads of every domain — audited on restricted domains — because the escalation, sod, and
@@ -23,7 +23,7 @@ Source: PLAN.md §4.4.
   `sod`, residency), and owner re-pointing are admin writes; the owner edits `access`,
   `named_readers`, and `review_sla_days`; every row-write is audited.
 - **DGV-006** — The owner must hold role `owner` or `admin` at write; an RBAC demotion below
-  that runs the SPEC-09 walk (transfer or admin custody, never an orphaned domain).
+  that runs the OFB-001 walk (transfer or admin custody, never an orphaned domain).
 
 ## Topology operations
 
@@ -94,7 +94,7 @@ Source: PLAN.md §4.4.
 - **DGV-045** — Pending asks whose addressee was derived from a domain's owner (the
   persistent-hire spawn approval's gate hop, a quorum ask's primary recipient) re-key to the
   resulting owner inside topology ops — ask ids stable, deadlines untouched — and at every
-  other owner-re-pointing door: the domain edit and the SPEC-09 walks.
+  other owner-re-pointing door: the domain edit and the OFB-001 walks.
 - **DGV-046** — The spawn gate's hop keys on the hire workspace's primary domain: an admin
   edit of that binding (primary demoted, unbound, emptied to domainless) — or of the
   binding list that demotes or unbinds the primary workspace itself (SPW-040's first-bound

@@ -53,7 +53,7 @@ this surface is the PRN-009 form — refuse, audit, ask where a human decision i
   `POST /dna/proposals/:id/withdraw` · `POST /dna/proposals/:id/amend` (revision during
   review) · `GET /dna/review-queue`.
 - **API-023** — `POST /dna/domains/:id/split|merge|rename|archive` — governed topology ops
-  per SPEC-06; archive refuses live-set holdings (DGV-040); owner-addressed pending asks
+  per DGV-001; archive refuses live-set holdings (DGV-040); owner-addressed pending asks
   settle inside the event (DGV-047).
 - **API-024** — `GET /dna/goals` (goal-slice reads), governance reads.
 
@@ -62,7 +62,7 @@ this surface is the PRN-009 form — refuse, audit, ask where a human decision i
 - **API-030** — `CRUD /role-templates` — versioned catalog; create/publish/retire are admin
   writes, audited (TPL-004).
 - **API-031** — `POST /spawn` · `GET /spawn/:id` — spawn requests with approval and
-  spawn-storm monitoring (SPEC-11); the requester's retraction rides the approval ask's
+  spawn-storm monitoring (SPW-001); the requester's retraction rides the approval ask's
   withdraw endpoint (API-040, SPW-047).
 - **API-032** — `POST /agents/:id/retire · /suspend · /resume` — lifecycle acts on the
   agent (not the spawn request); authority per CLC-010.

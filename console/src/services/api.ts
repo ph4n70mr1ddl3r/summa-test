@@ -1,19 +1,31 @@
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
+const TOKEN_KEY = 'summa_auth_token';
 
-let authToken: string | null = null;
+function loadToken(): string | null {
+  try {
+    return localStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+let authToken: string | null = loadToken();
 
 export function setAuthToken(token: string | null) {
   authToken = token;
+  try {
+    if (token) {
+      localStorage.setItem(TOKEN_KEY, token);
+    } else {
+      localStorage.removeItem(TOKEN_KEY);
+    }
+  } catch {
+    // localStorage unavailable — token still works in memory for this session
+  }
 }
 
 export function getAuthToken(): string | null {
   return authToken;
-}
-
-function withQuery(path: string, params?: Record<string, string>): string {
-  if (!params || Object.keys(params).length === 0) return path;
-  const qs = new URLSearchParams(params).toString();
-  return `${path}?${qs}`;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -135,19 +147,113 @@ export interface GovernanceSetting {
   [key: string]: unknown;
 }
 
-function toQueryString(params?: Record<string, string | number | undefined>): Record<string, string> | undefined {
-  if (!params || Object.keys(params).length === 0) return undefined;
-  const result: Record<string, string> = {};
-  for (const [k, v] of Object.entries(params)) {
-    if (v !== undefined) result[k] = String(v);
-  }
-  return Object.keys(result).length > 0 ? result : undefined;
+export interface BoardTask {
+  id: string;
+  title: string;
+  description: string;
+  assigneeMemberId?: string;
+  initiativeId?: string;
+  status: string;
+  priority: number;
+  dueAt?: string;
+  createdBy: string;
+  createdAt?: string;
+}
+
+export interface Trigger {
+  id: string;
+  name: string;
+  kind: string;
+  expression: string;
+  agentId: string;
+  workspaceId?: string;
+  criticality: string;
+  status: string;
+  lastFiredAt?: string;
+  createdAt?: string;
+}
+
+export interface Workspace {
+  id: string;
+  name: string;
+  kind: string;
+  initiativeIds: string[];
+  domainIds: string[];
+  nodeId?: string;
+  claimEpoch: number;
+  leaseExpiresAt?: string;
+  participants: string[];
+  archivedAt?: string;
+  createdAt?: string;
+}
+
+export interface Node {
+  id: string;
+  name: string;
+  kind: string;
+  capabilities: Record<string, unknown>;
+  region?: string;
+  pubkey: string;
+  enrolledAt: string;
+  status: string;
+}
+
+export interface RoleTemplate {
+  id: string;
+  name: string;
+  version: number;
+  class: string;
+  status: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface MemoryItem {
+  id: string;
+  tier: string;
+  memberId?: string;
+  workspaceId?: string;
+  contentMd: string;
+  tainted: boolean;
+  createdAt?: string;
+}
+
+export interface Pat {
+  id: string;
+  memberId: string;
+  name: string;
+  createdAt: string;
+  expiresAt: string;
+  revokedAt?: string;
+  lastUsedAt?: string;
+}
+
+export interface Group {
+  id: string;
+  name: string;
+  leaderMemberId?: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface SpendSnapshot {
+  periodTokensIn: number;
+  periodTokensOut: number;
+  periodCostUsd: number;
+  circuitBreakerTripped: boolean;
+}
+
+function buildQuery(params?: Record<string, string | number | undefined>): string {
+  const entries = Object.entries(params ?? {}).filter(([, v]) => v !== undefined);
+  if (entries.length === 0) return '';
+  const qs = new URLSearchParams(entries.map(([k, v]) => [k, String(v)]).filter(([, v]) => v !== undefined)).toString();
+  return qs ? `?${qs}` : '';
 }
 
 export const api = {
   agents: {
     list: (params?: { status?: string; ownerId?: string }) =>
-      request<Agent[]>(withQuery('/agents', toQueryString(params))),
+      request<Agent[]>(`/agents${buildQuery(params)}`),
     get: (id: string) => request<Agent>(`/agents/${id}`),
     lineage: (id: string) => request<string[]>(`/agents/${id}/lineage`),
     suspend: (id: string, actor: string) =>
@@ -173,16 +279,16 @@ export const api = {
   },
   dna: {
     cards: (domainId?: string) =>
-      request<DnaCard[]>(withQuery('/dna/cards', domainId ? { domainId } : undefined)),
+      request<DnaCard[]>(`/dna/cards${buildQuery(domainId ? { domainId } : undefined)}`),
     rules: (domainId?: string) =>
-      request<DnaRule[]>(withQuery('/dna/rules', domainId ? { domainId } : undefined)),
+      request<DnaRule[]>(`/dna/rules${buildQuery(domainId ? { domainId } : undefined)}`),
     decisions: (domainId?: string) =>
-      request<DnaDecision[]>(withQuery('/dna/decisions', domainId ? { domainId } : undefined)),
+      request<DnaDecision[]>(`/dna/decisions${buildQuery(domainId ? { domainId } : undefined)}`),
     search: (query: string) =>
-      request<unknown[]>(withQuery('/dna/search', { q: query })),
+      request<unknown[]>(`/dna/search${buildQuery({ q: query })}`),
     domains: () => request<DnaDomain[]>('/dna/domains'),
     proposals: (status?: string) =>
-      request<unknown[]>(withQuery('/dna/proposals', status ? { status } : undefined)),
+      request<unknown[]>(`/dna/proposals${buildQuery(status ? { status } : undefined)}`),
     publishProposal: (id: string, actor: string) =>
       request(`/dna/proposals/${id}/review`, {
         method: 'POST',
@@ -211,7 +317,7 @@ export const api = {
     list: () =>
       request<Ask[]>('/asks'),
     listByStatus: (status: string) =>
-      request<Ask[]>(withQuery('/asks', { status })),
+      request<Ask[]>(`/asks${buildQuery({ status })}`),
     respond: (id: string, response: string, actor: string) =>
       request<Ask>(`/asks/${id}/respond`, {
         method: 'POST',
@@ -233,7 +339,7 @@ export const api = {
     bootstrap: (body?: Record<string, string>) =>
       request('/org/bootstrap', { method: 'POST', body: body ? JSON.stringify(body) : undefined }),
     humans: (active?: boolean) =>
-      request<Human[]>(withQuery('/org/humans', active !== undefined ? { active: String(active) } : undefined)),
+      request<Human[]>(`/org/humans${buildQuery(active !== undefined ? { active: String(active) } : undefined)}`),
     updateRbac: (id: string, rbac: string, actor: string) =>
       request<Human>(`/org/humans/${id}/rbac`, {
         method: 'PUT',
@@ -256,18 +362,18 @@ export const api = {
         method: 'POST',
         headers: { 'X-Actor': actor },
       }),
-    members: () => request<{ members: unknown[]; total: number }>('/org/members'),
-    lineage: (memberId: string) => request<string[]>(withQuery('/org/lineage', { memberId })),
+    members: () => request<{ members: (Human | Agent)[]; total: number }>('/org/members'),
+    lineage: (memberId: string) => request<string[]>(`/org/lineage${buildQuery({ memberId })}`),
     audit: (limit?: number, objectType?: string, objectId?: string) =>
-      request<unknown[]>(withQuery('/org/audit', {
-        ...(limit ? { limit: String(limit) } : {}),
+      request<unknown[]>(`/org/audit${buildQuery({
+        ...(limit !== undefined ? { limit: String(limit) } : {}),
         ...(objectType ? { objectType } : {}),
         ...(objectId ? { objectId } : {}),
-      })),
+      })}`),
   },
   spawn: {
     list: (status?: string, requesterId?: string) =>
-      request<SpawnRequest[]>(withQuery('/spawn', toQueryString({ status, requesterId }))),
+      request<SpawnRequest[]>(`/spawn${buildQuery({ status, requesterId })}`),
     create: (body: Record<string, string>, actor: string) =>
       request<SpawnRequest>('/spawn', {
         method: 'POST',
@@ -288,7 +394,7 @@ export const api = {
   },
   initiatives: {
     list: (status?: string) =>
-      request<Initiative[]>(withQuery('/initiatives', status ? { status } : undefined)),
+      request<Initiative[]>(`/initiatives${buildQuery(status ? { status } : undefined)}`),
     create: (body: Record<string, string>, actor: string) =>
       request<Initiative>('/initiatives', {
         method: 'POST',
@@ -318,7 +424,7 @@ export const api = {
   },
   runs: {
     list: (params?: { agentId?: string; workspaceId?: string; status?: string; limit?: number }) =>
-      request<Run[]>(withQuery('/runs', toQueryString(params))),
+      request<Run[]>(`/runs${buildQuery(params)}`),
     create: (body: Record<string, string>, actor: string) =>
       request<Run>('/runs', {
         method: 'POST',
@@ -356,7 +462,7 @@ export const api = {
   health: () => request<{ status: string }>('/health'),
   boardTasks: {
     list: (params?: { status?: string; assigneeId?: string; initiativeId?: string }) =>
-      request<unknown[]>(withQuery('/board-tasks', toQueryString(params))),
+      request<BoardTask[]>(`/board-tasks${buildQuery(params)}`),
     create: (body: Record<string, string>, actor: string) =>
       request('/board-tasks', {
         method: 'POST',
@@ -382,7 +488,7 @@ export const api = {
   },
   triggers: {
     list: (agentId?: string) =>
-      request<unknown[]>(withQuery('/triggers', agentId ? { agentId } : undefined)),
+      request<Trigger[]>(`/triggers${buildQuery(agentId ? { agentId } : undefined)}`),
     create: (body: Record<string, string>, actor: string) =>
       request('/triggers', {
         method: 'POST',
@@ -407,7 +513,7 @@ export const api = {
     stats: () => request('/triggers/stats'),
   },
   workspaces: {
-    list: () => request<unknown[]>('/workspaces'),
+    list: () => request<Workspace[]>('/workspaces'),
     create: (body: Record<string, string>, actor: string) =>
       request('/workspaces', {
         method: 'POST',
@@ -427,7 +533,7 @@ export const api = {
       }),
   },
   nodes: {
-    list: () => request<unknown[]>('/nodes'),
+    list: () => request<Node[]>('/nodes'),
     enroll: (body: Record<string, string>) =>
       request('/nodes/enroll', {
         method: 'POST',
@@ -442,7 +548,7 @@ export const api = {
   governance: {
     policies: () => request<GovernanceSetting>('/governance/policies'),
     quotas: () => request<GovernanceSetting>('/governance/quotas'),
-    spend: () => request<unknown>('/governance/spend'),
+    spend: () => request<SpendSnapshot>('/governance/spend'),
     updatePolicies: (body: Record<string, unknown>, actor: string) =>
       request('/governance/policies', {
         method: 'PUT',
@@ -485,7 +591,7 @@ export const api = {
       }),
   },
   roleTemplates: {
-    list: () => request<unknown[]>('/role-templates'),
+    list: () => request<RoleTemplate[]>('/role-templates'),
     create: (body: Record<string, string>, actor: string) =>
       request('/role-templates', {
         method: 'POST',
@@ -505,7 +611,7 @@ export const api = {
   },
   memory: {
     list: (params?: { memberId?: string; workspaceId?: string; tainted?: string }) =>
-      request<unknown[]>(withQuery('/memory', toQueryString(params))),
+      request<MemoryItem[]>(`/memory${buildQuery(params)}`),
     create: (body: Record<string, string>, actor: string) =>
       request('/memory', {
         method: 'POST',
@@ -520,7 +626,7 @@ export const api = {
   },
   authPats: {
     list: (memberId: string) =>
-      request<unknown[]>(withQuery('/auth/pats', { memberId })),
+      request<Pat[]>(`/auth/pats${buildQuery({ memberId })}`),
     create: (body: Record<string, string>, actor: string) =>
       request('/auth/pats', {
         method: 'POST',
@@ -534,7 +640,7 @@ export const api = {
       }),
   },
   groups: {
-    list: () => request<unknown[]>('/org/groups'),
+    list: () => request<Group[]>('/org/groups'),
     create: (body: Record<string, string>, actor: string) =>
       request('/org/groups', {
         method: 'POST',

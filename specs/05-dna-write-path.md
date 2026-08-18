@@ -22,8 +22,8 @@ Source: PLAN.md §4.3.
   (default 7); a breach escalates to the admin and a stale queue surfaces in the owner's
   digest.
 - **DWP-021** — The queue belongs to the domain, not the owner's inbox: it renders to whoever
-  holds `owner_human_id`, and owner re-pointing at any door (topology op, domain edit, the
-  SPEC-09 walks) re-keys the rendering with `review_by` clocks untouched.
+   holds `owner_human_id`, and owner re-pointing at any door (topology op, domain edit, the
+   OFB-001 walks) re-keys the rendering with `review_by` clocks untouched.
 - **DWP-022** — Org-scoped items (org-wide goals, org-wide glossary; `domain_id` null) route
   to the admin review queue; their `review_by` derives from the global default (CFG-024,
   7 days) — no domain row governs them.
@@ -68,7 +68,7 @@ Source: PLAN.md §4.3.
   proposer cannot be the publisher — an owner's own proposal routes publish to the
   admin broadcast (ASK-055); in a single-admin org that collapse to one click is accepted
   (NFR-020), with strictness governed separately (CFG-130).
-- **DWP-051** — Withdrawal: the proposer may withdraw a pending proposal; the SPEC-09 walks
+- **DWP-051** — Withdrawal: the proposer may withdraw a pending proposal; the OFB-001…003 walks
   transfer or auto-withdraw authored proposals on departure so the queue never waits on a
   proposer who cannot amend.
 

@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { getAuthToken } from './services/api'
+import { getAuthToken, setAuthToken } from './services/api'
 
 interface NavItem {
   to: string
@@ -27,6 +27,22 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   }
 
   return <>{children}</>
+}
+
+function LogoutButton() {
+  const navigate = useNavigate()
+  function handleLogout() {
+    setAuthToken(null)
+    navigate('/login', { replace: true })
+  }
+  return (
+    <button
+      onClick={handleLogout}
+      className="text-gray-400 hover:text-white text-sm px-2 py-1 rounded hover:bg-gray-700 transition-colors"
+    >
+      Sign out
+    </button>
+  )
 }
 
 export default function App() {
@@ -64,6 +80,7 @@ export default function App() {
               {getAuthToken() && (
                 <span className="text-gray-500 text-xs">authenticated</span>
               )}
+              {getAuthToken() && <LogoutButton />}
             </div>
           </div>
         </div>

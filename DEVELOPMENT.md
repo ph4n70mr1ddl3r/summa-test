@@ -9,7 +9,7 @@ summa/
 │   │   ├── controller/    # REST endpoints (API-001..061)
 │   │   ├── service/       # Business logic
 │   │   ├── repository/    # JPA data access
-│   │   ├── model/         # JPA entities (SPEC-16)
+│   │   ├── model/         # JPA entities (DAT-010)
 │   │   ├── enums/         # Type enums
 │   │   ├── security/      # Auth filters
 │   │   └── config/        # App configuration

@@ -5,7 +5,7 @@ Source: PLAN.md §8.10.
 ## Kinds, tiers, expiry
 
 - **ASK-001** — Ask kinds: `approval | question | assignment | spawn_request`; fields per
-  SPEC-16. Asks carry payload, deadline, SLA tier (`critical | standard | bulk`), escalation
+  DAT-010. Asks carry payload, deadline, SLA tier (`critical | standard | bulk`), escalation
   policy, expiry behavior (`deny | escalate | reassign`), optional initiative/workspace
   linkage, quorum count, responses ledger, collapsed count. The spawn gates file their
   asks as kind `spawn_request` (SPW-040/043/049); `approval` is the generic write-approval
@@ -32,7 +32,7 @@ Source: PLAN.md §8.10.
 - **ASK-030** — Withdrawal is the originator's side: `from` may retract a pending ask before
   it closes — the retracting originator's waiters resolve per the ask's expiry behavior, the
   retraction originator-scoped per ASK-033 — partial quorum accepts stay audit-only; the
-  SPEC-09/12 walks' close-with-audit-note is this mechanism applied by the system.
+  OFB-001/CLC-001 walks' close-with-audit-note is this mechanism applied by the system.
 - **ASK-031** — The system files asks as well as settling them: plane-originated asks —
   goal-window, stall, close-out, dependency, retrospective, starvation, rebind, trip,
   upgrade, activation, contradiction, quarantine, parity, the storm aggregate, among others

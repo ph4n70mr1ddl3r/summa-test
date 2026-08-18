@@ -54,7 +54,7 @@ Source: PLAN.md §4.5.
   re-point to the pseudonym; and operational history — resolved ask rows (`from`/`to` and the
   quorum responses ledger) and completed board-task assignments pseudonymize with the
   ledgers, event shape kept, identity link severed; pending state is pre-resolved by the
-  SPEC-09 walk before erasure can run.
+  OFB-001 walk before erasure can run.
 - **STG-032** — Free-text mentions (prose naming the member in a card body, memory item, or
   decision context) are reported, never rewritten: the sweep files an erasure annex to the
   admin listing each mention with its owner; the per-mention call (delete, rewrite under
@@ -64,7 +64,7 @@ Source: PLAN.md §4.5.
   remediation.
 - **STG-034** — Legal holds (`data_holds`, kind `member`) freeze erasure for covered subjects
   until an admin releases them, audited; an erasure request against a member with live
-  dependencies is refused until the SPEC-09 offboarding walk has run.
+  dependencies is refused until the OFB-001 offboarding walk has run.
 - **STG-035** — Erasure is the only shredding path in the product (DWP-061).
 - **STG-036** — The annex covers operational prose: ask payloads, board-task descriptions,
   and run artifacts naming the member are reported for the human delete/rewrite/contest call

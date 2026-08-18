@@ -26,11 +26,11 @@ Both directions — every defined ID listed, every listed ID defined — are ver
 | §6.3 Lineage (authority, retire/suspend/resume, re-role, fencing) | 12 | CLC-001…003, CLC-010, CLC-015, CLC-020…027, CLC-030…034, CLC-040 |
 | §6.4 Personal assistants | 12 | CLC-050…053 |
 | §6.5 Templates & catalog (versioning, upgrades, promotion) | 13 | TPL-001…004, TPL-010…011, TPL-020…023, TPL-030, TPL-040…046 |
-| §7 Data model (all tables + inline invariants) | 16 (+03; workspaces archival walk: 12, CLC-040) | DAT-010…011, DAT-020…022, DAT-030, DAT-040, DAT-050, DAT-060…061, DAT-070, DAT-080…081, DAT-090…091, DAT-100…102, DAT-110, DAT-120…125 |
+| §7 Data model (all tables + inline invariants) | 16, 03, 12 | CLC-040; DAT-010…011, DAT-020…022, DAT-030, DAT-040, DAT-050, DAT-060…061, DAT-070, DAT-080…081, DAT-090…091, DAT-100…102, DAT-110, DAT-120…125 |
 | §8.1 Agent runtime | 15 | SUB-001…005 |
 | §8.2 Tools & MCP (staged writes, send-once, reconciliation) | 15 | SUB-010…011, SUB-020…022 |
 | §8.3 Memory service (taint) | 15 | SUB-040…042 |
-| §8.4 Skills | 15 (ref-only) | referenced by TPL-030, SUB-064 (uninstall-check reuse); no owned IDs |
+| §8.4 Skills | 15 | referenced by TPL-030, SUB-064 (uninstall-check reuse); no owned IDs |
 | §8.5 Trigger engine (coalescing, idempotency) | 15 | SUB-050…052 |
 | §8.6 Playbook engine (depth, pinning, retirement) | 15 | SUB-060…064 |
 | §8.7 DNA engine (embedding switch, parity gate) | 15 | SUB-070…072 |
@@ -41,7 +41,7 @@ Both directions — every defined ID listed, every listed ID defined — are ver
 | §9 API surface | 17 | API-001…007, API-010, API-020…024, API-030…033, API-040…045, API-050…052, API-060…061 |
 | §10 Security & governance checklist | 18 | SEC-001…005, SEC-009…012, SEC-020, SEC-030, SEC-040…042, SEC-050 |
 | §11 Delivery plan (phases, spikes, acceptance, restore) | 21 | DLV-010…013, DLV-040…044, DLV-050…055 |
-| §12 Testing & quality | 21, README, 19 | DLV-060…061; NFR-010…011 (determinism); README verification conventions |
+| §12 Testing & quality | 21, 19 | DLV-060…061; NFR-010…011 (determinism); README verification conventions |
 | §13 Risks & mitigations | 19 | NFR-030…035; the table's remaining rows carry mitigations specified by their cited modules (SPW, DGV, ARC, SUB, CLC, DLV) |
 | §13.1 Residual risk / accepted boundaries | 19 | NFR-001, NFR-020…022 |
 | §14 Key open decisions 1–17 + named parameters | 20 | CFG-001…024, CFG-030, CFG-040, CFG-050, CFG-060, CFG-070, CFG-080, CFG-090, CFG-100, CFG-110, CFG-130, CFG-140, CFG-150, CFG-160, CFG-170 |

@@ -1,6 +1,6 @@
 # SPEC-03 — DNA Content & Lifecycles
 
-Source: PLAN.md §4.1, §7 (item tables). Data representation: SPEC-16.
+Source: PLAN.md §4.1, §7 (item tables). Data representation: DAT-010.
 
 ## Content model
 

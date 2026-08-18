@@ -94,7 +94,7 @@ memory_items   (id, tier 'personal'|'project'|'proposal', member_id?, workspace_
   non-archived (DNC-060); `named_readers` evaluated against live state (DGV-003); owner must
   hold role owner/admin at write (DGV-006); archived = read-only history with the holdings
   rule of DGV-040.
-- **DAT-060** — Item lifecycles per SPEC-03 (cards/glossary draft|active|retired; rules
+- **DAT-060** — Item lifecycles per DNC-001 (cards/glossary draft|active|retired; rules
   active|superseded|lapsed with window truncation; decisions lifecycle-free; goals terminal-
   immutable). Frozen-history updates are refused at every surface (DWP-062).
 - **DAT-061** — `dna_rules.supersedes_id` intra-domain, chains linear (DNC-024/025);

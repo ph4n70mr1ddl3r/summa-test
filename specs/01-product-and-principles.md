@@ -9,14 +9,14 @@ Source: PLAN.md §1, §2. Actors defined here are used uniformly across the suit
   attention surface.
 - **VIS-002** — The system shall maintain a governed **Company DNA** — knowledge cards, rules,
   decision records, SOPs, glossary, org facts, goals — as the single source of organizational
-  coherence, changed only through the write paths of SPEC-05/06/07 (proposals, item CRUD,
-  topology ops, validated ingest).
+  coherence, changed only through the write paths of DWP-001, DGV-001, STG-001
+  (proposals, item CRUD, topology ops, validated ingest).
 - **VIS-003** — The system shall record all work — chat tasks, automations, playbook runs — as
   runs with results, artifacts, and to-dos on a shared Task Board (ORG-030…033).
 - **VIS-004** — The system shall carry directives from decision records and goals through
-  **initiatives** to coordinated execution (SPEC-10).
+  **initiatives** to coordinated execution (INT-001).
 - **VIS-005** — The system shall provide governed spawning: a human or agent member spawns
-  agents under policy, budget, and lineage constraints (SPEC-11).
+  agents under policy, budget, and lineage constraints (SPW-001).
 - **VIS-006** — The system shall implement the improvement loop: every run's learning is
   classified (personal / project / DNA proposal, SUB-040), DNA changes are reviewed by owners,
   and the updated DNA guides subsequent runs.

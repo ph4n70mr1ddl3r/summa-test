@@ -15,7 +15,7 @@ Source: PLAN.md §5.
   filing asks, creating board tasks or initiatives, and spawning are all refused at write;
   these are facets of one surface, not a checklist. Viewers receive the org-stall broadcast
   read-only (ASK-058).
-- **ORG-021** — Mid-life role changes maintain the invariants through the SPEC-09 walks;
+- **ORG-021** — Mid-life role changes maintain the invariants through the OFB-001…003 walks;
   write-time guards and the walks are one mechanism in two tenses.
 - **ORG-022** — Rehire is a new member, never a resurrection: deactivation is terminal for
   identity; `decided_by` references, audit history, and spend attribution stay pinned to the
@@ -35,7 +35,7 @@ Source: PLAN.md §5.
 - **ORG-031** — Tasks are assignable to humans or agents, never viewers, and the assignee
   must be active at write; suspension freezes an assignee's tasks (resume re-arms them);
   retire/offboard walks return them (OFB-010, CLC-020).
-- **ORG-032** — Tasks are groupable under initiatives (SPEC-10) and visible org-wide within
+- **ORG-032** — Tasks are groupable under initiatives (INT-001) and visible org-wide within
   access scopes.
 - **ORG-033** — An exhausted assignment ask returns the task to the board pool (ASK-057) —
   the board is an assignment's fallback surface, never a hang.
@@ -63,7 +63,7 @@ Source: PLAN.md §5.
   `spawned_by`; the chain must terminate at a human.
 - **ORG-051** — Ownership is derived, not configured: a persistent hire's first owner is the
   gate's accepting human at activation (SPW-046); an ephemeral's is the first human up the
-  `spawned_by` line, pinned at spawn; the SPEC-09/12 walks carry it from there.
+  `spawned_by` line, pinned at spawn; the OFB-001/CLC-001 walks carry it from there.
 
 ## Deputies
 
