@@ -28,7 +28,7 @@ if [ -z "$SUMMA_JWT_SECRET" ]; then
 fi
 
 # Create data directories
-mkdir -p ~/.summa/db ~/.summa/dna
+mkdir -p ~/.summa
 
 # Start the backend
 echo "Starting backend on port 8080..."

@@ -84,7 +84,7 @@ export default function AskInbox() {
                       <span className={`text-xs px-2 py-0.5 rounded border ${tierColor(ask.slaTier)}`}>
                         {ask.slaTier}
                       </span>
-                      {ask.collapsedCount > 1 && (
+                      {ask.collapsedCount && ask.collapsedCount > 1 && (
                         <span className="text-xs text-gray-500">
                           ×{ask.collapsedCount} collapsed
                         </span>
@@ -101,7 +101,7 @@ export default function AskInbox() {
                   <p className="text-sm text-gray-300">
                     {new Date(ask.deadline).toLocaleString()}
                   </p>
-                  {ask.quorumRequired > 1 && (
+                  {ask.quorumRequired && ask.quorumRequired > 1 && (
                     <p className="text-xs text-gray-500 mt-1">
                       Quorum: {ask.quorumRequired}
                     </p>

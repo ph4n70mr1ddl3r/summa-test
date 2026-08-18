@@ -48,6 +48,7 @@ export interface Ask {
   status: string;
   deadline: string;
   quorumRequired?: number;
+  collapsedCount?: number;
 }
 
 export interface SpawnRequest {

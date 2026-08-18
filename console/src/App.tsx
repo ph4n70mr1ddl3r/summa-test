@@ -1,7 +1,21 @@
 import { Outlet, NavLink } from 'react-router-dom'
 
-export default function App() {
+interface NavItem {
+  to: string
+  label: string
+}
 
+const navItems: NavItem[] = [
+  { to: '/', label: 'Home' },
+  { to: '/dna', label: 'DNA' },
+  { to: '/org', label: 'Org' },
+  { to: '/asks', label: 'Asks' },
+  { to: '/spawn', label: 'Spawn' },
+  { to: '/runs', label: 'Runs' },
+  { to: '/governance', label: 'Governance' },
+]
+
+export default function App() {
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-blue-600 focus:text-white focus:p-2">
@@ -13,55 +27,22 @@ export default function App() {
             <div className="flex items-center space-x-8">
               <h1 className="text-xl font-bold text-blue-400">Summa</h1>
               <nav className="flex space-x-4">
-                <NavLink
-                  to="/"
-                  className={({ isActive }) => isActive ? 'text-white border-b-2 border-blue-400 px-1 py-2' : 'text-gray-400 hover:text-white px-1 py-2'}
-                  aria-current={isActive ? 'page' : undefined}
-                >
-                  Home
-                </NavLink>
-                <NavLink
-                  to="/dna"
-                  className={({ isActive }) => isActive ? 'text-white border-b-2 border-blue-400 px-1 py-2' : 'text-gray-400 hover:text-white px-1 py-2'}
-                  aria-current={isActive ? 'page' : undefined}
-                >
-                  DNA
-                </NavLink>
-                <NavLink
-                  to="/org"
-                  className={({ isActive }) => isActive ? 'text-white border-b-2 border-blue-400 px-1 py-2' : 'text-gray-400 hover:text-white px-1 py-2'}
-                  aria-current={isActive ? 'page' : undefined}
-                >
-                  Org
-                </NavLink>
-                <NavLink
-                  to="/asks"
-                  className={({ isActive }) => isActive ? 'text-white border-b-2 border-blue-400 px-1 py-2' : 'text-gray-400 hover:text-white px-1 py-2'}
-                  aria-current={isActive ? 'page' : undefined}
-                >
-                  Asks
-                </NavLink>
-              <NavLink
-                to="/spawn"
-                className={({ isActive }) => isActive ? 'text-white border-b-2 border-blue-400 px-1 py-2' : 'text-gray-400 hover:text-white px-1 py-2'}
-                aria-current={isActive ? 'page' : undefined}
-              >
-                Spawn
-              </NavLink>
-              <NavLink
-                to="/runs"
-                className={({ isActive }) => isActive ? 'text-white border-b-2 border-blue-400 px-1 py-2' : 'text-gray-400 hover:text-white px-1 py-2'}
-                aria-current={isActive ? 'page' : undefined}
-              >
-                Runs
-              </NavLink>
-              <NavLink
-                to="/governance"
-                className={({ isActive }) => isActive ? 'text-white border-b-2 border-blue-400 px-1 py-2' : 'text-gray-400 hover:text-white px-1 py-2'}
-                aria-current={isActive ? 'page' : undefined}
-              >
-                Governance
-              </NavLink>
+                {navItems.map(({ to, label }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    end={to === '/'}
+                    className={({ isActive }) =>
+                      isActive
+                        ? 'text-white border-b-2 border-blue-400 px-1 py-2'
+                        : 'text-gray-400 hover:text-white px-1 py-2'
+                    }
+                  >
+                    {({ isActive }) => (
+                      <span aria-current={isActive ? 'page' : undefined}>{label}</span>
+                    )}
+                  </NavLink>
+                ))}
               </nav>
             </div>
             <div className="flex items-center space-x-4">

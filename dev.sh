@@ -8,6 +8,9 @@ cd "$SCRIPT_DIR"
 echo "Starting Summa development environment..."
 echo ""
 
+# Create data directories
+mkdir -p ~/.summa/db ~/.summa/dna
+
 # Start backend in background
 echo "[1/2] Starting backend..."
 cd backend
@@ -18,18 +21,25 @@ cd ..
 
 # Wait for backend to start
 echo "      Waiting for backend on :8080..."
+BACKEND_READY=false
 for i in $(seq 1 30); do
     if curl -s http://localhost:8080/api/health > /dev/null 2>&1; then
         echo "      Backend ready!"
+        BACKEND_READY=true
         break
     fi
     sleep 1
 done
 
+if [ "$BACKEND_READY" = false ]; then
+    echo "ERROR: Backend did not start within 30 seconds. Check /tmp/summa-backend.log"
+    exit 1
+fi
+
 # Start console
 echo "[2/2] Starting console..."
 cd console
-npm run dev &
+npm run dev > /tmp/summa-console.log 2>&1 &
 CONSOLE_PID=$!
 echo "      Console PID: $CONSOLE_PID"
 cd ..
@@ -41,5 +51,5 @@ echo "  API:     http://localhost:8080/api"
 echo ""
 echo "Press Ctrl+C to stop all services"
 
-trap "kill $BACKEND_PID $CONSOLE_PID 2>/dev/null" EXIT
+trap "kill $BACKEND_PID $CONSOLE_PID 2>/dev/null; exit 0" INT TERM EXIT
 wait
