@@ -1,5 +1,7 @@
 package com.summa.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
@@ -11,6 +13,8 @@ import java.util.List;
 
 @Component
 public class SchemaInitializer {
+
+    private static final Logger log = LoggerFactory.getLogger(SchemaInitializer.class);
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -33,7 +37,7 @@ public class SchemaInitializer {
                         jdbcTemplate.execute(s);
                     } catch (Exception e) {
                         if (!e.getMessage().contains("already exists")) {
-                            System.err.println("Schema init warning: " + e.getMessage());
+                            log.warn("Schema init warning: {}", e.getMessage());
                         }
                     }
                 }
