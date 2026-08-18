@@ -43,10 +43,16 @@ public class AuthController {
 
         var humanOpt = orgService.findHumanByEmail(email);
 
-        if (humanOpt.isEmpty() || !humanOpt.get().isActive()) {
+        if (humanOpt.isEmpty()) {
             return ResponseEntity.status(401).body(Map.of(
                 "code", "unauthorized",
-                "message", "Invalid credentials"
+                "message", "Account not found"
+            ));
+        }
+        if (!humanOpt.get().isActive()) {
+            return ResponseEntity.status(401).body(Map.of(
+                "code", "unauthorized",
+                "message", "Account is deactivated"
             ));
         }
 
@@ -56,7 +62,7 @@ public class AuthController {
                 || !passwordUtil.verify(password, human.getPasswordHash())) {
             return ResponseEntity.status(401).body(Map.of(
                 "code", "unauthorized",
-                "message", "Invalid credentials"
+                "message", "Invalid password"
             ));
         }
 

@@ -17,6 +17,7 @@ public class GovernanceSetting {
     private String editedBy;
 
     @Column(name = "edited_at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant editedAt;
 
     @PrePersist

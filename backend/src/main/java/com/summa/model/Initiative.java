@@ -32,18 +32,22 @@ public class Initiative {
     private String businessBudget;
 
     @Column(name = "deadline")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant deadline;
 
     @Column(name = "closed_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant closedAt;
 
     @Column(name = "depends_on", nullable = false, columnDefinition = "TEXT")
     private String dependsOn;
 
     @Column(name = "created_at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant createdAt;
 
     @Column(name = "updated_at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant updatedAt;
 
     @PrePersist

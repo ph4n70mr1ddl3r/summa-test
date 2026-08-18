@@ -22,7 +22,7 @@ public class AuditService {
         event.setAction(action);
         event.setObjectType(objectType);
         event.setObjectId(objectId);
-        event.setDetail(detail != null ? sanitizeJson(detail) : "{}");
+        event.setDetail(detail != null && !detail.isBlank() ? sanitizeJson(detail) : "{}");
         event.setOrigin("live");
         return auditEventRepository.save(event);
     }
@@ -39,7 +39,7 @@ public class AuditService {
         event.setAction(action);
         event.setObjectType(objectType);
         event.setObjectId(objectId);
-        event.setDetail(detail != null ? sanitizeJson(detail) : "{}");
+        event.setDetail(detail != null && !detail.isBlank() ? sanitizeJson(detail) : "{}");
         event.setOrigin("live");
         event.setNodeId(nodeId);
         return auditEventRepository.save(event);

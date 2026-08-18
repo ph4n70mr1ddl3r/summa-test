@@ -20,9 +20,11 @@ public class DnaRule {
     private String machineHint;
 
     @Column(name = "effective_from", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant effectiveFrom;
 
     @Column(name = "effective_to")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant effectiveTo;
 
     @Column(name = "supersedes_id", length = 36)
@@ -32,9 +34,11 @@ public class DnaRule {
     private String status;
 
     @Column(name = "created_at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant createdAt;
 
     @Column(name = "updated_at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant updatedAt;
 
     @PrePersist

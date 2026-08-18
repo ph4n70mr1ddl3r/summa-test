@@ -15,7 +15,6 @@ public class TestDatabaseConfig {
         return new EmbeddedDatabaseBuilder()
                 .setType(EmbeddedDatabaseType.H2)
                 .setName("summatest")
-                .addScript("schema.sql")
                 .build();
     }
 

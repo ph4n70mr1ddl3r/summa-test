@@ -23,6 +23,7 @@ public class DnaDecision {
     private String decidedBy;
 
     @Column(name = "decided_at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant decidedAt;
 
     @Column(name = "refs", nullable = false, columnDefinition = "TEXT")

@@ -23,15 +23,19 @@ public class Pat {
     private String scopes;
 
     @Column(name = "created_at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant createdAt;
 
     @Column(name = "expires_at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant expiresAt;
 
     @Column(name = "revoked_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant revokedAt;
 
     @Column(name = "last_used_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant lastUsedAt;
 
     @PrePersist

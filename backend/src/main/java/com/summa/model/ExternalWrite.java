@@ -26,9 +26,11 @@ public class ExternalWrite {
     private String status;
 
     @Column(name = "prepared_at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant preparedAt;
 
     @Column(name = "resolved_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant resolvedAt;
 
     @PrePersist

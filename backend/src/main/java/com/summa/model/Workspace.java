@@ -29,15 +29,18 @@ public class Workspace {
     private Integer claimEpoch;
 
     @Column(name = "lease_expires_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant leaseExpiresAt;
 
     @Column(name = "participants", nullable = false, columnDefinition = "TEXT")
     private String participants;
 
     @Column(name = "archived_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant archivedAt;
 
     @Column(name = "created_at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant createdAt;
 
     @PrePersist

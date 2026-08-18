@@ -32,9 +32,11 @@ public class Ask {
     private String status;
 
     @Column(name = "deadline", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant deadline;
 
     @Column(name = "created_at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant createdAt;
 
     @Column(name = "sla_tier", nullable = false, length = 20)
@@ -47,6 +49,7 @@ public class Ask {
     private String expiryBehavior;
 
     @Column(name = "responded_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant respondedAt;
 
     @Column(name = "quorum_required", nullable = false)

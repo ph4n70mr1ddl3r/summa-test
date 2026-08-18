@@ -44,9 +44,11 @@ public class Run {
     private String errorMessage;
 
     @Column(name = "started_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant startedAt;
 
     @Column(name = "completed_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant completedAt;
 
     @Column(name = "cost_tokens", nullable = false)
@@ -56,6 +58,7 @@ public class Run {
     private Double costUsd;
 
     @Column(name = "created_at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant createdAt;
 
     @PrePersist

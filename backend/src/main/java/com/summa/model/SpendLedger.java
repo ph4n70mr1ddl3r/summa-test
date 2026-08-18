@@ -35,6 +35,7 @@ public class SpendLedger {
     private String pricingVersion;
 
     @Column(name = "at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant at;
 
     @PrePersist

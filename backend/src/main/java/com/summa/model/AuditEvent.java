@@ -11,6 +11,7 @@ public class AuditEvent {
     private String id;
 
     @Column(name = "at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant at;
 
     @Column(name = "actor", nullable = false, length = 36)

@@ -14,7 +14,7 @@ services:
       - SUMMA_DNA_REPO=/data/dna
       - SUMMA_JWT_SECRET=${SUMMA_JWT_SECRET:?SUMMA_JWT_SECRET must be set}
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/api/health || exit 1"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/api/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -23,6 +23,7 @@ public class Agent {
     private String spawnedBy;
 
     @Column(name = "ttl_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant ttlAt;
 
     @Column(name = "budget_cap")
@@ -41,15 +42,19 @@ public class Agent {
     private String status;
 
     @Column(name = "created_at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant createdAt;
 
     @Column(name = "suspended_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant suspendedAt;
 
     @Column(name = "retired_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant retiredAt;
 
     @Column(name = "archived_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant archivedAt;
 
     @PrePersist

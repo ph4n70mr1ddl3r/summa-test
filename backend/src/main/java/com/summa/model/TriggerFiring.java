@@ -17,6 +17,7 @@ public class TriggerFiring {
     private String idempotencyKey;
 
     @Column(name = "fired_at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant firedAt;
 
     @Column(name = "run_id", length = 36)

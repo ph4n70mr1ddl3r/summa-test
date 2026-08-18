@@ -164,7 +164,12 @@ public class SpawnService {
         Agent agent = new Agent();
         agent.setId(agentId);
         agent.setName(name);
-        agent.setOwnerHumanId(request.getRequestedByHumanId() != null ? request.getRequestedByHumanId() : request.getRequesterId());
+        // SPW-046: Persistent hire ownership derives from the gate's accepting human at activation,
+        // not from the requester. Use requestedByHumanId when explicitly provided (approval-gated path);
+        // otherwise fall back to requesterId for direct activation.
+        agent.setOwnerHumanId(request.getRequestedByHumanId() != null
+            ? request.getRequestedByHumanId()
+            : request.getRequesterId());
         agent.setAgentClass(request.getSpawnClass());
         agent.setSpawnedBy(request.getRequesterId());
         agent.setLineageDepth(depth);

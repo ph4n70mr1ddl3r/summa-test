@@ -47,12 +47,14 @@ public class SpawnRequest {
     private String approvedBy;
 
     @Column(name = "approved_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant approvedAt;
 
     @Column(name = "agent_id", length = 36)
     private String agentId;
 
     @Column(name = "created_at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant createdAt;
 
     @PrePersist

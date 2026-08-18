@@ -13,9 +13,11 @@ public class GroupMembership {
     private String addedBy;
 
     @Column(name = "added_at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant addedAt;
 
     @Column(name = "removed_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant removedAt;
 
     @PrePersist

@@ -20,6 +20,7 @@ public class Message {
     private String content;
 
     @Column(name = "timestamp", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant timestamp;
 
     @PrePersist

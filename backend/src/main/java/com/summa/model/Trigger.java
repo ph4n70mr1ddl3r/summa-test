@@ -35,12 +35,15 @@ public class Trigger {
     private String config;
 
     @Column(name = "last_fired_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant lastFiredAt;
 
     @Column(name = "created_at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant createdAt;
 
     @Column(name = "updated_at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant updatedAt;
 
     @PrePersist

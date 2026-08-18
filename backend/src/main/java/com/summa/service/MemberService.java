@@ -1,5 +1,6 @@
 package com.summa.service;
 
+import com.summa.enums.RbacRole;
 import com.summa.repository.HumanRepository;
 import com.summa.repository.AgentRepository;
 import com.summa.model.Human;
@@ -36,27 +37,27 @@ public class MemberService {
     }
 
     public List<Human> findAdmins() {
-        return humanRepository.findActiveByRole("admin");
+        return humanRepository.findActiveByRole(RbacRole.ADMIN.getValue());
     }
 
     public List<Human> findOwnerHumans() {
-        return humanRepository.findActiveByRole("owner");
+        return humanRepository.findActiveByRole(RbacRole.OWNER.getValue());
     }
 
     public long countActiveAdmins() {
-        return humanRepository.countByDeactivatedAtIsNullAndRbac("admin");
+        return humanRepository.countByDeactivatedAtIsNullAndRbac(RbacRole.ADMIN.getValue());
     }
 
     public boolean isViewer(Human human) {
-        return "viewer".equals(human.getRbac());
+        return human != null && RbacRole.VIEWER.getValue().equals(human.getRbac());
     }
 
     public boolean hasWriteSurface(Human human) {
-        return human != null && !"viewer".equals(human.getRbac()) && human.isActive();
+        return human != null && !isViewer(human) && human.isActive();
     }
 
     public boolean hasWriteSurfaceAgent(Agent agent) {
-        return agent != null && agent.isActive() && !"ephemeral".equals(agent.getAgentClass());
+        return agent != null && agent.isActive() && !agent.isEphemeral();
     }
 
     @Transactional

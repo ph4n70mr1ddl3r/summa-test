@@ -26,8 +26,8 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .addFilterBefore(rbacFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtFilter, RbacAuthorizationFilter.class)
+            .addFilterBefore(rbacFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/health").permitAll()

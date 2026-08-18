@@ -29,12 +29,14 @@ public class MemoryItem {
     private Boolean tainted;
 
     @Column(name = "created_at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant createdAt;
 
     @Column(name = "reviewed_by", length = 36)
     private String reviewedBy;
 
     @Column(name = "reviewed_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant reviewedAt;
 
     @PrePersist

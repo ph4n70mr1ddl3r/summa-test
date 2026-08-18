@@ -35,9 +35,11 @@ public class Human {
     private String workingHours;
 
     @Column(name = "created_at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant createdAt;
 
     @Column(name = "deactivated_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant deactivatedAt;
 
     @PrePersist

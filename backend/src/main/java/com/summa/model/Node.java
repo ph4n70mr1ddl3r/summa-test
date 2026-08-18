@@ -26,15 +26,18 @@ public class Node {
     private String claim;
 
     @Column(name = "last_heartbeat")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant lastHeartbeat;
 
     @Column(name = "pubkey", nullable = false, length = 512)
     private String pubkey;
 
     @Column(name = "enrolled_at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant enrolledAt;
 
     @Column(name = "revoked_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant revokedAt;
 
     @Column(name = "status", nullable = false, length = 20)

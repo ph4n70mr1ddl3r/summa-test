@@ -17,6 +17,8 @@ spring:
           batch-writing: delayed
         batching:
           size: 50
+        jpa:
+          convertors: com.summa.config.InstantToUnixEpochConverter
       eclipselink.cache.shared.default: false
   sql:
     init:

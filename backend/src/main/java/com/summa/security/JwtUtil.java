@@ -7,6 +7,7 @@ import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Map;
 
@@ -52,7 +53,7 @@ public class JwtUtil {
 
         String signatureInput = parts[0] + "." + parts[1];
         String expectedSignature = base64UrlEncode(hmacSha256(signatureInput, secret));
-        if (!expectedSignature.equals(parts[2])) {
+        if (!constantTimeEquals(expectedSignature, parts[2])) {
             return null;
         }
 
@@ -87,5 +88,16 @@ public class JwtUtil {
 
     private static String base64UrlEncode(byte[] bytes) {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    private static boolean constantTimeEquals(String a, String b) {
+        if (a.length() != b.length()) return false;
+        byte[] ab = a.getBytes(StandardCharsets.UTF_8);
+        byte[] bb = b.getBytes(StandardCharsets.UTF_8);
+        int result = 0;
+        for (int i = 0; i < ab.length; i++) {
+            result |= ab[i] ^ bb[i];
+        }
+        return result == 0;
     }
 }

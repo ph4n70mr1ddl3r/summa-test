@@ -15,6 +15,8 @@ public class DnaProposalService {
     private final AuditService auditService;
     private final DnaDomainService domainService;
 
+    private static final long DEFAULT_REVIEW_SLA_SECONDS = 7 * 86400L; // 7 days default
+
     public DnaProposalService(DnaProposalRepository proposalRepository, 
                                AuditService auditService,
                                DnaDomainService domainService) {
@@ -41,11 +43,11 @@ public class DnaProposalService {
                 proposal.setReviewBy(Instant.now().plusSeconds(domainOpt.get().getReviewSlaDays() * 86400L));
             } else {
                 // Domain not found — use default 7 days
-                proposal.setReviewBy(Instant.now().plusSeconds(7 * 86400L));
+                proposal.setReviewBy(Instant.now().plusSeconds(DEFAULT_REVIEW_SLA_SECONDS));
             }
         } else {
             // Org-scoped: use default 7 days
-            proposal.setReviewBy(Instant.now().plusSeconds(7 * 86400L));
+            proposal.setReviewBy(Instant.now().plusSeconds(DEFAULT_REVIEW_SLA_SECONDS));
         }
         
         DnaProposal saved = proposalRepository.save(proposal);

@@ -12,6 +12,9 @@ import java.util.Optional;
 
 @Service
 public class InitiativeService {
+    private static final long STALL_CHECK_INTERVAL_MS = 300000; // 5 minutes
+    private static final long STALL_ASK_DEADLINE_SECONDS = 7 * 86400L; // 7 days
+
     private final InitiativeRepository initiativeRepository;
     private final BoardTaskRepository boardTaskRepository;
     private final AuditService auditService;
@@ -128,7 +131,7 @@ public class InitiativeService {
      * - Deadline passed with no open work → close-out ask (INT-063)
      * - Goal window ended without initiative action → direction ask (INT-050)
      */
-    @Scheduled(fixedRate = 300000) // every 5 minutes
+    @Scheduled(fixedRate = STALL_CHECK_INTERVAL_MS) // every 5 minutes
     @Transactional
     public void checkStallsAndDirections() {
         Instant now = Instant.now();
@@ -150,12 +153,12 @@ public class InitiativeService {
                         askService.create("question", "system", init.getSponsor(),
                             String.format("{\"initiativeId\":\"%s\",\"reason\":\"stall\"}", init.getId()),
                             "bulk", "escalate", 1,
-                            Instant.now().plusSeconds(7 * 86400L), null, null);
+                            Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
                     } else {
                         askService.create("question", "system", init.getSponsor(),
                             String.format("{\"initiativeId\":\"%s\",\"reason\":\"closeout\"}", init.getId()),
                             "bulk", "escalate", 1,
-                            Instant.now().plusSeconds(7 * 86400L), null, null);
+                            Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
                     }
                 } catch (Exception e) {
                     auditService.logSystem("STALL_ASK_FAIL", "initiative", init.getId(),

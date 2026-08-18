@@ -20,14 +20,21 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 @Service
 public class AskService {
+    private static final long DEFAULT_CRITICAL_ASK_DEADLINE_HOURS = 1;
+    private static final long DEFAULT_BULK_ASK_DEADLINE_HOURS = 24;
+    private static final long DEFAULT_STANDARD_ASK_DEADLINE_HOURS = 24;
+
     private final AskRepository askRepository;
     private final AuditService auditService;
     private final MemberService memberService;
     private final GovernanceService governanceService;
     private final long stormCollapseWindowSeconds;
 
+    private static final int MAX_EXPIRE_SUCCESSOR_DEPTH = 5;
+
     // ASK-100: Storm collapse window — tracks recent ask creation by (kind, to, payloadHash)
     private final ConcurrentHashMap<String, Instant> collapseWindowTimestamps = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Integer> successorDepth = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public AskService(AskRepository askRepository, AuditService auditService, MemberService memberService,
@@ -143,6 +150,12 @@ public class AskService {
             } else if ("escalate".equals(behavior) || "reassign".equals(behavior)) {
                 expire(ask.getId());
                 try {
+                    int depth = successorDepth.getOrDefault(ask.getId(), 0) + 1;
+                    if (depth > MAX_EXPIRE_SUCCESSOR_DEPTH) {
+                        auditService.logSystem("EXPIRE_MAX_DEPTH_REACHED", "ask", ask.getId(),
+                            String.format("{\"depth\":%d,\"behavior\":\"%s\"}", depth, behavior));
+                        continue;
+                    }
                     String successorTo = "admins";
                     Optional<Human> target = memberService.findHuman(ask.getTo());
                     if (target.isPresent() && target.get().getDeputyMemberId() != null) {
@@ -155,8 +168,9 @@ public class AskService {
                         ask.getQuorumRequired(),
                         Instant.now().plusSeconds(successorDeadlineSeconds),
                         ask.getInitiativeId(), ask.getWorkspaceId());
+                    successorDepth.put(successor.getId(), depth);
                     auditService.logSystem("EXPIRE_SUCCESSOR_CREATED", "ask", successor.getId(),
-                        String.format("{\"originalId\":\"%s\",\"behavior\":\"%s\"}", ask.getId(), behavior));
+                        String.format("{\"originalId\":\"%s\",\"behavior\":\"%s\",\"depth\":%d}", ask.getId(), behavior, depth));
                 } catch (Exception e) {
                     auditService.logSystem("EXPIRE_SUCCESSOR_FAIL", "ask", ask.getId(),
                         String.format("{\"behavior\":\"%s\",\"error\":\"%s\"}", behavior, e.getMessage()));
@@ -225,15 +239,15 @@ public class AskService {
         if ("critical".equals(tier)) {
             Object val = governanceService.getSetting("asks-tier-critical-deadline-hours");
             if (val instanceof Number) return ((Number) val).longValue() * 3600L;
-            return 1L * 3600L;
+            return DEFAULT_CRITICAL_ASK_DEADLINE_HOURS * 3600L;
         }
         if ("bulk".equals(tier)) {
             Object val = governanceService.getSetting("asks-tier-bulk-deadline-hours");
             if (val instanceof Number) return ((Number) val).longValue() * 3600L;
-            return 24L * 3600L;
+            return DEFAULT_BULK_ASK_DEADLINE_HOURS * 3600L;
         }
         // standard tier: next digest is not a fixed deadline — use 24h as safe upper bound
-        return 24L * 3600L;
+        return DEFAULT_STANDARD_ASK_DEADLINE_HOURS * 3600L;
     }
 
     private void recordResponse(Ask ask, String responder, String response) {

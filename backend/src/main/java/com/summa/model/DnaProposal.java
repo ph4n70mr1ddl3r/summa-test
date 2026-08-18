@@ -32,12 +32,15 @@ public class DnaProposal {
     private String reviewedBy;
 
     @Column(name = "created_at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant createdAt;
 
     @Column(name = "reviewed_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant reviewedAt;
 
     @Column(name = "review_by")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant reviewBy;
 
     @Column(name = "domain_id", length = 36)

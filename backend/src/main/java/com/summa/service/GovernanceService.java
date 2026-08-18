@@ -16,6 +16,12 @@ public class GovernanceService {
     private final GovernanceSettingRepository settingRepository;
     private final SpendLedgerRepository spendLedgerRepository;
 
+    private static final double DEFAULT_SPEND_CEILING = 1_000_000.0;
+    private static final long DEFAULT_EVALUATION_WINDOW_DAYS = 30;
+    private static final long DEFAULT_CRITICAL_ASK_DEADLINE_HOURS = 1;
+    private static final long DEFAULT_BULK_ASK_DEADLINE_HOURS = 24;
+    private static final long DEFAULT_STANDARD_ASK_DEADLINE_HOURS = 24;
+
     public GovernanceService(GovernanceSettingRepository settingRepository,
                               SpendLedgerRepository spendLedgerRepository) {
         this.settingRepository = settingRepository;
@@ -85,9 +91,9 @@ public class GovernanceService {
     public boolean isSpendHaltTripped() {
         try {
             Double ceiling = getSetting("spend-org-ceiling", Double.class);
-            if (ceiling == null) ceiling = 1000000.0;
+            if (ceiling == null) ceiling = DEFAULT_SPEND_CEILING;
             Object windowDaysObj = getSetting("spend-evaluation-window-days");
-            long windowDays = 30;
+            long windowDays = DEFAULT_EVALUATION_WINDOW_DAYS;
             if (windowDaysObj instanceof Number) {
                 windowDays = ((Number) windowDaysObj).longValue();
             }
@@ -105,9 +111,9 @@ public class GovernanceService {
 
     public Map<String, Object> getSpendView() {
         Double ceiling = getSetting("spend-org-ceiling", Double.class);
-        if (ceiling == null) ceiling = 1000000.0;
+        if (ceiling == null) ceiling = DEFAULT_SPEND_CEILING;
         Object windowDaysObj = getSetting("spend-evaluation-window-days");
-        long windowDays = 30;
+        long windowDays = DEFAULT_EVALUATION_WINDOW_DAYS;
         if (windowDaysObj instanceof Number) {
             windowDays = ((Number) windowDaysObj).longValue();
         }
@@ -138,9 +144,9 @@ public class GovernanceService {
         settings.putIfAbsent("asks-storm-collapse-window-hours", 1);
         settings.putIfAbsent("asks-rate-limit-per-source-per-hour", 60);
         settings.putIfAbsent("dna-default-review-sla-days", 7);
-        settings.putIfAbsent("spend-org-ceiling", 1000000.0);
+        settings.putIfAbsent("spend-org-ceiling", DEFAULT_SPEND_CEILING);
         settings.putIfAbsent("spend-critical-floor-percent", 5.0);
-        settings.putIfAbsent("spend-evaluation-window-days", 30);
+        settings.putIfAbsent("spend-evaluation-window-days", DEFAULT_EVALUATION_WINDOW_DAYS);
     }
 
     private Object parseValue(String value) {
