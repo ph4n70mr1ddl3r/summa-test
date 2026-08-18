@@ -19,6 +19,7 @@ public class RunService {
         this.auditService = auditService;
     }
 
+    @Transactional
     public Run create(String agentId, String workspaceId, String initiativeId,
                        String triggerId, String prompt, String actor) {
         Run run = new Run();

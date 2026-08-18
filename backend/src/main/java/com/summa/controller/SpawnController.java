@@ -57,8 +57,8 @@ public class SpawnController {
                 body.get("purpose"),
                 body.get("workspaceBindings"),
                 body.get("scopeCeiling"),
-                body.containsKey("budgetCap") ? Double.parseDouble(body.get("budgetCap")) : null,
-                body.containsKey("ttlHours") ? Integer.parseInt(body.get("ttlHours")) : null,
+                body.containsKey("budgetCap") ? parseDoubleSafe(body.get("budgetCap")) : null,
+                body.containsKey("ttlHours") ? parseIntSafe(body.get("ttlHours")) : null,
                 body.get("requestedByHumanId"),
                 actor
             );
@@ -111,5 +111,15 @@ public class SpawnController {
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> stats() {
         return ResponseEntity.ok(spawnService.getStats());
+    }
+
+    private Double parseDoubleSafe(String s) {
+        try { return Double.parseDouble(s); }
+        catch (NumberFormatException e) { throw new IllegalArgumentException("Invalid budgetCap: " + s); }
+    }
+
+    private Integer parseIntSafe(String s) {
+        try { return Integer.parseInt(s); }
+        catch (NumberFormatException e) { throw new IllegalArgumentException("Invalid ttlHours: " + s); }
     }
 }

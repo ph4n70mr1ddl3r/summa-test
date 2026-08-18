@@ -63,7 +63,8 @@ public class JwtUtil {
             if (exp * 1000L < System.currentTimeMillis()) {
                 return null;
             }
-            Long nbf = (Long) payload.get("nbf");
+            Number nbfNum = (Number) payload.get("nbf");
+            Long nbf = nbfNum != null ? nbfNum.longValue() : null;
             if (nbf != null && nbf * 1000L > System.currentTimeMillis()) {
                 return null;
             }

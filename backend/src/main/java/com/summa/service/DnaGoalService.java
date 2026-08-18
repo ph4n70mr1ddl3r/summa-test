@@ -65,10 +65,11 @@ public class DnaGoalService {
             throw new IllegalStateException("Cannot update terminal goal: " + goal.getStatus());
         }
 
+        String oldStatus = goal.getStatus();
         goal.setStatus(status);
         DnaGoal saved = goalRepository.save(goal);
         auditService.log(actor, "UPDATE_GOAL_STATUS", "dna_goal", id,
-            String.format("{\"newStatus\":\"%s\",\"previousStatus\":\"%s\"}", status, goal.getStatus()));
+            String.format("{\"newStatus\":\"%s\",\"previousStatus\":\"%s\"}", status, oldStatus));
         return saved;
     }
 

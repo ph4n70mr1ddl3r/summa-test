@@ -4,6 +4,7 @@ import com.summa.service.WorkspaceService;
 import com.summa.model.Workspace;
 import com.summa.service.AuditService;
 import com.summa.model.AuditEvent;
+import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -14,10 +15,12 @@ import java.util.Map;
 public class WorkspaceController {
     private final WorkspaceService workspaceService;
     private final AuditService auditService;
+    private final WriteGate writeGate;
 
-    public WorkspaceController(WorkspaceService workspaceService, AuditService auditService) {
+    public WorkspaceController(WorkspaceService workspaceService, AuditService auditService, WriteGate writeGate) {
         this.workspaceService = workspaceService;
         this.auditService = auditService;
+        this.writeGate = writeGate;
     }
 
     @GetMapping
@@ -34,7 +37,9 @@ public class WorkspaceController {
 
     @PostMapping
     public ResponseEntity<?> createWorkspace(@RequestBody Map<String, String> body,
-                                              @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                               @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Workspace ws = workspaceService.create(
                 body.get("id"),
@@ -61,6 +66,8 @@ public class WorkspaceController {
     public ResponseEntity<?> rebind(@PathVariable String id,
                                      @RequestBody Map<String, String> body,
                                      @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Workspace ws = workspaceService.rebind(id, body.get("targetNodeId"), actor);
             return ResponseEntity.ok(ws);
@@ -74,6 +81,8 @@ public class WorkspaceController {
     @PostMapping("/{id}/archive")
     public ResponseEntity<?> archive(@PathVariable String id,
                                       @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Workspace ws = workspaceService.archive(id, actor);
             return ResponseEntity.ok(ws);

@@ -19,6 +19,7 @@ public class DataHoldService {
         this.auditService = auditService;
     }
 
+    @Transactional
     public DataHold create(String kind, String subjectId, String reasonMd, String createdBy) {
         DataHold hold = new DataHold();
         hold.setId(UUID.randomUUID().toString());

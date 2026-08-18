@@ -19,6 +19,7 @@ public class BoardTaskService {
         this.auditService = auditService;
     }
 
+    @Transactional
     public BoardTask create(String title, String description, String createdBy, 
                              String assigneeMemberId, String initiativeId, Integer priority,
                              Instant dueAt) {

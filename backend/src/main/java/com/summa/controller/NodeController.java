@@ -4,6 +4,7 @@ import com.summa.service.NodeService;
 import com.summa.model.Node;
 import com.summa.service.AuditService;
 import com.summa.model.AuditEvent;
+import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -14,10 +15,12 @@ import java.util.Map;
 public class NodeController {
     private final NodeService nodeService;
     private final AuditService auditService;
+    private final WriteGate writeGate;
 
-    public NodeController(NodeService nodeService, AuditService auditService) {
+    public NodeController(NodeService nodeService, AuditService auditService, WriteGate writeGate) {
         this.nodeService = nodeService;
         this.auditService = auditService;
+        this.writeGate = writeGate;
     }
 
     @GetMapping
@@ -89,7 +92,9 @@ public class NodeController {
 
     @PostMapping("/{id}/revoke")
     public ResponseEntity<?> revoke(@PathVariable String id,
-                                     @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                      @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Node node = nodeService.revoke(id, actor);
             return ResponseEntity.ok(node);
@@ -103,6 +108,8 @@ public class NodeController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateNode(@PathVariable String id, @RequestBody Map<String, String> body,
                                          @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Node node = nodeService.updateMetadata(
                 id,

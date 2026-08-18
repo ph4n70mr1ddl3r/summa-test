@@ -19,6 +19,7 @@ public class NodeService {
         this.auditService = auditService;
     }
 
+    @Transactional
     public Node enroll(String name, String kind, String pubkey) {
         Node node = new Node();
         node.setId(UUID.randomUUID().toString());

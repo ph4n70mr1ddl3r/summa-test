@@ -4,6 +4,7 @@ import com.summa.service.MemoryService;
 import com.summa.model.MemoryItem;
 import com.summa.service.AuditService;
 import com.summa.model.AuditEvent;
+import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -14,10 +15,12 @@ import java.util.Map;
 public class MemoryController {
     private final MemoryService memoryService;
     private final AuditService auditService;
+    private final WriteGate writeGate;
 
-    public MemoryController(MemoryService memoryService, AuditService auditService) {
+    public MemoryController(MemoryService memoryService, AuditService auditService, WriteGate writeGate) {
         this.memoryService = memoryService;
         this.auditService = auditService;
+        this.writeGate = writeGate;
     }
 
     @GetMapping
@@ -47,6 +50,8 @@ public class MemoryController {
     @PostMapping
     public ResponseEntity<?> createMemory(@RequestBody Map<String, String> body,
                                            @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             MemoryItem item = memoryService.create(
                 body.get("tier"),
@@ -71,6 +76,8 @@ public class MemoryController {
     @PostMapping("/{id}/review")
     public ResponseEntity<?> review(@PathVariable String id,
                                       @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             MemoryItem item = memoryService.review(id, actor);
             return ResponseEntity.ok(item);

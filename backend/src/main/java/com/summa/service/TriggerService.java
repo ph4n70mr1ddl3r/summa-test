@@ -32,6 +32,7 @@ public class TriggerService {
         this.auditService = auditService;
     }
 
+    @Transactional
     public Trigger create(String name, String kind, String expression, String agentId,
                            String workspaceId, String criticality, String config, String actor) {
         Trigger trigger = new Trigger();

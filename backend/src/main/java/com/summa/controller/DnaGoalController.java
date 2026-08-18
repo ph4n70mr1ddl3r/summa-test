@@ -4,6 +4,7 @@ import com.summa.service.DnaGoalService;
 import com.summa.model.DnaGoal;
 import com.summa.service.AuditService;
 import com.summa.model.AuditEvent;
+import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
@@ -15,10 +16,12 @@ import java.util.Map;
 public class DnaGoalController {
     private final DnaGoalService goalService;
     private final AuditService auditService;
+    private final WriteGate writeGate;
 
-    public DnaGoalController(DnaGoalService goalService, AuditService auditService) {
+    public DnaGoalController(DnaGoalService goalService, AuditService auditService, WriteGate writeGate) {
         this.goalService = goalService;
         this.auditService = auditService;
+        this.writeGate = writeGate;
     }
 
     @GetMapping
@@ -43,7 +46,9 @@ public class DnaGoalController {
 
     @PostMapping
     public ResponseEntity<?> createGoal(@RequestBody Map<String, String> body,
-                                         @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                          @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Instant effectiveFrom = body.containsKey("effectiveFrom") ?
                 Instant.parse(body.get("effectiveFrom")) : Instant.now();
@@ -75,7 +80,9 @@ public class DnaGoalController {
 
     @PatchMapping("/{id}/status")
     public ResponseEntity<?> updateStatus(@PathVariable String id, @RequestBody Map<String, String> body,
-                                           @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                            @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             DnaGoal goal = goalService.updateStatus(id, body.get("status"), actor);
             return ResponseEntity.ok(goal);
@@ -92,7 +99,9 @@ public class DnaGoalController {
 
     @PatchMapping("/{id}/window")
     public ResponseEntity<?> updateWindow(@PathVariable String id, @RequestBody Map<String, String> body,
-                                           @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                            @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Instant effectiveFrom = body.containsKey("effectiveFrom") ?
                 Instant.parse(body.get("effectiveFrom")) : null;

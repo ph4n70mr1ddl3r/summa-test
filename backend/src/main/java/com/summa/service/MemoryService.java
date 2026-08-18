@@ -19,6 +19,7 @@ public class MemoryService {
         this.auditService = auditService;
     }
 
+    @Transactional
     public MemoryItem create(String tier, String memberId, String workspaceId, 
                               String contentMd, String provenance, boolean tainted) {
         MemoryItem item = new MemoryItem();

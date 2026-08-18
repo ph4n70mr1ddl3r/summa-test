@@ -122,7 +122,9 @@ public class AgentController {
 
     @PostMapping("/{id}/archive")
     public ResponseEntity<?> archive(@PathVariable String id,
-                                        @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                         @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Agent agent = agentService.archive(id, actor);
             return ResponseEntity.ok(agent);

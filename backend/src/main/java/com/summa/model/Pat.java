@@ -58,7 +58,7 @@ public class Pat {
     public void setRevokedAt(Instant revokedAt) { this.revokedAt = revokedAt; }
     public Instant getLastUsedAt() { return lastUsedAt; }
     public void setLastUsedAt(Instant lastUsedAt) { this.lastUsedAt = lastUsedAt; }
-    public boolean isExpired() { return expiresAt.isBefore(Instant.now()); }
+    public boolean isExpired() { return expiresAt != null && expiresAt.isBefore(Instant.now()); }
     public boolean isRevoked() { return revokedAt != null; }
     public boolean isActive() { return !isExpired() && !isRevoked(); }
 }

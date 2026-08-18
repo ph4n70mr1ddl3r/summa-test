@@ -18,6 +18,7 @@ public class RoleTemplateService {
         this.auditService = auditService;
     }
 
+    @Transactional
     public RoleTemplate create(String name, String agentClass, String body, String defaultScopes) {
         RoleTemplate template = new RoleTemplate();
         template.setId(UUID.randomUUID().toString());

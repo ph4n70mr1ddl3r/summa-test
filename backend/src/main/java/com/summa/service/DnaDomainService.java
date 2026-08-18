@@ -28,6 +28,7 @@ public class DnaDomainService {
         this.auditService = auditService;
     }
 
+    @Transactional
     public DnaDomain create(String id, String name, String ownerHumanId, String access, 
                            String store, Integer reviewSlaDays, String residency) {
         DnaDomain domain = new DnaDomain();
@@ -94,6 +95,7 @@ public class DnaDomainService {
         return saved;
     }
 
+    @Transactional
     public DnaDomain updateOwner(String id, String newOwnerId, String actor) {
         DnaDomain domain = domainRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Domain not found: " + id));
@@ -104,6 +106,7 @@ public class DnaDomainService {
         return saved;
     }
 
+    @Transactional
     public DnaDomain updateAccess(String id, String access, String actor) {
         DnaDomain domain = domainRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Domain not found: " + id));

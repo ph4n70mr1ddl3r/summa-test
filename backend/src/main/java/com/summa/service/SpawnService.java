@@ -36,6 +36,7 @@ public class SpawnService {
         this.depthCap = Math.max(2, depthCap);
     }
 
+    @Transactional
     public SpawnRequest create(String requesterId, String templateId, String customRole,
                                    String spawnClass, String purpose, String workspaceBindings,
                                    String scopeCeiling, Double budgetCap, Integer ttlHours,

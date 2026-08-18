@@ -4,6 +4,7 @@ import com.summa.service.TriggerService;
 import com.summa.model.Trigger;
 import com.summa.service.AuditService;
 import com.summa.model.AuditEvent;
+import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -14,10 +15,12 @@ import java.util.Map;
 public class TriggerController {
     private final TriggerService triggerService;
     private final AuditService auditService;
+    private final WriteGate writeGate;
 
-    public TriggerController(TriggerService triggerService, AuditService auditService) {
+    public TriggerController(TriggerService triggerService, AuditService auditService, WriteGate writeGate) {
         this.triggerService = triggerService;
         this.auditService = auditService;
+        this.writeGate = writeGate;
     }
 
     @GetMapping
@@ -39,6 +42,8 @@ public class TriggerController {
     @PostMapping
     public ResponseEntity<?> createTrigger(@RequestBody Map<String, String> body,
                                             @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Trigger trigger = triggerService.create(
                 body.get("name"),
@@ -65,6 +70,8 @@ public class TriggerController {
     @PostMapping("/{id}/pause")
     public ResponseEntity<?> pause(@PathVariable String id,
                                     @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Trigger trigger = triggerService.pause(id, actor);
             return ResponseEntity.ok(trigger);
@@ -78,6 +85,8 @@ public class TriggerController {
     @PostMapping("/{id}/resume")
     public ResponseEntity<?> resume(@PathVariable String id,
                                      @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Trigger trigger = triggerService.resume(id, actor);
             return ResponseEntity.ok(trigger);
@@ -91,6 +100,8 @@ public class TriggerController {
     @PostMapping("/{id}/archive")
     public ResponseEntity<?> archive(@PathVariable String id,
                                       @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Trigger trigger = triggerService.archive(id, actor);
             return ResponseEntity.ok(trigger);

@@ -23,6 +23,7 @@ public class DnaProposalService {
         this.domainService = domainService;
     }
 
+    @Transactional
     public DnaProposal create(String id, String kind, String payload, String proposedBy, 
                                String provenance, String domainId) {
         DnaProposal proposal = new DnaProposal();

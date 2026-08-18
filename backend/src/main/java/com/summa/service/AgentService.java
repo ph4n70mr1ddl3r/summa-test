@@ -30,6 +30,7 @@ public class AgentService {
         this.depthCap = depthCap;
     }
 
+    @Transactional
     public Agent create(String id, String name, String ownerHumanId, String agentClass,
                         String spawnedBy, Integer lineageDepth, String templateId,
                         String templateVersion, Double budgetCap, Instant ttlAt) {

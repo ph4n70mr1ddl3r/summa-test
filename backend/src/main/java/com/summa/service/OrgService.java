@@ -32,6 +32,7 @@ public class OrgService {
         this.passwordUtil = passwordUtil;
     }
 
+    @Transactional
     public Human bootstrap(String name, String email, String rbac, String password) {
         // Check if any human exists
         long count = humanRepository.count();
@@ -53,6 +54,7 @@ public class OrgService {
         return saved;
     }
 
+    @Transactional
     public Human createHuman(String name, String email, String rbac, String auth, String password) {
         Human human = new Human();
         human.setId(UUID.randomUUID().toString());

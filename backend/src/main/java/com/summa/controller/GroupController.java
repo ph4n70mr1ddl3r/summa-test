@@ -4,6 +4,7 @@ import com.summa.service.GroupService;
 import com.summa.model.Group;
 import com.summa.service.AuditService;
 import com.summa.model.AuditEvent;
+import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -14,10 +15,12 @@ import java.util.Map;
 public class GroupController {
     private final GroupService groupService;
     private final AuditService auditService;
+    private final WriteGate writeGate;
 
-    public GroupController(GroupService groupService, AuditService auditService) {
+    public GroupController(GroupService groupService, AuditService auditService, WriteGate writeGate) {
         this.groupService = groupService;
         this.auditService = auditService;
+        this.writeGate = writeGate;
     }
 
     @GetMapping
@@ -34,7 +37,9 @@ public class GroupController {
 
     @PostMapping
     public ResponseEntity<?> createGroup(@RequestBody Map<String, String> body,
-                                          @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                           @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Group group = groupService.create(
                 body.get("name"),
@@ -50,7 +55,9 @@ public class GroupController {
 
     @PostMapping("/{id}/archive")
     public ResponseEntity<?> archiveGroup(@PathVariable String id,
-                                           @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                            @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Group group = groupService.archive(id, actor);
             return ResponseEntity.ok(group);
@@ -64,6 +71,8 @@ public class GroupController {
     @PutMapping("/{id}/leader")
     public ResponseEntity<?> setLeader(@PathVariable String id, @RequestBody Map<String, String> body,
                                         @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Group group = groupService.setLeader(id, body.get("leaderMemberId"), actor);
             return ResponseEntity.ok(group);

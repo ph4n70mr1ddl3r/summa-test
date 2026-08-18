@@ -95,7 +95,7 @@ export default function AskInbox() {
                       <span className={`text-xs px-2 py-0.5 rounded border ${tierColor(ask.slaTier)}`}>
                         {ask.slaTier}
                       </span>
-                      {ask.collapsedCount && ask.collapsedCount > 1 && (
+                      {ask.collapsedCount != null && ask.collapsedCount > 1 && (
                         <span className="text-xs text-gray-500">
                           \u00d7{ask.collapsedCount} collapsed
                         </span>

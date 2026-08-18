@@ -4,6 +4,7 @@ import com.summa.service.DataHoldService;
 import com.summa.model.DataHold;
 import com.summa.service.AuditService;
 import com.summa.model.AuditEvent;
+import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -14,10 +15,12 @@ import java.util.Map;
 public class DataHoldController {
     private final DataHoldService holdService;
     private final AuditService auditService;
+    private final WriteGate writeGate;
 
-    public DataHoldController(DataHoldService holdService, AuditService auditService) {
+    public DataHoldController(DataHoldService holdService, AuditService auditService, WriteGate writeGate) {
         this.holdService = holdService;
         this.auditService = auditService;
+        this.writeGate = writeGate;
     }
 
     @GetMapping
@@ -28,6 +31,8 @@ public class DataHoldController {
     @PostMapping
     public ResponseEntity<?> createHold(@RequestBody Map<String, String> body,
                                          @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             DataHold hold = holdService.create(
                 body.get("kind"),
@@ -50,6 +55,8 @@ public class DataHoldController {
     @PostMapping("/{id}/release")
     public ResponseEntity<?> releaseHold(@PathVariable String id,
                                           @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             DataHold hold = holdService.release(id, actor);
             return ResponseEntity.ok(hold);

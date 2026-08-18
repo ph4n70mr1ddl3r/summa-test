@@ -14,6 +14,7 @@ import Spawning from './pages/Spawning.tsx'
 import Runs from './pages/Runs.tsx'
 import Governance from './pages/Governance.tsx'
 import NotFound from './pages/NotFound.tsx'
+import Login from './pages/Login.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -30,6 +31,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="spawn" element={<Spawning />} />
           <Route path="runs" element={<Runs />} />
           <Route path="governance" element={<Governance />} />
+          <Route path="login" element={<Login />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

@@ -4,6 +4,7 @@ import com.summa.service.PatService;
 import com.summa.model.Pat;
 import com.summa.service.AuditService;
 import com.summa.model.AuditEvent;
+import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -14,10 +15,12 @@ import java.util.Map;
 public class PatController {
     private final PatService patService;
     private final AuditService auditService;
+    private final WriteGate writeGate;
 
-    public PatController(PatService patService, AuditService auditService) {
+    public PatController(PatService patService, AuditService auditService, WriteGate writeGate) {
         this.patService = patService;
         this.auditService = auditService;
+        this.writeGate = writeGate;
     }
 
     @GetMapping
@@ -28,16 +31,24 @@ public class PatController {
     @PostMapping
     public ResponseEntity<?> createPat(@RequestBody Map<String, String> body,
                                         @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             int expiryDays = body.containsKey("expiryDays") ? 
                 Integer.parseInt(body.get("expiryDays")) : 90;
             
             List<String> scopes = List.of();
             if (body.containsKey("scopes")) {
-                String scopesStr = body.get("scopes").replace("[", "").replace("]", "")
-                    .replace("\"", "").trim();
-                if (!scopesStr.isEmpty()) {
-                    scopes = List.of(scopesStr.split(","));
+                String scopesRaw = body.get("scopes").trim();
+                if (scopesRaw.isEmpty() || "{}".equals(scopesRaw) || "[]".equals(scopesRaw)) {
+                    scopes = List.of();
+                } else {
+                    try {
+                        com.fasterxml.jackson.core.type.TypeReference<List<String>> ref = new com.fasterxml.jackson.core.type.TypeReference<List<String>>() {};
+                        scopes = new com.fasterxml.jackson.databind.ObjectMapper().readValue(scopesRaw, ref);
+                    } catch (Exception e) {
+                        throw new IllegalArgumentException("Invalid scopes format: " + scopesRaw);
+                    }
                 }
             }
             
@@ -69,6 +80,8 @@ public class PatController {
     @PostMapping("/{id}/revoke")
     public ResponseEntity<?> revokePat(@PathVariable String id,
                                         @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Pat pat = patService.revoke(id, actor);
             return ResponseEntity.ok(pat);

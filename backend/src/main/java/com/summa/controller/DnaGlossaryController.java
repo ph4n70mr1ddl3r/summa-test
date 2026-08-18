@@ -4,6 +4,7 @@ import com.summa.service.DnaGlossaryService;
 import com.summa.model.DnaGlossary;
 import com.summa.service.AuditService;
 import com.summa.model.AuditEvent;
+import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -14,10 +15,12 @@ import java.util.Map;
 public class DnaGlossaryController {
     private final DnaGlossaryService glossaryService;
     private final AuditService auditService;
+    private final WriteGate writeGate;
 
-    public DnaGlossaryController(DnaGlossaryService glossaryService, AuditService auditService) {
+    public DnaGlossaryController(DnaGlossaryService glossaryService, AuditService auditService, WriteGate writeGate) {
         this.glossaryService = glossaryService;
         this.auditService = auditService;
+        this.writeGate = writeGate;
     }
 
     @GetMapping
@@ -42,7 +45,9 @@ public class DnaGlossaryController {
 
     @PostMapping
     public ResponseEntity<?> createEntry(@RequestBody Map<String, String> body,
-                                          @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                           @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             DnaGlossary entry = glossaryService.create(
                 body.get("id"),
@@ -62,7 +67,9 @@ public class DnaGlossaryController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<?> updateEntry(@PathVariable String id, @RequestBody Map<String, String> body,
-                                          @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                           @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             DnaGlossary entry = glossaryService.update(
                 id,
@@ -84,7 +91,9 @@ public class DnaGlossaryController {
 
     @PostMapping("/{id}/retire")
     public ResponseEntity<?> retireEntry(@PathVariable String id,
-                                          @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                           @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             DnaGlossary entry = glossaryService.retire(id, actor);
             return ResponseEntity.ok(entry);
