@@ -53,12 +53,8 @@ class OffboardingWalkServiceTest {
     private OffboardingWalkService walkService;
 
     @Test
-    void walkOffboard_refusesLastAdmin() {
-        when(memberService.countActiveAdmins()).thenReturn(1L);
-        Human human = new Human();
-        human.setId("h1");
-        human.setRbac("admin");
-        when(memberService.findHuman("h1")).thenReturn(Optional.of(human));
+    void walkOffboard_throwsWhenHumanNotFound() {
+        when(memberService.findHuman("h1")).thenReturn(Optional.empty());
 
         assertThrows(IllegalStateException.class, () -> {
             walkService.walkOffboard("h1", null, "admin2");
@@ -67,7 +63,6 @@ class OffboardingWalkServiceTest {
 
     @Test
     void walkOffboard_deactivatesHuman() {
-        when(memberService.countActiveAdmins()).thenReturn(2L);
         Human human = new Human();
         human.setId("h1");
         human.setRbac("member");
@@ -97,7 +92,6 @@ class OffboardingWalkServiceTest {
 
     @Test
     void walkOffboard_throwsWhenNoSuccessorAndNoAdmin() {
-        when(memberService.countActiveAdmins()).thenReturn(2L);
         Human human = new Human();
         human.setId("h1");
         human.setRbac("member");
@@ -112,7 +106,6 @@ class OffboardingWalkServiceTest {
 
     @Test
     void walkOffboard_transfersDomainsToSuccessor() {
-        when(memberService.countActiveAdmins()).thenReturn(2L);
         Human human = new Human();
         human.setId("h1");
         human.setRbac("member");
@@ -143,7 +136,6 @@ class OffboardingWalkServiceTest {
 
     @Test
     void walkOffboard_transfersAgentsToSuccessor() {
-        when(memberService.countActiveAdmins()).thenReturn(2L);
         Human human = new Human();
         human.setId("h1");
         human.setRbac("member");
@@ -176,7 +168,6 @@ class OffboardingWalkServiceTest {
 
     @Test
     void walkOffboard_reassignsInitiativeSponsorAndLead() {
-        when(memberService.countActiveAdmins()).thenReturn(2L);
         Human human = new Human();
         human.setId("h1");
         human.setRbac("member");
@@ -209,7 +200,6 @@ class OffboardingWalkServiceTest {
 
     @Test
     void walkOffboard_transfersProposals() {
-        when(memberService.countActiveAdmins()).thenReturn(2L);
         Human human = new Human();
         human.setId("h1");
         human.setRbac("member");
@@ -241,7 +231,6 @@ class OffboardingWalkServiceTest {
 
     @Test
     void walkOffboard_revokesPats() {
-        when(memberService.countActiveAdmins()).thenReturn(2L);
         Human human = new Human();
         human.setId("h1");
         human.setRbac("member");

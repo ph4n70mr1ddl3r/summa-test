@@ -67,20 +67,17 @@ public class OffboardingWalkService {
     }
 
     /**
-     * Full offboarding walk per OFB-001.
+     * Full offboarding walk per OFB-001. Last-admin guard is enforced by the caller
+     * (OrgService.offboard) in a single transaction; this method assumes the guard
+     * passed and proceeds directly to the dependency walk.
      */
     @Transactional
     public Map<String, Object> walkOffboard(String humanId, String successorId, String actor) {
-        // OFB-020: Last-admin guard
-        long adminCount = memberService.countActiveAdmins();
+        // Note: last-admin guard is checked in OrgService.offboard(), not here, to avoid TOCTOU.
         Optional<Human> humanOpt = memberService.findHuman(humanId);
-        if (humanOpt.isPresent()) {
-            Human human = humanOpt.get();
-            if ("admin".equals(human.getRbac()) && adminCount <= 1) {
-                throw new IllegalStateException("Cannot offboard the last active admin");
-            }
+        if (humanOpt.isEmpty()) {
+            throw new IllegalStateException("Human not found for offboarding: " + humanId);
         }
-
         String targetOwner = successorId != null ? successorId : findAnyAdminId();
         if (targetOwner == null) {
             throw new IllegalStateException("No successor specified and no active admin found for custody transfer");

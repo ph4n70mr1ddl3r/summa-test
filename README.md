@@ -5,7 +5,7 @@ A self-hosted platform where human employees and AI agents work as one organizat
 ## Quick Start
 
 ### Prerequisites
-- Java 25+
+- Java 21+
 - Node.js 22+
 - Maven 3.9+
 
@@ -44,7 +44,7 @@ A self-hosted platform where human employees and AI agents work as one organizat
 
 ## Tech Stack
 
-- **Backend**: Java 25 LTS + Spring Boot 4, SQLite (WAL)
+- **Backend**: Java 21 LTS + Spring Boot 3, SQLite (WAL)
 - **Console**: React 19 + TypeScript + Vite + Tailwind CSS
 - **Deployment**: OCI images, rootless Podman, Kubernetes-ready
 

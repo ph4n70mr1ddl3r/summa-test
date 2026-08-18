@@ -68,7 +68,7 @@ public class DnaGoalService {
         goal.setStatus(status);
         DnaGoal saved = goalRepository.save(goal);
         auditService.log(actor, "UPDATE_GOAL_STATUS", "dna_goal", id,
-            String.format("{\"newStatus\":\"%s\"}", status));
+            String.format("{\"newStatus\":\"%s\",\"previousStatus\":\"%s\"}", status, goal.getStatus()));
         return saved;
     }
 

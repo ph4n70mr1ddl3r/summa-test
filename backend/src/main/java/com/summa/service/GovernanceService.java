@@ -79,13 +79,21 @@ public class GovernanceService {
     /**
      * SPW-060: Check if the spend circuit-breaker should trip.
      * Compares (reserved + settled) against the org ceiling per SPW-033.
+     * The evaluation window is configurable via governance setting
+     * "spend-evaluation-window-days" (default 30).
      */
     public boolean isSpendHaltTripped() {
         try {
             Double ceiling = getSetting("spend-org-ceiling", Double.class);
             if (ceiling == null) ceiling = 1000000.0;
-            Double reservedObj = spendLedgerRepository.sumReservedSince(Instant.now().minus(30, ChronoUnit.DAYS));
-            Double settledObj = spendLedgerRepository.sumSettleCostSince(Instant.now().minus(30, ChronoUnit.DAYS));
+            Object windowDaysObj = getSetting("spend-evaluation-window-days");
+            long windowDays = 30;
+            if (windowDaysObj instanceof Number) {
+                windowDays = ((Number) windowDaysObj).longValue();
+            }
+            Instant window = Instant.now().minus(windowDays, ChronoUnit.DAYS);
+            Double reservedObj = spendLedgerRepository.sumReservedSince(window);
+            Double settledObj = spendLedgerRepository.sumSettleCostSince(window);
             double reserved = reservedObj != null ? reservedObj : 0.0;
             double settled = settledObj != null ? settledObj : 0.0;
             return (reserved + settled) >= ceiling;
@@ -98,7 +106,12 @@ public class GovernanceService {
     public Map<String, Object> getSpendView() {
         Double ceiling = getSetting("spend-org-ceiling", Double.class);
         if (ceiling == null) ceiling = 1000000.0;
-        Instant window = Instant.now().minus(30, ChronoUnit.DAYS);
+        Object windowDaysObj = getSetting("spend-evaluation-window-days");
+        long windowDays = 30;
+        if (windowDaysObj instanceof Number) {
+            windowDays = ((Number) windowDaysObj).longValue();
+        }
+        Instant window = Instant.now().minus(windowDays, ChronoUnit.DAYS);
         Double reservedObj = spendLedgerRepository.sumReservedSince(window);
         Double settledObj = spendLedgerRepository.sumSettleCostSince(window);
         double reserved = reservedObj != null ? reservedObj : 0.0;
@@ -127,6 +140,7 @@ public class GovernanceService {
         settings.putIfAbsent("dna-default-review-sla-days", 7);
         settings.putIfAbsent("spend-org-ceiling", 1000000.0);
         settings.putIfAbsent("spend-critical-floor-percent", 5.0);
+        settings.putIfAbsent("spend-evaluation-window-days", 30);
     }
 
     private Object parseValue(String value) {
