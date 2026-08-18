@@ -13,7 +13,7 @@ is promoted to a central, governed **Company DNA** with proposals and review; ag
 agents (governed); topology becomes a **control plane + execution nodes**, with a single-process
 mode so small teams start simple.
 
-*Version v2.60 · 2026-08-16 — change history: [CHANGELOG.md](CHANGELOG.md)*
+*Version v2.61 · 2026-08-19 — change history: [CHANGELOG.md](CHANGELOG.md)*
 
 > **Provenance & completion status**: the v1 design document that §7, §8, and §9 delta
 > against is not part of this repository. The normative, testable statement of every
@@ -461,7 +461,7 @@ keeps governing strictness separately.
   pairing — `domain` vs `domain` included — is won by the strictly smaller evaluated member
   set, and a pair with no strictly smaller side (each admitting members the other excludes,
   or the two evaluating equal) refuses the default and demands a declared access
-  (SPEC-06 DGV-014) — undeclared attributes persist from the surviving domain, and the
+  (DGV-014) — undeclared attributes persist from the surviving domain, and the
   `named` reader list keeps the same floor: the survivor's list stands unless the op
   declares the union, so a
   merge never silently widens access — and a narrowed list shows in the event's access
@@ -1347,7 +1347,7 @@ refused the second ask before it existed.
 
 New/changed tables (v1 session/run/message/skill/connector tables carry over). The v2.46
 completion tables — `groups` + `group_memberships`, `audit_events`, `pats`,
-`governance_settings`, `memory_items` — are defined in SPEC-16 (DAT-120…125), as is the keyed
+`governance_settings`, `memory_items` — are defined in DAT-120…125, as is the keyed
 `h:`/`a:` member-reference representation that makes the shared humans+agents namespace
 addressable from every member-typed column:
 
@@ -2122,7 +2122,7 @@ POST /governance/holds · POST /governance/holds/:id/release  (admin; audited �
 Refusal envelope: every 4xx on this surface answers in one machine-parseable shape —
 `{code, message, audit_event_id, ask_id?}` with a stable `code` enum (validation, eligibility,
 not_found, conflict, rate_limited, gate) — so a §2-shaped refusal always links the audit row it
-wrote and the ask it raised (SPEC-17 API-061).
+wrote and the ask it raised (API-061).
 
 ---
 

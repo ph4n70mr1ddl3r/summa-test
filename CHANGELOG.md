@@ -4,6 +4,13 @@ Version history for PLAN.md and the `specs/` suite. Newest first. Entries v2.1�
 were extracted verbatim from PLAN.md's preamble in v2.46; from v2.46 on, history lives
 here alone (PLAN.md carries only the current version stamp).
 
+**Review pass 27: consistency, unambiguity fixes**: terminology alignment — the suite
+defines *non-active* as "any status other than `active`" (01-product-and-principles.md)
+but ASK-060 and OFB-017 used *inactive* instead; both now read *non-active*. PLAN.md
+body citations shed their module-name prefix where a bare REQ ID suffices:
+(SPEC-06 DGV-014) → (DGV-014), SPEC-16 (DAT-120…125) → DAT-120…125, (SPEC-17 API-061)
+→ (API-061). No requirement text changed meaning; lint green, all 19 self-tests pass.
+
 **Errata pass (v2.60)**: a full-suite review — PLAN.md and all 21 modules read against each
 other for correctness, consistency, completeness, and unambiguity — closed three residues:
 DAT-120's keyed-union rule said `system` is "the one non-member value a member-typed column

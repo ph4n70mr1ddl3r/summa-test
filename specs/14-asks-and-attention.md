@@ -107,7 +107,7 @@ Source: PLAN.md §8.10.
 
 - **ASK-060** — Every ask to a human carries member → deputy → domain owner (of the domain
   the ask's workspace belongs to; an ask with no domain skips this hop; multi-domain
-  workspaces hop to the primary domain) → admin, walked on SLA breach; inactive members are
+   workspaces hop to the primary domain) → admin, walked on SLA breach; non-active members are
   skipped; the walk carries a visited-set so a mis-configured cycle ends the hop, not the
   walk.
 - **ASK-061** — Agent targets: an ask routed to an agent queues into its next run (or

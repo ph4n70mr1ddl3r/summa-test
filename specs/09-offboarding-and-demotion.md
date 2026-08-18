@@ -34,7 +34,7 @@ Source: PLAN.md §5 (offboarding, demotion, last-admin guard).
 - **OFB-016** — Pending DNA proposals they authored transfer to the successor for owned
   domains and are auto-withdrawn with an audit note for member proposals — the review queue
   never waits on a departed proposer.
-- **OFB-017** — Inactive members are skipped when walking ask chains.
+- **OFB-017** — Non-active members are skipped when walking ask chains.
 
 ## Last-admin guard
 
