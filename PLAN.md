@@ -1928,7 +1928,7 @@ deputy cycles, and viewer deputies are refused the same way — a read-only memb
 standing answer hop) → domain owner (of the domain the ask's workspace
 belongs to; asks with no domain skip the hop; multi-domain workspaces hop to the primary domain
 — first-bound, admin-editable: one deterministic hop, not a fan-out to every owner) → admin,
-walked on SLA breach (inactive members are skipped; the walk carries a visited-set, so a
+walked on SLA breach (non-active members are skipped; the walk carries a visited-set, so a
 mis-configured cycle ends the hop, not the walk — the §5 last-admin guard and the exhaustion
 broadcast remain the backstops). The admin hop is a broadcast, not a pick: every path that
 routes to "an admin" — this terminal hop, the §4.3 review-SLA escalation and sod publish
