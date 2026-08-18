@@ -6,6 +6,7 @@ import com.summa.repository.RoleTemplateRepository;
 import com.summa.model.RoleTemplate;
 import com.summa.repository.AgentRepository;
 import com.summa.model.Agent;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -21,6 +22,9 @@ public class SpawnService {
     private final RoleTemplateRepository templateRepository;
     private final AgentRepository agentRepository;
 
+    @Value("${summa.spawn.depth-cap:2}")
+    private int depthCap;
+
     public SpawnService(SpawnRequestRepository spawnRepository, AuditService auditService,
                           GovernanceService governanceService, RoleTemplateRepository templateRepository,
                           AgentRepository agentRepository) {
@@ -29,12 +33,13 @@ public class SpawnService {
         this.governanceService = governanceService;
         this.templateRepository = templateRepository;
         this.agentRepository = agentRepository;
+        this.depthCap = Math.max(2, depthCap);
     }
 
     public SpawnRequest create(String requesterId, String templateId, String customRole,
-                                  String spawnClass, String purpose, String workspaceBindings,
-                                  String scopeCeiling, Double budgetCap, Integer ttlHours,
-                                  String requestedByHumanId, String actor) {
+                                   String spawnClass, String purpose, String workspaceBindings,
+                                   String scopeCeiling, Double budgetCap, Integer ttlHours,
+                                   String requestedByHumanId, String actor) {
         // SPW-001: Validate requester is an existing active agent
         Optional<Agent> requesterOpt = agentRepository.findById(requesterId);
         if (requesterOpt.isEmpty()) {
@@ -70,7 +75,7 @@ public class SpawnService {
         }
 
         SpawnRequest request = new SpawnRequest();
-        request.setId(java.util.UUID.randomUUID().toString());
+        request.setId(UUID.randomUUID().toString());
         request.setRequesterId(requesterId);
         request.setTemplateId(templateId);
         request.setCustomRole(customRole);
@@ -144,6 +149,15 @@ public class SpawnService {
         Integer depth = 0;
         if (request.getRequestedByHumanId() != null) {
             depth = 1;
+        } else if (request.getRequesterId() != null) {
+            Optional<Agent> parentOpt = agentRepository.findById(request.getRequesterId());
+            if (parentOpt.isPresent()) {
+                depth = parentOpt.get().getLineageDepth() != null ? parentOpt.get().getLineageDepth() + 1 : 1;
+            }
+        }
+
+        if (depth >= depthCap) {
+            throw new IllegalStateException("Spawn depth cap reached: depth=" + depth + " cap=" + depthCap);
         }
 
         Agent agent = new Agent();
@@ -154,7 +168,7 @@ public class SpawnService {
         agent.setSpawnedBy(request.getRequesterId());
         agent.setLineageDepth(depth);
         agent.setTemplateId(request.getTemplateId());
-        agent.setTemplateVersion(request.getTemplateId() != null ? "v1" : null);
+        agent.setTemplateVersion(resolveTemplateVersion(request.getTemplateId()));
         agent.setBudgetCap(request.getBudgetCap());
         agent.setStatus("active");
 
@@ -162,6 +176,13 @@ public class SpawnService {
         auditService.log(actor, "SPAWN_AGENT", "agent", agentId,
             String.format("{\"requestId\":\"%s\",\"class\":\"%s\"}", request.getId(), request.getSpawnClass()));
         return saved;
+    }
+
+    private String resolveTemplateVersion(String templateId) {
+        if (templateId == null || templateId.isBlank()) return null;
+        return templateRepository.findById(templateId)
+            .map(t -> t.getVersion() != null ? "v" + t.getVersion() : "v1")
+            .orElse("v1");
     }
 
     @Transactional

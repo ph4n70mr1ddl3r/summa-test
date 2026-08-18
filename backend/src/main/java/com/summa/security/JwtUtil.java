@@ -4,11 +4,15 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
 
 public class JwtUtil {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtUtil.class);
 
     private static final String ALGORITHM = "HmacSHA256";
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -59,8 +63,13 @@ public class JwtUtil {
             if (exp * 1000L < System.currentTimeMillis()) {
                 return null;
             }
+            Long nbf = (Long) payload.get("nbf");
+            if (nbf != null && nbf * 1000L > System.currentTimeMillis()) {
+                return null;
+            }
             return payload;
         } catch (Exception e) {
+            log.warn("JWT parse failure: {}", e.getMessage());
             return null;
         }
     }
@@ -79,4 +88,3 @@ public class JwtUtil {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 }
-

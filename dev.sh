@@ -51,5 +51,5 @@ echo "  API:     http://localhost:8080/api"
 echo ""
 echo "Press Ctrl+C to stop all services"
 
-trap "kill $BACKEND_PID $CONSOLE_PID 2>/dev/null; exit 0" INT TERM EXIT
+trap '[ "${BACKEND_PID:-0}" -ne 0 ] && kill "${BACKEND_PID}" 2>/dev/null; [ "${CONSOLE_PID:-0}" -ne 0 ] && kill "${CONSOLE_PID}" 2>/dev/null; exit 0' INT TERM EXIT
 wait

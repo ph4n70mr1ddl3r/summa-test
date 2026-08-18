@@ -121,6 +121,10 @@ public class RunService {
         return saved;
     }
 
+    public List<Run> findByStatus(String status) {
+        return runRepository.findByStatus(status);
+    }
+
     public long countByStatus(String status) {
         return runRepository.countByStatus(status);
     }

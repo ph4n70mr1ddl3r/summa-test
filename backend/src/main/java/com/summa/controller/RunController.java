@@ -5,6 +5,8 @@ import com.summa.model.Run;
 import com.summa.service.AuditService;
 import com.summa.model.AuditEvent;
 import com.summa.security.WriteGate;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -28,19 +30,18 @@ public class RunController {
             @RequestParam(required = false) String agentId,
             @RequestParam(required = false) String workspaceId,
             @RequestParam(required = false) String status,
-            @RequestParam(defaultValue = "50") int limit) {
+            @RequestParam(defaultValue = "50") @Min(1) @Max(200) int limit) {
+        List<Run> all;
         if (agentId != null) {
-            return ResponseEntity.ok(runService.findByAgent(agentId).stream().limit(limit).toList());
+            all = runService.findByAgent(agentId);
+        } else if (workspaceId != null) {
+            all = runService.findByWorkspace(workspaceId);
+        } else if (status != null) {
+            all = runService.findByStatus(status);
+        } else {
+            all = runService.findRecent(limit * 2);
         }
-        if (workspaceId != null) {
-            return ResponseEntity.ok(runService.findByWorkspace(workspaceId).stream().limit(limit).toList());
-        }
-        if (status != null) {
-            return ResponseEntity.ok(runService.findRecent(limit).stream()
-                .filter(r -> status.equals(r.getStatus()))
-                .toList());
-        }
-        return ResponseEntity.ok(runService.findRecent(limit));
+        return ResponseEntity.ok(all.stream().limit(limit).toList());
     }
 
     @GetMapping("/{id}")
@@ -52,7 +53,7 @@ public class RunController {
 
     @PostMapping
     public ResponseEntity<?> createRun(@RequestBody Map<String, String> body,
-                                         @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                          @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -76,9 +77,9 @@ public class RunController {
         }
     }
 
-    @PostMapping("/{id}/start")
+    @GetMapping("/{id}/start")
     public ResponseEntity<?> startRun(@PathVariable String id,
-                                       @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                        @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -93,15 +94,13 @@ public class RunController {
 
     @PostMapping("/{id}/complete")
     public ResponseEntity<?> completeRun(@PathVariable String id, @RequestBody Map<String, Object> body,
-                                          @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                           @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
             String result = (String) body.get("result");
-            Long costTokens = body.get("costTokens") != null ? 
-                ((Number) body.get("costTokens")).longValue() : null;
-            Double costUsd = body.get("costUsd") != null ? 
-                ((Number) body.get("costUsd")).doubleValue() : null;
+            Long costTokens = convertToLong(body.get("costTokens"));
+            Double costUsd = convertToDouble(body.get("costUsd"));
             
             Run run = runService.complete(id, result, costTokens, costUsd);
             return ResponseEntity.ok(run);
@@ -114,7 +113,7 @@ public class RunController {
 
     @PostMapping("/{id}/fail")
     public ResponseEntity<?> failRun(@PathVariable String id, @RequestBody Map<String, String> body,
-                                      @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+                                       @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -150,5 +149,17 @@ public class RunController {
             "completed", runService.countByStatus("completed"),
             "failed", runService.countByStatus("failed")
         ));
+    }
+
+    private Long convertToLong(Object val) {
+        if (val == null) return null;
+        if (val instanceof Number n) return n.longValue();
+        try { return Long.parseLong(val.toString()); } catch (NumberFormatException e) { return null; }
+    }
+
+    private Double convertToDouble(Object val) {
+        if (val == null) return null;
+        if (val instanceof Number n) return n.doubleValue();
+        try { return Double.parseDouble(val.toString()); } catch (NumberFormatException e) { return null; }
     }
 }

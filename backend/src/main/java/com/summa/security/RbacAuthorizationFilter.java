@@ -43,31 +43,34 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-                                     FilterChain filterChain) throws ServletException, IOException {
+                                      FilterChain filterChain) throws ServletException, IOException {
         String actor = (String) request.getAttribute("actor");
         if (actor == null) {
             actor = request.getHeader("X-Actor");
         }
         if (actor == null) {
-            actor = "system";
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "No actor identity provided");
+            return;
         }
-        ACTOR_CONTEXT.set(actor);
 
         boolean writeAllowed = true;
         if (WRITE_METHODS.containsKey(request.getMethod())) {
             Optional<Human> humanOpt = memberService.findHuman(actor);
             if (humanOpt.isPresent()) {
                 writeAllowed = memberService.hasWriteSurface(humanOpt.get());
-            }
-            // Agents are allowed to write (they are system actors)
-            var agentOpt = memberService.findAgent(actor);
-            if (agentOpt.isPresent()) {
-                writeAllowed = memberService.hasWriteSurfaceAgent(agentOpt.get());
+            } else {
+                var agentOpt = memberService.findAgent(actor);
+                if (agentOpt.isPresent()) {
+                    writeAllowed = memberService.hasWriteSurfaceAgent(agentOpt.get());
+                } else {
+                    writeAllowed = false;
+                }
             }
         }
-        WRITES_ALLOWED.set(writeAllowed);
 
         try {
+            ACTOR_CONTEXT.set(actor);
+            WRITES_ALLOWED.set(writeAllowed);
             filterChain.doFilter(request, response);
         } finally {
             ACTOR_CONTEXT.remove();

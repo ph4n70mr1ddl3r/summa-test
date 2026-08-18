@@ -1,4 +1,5 @@
-import { Outlet, NavLink } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { getAuthToken } from './services/api'
 
 interface NavItem {
   to: string
@@ -14,6 +15,19 @@ const navItems: NavItem[] = [
   { to: '/runs', label: 'Runs' },
   { to: '/governance', label: 'Governance' },
 ]
+
+function AuthGuard({ children }: { children: React.ReactNode }) {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const token = getAuthToken()
+
+  if (!token) {
+    navigate('/login', { state: { from: location } })
+    return null
+  }
+
+  return <>{children}</>
+}
 
 export default function App() {
   return (
@@ -31,7 +45,7 @@ export default function App() {
                   <NavLink
                     key={to}
                     to={to}
-                    end={to === '/'}
+                    end={to === '/' || to === '/dna' || to === '/org'}
                     className={({ isActive }) =>
                       isActive
                         ? 'text-white border-b-2 border-blue-400 px-1 py-2'
@@ -47,13 +61,18 @@ export default function App() {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-gray-400 text-sm">Single-process mode</span>
+              {getAuthToken() && (
+                <span className="text-gray-500 text-xs">authenticated</span>
+              )}
             </div>
           </div>
         </div>
       </header>
 
       <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Outlet />
+        <AuthGuard>
+          <Outlet />
+        </AuthGuard>
       </main>
     </div>
   )

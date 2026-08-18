@@ -11,6 +11,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 @Service
 public class OffboardingWalkService {
+    private static final String ADMIN_BROADCAST = "admins";
+
     private final MemberService memberService;
     private final AgentService agentService;
     private final InitiativeService initiativeService;
@@ -173,7 +175,7 @@ public class OffboardingWalkService {
                     askRepository.save(ask);
                     asksReassigned++;
                 } else {
-                    ask.setTo("admins");
+                    ask.setTo(ADMIN_BROADCAST);
                     askRepository.save(ask);
                     asksReassigned++;
                 }
@@ -214,6 +216,9 @@ public class OffboardingWalkService {
             human.setDeactivatedAt(Instant.now());
             memberService.saveHuman(human);
         });
+        if (humanOpt.isEmpty()) {
+            throw new IllegalStateException("Human not found during offboarding walk: " + humanId);
+        }
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("humanId", humanId);

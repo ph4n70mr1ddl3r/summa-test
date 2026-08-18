@@ -121,20 +121,27 @@ public class OrgService {
                 .orElseThrow(() -> new IllegalArgumentException("Human not found: " + id));
 
         // Validate deputy exists and is not a viewer
-        humanRepository.findById(deputyId).ifPresent(deputy -> {
-            if ("viewer".equals(deputy.getRbac())) {
-                throw new IllegalArgumentException("Deputy cannot be a viewer");
-            }
-            if (deputy.getId().equals(id)) {
-                throw new IllegalArgumentException("Cannot deputy self");
-            }
-        });
+        Optional<Human> deputyOpt = humanRepository.findById(deputyId);
+        if (deputyOpt.isEmpty()) {
+            throw new IllegalArgumentException("Deputy not found: " + deputyId);
+        }
+        Human deputy = deputyOpt.get();
+        if ("viewer".equals(deputy.getRbac())) {
+            throw new IllegalArgumentException("Deputy cannot be a viewer");
+        }
+        if (deputy.getId().equals(id)) {
+            throw new IllegalArgumentException("Cannot deputy self");
+        }
 
         human.setDeputyMemberId(deputyId);
         Human saved = humanRepository.save(human);
         auditService.log(actor, "SET_DEPUTY", "human", id,
             String.format("{\"deputyId\":\"%s\"}", deputyId));
         return saved;
+    }
+
+    public Human saveHuman(Human human) {
+        return humanRepository.save(human);
     }
 
     public List<AuditEvent> getAuditLog(int limit) {

@@ -1,5 +1,15 @@
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
+let authToken: string | null = null;
+
+export function setAuthToken(token: string | null) {
+  authToken = token;
+}
+
+export function getAuthToken(): string | null {
+  return authToken;
+}
+
 function withQuery(path: string, params?: Record<string, string>): string {
   if (!params || Object.keys(params).length === 0) return path;
   const qs = new URLSearchParams(params).toString();
@@ -7,8 +17,13 @@ function withQuery(path: string, params?: Record<string, string>): string {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers);
+  headers.set('Content-Type', 'application/json');
+  if (authToken) {
+    headers.set('Authorization', `Bearer ${authToken}`);
+  }
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
+    headers,
     ...init,
   });
   if (!res.ok) {
@@ -120,10 +135,19 @@ export interface GovernanceSetting {
   [key: string]: unknown;
 }
 
+function toQueryString(params?: Record<string, string | number | undefined>): Record<string, string> | undefined {
+  if (!params || Object.keys(params).length === 0) return undefined;
+  const result: Record<string, string> = {};
+  for (const [k, v] of Object.entries(params)) {
+    if (v !== undefined) result[k] = String(v);
+  }
+  return Object.keys(result).length > 0 ? result : undefined;
+}
+
 export const api = {
   agents: {
     list: (params?: { status?: string; ownerId?: string }) =>
-      request<Agent[]>(withQuery('/agents', params)),
+      request<Agent[]>(withQuery('/agents', toQueryString(params))),
     get: (id: string) => request<Agent>(`/agents/${id}`),
     lineage: (id: string) => request<string[]>(`/agents/${id}/lineage`),
     suspend: (id: string, actor: string) =>
@@ -233,20 +257,17 @@ export const api = {
         headers: { 'X-Actor': actor },
       }),
     members: () => request<{ members: unknown[]; total: number }>('/org/members'),
-    lineage: (memberId: string) => request(withQuery('/org/lineage', { memberId })),
+    lineage: (memberId: string) => request<string[]>(withQuery('/org/lineage', { memberId })),
     audit: (limit?: number, objectType?: string, objectId?: string) =>
       request<unknown[]>(withQuery('/org/audit', {
-        limit: String(limit ?? 100),
+        ...(limit ? { limit: String(limit) } : {}),
         ...(objectType ? { objectType } : {}),
         ...(objectId ? { objectId } : {}),
       })),
   },
   spawn: {
     list: (status?: string, requesterId?: string) =>
-      request<SpawnRequest[]>(withQuery('/spawn', {
-        ...(status ? { status } : {}),
-        ...(requesterId ? { requesterId } : {}),
-      })),
+      request<SpawnRequest[]>(withQuery('/spawn', toQueryString({ status, requesterId }))),
     create: (body: Record<string, string>, actor: string) =>
       request<SpawnRequest>('/spawn', {
         method: 'POST',
@@ -297,7 +318,7 @@ export const api = {
   },
   runs: {
     list: (params?: { agentId?: string; workspaceId?: string; status?: string; limit?: number }) =>
-      request<Run[]>(withQuery('/runs', params as Record<string, string>)),
+      request<Run[]>(withQuery('/runs', toQueryString(params))),
     create: (body: Record<string, string>, actor: string) =>
       request<Run>('/runs', {
         method: 'POST',
@@ -326,11 +347,16 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       }),
+    changePassword: (currentPassword: string, newPassword: string) =>
+      request<{ message: string }>('/auth/change-password', {
+        method: 'PUT',
+        body: JSON.stringify({ currentPassword, newPassword }),
+      }),
   },
   health: () => request<{ status: string }>('/health'),
   boardTasks: {
     list: (params?: { status?: string; assigneeId?: string; initiativeId?: string }) =>
-      request<unknown[]>(withQuery('/board-tasks', params as Record<string, string>)),
+      request<unknown[]>(withQuery('/board-tasks', toQueryString(params))),
     create: (body: Record<string, string>, actor: string) =>
       request('/board-tasks', {
         method: 'POST',
@@ -479,7 +505,7 @@ export const api = {
   },
   memory: {
     list: (params?: { memberId?: string; workspaceId?: string; tainted?: string }) =>
-      request<unknown[]>(withQuery('/memory', params as Record<string, string>)),
+      request<unknown[]>(withQuery('/memory', toQueryString(params))),
     create: (body: Record<string, string>, actor: string) =>
       request('/memory', {
         method: 'POST',

@@ -4,7 +4,7 @@
 
 ```
 summa/
-├── backend/           # Java 21 + Spring Boot 3.4
+├── backend/           # Java 25 LTS + Spring Boot 4
 │   ├── src/main/java/com/summa/
 │   │   ├── controller/    # REST endpoints (API-001..061)
 │   │   ├── service/       # Business logic

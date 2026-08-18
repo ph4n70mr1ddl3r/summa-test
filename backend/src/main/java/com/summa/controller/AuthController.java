@@ -41,10 +41,9 @@ public class AuthController {
             ));
         }
 
-        // Find human by email
         var humanOpt = orgService.findHumanByEmail(email);
 
-        if (humanOpt.isEmpty()) {
+        if (humanOpt.isEmpty() || !humanOpt.get().isActive()) {
             return ResponseEntity.status(401).body(Map.of(
                 "code", "unauthorized",
                 "message", "Invalid credentials"
@@ -52,22 +51,9 @@ public class AuthController {
         }
 
         var human = humanOpt.get();
-        if (!human.isActive()) {
-            return ResponseEntity.status(403).body(Map.of(
-                "code", "forbidden",
-                "message", "Account is deactivated"
-            ));
-        }
 
-        if (password == null || password.isBlank()) {
-            return ResponseEntity.status(401).body(Map.of(
-                "code", "unauthorized",
-                "message", "Invalid credentials"
-            ));
-        }
-
-        String storedHash = human.getPasswordHash();
-        if (storedHash == null || !passwordUtil.verify(password, storedHash)) {
+        if (password == null || password.isBlank() || human.getPasswordHash() == null
+                || !passwordUtil.verify(password, human.getPasswordHash())) {
             return ResponseEntity.status(401).body(Map.of(
                 "code", "unauthorized",
                 "message", "Invalid credentials"
@@ -83,5 +69,56 @@ public class AuthController {
             "rbac", human.getRbac(),
             "name", human.getName()
         ));
+    }
+
+    @PutMapping("/change-password")
+    public ResponseEntity<Map<String, Object>> changePassword(
+            @RequestHeader(value = "Authorization") String authHeader,
+            @RequestBody Map<String, String> body) {
+        String token = extractToken(authHeader);
+        if (token == null) {
+            return ResponseEntity.status(401).body(Map.of("code", "unauthorized", "message", "Missing token"));
+        }
+        var payload = JwtUtil.parseToken(token, jwtSecret);
+        if (payload == null) {
+            return ResponseEntity.status(401).body(Map.of("code", "unauthorized", "message", "Invalid token"));
+        }
+        String actor = (String) payload.get("sub");
+
+        String currentPassword = body.get("currentPassword");
+        String newPassword = body.get("newPassword");
+
+        if (currentPassword == null || currentPassword.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", "currentPassword is required"));
+        }
+        if (newPassword == null || newPassword.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", "newPassword is required"));
+        }
+        if (newPassword.length() < 8) {
+            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", "newPassword must be at least 8 characters"));
+        }
+
+        var humanOpt = orgService.findHuman(actor);
+        if (humanOpt.isEmpty()) {
+            return ResponseEntity.status(401).body(Map.of("code", "unauthorized", "message", "Invalid credentials"));
+        }
+        var human = humanOpt.get();
+
+        if (human.getPasswordHash() == null || !passwordUtil.verify(currentPassword, human.getPasswordHash())) {
+            return ResponseEntity.status(401).body(Map.of("code", "unauthorized", "message", "Invalid credentials"));
+        }
+
+        human.setPasswordHash(passwordUtil.hash(newPassword));
+        orgService.saveHuman(human);
+        auditService.log(actor, "CHANGE_PASSWORD", "auth", actor, null);
+
+        return ResponseEntity.ok(Map.of("message", "Password updated"));
+    }
+
+    private String extractToken(String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+        return null;
     }
 }

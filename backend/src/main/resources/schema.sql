@@ -172,7 +172,7 @@ CREATE TABLE IF NOT EXISTS asks (
     id TEXT PRIMARY KEY,
     kind TEXT NOT NULL CHECK (kind IN ('approval', 'question', 'assignment', 'spawn_request')),
     "from" TEXT NOT NULL,
-    to TEXT NOT NULL,
+    "to" TEXT NOT NULL,
     payload TEXT NOT NULL DEFAULT '{}',
     initiative_id TEXT,
     workspace_id TEXT,

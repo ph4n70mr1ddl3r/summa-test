@@ -7,19 +7,17 @@ spring:
   application:
     name: summa
   datasource:
-    url: jdbc:sqlite:${SUMMA_DB_PATH:~/.summa/summa.db}
+    url: jdbc:sqlite:${SUMMA_DB_PATH:${user.home}/.summa/summa.db}
     driver-class-name: org.sqlite.JDBC
   jpa:
     database-platform: org.eclipse.persistence.platform.database.SQLiteDialect
-    hibernate:
-      ddl-auto: none
-      show-sql: false
-      properties:
+    properties:
+      eclipselink:
         jdbc:
-          batch_size: 50
-        cache:
-          shared:
-            enabled: false
+          batch-writing: delayed
+        batching:
+          size: 50
+      eclipselink.cache.shared.default: false
   sql:
     init:
       mode: never
@@ -28,10 +26,10 @@ spring:
 
 summa:
   database:
-    path: ${SUMMA_DB_PATH:~/.summa/summa.db}
+    path: ${SUMMA_DB_PATH:${user.home}/.summa/summa.db}
     wal-mode: true
   git:
-    dna-repo-path: ${SUMMA_DNA_REPO:~/.summa/dna}
+    dna-repo-path: ${SUMMA_DNA_REPO:${user.home}/.summa/dna}
     branch: main
     commit-author: summa <summa@local>
   auth:

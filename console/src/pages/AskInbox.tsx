@@ -9,7 +9,7 @@ export default function AskInbox() {
   useEffect(() => {
     api.asks.listByStatus('pending')
       .then((data) => {
-        setAsks(data as Ask[])
+        setAsks(data)
         setLoading(false)
       })
       .catch((err) => {
@@ -29,12 +29,17 @@ export default function AskInbox() {
 
   const kindIcon = (kind: string) => {
     switch (kind) {
-      case 'approval': return '⏻'
+      case 'approval': return '\u23FA'
       case 'question': return '?'
-      case 'assignment': return '→'
+      case 'assignment': return '\u2192'
       case 'spawn_request': return '+'
-      default: return '•'
+      default: return '\u2022'
     }
+  }
+
+  const formatDeadline = (deadline: string) => {
+    const d = new Date(deadline)
+    return isNaN(d.getTime()) ? '\u2014' : d.toLocaleString()
   }
 
   if (loading) {
@@ -52,6 +57,12 @@ export default function AskInbox() {
         <h2 className="text-2xl font-bold">Ask Inbox</h2>
         <div className="bg-red-900/30 border border-red-700 rounded-lg p-4 text-red-400">
           Failed to load asks: {error}
+          <button
+            onClick={() => window.location.reload()}
+            className="ml-4 px-3 py-1 bg-red-700 hover:bg-red-600 rounded text-sm text-red-100"
+          >
+            Retry
+          </button>
         </div>
       </div>
     )
@@ -86,20 +97,20 @@ export default function AskInbox() {
                       </span>
                       {ask.collapsedCount && ask.collapsedCount > 1 && (
                         <span className="text-xs text-gray-500">
-                          ×{ask.collapsedCount} collapsed
+                          \u00d7{ask.collapsedCount} collapsed
                         </span>
                       )}
                     </div>
                     <p className="text-sm text-gray-400 mt-1">
                       From: <span className="text-gray-300">{ask.from}</span>
-                      {' → '}To: <span className="text-gray-300">{ask.to}</span>
+                      {' \u2192 '}To: <span className="text-gray-300">{ask.to}</span>
                     </p>
                   </div>
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-xs text-gray-500">Deadline</p>
                   <p className="text-sm text-gray-300">
-                    {new Date(ask.deadline).toLocaleString()}
+                    {formatDeadline(ask.deadline)}
                   </p>
                   {ask.quorumRequired && ask.quorumRequired > 1 && (
                     <p className="text-xs text-gray-500 mt-1">
@@ -124,19 +135,19 @@ export default function AskInbox() {
       <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
         <h3 className="text-lg font-semibold text-yellow-300 mb-4">Ask Kinds</h3>
         <ul className="text-gray-400 space-y-1 text-sm">
-          <li>• approval — requires human decision before proceeding</li>
-          <li>• question — seeks information or guidance</li>
-          <li>• assignment — delegates work to a member</li>
-          <li>• spawn_request — gates agent spawning</li>
+          <li>\u2022 approval — requires human decision before proceeding</li>
+          <li>\u2022 question — seeks information or guidance</li>
+          <li>\u2022 assignment — delegates work to a member</li>
+          <li>\u2022 spawn_request — gates agent spawning</li>
         </ul>
       </div>
 
       <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
         <h3 className="text-lg font-semibold text-yellow-300 mb-4">SLA Tiers</h3>
         <ul className="text-gray-400 space-y-1 text-sm">
-          <li>• critical — blocks money-moving/critical runs (1h deadline)</li>
-          <li>• standard — blocks regular runs (next digest)</li>
-          <li>• bulk — non-blocking (24h deadline)</li>
+          <li>\u2022 critical — blocks money-moving/critical runs (1h deadline)</li>
+          <li>\u2022 standard — blocks regular runs (next digest)</li>
+          <li>\u2022 bulk — non-blocking (24h deadline)</li>
         </ul>
       </div>
     </div>

@@ -64,9 +64,11 @@ function ApiStatusCheck() {
   const [status, setStatus] = useState<'ok' | 'error' | 'loading'>('loading')
 
   useEffect(() => {
+    let cancelled = false
     api.health()
-      .then(() => setStatus('ok'))
-      .catch(() => setStatus('error'))
+      .then(() => { if (!cancelled) setStatus('ok') })
+      .catch(() => { if (!cancelled) setStatus('error') })
+    return () => { cancelled = true }
   }, [])
 
   return (
