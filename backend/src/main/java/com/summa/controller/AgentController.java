@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
 
@@ -49,7 +50,7 @@ public class AgentController {
 
     @GetMapping("/{id}/lineage")
     public ResponseEntity<List<String>> getLineage(@PathVariable String id) {
-        List<String> lineage = new java.util.ArrayList<>();
+        List<String> lineage = new ArrayList<>();
         String currentId = id;
         while (currentId != null && lineage.size() < 10) {
             lineage.add(currentId);

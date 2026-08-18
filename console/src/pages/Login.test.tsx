@@ -9,8 +9,8 @@ vi.mock('../services/api', () => ({
     auth: {
       login: vi.fn(),
     },
-    setAuthToken: vi.fn(),
   },
+  setAuthToken: vi.fn(),
   getAuthToken: vi.fn().mockReturnValue(null),
 }))
 
@@ -45,7 +45,7 @@ describe('Login page', () => {
     fireEvent.change(getByLabelText(/password/i), { target: { value: 'password123' } })
     fireEvent.click(getByText('Sign in'))
     await waitFor(() => {
-      expect(apiModule.api.auth.login).toHaveBeenCalledWith('test@example.com', 'password123')
+      expect(apiModule.setAuthToken).toHaveBeenCalledWith('fake-token')
     })
   })
 

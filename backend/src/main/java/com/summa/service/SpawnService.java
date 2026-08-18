@@ -13,6 +13,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Map;
 
 @Service
 public class SpawnService {
@@ -213,11 +214,11 @@ public class SpawnService {
         return saved;
     }
 
-    public java.util.Map<String, Object> getStats() {
+    public Map<String, Object> getStats() {
         long requested = spawnRepository.countByStatus("requested");
         long approved = spawnRepository.countByStatus("approved");
         long archived = spawnRepository.countByStatus("archived");
-        return java.util.Map.of("requested", requested, "approved", approved, "archived", archived);
+        return Map.of("requested", requested, "approved", approved, "archived", archived);
     }
 
     /**

@@ -5,6 +5,7 @@ import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/governance")
@@ -25,7 +26,7 @@ public class GovernanceController {
     @GetMapping("/quotas")
     public ResponseEntity<Map<String, Object>> getQuotas() {
         Map<String, Object> all = governanceService.getAllSettings();
-        Map<String, Object> quotas = new java.util.HashMap<>();
+        Map<String, Object> quotas = new HashMap<>();
         quotas.put("spawn-ephemeral-default-ttl-hours", all.get("spawn-ephemeral-default-ttl-hours"));
         quotas.put("spawn-ephemeral-max-concurrent-per-spawner", all.get("spawn-ephemeral-max-concurrent-per-spawner"));
         quotas.put("spawn-org-wide-max-active-agents", all.get("spawn-org-wide-max-active-agents"));

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { api } from '../services/api'
+import { api, setAuthToken } from '../services/api'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -18,7 +18,7 @@ export default function Login() {
     setLoading(true)
     try {
       const result = await api.auth.login(email, password)
-      api.setAuthToken(result.token)
+      setAuthToken(result.token)
       navigate(from, { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))

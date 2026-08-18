@@ -13,6 +13,10 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Base64;
+import java.util.Objects;
 import java.security.MessageDigest;
 import java.nio.charset.StandardCharsets;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -99,9 +103,9 @@ public class AskService {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest((kind + "|" + to + "|" + (payload != null ? payload : "")).getBytes(StandardCharsets.UTF_8));
-            return java.util.Base64.getEncoder().encodeToString(hash);
+            return Base64.getEncoder().encodeToString(hash);
         } catch (Exception e) {
-            return kind + "|" + to + "|" + java.util.Objects.hash(payload);
+            return kind + "|" + to + "|" + Objects.hash(payload);
         }
     }
 
@@ -259,18 +263,18 @@ public class AskService {
     private List<String> parseResponseIds(Ask ask) {
         try {
             String resp = ask.getResponses();
-            if (resp == null || resp.isBlank() || resp.equals("[]")) return new java.util.ArrayList<>();
+            if (resp == null || resp.isBlank() || resp.equals("[]")) return new ArrayList<>();
             return objectMapper.readValue(resp, new TypeReference<List<String>>() {});
         } catch (Exception e) {
-            return new java.util.ArrayList<>();
+            return new ArrayList<>();
         }
     }
 
     private String toJsonResponseList(List<String> ids, String response) {
         try {
-            List<Map<String, String>> list = new java.util.ArrayList<>();
+            List<Map<String, String>> list = new ArrayList<>();
             for (String id : ids) {
-                Map<String, String> entry = new java.util.HashMap<>();
+                Map<String, String> entry = new HashMap<>();
                 entry.put("responder", id);
                 list.add(entry);
             }

@@ -64,7 +64,7 @@ this surface is the PRN-009 form — refuse, audit, ask where a human decision i
 - **API-031** — `POST /spawn` · `GET /spawn/:id` — spawn requests with approval and
   spawn-storm monitoring (SPW-001); the requester's retraction rides the approval ask's
   withdraw endpoint (API-040, SPW-047).
-- **API-032** — `POST /agents/:id/retire · /suspend · /resume` — lifecycle acts on the
+- **API-032** — `POST /agents/:id/retire · /suspend · /resume · /archive` — lifecycle acts on the
   agent (not the spawn request); authority per CLC-010.
 - **API-033** — `POST /agents/:id/promote` — files the promotion ask for a customRole
   hire; authority: the hire's owner human or an admin; the ask snapshots identity files and

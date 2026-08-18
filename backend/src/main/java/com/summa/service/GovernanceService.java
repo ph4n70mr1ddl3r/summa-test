@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Optional;
 
 @Service
@@ -123,7 +124,7 @@ public class GovernanceService {
         double reserved = reservedObj != null ? reservedObj : 0.0;
         double settled = settledObj != null ? settledObj : 0.0;
         double utilization = (reserved + settled) / ceiling;
-        java.util.Map<String, Object> view = new java.util.LinkedHashMap<>();
+        Map<String, Object> view = new LinkedHashMap<>();
         view.put("reserved", reserved);
         view.put("settled", settled);
         view.put("ceiling", ceiling);
