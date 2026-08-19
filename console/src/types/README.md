@@ -1,0 +1,1 @@
+# Summa Console — Shared Types

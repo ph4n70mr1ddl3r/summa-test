@@ -20,6 +20,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
+        <Route path="/login" element={<Login />} />
         <Route path="/" element={<App />}>
           <Route index element={<Home />} />
           <Route path="dna" element={<DnaConsole />} />
@@ -31,7 +32,6 @@ createRoot(document.getElementById('root')!).render(
           <Route path="spawn" element={<Spawning />} />
           <Route path="runs" element={<Runs />} />
           <Route path="governance" element={<Governance />} />
-          <Route path="login" element={<Login />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

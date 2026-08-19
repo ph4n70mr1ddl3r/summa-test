@@ -13,12 +13,16 @@ spring:
     driver-class-name: org.sqlite.JDBC
   jpa:
     database-platform: org.eclipse.persistence.platform.database.SQLiteDialect
-    hibernate:
-      ddl-auto: none
     show-sql: false
     properties:
-      hibernate:
-        dialect: org.eclipse.persistence.platform.database.SQLiteDialect
+      eclipselink:
+        jdbc:
+          batch-writing: delayed
+        batching:
+          size: 50
+        jpa:
+          convertors: com.summa.config.InstantToUnixEpochConverter
+      eclipselink.cache.shared.default: false
   sql:
     init:
       mode: never

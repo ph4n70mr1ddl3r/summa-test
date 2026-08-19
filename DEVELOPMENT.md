@@ -12,14 +12,16 @@ summa/
 │   │   ├── model/         # JPA entities (DAT-010)
 │   │   ├── enums/         # Type enums
 │   │   ├── security/      # Auth filters
-│   │   └── config/        # App configuration
+│   │   ├── config/        # App configuration
+│   │   └── exception/     # Exception handlers
 │   └── src/test/java/     # Unit tests
 ├── console/           # React 19 + TypeScript + Vite
 │   ├── src/
 │   │   ├── pages/       # Route components
-│   │   └── components/  # Reusable UI
+│   │   ├── services/    # API client
+│   │   └── components/  # Reusable UI (placeholder)
 │   └── public/
-├── specs/             # Normative requirements (490 REQs)
+├── specs/             # Normative requirements (497 REQs)
 ├── tools/             # Lint tooling
 ├── Dockerfile
 ├── docker-compose.yml
@@ -104,9 +106,9 @@ See `PRODUCTION.md` for full deployment guide.
 
 ## Status
 
-- Phase 0 (Foundations): ✓ Complete
-- Phase 1 (MVP Agent): ✓ Complete
-- Phase 2 (Identity/Memory): ✓ In Progress
-- Phase 3 (DNA v1): ✓ In Progress
-- Phase 4 (Automation): ✓ In Progress
+- Phase 0 (Foundations): Complete
+- Phase 1 (MVP Agent): Complete
+- Phase 2 (Identity/Memory): In Progress
+- Phase 3 (DNA v1): In Progress
+- Phase 4 (Automation): In Progress
 - Phase 5-7: Pending
