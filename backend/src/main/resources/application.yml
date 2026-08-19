@@ -27,6 +27,7 @@ spring:
     allow-bean-definition-overriding: false
 
 summa:
+  mode: single-process
   database:
     path: ${SUMMA_DB_PATH:${user.home}/.summa/summa.db}
     wal-mode: true

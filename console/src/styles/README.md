@@ -1,1 +1,0 @@
-# Summa Console — Global Styles

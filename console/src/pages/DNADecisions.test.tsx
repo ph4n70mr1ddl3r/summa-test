@@ -12,4 +12,15 @@ describe('DNADecisions page', () => {
     const { container } = render(<DNADecisions />)
     expect(container.textContent).toContain('immutable')
   })
+
+  it('shows properties section', () => {
+    const { container } = render(<DNADecisions />)
+    expect(container.textContent).toContain('Lifecycle-free')
+    expect(container.textContent).toContain('Decided-by')
+  })
+
+  it('shows the API endpoint', () => {
+    const { container } = render(<DNADecisions />)
+    expect(container.textContent).toContain('/api/dna/decisions')
+  })
 })

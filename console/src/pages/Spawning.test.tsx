@@ -13,4 +13,14 @@ describe('Spawning page', () => {
     expect(container.textContent).toContain('GET /api/spawn')
     expect(container.textContent).toContain('Spend circuit-breaker')
   })
+
+  it('shows lineage section', () => {
+    const { container } = render(<Spawning />)
+    expect(container.textContent).toContain('Lineage')
+  })
+
+  it('mentions depth cap', () => {
+    const { container } = render(<Spawning />)
+    expect(container.textContent).toContain('Depth limit')
+  })
 })

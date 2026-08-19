@@ -13,4 +13,15 @@ describe('DnaConsole page', () => {
     expect(container.textContent).toContain('Domains')
     expect(container.textContent).toContain('Review Queue')
   })
+
+  it('lists content model items', () => {
+    const { container } = render(<DnaConsole />)
+    expect(container.textContent).toContain('Cards')
+    expect(container.textContent).toContain('Goals')
+  })
+
+  it('shows DNA proposal endpoints', () => {
+    const { container } = render(<DnaConsole />)
+    expect(container.textContent).toContain('/api/dna/proposals')
+  })
 })

@@ -13,4 +13,16 @@ describe('Governance page', () => {
     expect(container.textContent).toContain('Policies')
     expect(container.textContent).toContain('Quotas')
   })
+
+  it('shows spend and data-hold sections', () => {
+    const { container } = render(<Governance />)
+    expect(container.textContent).toContain('Spend')
+    expect(container.textContent).toContain('Data Holds')
+  })
+
+  it('shows governance API endpoints', () => {
+    const { container } = render(<Governance />)
+    expect(container.textContent).toContain('/api/governance/policies')
+    expect(container.textContent).toContain('/api/governance/spend')
+  })
 })

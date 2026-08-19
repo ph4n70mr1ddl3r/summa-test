@@ -12,4 +12,14 @@ describe('DNARules page', () => {
     const { container } = render(<DNARules />)
     expect(container.textContent).toContain('superseded')
   })
+
+  it('shows effective dates description', () => {
+    const { container } = render(<DNARules />)
+    expect(container.textContent).toContain('effective dates')
+  })
+
+  it('shows supersede endpoint', () => {
+    const { container } = render(<DNARules />)
+    expect(container.textContent).toContain('supersede')
+  })
 })

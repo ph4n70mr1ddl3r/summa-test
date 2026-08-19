@@ -12,5 +12,17 @@ describe('Runs page', () => {
     const { container } = render(<Runs />)
     expect(container.textContent).toContain('queued')
     expect(container.textContent).toContain('completed')
+    expect(container.textContent).toContain('failed')
+  })
+
+  it('shows metering info', () => {
+    const { container } = render(<Runs />)
+    expect(container.textContent).toContain('cost_tokens')
+    expect(container.textContent).toContain('Audit event on every transition')
+  })
+
+  it('shows triggers section', () => {
+    const { container } = render(<Runs />)
+    expect(container.textContent).toContain('Triggers')
   })
 })

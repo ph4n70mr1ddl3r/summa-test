@@ -12,4 +12,16 @@ describe('DNACards page', () => {
     const { container } = render(<DNACards />)
     expect(container.textContent).toContain('GET /api/dna/cards')
   })
+
+  it('shows lifecycle states', () => {
+    const { container } = render(<DNACards />)
+    expect(container.textContent).toContain('draft')
+    expect(container.textContent).toContain('active')
+    expect(container.textContent).toContain('retired')
+  })
+
+  it('notes that cards are never deleted', () => {
+    const { container } = render(<DNACards />)
+    expect(container.textContent).toContain('never delete')
+  })
 })
