@@ -6,8 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.core.type.TypeReference;
 
 @Service
 public class OffboardingWalkService {
@@ -32,7 +30,6 @@ public class OffboardingWalkService {
     private final AskRepository askRepository;
     private final BoardTaskRepository boardTaskRepository;
     private final PatRepository patRepository;
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public OffboardingWalkService(MemberService memberService, AgentService agentService,
                                     InitiativeService initiativeService, BoardTaskService boardTaskService,

@@ -6,7 +6,6 @@ import java.nio.file.*;
 import java.time.Instant;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-import java.util.Arrays;
 
 @Service
 public class BackupService {

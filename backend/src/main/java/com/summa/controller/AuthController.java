@@ -44,15 +44,19 @@ public class AuthController {
         var humanOpt = orgService.findHumanByEmail(email);
 
         if (humanOpt.isEmpty()) {
+            var audit = auditService.logSystem("REFUSAL", "auth_login", "Account not found: " + email, null);
             return ResponseEntity.status(401).body(Map.of(
                 "code", "unauthorized",
-                "message", "Account not found"
+                "message", "Account not found",
+                "audit_event_id", audit.getId()
             ));
         }
         if (!humanOpt.get().isActive()) {
+            var audit = auditService.logSystem("REFUSAL", "auth_login", "Deactivated account: " + email, null);
             return ResponseEntity.status(401).body(Map.of(
                 "code", "unauthorized",
-                "message", "Account is deactivated"
+                "message", "Account is deactivated",
+                "audit_event_id", audit.getId()
             ));
         }
 
@@ -60,9 +64,11 @@ public class AuthController {
 
         if (password == null || password.isBlank() || human.getPasswordHash() == null
                 || !passwordUtil.verify(password, human.getPasswordHash())) {
+            var audit = auditService.logSystem("REFUSAL", "auth_login", "Invalid password: " + email, null);
             return ResponseEntity.status(401).body(Map.of(
                 "code", "unauthorized",
-                "message", "Invalid password"
+                "message", "Invalid password",
+                "audit_event_id", audit.getId()
             ));
         }
 
@@ -83,11 +89,13 @@ public class AuthController {
             @RequestBody Map<String, String> body) {
         String token = extractToken(authHeader);
         if (token == null) {
-            return ResponseEntity.status(401).body(Map.of("code", "unauthorized", "message", "Missing token"));
+            var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Missing token", null);
+            return ResponseEntity.status(401).body(Map.of("code", "unauthorized", "message", "Missing token", "audit_event_id", audit.getId()));
         }
         var payload = JwtUtil.parseToken(token, jwtSecret);
         if (payload == null) {
-            return ResponseEntity.status(401).body(Map.of("code", "unauthorized", "message", "Invalid token"));
+            var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Invalid token", null);
+            return ResponseEntity.status(401).body(Map.of("code", "unauthorized", "message", "Invalid token", "audit_event_id", audit.getId()));
         }
         String actor = (String) payload.get("sub");
 
@@ -106,12 +114,14 @@ public class AuthController {
 
         var humanOpt = orgService.findHuman(actor);
         if (humanOpt.isEmpty()) {
-            return ResponseEntity.status(401).body(Map.of("code", "unauthorized", "message", "Invalid credentials"));
+            var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Invalid credentials for: " + actor, null);
+            return ResponseEntity.status(401).body(Map.of("code", "unauthorized", "message", "Invalid credentials", "audit_event_id", audit.getId()));
         }
         var human = humanOpt.get();
 
         if (human.getPasswordHash() == null || !passwordUtil.verify(currentPassword, human.getPasswordHash())) {
-            return ResponseEntity.status(401).body(Map.of("code", "unauthorized", "message", "Invalid credentials"));
+            var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Password mismatch for: " + actor, null);
+            return ResponseEntity.status(401).body(Map.of("code", "unauthorized", "message", "Invalid credentials", "audit_event_id", audit.getId()));
         }
 
         human.setPasswordHash(passwordUtil.hash(newPassword));

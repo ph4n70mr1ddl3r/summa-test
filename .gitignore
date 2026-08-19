@@ -17,7 +17,6 @@ coverage/
 *.iml
 .mvn/
 backend/target/
-backend/target/logs/
 console/node_modules/
 console/.vite/
 .opencode/node_modules/
@@ -27,3 +26,4 @@ target/logs/
 *.keystore
 *.p12
 *.jks
+dependency-reduced-pom.xml

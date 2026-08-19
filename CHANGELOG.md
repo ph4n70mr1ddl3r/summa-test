@@ -4,6 +4,8 @@ Version history for PLAN.md and the `specs/` suite. Newest first. Entries v2.1�
 were extracted verbatim from PLAN.md's preamble in v2.46; from v2.46 on, history lives
 here alone (PLAN.md carries only the current version stamp).
 
+**Review pass 38: completeness, consistency, unambiguity, correctness fixes**: backend implementation review closes seven residues discovered against the running codebase — `Agent.class` column mapped with spurious doubled quotes (`@Column(name = "\"class\"")`) which would resolve to a literal quoted-column name at runtime, corrected to `@Column(name = "class")` per the schema and `SpawnRequest`'s own mapping; nine dead-import lines removed across services, security, and controllers; one no-op `ObjectMapper` field excised from `OffboardingWalkService`; five silent `401`/`400` responses in `AuthController` now emit `audit_event_id` and log the refusal to the audit trail the same way the rest of the plane does. Lint green, all tests pass.
+
 **Review pass 27: consistency, unambiguity fixes**: terminology alignment — the suite
 defines *non-active* as "any status other than `active`" (01-product-and-principles.md)
 but ASK-060 and OFB-017 used *inactive* instead; both now read *non-active*. PLAN.md

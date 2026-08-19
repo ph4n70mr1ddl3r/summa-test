@@ -16,7 +16,7 @@ public class Agent {
     @Column(name = "owner_human_id", nullable = false, length = 36)
     private String ownerHumanId;
 
-    @Column(name = "\"class\"", nullable = false, length = 20)
+    @Column(name = "class", nullable = false, length = 20)
     private String agentClass;
 
     @Column(name = "spawned_by", length = 36)

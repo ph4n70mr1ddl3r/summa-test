@@ -4,7 +4,6 @@ import com.summa.repository.*;
 import com.summa.model.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
 
