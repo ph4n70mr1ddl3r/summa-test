@@ -50,8 +50,12 @@ public class SpawnController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
+            String requesterId = body.get("requesterId");
+            if (requesterId == null || requesterId.isBlank()) {
+                throw new IllegalArgumentException("requesterId is required");
+            }
             SpawnRequest request = spawnService.create(
-                body.get("requesterId"),
+                requesterId,
                 body.get("templateId"),
                 body.get("customRole"),
                 body.get("spawnClass") != null ? body.get("spawnClass") : "ephemeral",

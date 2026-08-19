@@ -19,7 +19,7 @@ export default function DnaConsole() {
           Domain owners review DNA proposals: diff view, provenance, and impact hints.
         </p>
         <div className="text-sm text-gray-500">
-          <p>Endpoints: GET /api/dna/proposals, POST /api/dna/proposals/:id/review</p>
+          <p>Endpoints: GET /api/dna/proposals, POST /api/dna/proposals/{"{"}id{"}"}/review</p>
         </div>
       </div>
 
