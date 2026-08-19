@@ -27,7 +27,7 @@ if [ -z "$SUMMA_JWT_SECRET" ]; then
 fi
 
 # Create data directories
-mkdir -p ~/.summa/db ~/.summa/dna
+mkdir -p ~/.summa
 
 # Start backend in background
 echo "[1/2] Starting backend..."

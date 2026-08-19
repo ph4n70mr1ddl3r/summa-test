@@ -123,8 +123,8 @@ public class AskController {
 
     @PostMapping("/{id}/expire")
     public ResponseEntity<?> expire(@PathVariable String id) {
-            String actor = RbacAuthorizationFilter.getCurrentActor();
-        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor != null ? actor : "system");
+        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
             Ask ask = askService.expire(id);

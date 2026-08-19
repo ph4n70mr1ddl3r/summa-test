@@ -123,7 +123,7 @@ public class DnaDomainController {
         }
     }
 
-    // API-023: topology ops — split, merge, rename are stubs for Phase 6+
+    // API-023: topology ops — split and merge are stubs for Phase 6
     @PostMapping("/{id}/split")
     public ResponseEntity<?> splitDomain(@PathVariable String id, @RequestBody Map<String, String> body) {
         // DGV-010..013: governed split — stub for Phase 6
