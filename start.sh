@@ -43,5 +43,5 @@ echo "Starting backend on port 8080..."
 exec java \
     -Xmx512m \
     -Xms256m \
-    -Dspring.profiles.active=default \
+    -Dspring.profiles.active=prod \
     -jar "$JAR_FILE"

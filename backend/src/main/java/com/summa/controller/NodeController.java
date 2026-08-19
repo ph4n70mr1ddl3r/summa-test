@@ -38,6 +38,11 @@ public class NodeController {
 
     @PostMapping("/enroll")
     public ResponseEntity<?> enroll(@RequestBody Map<String, String> body) {
+        String actor = RbacAuthorizationFilter.getCurrentActor();
+        if (actor == null) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("code", "unauthorized", "message", "Node enrollment requires authentication"));
+        }
         try {
             Node node = nodeService.enroll(
                 body.get("name"),

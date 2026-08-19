@@ -33,7 +33,6 @@ public class SecurityConfig {
                 .requestMatchers("/health").permitAll()
                 .requestMatchers("/info").permitAll()
                 .requestMatchers("/nodes/enroll").permitAll()
-                .requestMatchers("/dna/search").permitAll()
                 .anyRequest().authenticated()
             )
             .httpBasic(Customizer.withDefaults());

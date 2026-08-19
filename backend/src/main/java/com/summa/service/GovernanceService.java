@@ -57,7 +57,7 @@ public class GovernanceService {
         if (type == Boolean.class || type == boolean.class) {
             return type.cast(Boolean.parseBoolean(value.toString()));
         }
-        return type.cast(value);
+        throw new IllegalArgumentException("Cannot cast value to " + type.getName() + " for key: " + key);
     }
 
     public Object getSetting(String key) {

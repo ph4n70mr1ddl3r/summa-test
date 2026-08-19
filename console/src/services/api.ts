@@ -96,7 +96,7 @@ export interface SpawnRequest {
   approvedAt?: string;
 }
 
-export type SpawnStatus = 'pending' | 'approved' | 'denied' | 'spawned' | 'expired';
+export type SpawnStatus = 'requested' | 'approved' | 'archived' | 'expired';
 
 export interface Initiative {
   id: string;
@@ -156,7 +156,7 @@ export interface DnaDomain {
   status: DnaDomainStatus;
 }
 
-export type DomainAccess = 'public' | 'private' | 'org';
+export type DomainAccess = 'public' | 'domain' | 'named';
 export type DnaDomainStatus = 'active' | 'archived';
 
 export interface GovernanceSetting {

@@ -273,9 +273,12 @@ public class AskService {
     private String toJsonResponseList(List<String> ids, String response) {
         try {
             List<Map<String, String>> list = new ArrayList<>();
-            for (String id : ids) {
+            for (int i = 0; i < ids.size(); i++) {
                 Map<String, String> entry = new HashMap<>();
-                entry.put("responder", id);
+                entry.put("responder", ids.get(i));
+                if (i == ids.size() - 1 && response != null) {
+                    entry.put("response", response);
+                }
                 list.add(entry);
             }
             return objectMapper.writeValueAsString(list);

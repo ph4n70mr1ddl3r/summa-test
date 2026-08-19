@@ -140,6 +140,10 @@ public class AgentService {
         return agentRepository.findBySpawnedBy(parentId);
     }
 
+    public int getDepthCap() {
+        return depthCap;
+    }
+
     public Optional<Human> findFirstHumanUpChain(String agentId) {
         String currentId = agentId;
         int depth = 0;

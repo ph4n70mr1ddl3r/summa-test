@@ -16,8 +16,6 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/agents")
 public class AgentController {
-    private static final int LINEAGE_DEPTH_CAP = 10;
-
     private final AgentService agentService;
     private final AuditService auditService;
     private final WriteGate writeGate;
@@ -54,7 +52,8 @@ public class AgentController {
     public ResponseEntity<List<String>> getLineage(@PathVariable String id) {
         List<String> lineage = new ArrayList<>();
         String currentId = id;
-        while (currentId != null && lineage.size() < LINEAGE_DEPTH_CAP) {
+        int depthCap = agentService.getDepthCap();
+        while (currentId != null && lineage.size() < depthCap) {
             lineage.add(currentId);
             Optional<Agent> agentOpt = agentService.findById(currentId);
             if (agentOpt.isPresent()) {

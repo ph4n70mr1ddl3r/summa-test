@@ -39,13 +39,17 @@ public class OrgService {
             throw new IllegalStateException("Company already bootstrapped");
         }
 
+        if (password == null || password.length() < 8) {
+            throw new IllegalArgumentException("Password must be at least 8 characters");
+        }
+
         Human human = new Human();
         human.setId(UUID.randomUUID().toString());
         human.setName(name);
         human.setEmail(email);
         human.setRbac(rbac != null ? rbac : "admin");
         human.setAuth("{}");
-        human.setPasswordHash(password != null && !password.isBlank() ? passwordUtil.hash(password) : null);
+        human.setPasswordHash(passwordUtil.hash(password));
 
         Human saved = humanRepository.save(human);
         auditService.log("system", "BOOTSTRAP", "human", saved.getId(),
@@ -55,13 +59,17 @@ public class OrgService {
 
     @Transactional
     public Human createHuman(String name, String email, String rbac, String auth, String password) {
+        if (password == null || password.length() < 8) {
+            throw new IllegalArgumentException("Password must be at least 8 characters");
+        }
+
         Human human = new Human();
         human.setId(UUID.randomUUID().toString());
         human.setName(name);
         human.setEmail(email);
         human.setRbac(rbac != null ? rbac : "member");
         human.setAuth(auth != null ? auth : "{}");
-        human.setPasswordHash(password != null && !password.isBlank() ? passwordUtil.hash(password) : null);
+        human.setPasswordHash(passwordUtil.hash(password));
 
         Human saved = humanRepository.save(human);
         auditService.log("system", "CREATE_HUMAN", "human", saved.getId(),

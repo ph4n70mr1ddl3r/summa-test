@@ -36,8 +36,11 @@ public class SchemaInitializer {
                     try {
                         jdbcTemplate.execute(s);
                     } catch (Exception e) {
-                        if (!e.getMessage().contains("already exists")) {
-                            log.warn("Schema init warning: {}", e.getMessage());
+                        String msg = e.getMessage();
+                        if (msg != null && (msg.contains("already exists") || msg.contains("table") && msg.contains("exists"))) {
+                            // Expected — schema already initialized
+                        } else {
+                            log.warn("Schema init warning: {}", msg);
                         }
                     }
                 }
