@@ -1,8 +1,11 @@
-FROM eclipse-temurin:25-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 LABEL maintainer="summa-team"
 LABEL org.opencontainers.image.source="https://github.com/summa-org/summa"
 
 WORKDIR /app
+
+# Install curl for healthcheck
+RUN apk add --no-cache curl
 
 COPY backend/target/summa-backend-*.jar app.jar
 

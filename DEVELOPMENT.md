@@ -109,4 +109,4 @@ See `PRODUCTION.md` for full deployment guide.
 - Phase 2 (Identity/Memory): ✓ In Progress
 - Phase 3 (DNA v1): ✓ In Progress
 - Phase 4 (Automation): ✓ In Progress
-- Phase 5-8: Pending
+- Phase 5-7: Pending
