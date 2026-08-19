@@ -78,7 +78,7 @@ public class RunController {
         }
     }
 
-    @GetMapping("/{id}/start")
+    @PostMapping("/{id}/start")
     public ResponseEntity<?> startRun(@PathVariable String id) {
         String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);

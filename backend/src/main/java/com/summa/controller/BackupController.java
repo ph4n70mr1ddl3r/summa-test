@@ -20,7 +20,7 @@ public class BackupController {
 
     @PostMapping
     public ResponseEntity<?> createBackup(@RequestBody Map<String, String> body) {
-            String actor = RbacAuthorizationFilter.getCurrentActor();
+        String actor = RbacAuthorizationFilter.getCurrentActor();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -34,7 +34,7 @@ public class BackupController {
 
     @PostMapping("/restore")
     public ResponseEntity<?> restore(@RequestBody Map<String, String> body) {
-            String actor = RbacAuthorizationFilter.getCurrentActor();
+        String actor = RbacAuthorizationFilter.getCurrentActor();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {

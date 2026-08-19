@@ -46,9 +46,6 @@ summa:
   spend:
     org-ceiling: ${SUMMA_SPEND_CEILING:1000000}
     critical-floor-percent: 5
-  security:
-    max-request-size: 10MB
-    rate-limit-enabled: true
 
 logging:
   level:
