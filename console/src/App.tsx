@@ -11,9 +11,15 @@ const navItems: NavItem[] = [
   { to: '/dna', label: 'DNA' },
   { to: '/org', label: 'Org' },
   { to: '/asks', label: 'Asks' },
+  { to: '/board-tasks', label: 'Board' },
+  { to: '/triggers', label: 'Triggers' },
+  { to: '/workspaces', label: 'Workspaces' },
   { to: '/spawn', label: 'Spawn' },
   { to: '/runs', label: 'Runs' },
   { to: '/governance', label: 'Governance' },
+  { to: '/nodes', label: 'Nodes' },
+  { to: '/role-templates', label: 'Roles' },
+  { to: '/memory', label: 'Memory' },
 ]
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -42,6 +48,14 @@ function LogoutButton() {
     >
       Sign out
     </button>
+  )
+}
+
+function ModeLabel() {
+  return (
+    <span className="text-gray-400 text-sm">
+      {import.meta.env.VITE_SUMMA_MODE === 'multi-node' ? 'Multi-node mode' : 'Single-process mode'}
+    </span>
   )
 }
 
@@ -76,7 +90,7 @@ export default function App() {
               </nav>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-gray-400 text-sm">Single-process mode</span>
+              <ModeLabel />
               {getAuthToken() && (
                 <span className="text-gray-500 text-xs">authenticated</span>
               )}

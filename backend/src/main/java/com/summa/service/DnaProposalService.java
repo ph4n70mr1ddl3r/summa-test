@@ -40,7 +40,7 @@ public class DnaProposalService {
         if (domainId != null) {
             Optional<DnaDomain> domainOpt = domainService.findById(domainId);
             if (domainOpt.isPresent()) {
-                proposal.setReviewBy(Instant.now().plusSeconds(domainOpt.get().getReviewSlaDays() * 86400L));
+                proposal.setReviewBy(Instant.now().plusSeconds(domainOpt.get().getReviewSlaDays().longValue() * 86400L));
             } else {
                 // Domain not found — use default 7 days
                 proposal.setReviewBy(Instant.now().plusSeconds(DEFAULT_REVIEW_SLA_SECONDS));

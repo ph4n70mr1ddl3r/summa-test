@@ -93,38 +93,54 @@ public class BackupService {
             Path dnaDest = Paths.get(expandPath(this.dnaRepoPath));
             if (Files.exists(dnaDest)) {
                 Files.walk(dnaDest).sorted((a, b) -> b.compareTo(a))
-                    .forEach(p -> { try { Files.delete(p); } catch (IOException e) {} });
+                    .forEach(p -> deletePathQuietly(p));
             }
             copyDirectory(dnaSrc, dnaDest);
         }
     }
 
     private void copyDirectory(Path src, Path dest) throws IOException {
-        Files.walk(src).forEach(source -> {
-            try {
-                Path destination = dest.resolve(src.relativize(source));
-                Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        try (java.util.stream.Stream<Path> walk = Files.walk(src)) {
+            walk.forEach(source -> copyPathQuietly(source, dest, src));
+        }
     }
 
     private void addEntry(ZipOutputStream zos, Path dir, String baseName) throws IOException {
-        Files.walk(dir).forEach(file -> {
-            try {
-                String entryName = baseName + "/" + dir.relativize(file).toString().replace('\\', '/');
-                if (Files.isDirectory(file)) {
-                    zos.putNextEntry(new ZipEntry(entryName + "/"));
-                } else {
-                    zos.putNextEntry(new ZipEntry(entryName));
-                    Files.copy(file, zos);
-                }
-                zos.closeEntry();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+        try (java.util.stream.Stream<Path> walk = Files.walk(dir)) {
+            walk.forEach(file -> addEntryQuietly(zos, file, dir, baseName));
+        }
+    }
+
+    private void copyPathQuietly(Path source, Path dest, Path root) {
+        try {
+            Path destination = dest.resolve(root.relativize(source));
+            Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void addEntryQuietly(ZipOutputStream zos, Path file, Path dir, String baseName) {
+        try {
+            String entryName = baseName + "/" + dir.relativize(file).toString().replace('\\', '/');
+            if (Files.isDirectory(file)) {
+                zos.putNextEntry(new ZipEntry(entryName + "/"));
+            } else {
+                zos.putNextEntry(new ZipEntry(entryName));
+                Files.copy(file, zos);
             }
-        });
+            zos.closeEntry();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void deletePathQuietly(Path p) {
+        try {
+            Files.delete(p);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private String expandPath(String path) {

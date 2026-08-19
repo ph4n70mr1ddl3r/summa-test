@@ -17,6 +17,7 @@ public class JwtUtil {
 
     private static final String ALGORITHM = "HmacSHA256";
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final long SECONDS_TO_MILLIS = 1000L;
 
     private JwtUtil() {}
 
@@ -61,12 +62,12 @@ public class JwtUtil {
             String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
             Map<String, Object> payload = MAPPER.readValue(payloadJson, new TypeReference<Map<String, Object>>() {});
             Long exp = ((Number) payload.get("exp")).longValue();
-            if (exp * 1000L < System.currentTimeMillis()) {
+            if (exp * SECONDS_TO_MILLIS < System.currentTimeMillis()) {
                 return null;
             }
             Number nbfNum = (Number) payload.get("nbf");
             Long nbf = nbfNum != null ? nbfNum.longValue() : null;
-            if (nbf != null && nbf * 1000L > System.currentTimeMillis()) {
+            if (nbf != null && nbf * SECONDS_TO_MILLIS > System.currentTimeMillis()) {
                 return null;
             }
             return payload;

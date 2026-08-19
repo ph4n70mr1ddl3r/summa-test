@@ -1,0 +1,45 @@
+import { useEffect, useState } from 'react'
+import { api, type BoardTask } from '../services/api'
+
+export default function BoardTasks() {
+  const [tasks, setTasks] = useState<BoardTask[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    api.boardTasks.list()
+      .then((data) => { setTasks(data); setLoading(false) })
+      .catch((err) => { setError(err instanceof Error ? err.message : String(err)); setLoading(false) })
+  }, [])
+
+  if (loading) return <div className="text-gray-400">Loading...</div>
+  if (error) return <div className="text-red-400">Error: {error}</div>
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Board Tasks</h2>
+        <span className="text-sm text-gray-400">{tasks.length} tasks</span>
+      </div>
+      {tasks.length === 0 ? (
+        <div className="bg-gray-800 rounded-lg p-8 border border-gray-700 text-center">
+          <p className="text-gray-400">No board tasks.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {tasks.map((task) => (
+            <div key={task.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="font-medium text-gray-200">{task.title}</p>
+                  <p className="text-sm text-gray-400 mt-1">Priority: {task.priority} | Assignee: {task.assigneeMemberId ?? 'unassigned'}</p>
+                </div>
+                <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300">{task.status}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}

@@ -1,6 +1,14 @@
 import { useEffect, useState } from 'react'
 import { api, type Ask } from '../services/api'
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
 export default function AskInbox() {
   const [asks, setAsks] = useState<Ask[]>([])
   const [loading, setLoading] = useState(true)
@@ -37,7 +45,7 @@ export default function AskInbox() {
     }
   }
 
-  const formatDeadline = (deadline: string | number) => {
+  const formatDeadline = (deadline: number) => {
     const epochSeconds = typeof deadline === 'string' ? parseInt(deadline, 10) : deadline
     if (isNaN(epochSeconds)) return '\u2014'
     const d = new Date(epochSeconds * 1000)
@@ -58,7 +66,7 @@ export default function AskInbox() {
       <div className="space-y-6">
         <h2 className="text-2xl font-bold">Ask Inbox</h2>
         <div className="bg-red-900/30 border border-red-700 rounded-lg p-4 text-red-400">
-          Failed to load asks: {error}
+          Failed to load asks: {escapeHtml(error)}
           <button
             onClick={() => window.location.reload()}
             className="ml-4 px-3 py-1 bg-red-700 hover:bg-red-600 rounded text-sm text-red-100"
@@ -104,8 +112,8 @@ export default function AskInbox() {
                       )}
                     </div>
                     <p className="text-sm text-gray-400 mt-1">
-                      From: <span className="text-gray-300">{ask.from}</span>
-                      {' \u2192 '}To: <span className="text-gray-300">{ask.to}</span>
+                      From: <span className="text-gray-300">{escapeHtml(ask.from)}</span>
+                      {' \u2192 '}To: <span className="text-gray-300">{escapeHtml(ask.to)}</span>
                     </p>
                   </div>
                 </div>
@@ -126,7 +134,7 @@ export default function AskInbox() {
                   View payload
                 </summary>
                 <pre className="mt-2 text-xs text-gray-400 bg-gray-900 rounded p-3 overflow-x-auto">
-                  {ask.payload}
+                  {escapeHtml(ask.payload)}
                 </pre>
               </details>
             </div>

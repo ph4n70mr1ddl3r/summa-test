@@ -13,6 +13,12 @@ import AskInbox from './pages/AskInbox.tsx'
 import Spawning from './pages/Spawning.tsx'
 import Runs from './pages/Runs.tsx'
 import Governance from './pages/Governance.tsx'
+import BoardTasks from './pages/BoardTasks.tsx'
+import Triggers from './pages/Triggers.tsx'
+import Workspaces from './pages/Workspaces.tsx'
+import Nodes from './pages/Nodes.tsx'
+import RoleTemplates from './pages/RoleTemplates.tsx'
+import Memory from './pages/Memory.tsx'
 import NotFound from './pages/NotFound.tsx'
 import Login from './pages/Login.tsx'
 
@@ -29,9 +35,15 @@ createRoot(document.getElementById('root')!).render(
           <Route path="dna/decisions" element={<DNADecisions />} />
           <Route path="org" element={<OrgView />} />
           <Route path="asks" element={<AskInbox />} />
+          <Route path="board-tasks" element={<BoardTasks />} />
+          <Route path="triggers" element={<Triggers />} />
+          <Route path="workspaces" element={<Workspaces />} />
           <Route path="spawn" element={<Spawning />} />
           <Route path="runs" element={<Runs />} />
           <Route path="governance" element={<Governance />} />
+          <Route path="nodes" element={<Nodes />} />
+          <Route path="role-templates" element={<RoleTemplates />} />
+          <Route path="memory" element={<Memory />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

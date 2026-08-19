@@ -41,16 +41,8 @@ public class GovernanceController {
 
     @GetMapping("/spend")
     public ResponseEntity<Map<String, Object>> getSpend() {
-        Double ceiling = governanceService.getSetting("spend-org-ceiling", Double.class);
-        if (ceiling == null) ceiling = 1_000_000.0;
-        Double criticalFloor = governanceService.getSetting("spend-critical-floor-percent", Double.class);
-        if (criticalFloor == null) criticalFloor = 5.0;
-        // Simplified spend view
-        return ResponseEntity.ok(Map.of(
-            "orgCeiling", ceiling,
-            "criticalFloorPercent", criticalFloor,
-            "halted", governanceService.isSpendHaltTripped()
-        ));
+        // Delegate defaults to GovernanceService to avoid divergence (CFG-070)
+        return ResponseEntity.ok(governanceService.getSpendView());
     }
 
     @PutMapping("/policies")

@@ -160,7 +160,7 @@ public class AskService {
                             String.format("{\"depth\":%d,\"behavior\":\"%s\"}", depth, behavior));
                         continue;
                     }
-                    String successorTo = "admins";
+                    String successorTo = OffboardingWalkService.ADMIN_BROADCAST;
                     Optional<Human> target = memberService.findHuman(ask.getTo());
                     if (target.isPresent() && target.get().getDeputyMemberId() != null) {
                         successorTo = target.get().getDeputyMemberId();
@@ -329,7 +329,7 @@ public class AskService {
         }
 
         // Admin broadcast: any active admin can respond to `admins` target
-        if ("admins".equals(ask.getTo())) {
+        if (OffboardingWalkService.ADMIN_BROADCAST.equals(ask.getTo())) {
             return memberService.findAdmins().stream()
                     .anyMatch(h -> h.getId().equals(responder));
         }

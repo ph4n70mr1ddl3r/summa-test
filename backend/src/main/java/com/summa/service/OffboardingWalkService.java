@@ -11,7 +11,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 @Service
 public class OffboardingWalkService {
-    private static final String ADMIN_BROADCAST = "admins";
+    // Re-exported from AskService for broadcast-target addressability
+    public static final String ADMIN_BROADCAST = "admins";
 
     private final MemberService memberService;
     private final AgentService agentService;

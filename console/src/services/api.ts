@@ -59,24 +59,29 @@ export interface Agent {
   name: string;
   ownerHumanId: string;
   class: string;
-  status: string;
+  status: AgentStatus;
   templateId?: string;
   lineageDepth?: number;
   createdAt?: string;
 }
 
+export type AgentStatus = 'active' | 'suspended' | 'retired' | 'archived' | 'requested';
+
 export interface Ask {
   id: string;
-  kind: string;
+  kind: AskKind;
   from: string;
   to: string;
   payload: string;
-  slaTier: string;
+  slaTier: AskTier;
   status: string;
   deadline: number;
   quorumRequired?: number;
   collapsedCount?: number;
 }
+
+export type AskKind = 'approval' | 'question' | 'assignment' | 'spawn_request';
+export type AskTier = 'critical' | 'standard' | 'bulk';
 
 export interface SpawnRequest {
   id: string;
@@ -85,40 +90,48 @@ export interface SpawnRequest {
   customRole?: string;
   spawnClass: string;
   purpose: string;
-  status: string;
+  status: SpawnStatus;
   requestedByHumanId?: string;
   agentId?: string;
   approvedAt?: string;
 }
+
+export type SpawnStatus = 'pending' | 'approved' | 'denied' | 'spawned' | 'expired';
 
 export interface Initiative {
   id: string;
   title: string;
   sponsor: string;
   lead: string;
-  status: string;
+  status: InitiativeStatus;
   deadline?: string;
   goalRef?: string;
 }
+
+export type InitiativeStatus = 'active' | 'paused' | 'closed' | 'completed';
 
 export interface Run {
   id: string;
   agentId: string;
   workspaceId?: string;
-  status: string;
+  status: RunStatus;
   result?: string;
   costTokens?: number;
   costUsd?: number;
   createdAt?: string;
 }
 
+export type RunStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
+
 export interface DnaCard {
   id: string;
   domainId: string;
   title: string;
   definitionMd: string;
-  status: string;
+  status: DnaCardStatus;
 }
+
+export type DnaCardStatus = 'draft' | 'active' | 'retired';
 
 export interface DnaRule {
   id: string;
@@ -139,9 +152,12 @@ export interface DnaDomain {
   id: string;
   name: string;
   ownerHumanId: string;
-  access: string;
-  status: string;
+  access: DomainAccess;
+  status: DnaDomainStatus;
 }
+
+export type DomainAccess = 'public' | 'private' | 'org';
+export type DnaDomainStatus = 'active' | 'archived';
 
 export interface GovernanceSetting {
   [key: string]: unknown;
@@ -167,16 +183,19 @@ export interface Trigger {
   expression: string;
   agentId: string;
   workspaceId?: string;
-  criticality: string;
-  status: string;
+  criticality: TriggerCriticality;
+  status: TriggerStatus;
   lastFiredAt?: string;
   createdAt?: string;
 }
 
+export type TriggerCriticality = 'critical' | 'standard' | 'bulk';
+export type TriggerStatus = 'active' | 'paused' | 'archived';
+
 export interface Workspace {
   id: string;
   name: string;
-  kind: string;
+  kind: WorkspaceKind;
   initiativeIds: string[];
   domainIds: string[];
   nodeId?: string;
@@ -187,36 +206,45 @@ export interface Workspace {
   createdAt?: string;
 }
 
+export type WorkspaceKind = 'agent' | 'ephemeral' | 'shared';
+
 export interface Node {
   id: string;
   name: string;
-  kind: string;
+  kind: NodeKind;
   capabilities: Record<string, unknown>;
   region?: string;
   pubkey: string;
   enrolledAt: string;
-  status: string;
+  status: NodeStatus;
 }
+
+export type NodeKind = 'dev' | 'office' | 'server';
+export type NodeStatus = 'enrolled' | 'active' | 'suspended' | 'revoked';
 
 export interface RoleTemplate {
   id: string;
   name: string;
   version: number;
   class: string;
-  status: string;
+  status: RoleTemplateStatus;
   createdAt?: string;
   updatedAt?: string;
 }
 
+export type RoleTemplateStatus = 'draft' | 'published' | 'retired';
+
 export interface MemoryItem {
   id: string;
-  tier: string;
+  tier: MemoryTier;
   memberId?: string;
   workspaceId?: string;
   contentMd: string;
   tainted: boolean;
   createdAt?: string;
 }
+
+export type MemoryTier = 'short' | 'long' | 'volatile';
 
 export interface Pat {
   id: string;
@@ -232,9 +260,11 @@ export interface Group {
   id: string;
   name: string;
   leaderMemberId?: string;
-  status: string;
+  status: GroupStatus;
   createdAt: string;
 }
+
+export type GroupStatus = 'active' | 'archived';
 
 export interface SpendSnapshot {
   periodTokensIn: number;

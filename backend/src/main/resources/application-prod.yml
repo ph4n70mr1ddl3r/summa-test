@@ -22,12 +22,14 @@ spring:
           size: 50
         jpa:
           convertors: com.summa.config.InstantToUnixEpochConverter
+        show-sql: false
       eclipselink.cache.shared.default: false
   sql:
     init:
       mode: never
 
 summa:
+  mode: single-process
   database:
     path: ${SUMMA_DB_PATH:/data/db/summa.db}
     wal-mode: true
