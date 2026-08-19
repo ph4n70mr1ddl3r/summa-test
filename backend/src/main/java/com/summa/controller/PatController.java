@@ -7,6 +7,7 @@ import com.summa.model.AuditEvent;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.summa.security.RbacAuthorizationFilter;
 import java.util.List;
 import java.util.Map;
 
@@ -29,8 +30,8 @@ public class PatController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createPat(@RequestBody Map<String, String> body,
-                                        @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+    public ResponseEntity<?> createPat(@RequestBody Map<String, String> body) {
+        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -78,8 +79,8 @@ public class PatController {
     }
 
     @PostMapping("/{id}/revoke")
-    public ResponseEntity<?> revokePat(@PathVariable String id,
-                                        @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+    public ResponseEntity<?> revokePat(@PathVariable String id) {
+        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {

@@ -26,7 +26,7 @@ public class DatabaseConfig {
 
         DriverManagerDataSource ds = new DriverManagerDataSource();
         ds.setDriverClassName("org.sqlite.JDBC");
-        ds.setUrl("jdbc:sqlite:" + path);
+        ds.setUrl("jdbc:sqlite:" + path + "?journal_mode=WAL&cache=shared");
         return ds;
     }
 

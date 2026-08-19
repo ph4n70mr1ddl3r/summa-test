@@ -37,9 +37,11 @@ export default function AskInbox() {
     }
   }
 
-  const formatDeadline = (deadline: string) => {
-    const d = new Date(deadline)
-    return isNaN(d.getTime()) ? '\u2014' : d.toLocaleString()
+  const formatDeadline = (deadline: string | number) => {
+    const epochSeconds = typeof deadline === 'string' ? parseInt(deadline, 10) : deadline
+    if (isNaN(epochSeconds)) return '\u2014'
+    const d = new Date(epochSeconds * 1000)
+    return d.toLocaleString()
   }
 
   if (loading) {

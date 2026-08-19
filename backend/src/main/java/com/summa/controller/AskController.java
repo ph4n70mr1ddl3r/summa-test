@@ -46,8 +46,8 @@ public class AskController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createAsk(@RequestBody Map<String, String> body,
-                                         @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+    public ResponseEntity<?> createAsk(@RequestBody Map<String, String> body) {
+        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -88,8 +88,8 @@ public class AskController {
     }
 
     @PostMapping("/{id}/respond")
-    public ResponseEntity<?> respond(@PathVariable String id, @RequestBody Map<String, String> body,
-                                         @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+    public ResponseEntity<?> respond(@PathVariable String id, @RequestBody Map<String, String> body) {
+        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -107,8 +107,8 @@ public class AskController {
     }
 
     @PostMapping("/{id}/withdraw")
-    public ResponseEntity<?> withdraw(@PathVariable String id,
-                                         @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+    public ResponseEntity<?> withdraw(@PathVariable String id) {
+        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -123,7 +123,7 @@ public class AskController {
 
     @PostMapping("/{id}/expire")
     public ResponseEntity<?> expire(@PathVariable String id) {
-        String actor = RbacAuthorizationFilter.getCurrentActor();
+            String actor = RbacAuthorizationFilter.getCurrentActor();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor != null ? actor : "system");
         if (gate != null) return gate;
         try {

@@ -11,6 +11,8 @@ import java.util.UUID;
 
 @Service
 public class NodeService {
+    private static final long ENROLLMENT_TOKEN_TTL_SECONDS = 3600L; // 1 hour
+
     private final NodeRepository nodeRepository;
     private final AuditService auditService;
 
@@ -27,11 +29,17 @@ public class NodeService {
         node.setKind(kind != null ? kind : "remote");
         node.setPubkey(pubkey);
         node.setCapabilities("{}");
+        node.setEnrolledAt(Instant.now());
 
         Node saved = nodeRepository.save(node);
-        auditService.log("system", "ENROLL", "node", node.getId(), 
-            String.format("{\"name\":\"%s\",\"kind\":\"%s\"}", name, kind));
+        auditService.log("system", "ENROLL", "node", node.getId(),
+            String.format("{\"name\":\"%s\",\"kind\":\"%s\",\"token_expires_at\":%d}",
+                name, kind, Instant.now().getEpochSecond() + ENROLLMENT_TOKEN_TTL_SECONDS));
         return saved;
+    }
+
+    public long getEnrollmentTokenTtlSeconds() {
+        return ENROLLMENT_TOKEN_TTL_SECONDS;
     }
 
     public Optional<Node> findById(String id) {

@@ -7,6 +7,7 @@ import com.summa.model.AuditEvent;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.summa.security.RbacAuthorizationFilter;
 import java.util.List;
 import java.util.Map;
 
@@ -36,8 +37,8 @@ public class DnaDomainController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createDomain(@RequestBody Map<String, String> body,
-                                            @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+    public ResponseEntity<?> createDomain(@RequestBody Map<String, String> body) {
+        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -59,8 +60,8 @@ public class DnaDomainController {
     }
 
     @PostMapping("/{id}/archive")
-    public ResponseEntity<?> archiveDomain(@PathVariable String id,
-                                              @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+    public ResponseEntity<?> archiveDomain(@PathVariable String id) {
+        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -78,8 +79,8 @@ public class DnaDomainController {
     }
 
     @PostMapping("/{id}/rename")
-    public ResponseEntity<?> renameDomain(@PathVariable String id, @RequestBody Map<String, String> body,
-                                            @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+    public ResponseEntity<?> renameDomain(@PathVariable String id, @RequestBody Map<String, String> body) {
+        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -93,8 +94,8 @@ public class DnaDomainController {
     }
 
     @PatchMapping("/{id}/owner")
-    public ResponseEntity<?> updateOwner(@PathVariable String id, @RequestBody Map<String, String> body,
-                                           @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+    public ResponseEntity<?> updateOwner(@PathVariable String id, @RequestBody Map<String, String> body) {
+        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -108,8 +109,8 @@ public class DnaDomainController {
     }
 
     @PatchMapping("/{id}/access")
-    public ResponseEntity<?> updateAccess(@PathVariable String id, @RequestBody Map<String, String> body,
-                                            @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+    public ResponseEntity<?> updateAccess(@PathVariable String id, @RequestBody Map<String, String> body) {
+        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -124,15 +125,13 @@ public class DnaDomainController {
 
     // API-023: topology ops — split, merge, rename are stubs for Phase 6+
     @PostMapping("/{id}/split")
-    public ResponseEntity<?> splitDomain(@PathVariable String id, @RequestBody Map<String, String> body,
-                                          @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+    public ResponseEntity<?> splitDomain(@PathVariable String id, @RequestBody Map<String, String> body) {
         // DGV-010..013: governed split — stub for Phase 6
         return ResponseEntity.ok(Map.of("status", "not_implemented", "note", "Topology ops scheduled for Phase 6"));
     }
 
     @PostMapping("/{id}/merge")
-    public ResponseEntity<?> mergeDomain(@PathVariable String id, @RequestBody Map<String, String> body,
-                                          @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+    public ResponseEntity<?> mergeDomain(@PathVariable String id, @RequestBody Map<String, String> body) {
         // DGV-014: governed merge — stub for Phase 6
         return ResponseEntity.ok(Map.of("status", "not_implemented", "note", "Topology ops scheduled for Phase 6"));
     }

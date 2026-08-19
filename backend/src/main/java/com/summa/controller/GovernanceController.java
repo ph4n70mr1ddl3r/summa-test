@@ -4,6 +4,7 @@ import com.summa.service.GovernanceService;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.summa.security.RbacAuthorizationFilter;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -49,8 +50,8 @@ public class GovernanceController {
     }
 
     @PutMapping("/policies")
-    public ResponseEntity<?> updatePolicy(@RequestBody Map<String, Object> body,
-                                            @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+    public ResponseEntity<?> updatePolicy(@RequestBody Map<String, Object> body) {
+        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         body.forEach((key, value) -> governanceService.setSetting(key, value, actor));
@@ -58,8 +59,8 @@ public class GovernanceController {
     }
 
     @PutMapping("/quotas")
-    public ResponseEntity<?> updateQuotas(@RequestBody Map<String, Object> body,
-                                            @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+    public ResponseEntity<?> updateQuotas(@RequestBody Map<String, Object> body) {
+        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         body.forEach((key, value) -> governanceService.setSetting(key, value, actor));
@@ -67,8 +68,7 @@ public class GovernanceController {
     }
 
     @PostMapping("/spend/overruns/{id}/ack")
-    public ResponseEntity<?> ackSpendOverrun(@PathVariable String id,
-                                              @RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+    public ResponseEntity<?> ackSpendOverrun(@PathVariable String id) {
         // API-051: admin; lifts the SPW-035 reserve gate
         return ResponseEntity.ok(Map.of("status", "overrun_acknowledged", "rowId", id));
     }

@@ -26,7 +26,7 @@ public class SecretsController {
 
     @PostMapping("/scan")
     public ResponseEntity<?> scan(@RequestBody Map<String, String> body) {
-        String actor = RbacAuthorizationFilter.getCurrentActor();
+            String actor = RbacAuthorizationFilter.getCurrentActor();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         String content = body.get("content");

@@ -46,9 +46,8 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
                                       FilterChain filterChain) throws ServletException, IOException {
         String actor = (String) request.getAttribute("actor");
         if (actor == null) {
-            actor = request.getHeader("X-Actor");
-        }
-        if (actor == null) {
+            // Do not trust X-Actor header from unauthenticated clients.
+            // Only JWT-authenticated requests carry a valid actor via request attribute.
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "No actor identity provided");
             return;
         }

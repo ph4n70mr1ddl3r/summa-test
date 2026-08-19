@@ -266,10 +266,10 @@ gained the citations PLAN already pointed at on its side (STG-001 → CFG-001; S
 CFG-070, PLAN §8.7's §14.7 pointer). Lint green: 477 requirements, TRACEABILITY exact
 both directions.
 
-**Stack re-host (v2.49)**: the backend moves from Node 22 + TypeScript to **Java 25 LTS +
-Spring Boot 4** (current major, fat-jar — one artifact) — a decided change landing as PLAN
+**Stack re-host (v2.49)**: the backend moves from Node 22 + TypeScript to **Java 21 LTS +
+Spring Boot 3.4** (current major, fat-jar — one artifact) — a decided change landing as PLAN
 amendment + spec delta per the change-control rule: ARC-005 and §3's stack bullet re-state
-the spine — Java 25 LTS + Spring Boot daemon; React + Vite + Tailwind + shadcn console
+the spine — Java 21 LTS + Spring Boot daemon; React + Vite + Tailwind + shadcn console
 (TypeScript) unchanged; SQLite (WAL) reached through sqlite-jdbc with sqlite-vec as a JVM
 loadable extension; the playbook sandbox re-hosts `isolated-vm` → a sealed GraalJS polyglot
 context (host access denied), the DSL unchanged and the child-process fallback kept; croner

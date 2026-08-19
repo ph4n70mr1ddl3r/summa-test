@@ -73,7 +73,7 @@ export interface Ask {
   payload: string;
   slaTier: string;
   status: string;
-  deadline: string;
+  deadline: number;
   quorumRequired?: number;
   collapsedCount?: number;
 }

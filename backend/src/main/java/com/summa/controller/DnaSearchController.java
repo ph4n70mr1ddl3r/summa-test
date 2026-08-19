@@ -5,6 +5,7 @@ import com.summa.service.AuditService;
 import com.summa.model.AuditEvent;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.summa.security.RbacAuthorizationFilter;
 import java.util.List;
 import java.util.Map;
 
@@ -35,7 +36,8 @@ public class DnaSearchController {
     }
 
     @GetMapping("/org-snapshot")
-    public ResponseEntity<?> orgSnapshot(@RequestHeader(value = "X-Actor", defaultValue = "system") String actor) {
+    public ResponseEntity<?> orgSnapshot() {
+        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
         return ResponseEntity.ok(dnaReadService.getOrgSnapshot(actor));
     }
 

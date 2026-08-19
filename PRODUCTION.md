@@ -15,7 +15,7 @@
 ```
 ┌─────────────────────────────────────────────────────┐
 │              Single-Process Mode                      │
-│  Spring Boot 4 + SQLite (WAL) + FTS5              │
+│  Spring Boot 3.4 + SQLite (WAL) + FTS5              │
 │  Port 8080 (API) / 3000 (console via proxy)         │
 └─────────────────────────────────────────────────────┘
 ```

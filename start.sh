@@ -9,13 +9,13 @@ echo "Starting Summa (single-process mode)..."
 
 # Check for Java
 if ! command -v java &> /dev/null; then
-    echo "ERROR: Java 25+ is required"
+    echo "ERROR: Java 21+ is required"
     exit 1
 fi
 
 JAVA_VERSION=$(java -version 2>&1 | head -n 1 | cut -d'"' -f2 | cut -d'.' -f1)
-if [ "$JAVA_VERSION" -lt 25 ]; then
-    echo "ERROR: Java 25+ is required, found $JAVA_VERSION"
+if [ "$JAVA_VERSION" -lt 21 ]; then
+    echo "ERROR: Java 21+ is required, found $JAVA_VERSION"
     exit 1
 fi
 
@@ -27,6 +27,14 @@ if [ -z "$SUMMA_JWT_SECRET" ]; then
     exit 1
 fi
 
+# Find the backend JAR
+JAR_FILE=$(ls backend/target/summa-backend-*.jar 2>/dev/null | head -n 1)
+if [ -z "$JAR_FILE" ]; then
+    echo "ERROR: Backend JAR not found. Run 'mvn package' in the backend directory first."
+    exit 1
+fi
+echo "Using JAR: $JAR_FILE"
+
 # Create data directories
 mkdir -p ~/.summa
 
@@ -36,4 +44,4 @@ exec java \
     -Xmx512m \
     -Xms256m \
     -Dspring.profiles.active=default \
-    -jar backend/target/summa-backend-*.jar
+    -jar "$JAR_FILE"
