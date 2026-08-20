@@ -1,11 +1,31 @@
 package com.summa.service;
 
-import com.summa.repository.*;
-import com.summa.model.*;
+import com.summa.repository.AskRepository;
+import com.summa.repository.BoardTaskRepository;
+import com.summa.repository.DnaGoalRepository;
+import com.summa.repository.DnaProposalRepository;
+import com.summa.repository.GroupMembershipRepository;
+import com.summa.repository.InitiativeRepository;
+import com.summa.repository.AgentRepository;
+import com.summa.repository.PatRepository;
+import com.summa.model.Agent;
+import com.summa.model.Ask;
+import com.summa.model.BoardTask;
+import com.summa.model.DnaDomain;
+import com.summa.model.DnaGoal;
+import com.summa.model.DnaProposal;
+import com.summa.model.GroupMembership;
+import com.summa.model.Human;
+import com.summa.model.Initiative;
+import com.summa.model.Pat;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class OffboardingWalkService {

@@ -1,5 +1,7 @@
 package com.summa.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.summa.service.PatService;
 import com.summa.model.Pat;
 import com.summa.service.AuditService;
@@ -17,11 +19,14 @@ public class PatController {
     private final PatService patService;
     private final AuditService auditService;
     private final WriteGate writeGate;
+    private final ObjectMapper objectMapper;
 
-    public PatController(PatService patService, AuditService auditService, WriteGate writeGate) {
+    public PatController(PatService patService, AuditService auditService, WriteGate writeGate,
+                         ObjectMapper objectMapper) {
         this.patService = patService;
         this.auditService = auditService;
         this.writeGate = writeGate;
+        this.objectMapper = objectMapper;
     }
 
     @GetMapping
@@ -45,8 +50,8 @@ public class PatController {
                     scopes = List.of();
                 } else {
                     try {
-                        com.fasterxml.jackson.core.type.TypeReference<List<String>> ref = new com.fasterxml.jackson.core.type.TypeReference<List<String>>() {};
-                        scopes = new com.fasterxml.jackson.databind.ObjectMapper().readValue(scopesRaw, ref);
+                        TypeReference<List<String>> ref = new TypeReference<List<String>>() {};
+                        scopes = objectMapper.readValue(scopesRaw, ref);
                     } catch (Exception e) {
                         throw new IllegalArgumentException("Invalid scopes format: " + scopesRaw);
                     }

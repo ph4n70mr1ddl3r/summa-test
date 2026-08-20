@@ -14,10 +14,11 @@ public class AuditService {
     private static final Pattern EMAIL_PATTERN = Pattern.compile("(?i)(email|mail)\\s*[:=]\\s*\"[^\"]+@[^\"]+\"");
 
     private final AuditEventRepository auditEventRepository;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
-    public AuditService(AuditEventRepository auditEventRepository) {
+    public AuditService(AuditEventRepository auditEventRepository, ObjectMapper objectMapper) {
         this.auditEventRepository = auditEventRepository;
+        this.objectMapper = objectMapper;
     }
 
     public AuditEvent log(String actor, String action, String objectType, String objectId, String detail) {

@@ -1,10 +1,17 @@
 package com.summa.service;
 
-import com.summa.repository.*;
-import com.summa.model.*;
+import com.summa.repository.DnaDomainRepository;
+import com.summa.repository.DnaProposalRepository;
+import com.summa.model.DnaDomain;
+import com.summa.model.DnaProposal;
+import com.summa.model.Agent;
+import com.summa.model.Human;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Service

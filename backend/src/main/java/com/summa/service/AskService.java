@@ -39,16 +39,18 @@ public class AskService {
     // ASK-100: Storm collapse window — tracks recent ask creation by (kind, to, payloadHash)
     private final ConcurrentHashMap<String, Instant> collapseWindowTimestamps = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Integer> successorDepth = new ConcurrentHashMap<>();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     public AskService(AskRepository askRepository, AuditService auditService, MemberService memberService,
                       GovernanceService governanceService,
-                      @Value("${summa.asks.storm-collapse-window-hours:1}") long stormCollapseWindowHours) {
+                      @Value("${summa.asks.storm-collapse-window-hours:1}") long stormCollapseWindowHours,
+                      ObjectMapper objectMapper) {
         this.askRepository = askRepository;
         this.auditService = auditService;
         this.memberService = memberService;
         this.governanceService = governanceService;
         this.stormCollapseWindowSeconds = stormCollapseWindowHours * 3600L;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
