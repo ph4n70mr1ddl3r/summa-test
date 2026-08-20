@@ -107,10 +107,10 @@ this surface is the PRN-009 form — refuse, audit, ask where a human decision i
 - **API-061** — One refusal envelope on the whole surface: every refused write or action
   responds 4xx with the machine-parseable body `{code, message, audit_event_id, ask_id?}`.
   `code` is a stable enum — `validation | eligibility | not_found | conflict |
-  rate_limited | gate` — mapped per family: 422 validation, 403 eligibility (the write-door
-  guards), 404 not_found, 409 conflict (lock serialization, racing transitions, stale
-  epoch), 429 rate_limited (ASK-101), with `gate` — guard refusals that carry policy
-  context (quota, depth, spend halt) — mapping to 403 alongside eligibility: the status is
-  coarse, `code` the fine grain. `audit_event_id` links the row the refusal wrote and
-  `ask_id` the ask a PRN-009/NFR-001 refusal raised — a refusal without an audit row is a
-  bug, not a response.
+  rate_limited | gate | internal` — mapped per family: 422 validation, 403 eligibility
+  (the write-door guards), 404 not_found, 409 conflict (lock serialization, racing
+  transitions, stale epoch), 429 rate_limited (ASK-101), with `gate` — guard refusals that
+  carry policy context (quota, depth, spend halt) — mapping to 403 alongside eligibility:
+  the status is coarse, `code` the fine grain; `internal` covers unhandled exceptions
+  (500) where an audit event is still written. `audit_event_id` links the row the refusal
+  wrote and the ask it raised (API-061).

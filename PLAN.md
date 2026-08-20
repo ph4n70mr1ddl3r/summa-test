@@ -18,9 +18,9 @@ mode so small teams start simple.
 > **Provenance & completion status**: the v1 design document that §7, §8, and §9 delta
 > against is not part of this repository. The normative, testable statement of every
 > behavior this repo commits to is the spec suite in `specs/`; where a section below says
-> "unchanged from v1", the spec module is the completion of record (§7 → SPEC-16,
-> §8 → SPEC-15, §9 → SPEC-17). Importing the v1 baseline prose remains a tracked Phase-0
-> debt item (SPEC-16's self-containedness note).
+> "unchanged from v1", the spec module is the completion of record (§7 → the data-model spec,
+> §8 → the subsystems spec, §9 → the API surface spec). Importing the v1 baseline prose remains a tracked Phase-0
+> debt item (the data model's self-containedness note).
 
 ## Contents
 
@@ -2121,8 +2121,8 @@ POST /governance/holds · POST /governance/holds/:id/release  (admin; audited �
 
 Refusal envelope: every 4xx on this surface answers in one machine-parseable shape —
 `{code, message, audit_event_id, ask_id?}` with a stable `code` enum (validation, eligibility,
-not_found, conflict, rate_limited, gate) — so a §2-shaped refusal always links the audit row it
-wrote and the ask it raised (API-061).
+not_found, conflict, rate_limited, gate, internal) — so a §2-shaped refusal always links
+the audit row it wrote and the ask it raised (API-061).
 
 ---
 
