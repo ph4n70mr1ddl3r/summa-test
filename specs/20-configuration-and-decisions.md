@@ -27,12 +27,45 @@ trigger; the mechanism it tunes is already designed (NFR-022). Defaults live beh
   database creation time via SchemaInitializer.
 - **CFG-009** — GraalJS sandbox isolation: sealed polyglot context, no host access;
   child-process fallback when GraalVM is unavailable (DLV-040).
+- **CFG-010** — Affinity starvation window: default 24h before the admin ask (ARC-011).
+- **CFG-011** — Deadline-less initiative staleness line: default 30 days in the sponsor's
+  digest (INT-061).
+- **CFG-012** — Critical floor under a partial spend breach: default 5% (SPW-060).
+- **CFG-013** — Trigger dedupe window: default 7 days, sized for webhook redelivery
+  (SUB-052).
+- **CFG-014** — Persistent-hire budget window: default monthly, admin-configurable
+  (SPW-032).
+- **CFG-015** — Storm-collapse window: identical pending asks collapse into one canonical
+  ask within this window (default 1h) (ASK-100).
+- **CFG-016** — Per-source ask-creation rate limit: default 60 asks/hour per run, trigger,
+  or agent; the storm aggregate closes after one full window back under the limit
+  (ASK-101).
+- **CFG-017** — Org-wide concurrent agent cap: default 100 active agents (persistent +
+  ephemeral combined) — a runaway-spawn backstop sized to trip well before resource
+  exhaustion (SPW-031).
+- **CFG-018** — Spawn depth cap: default 2 — the global lineage depth SPW-031 enforces
+  and the playbook instantiation depth mirrors (SUB-062).
+- **CFG-019** — Injection layer token budgets: org snapshot ~1k, glossary ~2k, rules ~4k,
+  goal slice ~1k (defaults) — soft budgets; overflow demotes per the DRP-007 order rather
+  than truncating (DRP-004).
 - **CFG-020** — Human auth v1: the deployment's own Keycloak over OIDC — decided (v2.58):
   Summa stores no human credentials (SEC-001) — `humans.auth` carries the Keycloak subject
   link, never credential material — "local accounts" are Keycloak realm accounts, and company
   SSO is Keycloak brokering the company's IdP: the same OIDC surface to Summa either way,
   which is why the original local-vs-SSO either/or collapsed. RBAC, PATs, and sessions stay
   Summa's own (SEC-004/005); lockout recovery rides Keycloak's realm-admin paths (SEC-002).
+- **CFG-021** — PAT default lifetime: default 90 days — the expiry SEC-004 names when a
+  create sets none; per-token expiry, rotation, and revocation stay row-level (DAT-124).
+- **CFG-022** — External-write grace window & reconciliation cadence: both default 5 minutes
+  — how long the TTL reaper lets a worker run between prepare and commit before halting it
+  (SPW-071), and the age at which the scheduled pass walks a stranded `prepared` row
+  (SUB-022).
+- **CFG-023** — Sustained-outage ask threshold: default 15 minutes — how long provider
+  degradation queues with backoff before the single critical admin ask fires (SUB-005);
+  the routing policy around it is CFG-150's decision.
+- **CFG-024** — Org-scoped review SLA: default 7 days — the `review_by` source for
+  org-scoped proposals when no domain row governs the admin queue (DWP-022); PLAN §4.3's
+  global default, given its parameter home (DAT-123's key space).
 - **CFG-030** — First deployment shape: microservices on Kubernetes under rootless Podman,
   containerized from day one — decided (v2.58): every artifact ships as an OCI image
   (ARC-006), the decomposition follows §3's existing seams (plane API/console backend, model
@@ -70,39 +103,3 @@ trigger; the mechanism it tunes is already designed (NFR-022). Defaults live beh
 - **CFG-170** — OKF interchange profile: the Open Knowledge Format (v0.2) is the DNA
   store's exchange profile — export target and ingest source (STG-050…052) — never the
   canonical schema — decided (v2.57); revisit only on an OKF major-version break.
-
-## Additional named parameters (from the body of the plan)
-
-- **CFG-010** — Affinity starvation window: default 24h before the admin ask (ARC-011).
-- **CFG-011** — Deadline-less initiative staleness line: default 30 days in the sponsor's
-  digest (INT-061).
-- **CFG-012** — Critical floor under a partial spend breach: default 5% (SPW-060).
-- **CFG-013** — Trigger dedupe window: default 7 days, sized for webhook redelivery
-  (SUB-052).
-- **CFG-014** — Persistent-hire budget window: default monthly, admin-configurable
-  (SPW-032).
-- **CFG-015** — Storm-collapse window: identical pending asks collapse into one canonical
-  ask within this window (default 1h) (ASK-100).
-- **CFG-016** — Per-source ask-creation rate limit: default 60 asks/hour per run, trigger,
-  or agent; the storm aggregate closes after one full window back under the limit
-  (ASK-101).
-- **CFG-017** — Org-wide concurrent agent cap: default 100 active agents (persistent +
-  ephemeral combined) — a runaway-spawn backstop sized to trip well before resource
-  exhaustion (SPW-031).
-- **CFG-018** — Spawn depth cap: default 2 — the global lineage depth SPW-031 enforces
-  and the playbook instantiation depth mirrors (SUB-062).
-- **CFG-019** — Injection layer token budgets: org snapshot ~1k, glossary ~2k, rules ~4k,
-  goal slice ~1k (defaults) — soft budgets; overflow demotes per the DRP-007 order rather
-  than truncating (DRP-004).
-- **CFG-021** — PAT default lifetime: default 90 days — the expiry SEC-004 names when a
-  create sets none; per-token expiry, rotation, and revocation stay row-level (DAT-124).
-- **CFG-022** — External-write grace window & reconciliation cadence: both default 5 minutes
-  — how long the TTL reaper lets a worker run between prepare and commit before halting it
-  (SPW-071), and the age at which the scheduled pass walks a stranded `prepared` row
-  (SUB-022).
-- **CFG-023** — Sustained-outage ask threshold: default 15 minutes — how long provider
-  degradation queues with backoff before the single critical admin ask fires (SUB-005);
-  the routing policy around it is CFG-150's decision.
-- **CFG-024** — Org-scoped review SLA: default 7 days — the `review_by` source for
-  org-scoped proposals when no domain row governs the admin queue (DWP-022); PLAN §4.3's
-  global default, given its parameter home (DAT-123's key space).

@@ -66,15 +66,6 @@ Source: PLAN.md §4.4.
   lock — items peaceful across two domains may collide in one, surfacing as review asks.
 - **DGV-019** — Dissolution is the degenerate case: no bare delete exists — merge remaining
   items and bindings away, then archive the emptied domain.
-- **DGV-054** — A topology op whose sides differ in `store` runs the store-change discipline
-  (DGV-015) — content moving across stores is the flag's change whatever door it moves
-  through: a merge of a db-only side into a git survivor demands the db-only→git explicit
-  confirm (the op refusing until confirmed), a git side merging into a db-only survivor runs
-  the one-commit sweep, and either direction refuses while either side sits under a
-  kind-`domain` hold; a split result whose declared `store` differs from its parent migrates
-  its mapped items by the same rules — confirm when the parent is db-only (content entering
-  git), sweep when the parent is git (content leaving it) —
-  held splits already queue behind release (DGV-017).
 
 ## Archive semantics
 
@@ -121,6 +112,15 @@ Source: PLAN.md §4.4.
 - **DGV-053** — Prior states stay reconstructible from git history and audit; for db-only
   domains, topology ops write full manifests (item ids, from/to, access re-evaluations) to
   the audit log and trigger an export snapshot (STG-040).
+- **DGV-054** — A topology op whose sides differ in `store` runs the store-change discipline
+  (DGV-015) — content moving across stores is the flag's change whatever door it moves
+  through: a merge of a db-only side into a git survivor demands the db-only→git explicit
+  confirm (the op refusing until confirmed), a git side merging into a db-only survivor runs
+  the one-commit sweep, and either direction refuses while either side sits under a
+  kind-`domain` hold; a split result whose declared `store` differs from its parent migrates
+  its mapped items by the same rules — confirm when the parent is db-only (content entering
+  git), sweep when the parent is git (content leaving it) —
+  held splits already queue behind release (DGV-017).
 
 ## Key acceptance scenarios
 

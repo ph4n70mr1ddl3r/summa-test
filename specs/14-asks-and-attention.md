@@ -105,17 +105,6 @@ Source: PLAN.md §8.10.
 
 ## Escalation chains
 
-- **ASK-060** — Every ask to a human carries member → deputy → domain owner (of the domain
-  the ask's workspace belongs to; an ask with no domain skips this hop; multi-domain
-   workspaces hop to the primary domain) → admin, walked on SLA breach; non-active members are
-  skipped; the walk carries a visited-set so a mis-configured cycle ends the hop, not the
-  walk.
-- **ASK-061** — Agent targets: an ask routed to an agent queues into its next run (or
-  wakes a session worker); if the target is anything but `active`, or is busy past SLA —
-  an ask queued into the agent's next run sitting past its own deadline (ASK-012) without
-  a run pickup — the ask reassigns up the chain; the agent chain is the lineage chain —
-  first hop the agent's `owner_human_id`, then the human chain with the same visited-set;
-  an ask to an agent never lacks a human next hop.
 - **ASK-055** — The admin hop is a broadcast: every path routing to "an admin" — the
   terminal hop, review-SLA escalation, sod publish routing, the spawn gate's fallback —
   addresses all active admins at once — the reserved `admins` addressee (DAT-080) — and
@@ -132,6 +121,17 @@ Source: PLAN.md §8.10.
 - **ASK-058** — The org-stall broadcast is an alert, not an ask: it renders to every active
   human — viewers included, read-only — because the never-a-target guard governs members the
   org waits on for an answer and an awareness blast waits on no one.
+- **ASK-060** — Every ask to a human carries member → deputy → domain owner (of the domain
+  the ask's workspace belongs to; an ask with no domain skips this hop; multi-domain
+   workspaces hop to the primary domain) → admin, walked on SLA breach; non-active members are
+  skipped; the walk carries a visited-set so a mis-configured cycle ends the hop, not the
+  walk.
+- **ASK-061** — Agent targets: an ask routed to an agent queues into its next run (or
+  wakes a session worker); if the target is anything but `active`, or is busy past SLA —
+  an ask queued into the agent's next run sitting past its own deadline (ASK-012) without
+  a run pickup — the ask reassigns up the chain; the agent chain is the lineage chain —
+  first hop the agent's `owner_human_id`, then the human chain with the same visited-set;
+  an ask to an agent never lacks a human next hop.
 
 ## Delegated authority
 
