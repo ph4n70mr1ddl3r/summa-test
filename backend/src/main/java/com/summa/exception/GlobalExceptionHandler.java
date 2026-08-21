@@ -2,6 +2,7 @@ package com.summa.exception;
 
 import com.summa.model.AuditEvent;
 import com.summa.service.AuditService;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -46,6 +47,17 @@ public class GlobalExceptionHandler {
                 .body(Map.of(
                     "code", "not_found",
                     "message", e.getMessage(),
+                    "audit_event_id", audit.getId()
+                ));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleDataIntegrity(DataIntegrityViolationException e) {
+        AuditEvent audit = auditService.logSystem("REFUSAL", "conflict", e.getMessage(), null);
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of(
+                    "code", "conflict",
+                    "message", "Resource conflict: " + e.getMostSpecificCause().getMessage(),
                     "audit_event_id", audit.getId()
                 ));
     }
