@@ -96,7 +96,7 @@ export interface SpawnRequest {
   approvedAt?: string;
 }
 
-export type SpawnStatus = 'requested' | 'approved' | 'archived' | 'expired';
+export type SpawnStatus = 'requested' | 'approved' | 'denied' | 'expired' | 'archived';
 
 export interface Initiative {
   id: string;
@@ -108,7 +108,7 @@ export interface Initiative {
   goalRef?: string;
 }
 
-export type InitiativeStatus = 'active' | 'paused' | 'closed' | 'completed';
+export type InitiativeStatus = 'proposed' | 'active' | 'paused' | 'closed';
 
 export interface Run {
   id: string;
@@ -121,7 +121,7 @@ export interface Run {
   createdAt?: string;
 }
 
-export type RunStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
+export type RunStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | 'suspended';
 
 export interface DnaCard {
   id: string;
@@ -189,7 +189,7 @@ export interface Trigger {
   createdAt?: string;
 }
 
-export type TriggerCriticality = 'critical' | 'standard' | 'bulk';
+export type TriggerCriticality = 'critical' | 'standard';
 export type TriggerStatus = 'active' | 'paused' | 'archived';
 
 export interface Workspace {
@@ -206,7 +206,7 @@ export interface Workspace {
   createdAt?: string;
 }
 
-export type WorkspaceKind = 'agent' | 'ephemeral' | 'shared';
+export type WorkspaceKind = 'project' | 'personal' | 'system';
 
 export interface Node {
   id: string;
@@ -219,8 +219,8 @@ export interface Node {
   status: NodeStatus;
 }
 
-export type NodeKind = 'dev' | 'office' | 'server';
-export type NodeStatus = 'enrolled' | 'active' | 'suspended' | 'revoked';
+export type NodeKind = 'local' | 'remote';
+export type NodeStatus = 'trusted' | 'revoked';
 
 export interface RoleTemplate {
   id: string;
@@ -232,7 +232,7 @@ export interface RoleTemplate {
   updatedAt?: string;
 }
 
-export type RoleTemplateStatus = 'draft' | 'published' | 'retired';
+export type RoleTemplateStatus = 'draft' | 'active' | 'retired';
 
 export interface MemoryItem {
   id: string;
@@ -244,7 +244,7 @@ export interface MemoryItem {
   createdAt?: string;
 }
 
-export type MemoryTier = 'short' | 'long' | 'volatile';
+export type MemoryTier = 'personal' | 'project' | 'proposal';
 
 export interface Pat {
   id: string;

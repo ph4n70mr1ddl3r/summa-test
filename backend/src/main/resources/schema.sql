@@ -161,7 +161,7 @@ CREATE TABLE IF NOT EXISTS dna_proposals (
     reviewed_by TEXT,
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     reviewed_at INTEGER,
-    review_by TEXT,
+    review_by INTEGER,
     domain_id TEXT,
     FOREIGN KEY (reviewed_by) REFERENCES humans(id) ON DELETE SET NULL,
     FOREIGN KEY (domain_id) REFERENCES dna_domains(id) ON DELETE SET NULL

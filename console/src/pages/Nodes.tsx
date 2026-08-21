@@ -23,7 +23,7 @@ export default function Nodes() {
       </div>
       {nodes.length === 0 ? (
         <div className="bg-gray-800 rounded-lg p-8 border border-gray-700 text-center">
-          <p className="text-gray-400">No enrolled nodes.</p>
+          <p className="text-gray-400">No trusted nodes.</p>
         </div>
       ) : (
         <div className="space-y-3">
