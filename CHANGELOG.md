@@ -4,6 +4,8 @@ Version history for PLAN.md and the `specs/` suite. Newest first. Entries v2.1�
 were extracted verbatim from PLAN.md's preamble in v2.46; from v2.46 on, history lives
 here alone (PLAN.md carries only the current version stamp).
 
+**Review pass 45: consistency, correctness fixes**: full-suite read across PLAN.md and all 21 spec modules for consistency, correctness, and completeness — closes one residue: VIS-002 cited STG-001 (git store default) for "validated ingest" when STG-010 is the ingest door; DWP-060 (item CRUD) was also missing from the citation. The v2.55 changelog entry recorded the fix direction ("SPEC-05/06/07 with the four doors named") but the applied edit swapped in the wrong STG ID and dropped DWP-060; the citation now reads DWP-001, DWP-060, DGV-001, STG-010. Lint green, all self-tests pass.
+
 **Review pass 38: completeness, consistency, unambiguity, correctness fixes**: backend implementation review closes seven residues discovered against the running codebase — `Agent.class` column mapped with spurious doubled quotes (`@Column(name = "\"class\"")`) which would resolve to a literal quoted-column name at runtime, corrected to `@Column(name = "class")` per the schema and `SpawnRequest`'s own mapping; nine dead-import lines removed across services, security, and controllers; one no-op `ObjectMapper` field excised from `OffboardingWalkService`; five silent `401`/`400` responses in `AuthController` now emit `audit_event_id` and log the refusal to the audit trail the same way the rest of the plane does. Lint green, all tests pass.
 
 **Review pass 27: consistency, unambiguity fixes**: terminology alignment — the suite

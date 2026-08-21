@@ -9,7 +9,7 @@ Source: PLAN.md §1, §2. Actors defined here are used uniformly across the suit
   attention surface.
 - **VIS-002** — The system shall maintain a governed **Company DNA** — knowledge cards, rules,
   decision records, SOPs, glossary, org facts, goals — as the single source of organizational
-  coherence, changed only through the write paths of DWP-001, DGV-001, STG-001
+  coherence, changed only through the write paths of DWP-001, DWP-060, DGV-001, STG-010
   (proposals, item CRUD, topology ops, validated ingest).
 - **VIS-003** — The system shall record all work — chat tasks, automations, playbook runs — as
   runs with results, artifacts, and to-dos on a shared Task Board (ORG-030…033).
