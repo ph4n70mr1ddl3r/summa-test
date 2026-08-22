@@ -4,6 +4,14 @@ Version history for PLAN.md and the `specs/` suite. Newest first. Entries v2.1�
 were extracted verbatim from PLAN.md's preamble in v2.46; from v2.46 on, history lives
 here alone (PLAN.md carries only the current version stamp).
 
+**Documentation review pass: consistency, correctness, completeness fixes**: two issues
+closed — review pass 38's `Agent.class` column fix omitted the identical bug in
+`RoleTemplate.java` (`@Column(name = "\"class\"")` resolving to a literal quoted-column
+name at runtime); both now read `@Column(name = "class")` consistent with the schema and
+`SpawnRequest`'s own mapping · PLAN.md §4.5's DNA tree path read `~/.agent/dna/` while
+every other document and the backend code use `~/.summa/dna/`; now aligned. Lint green,
+all self-tests pass.
+
 **Documentation review pass: consistency, correctness, completeness fixes**: three issues
 closed — CHANGELOG v2.60 entry left version pins drifted from v2.61 across PLAN.md,
 specs/README.md, and specs/TRACEABILITY.md (now restored); README.md prerequisites omitted

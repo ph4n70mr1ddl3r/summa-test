@@ -16,7 +16,7 @@ public class RoleTemplate {
     @Column(name = "version", nullable = false)
     private Integer version;
 
-    @Column(name = "\"class\"", nullable = false, length = 30)
+    @Column(name = "class", nullable = false, length = 30)
     private String agentClass;
 
     @Column(name = "body", nullable = false, columnDefinition = "TEXT")

@@ -568,7 +568,7 @@ Topology ops serialize behind a domain-level write lock (§4.5):
 ### 4.5 Storage
 
 ```
-~/.agent/dna/            (or a company git repo — the canonical store)
+~/.summa/dna/            (or a company git repo — the canonical store)
   domains/<domain>/cards/*.md, rules/*.md, decisions/*.md, glossary.md, goals/*.md
   goals/<quarter>.md          (org-wide — domain_id null)
   glossary.md                 (org-wide glossary — domain_id null)
