@@ -4,6 +4,15 @@ Version history for PLAN.md and the `specs/` suite. Newest first. Entries v2.1�
 were extracted verbatim from PLAN.md's preamble in v2.46; from v2.46 on, history lives
 here alone (PLAN.md carries only the current version stamp).
 
+**Documentation review pass: consistency, correctness, completeness fixes**: three issues
+closed — CHANGELOG v2.60 entry left version pins drifted from v2.61 across PLAN.md,
+specs/README.md, and specs/TRACEABILITY.md (now restored); README.md prerequisites omitted
+Python 3.10+ required by the spec lint tooling (added alongside Java/Node/Maven);
+PRODUCTION.md single-process architecture diagram claimed console on port 3000 behind a
+proxy when single-process mode serves only the API on 8080 (rephrased to show API-only;
+console is available via dev.sh or the docker-compose console service). Lint green,
+all self-tests pass.
+
 **Review pass 45: consistency, correctness fixes**: full-suite read across PLAN.md and all 21 spec modules for consistency, correctness, and completeness — closes one residue: VIS-002 cited STG-001 (git store default) for "validated ingest" when STG-010 is the ingest door; DWP-060 (item CRUD) was also missing from the citation. The v2.55 changelog entry recorded the fix direction ("SPEC-05/06/07 with the four doors named") but the applied edit swapped in the wrong STG ID and dropped DWP-060; the citation now reads DWP-001, DWP-060, DGV-001, STG-010. Lint green, all self-tests pass.
 
 **Review pass 38: completeness, consistency, unambiguity, correctness fixes**: backend implementation review closes seven residues discovered against the running codebase — `Agent.class` column mapped with spurious doubled quotes (`@Column(name = "\"class\"")`) which would resolve to a literal quoted-column name at runtime, corrected to `@Column(name = "class")` per the schema and `SpawnRequest`'s own mapping; nine dead-import lines removed across services, security, and controllers; one no-op `ObjectMapper` field excised from `OffboardingWalkService`; five silent `401`/`400` responses in `AuthController` now emit `audit_event_id` and log the refusal to the audit trail the same way the rest of the plane does. Lint green, all tests pass.

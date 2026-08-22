@@ -8,6 +8,7 @@ A self-hosted platform where human employees and AI agents work as one organizat
 - Java 21+
 - Node.js 22+
 - Maven 3.9+
+- Python 3.10+ (spec lint tooling)
 
 ### Start Single-Process Mode
 

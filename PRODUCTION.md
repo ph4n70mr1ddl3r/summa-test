@@ -16,9 +16,18 @@
 ┌─────────────────────────────────────────────────────┐
 │              Single-Process Mode                      │
 │  Spring Boot 3.4 + SQLite (WAL) + FTS5              │
-│  Port 8080 (API) / 3000 (console via proxy)         │
-└─────────────────────────────────────────────────────┘
+│  Port 8080 (API only; context-path /api)            │
+└──────────────────┬──────────────────────────────────┘
+                   │
+     ┌─────────────┼─────────────┐
+     ▼             ▼             ▼
+  Console       Docker       k8s
+ :3000 (dev)    Compose      (prod)
 ```
+
+- **Single-process** (`./start.sh`): API on `:8080` only. No console.
+- **Dev mode** (`./dev.sh`): API on `:8080` + console on `:3000` (separate processes).
+- **Docker Compose**: API container + nginx-proxied console on `:3000` (console proxies `/api` to the API container).
 
 ## Data Storage
 
@@ -105,6 +114,57 @@
 - `GET /api/info` — Version info
 - `POST /api/admin/backup` — Create backup
 - `POST /api/admin/backup/restore` — Restore from backup
+- `POST /api/admin/secrets/scan` — Scan for leaked secrets
+
+### Auth
+- `POST /api/auth/login` — OIDC token exchange
+- `PUT /api/auth/change-password` — Change password
+- `GET /api/auth/pats` — List PATs
+- `POST /api/auth/pats` — Create PAT
+- `POST /api/auth/pats/{id}/revoke` — Revoke PAT
+
+### Data Holds
+- `GET /api/governance/holds` — List active holds
+- `POST /api/governance/holds` — Place a data hold
+- `POST /api/governance/holds/{id}/release` — Release a hold
+
+### Groups
+- `GET /api/org/groups` — List groups
+- `GET /api/org/groups/{id}` — Get group
+- `POST /api/org/groups` — Create group
+- `POST /api/org/groups/{id}/archive` — Archive group
+- `PUT /api/org/groups/{id}/leader` — Change group leader
+
+### Memory
+- `GET /api/memory` — List memory items (filter: memberId, workspaceId, tainted)
+- `GET /api/memory/{id}` — Get memory item
+- `POST /api/memory` — Create memory item
+- `POST /api/memory/{id}/review` — Review (cleared) memory item
+
+### Nodes
+- `GET /api/nodes` — List nodes
+- `GET /api/nodes/{id}` — Get node
+- `POST /api/nodes/enroll` — Enroll a new node
+- `POST /api/nodes/{id}/heartbeat` — Node heartbeat
+- `POST /api/nodes/{id}/claims` — Claim workspace (lease)
+- `POST /api/nodes/{id}/work/pull` — Pull queued work
+- `POST /api/nodes/{id}/runs/{runId}/report` — Report run results
+- `POST /api/nodes/{id}/revoke` — Revoke node
+- `PUT /api/nodes/{id}` — Update node metadata
+
+### Role Templates
+- `GET /api/role-templates` — List templates
+- `GET /api/role-templates/{id}` — Get template
+- `POST /api/role-templates` — Create template
+- `POST /api/role-templates/{id}/publish` — Publish template
+- `POST /api/role-templates/{id}/retire` — Retire template
+
+### Workspaces
+- `GET /api/workspaces` — List workspaces
+- `GET /api/workspaces/{id}` — Get workspace
+- `POST /api/workspaces` — Create workspace
+- `POST /api/workspaces/{id}/rebind` — Rebind workspace to member
+- `POST /api/workspaces/{id}/archive` — Archive workspace
 
 ## Deployment
 
