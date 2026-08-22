@@ -12,61 +12,82 @@ carry over and are out of scope here.
 
 ```
 humans         (id, name, email, rbac 'admin'|'owner'|'member'|'viewer', auth json,
-                deputy_member_id?, timezone?, working_hours json?, created_at, deactivated_at?)
+                password_hash?, deputy_member_id?, timezone?, working_hours json?,
+                created_at, updated_at?, deactivated_at?)
+                -- password_hash: reserved for local-account auth (a deployment choice, not the
+                -- default — SEC-001's OIDC path leaves it null); when set, /auth/login accepts
+                -- email+password as an alternative to OIDC; hashed, never returned in
+                -- responses; SEC-001/CFG-020 govern when it is used
 agents         + owner_human_id, class 'persistent'|'ephemeral', spawned_by member?, ttl_at,
                 budget_cap, lineage_depth, template_id?, template_version?,
-                status 'requested'|'active'|'suspended'|'retiring'|'archived'
+                status 'requested'|'active'|'suspended'|'retiring'|'archived',
+                created_at, updated_at?, suspended_at?, retired_at?, archived_at?
 role_templates (id, name, version, class 'persistent'|'ephemeral-subagent', body json,
-                default_scopes json, status 'draft'|'active'|'retired')
+                default_scopes json, status 'draft'|'active'|'retired',
+                created_at, updated_at?)
 nodes          (id, name, kind 'local'|'remote', capabilities json, region?, claim json?,
-                last_heartbeat, pubkey, enrolled_at, revoked_at?, status 'trusted'|'revoked')
+                last_heartbeat, pubkey, enrolled_at, revoked_at?, status 'trusted'|'revoked',
+                created_at, updated_at?)
 dna_domains    (id, name, owner_human_id, access 'public'|'domain'|'named',
                 named_readers json, store 'git'|'db-only', sod 'off'|'reviewer-distinct',
                 review_sla_days int default 7, residency?, status 'active'|'archived'
-                default 'active')
+                default 'active', created_at, updated_at?)
 dna_cards      (id, domain_id, title, definition_md, refs json, provenance json, version,
-                status 'draft'|'active'|'retired' default 'active')
+                status 'draft'|'active'|'retired' default 'active', created_at, updated_at?)
 dna_rules      (id, domain_id, statement_md, machine_hint json?, effective_from, effective_to?,
-                supersedes_id, status 'active'|'superseded'|'lapsed')
-dna_decisions  (id, domain_id, context_md, outcome_md, decided_by member, decided_at)
+                supersedes_id, status 'active'|'superseded'|'lapsed', created_at, updated_at?)
+dna_decisions  (id, domain_id, context_md, outcome_md, decided_by member, decided_at,
+                refs json?, provenance json?)
 dna_glossary   (id, domain_id?, term, definition, aliases json,
-                status 'draft'|'active'|'retired' default 'active')
+                status 'draft'|'active'|'retired' default 'active', created_at, updated_at?)
 dna_goals      (id, domain_id?, quarter?, statement_md, owner member,
                 status 'active'|'met'|'missed'|'retired', inject 'always'|'linked',
-                effective_from, effective_to?)
+                effective_from, effective_to?, created_at, updated_at?)
 dna_proposals  (id, kind 'card'|'rule'|'decision'|'goal'|'glossary'|'edit', payload json,
                 revision int default 1, proposed_by member, provenance json,
                 status 'open'|'published'|'rejected'|'withdrawn', reviewed_by?, created_at,
-                reviewed_at?, review_by?)
+                reviewed_at?, review_by?, domain_id?, updated_at?)
 asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request', from member,
                 to member, payload json, initiative_id?, workspace_id?,
-                status 'pending'|'answered'|'expired'|'withdrawn', deadline, created_at,
+                status 'pending'|'answered'|'expired'|'withdrawn', deadline, created_at, updated_at?,
                 sla_tier 'critical'|'standard'|'bulk', escalation json,
                 expiry_behavior 'deny'|'escalate'|'reassign', responded_at?,
                 quorum_required int default 1, responses json, collapsed_count int default 1)
 initiatives    (id, title, goal_ref?, decision_ref?, sponsor member, lead member,
                 status 'proposed'|'active'|'paused'|'closed', business_budget json?,
-                deadline?, closed_at?, depends_on json?)
-board_tasks    + assignee_member_id?, initiative_id?   (runs carry initiative_id? likewise)
+                deadline?, closed_at?, depends_on json?, created_at, updated_at?)
+board_tasks    + assignee_member_id?, initiative_id?, created_by member?, created_at,
+                updated_at?, status 'open'|'in_progress'|'done'|'cancelled' default 'open',
+                priority int default 0, due_at?, completed_at?
+                (runs carry initiative_id? likewise)
 workspaces     + initiative_ids json?, domain_ids json?, node_id?, claim_epoch int default 0,
-                lease_expires_at?, participants json, archived_at?
-triggers       + criticality 'standard'|'critical' default 'standard'
-playbooks      + criticality 'standard'|'critical' default 'standard'
+                lease_expires_at?, participants json, archived_at?,
+                created_at, updated_at?
+triggers       + criticality 'standard'|'critical' default 'standard',
+                kind 'schedule'|'api'|'event' default 'schedule', expression text default '',
+                agent_id member, workspace_id?, status 'active'|'paused'|'archived' default 'active',
+                config json default '{}', last_fired_at?, created_at, updated_at?
+playbooks      + criticality 'standard'|'critical' default 'standard',
+                version int default 1, body json default '{}', status 'draft'|'active'|'retired'
+                default 'active', created_by member?, created_at, updated_at?
 spend_ledger   (id, member_id, run_id?, spawn_id?, kind 'reserve'|'settle'|'release',
-                tokens_in/out, cost, pricing_version, at)
+                tokens_in/out, cost, pricing_version, at, created_at)
 trigger_firings (id, trigger_id, idempotency_key, fired_at, run_id?)
 external_writes (id, run_id, connector, op, idempotency_key,
-                status 'prepared'|'committed'|'compensated'|'failed', prepared_at, resolved_at?)
-data_holds     (id, kind 'member'|'domain', subject_id, reason_md, created_by, released_at?)
-groups         (id, name, leader_member_id?, status 'active'|'archived', created_at)
+                status 'prepared'|'committed'|'compensated'|'failed', prepared_at, resolved_at?,
+                created_at)
+data_holds     (id, kind 'member'|'domain', subject_id, reason_md, created_by, released_at?,
+                created_at)
+groups         (id, name, leader_member_id?, status 'active'|'archived' default 'active',
+                created_at, updated_at?)
 group_memberships (group_id, member_id, added_by member, added_at, removed_at?)
 audit_events   (id, at, actor member|'system', action, object_type, object_id, detail json,
                 node_id?, origin 'live'|'replay' default 'live')
 pats           (id, member_id, name, token_hash, scopes json, created_at, expires_at,
-                revoked_at?, last_used_at?)
+                revoked_at?, last_used_at?, updated_at?)
 governance_settings (key, value json, edited_by member, edited_at)
 memory_items   (id, tier 'personal'|'project'|'proposal', member_id?, workspace_id?,
-                content_md, provenance json, tainted bool default false, created_at,
+                content_md, provenance json, tainted bool default false, created_at, updated_at?,
                 reviewed_by?, reviewed_at?)
 ```
 

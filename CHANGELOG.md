@@ -4,6 +4,16 @@ Version history for PLAN.md and the `specs/` suite. Newest first. Entries v2.1�
 were extracted verbatim from PLAN.md's preamble in v2.46; from v2.46 on, history lives
 here alone (PLAN.md carries only the current version stamp).
 
+**Documentation review pass 48: consistency, correctness, completeness fixes**: full-suite
+schema audit — `specs/16-data-model.md` and PLAN.md §7 gained all columns present in
+`schema.sql` but missing from the spec definition: `humans.password_hash?` (reconciled
+with SEC-001's OIDC-only default; local-account auth is a deployment choice),
+`dna_decisions.refs json?` and `dna_decisions.provenance json?` (referenced by DNC-030/
+DNC-004 but absent from the schema row), `board_tasks.created_by member?`,
+`playbooks.created_by member?`, and `updated_at?` on every table that carries one in the
+ground-truth schema. README.md gained the version-pin line ("derived from `PLAN.md`
+(v2.61)") to complete the three-version-pin invariant. Lint green, all self-tests pass.
+
 **Documentation review pass: consistency, correctness, completeness fixes**: two issues
 closed — review pass 38's `Agent.class` column fix omitted the identical bug in
 `RoleTemplate.java` (`@Column(name = "\"class\"")` resolving to a literal quoted-column

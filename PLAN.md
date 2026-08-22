@@ -1359,7 +1359,12 @@ addressable from every member-typed column:
 
 ```
 humans         (id, name, email, rbac 'admin'|'owner'|'member'|'viewer', auth json,
-                 deputy_member_id?, timezone?, working_hours json?, created_at, deactivated_at?)
+                  password_hash?, deputy_member_id?, timezone?, working_hours json?, created_at,
+                  updated_at?, deactivated_at?)
+                  -- password_hash: reserved for local-account auth (a deployment choice, not the
+                  -- default — SEC-001's OIDC path leaves it null); when set, /auth/login accepts
+                  -- email+password as an alternative to OIDC; hashed, never returned in
+                  -- responses; SEC-001/CFG-020 govern when it is used
                  -- deactivated_at: offboarding's terminal marker (§5) — rehire is a new row,
                  -- so a timestamp is the whole state; ask-chain walks skip deactivated members
                  -- and the last-admin guard counts admins with deactivated_at IS NULL (§5, §8.10)
@@ -1370,8 +1375,9 @@ humans         (id, name, email, rbac 'admin'|'owner'|'member'|'viewer', auth js
                  -- timezone/working_hours: per-human calendar — digests and queue_until_morning
                  -- compute against it (§8.10, §3)
 agents         + owner_human_id, class 'persistent'|'ephemeral', spawned_by member?, ttl_at,
-                 budget_cap, lineage_depth, template_id?, template_version?,
-                 status 'requested'|'active'|'suspended'|'retiring'|'archived'
+                  budget_cap, lineage_depth, template_id?, template_version?,
+                  status 'requested'|'active'|'suspended'|'retiring'|'archived',
+                  created_at, updated_at?, suspended_at?, retired_at?, archived_at?
                  -- owner_human_id derivation (§6.2): a persistent hire's owner is the gate's
                  -- accepting human at activation (the self-addressed collapse included, a
                  -- re-keyed gate landing on the re-keyed addressee); an ephemeral's is the
@@ -1400,7 +1406,8 @@ agents         + owner_human_id, class 'persistent'|'ephemeral', spawned_by memb
                  -- requested, retiring, or already archived at the accept, the template
                  -- publishes unpinned, the founding reference audit and citation
 role_templates (id, name, version, class 'persistent'|'ephemeral-subagent', body json
-                 (identity/style/handbook), default_scopes json, status 'draft'|'active'|'retired')
+                  (identity/style/handbook), default_scopes json, status 'draft'|'active'|'retired',
+                  created_at, updated_at?)
                  -- versioned catalog; persistent agents pin (template_id, template_version) (§6.5)
                  -- (class, name, version) unique — the catalog's deterministic key: a new
                  -- version is a new row, never an in-place rewrite of one an agent pins;
@@ -1421,7 +1428,8 @@ role_templates (id, name, version, class 'persistent'|'ephemeral-subagent', body
                  -- catalog writes — create, publish, retire — are admin, audited (§9):
                  -- authorship is infrastructure; the owner asks govern adoption, not authoring
 nodes          (id, name, kind 'local'|'remote', capabilities json, region?, claim json?,
-                 last_heartbeat, pubkey, enrolled_at, revoked_at?, status 'trusted'|'revoked')
+                  last_heartbeat, pubkey, enrolled_at, revoked_at?, status 'trusted'|'revoked',
+                  created_at, updated_at?)
                  -- region gates residency-constrained scheduling (§3, §4.5);
                  -- claim: epoch-fenced workspace leases (§3)
                  -- capabilities re-advertise on every heartbeat: drift against a bound
@@ -1429,9 +1437,10 @@ nodes          (id, name, kind 'local'|'remote', capabilities json, region?, cla
                  -- the advertisement is heartbeat-owned: console edits touch region and
                  -- metadata (the name row) only, never capabilities (§3, §9)
 dna_domains    (id, name, owner_human_id, access 'public'|'domain'|'named',
-                 named_readers json, store 'git'|'db-only', sod 'off'|'reviewer-distinct',
-                 review_sla_days int default 7,
-                 residency?, status 'active'|'archived' default 'active')
+                  named_readers json, store 'git'|'db-only', sod 'off'|'reviewer-distinct',
+                  review_sla_days int default 7,
+                  residency?, status 'active'|'archived' default 'active',
+                  created_at, updated_at?)
                  -- db-only: the §4.5 privacy carve-out; sod: proposer ≠ publisher when on (§4.3);
                  -- review_sla_days: the per-domain queue SLA's schema home (§4.3) — review_by
                  -- derives from it at propose, and topology results inherit or persist it like
@@ -1463,13 +1472,15 @@ dna_domains    (id, name, owner_human_id, access 'public'|'domain'|'named',
                  -- dissolution = merge-away then archive, never bare delete (§4.4) — merge
                  -- moves the whole corpus, history included, ids stable
 dna_cards      (id, domain_id, title, definition_md, refs json, provenance json, version,
-                 status 'draft'|'active'|'retired' default 'active')
+                  status 'draft'|'active'|'retired' default 'active',
+                  created_at, updated_at?)
                  -- default active mirrors the glossary (§7): an owner's direct create is the
                  -- publish path (§9); draft is an explicit owner-staged phase (§4.2)
                  -- retirement is terminal: revival is a new card, and a draft discards by
                  -- retiring — one lifecycle, no un-retire (§9)
 dna_rules      (id, domain_id, statement_md, machine_hint json?, effective_from, effective_to?,
-                 supersedes_id, status 'active'|'superseded'|'lapsed')
+                  supersedes_id, status 'active'|'superseded'|'lapsed',
+                  created_at, updated_at?)
                  -- effective_to bounds delegation windows (§8.10); lapsed: the window ended —
                  -- ordinary expiring rules transition lapsed at effective_to exactly like
                  -- delegations, dropping out of injection and routing; initiative close lapses
@@ -1490,7 +1501,8 @@ dna_rules      (id, domain_id, statement_md, machine_hint json?, effective_from,
                  -- refused at propose, amend, and item write (§9's one-validation rule), the
                  -- way to displace a superseded rule being to name the chain's live head, so
                  -- the superseder whose window displaces a predecessor is always one rule (§4.4)
-dna_decisions  (id, domain_id, context_md, outcome_md, decided_by member, decided_at)
+dna_decisions  (id, domain_id, context_md, outcome_md, decided_by member, decided_at,
+                  refs json?, provenance json?)
                  -- immutable and lifecycle-free: create-only at every surface (proposal publish
                  -- and item CRUD, §9) — no update, retire, or delete exists for them, and they
                  -- are always live in search (§4.2); reversal or amendment is a new decision
@@ -1505,7 +1517,8 @@ dna_decisions  (id, domain_id, context_md, outcome_md, decided_by member, decide
                  -- decisions leave search with its corpus, resolving by citation like the
                  -- rest of its history, and merge-away moves them with the corpus, ids stable
 dna_glossary   (id, domain_id?, term, definition, aliases json,
-                 status 'draft'|'active'|'retired' default 'active')
+                  status 'draft'|'active'|'retired' default 'active',
+                  created_at, updated_at?)
                  -- the "live entry" of the §4.2 duplicate check is any non-retired row of the
                  -- same scope — draft and active both hold their terms; retire (item CRUD, §9 —
                  -- never delete) is what frees a term or alias for a new live entry, and the
@@ -1513,7 +1526,8 @@ dna_glossary   (id, domain_id?, term, definition, aliases json,
                  -- retirement stays terminal for the same reason it frees terms: un-retiring
                  -- would collide with a re-claimed term or alias — revival is a new entry (§9)
 dna_goals      (id, domain_id?, quarter?, statement_md, owner member, status 'active'|'met'|'missed'|'retired',
-                inject 'always'|'linked', effective_from, effective_to?)  -- goal-slice source (§4.2)
+                 inject 'always'|'linked', effective_from, effective_to?,
+                 created_at, updated_at?)  -- goal-slice source (§4.2)
                 -- the slice's 'deadline' (§4.2) is effective_to, and the window is two-sided:
                 -- admission at effective_from, exit at effective_to (§4.2);
                 -- owner: any member but an ephemeral worker — a viewer human is refused at
@@ -1535,9 +1549,9 @@ dna_goals      (id, domain_id?, quarter?, statement_md, owner member, status 'ac
                 -- goals, a terminal owner reference staying pinned to the departed identity
                 -- — severable only by §4.5 erasure, never by a walk
 dna_proposals  (id, kind 'card'|'rule'|'decision'|'goal'|'glossary'|'edit', payload json, revision int
-                 default 1, proposed_by member,
-                 provenance json, status 'open'|'published'|'rejected'|'withdrawn', reviewed_by?, created_at,
-                 reviewed_at?, review_by?)  -- review_by: queue SLA deadline; breach escalates to admin (§4.3);
+                  default 1, proposed_by member,
+                  provenance json, status 'open'|'published'|'rejected'|'withdrawn', reviewed_by?, created_at,
+                  reviewed_at?, review_by?, domain_id?, updated_at?)  -- review_by: queue SLA deadline; breach escalates to admin (§4.3);
                  -- created_at: the filed date review_by derives and re-derives from (§4.3);
                  -- reviewed_at: when reviewed_by decided
                  -- revision: amendable in review — history retained, publish binds latest (§4.3);
@@ -1547,10 +1561,11 @@ dna_proposals  (id, kind 'card'|'rule'|'decision'|'goal'|'glossary'|'edit', payl
                  -- an ephemeral worker is refused at propose (§6); its learning folds back, and
                  -- the spawner or a human proposes from it. Viewers are refused the same way (§5)
 asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request', from member, to member,
-                 payload json, initiative_id?, workspace_id?, status 'pending'|'answered'|'expired'|'withdrawn', deadline, created_at,
-                 sla_tier 'critical'|'standard'|'bulk', escalation json,
-                 expiry_behavior 'deny'|'escalate'|'reassign', responded_at?, quorum_required int
-                 default 1, responses json, collapsed_count int default 1)
+                  payload json, initiative_id?, workspace_id?, status 'pending'|'answered'|'expired'|'withdrawn', deadline, created_at,
+                  updated_at?,
+                  sla_tier 'critical'|'standard'|'bulk', escalation json,
+                  expiry_behavior 'deny'|'escalate'|'reassign', responded_at?, quorum_required int
+                  default 1, responses json, collapsed_count int default 1)
                  -- supersedes approvals;
                  -- withdrawn: the originator's retract of a pending ask — originator-scoped,
                  -- never communal: the retracting originator's waiters resolve per the expiry
@@ -1591,8 +1606,8 @@ asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request', fro
                  -- close, expiry per behavior — and the system withdraws no member's ask:
                  -- each side's retract is its own door
 initiatives    (id, title, goal_ref?, decision_ref?, sponsor member, lead member,
-                 status 'proposed'|'active'|'paused'|'closed', business_budget json?, deadline?,
-                 closed_at?, depends_on json?)
+                  status 'proposed'|'active'|'paused'|'closed', business_budget json?, deadline?,
+                  closed_at?, depends_on json?, created_at, updated_at?)
                  -- sponsor: pinned human — an agent sponsor refused at the same write (§5.1);
                  -- lead: any member but an ephemeral worker — the §5.1 mortality guard, with
                  -- the eligibility refusals: viewer and non-active members refused (§5.1);
@@ -1610,13 +1625,16 @@ initiatives    (id, title, goal_ref?, decision_ref?, sponsor member, lead member
                  -- refused at write, the goal_ref liveness rule on the graph axis (§5.1);
                  -- closing an upstream with live dependents asks each sponsor — signal,
                  -- not block (§5.1)
-board_tasks    + assignee_member_id?, initiative_id?  (runs carry initiative_id? the
-                 same way — burndown, per-initiative digests)
+board_tasks    + assignee_member_id?, initiative_id?, created_by member?, created_at,
+                  updated_at?, status 'open'|'in_progress'|'done'|'cancelled' default 'open',
+                  priority int default 0, due_at?, completed_at?
+                  (runs carry initiative_id? the same way — burndown, per-initiative digests)
                  -- assignee: any member but a viewer — and active at write, the sponsor/lead
                  -- guard (§5.1) extended to assignments; suspension freezes an assignee's tasks
                  -- (resume re-arms them), retire/offboard walks return them (§5, §6.3)
 workspaces     + initiative_ids json?, domain_ids json?, node_id?, claim_epoch int default 0,
-                 lease_expires_at?, participants json, archived_at?
+                  lease_expires_at?, participants json, archived_at?,
+                  created_at, updated_at?
                  -- participants: the member ids on this workspace's collaboration surface —
                  -- §4.4 'domain' DNA access derives its human reader set from the binding
                  -- through this list (an agent's reads derive from its workspaces directly);
@@ -1665,11 +1683,18 @@ workspaces     + initiative_ids json?, domain_ids json?, node_id?, claim_epoch i
                  -- the archived row, and project memory (§8.3) archives inert with it — the
                  -- retire rule applied to the workspace's own tier: never transferred, never
                  -- injected
-triggers       + criticality 'standard'|'critical' default 'standard'  -- §6.2 breaker trip order
-playbooks      + criticality 'standard'|'critical' default 'standard'  -- with triggers (§6.2
+triggers       + criticality 'standard'|'critical' default 'standard',
+                  kind 'schedule'|'api'|'event' default 'schedule', expression text default '',
+                  agent_id member, workspace_id?, status 'active'|'paused'|'archived' default 'active',
+                  config json default '{}', last_fired_at?, created_at, updated_at?
+                  -- §6.2 breaker trip order
+playbooks      + criticality 'standard'|'critical' default 'standard',
+                  version int default 1, body json default '{}', status 'draft'|'active'|'retired'
+                  default 'active', created_by member?, created_at, updated_at?
+                  -- with triggers (§6.2
                  -- breaker): a firing's class is the stricter of its trigger's and playbook's tags
 spend_ledger   (id, member_id, run_id?, spawn_id?, kind 'reserve'|'settle'|'release',
-                 tokens_in/out, cost, pricing_version, at)
+                  tokens_in/out, cost, pricing_version, at, created_at)
                  -- reservation metering: caps evaluate reserved + settled; releases return
                  -- budget on failure or reap (§6.2)
 trigger_firings (id, trigger_id, idempotency_key, fired_at, run_id?)
@@ -1677,11 +1702,12 @@ trigger_firings (id, trigger_id, idempotency_key, fired_at, run_id?)
                  -- (default 7d — sized to cover provider redelivery after downtime, §8.5):
                  -- replays return the original run
 external_writes (id, run_id, connector, op, idempotency_key, status 'prepared'|'committed'|
-                 'compensated'|'failed', prepared_at, resolved_at?)
+                  'compensated'|'failed', prepared_at, resolved_at?, created_at)
                  -- staged writes: prepare→confirm→commit (§8.2); stranded 'prepared' rows are
                  -- reconciled — confirm, compensate, or escalate; the reaper leaves these, not
                  -- half-posted side effects (§6.2)
-data_holds     (id, kind 'member'|'domain', subject_id, reason_md, created_by, released_at?)
+data_holds     (id, kind 'member'|'domain', subject_id, reason_md, created_by, released_at?,
+                  created_at)
                  -- created/released through the §9 admin endpoints, audited;
                  -- legal hold freezes §4.5 erasure until admin release, audited;
                  -- kind 'domain' freezes the §4.5 history-rewrite remediation and db-only
