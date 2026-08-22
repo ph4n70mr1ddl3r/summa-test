@@ -38,9 +38,14 @@ public class SpendLedger {
     @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant at;
 
+    @Column(name = "created_at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    private Instant createdAt;
+
     @PrePersist
     public void prePersist() {
         if (at == null) at = Instant.now();
+        if (createdAt == null) createdAt = Instant.now();
         if (tokensIn == null) tokensIn = 0.0;
         if (tokensOut == null) tokensOut = 0.0;
         if (cost == null) cost = 0.0;
@@ -67,4 +72,6 @@ public class SpendLedger {
     public void setPricingVersion(String pricingVersion) { this.pricingVersion = pricingVersion; }
     public Instant getAt() { return at; }
     public void setAt(Instant at) { this.at = at; }
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 }

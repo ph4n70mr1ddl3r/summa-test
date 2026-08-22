@@ -38,6 +38,10 @@ public class Human {
     @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant createdAt;
 
+    @Column(name = "updated_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    private Instant updatedAt;
+
     @Column(name = "deactivated_at")
     @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant deactivatedAt;
@@ -47,6 +51,7 @@ public class Human {
         if (createdAt == null) {
             createdAt = Instant.now();
         }
+        if (updatedAt == null) updatedAt = Instant.now();
     }
 
     // Getters and setters
@@ -68,6 +73,8 @@ public class Human {
     public void setWorkingHours(String workingHours) { this.workingHours = workingHours; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
     public Instant getDeactivatedAt() { return deactivatedAt; }
     public void setDeactivatedAt(Instant deactivatedAt) { this.deactivatedAt = deactivatedAt; }
     public String getPasswordHash() { return passwordHash; }

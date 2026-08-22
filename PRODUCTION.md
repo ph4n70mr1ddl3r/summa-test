@@ -13,16 +13,16 @@
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│              Single-Process Mode                      │
-│  Spring Boot 3.4 + SQLite (WAL) + FTS5              │
-│  Port 8080 (API only; context-path /api)            │
-└──────────────────┬──────────────────────────────────┘
-                   │
-     ┌─────────────┼─────────────┐
-     ▼             ▼             ▼
-  Console       Docker       k8s
- :3000 (dev)    Compose      (prod)
+Single-Process Mode (./start.sh):
+  ┌─────────────────────────────────────────────────────┐
+  │  Spring Boot 3.4 + SQLite (WAL) + FTS5              │
+  │  Port 8080 (API only; context-path /api)            │
+  └─────────────────────────────────────────────────────┘
+
+Dev Mode (./dev.sh): API on :8080 + Console on :3000 (separate processes)
+
+Docker Compose: API container + nginx-proxied console on :3000
+Kubernetes (prod): decomposed services
 ```
 
 - **Single-process** (`./start.sh`): API on `:8080` only. No console.

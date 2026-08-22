@@ -26,10 +26,10 @@ public class DnaDecision {
     @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant decidedAt;
 
-    @Column(name = "refs", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "refs", columnDefinition = "TEXT")
     private String refs;
 
-    @Column(name = "provenance", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "provenance", columnDefinition = "TEXT")
     private String provenance;
 
     @PrePersist

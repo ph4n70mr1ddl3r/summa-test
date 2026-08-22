@@ -43,6 +43,10 @@ public class Workspace {
     @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant createdAt;
 
+    @Column(name = "updated_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    private Instant updatedAt;
+
     @PrePersist
     public void prePersist() {
         if (createdAt == null) createdAt = Instant.now();
@@ -75,5 +79,7 @@ public class Workspace {
     public void setArchivedAt(Instant archivedAt) { this.archivedAt = archivedAt; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
     public boolean isArchived() { return archivedAt != null; }
 }

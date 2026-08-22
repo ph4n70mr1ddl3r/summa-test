@@ -39,6 +39,10 @@ public class Ask {
     @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant createdAt;
 
+    @Column(name = "updated_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    private Instant updatedAt;
+
     @Column(name = "sla_tier", nullable = false, length = 20)
     private String slaTier;
 
@@ -64,6 +68,7 @@ public class Ask {
     @PrePersist
     public void prePersist() {
         if (createdAt == null) createdAt = Instant.now();
+        if (updatedAt == null) updatedAt = Instant.now();
         if (status == null) status = "pending";
         if (slaTier == null) slaTier = "standard";
         if (expiryBehavior == null) expiryBehavior = "deny";
@@ -92,6 +97,8 @@ public class Ask {
     public void setDeadline(Instant deadline) { this.deadline = deadline; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
     public String getSlaTier() { return slaTier; }
     public void setSlaTier(String slaTier) { this.slaTier = slaTier; }
     public String getEscalation() { return escalation; }

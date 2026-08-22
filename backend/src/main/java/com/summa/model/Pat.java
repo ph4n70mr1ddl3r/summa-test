@@ -38,9 +38,14 @@ public class Pat {
     @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant lastUsedAt;
 
+    @Column(name = "updated_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    private Instant updatedAt;
+
     @PrePersist
     public void prePersist() {
         if (createdAt == null) createdAt = Instant.now();
+        if (updatedAt == null) updatedAt = Instant.now();
         if (scopes == null) scopes = "[]";
     }
 
@@ -62,6 +67,8 @@ public class Pat {
     public void setRevokedAt(Instant revokedAt) { this.revokedAt = revokedAt; }
     public Instant getLastUsedAt() { return lastUsedAt; }
     public void setLastUsedAt(Instant lastUsedAt) { this.lastUsedAt = lastUsedAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
     public boolean isExpired() { return expiresAt != null && expiresAt.isBefore(Instant.now()); }
     public boolean isRevoked() { return revokedAt != null; }
     public boolean isActive() { return !isExpired() && !isRevoked(); }

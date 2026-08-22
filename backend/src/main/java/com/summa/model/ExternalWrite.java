@@ -33,9 +33,14 @@ public class ExternalWrite {
     @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant resolvedAt;
 
+    @Column(name = "created_at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    private Instant createdAt;
+
     @PrePersist
     public void prePersist() {
         if (preparedAt == null) preparedAt = Instant.now();
+        if (createdAt == null) createdAt = Instant.now();
         if (status == null) status = "prepared";
     }
 
@@ -55,6 +60,8 @@ public class ExternalWrite {
     public void setPreparedAt(Instant preparedAt) { this.preparedAt = preparedAt; }
     public Instant getResolvedAt() { return resolvedAt; }
     public void setResolvedAt(Instant resolvedAt) { this.resolvedAt = resolvedAt; }
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     public boolean isPrepared() { return "prepared".equals(status); }
     public boolean isCommitted() { return "committed".equals(status); }
     public boolean isFailed() { return "failed".equals(status) || "compensated".equals(status); }

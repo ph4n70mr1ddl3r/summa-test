@@ -43,6 +43,10 @@ public class Node {
     @Column(name = "status", nullable = false, length = 20)
     private String status;
 
+    @Column(name = "updated_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    private Instant updatedAt;
+
     @PrePersist
     public void prePersist() {
         if (enrolledAt == null) enrolledAt = Instant.now();
@@ -72,6 +76,8 @@ public class Node {
     public void setRevokedAt(Instant revokedAt) { this.revokedAt = revokedAt; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
     public boolean isTrusted() { return "trusted".equals(status); }
     public boolean isRevoked() { return "revoked".equals(status); }
 }

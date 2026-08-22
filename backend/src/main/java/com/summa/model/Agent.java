@@ -57,6 +57,10 @@ public class Agent {
     @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant archivedAt;
 
+    @Column(name = "updated_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    private Instant updatedAt;
+
     @PrePersist
     public void prePersist() {
         if (createdAt == null) createdAt = Instant.now();
@@ -94,6 +98,8 @@ public class Agent {
     public void setRetiredAt(Instant retiredAt) { this.retiredAt = retiredAt; }
     public Instant getArchivedAt() { return archivedAt; }
     public void setArchivedAt(Instant archivedAt) { this.archivedAt = archivedAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
     public boolean isActive() { return "active".equals(status); }
     public boolean isEphemeral() { return "ephemeral".equals(agentClass); }
 }

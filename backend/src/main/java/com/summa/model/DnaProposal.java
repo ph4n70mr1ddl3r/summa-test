@@ -46,9 +46,14 @@ public class DnaProposal {
     @Column(name = "domain_id", length = 36)
     private String domainId;
 
+    @Column(name = "updated_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    private Instant updatedAt;
+
     @PrePersist
     public void prePersist() {
         if (createdAt == null) createdAt = Instant.now();
+        if (updatedAt == null) updatedAt = Instant.now();
         if (status == null) status = "open";
         if (revision == null) revision = 1;
         if (provenance == null) provenance = "{}";
@@ -79,6 +84,8 @@ public class DnaProposal {
     public void setReviewBy(Instant reviewBy) { this.reviewBy = reviewBy; }
     public String getDomainId() { return domainId; }
     public void setDomainId(String domainId) { this.domainId = domainId; }
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
     public boolean isOpen() { return "open".equals(status); }
     public boolean isPublished() { return "published".equals(status); }
 }

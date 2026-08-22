@@ -53,7 +53,7 @@ These checks verify:
 - **Backend**: Follows standard Java conventions. Use SLF4J for logging
   (`private static final Logger log = LoggerFactory.getLogger(...)`).
 - **Console**: TypeScript strict mode. Tailwind CSS for styling.
-- ** specs**: One requirement per line, unique ID, testable language.
+- **specs**: One requirement per line, unique ID, testable language.
 
 ## Testing
 
