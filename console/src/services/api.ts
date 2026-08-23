@@ -52,6 +52,11 @@ export interface Human {
   rbac: string;
   active: boolean;
   createdAt?: string;
+  auth?: string;
+  timezone?: string;
+  workingHours?: string;
+  updatedAt?: string;
+  deactivatedAt?: string;
 }
 
 export interface Agent {
@@ -63,9 +68,17 @@ export interface Agent {
   templateId?: string;
   lineageDepth?: number;
   createdAt?: string;
+  spawnedBy?: string;
+  ttlAt?: string;
+  budgetCap?: number;
+  templateVersion?: string;
+  suspendedAt?: string;
+  retiredAt?: string;
+  archivedAt?: string;
+  updatedAt?: string;
 }
 
-export type AgentStatus = 'active' | 'suspended' | 'retired' | 'archived' | 'requested';
+export type AgentStatus = 'active' | 'suspended' | 'retired' | 'retiring' | 'archived' | 'requested';
 
 export interface Ask {
   id: string;
@@ -78,6 +91,12 @@ export interface Ask {
   deadline: number;
   quorumRequired?: number;
   collapsedCount?: number;
+  initiativeId?: string;
+  workspaceId?: string;
+  updatedAt?: string;
+  escalation?: string;
+  expiryBehavior?: string;
+  respondedAt?: string;
 }
 
 export type AskKind = 'approval' | 'question' | 'assignment' | 'spawn_request';
@@ -94,6 +113,12 @@ export interface SpawnRequest {
   requestedByHumanId?: string;
   agentId?: string;
   approvedAt?: string;
+  workspaceBindings?: string;
+  scopeCeiling?: string;
+  budgetCap?: number;
+  ttlHours?: number;
+  approvedBy?: string;
+  createdAt?: string;
 }
 
 export type SpawnStatus = 'requested' | 'approved' | 'denied' | 'expired' | 'archived';
@@ -106,6 +131,11 @@ export interface Initiative {
   status: InitiativeStatus;
   deadline?: string;
   goalRef?: string;
+  decisionRef?: string;
+  businessBudget?: string;
+  closedAt?: string;
+  dependsOn?: string;
+  updatedAt?: string;
 }
 
 export type InitiativeStatus = 'proposed' | 'active' | 'paused' | 'closed';
@@ -119,6 +149,15 @@ export interface Run {
   costTokens?: number;
   costUsd?: number;
   createdAt?: string;
+  prompt?: string;
+  artifacts?: string;
+  errorMessage?: string;
+  startedAt?: string;
+  completedAt?: string;
+  initiativeId?: string;
+  triggerId?: string;
+  playbookId?: string;
+  parentRunId?: string;
 }
 
 export type RunStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | 'suspended';
@@ -174,6 +213,7 @@ export interface BoardTask {
   dueAt?: string;
   createdBy: string;
   createdAt?: string;
+  completedAt?: string;
 }
 
 export interface Trigger {
@@ -185,8 +225,10 @@ export interface Trigger {
   workspaceId?: string;
   criticality: TriggerCriticality;
   status: TriggerStatus;
+  config?: string;
   lastFiredAt?: string;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 export type TriggerCriticality = 'critical' | 'standard';
@@ -204,6 +246,7 @@ export interface Workspace {
   participants: string[];
   archivedAt?: string;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 export type WorkspaceKind = 'project' | 'personal' | 'system';
@@ -217,6 +260,10 @@ export interface Node {
   pubkey: string;
   enrolledAt: string;
   status: NodeStatus;
+  revokedAt?: string;
+  updatedAt?: string;
+  claim?: string;
+  lastHeartbeat?: string;
 }
 
 export type NodeKind = 'local' | 'remote';
@@ -228,6 +275,8 @@ export interface RoleTemplate {
   version: number;
   class: string;
   status: RoleTemplateStatus;
+  body?: string;
+  defaultScopes?: string;
   createdAt?: string;
   updatedAt?: string;
 }

@@ -32,9 +32,18 @@ export default function Nodes() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="font-medium text-gray-200">{n.name}</p>
-                  <p className="text-sm text-gray-400 mt-1">Kind: {n.kind} | Region: {n.region ?? 'default'}</p>
+                  <p className="text-sm text-gray-400 mt-1">
+                    Kind: {n.kind} | Region: {n.region ?? 'default'}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Pubkey: {n.pubkey.slice(0, 16)}… | Enrolled: {n.enrolledAt ?? '—'}
+                  </p>
                 </div>
-                <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300">{n.status}</span>
+                <span className={`text-xs px-2 py-1 rounded ${
+                  n.status === 'trusted' ? 'bg-green-900/50 text-green-400' : 'bg-red-900/50 text-red-400'
+                }`}>
+                  {n.status}
+                </span>
               </div>
             </div>
           ))}

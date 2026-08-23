@@ -9,7 +9,7 @@ export default function OrgView() {
           Humans and agents share one member namespace. RBAC roles: admin, owner, member, viewer.
         </p>
         <div className="text-sm text-gray-500">
-          <p>Endpoints: GET /api/org/humans</p>
+          <p>Endpoints: GET /api/org/members</p>
         </div>
       </div>
 
