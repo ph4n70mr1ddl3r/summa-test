@@ -50,11 +50,17 @@ public class Workspace {
     @PrePersist
     public void prePersist() {
         if (createdAt == null) createdAt = Instant.now();
+        if (updatedAt == null) updatedAt = Instant.now();
         if (kind == null) kind = "project";
         if (initiativeIds == null) initiativeIds = "[]";
         if (domainIds == null) domainIds = "[]";
         if (claimEpoch == null) claimEpoch = 0;
         if (participants == null) participants = "[]";
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = Instant.now();
     }
 
     public String getId() { return id; }

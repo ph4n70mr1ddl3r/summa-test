@@ -54,6 +54,11 @@ public class Human {
         if (updatedAt == null) updatedAt = Instant.now();
     }
 
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = Instant.now();
+    }
+
     // Getters and setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }

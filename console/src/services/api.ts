@@ -78,7 +78,7 @@ export interface Agent {
   updatedAt?: string;
 }
 
-export type AgentStatus = 'active' | 'suspended' | 'retired' | 'retiring' | 'archived' | 'requested';
+export type AgentStatus = 'active' | 'suspended' | 'retiring' | 'archived' | 'requested';
 
 export interface Ask {
   id: string;

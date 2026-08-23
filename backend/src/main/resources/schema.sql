@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS humans (
     timezone TEXT,
     working_hours TEXT,
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
     deactivated_at INTEGER,
     FOREIGN KEY (deputy_member_id) REFERENCES humans(id) ON DELETE SET NULL
 );
@@ -26,6 +27,7 @@ CREATE TABLE IF NOT EXISTS agents (
     template_version TEXT,
     status TEXT NOT NULL DEFAULT 'requested' CHECK (status IN ('requested', 'active', 'suspended', 'retiring', 'archived')),
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
     suspended_at INTEGER,
     retired_at INTEGER,
     archived_at INTEGER,
@@ -58,7 +60,8 @@ CREATE TABLE IF NOT EXISTS nodes (
     pubkey TEXT NOT NULL,
     enrolled_at INTEGER NOT NULL DEFAULT (unixepoch()),
     revoked_at INTEGER,
-    status TEXT NOT NULL DEFAULT 'trusted' CHECK (status IN ('trusted', 'revoked'))
+    status TEXT NOT NULL DEFAULT 'trusted' CHECK (status IN ('trusted', 'revoked')),
+    updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
 CREATE TABLE IF NOT EXISTS dna_domains (
@@ -160,6 +163,7 @@ CREATE TABLE IF NOT EXISTS dna_proposals (
     status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'published', 'rejected', 'withdrawn')),
     reviewed_by TEXT,
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
     reviewed_at INTEGER,
     review_by INTEGER,
     domain_id TEXT,
@@ -186,6 +190,8 @@ CREATE TABLE IF NOT EXISTS asks (
     quorum_required INTEGER NOT NULL DEFAULT 1 CHECK (quorum_required >= 1),
     responses TEXT NOT NULL DEFAULT '[]',
     collapsed_count INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
     FOREIGN KEY (initiative_id) REFERENCES initiatives(id) ON DELETE SET NULL,
     FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE SET NULL
 );
@@ -237,6 +243,7 @@ CREATE TABLE IF NOT EXISTS workspaces (
     participants TEXT NOT NULL DEFAULT '[]',
     archived_at INTEGER,
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
     FOREIGN KEY (node_id) REFERENCES nodes(id) ON DELETE SET NULL
 );
 
@@ -328,6 +335,7 @@ CREATE TABLE IF NOT EXISTS groups (
     leader_member_id TEXT,
     status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'archived')),
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
     UNIQUE(name) WHERE status != 'archived'
     -- leader_member_id is a keyed union per DAT-120: h:<humans.id> or a:<agents.id>
 );
@@ -370,6 +378,7 @@ CREATE TABLE IF NOT EXISTS pats (
     expires_at INTEGER NOT NULL,
     revoked_at INTEGER,
     last_used_at INTEGER,
+    updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
     UNIQUE(token_hash)
     -- member_id is a keyed union per DAT-120: h:<humans.id> or a:<agents.id>
 );

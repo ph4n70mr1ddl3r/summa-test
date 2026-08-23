@@ -77,6 +77,11 @@ public class Ask {
         if (collapsedCount == null) collapsedCount = 1;
     }
 
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = Instant.now();
+    }
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getKind() { return kind; }
