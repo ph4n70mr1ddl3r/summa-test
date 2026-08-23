@@ -64,6 +64,7 @@ public class Agent {
     @PrePersist
     public void prePersist() {
         if (createdAt == null) createdAt = Instant.now();
+        if (updatedAt == null) updatedAt = Instant.now();
         if (lineageDepth == null) lineageDepth = 0;
         if (status == null) status = "requested";
     }

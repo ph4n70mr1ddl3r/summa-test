@@ -50,6 +50,7 @@ public class Node {
     @PrePersist
     public void prePersist() {
         if (enrolledAt == null) enrolledAt = Instant.now();
+        if (updatedAt == null) updatedAt = Instant.now();
         if (status == null) status = "trusted";
         if (capabilities == null) capabilities = "{}";
     }

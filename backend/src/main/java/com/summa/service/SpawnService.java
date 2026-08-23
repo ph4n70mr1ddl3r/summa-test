@@ -92,7 +92,7 @@ public class SpawnService {
 
         SpawnRequest saved = spawnRepository.save(request);
         auditService.log(actor, "CREATE_SPAWN", "spawn_request", saved.getId(),
-            String.format("{\"class\":\"%s\",\"templateId\":\"%s\"}", spawnClass, templateId));
+            String.format("{\"class\":\"%s\",\"templateId\":\"%s\"}", effectiveSpawnClass, templateId));
         return saved;
     }
 
@@ -197,7 +197,7 @@ public class SpawnService {
         SpawnRequest request = spawnRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Spawn request not found: " + id));
 
-        request.setStatus("archived");
+        request.setStatus("denied");
         SpawnRequest saved = spawnRepository.save(request);
         auditService.log(actor, "DENY_SPAWN", "spawn_request", id, null);
         return saved;

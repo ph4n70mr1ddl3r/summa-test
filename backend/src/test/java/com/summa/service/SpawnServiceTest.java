@@ -87,4 +87,17 @@ class SpawnServiceTest {
             spawnService.approve("spawn-1", "admin", "actor");
         });
     }
+
+    @Test
+    void deny_setsDeniedStatus() {
+        SpawnRequest request = new SpawnRequest();
+        request.setId("spawn-1");
+        request.setStatus("requested");
+        when(spawnRepository.findById("spawn-1")).thenReturn(Optional.of(request));
+        when(spawnRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        SpawnRequest result = spawnService.deny("spawn-1", "admin");
+
+        assertEquals("denied", result.getStatus());
+    }
 }
