@@ -427,6 +427,7 @@ CREATE TABLE IF NOT EXISTS runs (
     cost_tokens INTEGER NOT NULL DEFAULT 0,
     cost_usd REAL NOT NULL DEFAULT 0,
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
     FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE,
     FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE SET NULL,
     FOREIGN KEY (initiative_id) REFERENCES initiatives(id) ON DELETE SET NULL,

@@ -7,8 +7,10 @@ import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/governance")
@@ -49,11 +51,34 @@ public class GovernanceController {
         return ResponseEntity.ok(governanceService.getSpendView());
     }
 
+    private static final Set<String> POLICY_KEYS = new HashSet<>(Set.of(
+            "spawn-ephemeral-default-ttl-hours",
+            "spawn-ephemeral-max-concurrent-per-spawner",
+            "spawn-org-wide-max-active-agents",
+            "spawn-depth-cap",
+            "spawn-budget-window-days",
+            "asks-tier-critical-deadline-hours",
+            "asks-tier-standard-deadline",
+            "asks-tier-bulk-deadline-hours",
+            "asks-storm-collapse-window-hours",
+            "asks-rate-limit-per-source-per-hour",
+            "dna-default-review-sla-days",
+            "spend-org-ceiling",
+            "spend-critical-floor-percent",
+            "spend-evaluation-window-days"
+    ));
+
     @PutMapping("/policies")
     public ResponseEntity<?> updatePolicy(@RequestBody Map<String, Object> body) {
         String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        for (String key : body.keySet()) {
+            if (!POLICY_KEYS.contains(key)) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
+                        .body(Map.of("code", "validation", "message", "Unknown policy key: " + key));
+            }
+        }
         body.forEach((key, value) -> governanceService.setSetting(key, value, actor));
         return ResponseEntity.ok(governanceService.getAllSettings());
     }
@@ -63,6 +88,12 @@ public class GovernanceController {
         String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        for (String key : body.keySet()) {
+            if (!POLICY_KEYS.contains(key)) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
+                        .body(Map.of("code", "validation", "message", "Unknown quota key: " + key));
+            }
+        }
         body.forEach((key, value) -> governanceService.setSetting(key, value, actor));
         return ResponseEntity.ok(governanceService.getAllSettings());
     }

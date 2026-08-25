@@ -1,29 +1,22 @@
 import { useEffect, useState } from 'react'
 import { api, type Ask } from '../services/api'
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-}
+import { escapeHtml } from '../utils/escapeHtml'
 
 export default function AskInbox() {
   const [asks, setAsks] = useState<Ask[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
+  const loadAsks = () => {
+    setLoading(true)
+    setError(null)
     api.asks.listByStatus('pending')
-      .then((data) => {
-        setAsks(data)
-        setLoading(false)
-      })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : String(err))
-        setLoading(false)
-      })
+      .then((data) => { setAsks(data); setLoading(false) })
+      .catch((err) => { setError(err instanceof Error ? err.message : String(err)); setLoading(false) })
+  }
+
+  useEffect(() => {
+    loadAsks()
   }, [])
 
   const tierColor = (tier: string) => {
@@ -66,7 +59,7 @@ export default function AskInbox() {
         <div className="bg-red-900/30 border border-red-700 rounded-lg p-4 text-red-400">
           Failed to load asks: {escapeHtml(error)}
           <button
-            onClick={() => window.location.reload()}
+            onClick={loadAsks}
             className="ml-4 px-3 py-1 bg-red-700 hover:bg-red-600 rounded text-sm text-red-100"
           >
             Retry

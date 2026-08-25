@@ -61,14 +61,24 @@ public class Run {
     @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant createdAt;
 
+    @Column(name = "updated_at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    private Instant updatedAt;
+
     @PrePersist
     public void prePersist() {
         if (createdAt == null) createdAt = Instant.now();
+        if (updatedAt == null) updatedAt = Instant.now();
         if (status == null) status = "queued";
         if (artifacts == null) artifacts = "[]";
         if (costTokens == null) costTokens = 0L;
         if (costUsd == null) costUsd = 0.0;
         if (prompt == null) prompt = "";
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = Instant.now();
     }
 
     public String getId() { return id; }
@@ -105,6 +115,8 @@ public class Run {
     public void setCostUsd(Double costUsd) { this.costUsd = costUsd; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
     public boolean isRunning() { return "running".equals(status); }
     public boolean isTerminal() {
         return "completed".equals(status) || "failed".equals(status) || "cancelled".equals(status);

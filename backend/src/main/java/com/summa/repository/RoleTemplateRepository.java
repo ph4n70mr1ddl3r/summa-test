@@ -17,6 +17,6 @@ public interface RoleTemplateRepository extends JpaRepository<RoleTemplate, Stri
     @Query("SELECT t FROM RoleTemplate t WHERE t.name = :name AND t.status = 'active' ORDER BY t.version DESC")
     List<RoleTemplate> findActiveByName(String name);
     
-    @Query("SELECT t FROM RoleTemplate t WHERE t.class = :clazz AND t.name = :name ORDER BY t.version DESC")
+    @Query("SELECT t FROM RoleTemplate t WHERE t.agentClass = :clazz AND t.name = :name ORDER BY t.version DESC")
     List<RoleTemplate> findByClassAndName(String clazz, String name);
 }

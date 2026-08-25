@@ -1,13 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, type MemoryItem } from '../services/api'
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-}
+import { escapeHtml } from '../utils/escapeHtml'
 
 export default function Memory() {
   const [items, setItems] = useState<MemoryItem[]>([])

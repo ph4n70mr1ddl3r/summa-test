@@ -87,7 +87,7 @@ export interface Ask {
   to: string;
   payload: string;
   slaTier: AskTier;
-  status: string;
+  status: AskStatus;
   deadline: number;
   quorumRequired?: number;
   collapsedCount?: number;
@@ -99,6 +99,7 @@ export interface Ask {
   respondedAt?: number;
 }
 
+export type AskStatus = 'pending' | 'answered' | 'expired' | 'withdrawn';
 export type AskKind = 'approval' | 'question' | 'assignment' | 'spawn_request';
 export type AskTier = 'critical' | 'standard' | 'bulk';
 
@@ -202,6 +203,24 @@ export interface DnaDecision {
   refs?: string;
   provenance?: string;
 }
+
+export interface DnaProposal {
+  id: string;
+  domainId?: string;
+  kind: string;
+  payload: string;
+  revision: number;
+  proposedBy: string;
+  provenance: string;
+  status: DnaProposalStatus;
+  reviewedBy?: string;
+  createdAt?: number;
+  reviewedAt?: number;
+  reviewBy?: number;
+  updatedAt?: number;
+}
+
+export type DnaProposalStatus = 'open' | 'published' | 'withdrawn' | 'amended';
 
 export interface DnaGoal {
   id: string;
@@ -413,14 +432,14 @@ export const api = {
     decisions: (domainId?: string) =>
       request<DnaDecision[]>(`/dna/decisions${buildQuery(domainId ? { domainId } : undefined)}`),
     search: (query: string) =>
-      request<unknown[]>(`/dna/search${buildQuery({ q: query })}`),
+      request<DnaCard[]>(`/dna/search${buildQuery({ q: query })}`),
     domains: () => request<DnaDomain[]>('/dna/domains'),
     goals: (params?: { domainId?: string; inject?: string }) =>
       request<DnaGoal[]>(`/dna/goals${buildQuery(params)}`),
     glossary: (params?: { domainId?: string; scope?: string }) =>
       request<DnaGlossary[]>(`/dna/glossary${buildQuery(params)}`),
     proposals: (status?: string) =>
-      request<unknown[]>(`/dna/proposals${buildQuery(status ? { status } : undefined)}`),
+      request<DnaProposal[]>(`/dna/proposals${buildQuery(status ? { status } : undefined)}`),
     publishProposal: (id: string, actor: string) =>
       request(`/dna/proposals/${id}/review`, {
         method: 'POST',
@@ -678,8 +697,8 @@ export const api = {
       }),
   },
   governance: {
-    policies: () => request<Map<string, unknown>>('/governance/policies'),
-    quotas: () => request<Map<string, unknown>>('/governance/quotas'),
+    policies: () => request<Record<string, unknown>>('/governance/policies'),
+    quotas: () => request<Record<string, unknown>>('/governance/quotas'),
     spend: () => request<SpendSnapshot>('/governance/spend'),
     updatePolicies: (body: Record<string, unknown>, actor: string) =>
       request('/governance/policies', {

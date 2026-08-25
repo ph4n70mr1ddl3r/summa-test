@@ -176,15 +176,7 @@ public class InitiativeService {
                 String.format("{\"initiativeId\":\"%s\",\"reason\":\"initiative_closed\"}", id));
         }
 
-        List<Trigger> activeTriggers = triggerRepository.findByStatus("active").stream()
-                .filter(t -> id.equals(t.getWorkspaceId()))
-                .toList();
-        for (Trigger trigger : activeTriggers) {
-            trigger.setStatus("archived");
-            triggerRepository.save(trigger);
-            auditService.logSystem("CLOSE_ARCHIVE_TRIGGER", "trigger", trigger.getId(),
-                String.format("{\"initiativeId\":\"%s\",\"reason\":\"initiative_closed\"}", id));
-        }
+        // Triggers are workspace-scoped, not initiative-scoped; no initiative-level trigger filtering available
 
         initiative.setStatus("closed");
         initiative.setClosedAt(Instant.now());

@@ -7,6 +7,8 @@ import com.summa.service.OrgService;
 import com.summa.model.Human;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
 
@@ -34,8 +36,14 @@ public class BackupController {
                     .body(Map.of("code", "admin_only", "message", "Backup requires admin role"));
         }
         try {
-            String backupDir = body.getOrDefault("backupDir", System.getProperty("java.io.tmpdir"));
-            String path = backupService.createBackup(backupDir);
+            String rawBackupDir = body.getOrDefault("backupDir", System.getProperty("java.io.tmpdir"));
+            Path backupDirPath = Paths.get(rawBackupDir).normalize();
+            Path validRoot = Paths.get(System.getProperty("java.io.tmpdir")).normalize();
+            if (!backupDirPath.startsWith(validRoot)) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
+                        .body(Map.of("code", "validation", "message", "backupDir must be under tmpdir"));
+            }
+            String path = backupService.createBackup(backupDirPath.toString());
             return ResponseEntity.ok(Map.of("path", path));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "backup failed"));
@@ -53,7 +61,18 @@ public class BackupController {
                     .body(Map.of("code", "admin_only", "message", "Restore requires admin role"));
         }
         try {
-            backupService.restore(body.get("backupPath"));
+            String rawPath = body.get("backupPath");
+            if (rawPath == null || rawPath.isBlank()) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
+                        .body(Map.of("code", "validation", "message", "backupPath is required"));
+            }
+            Path backupFilePath = Paths.get(rawPath).normalize();
+            Path validRoot = Paths.get(System.getProperty("java.io.tmpdir")).normalize();
+            if (!backupFilePath.startsWith(validRoot)) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
+                        .body(Map.of("code", "validation", "message", "backupPath must be under tmpdir"));
+            }
+            backupService.restore(backupFilePath.toString());
             return ResponseEntity.ok(Map.of("status", "restored"));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "restore failed"));
