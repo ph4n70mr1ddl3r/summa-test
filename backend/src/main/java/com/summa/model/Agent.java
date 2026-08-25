@@ -1,5 +1,6 @@
 package com.summa.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.Instant;
 
@@ -16,6 +17,7 @@ public class Agent {
     @Column(name = "owner_human_id", nullable = false, length = 36)
     private String ownerHumanId;
 
+    @JsonProperty("class")
     @Column(name = "class", nullable = false, length = 20)
     private String agentClass;
 
@@ -57,7 +59,7 @@ public class Agent {
     @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant archivedAt;
 
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant updatedAt;
 

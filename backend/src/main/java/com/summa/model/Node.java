@@ -43,7 +43,7 @@ public class Node {
     @Column(name = "status", nullable = false, length = 20)
     private String status;
 
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant updatedAt;
 

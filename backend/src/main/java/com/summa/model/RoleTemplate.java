@@ -1,5 +1,6 @@
 package com.summa.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.Instant;
 
@@ -16,6 +17,7 @@ public class RoleTemplate {
     @Column(name = "version", nullable = false)
     private Integer version;
 
+    @JsonProperty("class")
     @Column(name = "class", nullable = false, length = 30)
     private String agentClass;
 

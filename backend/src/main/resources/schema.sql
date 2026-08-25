@@ -287,6 +287,7 @@ CREATE TABLE IF NOT EXISTS spend_ledger (
     cost REAL NOT NULL DEFAULT 0,
     pricing_version TEXT NOT NULL DEFAULT 'v1',
     at INTEGER NOT NULL DEFAULT (unixepoch()),
+    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     FOREIGN KEY (member_id) REFERENCES agents(id) ON DELETE CASCADE,
     FOREIGN KEY (run_id) REFERENCES runs(id) ON DELETE SET NULL,
     FOREIGN KEY (spawn_id) REFERENCES spawn_requests(id) ON DELETE SET NULL
@@ -312,6 +313,7 @@ CREATE TABLE IF NOT EXISTS external_writes (
     status TEXT NOT NULL DEFAULT 'prepared' CHECK (status IN ('prepared', 'committed', 'compensated', 'failed')),
     prepared_at INTEGER NOT NULL DEFAULT (unixepoch()),
     resolved_at INTEGER,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     FOREIGN KEY (run_id) REFERENCES runs(id) ON DELETE CASCADE
 );
 

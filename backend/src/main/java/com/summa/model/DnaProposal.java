@@ -46,7 +46,7 @@ public class DnaProposal {
     @Column(name = "domain_id", length = 36)
     private String domainId;
 
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant updatedAt;
 
