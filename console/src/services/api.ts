@@ -347,6 +347,7 @@ export interface Pat {
   expiresAt: number;
   revokedAt?: number;
   lastUsedAt?: number;
+  updatedAt?: number;
 }
 
 export interface Group {
@@ -355,6 +356,7 @@ export interface Group {
   leaderMemberId?: string;
   status: GroupStatus;
   createdAt: number;
+  updatedAt?: number;
 }
 
 export type GroupStatus = 'active' | 'archived';
@@ -712,10 +714,11 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ backupPath }),
       }),
-    scanSecrets: (actor: string) =>
+    scanSecrets: (content: string, actor: string) =>
       request('/admin/secrets/scan', {
         method: 'POST',
         headers: { 'X-Actor': actor },
+        body: JSON.stringify({ content }),
       }),
   },
   roleTemplates: {
