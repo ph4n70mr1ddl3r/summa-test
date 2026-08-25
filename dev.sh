@@ -20,6 +20,18 @@ if [ "$JAVA_VERSION" -lt 21 ]; then
     exit 1
 fi
 
+# Check for Node.js
+if ! command -v node &> /dev/null; then
+    echo "ERROR: Node.js is required"
+    exit 1
+fi
+
+NODE_VERSION=$(node -e "console.log(process.version.replace('v','').split('.')[0])")
+if [ "$NODE_VERSION" -lt 22 ]; then
+    echo "ERROR: Node.js 22+ is required, found $NODE_VERSION"
+    exit 1
+fi
+
 # Check for JWT secret
 if [ -z "$SUMMA_JWT_SECRET" ]; then
     echo "ERROR: SUMMA_JWT_SECRET environment variable is required"

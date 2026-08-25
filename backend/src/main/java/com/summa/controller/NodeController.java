@@ -74,21 +74,26 @@ public class NodeController {
     @PostMapping("/{id}/claims")
     public ResponseEntity<?> claimWorkspace(@PathVariable String id, @RequestBody Map<String, String> body) {
         // API-060: acquire or renew a workspace claim as epoch-fenced lease
-        // Stub for now — full implementation needs WorkspaceService integration
-        return ResponseEntity.ok(Map.of("status", "claimed", "epoch", 1));
+        // TODO: implement WorkspaceService integration for epoch-fenced leases
+        return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_IMPLEMENTED)
+                .body(Map.of("code", "not_implemented", "message", "Workspace claim leasing is not yet implemented"));
     }
 
     @PostMapping("/{id}/work/pull")
     public ResponseEntity<?> pullWork(@PathVariable String id) {
         // API-060: fetch queued runs for workspaces the node holds a live claim on
-        return ResponseEntity.ok(Map.of("runs", List.of()));
+        // TODO: implement work queue integration with WorkspaceService
+        return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_IMPLEMENTED)
+                .body(Map.of("code", "not_implemented", "message", "Work pull is not yet implemented"));
     }
 
     @PostMapping("/{id}/runs/{runId}/report")
     public ResponseEntity<?> reportRun(@PathVariable String id, @PathVariable String runId,
                                         @RequestBody Map<String, Object> body) {
         // API-060: land results, artifacts, and spend ledger lines
-        return ResponseEntity.ok(Map.of("status", "received"));
+        // TODO: implement run result landing with spend ledger integration
+        return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_IMPLEMENTED)
+                .body(Map.of("code", "not_implemented", "message", "Run reporting is not yet implemented"));
     }
 
     @PostMapping("/{id}/revoke")

@@ -28,7 +28,7 @@ fi
 echo "Java version: $(java -version 2>&1 | head -n 1)"
 
 # Find the backend JAR
-JAR_FILE=$(ls backend/target/summa-backend-*.jar 2>/dev/null | head -n 1)
+JAR_FILE=$(ls backend/target/summa-backend-*.jar 2>/dev/null | grep -v sources | grep -v plain | head -n 1)
 if [ -z "$JAR_FILE" ]; then
     echo "ERROR: Backend JAR not found. Run 'mvn package' in the backend directory first."
     exit 1

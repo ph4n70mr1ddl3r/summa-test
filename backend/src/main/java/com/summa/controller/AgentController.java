@@ -144,7 +144,8 @@ public class AgentController {
     @PostMapping("/{id}/promote")
     public ResponseEntity<?> promote(@PathVariable String id, @RequestBody Map<String, String> body) {
         // API-033: files promotion ask for customRole hire
-        // Stub: in production this creates a proposal-shaped ask per TPL-040..046
-        return ResponseEntity.ok(Map.of("status", "promotion_ask_filed", "agentId", id));
+        // TODO: implement promotion ask creation per TPL-040..046
+        return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_IMPLEMENTED)
+                .body(Map.of("code", "not_implemented", "message", "Promotion ask creation is not yet implemented"));
     }
 }

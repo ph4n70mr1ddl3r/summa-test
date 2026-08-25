@@ -150,7 +150,8 @@ public class SpawnService {
 
         Integer depth = 0;
         if (request.getRequestedByHumanId() != null) {
-            depth = 1;
+            // Direct human request: human is root, agent depth = 0
+            depth = 0;
         } else if (request.getRequesterId() != null) {
             Optional<Agent> parentOpt = agentRepository.findById(request.getRequesterId());
             if (parentOpt.isPresent()) {

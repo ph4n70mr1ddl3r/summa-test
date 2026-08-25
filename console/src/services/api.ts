@@ -217,19 +217,15 @@ export interface DnaGoal {
 
 export type DnaGoalStatus = 'active' | 'met' | 'missed' | 'retired';
 
-export interface DnaRule {
+export interface DnaGlossary {
   id: string;
-  domainId: string;
-  statementMd: string;
-  effectiveFrom: string;
-  effectiveTo?: string;
-}
-
-export interface DnaDecision {
-  id: string;
-  domainId: string;
-  contextMd: string;
-  outcomeMd: string;
+  domainId?: string;
+  term: string;
+  definition: string;
+  aliases: string;
+  status: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface DnaDomain {
@@ -414,6 +410,10 @@ export const api = {
     search: (query: string) =>
       request<unknown[]>(`/dna/search${buildQuery({ q: query })}`),
     domains: () => request<DnaDomain[]>('/dna/domains'),
+    goals: (params?: { domainId?: string; inject?: string }) =>
+      request<DnaGoal[]>(`/dna/goals${buildQuery(params)}`),
+    glossary: (params?: { domainId?: string; scope?: string }) =>
+      request<DnaGlossary[]>(`/dna/glossary${buildQuery(params)}`),
     proposals: (status?: string) =>
       request<unknown[]>(`/dna/proposals${buildQuery(status ? { status } : undefined)}`),
     publishProposal: (id: string, actor: string) =>

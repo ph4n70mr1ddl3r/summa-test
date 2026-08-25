@@ -46,9 +46,7 @@ export default function AskInbox() {
   }
 
   const formatDeadline = (deadline: number) => {
-    const epochSeconds = typeof deadline === 'string' ? parseInt(deadline, 10) : deadline
-    if (isNaN(epochSeconds)) return '\u2014'
-    const d = new Date(epochSeconds * 1000)
+    const d = new Date(deadline * 1000)
     return d.toLocaleString()
   }
 

@@ -24,6 +24,9 @@ public class JwtUtil {
         if (secret == null || secret.isBlank()) {
             throw new IllegalArgumentException("JWT secret must not be blank");
         }
+        if (secret.length() < 32) {
+            throw new IllegalArgumentException("JWT secret must be at least 32 characters (256 bits recommended)");
+        }
         long nowMillis = System.currentTimeMillis();
         long expMillis = nowMillis + expirationMillis;
 

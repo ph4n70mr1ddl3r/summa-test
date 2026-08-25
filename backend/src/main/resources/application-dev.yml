@@ -1,0 +1,73 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  datasource:
+    url: jdbc:sqlite:${SUMMA_DB_PATH:${user.home}/.summa/summa.db}
+    driver-class-name: org.sqlite.JDBC
+  jpa:
+    database-platform: org.eclipse.persistence.platform.database.SQLiteDialect
+    show-sql: true
+    properties:
+      eclipselink:
+        jdbc:
+          batch-writing: delayed
+        batching:
+          size: 50
+        jpa:
+          convertors: com.summa.config.InstantToUnixEpochConverter
+        show-sql: true
+      eclipselink.cache.shared.default: false
+  sql:
+    init:
+      mode: never
+  main:
+    allow-bean-definition-overriding: false
+
+summa:
+  mode: dev
+  database:
+    path: ${SUMMA_DB_PATH:${user.home}/.summa/summa.db}
+    wal-mode: true
+  git:
+    dna-repo-path: ${SUMMA_DNA_REPO:${user.home}/.summa/dna}
+    branch: main
+    commit-author: summa <summa@local>
+  auth:
+    jwt-secret: ${SUMMA_JWT_SECRET}
+    jwt-expiration: 86400000
+    pat-default-expiry-days: 90
+  node:
+    lease-interval-seconds: 30
+    heartbeat-timeout-seconds: 90
+    affinity-starvation-hours: 24
+  spawn:
+    ephemeral-default-ttl-hours: 24
+    ephemeral-max-concurrent-per-spawner: 3
+    org-wide-max-active-agents: 100
+    depth-cap: 2
+    budget-window-days: 30
+  asks:
+    tier-critical-deadline-hours: 1
+    tier-standard-deadline: next-digest
+    tier-bulk-deadline-hours: 24
+    storm-collapse-window-hours: 1
+    rate-limit-per-source-per-hour: 60
+  dna:
+    default-review-sla-days: 7
+    injection-layers:
+      org-snapshot-token-budget: 1000
+      glossary-token-budget: 2000
+      rules-token-budget: 4000
+      goal-slice-token-budget: 1000
+  spend:
+    org-ceiling: ${SUMMA_SPEND_CEILING:1000000}
+    critical-floor-percent: 5
+
+logging:
+  level:
+    com.summa: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate: INFO
