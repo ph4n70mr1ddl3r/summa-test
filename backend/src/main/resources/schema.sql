@@ -286,6 +286,7 @@ CREATE TABLE IF NOT EXISTS spend_ledger (
     tokens_out REAL NOT NULL DEFAULT 0,
     cost REAL NOT NULL DEFAULT 0,
     pricing_version TEXT NOT NULL DEFAULT 'v1',
+    acknowledged INTEGER NOT NULL DEFAULT 0 CHECK (acknowledged IN (0, 1)),
     at INTEGER NOT NULL DEFAULT (unixepoch()),
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     FOREIGN KEY (member_id) REFERENCES agents(id) ON DELETE CASCADE,

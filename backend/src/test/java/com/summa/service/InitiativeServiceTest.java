@@ -1,7 +1,15 @@
 package com.summa.service;
 
 import com.summa.repository.InitiativeRepository;
+import com.summa.repository.BoardTaskRepository;
+import com.summa.repository.AskRepository;
+import com.summa.repository.TriggerRepository;
+import com.summa.repository.SpawnRequestRepository;
 import com.summa.model.Initiative;
+import com.summa.model.BoardTask;
+import com.summa.model.Ask;
+import com.summa.model.Trigger;
+import com.summa.model.SpawnRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -9,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -20,10 +29,22 @@ class InitiativeServiceTest {
     private InitiativeRepository initiativeRepository;
 
     @Mock
+    private BoardTaskRepository boardTaskRepository;
+
+    @Mock
     private AuditService auditService;
 
     @Mock
     private AskService askService;
+
+    @Mock
+    private AskRepository askRepository;
+
+    @Mock
+    private TriggerRepository triggerRepository;
+
+    @Mock
+    private SpawnRequestRepository spawnRequestRepository;
 
     @InjectMocks
     private InitiativeService initiativeService;

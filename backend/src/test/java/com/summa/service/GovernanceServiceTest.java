@@ -28,7 +28,8 @@ class GovernanceServiceTest {
 
     @Test
     void isSpendHaltTripped_returnsTrueWhenCostExceedsCeiling() {
-        when(spendLedgerRepository.sumSettleCostSince(any())).thenReturn(2000000.0);
+        when(spendLedgerRepository.sumReservedSince(any())).thenReturn(1500000.0);
+        when(spendLedgerRepository.sumUnacknowledgedSettleCostSince(any())).thenReturn(0.0);
 
         assertTrue(governanceService.isSpendHaltTripped());
     }
@@ -39,7 +40,8 @@ class GovernanceServiceTest {
         setting.setKey("spend-org-ceiling");
         setting.setValue("1000000");
         when(settingRepository.findAll()).thenReturn(java.util.List.of(setting));
-        when(spendLedgerRepository.sumSettleCostSince(any())).thenReturn(500000.0);
+        when(spendLedgerRepository.sumReservedSince(any())).thenReturn(200000.0);
+        when(spendLedgerRepository.sumUnacknowledgedSettleCostSince(any())).thenReturn(100000.0);
 
         assertFalse(governanceService.isSpendHaltTripped());
     }

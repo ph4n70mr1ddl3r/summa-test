@@ -2,6 +2,10 @@ package com.summa.service;
 
 import com.summa.repository.AgentRepository;
 import com.summa.repository.AskRepository;
+import com.summa.repository.BoardTaskRepository;
+import com.summa.repository.InitiativeRepository;
+import com.summa.repository.SpawnRequestRepository;
+import com.summa.repository.TriggerRepository;
 import com.summa.model.Agent;
 import com.summa.model.Ask;
 import com.summa.model.Human;
@@ -32,11 +36,24 @@ class AgentServiceTest {
     @Mock
     private AskRepository askRepository;
 
+    @Mock
+    private BoardTaskRepository boardTaskRepository;
+
+    @Mock
+    private InitiativeRepository initiativeRepository;
+
+    @Mock
+    private TriggerRepository triggerRepository;
+
+    @Mock
+    private SpawnRequestRepository spawnRequestRepository;
+
     private AgentService agentService;
 
     @BeforeEach
     void setUp() {
-        agentService = new AgentService(agentRepository, auditService, memberService, askRepository, 2);
+        agentService = new AgentService(agentRepository, auditService, memberService, askRepository,
+            boardTaskRepository, initiativeRepository, triggerRepository, spawnRequestRepository, 2);
     }
 
     @Test

@@ -8,7 +8,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.config.Customizer;
 
 @Configuration
 @EnableWebSecurity
@@ -29,13 +28,9 @@ public class SecurityConfig {
             .addFilterBefore(jwtFilter, RbacAuthorizationFilter.class)
             .addFilterBefore(rbacFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/health").permitAll()
-                .requestMatchers("/info").permitAll()
-                .requestMatchers("/nodes/enroll").permitAll()
+                .requestMatchers(JwtAuthenticationFilter.PUBLIC_PATHS.toArray(String[]::new)).permitAll()
                 .anyRequest().authenticated()
-            )
-            .httpBasic(Customizer.withDefaults());
+            );
 
         return http.build();
     }

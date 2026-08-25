@@ -1,5 +1,6 @@
 package com.summa.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.Instant;
 
@@ -19,9 +20,11 @@ public class Human {
     @Column(name = "rbac", nullable = false, length = 20)
     private String rbac;
 
+    @JsonIgnore
     @Column(name = "auth", nullable = false, columnDefinition = "TEXT")
     private String auth;
 
+    @JsonIgnore
     @Column(name = "password_hash", length = 64)
     private String passwordHash;
 
