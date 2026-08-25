@@ -140,7 +140,7 @@ public class InitiativeService {
         for (BoardTask task : openTasks) {
             task.setStatus("cancelled");
             boardTaskRepository.save(task);
-            auditService.logSystem("CLOSE_CANCELL_TASK", "board_task", task.getId(),
+            auditService.logSystem("CLOSE_CANCEL_TASK", "board_task", task.getId(),
                 String.format("{\"initiativeId\":\"%s\",\"reason\":\"initiative_closed\"}", id));
         }
 

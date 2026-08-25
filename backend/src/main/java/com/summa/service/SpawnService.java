@@ -173,7 +173,7 @@ public class SpawnService {
             ownerHumanId = request.getRequesterId();
             // Validate it is not an agent ID — owner_human_id is a FK to humans(id)
             Optional<Agent> maybeOwner = agentRepository.findById(ownerHumanId);
-            if (maybeOwner.isPresent() && "agent".equals(maybeOwner.get().getClass())) {
+            if (maybeOwner.isPresent() && "agent".equals(maybeOwner.get().getClass().getSimpleName())) {
                 throw new IllegalStateException("Cannot activate spawn without a human owner: no requestedByHumanId and requester is an agent");
             }
         }

@@ -107,7 +107,7 @@ export interface SpawnRequest {
   requesterId: string;
   templateId?: string;
   customRole?: string;
-  spawnClass: string;
+  class: string;
   purpose: string;
   status: SpawnStatus;
   requestedByHumanId?: string;
@@ -185,10 +185,12 @@ export interface DnaRule {
   effectiveFrom: number;
   effectiveTo?: number;
   supersedesId?: string;
-  status: string;
+  status: DnaRuleStatus;
   createdAt?: number;
   updatedAt?: number;
 }
+
+export type DnaRuleStatus = 'active' | 'superseded' | 'lapsed';
 
 export interface DnaDecision {
   id: string;
@@ -223,10 +225,12 @@ export interface DnaGlossary {
   term: string;
   definition: string;
   aliases: string;
-  status: string;
+  status: DnaGlossaryStatus;
   createdAt?: number;
   updatedAt?: number;
 }
+
+export type DnaGlossaryStatus = 'draft' | 'active' | 'retired';
 
 export interface DnaDomain {
   id: string;
@@ -239,23 +243,21 @@ export interface DnaDomain {
 export type DomainAccess = 'public' | 'domain' | 'named';
 export type DnaDomainStatus = 'active' | 'archived';
 
-export interface GovernanceSetting {
-  [key: string]: unknown;
-}
-
 export interface BoardTask {
   id: string;
   title: string;
   description: string;
   assigneeMemberId?: string;
   initiativeId?: string;
-  status: string;
+  status: BoardTaskStatus;
   priority: number;
   dueAt?: number;
   createdBy: string;
   createdAt?: number;
   completedAt?: number;
 }
+
+export type BoardTaskStatus = 'open' | 'in_progress' | 'done' | 'cancelled';
 
 export interface Trigger {
   id: string;
@@ -676,8 +678,8 @@ export const api = {
       }),
   },
   governance: {
-    policies: () => request<GovernanceSetting>('/governance/policies'),
-    quotas: () => request<GovernanceSetting>('/governance/quotas'),
+    policies: () => request<Map<string, unknown>>('/governance/policies'),
+    quotas: () => request<Map<string, unknown>>('/governance/quotas'),
     spend: () => request<SpendSnapshot>('/governance/spend'),
     updatePolicies: (body: Record<string, unknown>, actor: string) =>
       request('/governance/policies', {

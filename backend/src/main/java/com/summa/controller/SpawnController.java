@@ -58,7 +58,7 @@ public class SpawnController {
                 requesterId,
                 body.get("templateId"),
                 body.get("customRole"),
-                body.get("spawnClass") != null ? body.get("spawnClass") : "ephemeral",
+                body.get("class") != null ? body.get("class") : "ephemeral",
                 body.get("purpose"),
                 body.get("workspaceBindings"),
                 body.get("scopeCeiling"),
