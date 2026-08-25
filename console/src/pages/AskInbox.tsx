@@ -107,13 +107,13 @@ export default function AskInbox() {
                       </span>
                       {ask.collapsedCount != null && ask.collapsedCount > 1 && (
                         <span className="text-xs text-gray-500">
-                          \u00d7{ask.collapsedCount} collapsed
+                          ×{ask.collapsedCount} collapsed
                         </span>
                       )}
                     </div>
                     <p className="text-sm text-gray-400 mt-1">
                       From: <span className="text-gray-300">{escapeHtml(ask.from)}</span>
-                      {' \u2192 '}To: <span className="text-gray-300">{escapeHtml(ask.to)}</span>
+                      {` → `}To: <span className="text-gray-300">{escapeHtml(ask.to)}</span>
                     </p>
                   </div>
                 </div>
@@ -145,19 +145,19 @@ export default function AskInbox() {
       <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
         <h3 className="text-lg font-semibold text-yellow-300 mb-4">Ask Kinds</h3>
         <ul className="text-gray-400 space-y-1 text-sm">
-          <li>\u2022 approval — requires human decision before proceeding</li>
-          <li>\u2022 question — seeks information or guidance</li>
-          <li>\u2022 assignment — delegates work to a member</li>
-          <li>\u2022 spawn_request — gates agent spawning</li>
+          <li>• approval — requires human decision before proceeding</li>
+          <li>• question — seeks information or guidance</li>
+          <li>• assignment — delegates work to a member</li>
+          <li>• spawn_request — gates agent spawning</li>
         </ul>
       </div>
 
       <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
         <h3 className="text-lg font-semibold text-yellow-300 mb-4">SLA Tiers</h3>
         <ul className="text-gray-400 space-y-1 text-sm">
-          <li>\u2022 critical — blocks money-moving/critical runs (1h deadline)</li>
-          <li>\u2022 standard — blocks regular runs (next digest)</li>
-          <li>\u2022 bulk — non-blocking (24h deadline)</li>
+          <li>• critical — blocks money-moving/critical runs (1h deadline)</li>
+          <li>• standard — blocks regular runs (next digest)</li>
+          <li>• bulk — non-blocking (24h deadline)</li>
         </ul>
       </div>
     </div>

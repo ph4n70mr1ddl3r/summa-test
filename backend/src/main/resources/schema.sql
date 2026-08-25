@@ -190,7 +190,6 @@ CREATE TABLE IF NOT EXISTS asks (
     quorum_required INTEGER NOT NULL DEFAULT 1 CHECK (quorum_required >= 1),
     responses TEXT NOT NULL DEFAULT '[]',
     collapsed_count INTEGER NOT NULL DEFAULT 1,
-    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
     FOREIGN KEY (initiative_id) REFERENCES initiatives(id) ON DELETE SET NULL,
     FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE SET NULL
