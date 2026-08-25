@@ -46,6 +46,9 @@ public class GovernanceService {
         if (value == null) return null;
         if (type.isInstance(value)) return type.cast(value);
         if (type == Integer.class || type == int.class) {
+            if (value instanceof Number) return type.cast(((Number) value).intValue());
+            try { return type.cast((int) Double.parseDouble(value.toString())); }
+            catch (NumberFormatException ignored) {}
             return type.cast(Integer.parseInt(value.toString()));
         }
         if (type == Long.class || type == long.class) {

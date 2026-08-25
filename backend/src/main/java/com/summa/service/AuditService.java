@@ -65,7 +65,8 @@ public class AuditService {
 
     private String sanitizeSensitive(String detail) {
         if (detail == null) return "{}";
-        String sanitized = PASSWORD_PATTERN.matcher(detail).replaceAll("$1\":\"[REDACTED]\"");
+        String sanitized = PASSWORD_PATTERN.matcher(detail).replaceAll("\"$1\":\"[REDACTED]\"");
+        sanitized = EMAIL_PATTERN.matcher(sanitized).replaceAll("\"$1\":\"[REDACTED]\"");
         return sanitized;
     }
 }

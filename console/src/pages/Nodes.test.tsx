@@ -34,7 +34,7 @@ describe('Nodes page', () => {
 
   it('renders node cards with data', async () => {
     vi.mocked(apiModule.api.nodes.list).mockResolvedValue([
-      { id: 'n-1', name: 'us-east-1', kind: 'remote', capabilities: {}, pubkey: 'abc123def456', enrolledAt: '2024-01-01T00:00:00Z', status: 'trusted' },
+      { id: 'n-1', name: 'us-east-1', kind: 'remote', capabilities: {}, pubkey: 'abc123def456', enrolledAt: 1704067200, status: 'trusted' },
     ])
     const { container } = render(<Nodes />)
     await waitFor(() => {
@@ -46,7 +46,7 @@ describe('Nodes page', () => {
 
   it('shows revoked node styling', async () => {
     vi.mocked(apiModule.api.nodes.list).mockResolvedValue([
-      { id: 'n-2', name: 'eu-west-1', kind: 'remote', capabilities: {}, pubkey: 'xyz789', enrolledAt: '2024-01-01T00:00:00Z', status: 'revoked' },
+      { id: 'n-2', name: 'eu-west-1', kind: 'remote', capabilities: {}, pubkey: 'xyz789', enrolledAt: 1704067200, status: 'revoked' },
     ])
     const { container } = render(<Nodes />)
     await waitFor(() => {

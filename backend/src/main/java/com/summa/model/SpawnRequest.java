@@ -1,5 +1,6 @@
 package com.summa.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.Instant;
 
@@ -20,6 +21,7 @@ public class SpawnRequest {
     private String customRole;
 
     @Column(name = "class", nullable = false, length = 20)
+    @JsonProperty("class")
     private String spawnClass;
 
     @Column(name = "purpose", nullable = false, columnDefinition = "TEXT")

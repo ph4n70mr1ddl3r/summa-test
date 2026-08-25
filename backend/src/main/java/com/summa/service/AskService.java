@@ -209,7 +209,7 @@ public class AskService {
             ask.setStatus("answered");
             Ask saved = askRepository.save(ask);
             auditService.log(responder, "RESPOND", "ask", id,
-                String.format("{\"response\":\"%s\"}", response != null ? response.substring(0, Math.min(100, response.length())) : ""));
+                String.format("{\"response\":\"%s\"}", response != null && !response.isEmpty() ? response.substring(0, Math.min(100, response.length())) : ""));
             return saved;
         }
 
@@ -231,10 +231,10 @@ public class AskService {
         }
         Ask saved = askRepository.save(ask);
 
-        auditService.log(responder, "RESPOND", "ask", id,
-            String.format("{\"response\":\"%s\",\"quorumProgress\":%d/%d}",
-                response != null ? response.substring(0, Math.min(100, response.length())) : "",
-                existingResponses.size(), ask.getQuorumRequired()));
+            auditService.log(responder, "RESPOND", "ask", id,
+                String.format("{\"response\":\"%s\",\"quorumProgress\":%d/%d}",
+                    response != null && !response.isEmpty() ? response.substring(0, Math.min(100, response.length())) : "",
+                    existingResponses.size(), ask.getQuorumRequired()));
         return saved;
     }
 

@@ -16,10 +16,8 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
-      - name: Build backend
-        run: cd backend && mvn -q -DskipTests package
-      - name: Run backend tests
-        run: cd backend && mvn test
+      - name: Build and test backend
+        run: cd backend && mvn -q test
 
   console-build:
     runs-on: ubuntu-latest

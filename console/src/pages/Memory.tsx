@@ -1,6 +1,14 @@
 import { useEffect, useState } from 'react'
 import { api, type MemoryItem } from '../services/api'
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
 export default function Memory() {
   const [items, setItems] = useState<MemoryItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -42,7 +50,7 @@ export default function Memory() {
                 </span>
               </div>
               <pre className="mt-2 text-xs text-gray-400 bg-gray-900 rounded p-3 overflow-x-auto whitespace-pre-wrap">
-                {item.contentMd.slice(0, 300)}{item.contentMd.length > 300 ? '...' : ''}
+                {escapeHtml(item.contentMd).slice(0, 300)}{item.contentMd.length > 300 ? '...' : ''}
               </pre>
             </div>
           ))}

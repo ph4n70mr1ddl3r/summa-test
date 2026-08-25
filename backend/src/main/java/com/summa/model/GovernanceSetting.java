@@ -26,6 +26,11 @@ public class GovernanceSetting {
         if (value == null) value = "{}";
     }
 
+    @PreUpdate
+    public void preUpdate() {
+        this.editedAt = Instant.now();
+    }
+
     public String getKey() { return key; }
     public void setKey(String key) { this.key = key; }
     public String getValue() { return value; }

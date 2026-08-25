@@ -51,12 +51,12 @@ export interface Human {
   email: string;
   rbac: string;
   active: boolean;
-  createdAt?: string;
+  createdAt?: number;
   auth?: string;
   timezone?: string;
   workingHours?: string;
-  updatedAt?: string;
-  deactivatedAt?: string;
+  updatedAt?: number;
+  deactivatedAt?: number;
 }
 
 export interface Agent {
@@ -67,15 +67,15 @@ export interface Agent {
   status: AgentStatus;
   templateId?: string;
   lineageDepth?: number;
-  createdAt?: string;
+  createdAt?: number;
   spawnedBy?: string;
-  ttlAt?: string;
+  ttlAt?: number;
   budgetCap?: number;
   templateVersion?: string;
-  suspendedAt?: string;
-  retiredAt?: string;
-  archivedAt?: string;
-  updatedAt?: string;
+  suspendedAt?: number;
+  retiredAt?: number;
+  archivedAt?: number;
+  updatedAt?: number;
 }
 
 export type AgentStatus = 'active' | 'suspended' | 'retiring' | 'archived' | 'requested';
@@ -93,10 +93,10 @@ export interface Ask {
   collapsedCount?: number;
   initiativeId?: string;
   workspaceId?: string;
-  updatedAt?: string;
+  updatedAt?: number;
   escalation?: string;
   expiryBehavior?: string;
-  respondedAt?: string;
+  respondedAt?: number;
 }
 
 export type AskKind = 'approval' | 'question' | 'assignment' | 'spawn_request';
@@ -112,13 +112,13 @@ export interface SpawnRequest {
   status: SpawnStatus;
   requestedByHumanId?: string;
   agentId?: string;
-  approvedAt?: string;
+  approvedAt?: number;
   workspaceBindings?: string;
   scopeCeiling?: string;
   budgetCap?: number;
   ttlHours?: number;
   approvedBy?: string;
-  createdAt?: string;
+  createdAt?: number;
 }
 
 export type SpawnStatus = 'requested' | 'approved' | 'denied' | 'expired' | 'archived';
@@ -129,13 +129,13 @@ export interface Initiative {
   sponsor: string;
   lead: string;
   status: InitiativeStatus;
-  deadline?: string;
+  deadline?: number;
   goalRef?: string;
   decisionRef?: string;
   businessBudget?: string;
-  closedAt?: string;
+  closedAt?: number;
   dependsOn?: string;
-  updatedAt?: string;
+  updatedAt?: number;
 }
 
 export type InitiativeStatus = 'proposed' | 'active' | 'paused' | 'closed';
@@ -148,12 +148,12 @@ export interface Run {
   result?: string;
   costTokens?: number;
   costUsd?: number;
-  createdAt?: string;
+  createdAt?: number;
   prompt?: string;
   artifacts?: string;
   errorMessage?: string;
-  startedAt?: string;
-  completedAt?: string;
+  startedAt?: number;
+  completedAt?: number;
   initiativeId?: string;
   triggerId?: string;
   playbookId?: string;
@@ -171,8 +171,8 @@ export interface DnaCard {
   provenance: string;
   version: number;
   status: DnaCardStatus;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 export type DnaCardStatus = 'draft' | 'active' | 'retired';
@@ -182,12 +182,12 @@ export interface DnaRule {
   domainId: string;
   statementMd: string;
   machineHint?: string;
-  effectiveFrom: string;
-  effectiveTo?: string;
+  effectiveFrom: number;
+  effectiveTo?: number;
   supersedesId?: string;
   status: string;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 export interface DnaDecision {
@@ -196,7 +196,7 @@ export interface DnaDecision {
   contextMd: string;
   outcomeMd: string;
   decidedBy: string;
-  decidedAt: string;
+  decidedAt: number;
   refs?: string;
   provenance?: string;
 }
@@ -209,10 +209,10 @@ export interface DnaGoal {
   owner: string;
   status: DnaGoalStatus;
   inject: string;
-  effectiveFrom: string;
-  effectiveTo?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  effectiveFrom: number;
+  effectiveTo?: number;
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 export type DnaGoalStatus = 'active' | 'met' | 'missed' | 'retired';
@@ -224,8 +224,8 @@ export interface DnaGlossary {
   definition: string;
   aliases: string;
   status: string;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 export interface DnaDomain {
@@ -251,10 +251,10 @@ export interface BoardTask {
   initiativeId?: string;
   status: string;
   priority: number;
-  dueAt?: string;
+  dueAt?: number;
   createdBy: string;
-  createdAt?: string;
-  completedAt?: string;
+  createdAt?: number;
+  completedAt?: number;
 }
 
 export interface Trigger {
@@ -267,9 +267,9 @@ export interface Trigger {
   criticality: TriggerCriticality;
   status: TriggerStatus;
   config?: string;
-  lastFiredAt?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  lastFiredAt?: number;
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 export type TriggerCriticality = 'critical' | 'standard';
@@ -279,15 +279,15 @@ export interface Workspace {
   id: string;
   name: string;
   kind: WorkspaceKind;
-  initiativeIds: string[];
-  domainIds: string[];
+  initiativeIds: string;
+  domainIds: string;
   nodeId?: string;
   claimEpoch: number;
-  leaseExpiresAt?: string;
-  participants: string[];
-  archivedAt?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  leaseExpiresAt?: number;
+  participants: string;
+  archivedAt?: number;
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 export type WorkspaceKind = 'project' | 'personal' | 'system';
@@ -299,12 +299,12 @@ export interface Node {
   capabilities: Record<string, unknown>;
   region?: string;
   pubkey: string;
-  enrolledAt: string;
+  enrolledAt: number;
   status: NodeStatus;
-  revokedAt?: string;
-  updatedAt?: string;
+  revokedAt?: number;
+  updatedAt?: number;
   claim?: string;
-  lastHeartbeat?: string;
+  lastHeartbeat?: number;
 }
 
 export type NodeKind = 'local' | 'remote';
@@ -318,8 +318,8 @@ export interface RoleTemplate {
   status: RoleTemplateStatus;
   body?: string;
   defaultScopes?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 export type RoleTemplateStatus = 'draft' | 'active' | 'retired';
@@ -333,8 +333,8 @@ export interface MemoryItem {
   provenance: string;
   tainted: boolean;
   reviewedBy?: string;
-  reviewedAt?: string;
-  createdAt?: string;
+  reviewedAt?: number;
+  createdAt?: number;
 }
 
 export type MemoryTier = 'personal' | 'project' | 'proposal';
@@ -343,10 +343,10 @@ export interface Pat {
   id: string;
   memberId: string;
   name: string;
-  createdAt: string;
-  expiresAt: string;
-  revokedAt?: string;
-  lastUsedAt?: string;
+  createdAt: number;
+  expiresAt: number;
+  revokedAt?: number;
+  lastUsedAt?: number;
 }
 
 export interface Group {
@@ -354,16 +354,17 @@ export interface Group {
   name: string;
   leaderMemberId?: string;
   status: GroupStatus;
-  createdAt: string;
+  createdAt: number;
 }
 
 export type GroupStatus = 'active' | 'archived';
 
 export interface SpendSnapshot {
-  periodTokensIn: number;
-  periodTokensOut: number;
-  periodCostUsd: number;
-  circuitBreakerTripped: boolean;
+  reserved: number;
+  settled: number;
+  ceiling: number;
+  utilization: string;
+  halted: boolean;
 }
 
 function buildQuery(params?: Record<string, string | number | undefined>): string {

@@ -1,6 +1,15 @@
 import { useEffect, useState } from 'react'
 import { api, type Workspace } from '../services/api'
 
+function parseParticipantsCount(participants: string): number {
+  try {
+    const arr = JSON.parse(participants ?? '[]')
+    return Array.isArray(arr) ? arr.length : 0
+  } catch {
+    return 0
+  }
+}
+
 export default function Workspaces() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([])
   const [loading, setLoading] = useState(true)
@@ -34,7 +43,9 @@ export default function Workspaces() {
                   <p className="font-medium text-gray-200">{ws.name}</p>
                   <p className="text-sm text-gray-400 mt-1">Kind: {ws.kind} | Epoch: {ws.claimEpoch}</p>
                 </div>
-                <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300">{ws.participants.length} participants</span>
+                <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300">
+                  {parseParticipantsCount(ws.participants)} participants
+                </span>
               </div>
             </div>
           ))}

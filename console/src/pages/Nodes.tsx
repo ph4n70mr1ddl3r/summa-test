@@ -36,7 +36,7 @@ export default function Nodes() {
                     Kind: {n.kind} | Region: {n.region ?? 'default'}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    Pubkey: {n.pubkey.slice(0, 16)}… | Enrolled: {n.enrolledAt ?? '—'}
+                    Pubkey: {n.pubkey.slice(0, 16)}… | Enrolled: {n.enrolledAt ? new Date(n.enrolledAt * 1000).toLocaleString() : '—'}
                   </p>
                 </div>
                 <span className={`text-xs px-2 py-1 rounded ${

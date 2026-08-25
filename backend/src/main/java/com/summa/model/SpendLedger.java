@@ -34,7 +34,7 @@ public class SpendLedger {
     @Column(name = "pricing_version", nullable = false, length = 20)
     private String pricingVersion;
 
-    @Column(name = "acknowledged", nullable = false)
+    @Column(name = "acknowledged", nullable = false, columnDefinition = "INTEGER")
     private Boolean acknowledged;
 
     @Column(name = "at", nullable = false)

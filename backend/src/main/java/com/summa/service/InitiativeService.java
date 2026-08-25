@@ -155,7 +155,19 @@ public class InitiativeService {
         }
 
         List<SpawnRequest> pendingSpawns = spawnRequestRepository.findByStatus("requested").stream()
-                .filter(s -> id.equals(s.getWorkspaceBindings()))
+                .filter(s -> {
+                    String bindings = s.getWorkspaceBindings();
+                    if (bindings == null || bindings.isBlank()) return false;
+                    try {
+                        com.fasterxml.jackson.databind.JsonNode node = new com.fasterxml.jackson.databind.ObjectMapper().readTree(bindings);
+                        if (node.isArray()) {
+                            for (com.fasterxml.jackson.databind.JsonNode el : node) {
+                                if (id.equals(el.asText())) return true;
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                    return false;
+                })
                 .toList();
         for (SpawnRequest spawn : pendingSpawns) {
             spawn.setStatus("archived");
@@ -165,7 +177,7 @@ public class InitiativeService {
         }
 
         List<Trigger> activeTriggers = triggerRepository.findByStatus("active").stream()
-                .filter(t -> id.equals(t.getWorkspaceId()) || t.getAgentId().equals(id))
+                .filter(t -> id.equals(t.getWorkspaceId()))
                 .toList();
         for (Trigger trigger : activeTriggers) {
             trigger.setStatus("archived");

@@ -2,7 +2,8 @@ package com.summa.enums;
 
 public enum AgentClass {
     PERSISTENT("persistent"),
-    EPHEMERAL("ephemeral");
+    EPHEMERAL("ephemeral"),
+    EPHEMERAL_SUBAGENT("ephemeral-subagent");
 
     private final String value;
 

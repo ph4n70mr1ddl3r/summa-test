@@ -25,7 +25,7 @@ public class MemoryItem {
     @Column(name = "provenance", nullable = false, columnDefinition = "TEXT")
     private String provenance;
 
-    @Column(name = "tainted", nullable = false)
+    @Column(name = "tainted", nullable = false, columnDefinition = "INTEGER")
     private Boolean tainted;
 
     @Column(name = "created_at", nullable = false)

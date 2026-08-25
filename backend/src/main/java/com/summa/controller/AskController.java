@@ -62,7 +62,14 @@ public class AskController {
                             .body(Map.of("code", "validation", "message", "Invalid deadlineSeconds value", "audit_event_id", audit.getId()));
                 }
             }
-            Instant deadline = Instant.now().plusSeconds(deadlineSeconds);
+            Instant deadline;
+            try {
+                deadline = Instant.now().plusSeconds(deadlineSeconds);
+            } catch (Exception e) {
+                AuditEvent audit = auditService.logSystem("REFUSAL", "validation", "Invalid deadlineSeconds value", null);
+                return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
+                        .body(Map.of("code", "validation", "message", "Invalid deadlineSeconds value", "audit_event_id", audit.getId()));
+            }
             Ask ask = askService.create(
                 body.get("kind"),
                 actor,

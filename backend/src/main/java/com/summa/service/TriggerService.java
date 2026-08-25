@@ -109,8 +109,10 @@ public class TriggerService {
         for (Trigger trigger : activeTriggers) {
             if (!"schedule".equals(trigger.getKind())) continue;
 
-            // Simple cron-like check: every minute for "*" expressions
-            if ("*".equals(trigger.getExpression()) || "*/1 * * * *".equals(trigger.getExpression())) {
+            // Simple cron-like check: every minute for "*" or "*/1 * * * *" expressions
+            String expr = trigger.getExpression();
+            boolean fireEveryMinute = "*".equals(expr) || "*/1 * * * *".equals(expr);
+            if (fireEveryMinute) {
                 Instant lastFire = lastFireTimes.getOrDefault(trigger.getId(), Instant.MIN);
                 if (ChronoUnit.MINUTES.between(lastFire, now) >= 1) {
                     // SUB-052: Idempotency key = trigger_id + scheduled_time

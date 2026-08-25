@@ -167,11 +167,17 @@ public class SpawnService {
         agent.setId(agentId);
         agent.setName(name);
         // SPW-046: Persistent hire ownership derives from the gate's accepting human at activation,
-        // not from the requester. Use requestedByHumanId when explicitly provided (approval-gated path);
-        // otherwise fall back to requesterId for direct activation.
-        agent.setOwnerHumanId(request.getRequestedByHumanId() != null
-            ? request.getRequestedByHumanId()
-            : request.getRequesterId());
+        // not from the requester. Fall back to requester if no human is associated.
+        String ownerHumanId = request.getRequestedByHumanId();
+        if (ownerHumanId == null || ownerHumanId.isBlank()) {
+            ownerHumanId = request.getRequesterId();
+            // Validate it is not an agent ID — owner_human_id is a FK to humans(id)
+            Optional<Agent> maybeOwner = agentRepository.findById(ownerHumanId);
+            if (maybeOwner.isPresent() && "agent".equals(maybeOwner.get().getClass())) {
+                throw new IllegalStateException("Cannot activate spawn without a human owner: no requestedByHumanId and requester is an agent");
+            }
+        }
+        agent.setOwnerHumanId(ownerHumanId);
         agent.setAgentClass(request.getSpawnClass());
         agent.setSpawnedBy(request.getRequesterId());
         agent.setLineageDepth(depth);
