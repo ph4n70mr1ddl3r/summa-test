@@ -7,6 +7,7 @@ import com.summa.model.AuditEvent;
 import com.summa.security.PasswordUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -159,5 +160,22 @@ public class OrgService {
 
     public List<AuditEvent> getAuditLogForEntity(String objectType, String objectId) {
         return auditEventRepository.findByObject(objectType, objectId);
+    }
+
+    @Transactional
+    public void erasure(String id, String actor) {
+        Human human = humanRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Human not found: " + id));
+
+        // Anonymize identity fields per STG-030..034
+        human.setName("[ERASED]");
+        human.setEmail("[ERASED]");
+        human.setPasswordHash(null);
+        human.setAuth("{}");
+        human.setDeputyMemberId(null);
+        human.setDeactivatedAt(Instant.now());
+        humanRepository.save(human);
+
+        auditService.log(actor, "ERASURE", "human", id, null);
     }
 }

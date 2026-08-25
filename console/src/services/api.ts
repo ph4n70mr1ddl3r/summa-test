@@ -167,10 +167,55 @@ export interface DnaCard {
   domainId: string;
   title: string;
   definitionMd: string;
+  refs: string;
+  provenance: string;
+  version: number;
   status: DnaCardStatus;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export type DnaCardStatus = 'draft' | 'active' | 'retired';
+
+export interface DnaRule {
+  id: string;
+  domainId: string;
+  statementMd: string;
+  machineHint?: string;
+  effectiveFrom: string;
+  effectiveTo?: string;
+  supersedesId?: string;
+  status: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface DnaDecision {
+  id: string;
+  domainId: string;
+  contextMd: string;
+  outcomeMd: string;
+  decidedBy: string;
+  decidedAt: string;
+  refs?: string;
+  provenance?: string;
+}
+
+export interface DnaGoal {
+  id: string;
+  domainId?: string;
+  quarter?: string;
+  statementMd: string;
+  owner: string;
+  status: DnaGoalStatus;
+  inject: string;
+  effectiveFrom: string;
+  effectiveTo?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type DnaGoalStatus = 'active' | 'met' | 'missed' | 'retired';
 
 export interface DnaRule {
   id: string;
@@ -289,7 +334,10 @@ export interface MemoryItem {
   memberId?: string;
   workspaceId?: string;
   contentMd: string;
+  provenance: string;
   tainted: boolean;
+  reviewedBy?: string;
+  reviewedAt?: string;
   createdAt?: string;
 }
 

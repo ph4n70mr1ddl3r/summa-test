@@ -3,9 +3,11 @@ package com.summa.controller;
 import com.summa.service.OrgService;
 import com.summa.service.AuditService;
 import com.summa.service.MemberService;
+import com.summa.service.DataHoldService;
 import com.summa.model.Human;
 import com.summa.model.AuditEvent;
 import com.summa.model.Agent;
+import com.summa.model.DataHold;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,12 +24,15 @@ public class OrgController {
     private final OrgService orgService;
     private final AuditService auditService;
     private final MemberService memberService;
+    private final DataHoldService dataHoldService;
     private final WriteGate writeGate;
 
-    public OrgController(OrgService orgService, AuditService auditService, MemberService memberService, WriteGate writeGate) {
+    public OrgController(OrgService orgService, AuditService auditService, MemberService memberService,
+                         DataHoldService dataHoldService, WriteGate writeGate) {
         this.orgService = orgService;
         this.auditService = auditService;
         this.memberService = memberService;
+        this.dataHoldService = dataHoldService;
         this.writeGate = writeGate;
     }
 
@@ -125,9 +130,20 @@ public class OrgController {
         if (gate != null) return gate;
         // API-005: admin, audited, honors data_holds (STG-030..034)
         try {
-            orgService.findHuman(id).orElseThrow(() -> new IllegalArgumentException("Human not found: " + id));
-            auditService.log(actor, "ERASURE_REQUEST", "human", id, null);
-            return ResponseEntity.ok(Map.of("status", "erasure_requested", "id", id));
+            Human human = orgService.findHuman(id).orElseThrow(() -> new IllegalArgumentException("Human not found: " + id));
+
+            List<DataHold> holds = dataHoldService.findBySubject("human", id);
+            if (!holds.isEmpty()) {
+                AuditEvent audit = auditService.logSystem("REFUSAL", "data_hold", "Active data holds prevent erasure", id);
+                return ResponseEntity.status(org.springframework.http.HttpStatus.CONFLICT)
+                        .body(Map.of("code", "data_hold", "message", "Active data holds prevent erasure",
+                                "audit_event_id", audit.getId(), "holds",
+                                holds.stream().map(h -> Map.of("id", h.getId(), "kind", h.getKind(), "reason", h.getReasonMd())).toList()));
+            }
+
+            orgService.erasure(id, actor);
+            auditService.log(actor, "ERASURE", "human", id, null);
+            return ResponseEntity.ok(Map.of("status", "erased", "id", id));
         } catch (IllegalArgumentException e) {
             AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
             return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)

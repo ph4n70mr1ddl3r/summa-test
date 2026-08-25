@@ -25,8 +25,11 @@ Source: PLAN.md §5.1.
   anyone other than its sponsor routes an activation ask (kind `approval`, tier `standard`)
   to the sponsor with expiry `deny` —
   a directive that never won its authority never executes; the denied initiative stays
-  `proposed`, inert (no bindings, no runs, no escalations) until its sponsor or lead closes
+  `proposed`, inert (no bindings, no runs, no independent escalations) until its sponsor or lead closes
   it; org state is never silently evaporated. A sponsor's own opens active.
+  The exception: goal-end direction asks (INT-050) still fire under `proposed` — they join
+  the activation ask on the sponsor's desk rather than escalating independently, so the
+  inertness guarantee holds for all other escalation paths.
 - **INT-021** — Activation re-validates its respond-time assumptions (ASK-041): an accept
   against a goal that died mid-wait is audit-only with a re-point successor ask; an accept
   landing after a close is audit-only — terminal beats activation.

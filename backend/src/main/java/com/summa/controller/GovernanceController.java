@@ -1,21 +1,24 @@
 package com.summa.controller;
 
 import com.summa.service.GovernanceService;
+import com.summa.service.SpendLedgerService;
+import com.summa.model.SpendLedger;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import java.util.Map;
-import java.util.HashMap;
 
 @RestController
 @RequestMapping("/governance")
 public class GovernanceController {
     private final GovernanceService governanceService;
+    private final SpendLedgerService spendLedgerService;
     private final WriteGate writeGate;
 
-    public GovernanceController(GovernanceService governanceService, WriteGate writeGate) {
+    public GovernanceController(GovernanceService governanceService, SpendLedgerService spendLedgerService, WriteGate writeGate) {
         this.governanceService = governanceService;
+        this.spendLedgerService = spendLedgerService;
         this.writeGate = writeGate;
     }
 
@@ -66,6 +69,20 @@ public class GovernanceController {
     @PostMapping("/spend/overruns/{id}/ack")
     public ResponseEntity<?> ackSpendOverrun(@PathVariable String id) {
         // API-051: admin; lifts the SPW-035 reserve gate
-        return ResponseEntity.ok(Map.of("status", "overrun_acknowledged", "rowId", id));
+        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
+        try {
+            SpendLedger ledger = spendLedgerService.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Spend ledger row not found: " + id));
+            if (!ledger.getAcknowledged()) {
+                spendLedgerService.acknowledge(id, actor);
+            }
+            return ResponseEntity.ok(Map.of("status", "overrun_acknowledged", "rowId", id,
+                    "haltTripped", governanceService.isSpendHaltTripped()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                    .body(Map.of("code", "not_found", "message", e.getMessage()));
+        }
     }
 }

@@ -2,7 +2,14 @@ package com.summa.service;
 
 import com.summa.repository.InitiativeRepository;
 import com.summa.repository.BoardTaskRepository;
+import com.summa.repository.AskRepository;
+import com.summa.repository.TriggerRepository;
+import com.summa.repository.SpawnRequestRepository;
 import com.summa.model.Initiative;
+import com.summa.model.BoardTask;
+import com.summa.model.Ask;
+import com.summa.model.Trigger;
+import com.summa.model.SpawnRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,13 +26,21 @@ public class InitiativeService {
     private final BoardTaskRepository boardTaskRepository;
     private final AuditService auditService;
     private final AskService askService;
+    private final AskRepository askRepository;
+    private final TriggerRepository triggerRepository;
+    private final SpawnRequestRepository spawnRequestRepository;
 
     public InitiativeService(InitiativeRepository initiativeRepository, BoardTaskRepository boardTaskRepository,
-                              AuditService auditService, AskService askService) {
+                              AuditService auditService, AskService askService,
+                              AskRepository askRepository, TriggerRepository triggerRepository,
+                              SpawnRequestRepository spawnRequestRepository) {
         this.initiativeRepository = initiativeRepository;
         this.boardTaskRepository = boardTaskRepository;
         this.auditService = auditService;
         this.askService = askService;
+        this.askRepository = askRepository;
+        this.triggerRepository = triggerRepository;
+        this.spawnRequestRepository = spawnRequestRepository;
     }
 
     @Transactional
@@ -116,6 +131,47 @@ public class InitiativeService {
 
         if (!"active".equals(initiative.getStatus()) && !"paused".equals(initiative.getStatus())) {
             throw new IllegalStateException("Cannot close initiative with status: " + initiative.getStatus());
+        }
+
+        // INT-040: dependency check — resolve open work before closing
+        List<BoardTask> openTasks = boardTaskRepository.findByInitiativeId(id).stream()
+                .filter(t -> !"done".equals(t.getStatus()))
+                .toList();
+        for (BoardTask task : openTasks) {
+            task.setStatus("cancelled");
+            boardTaskRepository.save(task);
+            auditService.logSystem("CLOSE_CANCELL_TASK", "board_task", task.getId(),
+                String.format("{\"initiativeId\":\"%s\",\"reason\":\"initiative_closed\"}", id));
+        }
+
+        List<Ask> openInitiativeAsks = askRepository.findAll().stream()
+                .filter(a -> id.equals(a.getInitiativeId()) && "pending".equals(a.getStatus()))
+                .toList();
+        for (Ask ask : openInitiativeAsks) {
+            ask.setStatus("withdrawn");
+            askRepository.save(ask);
+            auditService.logSystem("CLOSE_WITHDRAW_ASK", "ask", ask.getId(),
+                String.format("{\"initiativeId\":\"%s\",\"reason\":\"initiative_closed\"}", id));
+        }
+
+        List<SpawnRequest> pendingSpawns = spawnRequestRepository.findByStatus("requested").stream()
+                .filter(s -> id.equals(s.getWorkspaceBindings()))
+                .toList();
+        for (SpawnRequest spawn : pendingSpawns) {
+            spawn.setStatus("archived");
+            spawnRequestRepository.save(spawn);
+            auditService.logSystem("CLOSE_ARCHIVE_SPAWN", "spawn_request", spawn.getId(),
+                String.format("{\"initiativeId\":\"%s\",\"reason\":\"initiative_closed\"}", id));
+        }
+
+        List<Trigger> activeTriggers = triggerRepository.findByStatus("active").stream()
+                .filter(t -> id.equals(t.getWorkspaceId()) || t.getAgentId().equals(id))
+                .toList();
+        for (Trigger trigger : activeTriggers) {
+            trigger.setStatus("archived");
+            triggerRepository.save(trigger);
+            auditService.logSystem("CLOSE_ARCHIVE_TRIGGER", "trigger", trigger.getId(),
+                String.format("{\"initiativeId\":\"%s\",\"reason\":\"initiative_closed\"}", id));
         }
 
         initiative.setStatus("closed");

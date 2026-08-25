@@ -48,7 +48,9 @@ Source: PLAN.md §4.4.
   evaluating equal) refuses the default and demands a declared
   access; undeclared attributes persist from the survivor; the `named` list keeps the
   survivor's unless the op declares the union — a merge never silently widens access, and
-  a narrowed list shows in the event's access re-evaluation.
+  a narrowed list shows in the event's access re-evaluation. If reader sets change between
+  declare and commit, the commit re-evaluates and refuses if the computed default would
+  differ — the snapshot is not locked in at declare.
 - **DGV-015** — A `store` change migrates content inside the same audited event: git→db-only
   sweeps the files from the tree in one commit; db-only→git demands an explicit confirm
   (immutable history is published); both are refused while either side sits under a

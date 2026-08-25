@@ -4,6 +4,14 @@ import com.summa.repository.AgentRepository;
 import com.summa.model.Agent;
 import com.summa.repository.AskRepository;
 import com.summa.model.Ask;
+import com.summa.repository.BoardTaskRepository;
+import com.summa.repository.InitiativeRepository;
+import com.summa.repository.TriggerRepository;
+import com.summa.repository.SpawnRequestRepository;
+import com.summa.model.BoardTask;
+import com.summa.model.Initiative;
+import com.summa.model.Trigger;
+import com.summa.model.SpawnRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,15 +26,27 @@ public class AgentService {
     private final AuditService auditService;
     private final MemberService memberService;
     private final AskRepository askRepository;
+    private final BoardTaskRepository boardTaskRepository;
+    private final InitiativeRepository initiativeRepository;
+    private final TriggerRepository triggerRepository;
+    private final SpawnRequestRepository spawnRequestRepository;
     private final int depthCap;
 
     public AgentService(AgentRepository agentRepository, AuditService auditService,
                         MemberService memberService, AskRepository askRepository,
+                        BoardTaskRepository boardTaskRepository,
+                        InitiativeRepository initiativeRepository,
+                        TriggerRepository triggerRepository,
+                        SpawnRequestRepository spawnRequestRepository,
                         @Value("${summa.spawn.depth-cap:2}") int depthCap) {
         this.agentRepository = agentRepository;
         this.auditService = auditService;
         this.memberService = memberService;
         this.askRepository = askRepository;
+        this.boardTaskRepository = boardTaskRepository;
+        this.initiativeRepository = initiativeRepository;
+        this.triggerRepository = triggerRepository;
+        this.spawnRequestRepository = spawnRequestRepository;
         this.depthCap = depthCap;
     }
 
@@ -101,12 +121,53 @@ public class AgentService {
         Agent agent = agentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Agent not found: " + id));
 
-        // CLC-020: Resolve pending asks from the retiring agent — close with audit note
+        // CLC-020: full dependency walk on retire
+        // 1. Close pending asks from the retiring agent
         for (Ask ask : askRepository.findByFromAndStatusPending(id)) {
             ask.setStatus("withdrawn");
             askRepository.save(ask);
             auditService.logSystem("RETIRE_CLOSE_ASK_FROM", "ask", ask.getId(),
                 String.format("{\"agentId\":\"%s\",\"reason\":\"agent_retiring\"}", id));
+        }
+
+        // 2. Cancel board tasks assigned to the agent
+        for (BoardTask task : boardTaskRepository.findByAssigneeMemberId(id)) {
+            if ("open".equals(task.getStatus()) || "in_progress".equals(task.getStatus())) {
+                task.setStatus("cancelled");
+                boardTaskRepository.save(task);
+                auditService.logSystem("RETIRE_CANCEL_TASK", "board_task", task.getId(),
+                    String.format("{\"agentId\":\"%s\",\"reason\":\"agent_retiring\"}", id));
+            }
+        }
+
+        // 3. Archive pending spawn requests from the agent
+        for (SpawnRequest spawn : spawnRequestRepository.findByRequesterId(id)) {
+            if ("requested".equals(spawn.getStatus())) {
+                spawn.setStatus("archived");
+                spawnRequestRepository.save(spawn);
+                auditService.logSystem("RETIRE_ARCHIVE_SPAWN", "spawn_request", spawn.getId(),
+                    String.format("{\"agentId\":\"%s\",\"reason\":\"agent_retiring\"}", id));
+            }
+        }
+
+        // 4. Pause active triggers owned by the agent
+        for (Trigger trigger : triggerRepository.findByAgentId(id)) {
+            if ("active".equals(trigger.getStatus())) {
+                trigger.setStatus("paused");
+                triggerRepository.save(trigger);
+                auditService.logSystem("RETIRE_PAUSE_TRIGGER", "trigger", trigger.getId(),
+                    String.format("{\"agentId\":\"%s\",\"reason\":\"agent_retiring\"}", id));
+            }
+        }
+
+        // 5. Pause initiatives led by the agent
+        for (Initiative init : initiativeRepository.findAll()) {
+            if (id.equals(init.getLead()) && ("active".equals(init.getStatus()) || "paused".equals(init.getStatus()))) {
+                init.setStatus("paused");
+                initiativeRepository.save(init);
+                auditService.logSystem("RETIRE_PAUSE_INITIATIVE", "initiative", init.getId(),
+                    String.format("{\"agentId\":\"%s\",\"reason\":\"agent_retiring\"}", id));
+            }
         }
 
         agent.setStatus("retiring");

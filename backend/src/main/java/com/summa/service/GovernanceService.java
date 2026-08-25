@@ -100,10 +100,11 @@ public class GovernanceService {
             }
             Instant window = Instant.now().minus(windowDays, ChronoUnit.DAYS);
             Double reservedObj = spendLedgerRepository.sumReservedSince(window);
-            Double settledObj = spendLedgerRepository.sumSettleCostSince(window);
+            // SPW-035: unacknowledged overruns trip the breaker; acknowledged ones do not
+            Double unsettledObj = spendLedgerRepository.sumUnacknowledgedSettleCostSince(window);
             double reserved = reservedObj != null ? reservedObj : 0.0;
-            double settled = settledObj != null ? settledObj : 0.0;
-            return (reserved + settled) >= ceiling;
+            double unsettled = unsettledObj != null ? unsettledObj : 0.0;
+            return (reserved + unsettled) >= ceiling;
         } catch (Exception e) {
             // Fail-closed: any error in spend calculation trips the breaker
             return true;

@@ -38,7 +38,10 @@ Source: PLAN.md §4.3.
   proposal's `review_by` from its filed date under the new SLA and applies it only where it
   lands earlier; loosening leaves standing clocks untouched and governs proposals filed
   after it. Urgency moves forward, never back (ARC-031's monotonic idiom at the queue
-  door).
+  door). If tightening would push a proposal's `review_by` into the past, the proposal
+  is flagged as already breached (status `breached`) rather than retroactively assigned a
+  past deadline; the breach is surfaced in the review queue as urgent without altering
+  historical timestamps.
 
 ## Amendment
 

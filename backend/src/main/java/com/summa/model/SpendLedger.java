@@ -34,6 +34,9 @@ public class SpendLedger {
     @Column(name = "pricing_version", nullable = false, length = 20)
     private String pricingVersion;
 
+    @Column(name = "acknowledged", nullable = false)
+    private Boolean acknowledged;
+
     @Column(name = "at", nullable = false)
     @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant at;
@@ -50,6 +53,7 @@ public class SpendLedger {
         if (tokensOut == null) tokensOut = 0.0;
         if (cost == null) cost = 0.0;
         if (pricingVersion == null) pricingVersion = "v1";
+        if (acknowledged == null) acknowledged = false;
     }
 
     public String getId() { return id; }
@@ -70,6 +74,8 @@ public class SpendLedger {
     public void setCost(Double cost) { this.cost = cost; }
     public String getPricingVersion() { return pricingVersion; }
     public void setPricingVersion(String pricingVersion) { this.pricingVersion = pricingVersion; }
+    public Boolean getAcknowledged() { return acknowledged; }
+    public void setAcknowledged(Boolean acknowledged) { this.acknowledged = acknowledged; }
     public Instant getAt() { return at; }
     public void setAt(Instant at) { this.at = at; }
     public Instant getCreatedAt() { return createdAt; }

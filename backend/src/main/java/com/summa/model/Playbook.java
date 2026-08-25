@@ -40,7 +40,7 @@ public class Playbook {
     public void prePersist() {
         if (createdAt == null) createdAt = Instant.now();
         if (updatedAt == null) updatedAt = Instant.now();
-        if (status == null) status = "draft";
+        if (status == null) status = "active";
         if (criticality == null) criticality = "standard";
         if (body == null) body = "{}";
         if (version == null) version = 1;

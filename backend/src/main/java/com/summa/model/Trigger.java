@@ -51,6 +51,7 @@ public class Trigger {
         if (createdAt == null) createdAt = Instant.now();
         if (updatedAt == null) updatedAt = Instant.now();
         if (status == null) status = "active";
+        if (kind == null) kind = "schedule";
         if (criticality == null) criticality = "standard";
         if (expression == null) expression = "";
         if (config == null) config = "{}";
