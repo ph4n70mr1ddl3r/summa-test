@@ -46,6 +46,9 @@ public class DnaCardController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
+            if (body.get("title") == null || body.get("title").isBlank()) {
+                throw new IllegalArgumentException("title is required");
+            }
             DnaCard card = cardService.create(
                 body.get("id"),
                 body.get("domainId"),
@@ -72,6 +75,9 @@ public class DnaCardController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
+            if (body.get("title") == null || body.get("title").isBlank()) {
+                throw new IllegalArgumentException("title is required");
+            }
             DnaCard card = cardService.createDraft(
                 body.get("id"),
                 body.get("domainId"),

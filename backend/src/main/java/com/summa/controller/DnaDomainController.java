@@ -42,6 +42,12 @@ public class DnaDomainController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
+            if (body.get("name") == null || body.get("name").isBlank()) {
+                throw new IllegalArgumentException("name is required");
+            }
+            if (body.get("ownerHumanId") == null || body.get("ownerHumanId").isBlank()) {
+                throw new IllegalArgumentException("ownerHumanId is required");
+            }
             DnaDomain domain = domainService.create(
                 body.get("id"),
                 body.get("name"),

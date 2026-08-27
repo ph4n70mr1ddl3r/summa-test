@@ -42,6 +42,9 @@ public class WorkspaceController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
+            if (body.get("name") == null || body.get("name").isBlank()) {
+                throw new IllegalArgumentException("name is required");
+            }
             Workspace ws = workspaceService.create(
                 body.get("id"),
                 body.get("name"),

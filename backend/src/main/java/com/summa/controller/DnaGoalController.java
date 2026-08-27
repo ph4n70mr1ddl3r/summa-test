@@ -8,6 +8,7 @@ import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
+import java.time.DateTimeException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +52,12 @@ public class DnaGoalController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
+            if (body.get("statementMd") == null || body.get("statementMd").isBlank()) {
+                throw new IllegalArgumentException("statementMd is required");
+            }
+            if (body.get("owner") == null || body.get("owner").isBlank()) {
+                throw new IllegalArgumentException("owner is required");
+            }
             Instant effectiveFrom = body.containsKey("effectiveFrom") ?
                 Instant.parse(body.get("effectiveFrom")) : Instant.now();
             Instant effectiveTo = body.containsKey("effectiveTo") ?
@@ -68,7 +75,7 @@ public class DnaGoalController {
                 actor
             );
             return ResponseEntity.ok(goal);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | DateTimeException e) {
             AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
             return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
                     .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
@@ -111,7 +118,7 @@ public class DnaGoalController {
 
             DnaGoal goal = goalService.updateWindow(id, effectiveFrom, effectiveTo, actor);
             return ResponseEntity.ok(goal);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | DateTimeException e) {
             AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
             return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
                     .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));

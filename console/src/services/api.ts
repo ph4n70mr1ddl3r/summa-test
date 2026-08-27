@@ -220,7 +220,7 @@ export interface DnaProposal {
   updatedAt?: number;
 }
 
-export type DnaProposalStatus = 'open' | 'published' | 'withdrawn' | 'amended';
+export type DnaProposalStatus = 'open' | 'published' | 'rejected' | 'withdrawn';
 
 export interface DnaGoal {
   id: string;
@@ -317,7 +317,7 @@ export interface Node {
   id: string;
   name: string;
   kind: NodeKind;
-  capabilities: Record<string, unknown>;
+  capabilities: string;
   region?: string;
   pubkey: string;
   enrolledAt: number;
@@ -364,6 +364,7 @@ export interface Pat {
   id: string;
   memberId: string;
   name: string;
+  scopes: string;
   createdAt: number;
   expiresAt: number;
   revokedAt?: number;
@@ -427,15 +428,65 @@ export const api = {
   dna: {
     cards: (domainId?: string) =>
       request<DnaCard[]>(`/dna/cards${buildQuery(domainId ? { domainId } : undefined)}`),
+    createDraft: (body: Record<string, string>, actor: string) =>
+      request<DnaCard>('/dna/cards/drafts', {
+        method: 'POST',
+        headers: { 'X-Actor': actor },
+        body: JSON.stringify(body),
+      }),
     rules: (domainId?: string) =>
       request<DnaRule[]>(`/dna/rules${buildQuery(domainId ? { domainId } : undefined)}`),
+    supersedeRule: (id: string, supersedesId: string, actor: string) =>
+      request<DnaRule>(`/dna/rules/${id}/supersede/${supersedesId}`, {
+        method: 'POST',
+        headers: { 'X-Actor': actor },
+      }),
     decisions: (domainId?: string) =>
       request<DnaDecision[]>(`/dna/decisions${buildQuery(domainId ? { domainId } : undefined)}`),
     search: (query: string) =>
       request<DnaCard[]>(`/dna/search${buildQuery({ q: query })}`),
     domains: () => request<DnaDomain[]>('/dna/domains'),
+    archiveDomain: (id: string, actor: string) =>
+      request<DnaDomain>(`/dna/domains/${id}/archive`, {
+        method: 'POST',
+        headers: { 'X-Actor': actor },
+      }),
+    renameDomain: (id: string, name: string, actor: string) =>
+      request<DnaDomain>(`/dna/domains/${id}/rename`, {
+        method: 'POST',
+        headers: { 'X-Actor': actor },
+        body: JSON.stringify({ name }),
+      }),
+    updateDomainOwner: (id: string, ownerHumanId: string, actor: string) =>
+      request<DnaDomain>(`/dna/domains/${id}/owner`, {
+        method: 'PATCH',
+        headers: { 'X-Actor': actor },
+        body: JSON.stringify({ ownerHumanId }),
+      }),
+    updateDomainAccess: (id: string, access: string, actor: string) =>
+      request<DnaDomain>(`/dna/domains/${id}/access`, {
+        method: 'PATCH',
+        headers: { 'X-Actor': actor },
+        body: JSON.stringify({ access }),
+      }),
     goals: (params?: { domainId?: string; inject?: string }) =>
       request<DnaGoal[]>(`/dna/goals${buildQuery(params)}`),
+    updateGoalStatus: (id: string, status: string, actor: string) =>
+      request<DnaGoal>(`/dna/goals/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'X-Actor': actor },
+        body: JSON.stringify({ status }),
+      }),
+    updateGoalWindow: (id: string, effectiveFrom?: number, effectiveTo?: number, actor?: string) => {
+      const body: Record<string, string> = {};
+      if (effectiveFrom !== undefined) body.effectiveFrom = String(effectiveFrom);
+      if (effectiveTo !== undefined) body.effectiveTo = String(effectiveTo);
+      return request<DnaGoal>(`/dna/goals/${id}/window`, {
+        method: 'PATCH',
+        headers: actor ? { 'X-Actor': actor } : undefined,
+        body: Object.keys(body).length ? JSON.stringify(body) : undefined,
+      });
+    },
     glossary: (params?: { domainId?: string; scope?: string }) =>
       request<DnaGlossary[]>(`/dna/glossary${buildQuery(params)}`),
     proposals: (status?: string) =>
@@ -463,6 +514,8 @@ export const api = {
         headers: { 'X-Actor': actor },
         body: JSON.stringify({ payload }),
       }),
+    reviewQueue: (domainId?: string) =>
+      request<DnaProposal[]>(`/dna/proposals/review-queue${buildQuery(domainId ? { domainId } : undefined)}`),
   },
   asks: {
     list: () =>
@@ -775,6 +828,8 @@ export const api = {
         method: 'POST',
         headers: { 'X-Actor': actor },
       }),
+    findTainted: () =>
+      request<MemoryItem[]>('/memory?tainted=true'),
   },
   authPats: {
     list: (memberId: string) =>

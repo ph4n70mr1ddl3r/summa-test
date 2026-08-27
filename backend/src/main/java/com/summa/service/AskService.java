@@ -188,6 +188,7 @@ public class AskService {
     /**
      * ASK-015/040/050: Respond to an ask with eligibility, quorum, and re-validation checks.
      */
+    @Transactional
     public Ask respond(String id, String responder, String response) {
         Ask ask = askRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Ask not found: " + id));
@@ -231,7 +232,7 @@ public class AskService {
         }
         Ask saved = askRepository.save(ask);
 
-            auditService.log(responder, "RESPOND", "ask", id,
+        auditService.log(responder, "RESPOND", "ask", id,
                 String.format("{\"response\":\"%s\",\"quorumProgress\":%d/%d}",
                     response != null && !response.isEmpty() ? response.substring(0, Math.min(100, response.length())) : "",
                     existingResponses.size(), ask.getQuorumRequired()));
@@ -295,6 +296,7 @@ public class AskService {
         }
     }
 
+    @Transactional
     public Ask withdraw(String id, String originator) {
         Ask ask = askRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Ask not found: " + id));
@@ -309,6 +311,7 @@ public class AskService {
         return saved;
     }
 
+    @Transactional
     public Ask expire(String id) {
         Ask ask = askRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Ask not found: " + id));

@@ -8,6 +8,7 @@ import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
+import java.time.DateTimeException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +64,7 @@ public class DnaRuleController {
                 actor
             );
             return ResponseEntity.ok(rule);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | DateTimeException e) {
             AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
             return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
                     .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
@@ -80,9 +81,9 @@ public class DnaRuleController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            Instant effectiveTo = body.containsKey("effectiveTo") ? 
+            Instant effectiveTo = body.containsKey("effectiveTo") ?
                 Instant.parse(body.get("effectiveTo")) : null;
-            
+
             DnaRule rule = ruleService.update(
                 id,
                 body.get("statementMd"),
@@ -91,7 +92,7 @@ public class DnaRuleController {
                 actor
             );
             return ResponseEntity.ok(rule);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | DateTimeException e) {
             AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
             return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
                     .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
