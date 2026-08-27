@@ -44,18 +44,18 @@ public class AuthController {
         var humanOpt = orgService.findHumanByEmail(email);
 
         if (humanOpt.isEmpty()) {
-            var audit = auditService.logSystem("REFUSAL", "auth_login", "Account not found: " + email, null);
+            var audit = auditService.logSystem("REFUSAL", "auth_login", "Login attempt for unknown account", null);
             return ResponseEntity.status(401).body(Map.of(
                 "code", "unauthorized",
-                "message", "Account not found",
+                "message", "Invalid credentials",
                 "audit_event_id", audit.getId()
             ));
         }
         if (!humanOpt.get().isActive()) {
-            var audit = auditService.logSystem("REFUSAL", "auth_login", "Deactivated account: " + email, null);
+            var audit = auditService.logSystem("REFUSAL", "auth_login", "Login attempt on deactivated account", null);
             return ResponseEntity.status(401).body(Map.of(
                 "code", "unauthorized",
-                "message", "Account is deactivated",
+                "message", "Invalid credentials",
                 "audit_event_id", audit.getId()
             ));
         }
@@ -64,10 +64,10 @@ public class AuthController {
 
         if (password == null || password.isBlank() || human.getPasswordHash() == null
                 || !passwordUtil.verify(password, human.getPasswordHash())) {
-            var audit = auditService.logSystem("REFUSAL", "auth_login", "Invalid password: " + email, null);
+            var audit = auditService.logSystem("REFUSAL", "auth_login", "Login attempt with bad password", null);
             return ResponseEntity.status(401).body(Map.of(
                 "code", "unauthorized",
-                "message", "Invalid password",
+                "message", "Invalid credentials",
                 "audit_event_id", audit.getId()
             ));
         }

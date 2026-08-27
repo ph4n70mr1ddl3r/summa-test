@@ -22,18 +22,20 @@ public class SpawnService {
     private final GovernanceService governanceService;
     private final RoleTemplateRepository templateRepository;
     private final AgentRepository agentRepository;
+    private final MemberService memberService;
 
     @Value("${summa.spawn.depth-cap:2}")
     private int depthCap;
 
     public SpawnService(SpawnRequestRepository spawnRepository, AuditService auditService,
                           GovernanceService governanceService, RoleTemplateRepository templateRepository,
-                          AgentRepository agentRepository) {
+                          AgentRepository agentRepository, MemberService memberService) {
         this.spawnRepository = spawnRepository;
         this.auditService = auditService;
         this.governanceService = governanceService;
         this.templateRepository = templateRepository;
         this.agentRepository = agentRepository;
+        this.memberService = memberService;
         this.depthCap = Math.max(2, depthCap);
     }
 
@@ -171,10 +173,10 @@ public class SpawnService {
         String ownerHumanId = request.getRequestedByHumanId();
         if (ownerHumanId == null || ownerHumanId.isBlank()) {
             ownerHumanId = request.getRequesterId();
-            // Validate it is not an agent ID — owner_human_id is a FK to humans(id)
-            Optional<Agent> maybeOwner = agentRepository.findById(ownerHumanId);
-            if (maybeOwner.isPresent() && Agent.class.isInstance(maybeOwner.get())) {
-                throw new IllegalStateException("Cannot activate spawn without a human owner: no requestedByHumanId and requester is an agent");
+            // Validate it is a human ID, not an agent ID — owner_human_id is a FK to humans(id)
+            Optional<com.summa.model.Human> maybeHuman = memberService.findHuman(ownerHumanId);
+            if (maybeHuman.isEmpty()) {
+                throw new IllegalStateException("Cannot activate spawn without a human owner: no requestedByHumanId and requester is not a human");
             }
         }
         agent.setOwnerHumanId(ownerHumanId);
@@ -226,13 +228,5 @@ public class SpawnService {
         long approved = spawnRepository.countByStatus("approved");
         long archived = spawnRepository.countByStatus("archived");
         return Map.of("requested", requested, "approved", approved, "archived", archived);
-    }
-
-    /**
-     * Check if spend ceiling is breached per SPW-060.
-     * Delegates to GovernanceService to avoid duplication.
-     */
-    public boolean isSpendHaltTripped() {
-        return governanceService.isSpendHaltTripped();
     }
 }

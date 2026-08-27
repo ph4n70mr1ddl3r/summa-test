@@ -121,6 +121,10 @@ public class AgentService {
         Agent agent = agentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Agent not found: " + id));
 
+        if (!"active".equals(agent.getStatus())) {
+            throw new IllegalStateException("Can only retire active agents, current status: " + agent.getStatus());
+        }
+
         // CLC-020: full dependency walk on retire
         // 1. Close pending asks from the retiring agent
         for (Ask ask : askRepository.findByFromAndStatusPending(id)) {

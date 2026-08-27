@@ -8,8 +8,6 @@ import com.summa.model.Agent;
 import com.summa.model.Human;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -101,7 +99,9 @@ public class DnaReadService {
             "id", a.getId(),
             "name", a.getName(),
             "class", a.getAgentClass(),
-            "status", a.getStatus()
+            "status", a.getStatus(),
+            "suspendedAt", a.getSuspendedAt() != null ? a.getSuspendedAt().toString() : null,
+            "retiredAt", a.getRetiredAt() != null ? a.getRetiredAt().toString() : null
         )).toList());
         snapshot.put("domains", domains.stream().map(d -> Map.of(
             "id", d.getId(),

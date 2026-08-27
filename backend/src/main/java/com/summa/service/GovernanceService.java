@@ -113,6 +113,7 @@ public class GovernanceService {
             return (reserved + unsettled) >= ceiling;
         } catch (Exception e) {
             // Fail-closed: any error in spend calculation trips the breaker
+            System.err.println("[SUMMA] spend halt evaluation failed, tripping breaker: " + e.getMessage());
             return true;
         }
     }

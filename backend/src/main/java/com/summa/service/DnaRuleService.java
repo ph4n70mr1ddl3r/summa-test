@@ -25,6 +25,11 @@ public class DnaRuleService {
     public DnaRule create(String id, String domainId, String statementMd, String machineHint,
                           Instant effectiveFrom, Instant effectiveTo, String supersedesId,
                           String actor) {
+        // Validate effective date ordering
+        if (effectiveTo != null && effectiveFrom != null && effectiveTo.isBefore(effectiveFrom)) {
+            throw new IllegalArgumentException("effectiveTo must not be before effectiveFrom");
+        }
+
         // Validate supersedes_id is in same domain
         if (supersedesId != null) {
             ruleRepository.findById(supersedesId).ifPresentOrElse(

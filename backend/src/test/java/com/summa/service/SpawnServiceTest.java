@@ -5,6 +5,7 @@ import com.summa.repository.RoleTemplateRepository;
 import com.summa.repository.AgentRepository;
 import com.summa.model.SpawnRequest;
 import com.summa.model.Agent;
+import com.summa.model.Human;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,6 +33,9 @@ class SpawnServiceTest {
 
     @Mock
     private AgentRepository agentRepository;
+
+    @Mock
+    private MemberService memberService;
 
     @InjectMocks
     private SpawnService spawnService;
@@ -62,6 +66,8 @@ class SpawnServiceTest {
         SpawnRequest request = new SpawnRequest();
         request.setId("spawn-1");
         request.setStatus("requested");
+        request.setRequesterId("agent-1");
+        request.setRequestedByHumanId("human-1");
         when(spawnRepository.findById("spawn-1")).thenReturn(Optional.of(request));
 
         Agent agent = new Agent();

@@ -5,6 +5,8 @@ import com.summa.repository.BoardTaskRepository;
 import com.summa.repository.AskRepository;
 import com.summa.repository.TriggerRepository;
 import com.summa.repository.SpawnRequestRepository;
+import com.summa.repository.DnaGoalRepository;
+import com.summa.repository.DnaDecisionRepository;
 import com.summa.model.Initiative;
 import com.summa.model.BoardTask;
 import com.summa.model.Ask;
@@ -29,11 +31,14 @@ public class InitiativeService {
     private final AskRepository askRepository;
     private final TriggerRepository triggerRepository;
     private final SpawnRequestRepository spawnRequestRepository;
+    private final DnaGoalRepository dnaGoalRepository;
+    private final DnaDecisionRepository dnaDecisionRepository;
 
     public InitiativeService(InitiativeRepository initiativeRepository, BoardTaskRepository boardTaskRepository,
                               AuditService auditService, AskService askService,
                               AskRepository askRepository, TriggerRepository triggerRepository,
-                              SpawnRequestRepository spawnRequestRepository) {
+                              SpawnRequestRepository spawnRequestRepository,
+                              DnaGoalRepository dnaGoalRepository, DnaDecisionRepository dnaDecisionRepository) {
         this.initiativeRepository = initiativeRepository;
         this.boardTaskRepository = boardTaskRepository;
         this.auditService = auditService;
@@ -41,12 +46,24 @@ public class InitiativeService {
         this.askRepository = askRepository;
         this.triggerRepository = triggerRepository;
         this.spawnRequestRepository = spawnRequestRepository;
+        this.dnaGoalRepository = dnaGoalRepository;
+        this.dnaDecisionRepository = dnaDecisionRepository;
     }
 
     @Transactional
     public Initiative create(String id, String title, String sponsor, String lead,
                               String goalRef, String decisionRef, Instant deadline,
                               String dependsOn) {
+        // Validate referenced entities exist
+        if (goalRef != null && !goalRef.isBlank()) {
+            dnaGoalRepository.findById(goalRef).orElseThrow(
+                () -> new IllegalArgumentException("Goal not found: " + goalRef));
+        }
+        if (decisionRef != null && !decisionRef.isBlank()) {
+            dnaDecisionRepository.findById(decisionRef).orElseThrow(
+                () -> new IllegalArgumentException("Decision not found: " + decisionRef));
+        }
+
         Initiative initiative = new Initiative();
         initiative.setId(id);
         initiative.setTitle(title);

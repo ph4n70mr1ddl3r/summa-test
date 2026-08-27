@@ -5,6 +5,8 @@ import com.summa.repository.BoardTaskRepository;
 import com.summa.repository.AskRepository;
 import com.summa.repository.TriggerRepository;
 import com.summa.repository.SpawnRequestRepository;
+import com.summa.repository.DnaGoalRepository;
+import com.summa.repository.DnaDecisionRepository;
 import com.summa.model.Initiative;
 import com.summa.model.BoardTask;
 import com.summa.model.Ask;
@@ -45,6 +47,12 @@ class InitiativeServiceTest {
 
     @Mock
     private SpawnRequestRepository spawnRequestRepository;
+
+    @Mock
+    private DnaGoalRepository dnaGoalRepository;
+
+    @Mock
+    private DnaDecisionRepository dnaDecisionRepository;
 
     @InjectMocks
     private InitiativeService initiativeService;

@@ -172,6 +172,8 @@ CREATE TABLE IF NOT EXISTS dna_proposals (
     -- proposed_by is a keyed union per DAT-120: h:<humans.id> or a:<agents.id>
 );
 
+CREATE INDEX IF NOT EXISTS idx_dna_proposals_domain ON dna_proposals(domain_id);
+
 CREATE TABLE IF NOT EXISTS asks (
     id TEXT PRIMARY KEY,
     kind TEXT NOT NULL CHECK (kind IN ('approval', 'question', 'assignment', 'spawn_request')),
@@ -194,6 +196,9 @@ CREATE TABLE IF NOT EXISTS asks (
     FOREIGN KEY (initiative_id) REFERENCES initiatives(id) ON DELETE SET NULL,
     FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE SET NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_asks_deadline ON asks(deadline);
+CREATE INDEX IF NOT EXISTS idx_asks_status ON asks(status);
 
 CREATE TABLE IF NOT EXISTS initiatives (
     id TEXT PRIMARY KEY,
@@ -229,6 +234,8 @@ CREATE TABLE IF NOT EXISTS board_tasks (
     FOREIGN KEY (initiative_id) REFERENCES initiatives(id) ON DELETE SET NULL
     -- assignee_member_id and created_by are keyed unions per DAT-120: h:<humans.id> or a:<agents.id>
 );
+
+CREATE INDEX IF NOT EXISTS idx_board_tasks_status ON board_tasks(status);
 
 CREATE TABLE IF NOT EXISTS workspaces (
     id TEXT PRIMARY KEY,

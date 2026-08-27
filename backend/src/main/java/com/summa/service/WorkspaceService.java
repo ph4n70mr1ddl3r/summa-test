@@ -1,26 +1,48 @@
 package com.summa.service;
 
 import com.summa.repository.WorkspaceRepository;
+import com.summa.repository.DnaDomainRepository;
 import com.summa.model.Workspace;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.ArrayList;
 
 @Service
 public class WorkspaceService {
     private final WorkspaceRepository workspaceRepository;
+    private final DnaDomainRepository domainRepository;
     private final AuditService auditService;
+    private final ObjectMapper objectMapper;
 
-    public WorkspaceService(WorkspaceRepository workspaceRepository, AuditService auditService) {
+    public WorkspaceService(WorkspaceRepository workspaceRepository, DnaDomainRepository domainRepository,
+                            AuditService auditService, ObjectMapper objectMapper) {
         this.workspaceRepository = workspaceRepository;
+        this.domainRepository = domainRepository;
         this.auditService = auditService;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
     public Workspace create(String id, String name, String kind, String domainIds,
                               String initiativeIds, String nodeId, String participants) {
+        // Validate referenced domains exist
+        if (domainIds != null && !domainIds.isBlank() && !domainIds.equals("[]")) {
+            try {
+                List<String> domainIdList = objectMapper.readValue(domainIds, new TypeReference<List<String>>() {});
+                for (String domId : domainIdList) {
+                    domainRepository.findById(domId).orElseThrow(
+                        () -> new IllegalArgumentException("Domain not found: " + domId));
+                }
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Invalid domainIds format: " + e.getMessage());
+            }
+        }
+
         Workspace ws = new Workspace();
         ws.setId(id);
         ws.setName(name);

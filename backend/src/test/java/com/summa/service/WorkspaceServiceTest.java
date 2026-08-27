@@ -1,6 +1,7 @@
 package com.summa.service;
 
 import com.summa.repository.WorkspaceRepository;
+import com.summa.repository.DnaDomainRepository;
 import com.summa.model.Workspace;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -9,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.Optional;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -20,10 +22,20 @@ class WorkspaceServiceTest {
     private WorkspaceRepository workspaceRepository;
 
     @Mock
+    private DnaDomainRepository domainRepository;
+
+    @Mock
     private AuditService auditService;
 
-    @InjectMocks
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     private WorkspaceService workspaceService;
+
+    @SuppressWarnings("unchecked")
+    @org.junit.jupiter.api.BeforeEach
+    void setUp() {
+        workspaceService = new WorkspaceService(workspaceRepository, domainRepository, auditService, objectMapper);
+    }
 
     @Test
     void create_withDefaults() {
@@ -42,6 +54,7 @@ class WorkspaceServiceTest {
     @Test
     void create_withExplicitValues() {
         when(workspaceRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.of(new com.summa.model.DnaDomain()));
 
         Workspace result = workspaceService.create(
             "ws-2", "Project Beta", "shared",
