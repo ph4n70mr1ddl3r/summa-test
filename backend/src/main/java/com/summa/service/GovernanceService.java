@@ -3,6 +3,8 @@ package com.summa.service;
 import com.summa.repository.GovernanceSettingRepository;
 import com.summa.repository.SpendLedgerRepository;
 import com.summa.model.GovernanceSetting;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -14,6 +16,7 @@ import java.util.Optional;
 
 @Service
 public class GovernanceService {
+    private static final Logger log = LoggerFactory.getLogger(GovernanceService.class);
     private final GovernanceSettingRepository settingRepository;
     private final SpendLedgerRepository spendLedgerRepository;
 
@@ -113,7 +116,7 @@ public class GovernanceService {
             return (reserved + unsettled) >= ceiling;
         } catch (Exception e) {
             // Fail-closed: any error in spend calculation trips the breaker
-            System.err.println("[SUMMA] spend halt evaluation failed, tripping breaker: " + e.getMessage());
+            log.warn("[SUMMA] spend halt evaluation failed, tripping breaker: {}", e.getMessage());
             return true;
         }
     }
