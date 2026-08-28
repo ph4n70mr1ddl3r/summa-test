@@ -22,23 +22,10 @@ public class AuditService {
     }
 
     public AuditEvent log(String actor, String action, String objectType, String objectId, String detail) {
-        AuditEvent event = new AuditEvent();
-        event.setId(UUID.randomUUID().toString());
-        event.setActor(actor);
-        event.setAction(action);
-        event.setObjectType(objectType);
-        event.setObjectId(objectId);
-        event.setDetail(detail != null && !detail.isBlank() ? sanitizeJson(sanitizeSensitive(detail)) : "{}");
-        event.setOrigin("live");
-        return auditEventRepository.save(event);
+        return log(actor, action, objectType, objectId, null, detail);
     }
 
-    public AuditEvent logSystem(String action, String objectType, String objectId, String detail) {
-        return log("system", action, objectType, objectId, detail);
-    }
-
-    public AuditEvent logWithNode(String actor, String action, String objectType, String objectId,
-                                     String nodeId, String detail) {
+    public AuditEvent log(String actor, String action, String objectType, String objectId, String nodeId, String detail) {
         AuditEvent event = new AuditEvent();
         event.setId(UUID.randomUUID().toString());
         event.setActor(actor);
@@ -49,6 +36,15 @@ public class AuditService {
         event.setOrigin("live");
         event.setNodeId(nodeId);
         return auditEventRepository.save(event);
+    }
+
+    public AuditEvent logSystem(String action, String objectType, String objectId, String detail) {
+        return log("system", action, objectType, objectId, detail);
+    }
+
+    public AuditEvent logWithNode(String actor, String action, String objectType, String objectId,
+                                      String nodeId, String detail) {
+        return log(actor, action, objectType, objectId, nodeId, detail);
     }
 
     private String sanitizeJson(String detail) {

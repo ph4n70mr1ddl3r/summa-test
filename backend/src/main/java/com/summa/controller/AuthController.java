@@ -4,6 +4,7 @@ import com.summa.service.OrgService;
 import com.summa.service.AuditService;
 import com.summa.security.JwtUtil;
 import com.summa.security.PasswordUtil;
+import com.summa.security.RateLimiter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,7 @@ public class AuthController {
     private final OrgService orgService;
     private final AuditService auditService;
     private final PasswordUtil passwordUtil;
+    private final RateLimiter rateLimiter;
 
     @Value("${summa.auth.jwt-secret}")
     private String jwtSecret;
@@ -23,10 +25,11 @@ public class AuthController {
     @Value("${summa.auth.jwt-expiration:86400000}")
     private long jwtExpiration;
 
-    public AuthController(OrgService orgService, AuditService auditService, PasswordUtil passwordUtil) {
+    public AuthController(OrgService orgService, AuditService auditService, PasswordUtil passwordUtil, RateLimiter rateLimiter) {
         this.orgService = orgService;
         this.auditService = auditService;
         this.passwordUtil = passwordUtil;
+        this.rateLimiter = rateLimiter;
     }
 
     @PostMapping("/login")
@@ -38,6 +41,18 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of(
                 "code", "validation",
                 "message", "email is required"
+            ));
+        }
+
+        // Rate limit by email to prevent brute-force
+        if (!rateLimiter.allow(email)) {
+            long remaining = rateLimiter.getRemainingAttempts(email);
+            var audit = auditService.logSystem("REFUSAL", "auth_login", "Rate limited login attempt for: " + email, null);
+            return ResponseEntity.status(429).body(Map.of(
+                "code", "rate_limited",
+                "message", "Too many login attempts. Try again later.",
+                "audit_event_id", audit.getId(),
+                "remainingAttempts", remaining
             ));
         }
 
@@ -74,6 +89,8 @@ public class AuthController {
 
         String token = JwtUtil.generateToken(human.getId(), jwtSecret, jwtExpiration);
         auditService.log(human.getId(), "LOGIN", "auth", human.getId(), null);
+        // Reset rate limit counter on successful login
+        rateLimiter.allow(human.getId() + ":reset");
 
         return ResponseEntity.ok(Map.of(
             "token", token,

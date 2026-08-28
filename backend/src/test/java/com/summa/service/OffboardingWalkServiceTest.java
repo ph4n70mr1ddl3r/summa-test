@@ -8,6 +8,7 @@ import com.summa.repository.InitiativeRepository;
 import com.summa.repository.DnaGoalRepository;
 import com.summa.repository.DnaProposalRepository;
 import com.summa.repository.AskRepository;
+import com.summa.repository.GroupRepository;
 import com.summa.model.Human;
 import com.summa.model.Agent;
 import com.summa.model.Initiative;
@@ -16,6 +17,7 @@ import com.summa.model.DnaProposal;
 import com.summa.model.DnaDomain;
 import com.summa.model.BoardTask;
 import com.summa.model.Pat;
+import com.summa.model.Group;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -48,6 +50,7 @@ class OffboardingWalkServiceTest {
     @Mock private AskRepository askRepository;
     @Mock private BoardTaskRepository boardTaskRepository;
     @Mock private PatRepository patRepository;
+    @Mock private GroupRepository groupRepository;
 
     @InjectMocks
     private OffboardingWalkService walkService;
@@ -79,6 +82,7 @@ class OffboardingWalkServiceTest {
         when(askRepository.findByStatus("pending")).thenReturn(java.util.List.of());
         when(boardTaskRepository.findByAssigneeMemberId("h1")).thenReturn(java.util.List.of());
         when(patRepository.findByMemberId("h1")).thenReturn(java.util.List.of());
+        when(groupRepository.findAll()).thenReturn(java.util.List.of());
         Human admin = new Human();
         admin.setId("admin1");
         when(memberService.findAdmins()).thenReturn(java.util.List.of(admin));
@@ -127,6 +131,7 @@ class OffboardingWalkServiceTest {
         when(askRepository.findByStatus("pending")).thenReturn(java.util.List.of());
         when(boardTaskRepository.findByAssigneeMemberId("h1")).thenReturn(java.util.List.of());
         when(patRepository.findByMemberId("h1")).thenReturn(java.util.List.of());
+        when(groupRepository.findAll()).thenReturn(java.util.List.of());
 
         var result = walkService.walkOffboard("h1", "h2", "admin1");
 
@@ -158,6 +163,7 @@ class OffboardingWalkServiceTest {
         when(askRepository.findByStatus("pending")).thenReturn(java.util.List.of());
         when(boardTaskRepository.findByAssigneeMemberId("h1")).thenReturn(java.util.List.of());
         when(patRepository.findByMemberId("h1")).thenReturn(java.util.List.of());
+        when(groupRepository.findAll()).thenReturn(java.util.List.of());
 
         var result = walkService.walkOffboard("h1", "h2", "admin1");
 
@@ -190,6 +196,7 @@ class OffboardingWalkServiceTest {
         when(askRepository.findByStatus("pending")).thenReturn(java.util.List.of());
         when(boardTaskRepository.findByAssigneeMemberId("h1")).thenReturn(java.util.List.of());
         when(patRepository.findByMemberId("h1")).thenReturn(java.util.List.of());
+        when(groupRepository.findAll()).thenReturn(java.util.List.of());
 
         var result = walkService.walkOffboard("h1", "h2", "admin1");
 
@@ -222,6 +229,7 @@ class OffboardingWalkServiceTest {
         when(askRepository.findByStatus("pending")).thenReturn(java.util.List.of());
         when(boardTaskRepository.findByAssigneeMemberId("h1")).thenReturn(java.util.List.of());
         when(patRepository.findByMemberId("h1")).thenReturn(java.util.List.of());
+        when(groupRepository.findAll()).thenReturn(java.util.List.of());
 
         var result = walkService.walkOffboard("h1", "h2", "admin1");
 

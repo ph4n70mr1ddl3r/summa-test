@@ -8,6 +8,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.security.SecureRandom;
+import java.util.Base64;
 
 @Service
 public class NodeService {
@@ -48,6 +50,13 @@ public class NodeService {
 
     public Optional<Node> findByPubkey(String pubkey) {
         return nodeRepository.findByPubkey(pubkey);
+    }
+
+    public String generateEnrollmentToken(String nodeId) {
+        SecureRandom random = new SecureRandom();
+        byte[] bytes = new byte[32];
+        random.nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
     public List<Node> findAll() {

@@ -10,9 +10,15 @@ public class SecretsScanner {
     private static final List<Pattern> SECRETS_PATTERNS = List.of(
         Pattern.compile("AKIA[0-9A-Z]{16}"),  // AWS access keys
         Pattern.compile("sk-[0-9a-zA-Z]{48}"), // OpenAI keys
+        Pattern.compile("sk-proj-[0-9a-zA-Z_-]{20,}"), // OpenAI project keys
         Pattern.compile("ghp_[0-9a-zA-Z]{36}"), // GitHub tokens
+        Pattern.compile("gho_[0-9a-zA-Z]{36}"), // GitHub OAuth tokens
+        Pattern.compile("github_pat_[0-9a-zA-Z_]{80}"), // GitHub fine-grained tokens
         Pattern.compile("xox[baprs]-[0-9a-zA-Z_-]+"), // Slack tokens
-        Pattern.compile("(?i)password\\s*[:=]\\s*['\"][^'\"]{8,}") // password assignments
+        Pattern.compile("(?i)password\\s*[:=]\\s*['\"][^'\"]{8,}"), // password assignments
+        Pattern.compile("(?i)api[_-]?key\\s*[:=]\\s*['\"][0-9a-zA-Z_-]{20,}"), // API keys
+        Pattern.compile("(?i)secret[_-]?key\\s*[:=]\\s*['\"][0-9a-zA-Z_-]{20,}"), // secret keys
+        Pattern.compile("(?i)authorization\\s*[:=]\\s*['\"][Bb]earer\\s+[0-9a-zA-Z_.-]{20,}") // Bearer tokens
     );
 
     public List<String> scan(String content) {

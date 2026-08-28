@@ -8,12 +8,14 @@ import com.summa.repository.GroupMembershipRepository;
 import com.summa.repository.InitiativeRepository;
 import com.summa.repository.AgentRepository;
 import com.summa.repository.PatRepository;
+import com.summa.repository.GroupRepository;
 import com.summa.model.Agent;
 import com.summa.model.Ask;
 import com.summa.model.BoardTask;
 import com.summa.model.DnaDomain;
 import com.summa.model.DnaGoal;
 import com.summa.model.DnaProposal;
+import com.summa.model.Group;
 import com.summa.model.GroupMembership;
 import com.summa.model.Human;
 import com.summa.model.Initiative;
@@ -50,6 +52,7 @@ public class OffboardingWalkService {
     private final AskRepository askRepository;
     private final BoardTaskRepository boardTaskRepository;
     private final PatRepository patRepository;
+    private final GroupRepository groupRepository;
 
     public OffboardingWalkService(MemberService memberService, AgentService agentService,
                                     InitiativeService initiativeService, BoardTaskService boardTaskService,
@@ -63,7 +66,8 @@ public class OffboardingWalkService {
                                     DnaProposalRepository proposalRepository,
                                     AskRepository askRepository,
                                     BoardTaskRepository boardTaskRepository,
-                                    PatRepository patRepository) {
+                                    PatRepository patRepository,
+                                    GroupRepository groupRepository) {
         this.memberService = memberService;
         this.agentService = agentService;
         this.initiativeService = initiativeService;
@@ -82,6 +86,7 @@ public class OffboardingWalkService {
         this.askRepository = askRepository;
         this.boardTaskRepository = boardTaskRepository;
         this.patRepository = patRepository;
+        this.groupRepository = groupRepository;
     }
 
     /**
@@ -110,6 +115,7 @@ public class OffboardingWalkService {
         int asksReassigned = 0;
         int tasksReassigned = 0;
         int patsRevoked = 0;
+        int groupsLeadershipTransferred = 0;
 
         // OFB-002: Transfer owned DNA domains (include archived — ownership references persist)
         for (DnaDomain domain : domainService.findAllIncludingArchived()) {
@@ -168,6 +174,17 @@ public class OffboardingWalkService {
             m.setRemovedAt(Instant.now());
             groupMembershipRepository.save(m);
             membershipsCleared++;
+        }
+
+        // OFB-017: Transfer group leadership
+        for (Group group : groupRepository.findAll()) {
+            if (humanId.equals(group.getLeaderMemberId()) && group.isActive()) {
+                group.setLeaderMemberId(finalTargetOwner);
+                groupRepository.save(group);
+                groupsLeadershipTransferred++;
+                auditService.log(actor, "OFFBOARD_TRANSFER_GROUP_LEADER", "group", group.getId(),
+                    String.format("{\"newLeader\":\"%s\",\"reason\":\"member_departed\"}", finalTargetOwner));
+            }
         }
 
         // OFB-016: Transfer authored proposals; leave others untouched
@@ -246,6 +263,7 @@ public class OffboardingWalkService {
         result.put("asksReassigned", asksReassigned);
         result.put("tasksReassigned", tasksReassigned);
         result.put("patsRevoked", patsRevoked);
+        result.put("groupsLeadershipTransferred", groupsLeadershipTransferred);
 
         auditService.log(actor, "OFFBOARD_WALK", "human", humanId,
             String.format("{\"successorId\":\"%s\",\"result\":%s}", finalTargetOwner, result));

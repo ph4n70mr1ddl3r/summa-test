@@ -46,7 +46,7 @@ public class NodeController {
             );
             return ResponseEntity.ok(Map.of(
                 "id", node.getId(),
-                "enrollmentToken", "temp-token-" + node.getId()
+                "enrollmentToken", nodeService.generateEnrollmentToken(node.getId())
             ));
         } catch (IllegalArgumentException e) {
             AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);

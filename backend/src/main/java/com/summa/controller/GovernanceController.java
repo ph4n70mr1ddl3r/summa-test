@@ -2,7 +2,9 @@ package com.summa.controller;
 
 import com.summa.service.GovernanceService;
 import com.summa.service.SpendLedgerService;
+import com.summa.service.MemberService;
 import com.summa.model.SpendLedger;
+import com.summa.model.Human;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +12,7 @@ import com.summa.security.RbacAuthorizationFilter;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.Set;
 
 @RestController
@@ -17,11 +20,14 @@ import java.util.Set;
 public class GovernanceController {
     private final GovernanceService governanceService;
     private final SpendLedgerService spendLedgerService;
+    private final MemberService memberService;
     private final WriteGate writeGate;
 
-    public GovernanceController(GovernanceService governanceService, SpendLedgerService spendLedgerService, WriteGate writeGate) {
+    public GovernanceController(GovernanceService governanceService, SpendLedgerService spendLedgerService,
+                                 MemberService memberService, WriteGate writeGate) {
         this.governanceService = governanceService;
         this.spendLedgerService = spendLedgerService;
+        this.memberService = memberService;
         this.writeGate = writeGate;
     }
 
@@ -104,6 +110,12 @@ public class GovernanceController {
         String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        // Admin-only check per API-051
+        Optional<Human> actorOpt = memberService.findHuman(actor);
+        if (actorOpt.isEmpty() || !"admin".equals(actorOpt.get().getRbac())) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body(Map.of("code", "eligibility", "message", "Admin access required to acknowledge spend overruns"));
+        }
         try {
             SpendLedger ledger = spendLedgerService.findById(id)
                     .orElseThrow(() -> new IllegalArgumentException("Spend ledger row not found: " + id));
