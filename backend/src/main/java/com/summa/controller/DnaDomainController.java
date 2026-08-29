@@ -133,12 +133,14 @@ public class DnaDomainController {
     @PostMapping("/{id}/split")
     public ResponseEntity<?> splitDomain(@PathVariable String id, @RequestBody Map<String, String> body) {
         // DGV-010..013: governed split — stub for Phase 6
-        return ResponseEntity.ok(Map.of("status", "not_implemented", "note", "Topology ops scheduled for Phase 6"));
+        return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_IMPLEMENTED)
+                .body(Map.of("code", "not_implemented", "message", "Topology ops scheduled for Phase 6"));
     }
 
     @PostMapping("/{id}/merge")
     public ResponseEntity<?> mergeDomain(@PathVariable String id, @RequestBody Map<String, String> body) {
         // DGV-014: governed merge — stub for Phase 6
-        return ResponseEntity.ok(Map.of("status", "not_implemented", "note", "Topology ops scheduled for Phase 6"));
+        return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_IMPLEMENTED)
+                .body(Map.of("code", "not_implemented", "message", "Topology ops scheduled for Phase 6"));
     }
 }

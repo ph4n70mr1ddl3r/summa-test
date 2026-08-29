@@ -468,8 +468,8 @@ export const api = {
       }),
     updateGoalWindow: (id: string, effectiveFrom?: number, effectiveTo?: number, _actor?: string) => {
       const body: Record<string, string> = {};
-      if (effectiveFrom !== undefined) body.effectiveFrom = String(effectiveFrom);
-      if (effectiveTo !== undefined) body.effectiveTo = String(effectiveTo);
+      if (effectiveFrom !== undefined) body.effectiveFrom = new Date(effectiveFrom * 1000).toISOString();
+      if (effectiveTo !== undefined) body.effectiveTo = new Date(effectiveTo * 1000).toISOString();
       return request<DnaGoal>(`/dna/goals/${id}/window`, {
         method: 'PATCH',
         body: Object.keys(body).length ? JSON.stringify(body) : undefined,
