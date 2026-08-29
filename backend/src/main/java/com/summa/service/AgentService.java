@@ -165,8 +165,8 @@ public class AgentService {
         }
 
         // 5. Pause initiatives led by the agent
-        for (Initiative init : initiativeRepository.findAll()) {
-            if (id.equals(init.getLead()) && ("active".equals(init.getStatus()) || "paused".equals(init.getStatus()))) {
+        for (Initiative init : initiativeRepository.findByLead(id)) {
+            if ("active".equals(init.getStatus()) || "paused".equals(init.getStatus())) {
                 init.setStatus("paused");
                 initiativeRepository.save(init);
                 auditService.logSystem("RETIRE_PAUSE_INITIATIVE", "initiative", init.getId(),

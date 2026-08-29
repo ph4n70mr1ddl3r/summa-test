@@ -62,14 +62,26 @@ export default function Home() {
 
 function ApiStatusCheck() {
   const [status, setStatus] = useState<'ok' | 'error' | 'loading'>('loading')
+  const [checked, setChecked] = useState(0)
 
   useEffect(() => {
     let cancelled = false
-    api.health()
-      .then(() => { if (!cancelled) setStatus('ok') })
-      .catch(() => { if (!cancelled) setStatus('error') })
-    return () => { cancelled = true }
-  }, [])
+    const check = async () => {
+      try {
+        await api.health()
+        if (!cancelled) setStatus('ok')
+      } catch {
+        if (!cancelled) setStatus('error')
+      }
+    }
+    check()
+    const interval = setInterval(() => {
+      setChecked(n => n + 1)
+      check()
+    }, 30000)
+    return () => { cancelled = true; clearInterval(interval) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checked])
 
   return (
     <div className="flex items-center space-x-2 text-sm">

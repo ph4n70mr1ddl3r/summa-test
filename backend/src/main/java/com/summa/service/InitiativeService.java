@@ -161,9 +161,7 @@ public class InitiativeService {
                 String.format("{\"initiativeId\":\"%s\",\"reason\":\"initiative_closed\"}", id));
         }
 
-        List<Ask> openInitiativeAsks = askRepository.findAll().stream()
-                .filter(a -> id.equals(a.getInitiativeId()) && "pending".equals(a.getStatus()))
-                .toList();
+        List<Ask> openInitiativeAsks = askRepository.findByInitiativeIdAndStatusPending(id);
         for (Ask ask : openInitiativeAsks) {
             ask.setStatus("withdrawn");
             askRepository.save(ask);

@@ -52,6 +52,9 @@ public class JwtUtil {
     }
 
     public static Map<String, Object> parseToken(String token, String secret) {
+        if (token == null || token.isBlank()) {
+            return null;
+        }
         String[] parts = token.split("\\.");
         if (parts.length != 3) {
             return null;

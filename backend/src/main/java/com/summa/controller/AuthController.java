@@ -90,7 +90,7 @@ public class AuthController {
         String token = JwtUtil.generateToken(human.getId(), jwtSecret, jwtExpiration);
         auditService.log(human.getId(), "LOGIN", "auth", human.getId(), null);
         // Reset rate limit counter on successful login
-        rateLimiter.allow(human.getId() + ":reset");
+        rateLimiter.reset(human.getId());
 
         return ResponseEntity.ok(Map.of(
             "token", token,

@@ -48,4 +48,9 @@ public class RateLimiter {
         long remaining = MAX_ATTEMPTS - (count != null ? count : 0L);
         return Math.max(0, remaining);
     }
+
+    public void reset(String identifier) {
+        attemptCounts.remove(identifier);
+        windowStarts.remove(identifier);
+    }
 }

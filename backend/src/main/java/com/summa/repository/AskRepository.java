@@ -23,4 +23,7 @@ public interface AskRepository extends JpaRepository<Ask, String> {
 
     @Query("SELECT a FROM Ask a WHERE a.from = :agentId AND a.status = 'pending'")
     List<Ask> findByFromAndStatusPending(String agentId);
+
+    @Query("SELECT a FROM Ask a WHERE a.initiativeId = :initiativeId AND a.status = 'pending'")
+    List<Ask> findByInitiativeIdAndStatusPending(String initiativeId);
 }

@@ -805,7 +805,7 @@ export const api = {
     setLeader: (id: string, memberId: string, _actor: string) =>
       request(`/org/groups/${id}/leader`, {
         method: 'PUT',
-        body: JSON.stringify({ memberId }),
+        body: JSON.stringify({ leaderMemberId: memberId }),
       }),
   },
 };

@@ -63,6 +63,14 @@ public class BackupService {
             throw new IllegalArgumentException("Backup file not found: " + backupPath);
         }
 
+        // Prevent path traversal: resolve to absolute and verify it's within allowed dirs
+        Path resolved = backupFile.toAbsolutePath().normalize();
+        Path tmpDir = Paths.get(System.getProperty("java.io.tmpdir")).toAbsolutePath().normalize();
+        Path dataDir = Paths.get(expandPath(dbPath)).getParent().toAbsolutePath().normalize();
+        if (!resolved.startsWith(tmpDir) && !resolved.startsWith(dataDir)) {
+            throw new IllegalArgumentException("Backup path must be under tmpdir or data directory");
+        }
+
         Path restoreDir = Files.createTempDirectory("summa-restore-");
         
         try (java.util.zip.ZipInputStream zis = new java.util.zip.ZipInputStream(Files.newInputStream(backupFile))) {
