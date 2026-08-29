@@ -8,6 +8,7 @@ import DnaConsole from './pages/DnaConsole.tsx'
 import DNACards from './pages/DNACards.tsx'
 import DNARules from './pages/DNARules.tsx'
 import DNADecisions from './pages/DNADecisions.tsx'
+import DNAGoals from './pages/DNAGoals.tsx'
 import OrgView from './pages/OrgView.tsx'
 import AskInbox from './pages/AskInbox.tsx'
 import Spawning from './pages/Spawning.tsx'
@@ -33,6 +34,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="dna/cards" element={<DNACards />} />
           <Route path="dna/rules" element={<DNARules />} />
           <Route path="dna/decisions" element={<DNADecisions />} />
+          <Route path="dna/goals" element={<DNAGoals />} />
           <Route path="org" element={<OrgView />} />
           <Route path="asks" element={<AskInbox />} />
           <Route path="board-tasks" element={<BoardTasks />} />

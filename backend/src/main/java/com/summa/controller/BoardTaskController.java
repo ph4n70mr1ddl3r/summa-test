@@ -57,7 +57,14 @@ public class BoardTaskController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            Integer priority = body.containsKey("priority") ? Integer.parseInt(body.get("priority")) : null;
+            Integer priority = null;
+            if (body.containsKey("priority")) {
+                try {
+                    priority = Integer.parseInt(body.get("priority"));
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("priority must be a valid integer");
+                }
+            }
             Instant dueAt = body.containsKey("dueAt") ? Instant.parse(body.get("dueAt")) : null;
             
             BoardTask task = taskService.create(

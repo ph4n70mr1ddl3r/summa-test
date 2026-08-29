@@ -116,6 +116,18 @@ public class AuthController {
         }
         String actor = (String) payload.get("sub");
 
+        // Rate limit by actor to prevent brute-force password changes
+        if (!rateLimiter.allow(actor + ":change-password")) {
+            long remaining = rateLimiter.getRemainingAttempts(actor + ":change-password");
+            var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Rate limited password change for: " + actor, null);
+            return ResponseEntity.status(429).body(Map.of(
+                "code", "rate_limited",
+                "message", "Too many password change attempts. Try again later.",
+                "audit_event_id", audit.getId(),
+                "remainingAttempts", remaining
+            ));
+        }
+
         String currentPassword = body.get("currentPassword");
         String newPassword = body.get("newPassword");
 

@@ -230,6 +230,7 @@ CREATE TABLE IF NOT EXISTS board_tasks (
     due_at INTEGER,
     created_by TEXT NOT NULL,
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
     completed_at INTEGER,
     FOREIGN KEY (initiative_id) REFERENCES initiatives(id) ON DELETE SET NULL
     -- assignee_member_id and created_by are keyed unions per DAT-120: h:<humans.id> or a:<agents.id>

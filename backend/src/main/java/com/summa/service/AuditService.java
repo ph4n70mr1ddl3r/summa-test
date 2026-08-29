@@ -39,7 +39,7 @@ public class AuditService {
     }
 
     public AuditEvent logSystem(String action, String objectType, String objectId, String detail) {
-        return log("system", action, objectType, objectId, detail);
+        return log("system", action, objectType, objectId, null, detail);
     }
 
     public AuditEvent logWithNode(String actor, String action, String objectType, String objectId,

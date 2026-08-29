@@ -40,7 +40,7 @@ public class RunController {
         } else if (status != null) {
             all = runService.findByStatus(status);
         } else {
-            all = runService.findRecent(limit * 2);
+            all = runService.findRecent(limit);
         }
         return ResponseEntity.ok(all.stream().limit(limit).toList());
     }

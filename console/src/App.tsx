@@ -9,6 +9,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { to: '/', label: 'Home' },
   { to: '/dna', label: 'DNA' },
+  { to: '/dna/goals', label: 'Goals' },
   { to: '/org', label: 'Org' },
   { to: '/asks', label: 'Asks' },
   { to: '/board-tasks', label: 'Board' },
@@ -75,7 +76,7 @@ export default function App() {
                   <NavLink
                     key={to}
                     to={to}
-                    end={to === '/' || to === '/dna' || to === '/org'}
+                    end={to === '/' || to === '/dna' || to === '/org' || to === '/dna/goals'}
                     className={({ isActive }) =>
                       isActive
                         ? 'text-white border-b-2 border-blue-400 px-1 py-2'

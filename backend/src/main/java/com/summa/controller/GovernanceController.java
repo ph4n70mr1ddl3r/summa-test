@@ -58,11 +58,6 @@ public class GovernanceController {
     }
 
     private static final Set<String> POLICY_KEYS = new HashSet<>(Set.of(
-            "spawn-ephemeral-default-ttl-hours",
-            "spawn-ephemeral-max-concurrent-per-spawner",
-            "spawn-org-wide-max-active-agents",
-            "spawn-depth-cap",
-            "spawn-budget-window-days",
             "asks-tier-critical-deadline-hours",
             "asks-tier-standard-deadline",
             "asks-tier-bulk-deadline-hours",
@@ -72,6 +67,14 @@ public class GovernanceController {
             "spend-org-ceiling",
             "spend-critical-floor-percent",
             "spend-evaluation-window-days"
+    ));
+
+    private static final Set<String> QUOTA_KEYS = new HashSet<>(Set.of(
+            "spawn-ephemeral-default-ttl-hours",
+            "spawn-ephemeral-max-concurrent-per-spawner",
+            "spawn-org-wide-max-active-agents",
+            "spawn-depth-cap",
+            "spawn-budget-window-days"
     ));
 
     @PutMapping("/policies")
@@ -95,7 +98,7 @@ public class GovernanceController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         for (String key : body.keySet()) {
-            if (!POLICY_KEYS.contains(key)) {
+            if (!QUOTA_KEYS.contains(key)) {
                 return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
                         .body(Map.of("code", "validation", "message", "Unknown quota key: " + key));
             }
