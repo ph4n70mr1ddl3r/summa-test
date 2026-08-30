@@ -13,7 +13,7 @@ export default function Spawning() {
       api.spawn.stats().catch(() => null),
     ]).then(([r, s]) => {
       setRequests(r)
-      setStats(s)
+      setStats(s as { requested: number; approved: number; archived: number } | null)
       setLoading(false)
     }).catch(() => {
       setError('Failed to load spawn data')

@@ -6,6 +6,10 @@ export default function AskInbox() {
   const [asks, setAsks] = useState<Ask[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [respondingId, setRespondingId] = useState<string | null>(null)
+  const [responseText, setResponseText] = useState('')
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null)
 
   const loadAsks = () => {
     setLoading(true)
@@ -43,6 +47,29 @@ export default function AskInbox() {
     return d.toLocaleString()
   }
 
+  const handleRespond = async (id: string) => {
+    setSubmitError(null)
+    setSubmitSuccess(null)
+    try {
+      await api.asks.respond(id, responseText, '')
+      setSubmitSuccess('Response recorded')
+      setRespondingId(null)
+      setResponseText('')
+      loadAsks()
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : String(err))
+    }
+  }
+
+  const handleWithdraw = async (id: string) => {
+    try {
+      await api.asks.withdraw(id, '')
+      loadAsks()
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : String(err))
+    }
+  }
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -75,6 +102,17 @@ export default function AskInbox() {
         <h2 className="text-2xl font-bold">Ask Inbox</h2>
         <span className="text-sm text-gray-400">{asks.length} pending asks</span>
       </div>
+
+      {submitError && (
+        <div className="bg-red-900/30 border border-red-700 rounded-lg p-3 text-red-400 text-sm">
+          {escapeHtml(submitError)}
+        </div>
+      )}
+      {submitSuccess && (
+        <div className="bg-green-900/30 border border-green-700 rounded-lg p-3 text-green-400 text-sm">
+          {escapeHtml(submitSuccess)}
+        </div>
+      )}
 
       {asks.length === 0 ? (
         <div className="bg-gray-800 rounded-lg p-8 border border-gray-700 text-center">
@@ -128,6 +166,45 @@ export default function AskInbox() {
                   {escapeHtml(ask.payload)}
                 </pre>
               </details>
+              <div className="mt-3 flex items-center gap-2">
+                <button
+                  onClick={() => { setRespondingId(ask.id); setResponseText('') }}
+                  className="px-3 py-1 bg-blue-700 hover:bg-blue-600 rounded text-sm text-blue-100"
+                >
+                  Respond
+                </button>
+                <button
+                  onClick={() => handleWithdraw(ask.id)}
+                  className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm text-gray-300"
+                >
+                  Withdraw
+                </button>
+              </div>
+              {respondingId === ask.id && (
+                <div className="mt-3 space-y-2">
+                  <textarea
+                    value={responseText}
+                    onChange={(e) => setResponseText(e.target.value)}
+                    placeholder="Type your response..."
+                    className="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-gray-100 text-sm focus:border-blue-500 focus:outline-none"
+                    rows={3}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleRespond(ask.id)}
+                      className="px-3 py-1 bg-green-700 hover:bg-green-600 rounded text-sm text-green-100"
+                    >
+                      Submit
+                    </button>
+                    <button
+                      onClick={() => { setRespondingId(null); setResponseText('') }}
+                      className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm text-gray-300"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

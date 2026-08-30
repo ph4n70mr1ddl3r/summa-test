@@ -59,7 +59,7 @@ public class GovernanceController {
 
     private static final Set<String> POLICY_KEYS = new HashSet<>(Set.of(
             "asks-tier-critical-deadline-hours",
-            "asks-tier-standard-deadline",
+            "asks-tier-standard-deadline-hours",
             "asks-tier-bulk-deadline-hours",
             "asks-storm-collapse-window-hours",
             "asks-rate-limit-per-source-per-hour",

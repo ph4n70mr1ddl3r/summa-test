@@ -11,6 +11,7 @@ const navItems: NavItem[] = [
   { to: '/dna', label: 'DNA' },
   { to: '/dna/goals', label: 'Goals' },
   { to: '/org', label: 'Org' },
+  { to: '/groups', label: 'Groups' },
   { to: '/asks', label: 'Asks' },
   { to: '/board-tasks', label: 'Board' },
   { to: '/triggers', label: 'Triggers' },

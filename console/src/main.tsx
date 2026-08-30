@@ -20,6 +20,7 @@ import Workspaces from './pages/Workspaces.tsx'
 import Nodes from './pages/Nodes.tsx'
 import RoleTemplates from './pages/RoleTemplates.tsx'
 import Memory from './pages/Memory.tsx'
+import Groups from './pages/Groups.tsx'
 import NotFound from './pages/NotFound.tsx'
 import Login from './pages/Login.tsx'
 
@@ -36,6 +37,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="dna/decisions" element={<DNADecisions />} />
           <Route path="dna/goals" element={<DNAGoals />} />
           <Route path="org" element={<OrgView />} />
+          <Route path="groups" element={<Groups />} />
           <Route path="asks" element={<AskInbox />} />
           <Route path="board-tasks" element={<BoardTasks />} />
           <Route path="triggers" element={<Triggers />} />

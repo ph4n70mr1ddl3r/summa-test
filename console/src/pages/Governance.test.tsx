@@ -21,7 +21,7 @@ describe('Governance page', () => {
   it('renders the Governance heading', async () => {
     vi.mocked(apiModule.api.governance.policies).mockResolvedValue({})
     vi.mocked(apiModule.api.governance.quotas).mockResolvedValue({})
-    vi.mocked(apiModule.api.governance.spend).mockResolvedValue(null)
+    vi.mocked(apiModule.api.governance.spend).mockResolvedValue(undefined as unknown as import('../services/api').SpendSnapshot)
     render(<Governance />)
     await waitFor(() => expect(screen.getByText('Governance')).toBeInTheDocument())
   })
@@ -29,7 +29,7 @@ describe('Governance page', () => {
   it('shows policies section', async () => {
     vi.mocked(apiModule.api.governance.policies).mockResolvedValue({ spawn_quota: 10 })
     vi.mocked(apiModule.api.governance.quotas).mockResolvedValue({})
-    vi.mocked(apiModule.api.governance.spend).mockResolvedValue(null)
+    vi.mocked(apiModule.api.governance.spend).mockResolvedValue(undefined as unknown as import('../services/api').SpendSnapshot)
     render(<Governance />)
     await waitFor(() => expect(screen.getByText('Policies (1)')).toBeInTheDocument())
   })
@@ -37,7 +37,7 @@ describe('Governance page', () => {
   it('shows quotas section', async () => {
     vi.mocked(apiModule.api.governance.policies).mockResolvedValue({})
     vi.mocked(apiModule.api.governance.quotas).mockResolvedValue({ max_concurrent: 5 })
-    vi.mocked(apiModule.api.governance.spend).mockResolvedValue(null)
+    vi.mocked(apiModule.api.governance.spend).mockResolvedValue(undefined as unknown as import('../services/api').SpendSnapshot)
     render(<Governance />)
     await waitFor(() => expect(screen.getByText('Quotas (1)')).toBeInTheDocument())
   })

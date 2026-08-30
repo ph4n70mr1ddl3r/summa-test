@@ -151,7 +151,7 @@ public class GovernanceService {
         settings.putIfAbsent("spawn-depth-cap", 2);
         settings.putIfAbsent("spawn-budget-window-days", 30);
         settings.putIfAbsent("asks-tier-critical-deadline-hours", 1);
-        settings.putIfAbsent("asks-tier-standard-deadline", "next-digest");
+        settings.putIfAbsent("asks-tier-standard-deadline-hours", 24);
         settings.putIfAbsent("asks-tier-bulk-deadline-hours", 24);
         settings.putIfAbsent("asks-storm-collapse-window-hours", 1);
         settings.putIfAbsent("asks-rate-limit-per-source-per-hour", 60);

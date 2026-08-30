@@ -253,7 +253,9 @@ public class AskService {
             if (val instanceof Number) return ((Number) val).longValue() * 3600L;
             return DEFAULT_BULK_ASK_DEADLINE_HOURS * 3600L;
         }
-        // standard tier: next digest is not a fixed deadline — use 24h as safe upper bound
+        // standard tier: next digest is not a fixed deadline — use configurable hours (default 24)
+        Object val = governanceService.getSetting("asks-tier-standard-deadline-hours");
+        if (val instanceof Number) return ((Number) val).longValue() * 3600L;
         return DEFAULT_STANDARD_ASK_DEADLINE_HOURS * 3600L;
     }
 
