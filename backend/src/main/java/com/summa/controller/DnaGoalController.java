@@ -58,13 +58,15 @@ public class DnaGoalController {
             if (body.get("owner") == null || body.get("owner").isBlank()) {
                 throw new IllegalArgumentException("owner is required");
             }
+            // Security: reject client-supplied IDs — always generate server-side
+            String generatedId = java.util.UUID.randomUUID().toString();
             Instant effectiveFrom = body.containsKey("effectiveFrom") ?
                 Instant.parse(body.get("effectiveFrom")) : Instant.now();
             Instant effectiveTo = body.containsKey("effectiveTo") ?
                 Instant.parse(body.get("effectiveTo")) : null;
 
             DnaGoal goal = goalService.create(
-                body.get("id"),
+                generatedId,
                 body.get("domainId"),
                 body.get("quarter"),
                 body.get("statementMd"),

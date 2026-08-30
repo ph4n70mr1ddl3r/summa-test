@@ -1,48 +1,84 @@
+import { useEffect, useState } from 'react'
+import { api, type SpawnRequest } from '../services/api'
+
 export default function Spawning() {
+  const [requests, setRequests] = useState<SpawnRequest[]>([])
+  const [stats, setStats] = useState<{ requested: number; approved: number; archived: number } | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    Promise.all([
+      api.spawn.list().catch(() => [] as SpawnRequest[]),
+      api.spawn.stats().catch(() => null),
+    ]).then(([r, s]) => {
+      setRequests(r)
+      setStats(s)
+      setLoading(false)
+    }).catch(() => {
+      setError('Failed to load spawn data')
+      setLoading(false)
+    })
+  }, [])
+
+  if (loading) return <div className="text-gray-400">Loading...</div>
+  if (error) return <div className="text-red-400">Error: {error}</div>
+
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Spawning</h2>
-      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-        <h3 className="text-lg font-semibold text-purple-300 mb-4">Spawn Requests</h3>
-        <p className="text-gray-400 mb-4">
-          Two classes: persistent hires (approval-gated) and ephemeral workers (quotas + TTL).
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-gray-700 rounded p-4">
-            <h4 className="text-blue-300 font-semibold mb-2">API</h4>
-            <code className="text-xs text-gray-400">
-              GET /api/spawn{'\n'}
-              POST /api/spawn{'\n'}
-              POST /api/spawn/:id/approve{'\n'}
-              POST /api/spawn/:id/deny
-            </code>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Spawning</h2>
+        {stats && (
+          <div className="flex space-x-4 text-sm">
+            <span className="text-yellow-400">Pending: {stats.requested}</span>
+            <span className="text-green-400">Approved: {stats.approved}</span>
+            <span className="text-gray-400">Archived: {stats.archived}</span>
           </div>
-          <div className="bg-gray-700 rounded p-4">
-            <h4 className="text-green-300 font-semibold mb-2">Gates</h4>
-            <code className="text-xs text-gray-400">
-              Spend circuit-breaker{'\n'}
-              Quota caps (CFG-040/017/018){'\n'}
-              Depth limit (default 2){'\n'}
-              Template class match
-            </code>
-          </div>
+        )}
+      </div>
+
+      {requests.length === 0 ? (
+        <div className="bg-gray-800 rounded-lg p-8 border border-gray-700 text-center">
+          <p className="text-gray-400">No spawn requests.</p>
         </div>
-      </div>
+      ) : (
+        <div className="space-y-3">
+          {requests.map((req) => (
+            <div key={req.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="font-medium text-gray-200">{req.purpose || 'Untitled request'}</p>
+                  <p className="text-sm text-gray-400 mt-1">
+                    Class: {req.class} · Requester: {req.requesterId}
+                    {req.templateId ? ` · Template: ${req.templateId}` : ''}
+                  </p>
+                </div>
+                <span className={`text-xs px-2 py-1 rounded ${
+                  req.status === 'requested' ? 'bg-yellow-900/50 text-yellow-400' :
+                  req.status === 'approved' ? 'bg-green-900/50 text-green-400' :
+                  req.status === 'denied' ? 'bg-red-900/50 text-red-400' :
+                  'bg-gray-700 text-gray-300'
+                }`}>
+                  {req.status}
+                </span>
+              </div>
+              {req.budgetCap && (
+                <p className="text-xs text-gray-500 mt-1">Budget cap: ${req.budgetCap}</p>
+              )}
+              {req.ttlHours && (
+                <p className="text-xs text-gray-500">TTL: {req.ttlHours}h</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-        <h3 className="text-lg font-semibold text-purple-300 mb-4">Spend Circuit-Breaker</h3>
-        <p className="text-gray-400 text-sm">
-          When spend exceeds ceiling, all non-critical spawns halt. Critical floor (5%) keeps
-          money-moving automations alive. Breaker un-trips only through admin ask resolution.
-        </p>
-      </div>
-
-      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-        <h3 className="text-lg font-semibold text-purple-300 mb-4">Lineage</h3>
-        <p className="text-gray-400 text-sm">
-          Every agent carries owner_human_id + spawned_by. Ephemeral workers fold back to spawner.
-          Persistent hires roll up to first human up the chain. Depth cap (default 2) prevents runaway spawning.
-        </p>
+        <h3 className="text-lg font-semibold text-purple-300 mb-4">Gates</h3>
+        <div className="text-xs text-gray-500 space-y-1">
+          <p>Spend circuit-breaker · Quota caps (CFG-040/017/018)</p>
+          <p>Depth limit (default 2) · Template class match</p>
+        </div>
       </div>
     </div>
   )

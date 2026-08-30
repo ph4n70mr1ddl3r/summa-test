@@ -80,7 +80,6 @@ function ApiStatusCheck() {
       check()
     }, 30000)
     return () => { cancelled = true; clearInterval(interval) }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checked])
 
   return (

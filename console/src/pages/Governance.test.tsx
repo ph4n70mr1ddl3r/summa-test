@@ -1,28 +1,52 @@
-import { describe, it, expect } from 'vitest'
-import { render } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
 import Governance from './Governance'
+import * as apiModule from '../services/api'
+
+vi.mock('../services/api', () => ({
+  api: {
+    governance: {
+      policies: vi.fn(),
+      quotas: vi.fn(),
+      spend: vi.fn(),
+    },
+  },
+}))
 
 describe('Governance page', () => {
-  it('renders the Governance heading', () => {
-    const { container } = render(<Governance />)
-    expect(container.textContent).toContain('Governance')
+  beforeEach(() => {
+    vi.clearAllMocks()
   })
 
-  it('shows policies and quotas sections', () => {
-    const { container } = render(<Governance />)
-    expect(container.textContent).toContain('Policies')
-    expect(container.textContent).toContain('Quotas')
+  it('renders the Governance heading', async () => {
+    vi.mocked(apiModule.api.governance.policies).mockResolvedValue({})
+    vi.mocked(apiModule.api.governance.quotas).mockResolvedValue({})
+    vi.mocked(apiModule.api.governance.spend).mockResolvedValue(null)
+    render(<Governance />)
+    await waitFor(() => expect(screen.getByText('Governance')).toBeInTheDocument())
   })
 
-  it('shows spend and data-hold sections', () => {
-    const { container } = render(<Governance />)
-    expect(container.textContent).toContain('Spend')
-    expect(container.textContent).toContain('Data Holds')
+  it('shows policies section', async () => {
+    vi.mocked(apiModule.api.governance.policies).mockResolvedValue({ spawn_quota: 10 })
+    vi.mocked(apiModule.api.governance.quotas).mockResolvedValue({})
+    vi.mocked(apiModule.api.governance.spend).mockResolvedValue(null)
+    render(<Governance />)
+    await waitFor(() => expect(screen.getByText('Policies (1)')).toBeInTheDocument())
   })
 
-  it('shows governance API endpoints', () => {
-    const { container } = render(<Governance />)
-    expect(container.textContent).toContain('/api/governance/policies')
-    expect(container.textContent).toContain('/api/governance/spend')
+  it('shows quotas section', async () => {
+    vi.mocked(apiModule.api.governance.policies).mockResolvedValue({})
+    vi.mocked(apiModule.api.governance.quotas).mockResolvedValue({ max_concurrent: 5 })
+    vi.mocked(apiModule.api.governance.spend).mockResolvedValue(null)
+    render(<Governance />)
+    await waitFor(() => expect(screen.getByText('Quotas (1)')).toBeInTheDocument())
+  })
+
+  it('shows spend snapshot', async () => {
+    vi.mocked(apiModule.api.governance.policies).mockResolvedValue({})
+    vi.mocked(apiModule.api.governance.quotas).mockResolvedValue({})
+    vi.mocked(apiModule.api.governance.spend).mockResolvedValue({ reserved: 100, settled: 50, ceiling: 1000, utilization: '5%', halted: false })
+    render(<Governance />)
+    await waitFor(() => expect(screen.getByText('Spend')).toBeInTheDocument())
   })
 })

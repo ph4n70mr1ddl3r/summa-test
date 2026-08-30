@@ -15,13 +15,16 @@ public class MemoryService {
     private final AuditService auditService;
     private final DnaDomainService domainService;
     private final MemberService memberService;
+    private final WorkspaceService workspaceService;
 
     public MemoryService(MemoryItemRepository memoryItemRepository, AuditService auditService,
-                          DnaDomainService domainService, MemberService memberService) {
+                          DnaDomainService domainService, MemberService memberService,
+                          WorkspaceService workspaceService) {
         this.memoryItemRepository = memoryItemRepository;
         this.auditService = auditService;
         this.domainService = domainService;
         this.memberService = memberService;
+        this.workspaceService = workspaceService;
     }
 
     @Transactional
@@ -78,12 +81,25 @@ public class MemoryService {
             if (item.getWorkspaceId() == null) {
                 throw new IllegalStateException("Project-tier memory requires a workspace for review");
             }
-            // Find the domain associated with this workspace and check ownership
+            // Find the workspace and check if reviewer owns any of its domains
             boolean isDomainOwner = false;
-            for (com.summa.model.DnaDomain domain : domainService.findAllIncludingArchived()) {
-                if (item.getWorkspaceId().startsWith(domain.getId() + ":")) {
-                    isDomainOwner = domain.getOwnerHumanId().equals(reviewerId);
-                    break;
+            Optional<com.summa.model.Workspace> wsOpt = workspaceService.findById(item.getWorkspaceId());
+            if (wsOpt.isPresent()) {
+                com.summa.model.Workspace ws = wsOpt.get();
+                try {
+                    com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                    java.util.List<String> domainIds = mapper.readValue(
+                        ws.getDomainIds(),
+                        new com.fasterxml.jackson.core.type.TypeReference<java.util.List<String>>() {});
+                    for (String domId : domainIds) {
+                        Optional<com.summa.model.DnaDomain> domainOpt = domainService.findById(domId);
+                        if (domainOpt.isPresent() && domainOpt.get().getOwnerHumanId().equals(reviewerId)) {
+                            isDomainOwner = true;
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    // If domainIds parsing fails, fall through to admin check
                 }
             }
             // Also check if reviewer is admin (admins can review any tier)

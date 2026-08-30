@@ -1,26 +1,54 @@
-import { describe, it, expect } from 'vitest'
-import { render } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
 import Spawning from './Spawning'
+import * as apiModule from '../services/api'
+
+vi.mock('../services/api', () => ({
+  api: {
+    spawn: {
+      list: vi.fn(),
+      stats: vi.fn(),
+    },
+  },
+}))
 
 describe('Spawning page', () => {
-  it('renders the Spawning heading', () => {
-    const { container } = render(<Spawning />)
-    expect(container.textContent).toContain('Spawning')
+  beforeEach(() => {
+    vi.clearAllMocks()
   })
 
-  it('shows spawn API and gates', () => {
-    const { container } = render(<Spawning />)
-    expect(container.textContent).toContain('GET /api/spawn')
-    expect(container.textContent).toContain('Spend circuit-breaker')
+  it('renders the Spawning heading', async () => {
+    vi.mocked(apiModule.api.spawn.list).mockResolvedValue([])
+    vi.mocked(apiModule.api.spawn.stats).mockResolvedValue({ requested: 0, approved: 0, archived: 0 })
+    render(<Spawning />)
+    await waitFor(() => expect(screen.getByText('Spawning')).toBeInTheDocument())
   })
 
-  it('shows lineage section', () => {
-    const { container } = render(<Spawning />)
-    expect(container.textContent).toContain('Lineage')
+  it('shows empty state when no requests', async () => {
+    vi.mocked(apiModule.api.spawn.list).mockResolvedValue([])
+    vi.mocked(apiModule.api.spawn.stats).mockResolvedValue({ requested: 0, approved: 0, archived: 0 })
+    render(<Spawning />)
+    await waitFor(() => {
+      const el = screen.getByText(/no spawn requests/i)
+      expect(el).toBeInTheDocument()
+    })
   })
 
-  it('mentions depth cap', () => {
-    const { container } = render(<Spawning />)
-    expect(container.textContent).toContain('Depth limit')
+  it('displays spawn requests', async () => {
+    vi.mocked(apiModule.api.spawn.list).mockResolvedValue([
+      { id: 's1', requesterId: 'a1', class: 'ephemeral', purpose: 'Test task', status: 'requested' as const },
+    ])
+    vi.mocked(apiModule.api.spawn.stats).mockResolvedValue({ requested: 1, approved: 0, archived: 0 })
+    render(<Spawning />)
+    await waitFor(() => {
+      expect(screen.getByText('Pending: 1')).toBeInTheDocument()
+    })
+  })
+
+  it('shows gates section', async () => {
+    vi.mocked(apiModule.api.spawn.list).mockResolvedValue([])
+    vi.mocked(apiModule.api.spawn.stats).mockResolvedValue({ requested: 0, approved: 0, archived: 0 })
+    render(<Spawning />)
+    await waitFor(() => expect(screen.getByText('Gates')).toBeInTheDocument())
   })
 })

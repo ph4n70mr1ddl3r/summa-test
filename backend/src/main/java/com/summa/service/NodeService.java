@@ -1,7 +1,10 @@
 package com.summa.service;
 
 import com.summa.repository.NodeRepository;
+import com.summa.repository.AskRepository;
 import com.summa.model.Node;
+import com.summa.model.Ask;
+import com.summa.service.WorkspaceService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -17,10 +20,15 @@ public class NodeService {
 
     private final NodeRepository nodeRepository;
     private final AuditService auditService;
+    private final WorkspaceService workspaceService;
+    private final AskRepository askRepository;
 
-    public NodeService(NodeRepository nodeRepository, AuditService auditService) {
+    public NodeService(NodeRepository nodeRepository, AuditService auditService,
+                       WorkspaceService workspaceService, AskRepository askRepository) {
         this.nodeRepository = nodeRepository;
         this.auditService = auditService;
+        this.workspaceService = workspaceService;
+        this.askRepository = askRepository;
     }
 
     @Transactional
@@ -81,10 +89,28 @@ public class NodeService {
     public Node revoke(String id, String actor) {
         Node node = nodeRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Node not found: " + id));
-        
+
         node.setRevokedAt(Instant.now());
         node.setStatus("revoked");
-        
+
+        // ARC-016(b): surface rebind asks for every workspace still bound to the revoked node
+        for (com.summa.model.Workspace ws : workspaceService.findByNode(id)) {
+            Ask rebindAsk = new Ask();
+            rebindAsk.setId(UUID.randomUUID().toString());
+            rebindAsk.setKind("question");
+            rebindAsk.setFrom("system");
+            rebindAsk.setTo(OffboardingWalkService.ADMIN_BROADCAST);
+            rebindAsk.setPayload(String.format("{\"nodeId\":\"%s\",\"workspaceId\":\"%s\",\"reason\":\"node_revoked\"}", id, ws.getId()));
+            rebindAsk.setSlaTier("bulk");
+            rebindAsk.setExpiryBehavior("escalate");
+            rebindAsk.setQuorumRequired(1);
+            rebindAsk.setDeadline(Instant.now().plusSeconds(7L * 86400));
+            rebindAsk.setWorkspaceId(ws.getId());
+            askRepository.save(rebindAsk);
+            auditService.logSystem("REBIND_ASK", "workspace", ws.getId(),
+                String.format("{\"nodeId\":\"%s\",\"reason\":\"node_revoked\"}", id));
+        }
+
         Node saved = nodeRepository.save(node);
         auditService.log(actor, "REVOKE", "node", id, null);
         return saved;

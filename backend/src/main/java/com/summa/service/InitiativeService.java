@@ -33,12 +33,14 @@ public class InitiativeService {
     private final SpawnRequestRepository spawnRequestRepository;
     private final DnaGoalRepository dnaGoalRepository;
     private final DnaDecisionRepository dnaDecisionRepository;
+    private final DnaGoalService dnaGoalService;
 
     public InitiativeService(InitiativeRepository initiativeRepository, BoardTaskRepository boardTaskRepository,
                               AuditService auditService, AskService askService,
                               AskRepository askRepository, TriggerRepository triggerRepository,
                               SpawnRequestRepository spawnRequestRepository,
-                              DnaGoalRepository dnaGoalRepository, DnaDecisionRepository dnaDecisionRepository) {
+                              DnaGoalRepository dnaGoalRepository, DnaDecisionRepository dnaDecisionRepository,
+                              DnaGoalService dnaGoalService) {
         this.initiativeRepository = initiativeRepository;
         this.boardTaskRepository = boardTaskRepository;
         this.auditService = auditService;
@@ -48,6 +50,7 @@ public class InitiativeService {
         this.spawnRequestRepository = spawnRequestRepository;
         this.dnaGoalRepository = dnaGoalRepository;
         this.dnaDecisionRepository = dnaDecisionRepository;
+        this.dnaGoalService = dnaGoalService;
     }
 
     @Transactional
@@ -242,9 +245,29 @@ public class InitiativeService {
             }
 
             // INT-050: Direction ask — goal window ended
-            if (init.getGoalRef() != null && "active".equals(init.getStatus())) {
-                auditService.logSystem("DIRECTION_CHECK", "initiative", init.getId(),
-                    String.format("{\"goalRef\":\"%s\",\"sponsor\":\"%s\"}", init.getGoalRef(), init.getSponsor()));
+            if (init.getGoalRef() != null && !init.getGoalRef().isBlank()) {
+                try {
+                    Optional<com.summa.model.DnaGoal> goalOpt = dnaGoalService.findById(init.getGoalRef());
+                    boolean windowEnded = goalOpt.filter(g ->
+                            g.getEffectiveTo() != null && g.getEffectiveTo().isBefore(now))
+                            .isPresent();
+                    boolean goalTerminal = goalOpt.filter(g ->
+                            !"active".equals(g.getStatus())).isPresent();
+                    if (windowEnded || goalTerminal) {
+                        String goalStatus = goalOpt.map(com.summa.model.DnaGoal::getStatus).orElse("unknown");
+                        askService.create("question", "system", init.getSponsor(),
+                            String.format("{\"initiativeId\":\"%s\",\"goalRef\":\"%s\",\"reason\":\"goal_window_ended\",\"goalStatus\":\"%s\"}",
+                                init.getId(), init.getGoalRef(), goalStatus),
+                            "bulk", "escalate", 1,
+                            Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
+                        auditService.logSystem("DIRECTION_ask_CREATED", "initiative", init.getId(),
+                            String.format("{\"goalRef\":\"%s\",\"sponsor\":\"%s\",\"reason\":\"%s\"}",
+                                init.getGoalRef(), init.getSponsor(), windowEnded ? "window_ended" : "goal_terminal"));
+                    }
+                } catch (Exception e) {
+                    auditService.logSystem("DIRECTION_ask_FAIL", "initiative", init.getId(),
+                        String.format("{\"error\":\"%s\"}", e.getMessage()));
+                }
             }
         }
     }

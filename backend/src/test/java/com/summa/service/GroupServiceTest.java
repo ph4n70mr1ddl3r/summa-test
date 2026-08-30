@@ -21,6 +21,9 @@ class GroupServiceTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private MemberService memberService;
+
     @InjectMocks
     private GroupService groupService;
 
@@ -76,6 +79,13 @@ class GroupServiceTest {
         group.setId("group-1");
         when(groupRepository.findById("group-1")).thenReturn(Optional.of(group));
         when(groupRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        com.summa.model.Human human = new com.summa.model.Human();
+        human.setId("human-2");
+        human.setRbac("member");
+        when(memberService.findHuman("human-2")).thenReturn(Optional.of(human));
+        when(memberService.isViewer(human)).thenReturn(false);
+        when(memberService.findAgent("human-2")).thenReturn(Optional.empty());
 
         Group result = groupService.setLeader("group-1", "human-2", "admin");
 

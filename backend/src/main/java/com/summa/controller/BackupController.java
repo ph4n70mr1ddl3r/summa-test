@@ -4,6 +4,7 @@ import com.summa.security.WriteGate;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.service.BackupService;
 import com.summa.service.OrgService;
+import com.summa.service.AuditService;
 import com.summa.model.Human;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,11 +19,14 @@ public class BackupController {
     private final BackupService backupService;
     private final WriteGate writeGate;
     private final OrgService orgService;
+    private final AuditService auditService;
 
-    public BackupController(BackupService backupService, WriteGate writeGate, OrgService orgService) {
+    public BackupController(BackupService backupService, WriteGate writeGate,
+                            OrgService orgService, AuditService auditService) {
         this.backupService = backupService;
         this.writeGate = writeGate;
         this.orgService = orgService;
+        this.auditService = auditService;
     }
 
     @PostMapping
@@ -44,6 +48,7 @@ public class BackupController {
                         .body(Map.of("code", "validation", "message", "backupDir must be under tmpdir"));
             }
             String path = backupService.createBackup(backupDirPath.toString());
+            auditService.log(actor, "CREATE_BACKUP", "backup", path, null);
             return ResponseEntity.ok(Map.of("path", path));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "backup failed"));
@@ -73,6 +78,7 @@ public class BackupController {
                         .body(Map.of("code", "validation", "message", "backupPath must be under tmpdir"));
             }
             backupService.restore(backupFilePath.toString());
+            auditService.log(actor, "RESTORE_BACKUP", "backup", backupFilePath.toString(), null);
             return ResponseEntity.ok(Map.of("status", "restored"));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "restore failed"));

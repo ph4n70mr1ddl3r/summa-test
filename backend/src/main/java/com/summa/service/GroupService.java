@@ -2,6 +2,7 @@ package com.summa.service;
 
 import com.summa.repository.GroupRepository;
 import com.summa.model.Group;
+import com.summa.service.MemberService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -12,10 +13,13 @@ import java.util.UUID;
 public class GroupService {
     private final GroupRepository groupRepository;
     private final AuditService auditService;
+    private final MemberService memberService;
 
-    public GroupService(GroupRepository groupRepository, AuditService auditService) {
+    public GroupService(GroupRepository groupRepository, AuditService auditService,
+                        MemberService memberService) {
         this.groupRepository = groupRepository;
         this.auditService = auditService;
+        this.memberService = memberService;
     }
 
     @Transactional
@@ -60,7 +64,25 @@ public class GroupService {
     public Group setLeader(String id, String leaderMemberId, String actor) {
         Group group = groupRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Group not found: " + id));
-        
+
+        // ORG-042: Validate leader eligibility — active human, not viewer, not ephemeral
+        Optional<com.summa.model.Human> leaderOpt = memberService.findHuman(leaderMemberId);
+        if (leaderOpt.isEmpty()) {
+            throw new IllegalStateException("Leader member not found: " + leaderMemberId);
+        }
+        com.summa.model.Human leader = leaderOpt.get();
+        if (!leader.isActive()) {
+            throw new IllegalStateException("Leader must be active: " + leaderMemberId);
+        }
+        if (memberService.isViewer(leader)) {
+            throw new IllegalStateException("Viewers cannot be group leaders: " + leaderMemberId);
+        }
+        // Check not ephemeral agent
+        Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(leaderMemberId);
+        if (agentOpt.isPresent() && agentOpt.get().isEphemeral()) {
+            throw new IllegalStateException("Ephemeral agents cannot be group leaders: " + leaderMemberId);
+        }
+
         group.setLeaderMemberId(leaderMemberId);
         Group saved = groupRepository.save(group);
         auditService.log(actor, "SET_LEADER", "group", id, null);

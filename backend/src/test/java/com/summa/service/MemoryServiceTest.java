@@ -22,6 +22,15 @@ class MemoryServiceTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private DnaDomainService domainService;
+
+    @Mock
+    private MemberService memberService;
+
+    @Mock
+    private WorkspaceService workspaceService;
+
     @InjectMocks
     private MemoryService memoryService;
 

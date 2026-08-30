@@ -54,11 +54,19 @@ public class SpawnController {
             if (requesterId == null || requesterId.isBlank()) {
                 throw new IllegalArgumentException("requesterId is required");
             }
+            String rawClass = body.get("class");
+            String effectiveClass = rawClass != null && !rawClass.isBlank() ? rawClass : "ephemeral";
+            try {
+                com.summa.enums.AgentClass.valueOf(effectiveClass.toUpperCase().replace("-", "_"));
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid spawn class: " + effectiveClass
+                    + ". Must be one of: persistent, ephemeral, ephemeral-subagent");
+            }
             SpawnRequest request = spawnService.create(
                 requesterId,
                 body.get("templateId"),
                 body.get("customRole"),
-                body.get("class") != null ? body.get("class") : "ephemeral",
+                effectiveClass,
                 body.get("purpose"),
                 body.get("workspaceBindings"),
                 body.get("scopeCeiling"),

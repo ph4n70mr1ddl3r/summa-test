@@ -54,6 +54,9 @@ class InitiativeServiceTest {
     @Mock
     private DnaDecisionRepository dnaDecisionRepository;
 
+    @Mock
+    private DnaGoalService dnaGoalService;
+
     @InjectMocks
     private InitiativeService initiativeService;
 

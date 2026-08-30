@@ -47,7 +47,7 @@ public class AuthController {
         // Rate limit by email to prevent brute-force
         if (!rateLimiter.allow(email)) {
             long remaining = rateLimiter.getRemainingAttempts(email);
-            var audit = auditService.logSystem("REFUSAL", "auth_login", "Rate limited login attempt for: " + email, null);
+            var audit = auditService.logSystem("REFUSAL", "auth_login", email, "Rate limited login attempt for: " + email);
             return ResponseEntity.status(429).body(Map.of(
                 "code", "rate_limited",
                 "message", "Too many login attempts. Try again later.",
@@ -59,7 +59,7 @@ public class AuthController {
         var humanOpt = orgService.findHumanByEmail(email);
 
         if (humanOpt.isEmpty()) {
-            var audit = auditService.logSystem("REFUSAL", "auth_login", "Login attempt for unknown account", null);
+            var audit = auditService.logSystem("REFUSAL", "auth_login", email, "Login attempt for unknown account");
             return ResponseEntity.status(401).body(Map.of(
                 "code", "unauthorized",
                 "message", "Invalid credentials",
@@ -67,7 +67,7 @@ public class AuthController {
             ));
         }
         if (!humanOpt.get().isActive()) {
-            var audit = auditService.logSystem("REFUSAL", "auth_login", "Login attempt on deactivated account", null);
+            var audit = auditService.logSystem("REFUSAL", "auth_login", email, "Login attempt on deactivated account");
             return ResponseEntity.status(401).body(Map.of(
                 "code", "unauthorized",
                 "message", "Invalid credentials",
@@ -79,7 +79,7 @@ public class AuthController {
 
         if (password == null || password.isBlank() || human.getPasswordHash() == null
                 || !passwordUtil.verify(password, human.getPasswordHash())) {
-            var audit = auditService.logSystem("REFUSAL", "auth_login", "Login attempt with bad password", null);
+            var audit = auditService.logSystem("REFUSAL", "auth_login", email, "Login attempt with bad password");
             return ResponseEntity.status(401).body(Map.of(
                 "code", "unauthorized",
                 "message", "Invalid credentials",
@@ -90,7 +90,7 @@ public class AuthController {
         String token = JwtUtil.generateToken(human.getId(), jwtSecret, jwtExpiration);
         auditService.log(human.getId(), "LOGIN", "auth", human.getId(), null);
         // Reset rate limit counter on successful login
-        rateLimiter.reset(human.getId());
+        rateLimiter.reset(email);
 
         return ResponseEntity.ok(Map.of(
             "token", token,

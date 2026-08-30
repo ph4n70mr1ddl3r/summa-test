@@ -1,6 +1,7 @@
 package com.summa.service;
 
 import com.summa.repository.NodeRepository;
+import com.summa.repository.AskRepository;
 import com.summa.model.Node;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +21,12 @@ class NodeServiceTest {
 
     @Mock
     private AuditService auditService;
+
+    @Mock
+    private WorkspaceService workspaceService;
+
+    @Mock
+    private AskRepository askRepository;
 
     @InjectMocks
     private NodeService nodeService;
@@ -89,6 +96,7 @@ class NodeServiceTest {
         node.setStatus("trusted");
         when(nodeRepository.findById("node-1")).thenReturn(Optional.of(node));
         when(nodeRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(workspaceService.findByNode("node-1")).thenReturn(java.util.List.of());
 
         Node result = nodeService.revoke("node-1", "admin");
 

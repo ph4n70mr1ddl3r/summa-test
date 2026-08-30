@@ -1,28 +1,52 @@
-import { describe, it, expect } from 'vitest'
-import { render } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
 import Runs from './Runs'
+import * as apiModule from '../services/api'
+
+vi.mock('../services/api', () => ({
+  api: {
+    runs: {
+      list: vi.fn(),
+    },
+  },
+}))
 
 describe('Runs page', () => {
-  it('renders the Runs heading', () => {
-    const { container } = render(<Runs />)
-    expect(container.textContent).toContain('Runs')
+  beforeEach(() => {
+    vi.clearAllMocks()
   })
 
-  it('shows run lifecycle states', () => {
-    const { container } = render(<Runs />)
-    expect(container.textContent).toContain('queued')
-    expect(container.textContent).toContain('completed')
-    expect(container.textContent).toContain('failed')
+  it('renders the Runs heading', async () => {
+    vi.mocked(apiModule.api.runs.list).mockResolvedValue([])
+    render(<Runs />)
+    await waitFor(() => expect(screen.getByText('Runs')).toBeInTheDocument())
   })
 
-  it('shows metering info', () => {
-    const { container } = render(<Runs />)
-    expect(container.textContent).toContain('cost_tokens')
-    expect(container.textContent).toContain('Audit event on every transition')
+  it('shows empty state when no runs', async () => {
+    vi.mocked(apiModule.api.runs.list).mockResolvedValue([])
+    render(<Runs />)
+    await waitFor(() => {
+      const el = screen.getByText(/no runs found/i)
+      expect(el).toBeInTheDocument()
+    })
   })
 
-  it('shows triggers section', () => {
-    const { container } = render(<Runs />)
-    expect(container.textContent).toContain('Triggers')
+  it('displays runs with status', async () => {
+    vi.mocked(apiModule.api.runs.list).mockResolvedValue([
+      { id: 'r1', agentId: 'a1', status: 'completed' as const },
+      { id: 'r2', agentId: 'a1', status: 'failed' as const },
+    ])
+    render(<Runs />)
+    await waitFor(() => {
+      expect(screen.getByText('All (2)')).toBeInTheDocument()
+    })
+  })
+
+  it('filters by status', async () => {
+    vi.mocked(apiModule.api.runs.list).mockResolvedValue([
+      { id: 'r1', agentId: 'a1', status: 'running' as const },
+    ])
+    render(<Runs />)
+    await waitFor(() => expect(screen.getByText('running (1)')).toBeInTheDocument())
   })
 })

@@ -1,50 +1,91 @@
+import { useEffect, useState } from 'react'
+import { api, type Run } from '../services/api'
+
 export default function Runs() {
+  const [runs, setRuns] = useState<Run[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [filter, setFilter] = useState<string>('all')
+
+  useEffect(() => {
+    const params: Record<string, string> = {}
+    if (filter !== 'all') params.status = filter
+    api.runs.list(params)
+      .then((data) => { setRuns(data); setLoading(false) })
+      .catch((err) => { setError(err instanceof Error ? err.message : String(err)); setLoading(false) })
+  }, [filter])
+
+  if (loading) return <div className="text-gray-400">Loading...</div>
+  if (error) return <div className="text-red-400">Error: {error}</div>
+
+  const statusCounts: Record<string, number> = {}
+  runs.forEach(r => { statusCounts[r.status] = (statusCounts[r.status] || 0) + 1 })
+
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Runs</h2>
-      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-        <h3 className="text-lg font-semibold text-blue-300 mb-4">Run Lifecycle</h3>
-        <div className="flex items-center space-x-2 text-sm text-gray-400 mb-4">
-          <span className="px-2 py-1 bg-gray-700 rounded">queued</span>
-          <span>→</span>
-          <span className="px-2 py-1 bg-blue-900 rounded">running</span>
-          <span>→</span>
-          <span className="px-2 py-1 bg-green-900 rounded">completed</span>
-          <span className="ml-4">or</span>
-          <span className="px-2 py-1 bg-red-900 rounded">failed</span>
-          <span className="ml-4">or</span>
-          <span className="px-2 py-1 bg-yellow-900 rounded">cancelled</span>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-gray-700 rounded p-4">
-            <h4 className="text-blue-300 font-semibold mb-2">API</h4>
-            <code className="text-xs text-gray-400">
-              GET /api/runs?agentId=&lt;id&gt;{'\n'}
-              POST /api/runs{'\n'}
-              POST /api/runs/:id/start{'\n'}
-              POST /api/runs/:id/complete{'\n'}
-              POST /api/runs/:id/fail{'\n'}
-              POST /api/runs/:id/cancel
-            </code>
-          </div>
-          <div className="bg-gray-700 rounded p-4">
-            <h4 className="text-green-300 font-semibold mb-2">Metering</h4>
-            <code className="text-xs text-gray-400">
-              cost_tokens, cost_usd on complete{'\n'}
-              Spent to spend_ledger{'\n'}
-              Audit event on every transition
-            </code>
-          </div>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Runs</h2>
+        <div className="flex space-x-2 text-sm">
+          <button
+            onClick={() => setFilter('all')}
+            className={`px-3 py-1 rounded ${filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400 hover:text-white'}`}
+          >
+            All ({runs.length})
+          </button>
+          {(['queued', 'running', 'completed', 'failed', 'cancelled'] as const).map(s => (
+            statusCounts[s] > 0 && (
+              <button
+                key={s}
+                onClick={() => setFilter(s)}
+                className={`px-3 py-1 rounded ${filter === s ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400 hover:text-white'}`}
+              >
+                {s} ({statusCounts[s]})
+              </button>
+            )
+          ))}
         </div>
       </div>
 
-      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-        <h3 className="text-lg font-semibold text-blue-300 mb-4">Triggers</h3>
-        <p className="text-gray-400 text-sm">
-          Schedule, API, and event triggers launch runs. Missed schedules coalesce on resume.
-          Critical triggers keep firing during spend halt (critical floor).
-        </p>
-      </div>
+      {runs.length === 0 ? (
+        <div className="bg-gray-800 rounded-lg p-8 border border-gray-700 text-center">
+          <p className="text-gray-400">No runs found.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {runs.map((run) => (
+            <div key={run.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="font-medium text-gray-200">Run {run.id.slice(0, 8)}</p>
+                  <p className="text-sm text-gray-400 mt-1">
+                    Agent: {run.agentId}
+                    {run.workspaceId ? ` · Workspace: ${run.workspaceId}` : ''}
+                    {run.initiativeId ? ` · Initiative: ${run.initiativeId}` : ''}
+                  </p>
+                  {run.prompt && (
+                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">{run.prompt}</p>
+                  )}
+                </div>
+                <span className={`text-xs px-2 py-1 rounded ${
+                  run.status === 'completed' ? 'bg-green-900/50 text-green-400' :
+                  run.status === 'running' ? 'bg-blue-900/50 text-blue-400' :
+                  run.status === 'failed' ? 'bg-red-900/50 text-red-400' :
+                  run.status === 'queued' ? 'bg-yellow-900/50 text-yellow-400' :
+                  'bg-gray-700 text-gray-300'
+                }`}>
+                  {run.status}
+                </span>
+              </div>
+              <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                {run.costTokens != null && <span>Tokens: {run.costTokens}</span>}
+                {run.costUsd != null && <span>Cost: ${run.costUsd}</span>}
+                {run.startedAt && <span>Started: {new Date(run.startedAt * 1000).toLocaleString()}</span>}
+                {run.completedAt && <span>Completed: {new Date(run.completedAt * 1000).toLocaleString()}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
