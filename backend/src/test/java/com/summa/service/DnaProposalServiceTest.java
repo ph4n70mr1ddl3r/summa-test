@@ -25,6 +25,9 @@ class DnaProposalServiceTest {
     @Mock
     private DnaDomainService domainService;
 
+    @Mock
+    private MemberService memberService;
+
     @InjectMocks
     private DnaProposalService proposalService;
 

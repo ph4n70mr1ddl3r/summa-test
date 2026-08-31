@@ -187,12 +187,31 @@ public class OffboardingWalkService {
             }
         }
 
-        // OFB-016: Transfer authored proposals; leave others untouched
+        // OFB-016: Transfer authored proposals — owned-domain proposals transfer to successor,
+        // member-scoped proposals are auto-withdrawn with audit note.
+        // We need to distinguish: proposals for domains the departing human owned go to successor;
+        // all other open proposals by the departed member are withdrawn.
         for (DnaProposal prop : proposalService.findAllOpen()) {
-            if (humanId.equals(prop.getProposedBy())) {
+            if (!humanId.equals(prop.getProposedBy())) continue;
+            // Check if this proposal belongs to a domain owned by the departing human
+            boolean ownsDomain = false;
+            if (prop.getDomainId() != null) {
+                Optional<DnaDomain> domOpt = domainService.findById(prop.getDomainId());
+                ownsDomain = domOpt.filter(d -> humanId.equals(d.getOwnerHumanId())).isPresent();
+            }
+            if (ownsDomain) {
                 prop.setProposedBy(finalTargetOwner);
                 proposalRepository.save(prop);
                 proposalsTransferred++;
+                auditService.logSystem("OFFBOARD_TRANSFER_PROPOSAL", "dna_proposal", prop.getId(),
+                    String.format("{\"domainId\":\"%s\",\"newProposer\":\"%s\"}", prop.getDomainId(), finalTargetOwner));
+            } else {
+                // Member-scoped proposal: auto-withdraw with audit note
+                prop.setStatus("withdrawn");
+                proposalRepository.save(prop);
+                proposalsTransferred++;
+                auditService.logSystem("OFFBOARD_WITHDRAW_PROPOSAL", "dna_proposal", prop.getId(),
+                    "{\"reason\":\"member_departed\"}");
             }
         }
 

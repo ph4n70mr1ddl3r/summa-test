@@ -4,10 +4,14 @@ import com.summa.service.AgentService;
 import com.summa.model.Agent;
 import com.summa.service.AuditService;
 import com.summa.model.AuditEvent;
+import com.summa.service.AskService;
+import com.summa.repository.AskRepository;
+import com.summa.model.Ask;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
+import java.time.Instant;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -19,11 +23,16 @@ public class AgentController {
     private final AgentService agentService;
     private final AuditService auditService;
     private final WriteGate writeGate;
+    private final AskService askService;
+    private final AskRepository askRepository;
 
-    public AgentController(AgentService agentService, AuditService auditService, WriteGate writeGate) {
+    public AgentController(AgentService agentService, AuditService auditService, WriteGate writeGate,
+                           AskService askService, AskRepository askRepository) {
         this.agentService = agentService;
         this.auditService = auditService;
         this.writeGate = writeGate;
+        this.askService = askService;
+        this.askRepository = askRepository;
     }
 
     @GetMapping
@@ -141,9 +150,57 @@ public class AgentController {
 
     @PostMapping("/{id}/promote")
     public ResponseEntity<?> promote(@PathVariable String id, @RequestBody Map<String, String> body) {
-        // API-033: files promotion ask for customRole hire
-        // TODO: implement promotion ask creation per TPL-040..046
-        return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_IMPLEMENTED)
-                .body(Map.of("code", "not_implemented", "message", "Promotion ask creation is not yet implemented"));
+        // API-033: files promotion ask for customRole hire per TPL-040..046
+        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
+        try {
+            com.summa.model.Agent agent = agentService.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Agent not found: " + id));
+            // TPL-040: Only customRole hires (template_id null) are eligible for promotion
+            if (agent.getTemplateId() != null) {
+                throw new IllegalStateException("Only customRole hires (no template) can be promoted");
+            }
+            // TPL-046: One live promotion ask per hire — refuse if already pending
+            List<com.summa.model.Ask> pendingPromoAsks = askRepository.findByToAndStatusPending(actor).stream()
+                    .filter(a -> "promotion".equals(a.getKind()))
+                    .toList();
+            boolean hasPromoForAgent = false;
+            for (com.summa.model.Ask a : pendingPromoAsks) {
+                try {
+                    com.fasterxml.jackson.databind.JsonNode node = new com.fasterxml.jackson.databind.ObjectMapper().readTree(a.getPayload());
+                    if (id.equals(node.get("agentId").asText())) {
+                        hasPromoForAgent = true;
+                        break;
+                    }
+                } catch (Exception ignored) {}
+            }
+            if (hasPromoForAgent) {
+                throw new IllegalStateException("A promotion ask already exists for this hire");
+            }
+            String placement = body.get("placement");
+            if (placement == null || placement.isBlank()) {
+                throw new IllegalArgumentException("placement is required (template name or 'new:<name>:<version>')");
+            }
+            // TPL-040: Snapshot identity files and effective scopes at creation
+            String snapshotPayload = String.format(
+                "{\"agentId\":\"%s\",\"agentName\":\"%s\",\"class\":\"%s\",\"placement\":\"%s\",\"scopes\":\"%s\"}",
+                id, agent.getName(), agent.getAgentClass(), placement,
+                agent.getTemplateId() != null ? "templated" : "custom");
+            askService.create("promotion", actor, "admins",
+                snapshotPayload, "standard", "deny", 1,
+                Instant.now().plusSeconds(7 * 86400L), null, null);
+            auditService.log(actor, "PROMOTE_REQUEST", "agent", id,
+                String.format("{\"placement\":\"%s\"}", placement));
+            return ResponseEntity.ok(Map.of("message", "Promotion ask filed", "agentId", id, "placement", placement));
+        } catch (IllegalArgumentException e) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "validation", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
+        } catch (IllegalStateException e) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "gate", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+        }
     }
 }

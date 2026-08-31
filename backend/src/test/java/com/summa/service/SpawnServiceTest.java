@@ -3,6 +3,8 @@ package com.summa.service;
 import com.summa.repository.SpawnRequestRepository;
 import com.summa.repository.RoleTemplateRepository;
 import com.summa.repository.AgentRepository;
+import com.summa.repository.WorkspaceRepository;
+import com.summa.repository.DnaDomainRepository;
 import com.summa.model.SpawnRequest;
 import com.summa.model.Agent;
 import com.summa.model.Human;
@@ -36,6 +38,18 @@ class SpawnServiceTest {
 
     @Mock
     private MemberService memberService;
+
+    @Mock
+    private WorkspaceRepository workspaceRepository;
+
+    @Mock
+    private DnaDomainRepository domainRepository;
+
+    @Mock
+    private AskService askService;
+
+    @Mock
+    private SpendLedgerService spendLedgerService;
 
     @InjectMocks
     private SpawnService spawnService;

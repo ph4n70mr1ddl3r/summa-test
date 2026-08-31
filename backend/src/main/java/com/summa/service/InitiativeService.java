@@ -12,6 +12,8 @@ import com.summa.model.BoardTask;
 import com.summa.model.Ask;
 import com.summa.model.Trigger;
 import com.summa.model.SpawnRequest;
+import com.summa.model.Human;
+import com.summa.model.Agent;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,13 +41,14 @@ public class InitiativeService {
     private final DnaGoalRepository dnaGoalRepository;
     private final DnaDecisionRepository dnaDecisionRepository;
     private final DnaGoalService dnaGoalService;
+    private final MemberService memberService;
 
     public InitiativeService(InitiativeRepository initiativeRepository, BoardTaskRepository boardTaskRepository,
                               AuditService auditService, AskService askService,
                               AskRepository askRepository, TriggerRepository triggerRepository,
                               SpawnRequestRepository spawnRequestRepository,
                               DnaGoalRepository dnaGoalRepository, DnaDecisionRepository dnaDecisionRepository,
-                              DnaGoalService dnaGoalService) {
+                              DnaGoalService dnaGoalService, MemberService memberService) {
         this.initiativeRepository = initiativeRepository;
         this.boardTaskRepository = boardTaskRepository;
         this.auditService = auditService;
@@ -56,12 +59,13 @@ public class InitiativeService {
         this.dnaGoalRepository = dnaGoalRepository;
         this.dnaDecisionRepository = dnaDecisionRepository;
         this.dnaGoalService = dnaGoalService;
+        this.memberService = memberService;
     }
 
     @Transactional
     public Initiative create(String id, String title, String sponsor, String lead,
-                               String goalRef, String decisionRef, Instant deadline,
-                               String dependsOn) {
+                                String goalRef, String decisionRef, Instant deadline,
+                                String dependsOn) {
         // Validate referenced entities exist
         if (goalRef != null && !goalRef.isBlank()) {
             dnaGoalRepository.findById(goalRef).orElseThrow(
@@ -73,6 +77,30 @@ public class InitiativeService {
         }
         validateKeyedUnion(sponsor, "sponsor");
         validateKeyedUnion(lead, "lead");
+
+        // INT-070: Cycle detection in depends_on — edges name non-closed rows only
+        if (dependsOn != null && !dependsOn.isBlank() && !dependsOn.equals("[]")) {
+            try {
+                List<String> depIds = OBJECT_MAPPER.readValue(dependsOn,
+                    new com.fasterxml.jackson.core.type.TypeReference<List<String>>() {});
+                for (String depId : depIds) {
+                    findById(depId).orElseThrow(
+                        () -> new IllegalArgumentException("Dependency initiative not found: " + depId));
+                    Initiative dep = findById(depId).orElseThrow();
+                    if ("closed".equals(dep.getStatus())) {
+                        throw new IllegalArgumentException(
+                            "Cannot depend on closed initiative: " + depId);
+                    }
+                }
+                // Check for cycles using DFS
+                if (wouldCreateCycle(id, depIds)) {
+                    throw new IllegalArgumentException(
+                        "Adding these dependencies would create a cycle: " + depIds);
+                }
+            } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+                throw new IllegalArgumentException("Invalid dependsOn format: " + e.getMessage());
+            }
+        }
 
         Initiative initiative = new Initiative();
         initiative.setId(id);
@@ -88,6 +116,33 @@ public class InitiativeService {
         auditService.log(sponsor, "CREATE", "initiative", id,
             String.format("{\"title\":\"%s\",\"lead\":\"%s\"}", title, lead));
         return saved;
+    }
+
+    /**
+     * INT-070: Detect if adding deps to the new initiative (id) would create a cycle.
+     * Walks the dependency graph from each dep; if any path reaches 'id', there's a cycle.
+     */
+    private boolean wouldCreateCycle(String newId, List<String> deps) {
+        java.util.Set<String> visited = new java.util.HashSet<>();
+        return hasPathTo(newId, deps, visited);
+    }
+
+    private boolean hasPathTo(String target, List<String> currentDeps, java.util.Set<String> visited) {
+        for (String depId : currentDeps) {
+            if (depId.equals(target)) return true;
+            if (visited.contains(depId)) continue;
+            visited.add(depId);
+            Optional<Initiative> depOpt = initiativeRepository.findById(depId);
+            if (depOpt.isPresent() && depOpt.get().getDependsOn() != null) {
+                try {
+                    List<String> grandchildDeps = OBJECT_MAPPER.readValue(
+                        depOpt.get().getDependsOn(),
+                        new com.fasterxml.jackson.core.type.TypeReference<List<String>>() {});
+                    if (hasPathTo(target, grandchildDeps, visited)) return true;
+                } catch (Exception ignored) {}
+            }
+        }
+        return false;
     }
 
     public Optional<Initiative> findById(String id) {
@@ -115,6 +170,38 @@ public class InitiativeService {
             throw new IllegalStateException("Cannot activate initiative with status: " + initiative.getStatus());
         }
 
+        // INT-020: If actor is not the sponsor, route an activation ask to the sponsor
+        // with expiry=deny. The sponsor's own opens go active outright.
+        if (!initiative.getSponsor().equals(actor)) {
+            // INT-021: Re-validate goal liveness at respond time
+            if (initiative.getGoalRef() != null && !initiative.getGoalRef().isBlank()) {
+                Optional<com.summa.model.DnaGoal> goalOpt = dnaGoalRepository.findById(initiative.getGoalRef());
+                if (goalOpt.isEmpty() || !"active".equals(goalOpt.get().getStatus())) {
+                    // Goal died mid-wait: audit-only activation, file successor ask
+                    auditService.logSystem("ACTIVATE_GOAL_DIED", "initiative", id,
+                        String.format("{\"actor\":\"%s\",\"goalRef\":\"%s\"}", actor, initiative.getGoalRef()));
+                    String payload = String.format(
+                        "{\"initiativeId\":\"%s\",\"reason\":\"goal_died_during_activation\",\"goalRef\":\"%s\"}",
+                        id, initiative.getGoalRef());
+                    askService.create("question", "system", initiative.getSponsor(),
+                        payload, "bulk", "escalate", 1,
+                        Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
+                    return initiative;
+                }
+            }
+            // Route activation ask to sponsor
+            String payload = String.format(
+                "{\"initiativeId\":\"%s\",\"title\":\"%s\",\"createdBy\":\"%s\"}",
+                id, initiative.getTitle(), actor);
+            askService.create("approval", "system", initiative.getSponsor(),
+                payload, "standard", "deny", 1,
+                Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
+            auditService.logSystem("ACTIVATE_REQUESTED", "initiative", id,
+                String.format("{\"actor\":\"%s\",\"sponsor\":\"%s\"}", actor, initiative.getSponsor()));
+            return initiative;
+        }
+
+        // Sponsor opening their own initiative: activate directly
         initiative.setStatus("active");
         Initiative saved = initiativeRepository.save(initiative);
         auditService.log(actor, "ACTIVATE", "initiative", id, null);
@@ -201,13 +288,45 @@ public class InitiativeService {
                 String.format("{\"initiativeId\":\"%s\",\"reason\":\"initiative_closed\"}", id));
         }
 
-        // Triggers are workspace-scoped, not initiative-scoped; no initiative-level trigger filtering available
+        // INT-042: File a retrospective ask (kind question, tier bulk, expiry escalate)
+        // to the lead — the sponsor when the lead is non-active.
+        String retrospectiveLead = isMemberActive(initiative.getLead())
+            ? initiative.getLead() : initiative.getSponsor();
+        try {
+            String retroPayload = String.format(
+                "{\"initiativeId\":\"%s\",\"title\":\"%s\",\"outcome\":\"closed\"}",
+                id, initiative.getTitle());
+            askService.create("question", "system", retrospectiveLead,
+                retroPayload, "bulk", "escalate", 1,
+                Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
+        } catch (Exception e) {
+            auditService.logSystem("CLOSE_RETRO_ASK_FAIL", "initiative", id,
+                String.format("{\"error\":\"%s\"}", e.getMessage()));
+        }
 
         initiative.setStatus("closed");
         initiative.setClosedAt(Instant.now());
         Initiative saved = initiativeRepository.save(initiative);
         auditService.log(actor, "CLOSE", "initiative", id, null);
         return saved;
+    }
+
+    /**
+     * Check whether a member ID refers to an active member (non-deactivated human or active agent).
+     */
+    private boolean isMemberActive(String memberId) {
+        if (memberId == null || memberId.isBlank()) return false;
+        // Check if it's a human
+        Optional<Human> humanOpt = memberService.findHuman(memberId);
+        if (humanOpt.isPresent()) {
+            return humanOpt.get().isActive();
+        }
+        // Check if it's an agent
+        Optional<Agent> agentOpt = memberService.findAgent(memberId);
+        if (agentOpt.isPresent()) {
+            return agentOpt.get().isActive();
+        }
+        return false;
     }
 
     /**

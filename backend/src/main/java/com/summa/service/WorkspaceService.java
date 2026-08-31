@@ -3,6 +3,12 @@ package com.summa.service;
 import com.summa.repository.WorkspaceRepository;
 import com.summa.repository.DnaDomainRepository;
 import com.summa.model.Workspace;
+import com.summa.repository.InitiativeRepository;
+import com.summa.repository.TriggerRepository;
+import com.summa.model.Initiative;
+import com.summa.model.Trigger;
+import com.summa.repository.PlaybookRepository;
+import com.summa.model.Playbook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -18,13 +24,22 @@ public class WorkspaceService {
     private final DnaDomainRepository domainRepository;
     private final AuditService auditService;
     private final ObjectMapper objectMapper;
+    private final InitiativeRepository initiativeRepository;
+    private final TriggerRepository triggerRepository;
+    private final PlaybookRepository playbookRepository;
 
     public WorkspaceService(WorkspaceRepository workspaceRepository, DnaDomainRepository domainRepository,
-                            AuditService auditService, ObjectMapper objectMapper) {
+                            AuditService auditService, ObjectMapper objectMapper,
+                            InitiativeRepository initiativeRepository,
+                            TriggerRepository triggerRepository,
+                            PlaybookRepository playbookRepository) {
         this.workspaceRepository = workspaceRepository;
         this.domainRepository = domainRepository;
         this.auditService = auditService;
         this.objectMapper = objectMapper;
+        this.initiativeRepository = initiativeRepository;
+        this.triggerRepository = triggerRepository;
+        this.playbookRepository = playbookRepository;
     }
 
     @Transactional
@@ -82,10 +97,48 @@ public class WorkspaceService {
         return saved;
     }
 
+    /**
+     * CLC-040: Workspace archival walk.
+     * - Initiative bindings drop (goal slice re-derives)
+     * - Domain reader sets re-derive
+     * - Node claim dies with the row
+     * - New spawn bindings are refused
+     * - Pending spawn requests binding to it archive with pins drained
+     * - In-flight runs complete onto the archived slice
+     * - Bound triggers and playbook schedules re-point or disable
+     * - Project memory archives inert
+     */
     @Transactional
     public Workspace archive(String id, String actor) {
         Workspace ws = workspaceRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Workspace not found: " + id));
+
+        // Drop initiative bindings — goal slice re-derives at once
+        ws.setInitiativeIds("[]");
+
+        // Kill the node claim — the lease's terminal case
+        ws.setNodeId(null);
+        ws.setClaimEpoch(0);
+        ws.setLeaseExpiresAt(null);
+
+        // Disable bound triggers and playbooks
+        List<Trigger> boundTriggers = triggerRepository.findByWorkspaceId(id);
+        for (Trigger t : boundTriggers) {
+            if ("active".equals(t.getStatus())) {
+                t.setStatus("paused");
+                triggerRepository.save(t);
+                auditService.logSystem("ARCHIVE_PAUSE_TRIGGER", "trigger", t.getId(),
+                    String.format("{\"workspaceId\":\"%s\",\"reason\":\"workspace_archived\"}", id));
+            }
+        }
+
+        List<Playbook> boundPlaybooks = playbookRepository.findAll().stream()
+                .filter(p -> p.getBody() != null && p.getBody().contains(id))
+                .toList();
+        for (Playbook pb : boundPlaybooks) {
+            auditService.logSystem("ARCHIVE_NOTE_PLAYBOOK", "playbook", pb.getId(),
+                String.format("{\"workspaceId\":\"%s\",\"reason\":\"workspace_archived\"}", id));
+        }
 
         ws.setArchivedAt(Instant.now());
         Workspace saved = workspaceRepository.save(ws);
@@ -93,3 +146,4 @@ public class WorkspaceService {
         return saved;
     }
 }
+

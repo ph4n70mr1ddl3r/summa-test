@@ -2,6 +2,9 @@ package com.summa.service;
 
 import com.summa.repository.WorkspaceRepository;
 import com.summa.repository.DnaDomainRepository;
+import com.summa.repository.InitiativeRepository;
+import com.summa.repository.TriggerRepository;
+import com.summa.repository.PlaybookRepository;
 import com.summa.model.Workspace;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,6 +30,15 @@ class WorkspaceServiceTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private InitiativeRepository initiativeRepository;
+
+    @Mock
+    private TriggerRepository triggerRepository;
+
+    @Mock
+    private PlaybookRepository playbookRepository;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private WorkspaceService workspaceService;
@@ -34,7 +46,8 @@ class WorkspaceServiceTest {
     @SuppressWarnings("unchecked")
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
-        workspaceService = new WorkspaceService(workspaceRepository, domainRepository, auditService, objectMapper);
+        workspaceService = new WorkspaceService(workspaceRepository, domainRepository, auditService, objectMapper,
+            initiativeRepository, triggerRepository, playbookRepository);
     }
 
     @Test

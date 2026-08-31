@@ -6,6 +6,10 @@ import com.summa.repository.RoleTemplateRepository;
 import com.summa.model.RoleTemplate;
 import com.summa.repository.AgentRepository;
 import com.summa.model.Agent;
+import com.summa.repository.WorkspaceRepository;
+import com.summa.model.Workspace;
+import com.summa.repository.DnaDomainRepository;
+import com.summa.model.DnaDomain;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +18,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.Map;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class SpawnService {
@@ -23,19 +29,32 @@ public class SpawnService {
     private final RoleTemplateRepository templateRepository;
     private final AgentRepository agentRepository;
     private final MemberService memberService;
+    private final WorkspaceRepository workspaceRepository;
+    private final DnaDomainRepository domainRepository;
+    private final AskService askService;
+    private final SpendLedgerService spendLedgerService;
 
     @Value("${summa.spawn.depth-cap:2}")
     private int depthCap;
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     public SpawnService(SpawnRequestRepository spawnRepository, AuditService auditService,
                           GovernanceService governanceService, RoleTemplateRepository templateRepository,
-                          AgentRepository agentRepository, MemberService memberService) {
+                          AgentRepository agentRepository, MemberService memberService,
+                          WorkspaceRepository workspaceRepository,
+                          DnaDomainRepository domainRepository,
+                          AskService askService, SpendLedgerService spendLedgerService) {
         this.spawnRepository = spawnRepository;
         this.auditService = auditService;
         this.governanceService = governanceService;
         this.templateRepository = templateRepository;
         this.agentRepository = agentRepository;
         this.memberService = memberService;
+        this.workspaceRepository = workspaceRepository;
+        this.domainRepository = domainRepository;
+        this.askService = askService;
+        this.spendLedgerService = spendLedgerService;
         this.depthCap = Math.max(2, depthCap);
     }
 
@@ -78,6 +97,43 @@ public class SpawnService {
             }
         }
 
+        // SPW-040: Determine the approval gate for persistent hires
+        // Gate routes to the owner of the primary domain of the hire's primary workspace
+        String gateTarget = null;
+        if ("persistent".equals(effectiveSpawnClass) && workspaceBindings != null && !workspaceBindings.isBlank()) {
+            try {
+                JsonNode bindings = OBJECT_MAPPER.readTree(workspaceBindings);
+                if (bindings.isArray() && bindings.size() > 0) {
+                    // Primary workspace is the first-bound entry
+                    String primaryWorkspaceId = bindings.get(0).asText();
+                    Optional<Workspace> wsOpt = workspaceRepository.findById(primaryWorkspaceId);
+                    if (wsOpt.isPresent()) {
+                        Workspace ws = wsOpt.get();
+                        String domainIdsStr = ws.getDomainIds();
+                        if (domainIdsStr != null && !domainIdsStr.isBlank() && !domainIdsStr.equals("[]")) {
+                            JsonNode domIds = OBJECT_MAPPER.readTree(domainIdsStr);
+                            if (domIds.isArray() && domIds.size() > 0) {
+                                // DAT-090: first entry is primary domain
+                                String primaryDomainId = domIds.get(0).asText();
+                                Optional<DnaDomain> domOpt = domainRepository.findById(primaryDomainId);
+                                if (domOpt.isPresent()) {
+                                    gateTarget = domOpt.get().getOwnerHumanId();
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                auditService.logSystem("SPAWN_PARSE_BINDINGS_FAIL", "spawn_request", UUID.randomUUID().toString(),
+                    String.format("{\"error\":\"%s\"}", e.getMessage()));
+            }
+        }
+
+        // SPW-040 fallback: multi-domain routes to primary domain owner; domainless/primary empty → admin
+        if (gateTarget == null || gateTarget.isBlank()) {
+            gateTarget = OffboardingWalkService.ADMIN_BROADCAST;
+        }
+
         SpawnRequest request = new SpawnRequest();
         request.setId(UUID.randomUUID().toString());
         request.setRequesterId(requesterId);
@@ -91,10 +147,11 @@ public class SpawnService {
         request.setTtlHours(ttlHours);
         request.setRequestedByHumanId(requestedByHumanId);
         request.setStatus("requested");
+        request.setGateTarget(gateTarget);
 
         SpawnRequest saved = spawnRepository.save(request);
         auditService.log(actor, "CREATE_SPAWN", "spawn_request", saved.getId(),
-            String.format("{\"class\":\"%s\",\"templateId\":\"%s\"}", effectiveSpawnClass, templateId));
+            String.format("{\"class\":\"%s\",\"templateId\":\"%s\",\"gateTarget\":\"%s\"}", effectiveSpawnClass, templateId, gateTarget));
         return saved;
     }
 

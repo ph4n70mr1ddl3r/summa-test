@@ -483,6 +483,7 @@ CREATE TABLE IF NOT EXISTS spawn_requests (
 
 CREATE INDEX IF NOT EXISTS idx_spawn_requests_requester ON spawn_requests(requester_id);
 CREATE INDEX IF NOT EXISTS idx_spawn_requests_status ON spawn_requests(status);
+CREATE INDEX IF NOT EXISTS idx_spawn_requests_gate ON spawn_requests(gate_target);
 
 CREATE TABLE IF NOT EXISTS messages (
     id TEXT PRIMARY KEY,

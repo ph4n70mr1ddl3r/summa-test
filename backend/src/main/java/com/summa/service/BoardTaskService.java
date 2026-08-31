@@ -2,6 +2,8 @@ package com.summa.service;
 
 import com.summa.repository.BoardTaskRepository;
 import com.summa.model.BoardTask;
+import com.summa.model.Human;
+import com.summa.model.Agent;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -13,16 +15,19 @@ import java.util.UUID;
 public class BoardTaskService {
     private final BoardTaskRepository taskRepository;
     private final AuditService auditService;
+    private final MemberService memberService;
 
-    public BoardTaskService(BoardTaskRepository taskRepository, AuditService auditService) {
+    public BoardTaskService(BoardTaskRepository taskRepository, AuditService auditService,
+                            MemberService memberService) {
         this.taskRepository = taskRepository;
         this.auditService = auditService;
+        this.memberService = memberService;
     }
 
     @Transactional
     public BoardTask create(String title, String description, String createdBy, 
-                             String assigneeMemberId, String initiativeId, Integer priority,
-                             Instant dueAt) {
+                              String assigneeMemberId, String initiativeId, Integer priority,
+                              Instant dueAt) {
         BoardTask task = new BoardTask();
         task.setId(UUID.randomUUID().toString());
         task.setTitle(title);
@@ -59,6 +64,10 @@ public class BoardTaskService {
         return taskRepository.findByStatus(status);
     }
 
+    /**
+     * ORG-031: Tasks are assignable to humans or agents, never viewers, and the assignee
+     * must be active at write. Suspension freezes an assignee's tasks (handled by the walk).
+     */
     @Transactional
     public BoardTask assign(String id, String assigneeMemberId, String actor) {
         BoardTask task = taskRepository.findById(id)
@@ -66,6 +75,27 @@ public class BoardTaskService {
 
         if (!"open".equals(task.getStatus())) {
             throw new IllegalStateException("Task is not open: " + task.getStatus());
+        }
+
+        // ORG-031: Refuse viewer assignees
+        Optional<Human> assigneeHuman = memberService.findHuman(assigneeMemberId);
+        if (assigneeHuman.isPresent()) {
+            if (memberService.isViewer(assigneeHuman.get())) {
+                throw new IllegalStateException("Viewers cannot be assigned board tasks");
+            }
+            if (!assigneeHuman.get().isActive()) {
+                throw new IllegalStateException("Non-active members cannot be assigned board tasks");
+            }
+        } else {
+            // Check if it's an agent
+            Optional<Agent> assigneeAgent = memberService.findAgent(assigneeMemberId);
+            if (assigneeAgent.isPresent()) {
+                if (!assigneeAgent.get().isActive()) {
+                    throw new IllegalStateException("Suspended/retired agents cannot be assigned board tasks");
+                }
+            } else {
+                throw new IllegalArgumentException("Assignee not found: " + assigneeMemberId);
+            }
         }
 
         task.setAssigneeMemberId(assigneeMemberId);
@@ -100,3 +130,4 @@ public class BoardTaskService {
         return saved;
     }
 }
+

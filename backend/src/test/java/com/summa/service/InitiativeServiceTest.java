@@ -57,6 +57,9 @@ class InitiativeServiceTest {
     @Mock
     private DnaGoalService dnaGoalService;
 
+    @Mock
+    private MemberService memberService;
+
     @InjectMocks
     private InitiativeService initiativeService;
 
@@ -80,6 +83,7 @@ class InitiativeServiceTest {
         Initiative init = new Initiative();
         init.setId("i1");
         init.setStatus("proposed");
+        init.setSponsor("admin");
         when(initiativeRepository.findById("i1")).thenReturn(Optional.of(init));
         when(initiativeRepository.save(any())).thenReturn(init);
 

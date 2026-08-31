@@ -55,6 +55,9 @@ public class SpawnRequest {
     @Column(name = "agent_id", length = 36)
     private String agentId;
 
+    @Column(name = "gate_target", length = 36)
+    private String gateTarget;
+
     @Column(name = "created_at", nullable = false)
     @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant createdAt;
@@ -98,6 +101,8 @@ public class SpawnRequest {
     public void setApprovedAt(Instant approvedAt) { this.approvedAt = approvedAt; }
     public String getAgentId() { return agentId; }
     public void setAgentId(String agentId) { this.agentId = agentId; }
+    public String getGateTarget() { return gateTarget; }
+    public void setGateTarget(String gateTarget) { this.gateTarget = gateTarget; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     public boolean isPending() { return "requested".equals(status); }

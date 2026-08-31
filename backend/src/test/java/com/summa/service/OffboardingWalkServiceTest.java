@@ -213,14 +213,22 @@ class OffboardingWalkServiceTest {
         when(memberService.findHuman("h1")).thenReturn(Optional.of(human));
         when(memberService.saveHuman(any())).thenReturn(human);
 
+        // Domain owned by departing human
+        DnaDomain domain = new DnaDomain();
+        domain.setId("d1");
+        domain.setOwnerHumanId("h1");
+        when(domainService.findById("d1")).thenReturn(Optional.of(domain));
+        when(domainService.findAllIncludingArchived()).thenReturn(java.util.List.of(domain));
+
+        // Proposal for owned domain — should transfer to successor
         DnaProposal prop = new DnaProposal();
         prop.setId("p1");
         prop.setProposedBy("h1");
         prop.setStatus("open");
+        prop.setDomainId("d1");
         when(proposalService.findAllOpen()).thenReturn(java.util.List.of(prop));
         when(proposalRepository.save(any())).thenReturn(prop);
 
-        when(domainService.findAllIncludingArchived()).thenReturn(java.util.List.of());
         when(agentService.findByOwner("h1")).thenReturn(java.util.List.of());
         when(initiativeService.findAllActive()).thenReturn(java.util.List.of());
         when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of());
@@ -234,6 +242,46 @@ class OffboardingWalkServiceTest {
         var result = walkService.walkOffboard("h1", "h2", "admin1");
 
         assertEquals("h2", prop.getProposedBy());
+        assertEquals(1, result.get("proposalsTransferred"));
+    }
+
+    @Test
+    void walkOffboard_withdrawsMemberScopedProposals() {
+        Human human = new Human();
+        human.setId("h1");
+        human.setRbac("member");
+        when(memberService.findHuman("h1")).thenReturn(Optional.of(human));
+        when(memberService.saveHuman(any())).thenReturn(human);
+
+        // Domain NOT owned by departing human
+        DnaDomain domain = new DnaDomain();
+        domain.setId("d1");
+        domain.setOwnerHumanId("other");
+        when(domainService.findById("d1")).thenReturn(Optional.of(domain));
+        when(domainService.findAllIncludingArchived()).thenReturn(java.util.List.of(domain));
+
+        // Proposal for non-owned domain — should be withdrawn
+        DnaProposal prop = new DnaProposal();
+        prop.setId("p1");
+        prop.setProposedBy("h1");
+        prop.setStatus("open");
+        prop.setDomainId("d1");
+        when(proposalService.findAllOpen()).thenReturn(java.util.List.of(prop));
+        when(proposalRepository.save(any())).thenReturn(prop);
+
+        when(agentService.findByOwner("h1")).thenReturn(java.util.List.of());
+        when(initiativeService.findAllActive()).thenReturn(java.util.List.of());
+        when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of());
+        when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
+        when(groupMembershipRepository.findById_MemberId("h1")).thenReturn(java.util.List.of());
+        when(askRepository.findByStatus("pending")).thenReturn(java.util.List.of());
+        when(boardTaskRepository.findByAssigneeMemberId("h1")).thenReturn(java.util.List.of());
+        when(patRepository.findByMemberId("h1")).thenReturn(java.util.List.of());
+        when(groupRepository.findAll()).thenReturn(java.util.List.of());
+
+        var result = walkService.walkOffboard("h1", "h2", "admin1");
+
+        assertEquals("withdrawn", prop.getStatus());
         assertEquals(1, result.get("proposalsTransferred"));
     }
 

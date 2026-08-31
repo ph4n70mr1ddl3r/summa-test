@@ -15,20 +15,23 @@ public class DnaProposalService {
     private final DnaProposalRepository proposalRepository;
     private final AuditService auditService;
     private final DnaDomainService domainService;
+    private final MemberService memberService;
 
     private static final Pattern KEYED_UNION_PATTERN = Pattern.compile("^[ha]?:.+$|^[a-zA-Z0-9_-]+$");
 
     public DnaProposalService(DnaProposalRepository proposalRepository, 
-                               AuditService auditService,
-                               DnaDomainService domainService) {
+                                AuditService auditService,
+                                DnaDomainService domainService,
+                                MemberService memberService) {
         this.proposalRepository = proposalRepository;
         this.auditService = auditService;
         this.domainService = domainService;
+        this.memberService = memberService;
     }
 
     @Transactional
     public DnaProposal create(String id, String kind, String payload, String proposedBy,
-                                String provenance, String domainId) {
+                                 String provenance, String domainId) {
         validateKeyedUnion(proposedBy, "proposedBy");
         DnaProposal proposal = new DnaProposal();
         proposal.setId(id);
@@ -63,6 +66,10 @@ public class DnaProposalService {
         return proposalRepository.findAllOpen();
     }
 
+    /**
+     * DWP-050: Separation of duties — when sod is on for the proposal's domain,
+     * the proposer cannot be the publisher. Route publish to the admin broadcast.
+     */
     @Transactional
     public DnaProposal publish(String id, String reviewedBy, String actor) {
         DnaProposal proposal = proposalRepository.findById(id)
@@ -71,14 +78,29 @@ public class DnaProposalService {
         if (!"open".equals(proposal.getStatus())) {
             throw new IllegalStateException("Proposal is not open: " + proposal.getStatus());
         }
-        
+
+        // DWP-050: Check SoD — if the domain has sod enabled and the proposer is the reviewer,
+        // route to admin broadcast instead
+        String actualReviewer = reviewedBy;
+        if (proposal.getDomainId() != null && !proposal.getDomainId().isBlank()) {
+            Optional<DnaDomain> domainOpt = domainService.findById(proposal.getDomainId());
+            if (domainOpt.isPresent() && "reviewer-distinct".equals(domainOpt.get().getSod())) {
+                if (proposal.getProposedBy().equals(reviewedBy)) {
+                    // SoD breach: route publish to admin broadcast
+                    actualReviewer = OffboardingWalkService.ADMIN_BROADCAST;
+                    auditService.logSystem("SOD_ROUTE_TO_ADMIN", "dna_proposal", id,
+                        "{\"reason\":\"separation_of_duties\",\"proposer\":\"" + proposal.getProposedBy() + "\"}");
+                }
+            }
+        }
+
         proposal.setStatus("published");
-        proposal.setReviewedBy(reviewedBy);
+        proposal.setReviewedBy(actualReviewer);
         proposal.setReviewedAt(Instant.now());
         
         DnaProposal saved = proposalRepository.save(proposal);
         auditService.log(actor, "PUBLISH", "dna_proposal", id, 
-            String.format("{\"reviewedBy\":\"%s\"}", reviewedBy));
+            String.format("{\"reviewedBy\":\"%s\"}", actualReviewer));
         return saved;
     }
 
@@ -143,3 +165,4 @@ public class DnaProposalService {
         }
     }
 }
+
