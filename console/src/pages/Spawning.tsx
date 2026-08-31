@@ -9,17 +9,21 @@ export default function Spawning() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    let aborted = false
     Promise.all([
-      api.spawn.list().catch((e) => { console.error('Failed to load spawn requests:', e); return [] as SpawnRequest[]; }),
-      api.spawn.stats().catch((e) => { console.error('Failed to load spawn stats:', e); return null; }),
+      api.spawn.list(),
+      api.spawn.stats(),
     ]).then(([r, s]) => {
+      if (aborted) return
       setRequests(r)
       setStats(s as { requested: number; approved: number; archived: number } | null)
       setLoading(false)
-    }).catch(() => {
-      setError('Failed to load spawn data')
+    }).catch((e) => {
+      if (aborted) return
+      setError('Failed to load spawn data: ' + (e?.message || String(e)))
       setLoading(false)
     })
+    return () => { aborted = true }
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>

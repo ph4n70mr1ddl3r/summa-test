@@ -15,6 +15,8 @@ import com.summa.model.SpawnRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +25,7 @@ import java.util.Optional;
 public class InitiativeService {
     private static final long STALL_CHECK_INTERVAL_MS = 300000; // 5 minutes
     private static final long STALL_ASK_DEADLINE_SECONDS = 7 * 86400L; // 7 days
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final InitiativeRepository initiativeRepository;
     private final BoardTaskRepository boardTaskRepository;
@@ -177,9 +180,9 @@ public class InitiativeService {
                     String bindings = s.getWorkspaceBindings();
                     if (bindings == null || bindings.isBlank()) return false;
                     try {
-                        com.fasterxml.jackson.databind.JsonNode node = new com.fasterxml.jackson.databind.ObjectMapper().readTree(bindings);
+                        JsonNode node = OBJECT_MAPPER.readTree(bindings);
                         if (node.isArray()) {
-                            for (com.fasterxml.jackson.databind.JsonNode el : node) {
+                            for (JsonNode el : node) {
                                 if (id.equals(el.asText())) return true;
                             }
                         }

@@ -36,8 +36,9 @@ public class BackupController {
         if (gate != null) return gate;
         Optional<Human> actorOpt = orgService.findHuman(actor);
         if (actorOpt.isEmpty() || !"admin".equals(actorOpt.get().getRbac())) {
+            var audit = auditService.logSystem("REFUSAL", "backup_create", actor, "Non-admin backup attempt");
             return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "admin_only", "message", "Backup requires admin role"));
+                    .body(Map.of("code", "eligibility", "message", "Backup requires admin role", "audit_event_id", audit.getId()));
         }
         try {
             String rawBackupDir = body.getOrDefault("backupDir", System.getProperty("java.io.tmpdir"));
@@ -51,7 +52,8 @@ public class BackupController {
             auditService.log(actor, "CREATE_BACKUP", "backup", path, null);
             return ResponseEntity.ok(Map.of("path", path));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "backup failed"));
+            var audit = auditService.logSystem("ERROR", "backup_create", actor, e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of("code", "internal", "message", "Backup failed", "audit_event_id", audit.getId()));
         }
     }
 
@@ -62,8 +64,9 @@ public class BackupController {
         if (gate != null) return gate;
         Optional<Human> actorOpt = orgService.findHuman(actor);
         if (actorOpt.isEmpty() || !"admin".equals(actorOpt.get().getRbac())) {
+            var audit = auditService.logSystem("REFUSAL", "backup_restore", actor, "Non-admin restore attempt");
             return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "admin_only", "message", "Restore requires admin role"));
+                    .body(Map.of("code", "eligibility", "message", "Restore requires admin role", "audit_event_id", audit.getId()));
         }
         try {
             String rawPath = body.get("backupPath");
@@ -81,7 +84,8 @@ public class BackupController {
             auditService.log(actor, "RESTORE_BACKUP", "backup", backupFilePath.toString(), null);
             return ResponseEntity.ok(Map.of("status", "restored"));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "restore failed"));
+            var audit = auditService.logSystem("ERROR", "backup_restore", actor, e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of("code", "internal", "message", "Restore failed", "audit_event_id", audit.getId()));
         }
     }
 }

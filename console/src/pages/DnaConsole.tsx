@@ -11,21 +11,25 @@ export default function DNAConsole() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    let aborted = false
     Promise.all([
-      api.dna.domains().catch((e) => { console.error('Failed to load domains:', e); return [] as DnaDomain[]; }),
-      api.dna.cards().catch((e) => { console.error('Failed to load cards:', e); return [] as DnaCard[]; }),
-      api.dna.goals().catch((e) => { console.error('Failed to load goals:', e); return [] as DnaGoal[]; }),
-      api.dna.proposals('open').catch((e) => { console.error('Failed to load proposals:', e); return [] as DnaProposal[]; }),
+      api.dna.domains(),
+      api.dna.cards(),
+      api.dna.goals(),
+      api.dna.proposals('open'),
     ]).then(([d, c, g, p]) => {
+      if (aborted) return
       setDomains(d)
       setCards(c)
       setGoals(g)
       setProposals(p)
       setLoading(false)
-    }).catch(() => {
-      setError('Failed to load DNA data')
+    }).catch((e) => {
+      if (aborted) return
+      setError('Failed to load DNA data: ' + (e?.message || String(e)))
       setLoading(false)
     })
+    return () => { aborted = true }
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>

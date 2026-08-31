@@ -98,6 +98,10 @@ public class DnaProposalController {
                 AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
                 return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
                         .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            } catch (IllegalStateException e) {
+                AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                        .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
             }
         } else {
             AuditEvent audit = auditService.logSystem("REFUSAL", "error", "action must be 'publish' or 'reject'", null);

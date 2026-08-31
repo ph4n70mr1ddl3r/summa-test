@@ -38,9 +38,11 @@ public class AuthController {
         String password = body.get("password");
 
         if (email == null || email.isBlank()) {
+            var audit = auditService.logSystem("REFUSAL", "auth_login", email, "email is required");
             return ResponseEntity.badRequest().body(Map.of(
                 "code", "validation",
-                "message", "email is required"
+                "message", "email is required",
+                "audit_event_id", audit.getId()
             ));
         }
 
@@ -132,13 +134,16 @@ public class AuthController {
         String newPassword = body.get("newPassword");
 
         if (currentPassword == null || currentPassword.isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", "currentPassword is required"));
+            var audit = auditService.logSystem("REFUSAL", "auth_change_password", actor, "currentPassword is required");
+            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", "currentPassword is required", "audit_event_id", audit.getId()));
         }
         if (newPassword == null || newPassword.isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", "newPassword is required"));
+            var audit = auditService.logSystem("REFUSAL", "auth_change_password", actor, "newPassword is required");
+            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", "newPassword is required", "audit_event_id", audit.getId()));
         }
         if (newPassword.length() < 8) {
-            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", "newPassword must be at least 8 characters"));
+            var audit = auditService.logSystem("REFUSAL", "auth_change_password", actor, "newPassword too short");
+            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", "newPassword must be at least 8 characters", "audit_event_id", audit.getId()));
         }
 
         var humanOpt = orgService.findHuman(actor);

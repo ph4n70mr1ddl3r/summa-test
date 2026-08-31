@@ -3,8 +3,10 @@ package com.summa.controller;
 import com.summa.service.GovernanceService;
 import com.summa.service.SpendLedgerService;
 import com.summa.service.MemberService;
+import com.summa.service.AuditService;
 import com.summa.model.SpendLedger;
 import com.summa.model.Human;
+import com.summa.model.AuditEvent;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,13 +24,15 @@ public class GovernanceController {
     private final SpendLedgerService spendLedgerService;
     private final MemberService memberService;
     private final WriteGate writeGate;
+    private final AuditService auditService;
 
     public GovernanceController(GovernanceService governanceService, SpendLedgerService spendLedgerService,
-                                 MemberService memberService, WriteGate writeGate) {
+                                  MemberService memberService, WriteGate writeGate, AuditService auditService) {
         this.governanceService = governanceService;
         this.spendLedgerService = spendLedgerService;
         this.memberService = memberService;
         this.writeGate = writeGate;
+        this.auditService = auditService;
     }
 
     @GetMapping("/policies")
@@ -84,8 +88,9 @@ public class GovernanceController {
         if (gate != null) return gate;
         for (String key : body.keySet()) {
             if (!POLICY_KEYS.contains(key)) {
-                return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
-                        .body(Map.of("code", "validation", "message", "Unknown policy key: " + key));
+                AuditEvent audit = auditService.logSystem("REFUSAL", "governance_update_policy", actor, "Unknown policy key: " + key);
+                return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
+                        .body(Map.of("code", "validation", "message", "Unknown policy key: " + key, "audit_event_id", audit.getId()));
             }
         }
         body.forEach((key, value) -> governanceService.setSetting(key, value, actor));
@@ -99,8 +104,9 @@ public class GovernanceController {
         if (gate != null) return gate;
         for (String key : body.keySet()) {
             if (!QUOTA_KEYS.contains(key)) {
-                return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
-                        .body(Map.of("code", "validation", "message", "Unknown quota key: " + key));
+                AuditEvent audit = auditService.logSystem("REFUSAL", "governance_update_quota", actor, "Unknown quota key: " + key);
+                return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
+                        .body(Map.of("code", "validation", "message", "Unknown quota key: " + key, "audit_event_id", audit.getId()));
             }
         }
         body.forEach((key, value) -> governanceService.setSetting(key, value, actor));

@@ -19,17 +19,29 @@ export default function OrgView() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    let aborted = false
     Promise.all([
-      api.org.members().catch((e) => { console.error('Failed to load members:', e); return { members: [], total: 0 }; }),
-      api.groups.list().catch((e) => { console.error('Failed to load groups:', e); return [] as Group[]; }),
+      api.org.members(),
+      api.groups.list(),
     ]).then(([m, g]) => {
-      setMembers(m.members as Member[])
+      if (aborted) return
+      setMembers(m.members.map((m: any) => ({
+        id: m.id,
+        name: m.name,
+        kind: m.rbac !== undefined ? 'human' : 'agent',
+        rbac: m.rbac,
+        class: m.class,
+        status: m.status,
+        active: m.active,
+      } as Member)))
       setGroups(g)
       setLoading(false)
-    }).catch(() => {
-      setError('Failed to load org data')
+    }).catch((e) => {
+      if (aborted) return
+      setError('Failed to load org data: ' + (e?.message || String(e)))
       setLoading(false)
     })
+    return () => { aborted = true }
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>

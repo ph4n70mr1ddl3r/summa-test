@@ -36,8 +36,9 @@ public class SecretsController {
                     .body(Map.of("code", "validation", "message", "content required", "audit_event_id", audit.getId()));
         }
         if (content.length() > MAX_SCAN_CONTENT_LENGTH) {
+            var audit = auditService.logSystem("REFUSAL", "secrets_scan", actor, "Content exceeds maximum scan length");
             return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
-                    .body(Map.of("code", "validation", "message", "content exceeds maximum scan length"));
+                    .body(Map.of("code", "validation", "message", "content exceeds maximum scan length", "audit_event_id", audit.getId()));
         }
         var findings = scanner.scan(content);
         return ResponseEntity.ok(Map.of(

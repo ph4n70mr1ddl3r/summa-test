@@ -9,19 +9,23 @@ export default function Governance() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    let aborted = false
     Promise.all([
-      api.governance.policies().catch((e) => { console.error('Failed to load policies:', e); return {}; }),
-      api.governance.quotas().catch((e) => { console.error('Failed to load quotas:', e); return {}; }),
-      api.governance.spend().catch((e) => { console.error('Failed to load spend:', e); return null; }),
+      api.governance.policies(),
+      api.governance.quotas(),
+      api.governance.spend(),
     ]).then(([p, q, s]) => {
+      if (aborted) return
       setPolicies(p)
       setQuotas(q)
       setSpend(s)
       setLoading(false)
-    }).catch(() => {
-      setError('Failed to load governance data')
+    }).catch((e) => {
+      if (aborted) return
+      setError('Failed to load governance data: ' + (e?.message || String(e)))
       setLoading(false)
     })
+    return () => { aborted = true }
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>

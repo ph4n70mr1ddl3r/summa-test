@@ -34,7 +34,7 @@ describe('Groups page', () => {
 
   it('displays groups with status and archive button', async () => {
     vi.mocked(apiModule.api.groups.list).mockResolvedValue([
-      { id: 'g1', name: 'Engineering', leaderMemberId: 'h1', status: 'active' },
+      { id: 'g1', name: 'Engineering', leaderMemberId: 'h1', status: 'active', createdAt: 0 },
     ])
     render(<Groups />)
     await waitFor(() => {
@@ -52,7 +52,7 @@ describe('Groups page', () => {
 
   it('calls archive on archive button click', async () => {
     vi.mocked(apiModule.api.groups.list).mockResolvedValue([
-      { id: 'g1', name: 'Engineering', status: 'active' },
+      { id: 'g1', name: 'Engineering', status: 'active', createdAt: 0 },
     ])
     vi.mocked(apiModule.api.groups.archive).mockResolvedValue({ id: 'g1', name: 'Engineering', status: 'archived' } as apiModule.Group)
     render(<Groups />)
