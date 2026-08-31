@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, type SpawnRequest } from '../services/api'
+import { escapeHtml } from '../utils/escapeHtml'
 
 export default function Spawning() {
   const [requests, setRequests] = useState<SpawnRequest[]>([])
@@ -9,8 +10,8 @@ export default function Spawning() {
 
   useEffect(() => {
     Promise.all([
-      api.spawn.list().catch(() => [] as SpawnRequest[]),
-      api.spawn.stats().catch(() => null),
+      api.spawn.list().catch((e) => { console.error('Failed to load spawn requests:', e); return [] as SpawnRequest[]; }),
+      api.spawn.stats().catch((e) => { console.error('Failed to load spawn stats:', e); return null; }),
     ]).then(([r, s]) => {
       setRequests(r)
       setStats(s as { requested: number; approved: number; archived: number } | null)
@@ -47,10 +48,10 @@ export default function Spawning() {
             <div key={req.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium text-gray-200">{req.purpose || 'Untitled request'}</p>
+                  <p className="font-medium text-gray-200">{escapeHtml(req.purpose || 'Untitled request')}</p>
                   <p className="text-sm text-gray-400 mt-1">
-                    Class: {req.class} · Requester: {req.requesterId}
-                    {req.templateId ? ` · Template: ${req.templateId}` : ''}
+                    Class: {escapeHtml(req.class)} · Requester: {escapeHtml(req.requesterId)}
+                    {req.templateId ? ` · Template: ${escapeHtml(req.templateId)}` : ''}
                   </p>
                 </div>
                 <span className={`text-xs px-2 py-1 rounded ${

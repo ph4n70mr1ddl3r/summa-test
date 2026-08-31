@@ -21,7 +21,7 @@ export default function Groups() {
 
   const handleArchive = async (id: string) => {
     try {
-      await api.groups.archive(id, '')
+      await api.groups.archive(id, 'console')
       loadGroups()
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))

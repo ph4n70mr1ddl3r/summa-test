@@ -27,7 +27,7 @@ export default function Memory() {
   const handleReview = async (id: string) => {
     setReviewResult(null)
     try {
-      await api.memory.review(id, '')
+      await api.memory.review(id, 'console')
       setReviewResult('Item reviewed and taint cleared')
       setReviewingId(null)
       loadItems()
@@ -69,7 +69,7 @@ export default function Memory() {
           reviewResult.startsWith('Item reviewed')
             ? 'bg-green-900/30 border border-green-700 text-green-400'
             : 'bg-red-900/30 border border-red-700 text-red-400'
-        }`}>
+        }`} role="alert">
           {escapeHtml(reviewResult)}
         </div>
       )}

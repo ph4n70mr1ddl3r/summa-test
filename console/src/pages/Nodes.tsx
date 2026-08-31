@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, type Node } from '../services/api'
+import { escapeHtml } from '../utils/escapeHtml'
 
 export default function Nodes() {
   const [nodes, setNodes] = useState<Node[]>([])
@@ -31,9 +32,9 @@ export default function Nodes() {
             <div key={n.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium text-gray-200">{n.name}</p>
+                  <p className="font-medium text-gray-200">{escapeHtml(n.name)}</p>
                   <p className="text-sm text-gray-400 mt-1">
-                    Kind: {n.kind} | Region: {n.region ?? 'default'}
+                    Kind: {escapeHtml(n.kind)} | Region: {n.region ?? 'default'}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
                     Pubkey: {n.pubkey.slice(0, 16)}… | Enrolled: {n.enrolledAt ? new Date(n.enrolledAt * 1000).toLocaleString() : '—'}

@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
 import App from './App.tsx'
 import Home from './pages/Home.tsx'
-import DnaConsole from './pages/DnaConsole.tsx'
+import DNAConsole from './pages/DnaConsole.tsx'
 import DNACards from './pages/DNACards.tsx'
 import DNARules from './pages/DNARules.tsx'
 import DNADecisions from './pages/DNADecisions.tsx'
@@ -31,7 +31,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<App />}>
           <Route index element={<Home />} />
-          <Route path="dna" element={<DnaConsole />} />
+          <Route path="dna" element={<DNAConsole />} />
           <Route path="dna/cards" element={<DNACards />} />
           <Route path="dna/rules" element={<DNARules />} />
           <Route path="dna/decisions" element={<DNADecisions />} />

@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/dna/proposals")
+@RequestMapping("/dna")
 public class DnaProposalController {
     private final DnaProposalService proposalService;
     private final AuditService auditService;
@@ -24,7 +24,7 @@ public class DnaProposalController {
         this.writeGate = writeGate;
     }
 
-    @GetMapping
+    @GetMapping("/proposals")
     public ResponseEntity<List<DnaProposal>> listProposals(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String domainId) {
@@ -37,14 +37,14 @@ public class DnaProposalController {
         return ResponseEntity.ok(proposalService.findAllOpen());
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/proposals/{id}")
     public ResponseEntity<?> getProposal(@PathVariable String id) {
         return proposalService.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping
+    @PostMapping("/proposals")
     public ResponseEntity<?> createProposal(@RequestBody Map<String, String> body) {
         String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
@@ -70,7 +70,7 @@ public class DnaProposalController {
         }
     }
 
-    @PostMapping("/{id}/review")
+    @PostMapping("/proposals/{id}/review")
     public ResponseEntity<?> reviewProposal(@PathVariable String id, @RequestBody Map<String, String> body) {
         String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
@@ -106,7 +106,7 @@ public class DnaProposalController {
         }
     }
 
-    @PostMapping("/{id}/withdraw")
+    @PostMapping("/proposals/{id}/withdraw")
     public ResponseEntity<?> withdrawProposal(@PathVariable String id) {
         String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
@@ -121,7 +121,7 @@ public class DnaProposalController {
         }
     }
 
-    @PostMapping("/{id}/amend")
+    @PostMapping("/proposals/{id}/amend")
     public ResponseEntity<?> amendProposal(@PathVariable String id, @RequestBody Map<String, String> body) {
         String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);

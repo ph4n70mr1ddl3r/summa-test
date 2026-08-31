@@ -51,7 +51,7 @@ export default function AskInbox() {
     setSubmitError(null)
     setSubmitSuccess(null)
     try {
-      await api.asks.respond(id, responseText, '')
+      await api.asks.respond(id, responseText, 'console')
       setSubmitSuccess('Response recorded')
       setRespondingId(null)
       setResponseText('')
@@ -63,7 +63,7 @@ export default function AskInbox() {
 
   const handleWithdraw = async (id: string) => {
     try {
-      await api.asks.withdraw(id, '')
+      await api.asks.withdraw(id, 'console')
       loadAsks()
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err))
@@ -104,12 +104,12 @@ export default function AskInbox() {
       </div>
 
       {submitError && (
-        <div className="bg-red-900/30 border border-red-700 rounded-lg p-3 text-red-400 text-sm">
+        <div className="bg-red-900/30 border border-red-700 rounded-lg p-3 text-red-400 text-sm" role="alert">
           {escapeHtml(submitError)}
         </div>
       )}
       {submitSuccess && (
-        <div className="bg-green-900/30 border border-green-700 rounded-lg p-3 text-green-400 text-sm">
+        <div className="bg-green-900/30 border border-green-700 rounded-lg p-3 text-green-400 text-sm" role="alert">
           {escapeHtml(submitSuccess)}
         </div>
       )}

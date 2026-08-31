@@ -10,9 +10,9 @@ export default function Governance() {
 
   useEffect(() => {
     Promise.all([
-      api.governance.policies().catch(() => ({})),
-      api.governance.quotas().catch(() => ({})),
-      api.governance.spend().catch(() => null),
+      api.governance.policies().catch((e) => { console.error('Failed to load policies:', e); return {}; }),
+      api.governance.quotas().catch((e) => { console.error('Failed to load quotas:', e); return {}; }),
+      api.governance.spend().catch((e) => { console.error('Failed to load spend:', e); return null; }),
     ]).then(([p, q, s]) => {
       setPolicies(p)
       setQuotas(q)

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, type Run } from '../services/api'
+import { escapeHtml } from '../utils/escapeHtml'
 
 export default function Runs() {
   const [runs, setRuns] = useState<Run[]>([])
@@ -56,14 +57,14 @@ export default function Runs() {
             <div key={run.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium text-gray-200">Run {run.id.slice(0, 8)}</p>
+                  <p className="font-medium text-gray-200">Run {escapeHtml(run.id.slice(0, 8))}</p>
                   <p className="text-sm text-gray-400 mt-1">
-                    Agent: {run.agentId}
-                    {run.workspaceId ? ` · Workspace: ${run.workspaceId}` : ''}
-                    {run.initiativeId ? ` · Initiative: ${run.initiativeId}` : ''}
+                    Agent: {escapeHtml(run.agentId)}
+                    {run.workspaceId ? ` · Workspace: ${escapeHtml(run.workspaceId)}` : ''}
+                    {run.initiativeId ? ` · Initiative: ${escapeHtml(run.initiativeId)}` : ''}
                   </p>
                   {run.prompt && (
-                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">{run.prompt}</p>
+                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">{escapeHtml(run.prompt)}</p>
                   )}
                 </div>
                 <span className={`text-xs px-2 py-1 rounded ${

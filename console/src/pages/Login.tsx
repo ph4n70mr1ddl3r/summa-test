@@ -10,7 +10,7 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/'
+  const from = ((location.state as { from?: { pathname: string } } | null)?.from?.pathname) || '/'
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -37,7 +37,7 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="bg-gray-800 rounded-lg p-6 border border-gray-700 space-y-4">
           {error && (
-            <div className="bg-red-900/30 border border-red-700 rounded p-3 text-sm text-red-400">
+            <div className="bg-red-900/30 border border-red-700 rounded p-3 text-sm text-red-400" role="alert">
               {error}
             </div>
           )}

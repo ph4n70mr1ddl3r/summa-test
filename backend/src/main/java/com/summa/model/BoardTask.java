@@ -43,12 +43,22 @@ public class BoardTask {
     @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant completedAt;
 
+    @Column(name = "updated_at", nullable = false)
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    private Instant updatedAt;
+
     @PrePersist
     public void prePersist() {
         if (createdAt == null) createdAt = Instant.now();
+        if (updatedAt == null) updatedAt = Instant.now();
         if (status == null) status = "open";
         if (priority == null) priority = 0;
         if (description == null) description = "";
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = Instant.now();
     }
 
     public String getId() { return id; }
@@ -73,5 +83,7 @@ public class BoardTask {
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     public Instant getCompletedAt() { return completedAt; }
     public void setCompletedAt(Instant completedAt) { this.completedAt = completedAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
     public boolean isDone() { return "done".equals(status); }
 }

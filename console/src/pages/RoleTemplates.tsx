@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, type RoleTemplate } from '../services/api'
+import { escapeHtml } from '../utils/escapeHtml'
 
 export default function RoleTemplates() {
   const [templates, setTemplates] = useState<RoleTemplate[]>([])
@@ -31,8 +32,8 @@ export default function RoleTemplates() {
             <div key={t.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium text-gray-200">{t.name}</p>
-                  <p className="text-sm text-gray-400 mt-1">Class: {t.class} | Version: {t.version}</p>
+                  <p className="font-medium text-gray-200">{escapeHtml(t.name)}</p>
+                  <p className="text-sm text-gray-400 mt-1">Class: {escapeHtml(t.class)} | Version: {t.version}</p>
                 </div>
                 <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300">{t.status}</span>
               </div>

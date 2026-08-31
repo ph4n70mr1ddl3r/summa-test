@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, type Workspace } from '../services/api'
+import { escapeHtml } from '../utils/escapeHtml'
 
 function parseParticipantsCount(participants: string): number {
   try {
@@ -40,8 +41,8 @@ export default function Workspaces() {
             <div key={ws.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium text-gray-200">{ws.name}</p>
-                  <p className="text-sm text-gray-400 mt-1">Kind: {ws.kind} | Epoch: {ws.claimEpoch}</p>
+                  <p className="font-medium text-gray-200">{escapeHtml(ws.name)}</p>
+                  <p className="text-sm text-gray-400 mt-1">Kind: {escapeHtml(ws.kind)} | Epoch: {ws.claimEpoch}</p>
                 </div>
                 <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300">
                   {parseParticipantsCount(ws.participants)} participants

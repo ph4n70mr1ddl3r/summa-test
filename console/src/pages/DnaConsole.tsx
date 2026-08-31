@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { api, type DnaDomain, type DnaCard, type DnaGoal, type DnaProposal } from '../services/api'
 
-export default function DnaConsole() {
+export default function DNAConsole() {
   const [domains, setDomains] = useState<DnaDomain[]>([])
   const [cards, setCards] = useState<DnaCard[]>([])
   const [goals, setGoals] = useState<DnaGoal[]>([])
@@ -12,10 +12,10 @@ export default function DnaConsole() {
 
   useEffect(() => {
     Promise.all([
-      api.dna.domains().catch(() => [] as DnaDomain[]),
-      api.dna.cards().catch(() => [] as DnaCard[]),
-      api.dna.goals().catch(() => [] as DnaGoal[]),
-      api.dna.proposals('open').catch(() => [] as DnaProposal[]),
+      api.dna.domains().catch((e) => { console.error('Failed to load domains:', e); return [] as DnaDomain[]; }),
+      api.dna.cards().catch((e) => { console.error('Failed to load cards:', e); return [] as DnaCard[]; }),
+      api.dna.goals().catch((e) => { console.error('Failed to load goals:', e); return [] as DnaGoal[]; }),
+      api.dna.proposals('open').catch((e) => { console.error('Failed to load proposals:', e); return [] as DnaProposal[]; }),
     ]).then(([d, c, g, p]) => {
       setDomains(d)
       setCards(c)

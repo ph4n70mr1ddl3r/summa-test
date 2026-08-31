@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, type DnaGoal } from '../services/api'
+import { escapeHtml } from '../utils/escapeHtml'
 
 export default function DNAGoals() {
   const [goals, setGoals] = useState<DnaGoal[]>([])
@@ -31,10 +32,10 @@ export default function DNAGoals() {
             <div key={goal.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium text-gray-200">{goal.statementMd}</p>
+                  <p className="font-medium text-gray-200">{escapeHtml(goal.statementMd)}</p>
                   <p className="text-sm text-gray-400 mt-1">
-                    Owner: {goal.owner} | Inject: {goal.inject}
-                    {goal.quarter && <span> | Q{goal.quarter}</span>}
+                    Owner: {escapeHtml(goal.owner)} | Inject: {escapeHtml(goal.inject)}
+                    {goal.quarter && <span> | Q{escapeHtml(goal.quarter)}</span>}
                   </p>
                   {goal.effectiveFrom && (
                     <p className="text-xs text-gray-500 mt-1">

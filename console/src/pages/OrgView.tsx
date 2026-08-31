@@ -20,8 +20,8 @@ export default function OrgView() {
 
   useEffect(() => {
     Promise.all([
-      api.org.members().catch(() => ({ members: [], total: 0 })),
-      api.groups.list().catch(() => [] as Group[]),
+      api.org.members().catch((e) => { console.error('Failed to load members:', e); return { members: [], total: 0 }; }),
+      api.groups.list().catch((e) => { console.error('Failed to load groups:', e); return [] as Group[]; }),
     ]).then(([m, g]) => {
       setMembers(m.members as Member[])
       setGroups(g)
