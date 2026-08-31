@@ -201,6 +201,10 @@ public class AgentService {
         return agentRepository.findActiveByOwner(ownerHumanId);
     }
 
+    public List<Agent> findByStatus(String status) {
+        return agentRepository.findByStatus(status);
+    }
+
     public List<Agent> findChildren(String parentId) {
         return agentRepository.findBySpawnedBy(parentId);
     }

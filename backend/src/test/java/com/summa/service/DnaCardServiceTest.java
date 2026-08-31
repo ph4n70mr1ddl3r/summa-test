@@ -21,6 +21,9 @@ class DnaCardServiceTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private SecretsScanner secretsScanner;
+
     @InjectMocks
     private DnaCardService cardService;
 

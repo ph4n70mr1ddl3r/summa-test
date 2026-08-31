@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/dna/cards")
@@ -49,8 +50,9 @@ public class DnaCardController {
             if (body.get("title") == null || body.get("title").isBlank()) {
                 throw new IllegalArgumentException("title is required");
             }
+            String generatedId = UUID.randomUUID().toString();
             DnaCard card = cardService.create(
-                body.get("id"),
+                generatedId,
                 body.get("domainId"),
                 body.get("title"),
                 body.get("definitionMd"),
@@ -78,8 +80,9 @@ public class DnaCardController {
             if (body.get("title") == null || body.get("title").isBlank()) {
                 throw new IllegalArgumentException("title is required");
             }
+            String generatedId = UUID.randomUUID().toString();
             DnaCard card = cardService.createDraft(
-                body.get("id"),
+                generatedId,
                 body.get("domainId"),
                 body.get("title"),
                 body.get("definitionMd"),

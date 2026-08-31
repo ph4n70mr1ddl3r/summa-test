@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { api, type DnaDomain, type DnaCard, type DnaGoal, type DnaProposal } from '../services/api'
+import { escapeHtml } from '../utils/escapeHtml'
 
 export default function DNAConsole() {
   const [domains, setDomains] = useState<DnaDomain[]>([])
@@ -71,10 +72,10 @@ export default function DNAConsole() {
           <div className="space-y-2">
             {proposals.slice(0, 5).map((p) => (
               <div key={p.id} className="bg-gray-700 rounded px-3 py-2 text-sm text-gray-300">
-                <span className="font-medium">{p.kind}</span>
-                <span className="text-gray-500 ml-2">{p.proposedBy}</span>
+                <span className="font-medium">{escapeHtml(p.kind)}</span>
+                <span className="text-gray-500 ml-2">{escapeHtml(p.proposedBy)}</span>
                 <span className={`ml-auto text-xs px-2 py-0.5 rounded ${p.status === 'open' ? 'bg-blue-900/50 text-blue-400' : 'bg-gray-600 text-gray-300'}`}>
-                  {p.status}
+                  {escapeHtml(p.status)}
                 </span>
               </div>
             ))}

@@ -138,7 +138,7 @@ public class OrgController {
                 return ResponseEntity.status(org.springframework.http.HttpStatus.CONFLICT)
                         .body(Map.of("code", "data_hold", "message", "Active data holds prevent erasure",
                                 "audit_event_id", audit.getId(), "holds",
-                                holds.stream().map(h -> Map.of("id", h.getId(), "kind", h.getKind(), "reason", h.getReasonMd())).toList()));
+                                holds.stream().map(h -> Map.of("id", h.getId(), "kind", h.getKind(), "reason", h.getReasonMd() != null ? h.getReasonMd() : "")).toList()));
             }
 
             orgService.erasure(id, actor);

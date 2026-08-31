@@ -31,9 +31,7 @@ public class AgentController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String ownerId) {
         if (status != null) {
-            return ResponseEntity.ok(agentService.findAll().stream()
-                .filter(a -> status.equals(a.getStatus()))
-                .toList());
+            return ResponseEntity.ok(agentService.findByStatus(status));
         }
         if (ownerId != null) {
             return ResponseEntity.ok(agentService.findByOwner(ownerId));

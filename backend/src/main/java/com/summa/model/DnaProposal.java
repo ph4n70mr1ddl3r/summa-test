@@ -39,10 +39,6 @@ public class DnaProposal {
     @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant reviewedAt;
 
-    @Column(name = "review_by")
-    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
-    private Instant reviewBy;
-
     @Column(name = "domain_id", length = 36)
     private String domainId;
 
@@ -85,8 +81,6 @@ public class DnaProposal {
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     public Instant getReviewedAt() { return reviewedAt; }
     public void setReviewedAt(Instant reviewedAt) { this.reviewedAt = reviewedAt; }
-    public Instant getReviewBy() { return reviewBy; }
-    public void setReviewBy(Instant reviewBy) { this.reviewBy = reviewBy; }
     public String getDomainId() { return domainId; }
     public void setDomainId(String domainId) { this.domainId = domainId; }
     public Instant getUpdatedAt() { return updatedAt; }

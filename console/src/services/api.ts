@@ -216,7 +216,6 @@ export interface DnaProposal {
   reviewedBy?: string;
   createdAt?: number;
   reviewedAt?: number;
-  reviewBy?: number;
   updatedAt?: number;
 }
 

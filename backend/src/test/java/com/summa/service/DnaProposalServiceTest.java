@@ -41,7 +41,7 @@ class DnaProposalServiceTest {
 
         assertNotNull(result);
         assertEquals("open", result.getStatus());
-        assertNotNull(result.getReviewBy());
+        assertNotNull(result.getReviewedAt());
     }
 
     @Test

@@ -20,12 +20,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Service
 public class InitiativeService {
     private static final long STALL_CHECK_INTERVAL_MS = 300000; // 5 minutes
     private static final long STALL_ASK_DEADLINE_SECONDS = 7 * 86400L; // 7 days
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final Pattern KEYED_UNION_PATTERN = Pattern.compile("^[ha]?:.+$|^[a-zA-Z0-9_-]+$");
 
     private final InitiativeRepository initiativeRepository;
     private final BoardTaskRepository boardTaskRepository;
@@ -58,8 +60,8 @@ public class InitiativeService {
 
     @Transactional
     public Initiative create(String id, String title, String sponsor, String lead,
-                              String goalRef, String decisionRef, Instant deadline,
-                              String dependsOn) {
+                               String goalRef, String decisionRef, Instant deadline,
+                               String dependsOn) {
         // Validate referenced entities exist
         if (goalRef != null && !goalRef.isBlank()) {
             dnaGoalRepository.findById(goalRef).orElseThrow(
@@ -69,6 +71,8 @@ public class InitiativeService {
             dnaDecisionRepository.findById(decisionRef).orElseThrow(
                 () -> new IllegalArgumentException("Decision not found: " + decisionRef));
         }
+        validateKeyedUnion(sponsor, "sponsor");
+        validateKeyedUnion(lead, "lead");
 
         Initiative initiative = new Initiative();
         initiative.setId(id);
@@ -272,6 +276,15 @@ public class InitiativeService {
                         String.format("{\"error\":\"%s\"}", e.getMessage()));
                 }
             }
+        }
+    }
+
+    private void validateKeyedUnion(String value, String fieldName) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(fieldName + " is required");
+        }
+        if (!KEYED_UNION_PATTERN.matcher(value).matches()) {
+            throw new IllegalArgumentException(fieldName + " must be a valid keyed union (h:<human-id> or a:<agent-id>)");
         }
     }
 }

@@ -11,6 +11,7 @@ import com.summa.security.RbacAuthorizationFilter;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/initiatives")
@@ -47,10 +48,11 @@ public class InitiativeController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            Instant deadline = body.containsKey("deadline") ? 
+            String generatedId = UUID.randomUUID().toString();
+            Instant deadline = body.containsKey("deadline") ?
                 Instant.parse(body.get("deadline")) : null;
             Initiative initiative = initiativeService.create(
-                body.get("id"),
+                generatedId,
                 body.get("title"),
                 body.get("sponsor"),
                 body.get("lead"),

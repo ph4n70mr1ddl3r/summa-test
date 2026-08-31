@@ -33,7 +33,7 @@ export default function DNADecisions() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="font-medium text-gray-200">Decision {d.id.slice(0, 8)}</p>
-                  <p className="text-sm text-gray-400 mt-1">Domain: {d.domainId} · By: {d.decidedBy}</p>
+                  <p className="text-sm text-gray-400 mt-1">Domain: {escapeHtml(d.domainId)} · By: {escapeHtml(d.decidedBy)}</p>
                 </div>
               </div>
               <pre className="mt-2 text-xs text-gray-400 bg-gray-900 rounded p-3 overflow-x-auto whitespace-pre-wrap">

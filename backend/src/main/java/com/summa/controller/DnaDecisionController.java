@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/dna/decisions")
@@ -46,8 +47,9 @@ public class DnaDecisionController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
+            String generatedId = UUID.randomUUID().toString();
             DnaDecision decision = decisionService.create(
-                body.get("id"),
+                generatedId,
                 body.get("domainId"),
                 body.get("contextMd"),
                 body.get("outcomeMd"),

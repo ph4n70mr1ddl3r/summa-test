@@ -122,8 +122,9 @@ public class GovernanceController {
         // Admin-only check per API-051
         Optional<Human> actorOpt = memberService.findHuman(actor);
         if (actorOpt.isEmpty() || !"admin".equals(actorOpt.get().getRbac())) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "eligibility", "Admin access required to acknowledge spend overruns", null);
             return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "eligibility", "message", "Admin access required to acknowledge spend overruns"));
+                    .body(Map.of("code", "eligibility", "message", "Admin access required to acknowledge spend overruns", "audit_event_id", audit.getId()));
         }
         try {
             SpendLedger ledger = spendLedgerService.findById(id)
@@ -134,8 +135,9 @@ public class GovernanceController {
             return ResponseEntity.ok(Map.of("status", "overrun_acknowledged", "rowId", id,
                     "haltTripped", governanceService.isSpendHaltTripped()));
         } catch (IllegalArgumentException e) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
             return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
-                    .body(Map.of("code", "not_found", "message", e.getMessage()));
+                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 }

@@ -37,9 +37,7 @@ public class BoardTaskController {
             return ResponseEntity.ok(taskService.findByInitiative(initiativeId));
         }
         if (status != null) {
-            return ResponseEntity.ok(taskService.findAll().stream()
-                .filter(t -> status.equals(t.getStatus()))
-                .toList());
+            return ResponseEntity.ok(taskService.findByStatus(status));
         }
         return ResponseEntity.ok(taskService.findAll());
     }

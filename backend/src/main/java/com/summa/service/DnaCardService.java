@@ -6,20 +6,25 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class DnaCardService {
     private final DnaCardRepository cardRepository;
     private final AuditService auditService;
+    private final SecretsScanner secretsScanner;
 
-    public DnaCardService(DnaCardRepository cardRepository, AuditService auditService) {
+    public DnaCardService(DnaCardRepository cardRepository, AuditService auditService,
+                           SecretsScanner secretsScanner) {
         this.cardRepository = cardRepository;
         this.auditService = auditService;
+        this.secretsScanner = secretsScanner;
     }
 
     @Transactional
     public DnaCard create(String id, String domainId, String title, String definitionMd,
                           String provenance, String actor) {
+        scanForSecrets(definitionMd, actor, "dna_card", id);
         DnaCard card = new DnaCard();
         card.setId(id);
         card.setDomainId(domainId);
@@ -80,6 +85,7 @@ public class DnaCardService {
     @Transactional
     public DnaCard createDraft(String id, String domainId, String title, String definitionMd,
                                  String provenance, String actor) {
+        scanForSecrets(definitionMd, actor, "dna_card", id);
         DnaCard card = new DnaCard();
         card.setId(id);
         card.setDomainId(domainId);
@@ -92,5 +98,14 @@ public class DnaCardService {
         auditService.log(actor, "CREATE_DRAFT", "dna_card", id,
             String.format("{\"domainId\":\"%s\",\"title\":\"%s\"}", domainId, title));
         return saved;
+    }
+
+    private void scanForSecrets(String content, String actor, String objectType, String objectId) {
+        if (content != null && secretsScanner.hasSecrets(content)) {
+            auditService.logSystem("SECRET_DETECTED", objectType, objectId,
+                String.format("{\"actor\":\"%s\",\"findings\":[%s]}", actor,
+                    secretsScanner.scan(content).stream().map(f -> "\"" + f + "\"").collect(Collectors.joining(","))));
+            throw new IllegalStateException("Content contains secrets and cannot be written");
+        }
     }
 }

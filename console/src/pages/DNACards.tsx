@@ -33,7 +33,7 @@ export default function DNACards() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="font-medium text-gray-200">{card.title}</p>
-                  <p className="text-sm text-gray-400 mt-1">Domain: {card.domainId}</p>
+                  <p className="text-sm text-gray-400 mt-1">Domain: {escapeHtml(card.domainId)}</p>
                 </div>
                 <span className={`text-xs px-2 py-1 rounded ${
                   card.status === 'active' ? 'bg-green-900/50 text-green-400' :

@@ -11,16 +11,14 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.Map;
 import java.util.UUID;
+import java.util.Map;
 
 @Service
 public class TriggerService {
     private final TriggerRepository triggerRepository;
     private final TriggerFiringRepository firingRepository;
     private final AuditService auditService;
-    private final Map<String, Instant> lastFireTimes = new ConcurrentHashMap<>();
 
     public TriggerService(TriggerRepository triggerRepository, TriggerFiringRepository firingRepository,
                            AuditService auditService) {
@@ -117,31 +115,28 @@ public class TriggerService {
                     || "0 * * * * *".equals(expr)
                     || "* * * * *".equals(expr);
             if (fireEveryMinute) {
-                Instant lastFire = lastFireTimes.getOrDefault(trigger.getId(), Instant.MIN);
-                if (ChronoUnit.MINUTES.between(lastFire, now) >= 1) {
-                    // SUB-052: Idempotency key = trigger_id + scheduled_time
-                    String idempotencyKey = trigger.getId() + ":" + now.truncatedTo(ChronoUnit.MINUTES);
-                    Optional<TriggerFiring> existing = firingRepository
-                            .findByTriggerIdAndIdempotencyKey(trigger.getId(), idempotencyKey);
-                    if (existing.isPresent()) {
-                        // Already fired — return original run (SUB-052 replay)
-                        auditService.logSystem("REPLAY_FIRING", "trigger_firing", existing.get().getId(), null);
-                        continue;
-                    }
-
-                    // Record firing
-                    TriggerFiring firing = new TriggerFiring();
-                    firing.setId(UUID.randomUUID().toString());
-                    firing.setTriggerId(trigger.getId());
-                    firing.setIdempotencyKey(idempotencyKey);
-                    firing.setFiredAt(now);
-                    firingRepository.save(firing);
-
-                    lastFireTimes.put(trigger.getId(), now);
-                    trigger.setLastFiredAt(now);
-                    triggerRepository.save(trigger);
-                    auditService.logSystem("FIRE_TRIGGER", "trigger", trigger.getId(), null);
+                Instant nowTruncated = now.truncatedTo(ChronoUnit.MINUTES);
+                // SUB-052: Idempotency key = trigger_id + scheduled_time
+                String idempotencyKey = trigger.getId() + ":" + nowTruncated;
+                Optional<TriggerFiring> existing = firingRepository
+                        .findByTriggerIdAndIdempotencyKey(trigger.getId(), idempotencyKey);
+                if (existing.isPresent()) {
+                    // Already fired — return original run (SUB-052 replay)
+                    auditService.logSystem("REPLAY_FIRING", "trigger_firing", existing.get().getId(), null);
+                    continue;
                 }
+
+                // Record firing
+                TriggerFiring firing = new TriggerFiring();
+                firing.setId(UUID.randomUUID().toString());
+                firing.setTriggerId(trigger.getId());
+                firing.setIdempotencyKey(idempotencyKey);
+                firing.setFiredAt(now);
+                firingRepository.save(firing);
+
+                trigger.setLastFiredAt(now);
+                triggerRepository.save(trigger);
+                auditService.logSystem("FIRE_TRIGGER", "trigger", trigger.getId(), null);
             }
         }
     }

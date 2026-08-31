@@ -25,6 +25,9 @@ class DnaRuleServiceTest {
     @Mock
     private DnaDomainService domainService;
 
+    @Mock
+    private SecretsScanner secretsScanner;
+
     @InjectMocks
     private DnaRuleService ruleService;
 

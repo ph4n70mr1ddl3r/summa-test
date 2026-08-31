@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Service
 public class DnaProposalService {
@@ -16,6 +17,7 @@ public class DnaProposalService {
     private final DnaDomainService domainService;
 
     private static final long DEFAULT_REVIEW_SLA_SECONDS = 7 * 86400L; // 7 days default
+    private static final Pattern KEYED_UNION_PATTERN = Pattern.compile("^[ha]?:.+$|^[a-zA-Z0-9_-]+$");
 
     public DnaProposalService(DnaProposalRepository proposalRepository, 
                                AuditService auditService,
@@ -26,8 +28,9 @@ public class DnaProposalService {
     }
 
     @Transactional
-    public DnaProposal create(String id, String kind, String payload, String proposedBy, 
-                               String provenance, String domainId) {
+    public DnaProposal create(String id, String kind, String payload, String proposedBy,
+                                String provenance, String domainId) {
+        validateKeyedUnion(proposedBy, "proposedBy");
         DnaProposal proposal = new DnaProposal();
         proposal.setId(id);
         proposal.setKind(kind);
@@ -36,18 +39,19 @@ public class DnaProposalService {
         proposal.setProvenance(provenance != null ? provenance : "{}");
         proposal.setDomainId(domainId);
         
-        // Set review_by based on domain
+        // Set review deadline based on domain
         if (domainId != null) {
             Optional<DnaDomain> domainOpt = domainService.findById(domainId);
             if (domainOpt.isPresent()) {
-                proposal.setReviewBy(Instant.now().plusSeconds(domainOpt.get().getReviewSlaDays().longValue() * 86400L));
+                // review deadline is stored as reviewed_at in schema, set to now + SLA
+                proposal.setReviewedAt(Instant.now().plusSeconds(domainOpt.get().getReviewSlaDays().longValue() * 86400L));
             } else {
                 // Domain not found — use default 7 days
-                proposal.setReviewBy(Instant.now().plusSeconds(DEFAULT_REVIEW_SLA_SECONDS));
+                proposal.setReviewedAt(Instant.now().plusSeconds(DEFAULT_REVIEW_SLA_SECONDS));
             }
         } else {
             // Org-scoped: use default 7 days
-            proposal.setReviewBy(Instant.now().plusSeconds(DEFAULT_REVIEW_SLA_SECONDS));
+            proposal.setReviewedAt(Instant.now().plusSeconds(DEFAULT_REVIEW_SLA_SECONDS));
         }
         
         DnaProposal saved = proposalRepository.save(proposal);
@@ -139,6 +143,16 @@ public class DnaProposalService {
     }
 
     private boolean proposedByMatches(DnaProposal proposal, String actor) {
-        return proposal.getProposedBy().equals(actor);
+        String proposedBy = proposal.getProposedBy();
+        return proposedBy != null && proposedBy.equals(actor);
+    }
+
+    private void validateKeyedUnion(String value, String fieldName) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(fieldName + " is required");
+        }
+        if (!KEYED_UNION_PATTERN.matcher(value).matches()) {
+            throw new IllegalArgumentException(fieldName + " must be a valid keyed union (h:<human-id> or a:<agent-id>)");
+        }
     }
 }

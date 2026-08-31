@@ -165,7 +165,6 @@ CREATE TABLE IF NOT EXISTS dna_proposals (
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
     reviewed_at INTEGER,
-    review_by INTEGER,
     domain_id TEXT,
     FOREIGN KEY (reviewed_by) REFERENCES humans(id) ON DELETE SET NULL,
     FOREIGN KEY (domain_id) REFERENCES dna_domains(id) ON DELETE SET NULL
@@ -173,6 +172,16 @@ CREATE TABLE IF NOT EXISTS dna_proposals (
 );
 
 CREATE INDEX IF NOT EXISTS idx_dna_proposals_domain ON dna_proposals(domain_id);
+CREATE INDEX IF NOT EXISTS idx_agents_status ON agents(status);
+CREATE INDEX IF NOT EXISTS idx_agents_owner ON agents(owner_human_id);
+CREATE INDEX IF NOT EXISTS idx_initiatives_status ON initiatives(status);
+CREATE INDEX IF NOT EXISTS idx_dna_goals_domain ON dna_goals(domain_id);
+CREATE INDEX IF NOT EXISTS idx_dna_goals_status ON dna_goals(status);
+CREATE INDEX IF NOT EXISTS idx_group_memberships_member ON group_memberships(member_id);
+CREATE INDEX IF NOT EXISTS idx_memory_items_tier ON memory_items(tier);
+CREATE INDEX IF NOT EXISTS idx_memory_items_workspace ON memory_items(workspace_id);
+CREATE INDEX IF NOT EXISTS idx_spend_ledger_member ON spend_ledger(member_id);
+CREATE INDEX IF NOT EXISTS idx_spend_ledger_kind ON spend_ledger(kind);
 
 CREATE TABLE IF NOT EXISTS asks (
     id TEXT PRIMARY KEY,

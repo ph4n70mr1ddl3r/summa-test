@@ -55,6 +55,10 @@ public class BoardTaskService {
         return taskRepository.findByInitiativeId(initiativeId);
     }
 
+    public List<BoardTask> findByStatus(String status) {
+        return taskRepository.findByStatus(status);
+    }
+
     @Transactional
     public BoardTask assign(String id, String assigneeMemberId, String actor) {
         BoardTask task = taskRepository.findById(id)

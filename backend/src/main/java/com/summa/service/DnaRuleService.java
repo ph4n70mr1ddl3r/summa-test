@@ -7,24 +7,28 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class DnaRuleService {
     private final DnaRuleRepository ruleRepository;
     private final AuditService auditService;
     private final DnaDomainService domainService;
+    private final SecretsScanner secretsScanner;
 
     public DnaRuleService(DnaRuleRepository ruleRepository, AuditService auditService,
-                          DnaDomainService domainService) {
+                          DnaDomainService domainService, SecretsScanner secretsScanner) {
         this.ruleRepository = ruleRepository;
         this.auditService = auditService;
         this.domainService = domainService;
+        this.secretsScanner = secretsScanner;
     }
 
     @Transactional
     public DnaRule create(String id, String domainId, String statementMd, String machineHint,
                           Instant effectiveFrom, Instant effectiveTo, String supersedesId,
                           String actor) {
+        scanForSecrets(statementMd, actor, "dna_rule", id);
         // Validate effective date ordering
         if (effectiveTo != null && effectiveFrom != null && effectiveTo.isBefore(effectiveFrom)) {
             throw new IllegalArgumentException("effectiveTo must not be before effectiveFrom");
@@ -130,5 +134,14 @@ public class DnaRuleService {
         auditService.log(actor, "SUPERSEDE_RULE", "dna_rule", id,
             String.format("{\"supersedes\":\"%s\"}", supersedesId));
         return saved;
+    }
+
+    private void scanForSecrets(String content, String actor, String objectType, String objectId) {
+        if (content != null && secretsScanner.hasSecrets(content)) {
+            auditService.logSystem("SECRET_DETECTED", objectType, objectId,
+                String.format("{\"actor\":\"%s\",\"findings\":[%s]}", actor,
+                    secretsScanner.scan(content).stream().map(f -> "\"" + f + "\"").collect(Collectors.joining(","))));
+            throw new IllegalStateException("Content contains secrets and cannot be written");
+        }
     }
 }
