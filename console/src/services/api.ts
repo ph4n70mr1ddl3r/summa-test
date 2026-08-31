@@ -605,17 +605,17 @@ export const api = {
       }),
     start: (id: string) =>
       request<Run>(`/runs/${id}/start`, { method: 'POST' }),
-    complete: (id: string, body: Record<string, unknown>) =>
+    complete: (id: string, body: Record<string, unknown>, _actor: string) =>
       request<Run>(`/runs/${id}/complete`, {
         method: 'POST',
         body: JSON.stringify(body),
       }),
-    fail: (id: string, errorMessage: string) =>
+    fail: (id: string, errorMessage: string, _actor: string) =>
       request<Run>(`/runs/${id}/fail`, {
         method: 'POST',
         body: JSON.stringify({ errorMessage }),
       }),
-    cancel: (id: string) =>
+    cancel: (id: string, _actor: string) =>
       request<Run>(`/runs/${id}/cancel`, { method: 'POST' }),
     stats: () => request('/runs/stats'),
   },

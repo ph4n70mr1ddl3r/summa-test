@@ -8,9 +8,11 @@ export default function DNACards() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    let aborted = false
     api.dna.cards()
-      .then((data) => { setCards(data); setLoading(false) })
-      .catch((err) => { setError(err instanceof Error ? err.message : String(err)); setLoading(false) })
+      .then((data) => { if (!aborted) { setCards(data); setLoading(false) } })
+      .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
+    return () => { aborted = true }
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
@@ -32,7 +34,7 @@ export default function DNACards() {
             <div key={card.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium text-gray-200">{card.title}</p>
+                  <p className="font-medium text-gray-200">{escapeHtml(card.title)}</p>
                   <p className="text-sm text-gray-400 mt-1">Domain: {escapeHtml(card.domainId)}</p>
                 </div>
                 <span className={`text-xs px-2 py-1 rounded ${

@@ -8,9 +8,11 @@ export default function DNARules() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    let aborted = false
     api.dna.rules()
-      .then((data) => { setRules(data); setLoading(false) })
-      .catch((err) => { setError(err instanceof Error ? err.message : String(err)); setLoading(false) })
+      .then((data) => { if (!aborted) { setRules(data); setLoading(false) } })
+      .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
+    return () => { aborted = true }
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>

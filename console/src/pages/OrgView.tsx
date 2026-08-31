@@ -25,14 +25,14 @@ export default function OrgView() {
       api.groups.list(),
     ]).then(([m, g]) => {
       if (aborted) return
-      setMembers(m.members.map((m: any) => ({
-        id: m.id,
-        name: m.name,
-        kind: m.rbac !== undefined ? 'human' : 'agent',
-        rbac: m.rbac,
-        class: m.class,
-        status: m.status,
-        active: m.active,
+      setMembers(m.members.map((m: unknown) => ({
+        id: (m as Record<string, unknown>).id as string,
+        name: (m as Record<string, unknown>).name as string,
+        kind: ((m as Record<string, unknown>).rbac as string | undefined) !== undefined ? 'human' : 'agent',
+        rbac: (m as Record<string, unknown>).rbac as string | undefined,
+        class: (m as Record<string, unknown>).class as string | undefined,
+        status: (m as Record<string, unknown>).status as string | undefined,
+        active: (m as Record<string, unknown>).active as boolean | undefined,
       } as Member)))
       setGroups(g)
       setLoading(false)

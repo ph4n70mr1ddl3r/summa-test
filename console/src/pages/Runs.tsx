@@ -9,11 +9,13 @@ export default function Runs() {
   const [filter, setFilter] = useState<string>('all')
 
   useEffect(() => {
+    let aborted = false
     const params: Record<string, string> = {}
     if (filter !== 'all') params.status = filter
     api.runs.list(params)
-      .then((data) => { setRuns(data); setLoading(false) })
-      .catch((err) => { setError(err instanceof Error ? err.message : String(err)); setLoading(false) })
+      .then((data) => { if (!aborted) { setRuns(data); setLoading(false) } })
+      .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
+    return () => { aborted = true }
   }, [filter])
 
   if (loading) return <div className="text-gray-400">Loading...</div>

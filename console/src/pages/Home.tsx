@@ -62,7 +62,6 @@ export default function Home() {
 
 function ApiStatusCheck() {
   const [status, setStatus] = useState<'ok' | 'error' | 'loading'>('loading')
-  const [checked, setChecked] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -75,12 +74,9 @@ function ApiStatusCheck() {
       }
     }
     check()
-    const interval = setInterval(() => {
-      setChecked(n => n + 1)
-      check()
-    }, 30000)
+    const interval = setInterval(check, 30000)
     return () => { cancelled = true; clearInterval(interval) }
-  }, [checked])
+  }, [])
 
   return (
     <div className="flex items-center space-x-2 text-sm">

@@ -10,13 +10,16 @@ export default function Groups() {
   const loadGroups = () => {
     setLoading(true)
     setError(null)
+    let aborted = false
     api.groups.list()
-      .then((data) => { setGroups(data); setLoading(false) })
-      .catch((err) => { setError(err instanceof Error ? err.message : String(err)); setLoading(false) })
+      .then((data) => { if (!aborted) { setGroups(data); setLoading(false) } })
+      .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
+    return () => { aborted = true }
   }
 
   useEffect(() => {
-    loadGroups()
+    const cleanup = loadGroups()
+    return cleanup
   }, [])
 
   const handleArchive = async (id: string) => {

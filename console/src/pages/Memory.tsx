@@ -13,15 +13,18 @@ export default function Memory() {
   const loadItems = () => {
     setLoading(true)
     setError(null)
+    let aborted = false
     const params: Record<string, string> = {}
     if (filter === 'tainted') params.tainted = 'true'
     api.memory.list(params)
-      .then((data) => { setItems(data); setLoading(false) })
-      .catch((err) => { setError(err instanceof Error ? err.message : String(err)); setLoading(false) })
+      .then((data) => { if (!aborted) { setItems(data); setLoading(false) } })
+      .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
+    return () => { aborted = true }
   }
 
   useEffect(() => {
-    loadItems()
+    const cleanup = loadItems()
+    return cleanup
   }, [filter])
 
   const handleReview = async (id: string) => {
