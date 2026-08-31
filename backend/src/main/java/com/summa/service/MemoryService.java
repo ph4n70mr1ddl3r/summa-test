@@ -2,6 +2,8 @@ package com.summa.service;
 
 import com.summa.repository.MemoryItemRepository;
 import com.summa.model.MemoryItem;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -16,15 +18,17 @@ public class MemoryService {
     private final DnaDomainService domainService;
     private final MemberService memberService;
     private final WorkspaceService workspaceService;
+    private final ObjectMapper objectMapper;
 
     public MemoryService(MemoryItemRepository memoryItemRepository, AuditService auditService,
-                          DnaDomainService domainService, MemberService memberService,
-                          WorkspaceService workspaceService) {
+                           DnaDomainService domainService, MemberService memberService,
+                           WorkspaceService workspaceService, ObjectMapper objectMapper) {
         this.memoryItemRepository = memoryItemRepository;
         this.auditService = auditService;
         this.domainService = domainService;
         this.memberService = memberService;
         this.workspaceService = workspaceService;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
@@ -87,10 +91,9 @@ public class MemoryService {
             if (wsOpt.isPresent()) {
                 com.summa.model.Workspace ws = wsOpt.get();
                 try {
-                    com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-                    java.util.List<String> domainIds = mapper.readValue(
+                    List<String> domainIds = objectMapper.readValue(
                         ws.getDomainIds(),
-                        new com.fasterxml.jackson.core.type.TypeReference<java.util.List<String>>() {});
+                        new TypeReference<List<String>>() {});
                     for (String domId : domainIds) {
                         Optional<com.summa.model.DnaDomain> domainOpt = domainService.findById(domId);
                         if (domainOpt.isPresent() && domainOpt.get().getOwnerHumanId().equals(reviewerId)) {

@@ -16,7 +16,6 @@ public class DnaProposalService {
     private final AuditService auditService;
     private final DnaDomainService domainService;
 
-    private static final long DEFAULT_REVIEW_SLA_SECONDS = 7 * 86400L; // 7 days default
     private static final Pattern KEYED_UNION_PATTERN = Pattern.compile("^[ha]?:.+$|^[a-zA-Z0-9_-]+$");
 
     public DnaProposalService(DnaProposalRepository proposalRepository, 
@@ -39,20 +38,8 @@ public class DnaProposalService {
         proposal.setProvenance(provenance != null ? provenance : "{}");
         proposal.setDomainId(domainId);
         
-        // Set review deadline based on domain
-        if (domainId != null) {
-            Optional<DnaDomain> domainOpt = domainService.findById(domainId);
-            if (domainOpt.isPresent()) {
-                // review deadline is stored as reviewed_at in schema, set to now + SLA
-                proposal.setReviewedAt(Instant.now().plusSeconds(domainOpt.get().getReviewSlaDays().longValue() * 86400L));
-            } else {
-                // Domain not found — use default 7 days
-                proposal.setReviewedAt(Instant.now().plusSeconds(DEFAULT_REVIEW_SLA_SECONDS));
-            }
-        } else {
-            // Org-scoped: use default 7 days
-            proposal.setReviewedAt(Instant.now().plusSeconds(DEFAULT_REVIEW_SLA_SECONDS));
-        }
+        // reviewedAt is set only when the proposal is actually reviewed (publish/reject);
+        // left as null here to indicate "not yet reviewed"
         
         DnaProposal saved = proposalRepository.save(proposal);
         auditService.log(proposedBy, "PROPOSE", "dna_proposal", id, 

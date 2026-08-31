@@ -10,7 +10,7 @@ export default function Runs() {
 
   useEffect(() => {
     let aborted = false
-    const params: Record<string, string> = {}
+    const params: Record<string, string | number> = {}
     if (filter !== 'all') params.status = filter
     api.runs.list(params)
       .then((data) => { if (!aborted) { setRuns(data); setLoading(false) } })

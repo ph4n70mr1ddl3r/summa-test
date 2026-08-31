@@ -35,13 +35,12 @@ class DnaProposalServiceTest {
             if (p.getStatus() == null) p.setStatus("open");
             return p;
         });
-        when(domainService.findById("domain-1")).thenReturn(Optional.empty());
 
         DnaProposal result = proposalService.create("prop-1", "card", "{}", "agent-1", "{}", "domain-1");
 
         assertNotNull(result);
         assertEquals("open", result.getStatus());
-        assertNotNull(result.getReviewedAt());
+        assertNull(result.getReviewedAt());
     }
 
     @Test

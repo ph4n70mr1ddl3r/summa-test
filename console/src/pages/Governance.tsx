@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, type SpendSnapshot } from '../services/api'
+import { escapeHtml } from '../utils/escapeHtml'
 
 export default function Governance() {
   const [policies, setPolicies] = useState<Record<string, unknown>>({})
@@ -48,7 +49,7 @@ export default function Governance() {
               {policyEntries.slice(0, 10).map(([k, v]) => (
                 <div key={k} className="flex justify-between text-sm">
                   <span className="text-gray-400">{k}</span>
-                  <span className="text-gray-200 font-mono">{String(v)}</span>
+                  <span className="text-gray-200 font-mono">{escapeHtml(String(v))}</span>
                 </div>
               ))}
             </div>
@@ -64,7 +65,7 @@ export default function Governance() {
               {quotaEntries.slice(0, 10).map(([k, v]) => (
                 <div key={k} className="flex justify-between text-sm">
                   <span className="text-gray-400">{k}</span>
-                  <span className="text-gray-200 font-mono">{String(v)}</span>
+                  <span className="text-gray-200 font-mono">{escapeHtml(String(v))}</span>
                 </div>
               ))}
             </div>

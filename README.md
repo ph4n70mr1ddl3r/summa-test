@@ -55,8 +55,8 @@ A self-hosted platform where human employees and AI agents work as one organizat
 The normative requirements are in `specs/`. Run the structural linter:
 
 ```bash
-python tools/lint_specs.py
-python tools/test_lint.py
+python3 tools/lint_specs.py
+python3 tools/test_lint.py
 ```
 
 ## Phases

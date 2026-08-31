@@ -24,6 +24,8 @@ import Groups from './pages/Groups.tsx'
 import NotFound from './pages/NotFound.tsx'
 import Login from './pages/Login.tsx'
 
+document.title = 'Summa'
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>

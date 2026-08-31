@@ -57,7 +57,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(Map.of(
                     "code", "conflict",
-                    "message", "Resource conflict: " + e.getMostSpecificCause().getMessage(),
+                    "message", "Resource conflict: " + (e.getMostSpecificCause() != null ? e.getMostSpecificCause().getMessage() : e.getMessage()),
                     "audit_event_id", audit.getId()
                 ));
     }

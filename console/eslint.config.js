@@ -1,6 +1,6 @@
 import js from '@eslint/js'
 import tseslint from 'typescript-eslint'
-import reactPlugins from '@typescript-eslint/parser'
+import parser from '@typescript-eslint/parser'
 
 export default tseslint.config(
   js.configs.recommended,
@@ -8,7 +8,7 @@ export default tseslint.config(
   {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
-      parser: reactPlugins,
+      parser: parser,
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',

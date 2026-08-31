@@ -22,8 +22,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private long jwtExpiration;
 
     public static final List<String> PUBLIC_PATHS = List.of(
-        "/auth/login", "/health", "/info",
-        "/nodes/enroll"
+        "/api/auth/login", "/api/health", "/api/info",
+        "/api/nodes/enroll"
     );
 
     @Override

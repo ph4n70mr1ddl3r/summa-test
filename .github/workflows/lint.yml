@@ -15,6 +15,6 @@ jobs:
         with:
           python-version: "3.12"
       - name: Lint spec suite
-        run: python tools/lint_specs.py
+        run: python3 tools/lint_specs.py
       - name: Linter self-tests
-        run: python tools/test_lint.py
+        run: python3 tools/test_lint.py
