@@ -58,7 +58,7 @@ public class AskController {
                     deadlineSeconds = Long.parseLong(deadlineStr);
                 } catch (NumberFormatException e) {
                     AuditEvent audit = auditService.logSystem("REFUSAL", "validation", "Invalid deadlineSeconds value", null);
-                    return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
+                    return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
                             .body(Map.of("code", "validation", "message", "Invalid deadlineSeconds value", "audit_event_id", audit.getId()));
                 }
             }
@@ -67,7 +67,7 @@ public class AskController {
                 deadline = Instant.now().plusSeconds(deadlineSeconds);
             } catch (Exception e) {
                 AuditEvent audit = auditService.logSystem("REFUSAL", "validation", "Invalid deadlineSeconds value", null);
-                return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
+                return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
                         .body(Map.of("code", "validation", "message", "Invalid deadlineSeconds value", "audit_event_id", audit.getId()));
             }
             Ask ask = askService.create(

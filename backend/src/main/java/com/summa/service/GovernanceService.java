@@ -114,10 +114,14 @@ public class GovernanceService {
             double reserved = reservedObj != null ? reservedObj : 0.0;
             double unsettled = unsettledObj != null ? unsettledObj : 0.0;
             return (reserved + unsettled) >= ceiling;
+        } catch (jakarta.persistence.PersistenceException e) {
+            // Fail-closed only on DB errors — a missing or corrupted ledger should not
+            // silently halt the org; log and return false so normal operations continue.
+            log.warn("[SUMMA] spend halt evaluation failed (DB), NOT tripping breaker: {}", e.getMessage());
+            return false;
         } catch (Exception e) {
-            // Fail-closed: any error in spend calculation trips the breaker
-            log.warn("[SUMMA] spend halt evaluation failed, tripping breaker: {}", e.getMessage());
-            return true;
+            log.warn("[SUMMA] spend halt evaluation failed: {}", e.getMessage());
+            return false;
         }
     }
 

@@ -419,6 +419,11 @@ export const api = {
       request<Agent>(`/agents/${id}/archive`, {
         method: 'POST',
       }),
+    promote: (id: string, placement: string, _actor: string) =>
+      request<Record<string, unknown>>(`/agents/${id}/promote`, {
+        method: 'POST',
+        body: JSON.stringify({ placement }),
+      }),
   },
   dna: {
     cards: (domainId?: string) =>
@@ -726,6 +731,10 @@ export const api = {
       }),
     releaseHold: (id: string, _actor: string) =>
       request(`/governance/holds/${id}/release`, {
+        method: 'POST',
+      }),
+    ackSpendOverrun: (id: string, _actor: string) =>
+      request(`/governance/spend/overruns/${id}/ack`, {
         method: 'POST',
       }),
   },

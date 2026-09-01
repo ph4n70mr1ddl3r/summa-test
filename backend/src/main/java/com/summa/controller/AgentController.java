@@ -162,7 +162,8 @@ public class AgentController {
                 throw new IllegalStateException("Only customRole hires (no template) can be promoted");
             }
             // TPL-046: One live promotion ask per hire — refuse if already pending
-            List<com.summa.model.Ask> pendingPromoAsks = askRepository.findByToAndStatusPending(actor).stream()
+            // Check asks TO the agent being promoted, not asks TO the actor
+            List<com.summa.model.Ask> pendingPromoAsks = askRepository.findByToAndStatusPending(id).stream()
                     .filter(a -> "promotion".equals(a.getKind()))
                     .toList();
             boolean hasPromoForAgent = false;

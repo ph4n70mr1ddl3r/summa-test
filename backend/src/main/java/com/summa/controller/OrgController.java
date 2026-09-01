@@ -4,6 +4,7 @@ import com.summa.service.OrgService;
 import com.summa.service.AuditService;
 import com.summa.service.MemberService;
 import com.summa.service.DataHoldService;
+import com.summa.service.AgentService;
 import com.summa.model.Human;
 import com.summa.model.AuditEvent;
 import com.summa.model.Agent;
@@ -26,14 +27,16 @@ public class OrgController {
     private final MemberService memberService;
     private final DataHoldService dataHoldService;
     private final WriteGate writeGate;
+    private final AgentService agentService;
 
     public OrgController(OrgService orgService, AuditService auditService, MemberService memberService,
-                         DataHoldService dataHoldService, WriteGate writeGate) {
+                         DataHoldService dataHoldService, WriteGate writeGate, AgentService agentService) {
         this.orgService = orgService;
         this.auditService = auditService;
         this.memberService = memberService;
         this.dataHoldService = dataHoldService;
         this.writeGate = writeGate;
+        this.agentService = agentService;
     }
 
     @PostMapping("/bootstrap")
@@ -207,9 +210,10 @@ public class OrgController {
     @GetMapping("/lineage")
     public ResponseEntity<?> lineage(@RequestParam String memberId) {
         // API-004: full lineage graph from any member
+        int depthCap = agentService.getDepthCap();
         List<String> lineage = new ArrayList<>();
         String[] holder = new String[]{memberId};
-        while (holder[0] != null && lineage.size() < 20) {
+        while (holder[0] != null && lineage.size() < depthCap) {
             lineage.add(holder[0]);
             final String nextId = holder[0];
             memberService.findAgent(nextId).ifPresent(a -> holder[0] = a.getSpawnedBy());

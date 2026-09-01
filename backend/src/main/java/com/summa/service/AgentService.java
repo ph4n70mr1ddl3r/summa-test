@@ -153,6 +153,21 @@ public class AgentService {
                 String.format("{\"agentId\":\"%s\",\"reason\":\"agent_retiring\"}", id));
         }
 
+        // ASK-061: Reassign asks TO the retiring agent up the chain
+        // (non-active target rule reassigns them to deputy or admin broadcast)
+        for (Ask ask : askRepository.findByToAndStatusPending(id)) {
+            Optional<Human> targetHuman = memberService.findHuman(id);
+            String newTo = OffboardingWalkService.ADMIN_BROADCAST;
+            if (targetHuman.isPresent() && targetHuman.get().getDeputyMemberId() != null
+                    && memberService.findHuman(targetHuman.get().getDeputyMemberId()).isPresent()) {
+                newTo = targetHuman.get().getDeputyMemberId();
+            }
+            ask.setTo(newTo);
+            askRepository.save(ask);
+            auditService.logSystem("RETIRE_REASSIGN_ASK_TO", "ask", ask.getId(),
+                String.format("{\"agentId\":\"%s\",\"newTo\":\"%s\",\"reason\":\"agent_retiring\"}", id, newTo));
+        }
+
         // 2. Cancel board tasks assigned to the agent
         for (BoardTask task : boardTaskRepository.findByAssigneeMemberId(id)) {
             if ("open".equals(task.getStatus()) || "in_progress".equals(task.getStatus())) {

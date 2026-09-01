@@ -60,7 +60,7 @@ class OrgServiceTest {
 
     @Test
     void offboard_refusesLastAdmin() {
-        when(humanRepository.findById("human-1")).thenReturn(Optional.of(createHuman("human-1", "admin")));
+        when(humanRepository.findByIdForUpdate("human-1")).thenReturn(Optional.of(createHuman("human-1", "admin")));
         when(humanRepository.countByDeactivatedAtIsNullAndRbac("admin")).thenReturn(1L);
 
         assertThrows(IllegalStateException.class, () -> {
@@ -71,7 +71,7 @@ class OrgServiceTest {
     @Test
     void offboard_succeedsWhenNotLastAdmin() {
         Human human = createHuman("human-1", "member");
-        when(humanRepository.findById("human-1")).thenReturn(Optional.of(human));
+        when(humanRepository.findByIdForUpdate("human-1")).thenReturn(Optional.of(human));
         when(humanRepository.countByDeactivatedAtIsNullAndRbac("admin")).thenReturn(2L);
         when(offboardingWalkService.walkOffboard(eq("human-1"), eq(null), eq("admin-2")))
             .thenReturn(Map.of("humanId", "human-1"));

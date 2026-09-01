@@ -159,29 +159,30 @@ public class AskService {
             } else if ("escalate".equals(behavior) || "reassign".equals(behavior)) {
                 expire(ask.getId());
                 try {
-                    int depth = successorDepth.getOrDefault(ask.getId(), 0) + 1;
-                    if (depth > MAX_EXPIRE_SUCCESSOR_DEPTH) {
-                        // ASK-057: Chain exhausted — broadcast org-stall alert
-                        broadcastOrgStall(ask);
-                        auditService.logSystem("EXPIRE_CHAIN_EXHAUSTED", "ask", ask.getId(),
-                            String.format("{\"depth\":%d,\"behavior\":\"%s\"}", depth, behavior));
-                        continue;
-                    }
-                    String successorTo = OffboardingWalkService.ADMIN_BROADCAST;
-                    Optional<Human> target = memberService.findHuman(ask.getTo());
-                    if (target.isPresent() && target.get().getDeputyMemberId() != null) {
-                        successorTo = target.get().getDeputyMemberId();
-                    }
-                    // ASK-012/CFG-140: derive deadline from tier defaults
-                    long successorDeadlineSeconds = deriveDeadlineFromTier(ask.getSlaTier());
-                    Ask successor = create(ask.getKind(), ask.getFrom(), successorTo,
-                        ask.getPayload(), ask.getSlaTier(), "deny",
-                        ask.getQuorumRequired(),
-                        Instant.now().plusSeconds(successorDeadlineSeconds),
-                        ask.getInitiativeId(), ask.getWorkspaceId());
-                    successorDepth.put(successor.getId(), depth);
-                    auditService.logSystem("EXPIRE_SUCCESSOR_CREATED", "ask", successor.getId(),
-                        String.format("{\"originalId\":\"%s\",\"behavior\":\"%s\",\"depth\":%d}", ask.getId(), behavior, depth));
+                     int depth = successorDepth.getOrDefault(ask.getId(), 0) + 1;
+                     if (depth > MAX_EXPIRE_SUCCESSOR_DEPTH) {
+                         // ASK-057: Chain exhausted — broadcast org-stall alert
+                         broadcastOrgStall(ask);
+                         auditService.logSystem("EXPIRE_CHAIN_EXHAUSTED", "ask", ask.getId(),
+                             String.format("{\"depth\":%d,\"behavior\":\"%s\"}", depth, behavior));
+                         continue;
+                     }
+                     String successorTo = OffboardingWalkService.ADMIN_BROADCAST;
+                     Optional<Human> target = memberService.findHuman(ask.getTo());
+                     if (target.isPresent() && target.get().getDeputyMemberId() != null) {
+                         successorTo = target.get().getDeputyMemberId();
+                     }
+                     // ASK-012/CFG-140: derive deadline from tier defaults
+                     long successorDeadlineSeconds = deriveDeadlineFromTier(ask.getSlaTier());
+                     Ask successor = create(ask.getKind(), ask.getFrom(), successorTo,
+                         ask.getPayload(), ask.getSlaTier(), "deny",
+                         ask.getQuorumRequired(),
+                         Instant.now().plusSeconds(successorDeadlineSeconds),
+                         ask.getInitiativeId(), ask.getWorkspaceId());
+                     // Track depth by the successor's ID so the next expire cycle sees the correct depth
+                     successorDepth.put(successor.getId(), depth);
+                     auditService.logSystem("EXPIRE_SUCCESSOR_CREATED", "ask", successor.getId(),
+                         String.format("{\"originalId\":\"%s\",\"behavior\":\"%s\",\"depth\":%d}", ask.getId(), behavior, depth));
                 } catch (Exception e) {
                     auditService.logSystem("EXPIRE_SUCCESSOR_FAIL", "ask", ask.getId(),
                         String.format("{\"behavior\":\"%s\",\"error\":\"%s\"}", behavior, e.getMessage()));

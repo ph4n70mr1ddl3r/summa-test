@@ -28,6 +28,7 @@ import java.util.regex.Pattern;
 public class InitiativeService {
     private static final long STALL_CHECK_INTERVAL_MS = 300000; // 5 minutes
     private static final long STALL_ASK_DEADLINE_SECONDS = 7 * 86400L; // 7 days
+    private static final long STALL_ASK_DEDUP_WINDOW_SECONDS = 3600L; // 1 hour
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final Pattern KEYED_UNION_PATTERN = Pattern.compile("^[ha]?:.+$|^[a-zA-Z0-9_-]+$");
 
@@ -343,11 +344,14 @@ public class InitiativeService {
      * - Deadline passed with open work → bulk ask to sponsor (INT-060)
      * - Deadline passed with no open work → close-out ask (INT-063)
      * - Goal window ended without initiative action → direction ask (INT-050)
+     * Deduplicates by refusing to file a new ask if one was created within
+     * STALL_ASK_DEDUP_WINDOW_SECONDS for the same initiative and reason.
      */
     @Scheduled(fixedRate = STALL_CHECK_INTERVAL_MS) // every 5 minutes
     @Transactional
     public void checkStallsAndDirections() {
         Instant now = Instant.now();
+        Instant dedupCutoff = now.minusSeconds(STALL_ASK_DEDUP_WINDOW_SECONDS);
         // INT-062: Clock runs while active AND proposed; paused suspends it; closed stops it
         List<Initiative> active = initiativeRepository.findByStatus("active");
         List<Initiative> proposed = initiativeRepository.findByStatus("proposed");
@@ -366,21 +370,18 @@ public class InitiativeService {
                     // INT-060: File stall ask when open work exists; INT-063: close-out ask when none
                     boolean hasOpenWork = boardTaskRepository.findByInitiativeId(init.getId()).stream()
                             .anyMatch(t -> !"done".equals(t.getStatus()));
-                    try {
-                        if (hasOpenWork) {
+                    String stallReason = hasOpenWork ? "stall" : "closeout";
+                    // Dedup: skip if a stall/close-out ask was filed recently for this initiative
+                    if (!hasRecentStallAsk(init.getId(), stallReason, dedupCutoff)) {
+                        try {
                             askService.create("question", "system", init.getSponsor(),
-                                String.format("{\"initiativeId\":\"%s\",\"reason\":\"stall\"}", init.getId()),
+                                String.format("{\"initiativeId\":\"%s\",\"reason\":\"%s\"}", init.getId(), stallReason),
                                 "bulk", "escalate", 1,
                                 Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
-                        } else {
-                            askService.create("question", "system", init.getSponsor(),
-                                String.format("{\"initiativeId\":\"%s\",\"reason\":\"closeout\"}", init.getId()),
-                                "bulk", "escalate", 1,
-                                Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
+                        } catch (Exception e) {
+                            auditService.logSystem("STALL_ASK_FAIL", "initiative", init.getId(),
+                                String.format("{\"error\":\"%s\"}", e.getMessage()));
                         }
-                    } catch (Exception e) {
-                        auditService.logSystem("STALL_ASK_FAIL", "initiative", init.getId(),
-                            String.format("{\"error\":\"%s\"}", e.getMessage()));
                     }
                 }
             }
@@ -395,15 +396,19 @@ public class InitiativeService {
                     boolean goalTerminal = goalOpt.filter(g ->
                             !"active".equals(g.getStatus())).isPresent();
                     if (windowEnded || goalTerminal) {
-                        String goalStatus = goalOpt.map(com.summa.model.DnaGoal::getStatus).orElse("unknown");
-                        askService.create("question", "system", init.getSponsor(),
-                            String.format("{\"initiativeId\":\"%s\",\"goalRef\":\"%s\",\"reason\":\"goal_window_ended\",\"goalStatus\":\"%s\"}",
-                                init.getId(), init.getGoalRef(), goalStatus),
-                            "bulk", "escalate", 1,
-                            Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
-                        auditService.logSystem("DIRECTION_ask_CREATED", "initiative", init.getId(),
-                            String.format("{\"goalRef\":\"%s\",\"sponsor\":\"%s\",\"reason\":\"%s\"}",
-                                init.getGoalRef(), init.getSponsor(), windowEnded ? "window_ended" : "goal_terminal"));
+                        String reason = windowEnded ? "window_ended" : "goal_terminal";
+                        // Dedup: skip if a direction ask was filed recently for this initiative
+                        if (!hasRecentStallAsk(init.getId(), "direction_" + reason, dedupCutoff)) {
+                            String goalStatus = goalOpt.map(com.summa.model.DnaGoal::getStatus).orElse("unknown");
+                            askService.create("question", "system", init.getSponsor(),
+                                String.format("{\"initiativeId\":\"%s\",\"goalRef\":\"%s\",\"reason\":\"%s\",\"goalStatus\":\"%s\"}",
+                                    init.getId(), init.getGoalRef(), reason, goalStatus),
+                                "bulk", "escalate", 1,
+                                Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
+                            auditService.logSystem("DIRECTION_ask_CREATED", "initiative", init.getId(),
+                                String.format("{\"goalRef\":\"%s\",\"sponsor\":\"%s\",\"reason\":\"%s\"}",
+                                    init.getGoalRef(), init.getSponsor(), reason));
+                        }
                     }
                 } catch (Exception e) {
                     auditService.logSystem("DIRECTION_ask_FAIL", "initiative", init.getId(),
@@ -411,6 +416,26 @@ public class InitiativeService {
                 }
             }
         }
+    }
+
+    /**
+     * Check whether a stall/direction ask for the given initiative and reason
+     * was filed within the dedup window. Uses initiativeId in the ask payload match.
+     */
+    private boolean hasRecentStallAsk(String initiativeId, String reason, Instant cutoff) {
+        try {
+            List<Ask> recent = askRepository.findByInitiativeIdAndStatusPending(initiativeId);
+            for (Ask ask : recent) {
+                if (ask.getCreatedAt() == null || ask.getCreatedAt().isBefore(cutoff)) continue;
+                try {
+                    com.fasterxml.jackson.databind.JsonNode node = OBJECT_MAPPER.readTree(ask.getPayload());
+                    if (node.has("reason") && node.get("reason").asText().equals(reason)) {
+                        return true;
+                    }
+                } catch (Exception ignored) {}
+            }
+        } catch (Exception ignored) {}
+        return false;
     }
 
     private void validateKeyedUnion(String value, String fieldName) {

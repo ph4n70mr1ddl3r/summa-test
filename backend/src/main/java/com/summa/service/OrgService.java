@@ -96,10 +96,13 @@ public class OrgService {
 
     @Transactional
     public Human offboard(String id, String actor) {
-        Human human = humanRepository.findById(id)
+        // OFB-020: Use pessimistic write lock on the target row to prevent a
+        // concurrent offboard of another admin from slipping between our
+        // admin-count check and our deactivate, which would leave zero live admins.
+        Human human = humanRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new IllegalArgumentException("Human not found: " + id));
 
-        // Check last admin guard
+        // Check last admin guard while holding the row lock
         long activeAdminCount = humanRepository.countByDeactivatedAtIsNullAndRbac("admin");
         if (activeAdminCount <= 1 && "admin".equals(human.getRbac())) {
             throw new IllegalStateException("Cannot offboard the last admin");

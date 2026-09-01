@@ -361,18 +361,13 @@ public class DnaDomainService {
         String oldOwner = oldOpt.get().getOwnerHumanId();
         String newOwner = newOpt.get().getOwnerHumanId();
         if (oldOwner.equals(newOwner)) return;
-        // Re-key pending asks addressed to old owner that reference the old domain
+        // Re-key ALL pending asks addressed to old owner (DGV-045: owner-derived asks follow the owner)
         for (Ask ask : askRepository.findByToAndStatusPending(oldOwner)) {
-            if (ask.getWorkspaceId() != null) {
-                Optional<Workspace> wsOpt = workspaceRepository.findById(ask.getWorkspaceId());
-                if (wsOpt.isPresent() && wsOpt.get().getDomainIds().contains(oldDomainId)) {
-                    ask.setTo(newOwner);
-                    askRepository.save(ask);
-                    auditService.logSystem("REKEY_ASK", "ask", ask.getId(),
-                        String.format("{\"oldDomain\":\"%s\",\"newDomain\":\"%s\",\"oldTo\":\"%s\",\"newTo\":\"%s\"}",
-                            oldDomainId, newDomainId, oldOwner, newOwner));
-                }
-            }
+            ask.setTo(newOwner);
+            askRepository.save(ask);
+            auditService.logSystem("REKEY_ASK", "ask", ask.getId(),
+                String.format("{\"oldDomain\":\"%s\",\"newDomain\":\"%s\",\"oldTo\":\"%s\",\"newTo\":\"%s\"}",
+                    oldDomainId, newDomainId, oldOwner, newOwner));
         }
     }
 

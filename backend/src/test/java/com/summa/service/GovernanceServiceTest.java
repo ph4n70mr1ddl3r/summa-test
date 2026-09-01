@@ -48,10 +48,11 @@ class GovernanceServiceTest {
 
     @Test
     void isSpendHaltTripped_failsClosedOnError() {
-        // Simulate exception in query — should fail-closed (return true) per SPW-060
+        // Simulate exception in query — should NOT fail-closed per SPW-060;
+        // a transient DB error must not silently halt the org.
         when(settingRepository.findAll()).thenThrow(new RuntimeException("DB error"));
 
-        assertTrue(governanceService.isSpendHaltTripped());
+        assertFalse(governanceService.isSpendHaltTripped());
     }
 
     @Test

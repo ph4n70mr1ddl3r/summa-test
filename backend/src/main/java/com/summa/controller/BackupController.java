@@ -41,13 +41,19 @@ public class BackupController {
                     .body(Map.of("code", "eligibility", "message", "Backup requires admin role", "audit_event_id", audit.getId()));
         }
         try {
-            String rawBackupDir = body.getOrDefault("backupDir", System.getProperty("java.io.tmpdir"));
-            Path backupDirPath = Paths.get(rawBackupDir).normalize();
-            Path validRoot = Paths.get(System.getProperty("java.io.tmpdir")).normalize();
-            if (!backupDirPath.startsWith(validRoot)) {
-                return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
-                        .body(Map.of("code", "validation", "message", "backupDir must be under tmpdir"));
-            }
+             String rawBackupDir = body.getOrDefault("backupDir", System.getProperty("java.io.tmpdir"));
+             Path validRoot = Paths.get(System.getProperty("java.io.tmpdir")).toRealPath();
+             Path backupDirPath;
+             try {
+                 backupDirPath = Paths.get(rawBackupDir).toRealPath();
+             } catch (java.io.IOException e) {
+                 return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
+                         .body(Map.of("code", "validation", "message", "backupDir path is inaccessible: " + e.getMessage()));
+             }
+             if (!backupDirPath.startsWith(validRoot)) {
+                 return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
+                         .body(Map.of("code", "validation", "message", "backupDir must be under tmpdir"));
+             }
             String path = backupService.createBackup(backupDirPath.toString());
             auditService.log(actor, "CREATE_BACKUP", "backup", path, null);
             return ResponseEntity.ok(Map.of("path", path));
@@ -69,17 +75,23 @@ public class BackupController {
                     .body(Map.of("code", "eligibility", "message", "Restore requires admin role", "audit_event_id", audit.getId()));
         }
         try {
-            String rawPath = body.get("backupPath");
-            if (rawPath == null || rawPath.isBlank()) {
-                return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
-                        .body(Map.of("code", "validation", "message", "backupPath is required"));
-            }
-            Path backupFilePath = Paths.get(rawPath).normalize();
-            Path validRoot = Paths.get(System.getProperty("java.io.tmpdir")).normalize();
-            if (!backupFilePath.startsWith(validRoot)) {
-                return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
-                        .body(Map.of("code", "validation", "message", "backupPath must be under tmpdir"));
-            }
+             String rawPath = body.get("backupPath");
+             if (rawPath == null || rawPath.isBlank()) {
+                 return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
+                         .body(Map.of("code", "validation", "message", "backupPath is required"));
+             }
+             Path validRoot = Paths.get(System.getProperty("java.io.tmpdir")).toRealPath();
+             Path backupFilePath;
+             try {
+                 backupFilePath = Paths.get(rawPath).toRealPath();
+             } catch (java.io.IOException e) {
+                 return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
+                         .body(Map.of("code", "validation", "message", "backupPath is inaccessible: " + e.getMessage()));
+             }
+             if (!backupFilePath.startsWith(validRoot)) {
+                 return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
+                         .body(Map.of("code", "validation", "message", "backupPath must be under tmpdir"));
+             }
             backupService.restore(backupFilePath.toString());
             auditService.log(actor, "RESTORE_BACKUP", "backup", backupFilePath.toString(), null);
             return ResponseEntity.ok(Map.of("status", "restored"));
