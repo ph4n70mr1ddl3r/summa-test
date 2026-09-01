@@ -88,4 +88,54 @@ class OrgServiceTest {
         h.setDeactivatedAt(null);
         return h;
     }
+
+    @Test
+    void setDeputy_detectsSelfDeputy() {
+        Human human = createHuman("human-1", "member");
+        when(humanRepository.findById("human-1")).thenReturn(Optional.of(human));
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            orgService.setDeputy("human-1", "human-1", "admin");
+        });
+    }
+
+    @Test
+    void setDeputy_refusesViewerAsDeputy() {
+        Human human = createHuman("human-1", "member");
+        Human viewer = createHuman("human-2", "viewer");
+        when(humanRepository.findById("human-1")).thenReturn(Optional.of(human));
+        when(humanRepository.findById("human-2")).thenReturn(Optional.of(viewer));
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            orgService.setDeputy("human-1", "human-2", "admin");
+        });
+    }
+
+    @Test
+    void setDeputy_detectsCycle() {
+        Human human1 = createHuman("human-1", "member");
+        human1.setDeputyMemberId("human-2");
+        Human human2 = createHuman("human-2", "member");
+        human2.setDeputyMemberId("human-1");
+        when(humanRepository.findById("human-1")).thenReturn(Optional.of(human1));
+        when(humanRepository.findById("human-2")).thenReturn(Optional.of(human2));
+
+        assertThrows(IllegalStateException.class, () -> {
+            orgService.setDeputy("human-1", "human-2", "admin");
+        });
+    }
+
+    @Test
+    void setDeputy_succeedsWhenNoCycle() {
+        Human human1 = createHuman("human-1", "member");
+        Human human2 = createHuman("human-2", "member");
+        when(humanRepository.findById("human-1")).thenReturn(Optional.of(human1));
+        when(humanRepository.findById("human-2")).thenReturn(Optional.of(human2));
+        when(humanRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Human result = orgService.setDeputy("human-1", "human-2", "admin");
+
+        assertNotNull(result);
+        assertEquals("human-2", result.getDeputyMemberId());
+    }
 }

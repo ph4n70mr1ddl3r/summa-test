@@ -1,13 +1,17 @@
 package com.summa.service;
 
 import com.summa.repository.DnaProposalRepository;
+import com.summa.repository.DnaRuleRepository;
 import com.summa.model.DnaProposal;
+import com.summa.model.DnaDomain;
+import com.summa.model.Ask;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -20,6 +24,9 @@ class DnaProposalServiceTest {
     private DnaProposalRepository proposalRepository;
 
     @Mock
+    private DnaRuleRepository ruleRepository;
+
+    @Mock
     private AuditService auditService;
 
     @Mock
@@ -27,6 +34,9 @@ class DnaProposalServiceTest {
 
     @Mock
     private MemberService memberService;
+
+    @Mock
+    private AskService askService;
 
     @InjectMocks
     private DnaProposalService proposalService;
@@ -109,5 +119,65 @@ class DnaProposalServiceTest {
         assertThrows(IllegalStateException.class, () -> {
             proposalService.amend("prop-1", "{}", "agent-1");
         });
+    }
+
+    @Test
+    void publish_rejectsContradictoryRule() {
+        DnaProposal proposal = new DnaProposal();
+        proposal.setId("prop-1");
+        proposal.setStatus("open");
+        proposal.setKind("rule");
+        proposal.setDomainId("domain-1");
+        proposal.setPayload("{\"supersedes_id\":\"rule-old\"}");
+        when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
+        when(ruleRepository.findBySupersedesId("rule-old")).thenReturn(List.of());
+        when(proposalRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        DnaProposal result = proposalService.publish("prop-1", "human-1", "human-1");
+        assertNotNull(result);
+        assertEquals("published", result.getStatus());
+    }
+
+    @Test
+    void checkAndEscalateBreachedProposals_escalatesOldProposal() {
+        DnaProposal proposal = new DnaProposal();
+        proposal.setId("prop-1");
+        proposal.setStatus("open");
+        proposal.setKind("card");
+        proposal.setDomainId("domain-1");
+        proposal.setCreatedAt(Instant.now().minusSeconds(8L * 86400L)); // 8 days ago, SLA is 7
+
+        DnaDomain domain = new DnaDomain();
+        domain.setId("domain-1");
+        domain.setReviewSlaDays(7);
+        when(proposalRepository.findAllOpen()).thenReturn(List.of(proposal));
+        when(domainService.findById("domain-1")).thenReturn(Optional.of(domain));
+
+        Ask ask = new Ask();
+        ask.setId("ask-escalation");
+        when(askService.create(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyInt(), any(), anyString(), anyString())).thenReturn(ask);
+
+        proposalService.checkAndEscalateBreachedProposals();
+
+        verify(askService).create(eq("question"), eq("system"), eq("admins"), anyString(), eq("critical"), eq("escalate"), eq(1), any(), isNull(), isNull());
+    }
+
+    @Test
+    void checkAndEscalateBreachedProposals_omitsNonBreached() {
+        DnaProposal proposal = new DnaProposal();
+        proposal.setId("prop-1");
+        proposal.setStatus("open");
+        proposal.setKind("card");
+        proposal.setDomainId("domain-1");
+        proposal.setCreatedAt(Instant.now().minusSeconds(1L * 86400L)); // 1 day ago, SLA is 7
+
+        when(proposalRepository.findAllOpen()).thenReturn(List.of(proposal));
+        DnaDomain domain = new DnaDomain();
+        domain.setReviewSlaDays(7);
+        when(domainService.findById("domain-1")).thenReturn(Optional.of(domain));
+
+        proposalService.checkAndEscalateBreachedProposals();
+
+        verify(askService, never()).create(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyInt(), any(), anyString(), anyString());
     }
 }

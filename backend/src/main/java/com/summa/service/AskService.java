@@ -145,6 +145,7 @@ public class AskService {
      * - deny: closes as expired
      * - escalate: closes as expired, files successor to escalation target
      * - reassign: closes as expired, files successor to deputy/admin
+     * ASK-057: Chain exhaustion — if no active recipient found, broadcasts org-stall alert.
      */
     @Scheduled(fixedRate = 60000)
     @Transactional
@@ -160,7 +161,9 @@ public class AskService {
                 try {
                     int depth = successorDepth.getOrDefault(ask.getId(), 0) + 1;
                     if (depth > MAX_EXPIRE_SUCCESSOR_DEPTH) {
-                        auditService.logSystem("EXPIRE_MAX_DEPTH_REACHED", "ask", ask.getId(),
+                        // ASK-057: Chain exhausted — broadcast org-stall alert
+                        broadcastOrgStall(ask);
+                        auditService.logSystem("EXPIRE_CHAIN_EXHAUSTED", "ask", ask.getId(),
                             String.format("{\"depth\":%d,\"behavior\":\"%s\"}", depth, behavior));
                         continue;
                     }
@@ -188,7 +191,29 @@ public class AskService {
     }
 
     /**
-     * ASK-015/040/050: Respond to an ask with eligibility, quorum, and re-validation checks.
+     * ASK-057/058: Broadcast org-stall alert to every active human when an ask chain exhausts.
+     * The alert is a critical-tier question ask rendered to all active humans including viewers.
+     */
+    private void broadcastOrgStall(Ask originalAsk) {
+        try {
+            String payload = String.format(
+                "{\"originalAskId\":\"%s\",\"originalAskKind\":\"%s\",\"originalAskTier\":\"%s\",\"reason\":\"chain_exhausted\"}",
+                originalAsk.getId(), originalAsk.getKind(), originalAsk.getSlaTier());
+            create("question", "system", OffboardingWalkService.ADMIN_BROADCAST,
+                payload, "critical", "deny", 1,
+                Instant.now().plusSeconds(DEFAULT_CRITICAL_ASK_DEADLINE_HOURS * 3600L),
+                originalAsk.getInitiativeId(), originalAsk.getWorkspaceId());
+            auditService.logSystem("ORG_STALL_BROADCAST", "ask", originalAsk.getId(),
+                "{\"reason\":\"chain_exhausted\",\"originalAskId\":\"%s\"}".formatted(originalAsk.getId()));
+        } catch (Exception e) {
+            auditService.logSystem("ORG_STALL_BROADCAST_FAIL", "ask", originalAsk.getId(),
+                String.format("{\"error\":\"%s\"}", e.getMessage()));
+        }
+    }
+
+    /**
+     * ASK-040/050/052: Respond to an ask with eligibility, quorum, and re-validation checks.
+     * ASK-052: When N>1, only pool principals' accepts count — deputy/delegate accepts are audit-only.
      */
     @Transactional
     public Ask respond(String id, String responder, String response) {
@@ -204,8 +229,20 @@ public class AskService {
             throw new IllegalArgumentException("Responder is not eligible: " + responder);
         }
 
-        // ASK-015: quorum-1 closes on first response; later responses are audit-only
         int quorum = ask.getQuorumRequired() != null ? ask.getQuorumRequired() : 1;
+
+        // ASK-052: When N>1, only pool principals' accepts count; deputy/delegate is audit-only
+        if (quorum > 1) {
+            boolean isPoolPrincipal = isPoolPrincipal(ask, responder);
+            if (!isPoolPrincipal) {
+                // Audit-only: record but don't count toward quorum
+                auditService.logSystem("AUDIT_ONLY_QUORUM_RESPONSE", "ask", id,
+                    String.format("{\"responder\":\"%s\",\"reason\":\"not_pool_principal\"}", responder));
+                return ask;
+            }
+        }
+
+        // ASK-015: quorum-1 closes on first response; later responses are audit-only
         if (quorum == 1) {
             recordResponse(ask, responder, response);
             ask.setRespondedAt(Instant.now());
@@ -222,7 +259,7 @@ public class AskService {
         List<String> existingResponses = parseResponseIds(ask);
         if (existingResponses.contains(responder)) {
             // Already responded — audit-only duplicate
-            auditService.logSystem("AUDIT_ONLY_RESPONSE", "ask", id,
+            auditService.logSystem("AUDIT_ONLY_DUPLICATE_RESPONSE", "ask", id,
                 String.format("{\"responder\":\"%s\"}", responder));
             return ask;
         }
@@ -243,6 +280,24 @@ public class AskService {
                     response != null && !response.isEmpty() ? response.substring(0, Math.min(100, response.length())) : "",
                     existingResponses.size(), ask.getQuorumRequired()));
         return saved;
+    }
+
+    /**
+     * ASK-052: Determine if a responder is a pool principal (not a deputy or delegated agent).
+     * Pool principals are the target human, active admins (for admin broadcast), and domain owners.
+     */
+    private boolean isPoolPrincipal(Ask ask, String responder) {
+        // Direct target match
+        if (ask.getTo().equals(responder)) {
+            Optional<Human> target = memberService.findHuman(ask.getTo());
+            return target.isPresent() && !"viewer".equals(target.get().getRbac());
+        }
+        // Admin broadcast: any active admin is a pool principal
+        if (OffboardingWalkService.ADMIN_BROADCAST.equals(ask.getTo())) {
+            return memberService.findAdmins().stream()
+                    .anyMatch(h -> h.getId().equals(responder));
+        }
+        return false;
     }
 
     /**

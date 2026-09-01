@@ -212,6 +212,26 @@ public class AgentService {
         return saved;
     }
 
+    /**
+     * CLC-002: Denial is terminal for requested rows — requested→archived.
+     * A requested agent that is denied never becomes active.
+     */
+    @Transactional
+    public Agent deny(String id, String actor) {
+        Agent agent = agentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Agent not found: " + id));
+
+        if (!"requested".equals(agent.getStatus())) {
+            throw new IllegalStateException("Can only deny requested agents, current status: " + agent.getStatus());
+        }
+
+        agent.setStatus("archived");
+        agent.setArchivedAt(Instant.now());
+        Agent saved = agentRepository.save(agent);
+        auditService.log(actor, "DENY", "agent", id, null);
+        return saved;
+    }
+
     public long countActiveAgents() {
         return agentRepository.countActiveAgents();
     }

@@ -130,6 +130,11 @@ public class SpawnService {
             }
         }
 
+        // SPW-030: Scope delegation — child's scopes must be ⊆ parent's scopes
+        if (scopeCeiling != null && !scopeCeiling.isBlank() && !scopeCeiling.equals("{}")) {
+            validateScopeCeiling(requesterId, scopeCeiling);
+        }
+
         if (templateId != null && !templateId.isBlank()) {
             Optional<RoleTemplate> templateOpt = templateRepository.findById(templateId);
             if (templateOpt.isEmpty()) {
@@ -328,6 +333,52 @@ public class SpawnService {
         SpawnRequest saved = spawnRepository.save(request);
         auditService.log(actor, "ARCHIVE_SPAWN", "spawn_request", id, null);
         return saved;
+    }
+
+    /**
+     * SPW-030: Validate that the requested scope ceiling is a subset of the parent agent's scopes.
+     * Returns true if valid, throws if the child's scopes exceed the parent's.
+     */
+    private void validateScopeCeiling(String requesterId, String scopeCeiling) {
+        try {
+            Optional<Agent> parentOpt = agentRepository.findById(requesterId);
+            if (parentOpt.isEmpty()) return;
+            Agent parent = parentOpt.get();
+            if (parent.getTemplateId() == null) return; // No template = no scope constraints
+
+            Optional<RoleTemplate> templateOpt = templateRepository.findById(parent.getTemplateId());
+            if (templateOpt.isEmpty()) return;
+
+            RoleTemplate template = templateOpt.get();
+            String parentScopes = template.getDefaultScopes();
+            if (parentScopes == null || parentScopes.isBlank() || parentScopes.equals("{}")) return;
+
+            JsonNode parentJson = OBJECT_MAPPER.readTree(parentScopes);
+            JsonNode childJson = OBJECT_MAPPER.readTree(scopeCeiling);
+
+            // Validate: every key in child must exist in parent with equal or narrower value
+            java.util.Iterator<String> childKeys = childJson.fieldNames();
+            while (childKeys.hasNext()) {
+                String key = childKeys.next();
+                if (!parentJson.has(key)) {
+                    throw new IllegalStateException(
+                        "Scope ceiling violation: child requests scope '" + key + "' not granted to parent");
+                }
+                // Check value containment — string values must match exactly for simplicity
+                String parentVal = parentJson.get(key).asText();
+                String childVal = childJson.get(key).asText();
+                if (!parentVal.equals(childVal)) {
+                    throw new IllegalStateException(
+                        "Scope ceiling violation: child requests '" + key + "=" + childVal
+                            + "' but parent only has '" + key + "=" + parentVal + "'");
+                }
+            }
+        } catch (IllegalStateException e) {
+            throw e;
+        } catch (Exception e) {
+            auditService.logSystem("SPAWN_SCOPE_VALIDATE_FAIL", "spawn_request", UUID.randomUUID().toString(),
+                String.format("{\"requesterId\":\"%s\",\"error\":\"%s\"}", requesterId, e.getMessage()));
+        }
     }
 
     public Map<String, Object> getStats() {

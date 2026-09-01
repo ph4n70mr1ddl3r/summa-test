@@ -143,11 +143,34 @@ public class OrgService {
             throw new IllegalArgumentException("Cannot deputy self");
         }
 
+        // ORG-061: Detect deputy cycles — refuse if setting this deputy would create a cycle
+        if (wouldCreateDeputyCycle(id, deputyId)) {
+            throw new IllegalStateException("Cannot set deputy: would create a cycle in deputy chain");
+        }
+
         human.setDeputyMemberId(deputyId);
         Human saved = humanRepository.save(human);
         auditService.log(actor, "SET_DEPUTY", "human", id,
             String.format("{\"deputyId\":\"%s\"}", deputyId));
         return saved;
+    }
+
+    /**
+     * ORG-061: Check if setting deputyId as deputy of humanId would create a cycle.
+     * Walks the deputy chain from deputyId to see if it ever reaches humanId.
+     */
+    private boolean wouldCreateDeputyCycle(String humanId, String deputyId) {
+        String current = deputyId;
+        int maxSteps = 50; // Safety bound
+        for (int i = 0; i < maxSteps; i++) {
+            Optional<Human> h = humanRepository.findById(current);
+            if (h.isEmpty()) return false;
+            String deputy = h.get().getDeputyMemberId();
+            if (deputy == null) return false;
+            if (deputy.equals(humanId)) return true;
+            current = deputy;
+        }
+        return true; // Exceeded max steps — treat as cycle
     }
 
     @Transactional

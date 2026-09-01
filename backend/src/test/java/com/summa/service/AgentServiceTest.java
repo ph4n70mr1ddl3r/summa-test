@@ -154,6 +154,32 @@ class AgentServiceTest {
     }
 
     @Test
+    void deny_requestedAgent() {
+        Agent agent = new Agent();
+        agent.setId("agent-1");
+        agent.setStatus("requested");
+        when(agentRepository.findById("agent-1")).thenReturn(Optional.of(agent));
+        when(agentRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Agent result = agentService.deny("agent-1", "admin");
+
+        assertEquals("archived", result.getStatus());
+        assertNotNull(result.getArchivedAt());
+    }
+
+    @Test
+    void deny_throwsWhenNotRequested() {
+        Agent agent = new Agent();
+        agent.setId("agent-1");
+        agent.setStatus("active");
+        when(agentRepository.findById("agent-1")).thenReturn(Optional.of(agent));
+
+        assertThrows(IllegalStateException.class, () -> {
+            agentService.deny("agent-1", "admin");
+        });
+    }
+
+    @Test
     void findByOwner() {
         Agent agent = new Agent();
         agent.setId("agent-1");

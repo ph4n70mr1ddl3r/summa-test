@@ -124,4 +124,58 @@ class SpawnServiceTest {
 
         assertEquals("denied", result.getStatus());
     }
+
+    @Test
+    void create_refusesScopeCeilingExceedingParent() {
+        when(governanceService.isSpendHaltTripped()).thenReturn(false);
+
+        Agent agent = new Agent();
+        agent.setId("agent-1");
+        agent.setStatus("active");
+        agent.setTemplateId("template-1");
+        when(agentRepository.findById("agent-1")).thenReturn(Optional.of(agent));
+
+        com.summa.model.RoleTemplate template = new com.summa.model.RoleTemplate();
+        template.setId("template-1");
+        template.setDefaultScopes("{\"fs\":\"read\",\"shell\":\"none\"}");
+        when(templateRepository.findById("template-1")).thenReturn(Optional.of(template));
+
+        SpawnRequest request = new SpawnRequest();
+        request.setId("spawn-1");
+        request.setSpawnClass("ephemeral");
+        lenient().when(spawnRepository.save(any())).thenReturn(request);
+
+        // scope ceiling requests fs:write which parent doesn't have — should fail
+        assertThrows(IllegalStateException.class, () -> {
+            spawnService.create("agent-1", null, null, "ephemeral",
+                "Do task", "[]", "{\"fs\":\"write\"}", null, 24, "human-1", "actor");
+        });
+    }
+
+    @Test
+    void create_allowsScopeCeilingWithinParent() {
+        when(governanceService.isSpendHaltTripped()).thenReturn(false);
+
+        Agent agent = new Agent();
+        agent.setId("agent-1");
+        agent.setStatus("active");
+        agent.setTemplateId("template-1");
+        when(agentRepository.findById("agent-1")).thenReturn(Optional.of(agent));
+
+        com.summa.model.RoleTemplate template = new com.summa.model.RoleTemplate();
+        template.setId("template-1");
+        template.setDefaultScopes("{\"fs\":\"readwrite\",\"shell\":\"exec\"}");
+        when(templateRepository.findById("template-1")).thenReturn(Optional.of(template));
+
+        SpawnRequest request = new SpawnRequest();
+        request.setId("spawn-1");
+        request.setSpawnClass("ephemeral");
+        when(spawnRepository.save(any())).thenReturn(request);
+
+        SpawnRequest result = spawnService.create("agent-1", null, null, "ephemeral",
+            "Do task", "[]", "{\"fs\":\"readwrite\"}", null, 24, "human-1", "actor");
+
+        assertNotNull(result);
+        assertEquals("ephemeral", result.getSpawnClass());
+    }
 }
