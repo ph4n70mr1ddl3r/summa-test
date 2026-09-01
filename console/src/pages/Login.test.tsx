@@ -64,7 +64,7 @@ describe('Login page', () => {
       resolveLogin = resolve
     })
     vi.mocked(apiModule.api.auth.login).mockImplementation(() => loginPromise)
-    const { getByText, getByRole, container } = renderLogin()
+    const { getByRole, container } = renderLogin()
     const form = container.querySelector('form') as HTMLFormElement
     fireEvent.submit(form)
     await waitFor(() => {
