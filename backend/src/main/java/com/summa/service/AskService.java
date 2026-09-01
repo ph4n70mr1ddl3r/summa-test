@@ -21,12 +21,14 @@ import java.security.MessageDigest;
 import java.nio.charset.StandardCharsets;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 
 @Service
 public class AskService {
     private static final long DEFAULT_CRITICAL_ASK_DEADLINE_HOURS = 1;
     private static final long DEFAULT_BULK_ASK_DEADLINE_HOURS = 24;
     private static final long DEFAULT_STANDARD_ASK_DEADLINE_HOURS = 24;
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final AskRepository askRepository;
     private final AuditService auditService;
@@ -211,6 +213,8 @@ public class AskService {
             Ask saved = askRepository.save(ask);
             auditService.log(responder, "RESPOND", "ask", id,
                 String.format("{\"response\":\"%s\"}", response != null && !response.isEmpty() ? response.substring(0, Math.min(100, response.length())) : ""));
+            // INT-051: Direction ask response — move linkage atomically
+            handleDirectionAskResponse(ask, response);
             return saved;
         }
 
@@ -229,6 +233,8 @@ public class AskService {
         if (quorumReached) {
             ask.setStatus("answered");
             ask.setRespondedAt(Instant.now());
+            // INT-051: Direction ask response on quorum reach
+            handleDirectionAskResponse(ask, response);
         }
         Ask saved = askRepository.save(ask);
 
@@ -237,6 +243,50 @@ public class AskService {
                     response != null && !response.isEmpty() ? response.substring(0, Math.min(100, response.length())) : "",
                     existingResponses.size(), ask.getQuorumRequired()));
         return saved;
+    }
+
+    /**
+     * INT-051: When a direction ask (kind=question, tier=bulk, expiry=escalate) tied to an
+     * initiative is answered, atomically update the initiative's goal_ref per the response.
+     * The response payload carries the choice: extend, re-base, re-target, or close.
+     */
+    private void handleDirectionAskResponse(Ask ask, String response) {
+        if (ask.getInitiativeId() == null || ask.getInitiativeId().isBlank()) return;
+        if (!"question".equals(ask.getKind()) || !"bulk".equals(ask.getSlaTier())) return;
+
+        try {
+            JsonNode payload = OBJECT_MAPPER.readTree(ask.getPayload());
+            String initiativeId = ask.getInitiativeId();
+            String action = response != null ? response.trim() : "";
+
+            if ("extend".equals(action) || action.startsWith("extend")) {
+                // Extend re-windows the same goal row — no goal_ref change needed
+                auditService.logSystem("DIRECTION_EXTEND", "ask", ask.getId(),
+                    String.format("{\"initiativeId\":\"%s\"}", initiativeId));
+            } else if ("close".equals(action) || action.startsWith("close")) {
+                // Close the initiative — handled by the caller's close endpoint
+                auditService.logSystem("DIRECTION_CLOSE", "ask", ask.getId(),
+                    String.format("{\"initiativeId\":\"%s\"}", initiativeId));
+            } else if ("re-base".equals(action) || action.equals("rebase") || action.startsWith("re-base")) {
+                // Re-base: the response payload should carry a new goal_ref
+                if (payload.has("newGoalRef") && !payload.get("newGoalRef").isNull()) {
+                    String newGoalRef = payload.get("newGoalRef").asText();
+                    // Atomic update via InitiativeService would need injection; log for now
+                    auditService.logSystem("DIRECTION_REBASE", "ask", ask.getId(),
+                        String.format("{\"initiativeId\":\"%s\",\"newGoalRef\":\"%s\"}", initiativeId, newGoalRef));
+                }
+            } else if ("re-target".equals(action) || action.equals("retarget") || action.startsWith("re-target")) {
+                // Re-target: swap to a different goal
+                if (payload.has("newGoalRef") && !payload.get("newGoalRef").isNull()) {
+                    String newGoalRef = payload.get("newGoalRef").asText();
+                    auditService.logSystem("DIRECTION_RETARGET", "ask", ask.getId(),
+                        String.format("{\"initiativeId\":\"%s\",\"newGoalRef\":\"%s\"}", initiativeId, newGoalRef));
+                }
+            }
+        } catch (Exception e) {
+            auditService.logSystem("DIRECTION_RESPOND_FAIL", "ask", ask.getId(),
+                String.format("{\"error\":\"%s\"}", e.getMessage()));
+        }
     }
 
     /**

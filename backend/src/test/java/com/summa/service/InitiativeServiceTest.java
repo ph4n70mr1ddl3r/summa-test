@@ -158,4 +158,48 @@ class InitiativeServiceTest {
         assertEquals(1, results.size());
         assertEquals("i1", results.get(0).getId());
     }
+
+    @Test
+    void close_filesRetrospectiveAskToLead() {
+        Initiative init = new Initiative();
+        init.setId("i1");
+        init.setStatus("active");
+        init.setLead("h1");
+        init.setSponsor("h1");
+        init.setClosedAt(null);
+        when(initiativeRepository.findById("i1")).thenReturn(Optional.of(init));
+        when(initiativeRepository.save(any())).thenReturn(init);
+        when(boardTaskRepository.findByInitiativeId("i1")).thenReturn(java.util.List.of());
+        when(askRepository.findByInitiativeIdAndStatusPending("i1")).thenReturn(java.util.List.of());
+        when(spawnRequestRepository.findByStatus("requested")).thenReturn(java.util.List.of());
+        when(memberService.findHuman("h1")).thenReturn(Optional.empty());
+        when(memberService.findAgent("h1")).thenReturn(Optional.empty());
+        when(askService.create(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(new com.summa.model.Ask());
+
+        Initiative result = initiativeService.close("i1", "admin");
+
+        assertEquals("closed", result.getStatus());
+        assertNotNull(result.getClosedAt());
+        verify(askService).create(eq("question"), eq("system"), eq("h1"), any(), eq("bulk"), eq("escalate"), anyInt(), any(), isNull(), isNull());
+    }
+
+    @Test
+    void checkStallsAndDirections_checksProposedState() {
+        Instant past = Instant.now().minusSeconds(86400 * 10); // 10 days ago
+
+        Initiative proposed = new Initiative();
+        proposed.setId("i-proposed");
+        proposed.setStatus("proposed");
+        proposed.setSponsor("h1");
+        proposed.setDeadline(past);
+        proposed.setGoalRef(null);
+        when(initiativeRepository.findByStatus("active")).thenReturn(java.util.List.of());
+        when(initiativeRepository.findByStatus("proposed")).thenReturn(java.util.List.of(proposed));
+        when(boardTaskRepository.findByInitiativeId("i-proposed")).thenReturn(java.util.List.of());
+        when(askService.create(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(new com.summa.model.Ask());
+
+        initiativeService.checkStallsAndDirections();
+
+        verify(askService).create(eq("question"), eq("system"), eq("h1"), any(), eq("bulk"), eq("escalate"), anyInt(), any(), isNull(), isNull());
+    }
 }

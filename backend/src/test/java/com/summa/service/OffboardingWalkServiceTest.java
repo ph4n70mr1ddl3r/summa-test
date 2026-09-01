@@ -315,4 +315,68 @@ class OffboardingWalkServiceTest {
         assertNotNull(pat.getRevokedAt());
         assertEquals(1, result.get("patsRevoked"));
     }
+
+    @Test
+    void walkDemote_transfersDomainsToAdminCustody() {
+        Human human = new Human();
+        human.setId("h1");
+        human.setRbac("owner");
+        when(memberService.findHuman("h1")).thenReturn(Optional.of(human));
+
+        DnaDomain domain = new DnaDomain();
+        domain.setId("d1");
+        domain.setOwnerHumanId("h1");
+        when(domainService.findAllIncludingArchived()).thenReturn(java.util.List.of(domain));
+        when(domainService.updateOwner("d1", "admin1", "admin1")).thenReturn(domain);
+
+        when(agentService.findByOwner("h1")).thenReturn(java.util.List.of());
+        when(proposalService.findAllOpen()).thenReturn(java.util.List.of());
+        when(initiativeService.findAllActive()).thenReturn(java.util.List.of());
+        when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of());
+        when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
+        when(askRepository.findByStatus("pending")).thenReturn(java.util.List.of());
+        when(boardTaskRepository.findByAssigneeMemberId("h1")).thenReturn(java.util.List.of());
+        when(patRepository.findByMemberId("h1")).thenReturn(java.util.List.of());
+        when(groupRepository.findAll()).thenReturn(java.util.List.of());
+        Human admin = new Human();
+        admin.setId("admin1");
+        when(memberService.findAdmins()).thenReturn(java.util.List.of(admin));
+
+        var result = walkService.walkDemote("h1", "member", "admin1");
+
+        assertEquals(1, result.get("domainsTransferred"));
+        verify(domainService).updateOwner("d1", "admin1", "admin1");
+    }
+
+    @Test
+    void walkDemote_retiresAllAgentsWhenDemotedToViewer() {
+        Human human = new Human();
+        human.setId("h1");
+        human.setRbac("owner");
+        when(memberService.findHuman("h1")).thenReturn(Optional.of(human));
+
+        Agent agent = new Agent();
+        agent.setId("a1");
+        agent.setOwnerHumanId("h1");
+        agent.setTemplateId(null);
+        when(agentService.findByOwner("h1")).thenReturn(java.util.List.of(agent));
+
+        when(domainService.findAllIncludingArchived()).thenReturn(java.util.List.of());
+        when(proposalService.findAllOpen()).thenReturn(java.util.List.of());
+        when(initiativeService.findAllActive()).thenReturn(java.util.List.of());
+        when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of());
+        when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
+        when(askRepository.findByStatus("pending")).thenReturn(java.util.List.of());
+        when(boardTaskRepository.findByAssigneeMemberId("h1")).thenReturn(java.util.List.of());
+        when(patRepository.findByMemberId("h1")).thenReturn(java.util.List.of());
+        when(groupRepository.findAll()).thenReturn(java.util.List.of());
+        Human admin = new Human();
+        admin.setId("admin1");
+        when(memberService.findAdmins()).thenReturn(java.util.List.of(admin));
+
+        var result = walkService.walkDemote("h1", "viewer", "admin1");
+
+        assertEquals(1, result.get("agentsRetired"));
+        verify(agentService).retire("a1", "admin1");
+    }
 }

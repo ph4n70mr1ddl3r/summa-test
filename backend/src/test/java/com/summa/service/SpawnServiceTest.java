@@ -5,6 +5,7 @@ import com.summa.repository.RoleTemplateRepository;
 import com.summa.repository.AgentRepository;
 import com.summa.repository.WorkspaceRepository;
 import com.summa.repository.DnaDomainRepository;
+import com.summa.repository.InitiativeRepository;
 import com.summa.model.SpawnRequest;
 import com.summa.model.Agent;
 import com.summa.model.Human;
@@ -50,6 +51,9 @@ class SpawnServiceTest {
 
     @Mock
     private SpendLedgerService spendLedgerService;
+
+    @Mock
+    private InitiativeRepository initiativeRepository;
 
     @InjectMocks
     private SpawnService spawnService;

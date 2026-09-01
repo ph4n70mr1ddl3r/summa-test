@@ -304,6 +304,15 @@ public class InitiativeService {
                 String.format("{\"error\":\"%s\"}", e.getMessage()));
         }
 
+        // INT-071: Closing an upstream initiative with active dependents raises asks to each
+        // dependent's sponsor — proceed, re-base, or pause.
+        try {
+            raiseDependentCloseAsks(id, actor);
+        } catch (Exception e) {
+            auditService.logSystem("CLOSE_DEPENDENT_ASKS_FAIL", "initiative", id,
+                String.format("{\"error\":\"%s\"}", e.getMessage()));
+        }
+
         initiative.setStatus("closed");
         initiative.setClosedAt(Instant.now());
         Initiative saved = initiativeRepository.save(initiative);
@@ -339,34 +348,40 @@ public class InitiativeService {
     @Transactional
     public void checkStallsAndDirections() {
         Instant now = Instant.now();
+        // INT-062: Clock runs while active AND proposed; paused suspends it; closed stops it
         List<Initiative> active = initiativeRepository.findByStatus("active");
         List<Initiative> proposed = initiativeRepository.findByStatus("proposed");
         List<Initiative> all = new java.util.ArrayList<>(active);
         all.addAll(proposed);
 
         for (Initiative init : all) {
-            // INT-060/063: Stall and close-out detection — deadline passed, still active
-            if (init.getDeadline() != null && init.getDeadline().isBefore(now) && "active".equals(init.getStatus())) {
-                auditService.logSystem("STALL_CHECK", "initiative", init.getId(),
-                    String.format("{\"deadlinePassed\":true,\"sponsor\":\"%s\"}", init.getSponsor()));
-                // INT-060: File stall ask when open work exists; INT-063: close-out ask when none
-                boolean hasOpenWork = boardTaskRepository.findByInitiativeId(init.getId()).stream()
-                        .anyMatch(t -> !"done".equals(t.getStatus()));
-                try {
-                    if (hasOpenWork) {
-                        askService.create("question", "system", init.getSponsor(),
-                            String.format("{\"initiativeId\":\"%s\",\"reason\":\"stall\"}", init.getId()),
-                            "bulk", "escalate", 1,
-                            Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
-                    } else {
-                        askService.create("question", "system", init.getSponsor(),
-                            String.format("{\"initiativeId\":\"%s\",\"reason\":\"closeout\"}", init.getId()),
-                            "bulk", "escalate", 1,
-                            Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
+            // INT-060/063: Stall and close-out detection — deadline passed
+            // INT-062: Runs for both active and proposed states
+            if (init.getDeadline() != null && init.getDeadline().isBefore(now)) {
+                boolean isActive = "active".equals(init.getStatus());
+                boolean isProposed = "proposed".equals(init.getStatus());
+                if (isActive || isProposed) {
+                    auditService.logSystem("STALL_CHECK", "initiative", init.getId(),
+                        String.format("{\"deadlinePassed\":true,\"sponsor\":\"%s\",\"status\":\"%s\"}", init.getStatus(), init.getSponsor()));
+                    // INT-060: File stall ask when open work exists; INT-063: close-out ask when none
+                    boolean hasOpenWork = boardTaskRepository.findByInitiativeId(init.getId()).stream()
+                            .anyMatch(t -> !"done".equals(t.getStatus()));
+                    try {
+                        if (hasOpenWork) {
+                            askService.create("question", "system", init.getSponsor(),
+                                String.format("{\"initiativeId\":\"%s\",\"reason\":\"stall\"}", init.getId()),
+                                "bulk", "escalate", 1,
+                                Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
+                        } else {
+                            askService.create("question", "system", init.getSponsor(),
+                                String.format("{\"initiativeId\":\"%s\",\"reason\":\"closeout\"}", init.getId()),
+                                "bulk", "escalate", 1,
+                                Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
+                        }
+                    } catch (Exception e) {
+                        auditService.logSystem("STALL_ASK_FAIL", "initiative", init.getId(),
+                            String.format("{\"error\":\"%s\"}", e.getMessage()));
                     }
-                } catch (Exception e) {
-                    auditService.logSystem("STALL_ASK_FAIL", "initiative", init.getId(),
-                        String.format("{\"error\":\"%s\"}", e.getMessage()));
                 }
             }
 
@@ -404,6 +419,36 @@ public class InitiativeService {
         }
         if (!KEYED_UNION_PATTERN.matcher(value).matches()) {
             throw new IllegalArgumentException(fieldName + " must be a valid keyed union (h:<human-id> or a:<agent-id>)");
+        }
+    }
+
+    /**
+     * INT-071: When an initiative closes, file bulk-tier escalation asks to each dependent's
+     * sponsor: proceed, re-base (dependency edge re-pointed), or pause.
+     */
+    private void raiseDependentCloseAsks(String closedId, String actor) {
+        List<Initiative> allInitiatives = findAll();
+        for (Initiative dep : allInitiatives) {
+            if ("closed".equals(dep.getStatus())) continue;
+            if (dep.getId().equals(closedId)) continue;
+            if (dep.getDependsOn() == null || dep.getDependsOn().isBlank()) continue;
+            try {
+                List<String> deps = OBJECT_MAPPER.readValue(dep.getDependsOn(),
+                    new com.fasterxml.jackson.core.type.TypeReference<List<String>>() {});
+                if (deps.contains(closedId)) {
+                    // File coordination ask to the dependent's sponsor
+                    String askTo = isMemberActive(dep.getSponsor())
+                        ? dep.getSponsor() : OffboardingWalkService.ADMIN_BROADCAST;
+                    String payload = String.format(
+                        "{\"initiativeId\":\"%s\",\"upstreamClosed\":\"%s\",\"reason\":\"upstream_closed\"}",
+                        dep.getId(), closedId);
+                    askService.create("question", "system", askTo,
+                        payload, "bulk", "escalate", 1,
+                        Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), dep.getId(), null);
+                    auditService.logSystem("DEPENDENT_CLOSE_ASK", "initiative", dep.getId(),
+                        String.format("{\"upstreamClosed\":\"%s\",\"sponsor\":\"%s\"}", closedId, askTo));
+                }
+            } catch (Exception ignored) {}
         }
     }
 }

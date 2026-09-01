@@ -150,6 +150,28 @@ public class OrgService {
         return saved;
     }
 
+    @Transactional
+    public Human demote(String id, String newRbac, String actor) {
+        Human human = humanRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Human not found: " + id));
+
+        // OFB-021: Last-admin guard — demotion joining deactivation under the same transactional check
+        long activeAdminCount = humanRepository.countByDeactivatedAtIsNullAndRbac("admin");
+        boolean isCurrentAdmin = "admin".equals(human.getRbac());
+        boolean becomesNonAdmin = "admin".equals(human.getRbac()) && !"admin".equals(newRbac);
+        if (becomesNonAdmin && activeAdminCount <= 1) {
+            throw new IllegalStateException("Cannot demote the last admin");
+        }
+
+        // OFB-030: Run the demotion walk scoped to what the new role can no longer carry
+        offboardingWalkService.walkDemote(id, newRbac, actor);
+
+        auditService.log(actor, "DEMOTE", "human", id,
+            String.format("{\"newRbac\":\"%s\"}", newRbac));
+        return human;
+    }
+
+    @Transactional
     public Human saveHuman(Human human) {
         return humanRepository.save(human);
     }

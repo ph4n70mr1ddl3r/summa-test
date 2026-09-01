@@ -290,6 +290,193 @@ public class OffboardingWalkService {
         return result;
     }
 
+    /**
+     * Demotion walk per OFB-030–033. Runs the same dependency resolution as offboarding
+     * but scoped to what the new role can no longer carry. A demotion to viewer strips
+     * all ownership, sponsorship, and leadership; a demotion from owner→member sheds
+     * only domain ownership. Last-admin guard is enforced by the caller (OrgService.demote).
+     */
+    @Transactional
+    public Map<String, Object> walkDemote(String humanId, String newRbac, String actor) {
+        Optional<Human> humanOpt = memberService.findHuman(humanId);
+        if (humanOpt.isEmpty()) {
+            throw new IllegalStateException("Human not found for demotion: " + humanId);
+        }
+        Human human = humanOpt.get();
+        String currentRbac = human.getRbac();
+
+        // No-op if role is not changing
+        if (currentRbac.equals(newRbac)) {
+            return Map.of("humanId", humanId, "newRbac", newRbac, "changed", false);
+        }
+
+        String targetOwner = findAnyAdminId();
+        if (targetOwner == null) {
+            throw new IllegalStateException("No active admin found for custody transfer during demotion");
+        }
+
+        int domainsTransferred = 0;
+        int agentsRetired = 0;
+        int goalsRetired = 0;
+        int initiativesRepointed = 0;
+        int proposalsWithdrawn = 0;
+        int asksClosed = 0;
+        int tasksReturned = 0;
+        int patsRevoked = 0;
+        int groupLeadershipsTransferred = 0;
+
+        // OFB-030/033: Transfer owned DNA domains to admin custody
+        for (DnaDomain domain : domainService.findAllIncludingArchived()) {
+            if (humanId.equals(domain.getOwnerHumanId())) {
+                domainService.updateOwner(domain.getId(), targetOwner, actor);
+                domainsTransferred++;
+            }
+        }
+
+        // OFB-030/033: Re-own or retire dependent agents; personal assistants always retire
+        for (Agent agent : agentService.findByOwner(humanId)) {
+            // CLC-051: demotion to viewer retires the assistant (mirrored viewer scopes are read-only)
+            if ("viewer".equals(newRbac) && agent.getTemplateId() != null
+                    && agent.getTemplateId().contains("personal-assistant")) {
+                agentService.retire(agent.getId(), actor);
+                agentsRetired++;
+            } else if ("viewer".equals(newRbac)) {
+                // Viewer cannot own staff — retire all agents
+                agentService.retire(agent.getId(), actor);
+                agentsRetired++;
+            } else {
+                agent.setOwnerHumanId(targetOwner);
+                agentRepository.save(agent);
+            }
+        }
+
+        // OFB-032: Withdraw authored open proposals when new role cannot propose
+        for (DnaProposal prop : proposalService.findAllOpen()) {
+            if (!humanId.equals(prop.getProposedBy())) continue;
+            boolean canPropose = !"viewer".equals(newRbac);
+            if (!canPropose) {
+                prop.setStatus("withdrawn");
+                proposalRepository.save(prop);
+                proposalsWithdrawn++;
+                auditService.logSystem("DEMOTE_WITHDRAW_PROPOSAL", "dna_proposal", prop.getId(),
+                    String.format("{\"humanId\":\"%s\",\"newRbac\":\"%s\"}", humanId, newRbac));
+            }
+        }
+
+        // OFB-031: Reassign or retire sponsored/led initiatives
+        for (Initiative init : initiativeService.findAllActive()) {
+            boolean changed = false;
+            if (humanId.equals(init.getSponsor())) {
+                init.setSponsor(targetOwner);
+                changed = true;
+            }
+            if (humanId.equals(init.getLead())) {
+                init.setLead(targetOwner);
+                changed = true;
+            }
+            if (changed) {
+                initiativeRepository.save(init);
+                initiativesRepointed++;
+            }
+        }
+
+        // OFB-031: Re-own or retire owned goals (active only)
+        for (com.summa.model.DnaGoal goal : goalService.findAllActiveWindowed(Instant.now())) {
+            if (humanId.equals(goal.getOwner()) && "active".equals(goal.getStatus())) {
+                if ("viewer".equals(newRbac)) {
+                    goal.setStatus("retired");
+                    goalRepository.save(goal);
+                    goalsRetired++;
+                } else {
+                    goal.setOwner(targetOwner);
+                    goalRepository.save(goal);
+                    goalsRetired++;
+                }
+            }
+        }
+
+        // OFB-031: Clear deputy references in both directions
+        for (Human h : memberService.findAllActiveHumans()) {
+            if (humanId.equals(h.getDeputyMemberId())) {
+                h.setDeputyMemberId(null);
+                memberService.saveHuman(h);
+            }
+            if (humanId.equals(h.getId()) && h.getDeputyMemberId() != null) {
+                h.setDeputyMemberId(null);
+                memberService.saveHuman(h);
+            }
+        }
+
+        // OFB-031: Transfer group leadership posts
+        for (com.summa.model.Group group : groupRepository.findAll()) {
+            if (humanId.equals(group.getLeaderMemberId()) && group.isActive()) {
+                group.setLeaderMemberId(targetOwner);
+                groupRepository.save(group);
+                groupLeadershipsTransferred++;
+                auditService.log(actor, "DEMOTE_TRANSFER_GROUP_LEADER", "group", group.getId(),
+                    String.format("{\"newLeader\":\"%s\",\"reason\":\"member_demoted\"}", targetOwner));
+            }
+        }
+
+        // OFB-031: Close asks to the member up the chain; asks from the member close with audit note
+        for (Ask ask : askRepository.findByStatus("pending")) {
+            if (humanId.equals(ask.getTo())) {
+                ask.setTo(targetOwner);
+                askRepository.save(ask);
+                asksClosed++;
+            } else if (humanId.equals(ask.getFrom())) {
+                ask.setStatus("withdrawn");
+                askRepository.save(ask);
+                asksClosed++;
+                auditService.logSystem("DEMOTE_CLOSE_ASK_FROM", "ask", ask.getId(),
+                    String.format("{\"humanId\":\"%s\",\"newRbac\":\"%s\"}", humanId, newRbac));
+            }
+        }
+
+        // OFB-031: Return board-task assignments to pool or reassign
+        for (com.summa.model.BoardTask task : boardTaskRepository.findByAssigneeMemberId(humanId)) {
+            if ("viewer".equals(newRbac)) {
+                task.setAssigneeMemberId(null);
+                task.setStatus("open");
+                boardTaskRepository.save(task);
+                tasksReturned++;
+            }
+        }
+
+        // OFB-015: Revoke PATs — credential-death on any role reduction
+        for (com.summa.model.Pat pat : patRepository.findByMemberId(humanId)) {
+            if (pat.getRevokedAt() == null) {
+                pat.setRevokedAt(Instant.now());
+                patRepository.save(pat);
+                patsRevoked++;
+            }
+        }
+
+        // Update the human's RBAC role
+        human.setRbac(newRbac);
+        memberService.saveHuman(human);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("humanId", humanId);
+        result.put("oldRbac", currentRbac);
+        result.put("newRbac", newRbac);
+        result.put("domainsTransferred", domainsTransferred);
+        result.put("agentsRetired", agentsRetired);
+        result.put("goalsRetired", goalsRetired);
+        result.put("initiativesRepointed", initiativesRepointed);
+        result.put("proposalsWithdrawn", proposalsWithdrawn);
+        result.put("asksClosed", asksClosed);
+        result.put("tasksReturned", tasksReturned);
+        result.put("patsRevoked", patsRevoked);
+        result.put("groupsLeadershipTransferred", groupLeadershipsTransferred);
+        result.put("changed", true);
+
+        auditService.log(actor, "DEMOTE_WALK", "human", humanId,
+            String.format("{\"oldRbac\":\"%s\",\"newRbac\":\"%s\",\"result\":%s}", currentRbac, newRbac, result));
+
+        return result;
+    }
+
     private String findAnyAdminId() {
         return memberService.findAdmins().stream()
             .map(Human::getId)

@@ -8,11 +8,14 @@ import com.summa.repository.BoardTaskRepository;
 import com.summa.repository.InitiativeRepository;
 import com.summa.repository.TriggerRepository;
 import com.summa.repository.SpawnRequestRepository;
+import com.summa.repository.RunRepository;
 import com.summa.model.BoardTask;
 import com.summa.model.Initiative;
 import com.summa.model.Trigger;
 import com.summa.model.SpawnRequest;
+import com.summa.model.Run;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -30,6 +33,7 @@ public class AgentService {
     private final InitiativeRepository initiativeRepository;
     private final TriggerRepository triggerRepository;
     private final SpawnRequestRepository spawnRequestRepository;
+    private final RunRepository runRepository;
     private final int depthCap;
 
     public AgentService(AgentRepository agentRepository, AuditService auditService,
@@ -38,6 +42,7 @@ public class AgentService {
                         InitiativeRepository initiativeRepository,
                         TriggerRepository triggerRepository,
                         SpawnRequestRepository spawnRequestRepository,
+                        RunRepository runRepository,
                         @Value("${summa.spawn.depth-cap:2}") int depthCap) {
         this.agentRepository = agentRepository;
         this.auditService = auditService;
@@ -47,6 +52,7 @@ public class AgentService {
         this.initiativeRepository = initiativeRepository;
         this.triggerRepository = triggerRepository;
         this.spawnRequestRepository = spawnRequestRepository;
+        this.runRepository = runRepository;
         this.depthCap = depthCap;
     }
 
@@ -96,8 +102,21 @@ public class AgentService {
         agent.setStatus("suspended");
         agent.setSuspendedAt(Instant.now());
         Agent saved = agentRepository.save(agent);
+
+        // CLC-030: Suspend halts in-flight runs — partial results fold back, never killed mid-commit
+        for (Run run : findRunningRuns(id)) {
+            run.setStatus("suspended");
+            runRepository.save(run);
+            auditService.logSystem("SUSPEND_HALT_RUN", "run", run.getId(),
+                String.format("{\"agentId\":\"%s\",\"reason\":\"agent_suspended\"}", id));
+        }
+
         auditService.log(actor, "SUSPEND", "agent", id, null);
         return saved;
+    }
+
+    private List<Run> findRunningRuns(String agentId) {
+        return runRepository.findByAgentIdAndStatus(agentId, "running");
     }
 
     @Transactional
@@ -226,4 +245,32 @@ public class AgentService {
         }
         return Optional.empty();
     }
+
+    /**
+     * SPW-071: TTL reaper — grace window before killing mid-write; suspended workers halt-then-reap.
+     * Runs every 5 minutes; reaps agents whose ttl_at has passed.
+     */
+    @Scheduled(fixedRate = STALL_CHECK_INTERVAL_MS)
+    @Transactional
+    public void reapExpiredAgents() {
+        Instant now = Instant.now();
+        List<Agent> expired = agentRepository.findByStatus("active").stream()
+            .filter(a -> a.getTtlAt() != null && a.getTtlAt().isBefore(now))
+            .toList();
+        for (Agent agent : expired) {
+            // CLC-030: Suspended worker halts then reaps
+            if ("suspended".equals(agent.getStatus())) {
+                // Already halted; just archive
+                agent.setStatus("archived");
+                agent.setArchivedAt(now);
+                agentRepository.save(agent);
+                auditService.logSystem("TTL_REAP_SUSPENDED", "agent", agent.getId(),
+                    "{\"reason\":\"ttl_expired\"}");
+            } else {
+                retire(agent.getId(), "system");
+            }
+        }
+    }
+
+    private static final long STALL_CHECK_INTERVAL_MS = 300000;
 }

@@ -1,6 +1,7 @@
 package com.summa.service;
 
 import com.summa.repository.RunRepository;
+import com.summa.repository.InitiativeRepository;
 import com.summa.model.Run;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +21,9 @@ class RunServiceTest {
 
     @Mock
     private AuditService auditService;
+
+    @Mock
+    private InitiativeRepository initiativeRepository;
 
     @InjectMocks
     private RunService runService;

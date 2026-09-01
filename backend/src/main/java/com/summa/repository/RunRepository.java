@@ -10,6 +10,7 @@ import java.util.List;
 @Repository
 public interface RunRepository extends JpaRepository<Run, String> {
     List<Run> findByAgentId(String agentId);
+    List<Run> findByAgentIdAndStatus(String agentId, String status);
     List<Run> findByWorkspaceId(String workspaceId);
     List<Run> findByStatus(String status);
     

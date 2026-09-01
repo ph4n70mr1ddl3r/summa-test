@@ -89,6 +89,31 @@ public class OrgController {
         }
     }
 
+    @PutMapping("/humans/{id}/demote")
+    public ResponseEntity<?> demote(@PathVariable String id, @RequestBody Map<String, String> body) {
+        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
+        String newRbac = body.get("rbac");
+        if (newRbac == null || newRbac.isBlank()) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", "rbac is required for demote", null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body(Map.of("code", "validation", "message", "rbac is required", "audit_event_id", audit.getId()));
+        }
+        try {
+            Human human = orgService.demote(id, newRbac, actor);
+            return ResponseEntity.ok(human);
+        } catch (IllegalStateException e) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+        } catch (IllegalArgumentException e) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
+        }
+    }
+
     @PutMapping("/humans/{id}/deputy")
     public ResponseEntity<?> setDeputy(@PathVariable String id, @RequestBody Map<String, String> body) {
         String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";

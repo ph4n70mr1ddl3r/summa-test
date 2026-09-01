@@ -6,9 +6,11 @@ import com.summa.repository.BoardTaskRepository;
 import com.summa.repository.InitiativeRepository;
 import com.summa.repository.SpawnRequestRepository;
 import com.summa.repository.TriggerRepository;
+import com.summa.repository.RunRepository;
 import com.summa.model.Agent;
 import com.summa.model.Ask;
 import com.summa.model.Human;
+import com.summa.model.Run;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,12 +50,16 @@ class AgentServiceTest {
     @Mock
     private SpawnRequestRepository spawnRequestRepository;
 
+    @Mock
+    private RunRepository runRepository;
+
     private AgentService agentService;
 
     @BeforeEach
     void setUp() {
         agentService = new AgentService(agentRepository, auditService, memberService, askRepository,
-            boardTaskRepository, initiativeRepository, triggerRepository, spawnRequestRepository, 2);
+            boardTaskRepository, initiativeRepository, triggerRepository, spawnRequestRepository,
+            runRepository, 2);
     }
 
     @Test
@@ -168,6 +174,27 @@ class AgentServiceTest {
         List<Agent> result = agentService.findChildren("parent-1");
 
         assertEquals(1, result.size());
+    }
+
+    @Test
+    void suspend_haltsRunningRuns() {
+        Agent agent = new Agent();
+        agent.setId("agent-1");
+        agent.setStatus("active");
+        when(agentRepository.findById("agent-1")).thenReturn(Optional.of(agent));
+        when(agentRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Run run1 = new Run();
+        run1.setId("run-1");
+        run1.setStatus("running");
+        run1.setAgentId("agent-1");
+        when(runRepository.findByAgentIdAndStatus("agent-1", "running")).thenReturn(List.of(run1));
+
+        Agent result = agentService.suspend("agent-1", "admin");
+
+        assertEquals("suspended", result.getStatus());
+        assertEquals("suspended", run1.getStatus());
+        verify(runRepository).save(run1);
     }
 
     @Test

@@ -4,6 +4,8 @@ import com.summa.repository.BoardTaskRepository;
 import com.summa.model.BoardTask;
 import com.summa.model.Human;
 import com.summa.model.Agent;
+import com.summa.repository.InitiativeRepository;
+import com.summa.model.Initiative;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -16,18 +18,33 @@ public class BoardTaskService {
     private final BoardTaskRepository taskRepository;
     private final AuditService auditService;
     private final MemberService memberService;
+    private final InitiativeRepository initiativeRepository;
 
     public BoardTaskService(BoardTaskRepository taskRepository, AuditService auditService,
-                            MemberService memberService) {
+                            MemberService memberService, InitiativeRepository initiativeRepository) {
         this.taskRepository = taskRepository;
         this.auditService = auditService;
         this.memberService = memberService;
+        this.initiativeRepository = initiativeRepository;
     }
 
     @Transactional
-    public BoardTask create(String title, String description, String createdBy, 
+    public BoardTask create(String title, String description, String createdBy,
                               String assigneeMemberId, String initiativeId, Integer priority,
                               Instant dueAt) {
+        // INT-081: Board tasks join runs and spawns in the closed-slice refusal
+        // proposed and paused keep task-filing open as planning; closed refuses
+        if (initiativeId != null && !initiativeId.isBlank()) {
+            Optional<Initiative> initOpt = initiativeRepository.findById(initiativeId);
+            if (initOpt.isPresent()) {
+                Initiative init = initOpt.get();
+                if ("closed".equals(init.getStatus())) {
+                    throw new IllegalStateException(
+                        "Cannot create board task under closed initiative: " + initiativeId);
+                }
+            }
+        }
+
         BoardTask task = new BoardTask();
         task.setId(UUID.randomUUID().toString());
         task.setTitle(title);
@@ -39,7 +56,7 @@ public class BoardTaskService {
         task.setDueAt(dueAt);
 
         BoardTask saved = taskRepository.save(task);
-        auditService.log(createdBy, "CREATE", "board_task", task.getId(), 
+        auditService.log(createdBy, "CREATE", "board_task", task.getId(),
             String.format("{\"title\":\"%s\"}", title));
         return saved;
     }

@@ -2,6 +2,8 @@ package com.summa.service;
 
 import com.summa.repository.RunRepository;
 import com.summa.model.Run;
+import com.summa.repository.InitiativeRepository;
+import com.summa.model.Initiative;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -13,15 +15,32 @@ import java.util.UUID;
 public class RunService {
     private final RunRepository runRepository;
     private final AuditService auditService;
+    private final InitiativeRepository initiativeRepository;
 
-    public RunService(RunRepository runRepository, AuditService auditService) {
+    public RunService(RunRepository runRepository, AuditService auditService,
+                      InitiativeRepository initiativeRepository) {
         this.runRepository = runRepository;
         this.auditService = auditService;
+        this.initiativeRepository = initiativeRepository;
     }
 
     @Transactional
     public Run create(String agentId, String workspaceId, String initiativeId,
-                       String triggerId, String prompt, String actor) {
+                        String triggerId, String prompt, String actor) {
+        // INT-080: Only active initiatives launch runs
+        if (initiativeId != null && !initiativeId.isBlank()) {
+            Optional<Initiative> initOpt = initiativeRepository.findById(initiativeId);
+            if (initOpt.isEmpty()) {
+                throw new IllegalArgumentException("Initiative not found: " + initiativeId);
+            }
+            Initiative init = initOpt.get();
+            if (!"active".equals(init.getStatus())) {
+                throw new IllegalStateException(
+                    "Cannot launch run under non-active initiative: " + initiativeId
+                        + " (status: " + init.getStatus() + ")");
+            }
+        }
+
         Run run = new Run();
         run.setId(UUID.randomUUID().toString());
         run.setAgentId(agentId);

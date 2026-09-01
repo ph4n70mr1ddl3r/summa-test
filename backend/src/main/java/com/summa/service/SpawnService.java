@@ -10,6 +10,8 @@ import com.summa.repository.WorkspaceRepository;
 import com.summa.model.Workspace;
 import com.summa.repository.DnaDomainRepository;
 import com.summa.model.DnaDomain;
+import com.summa.repository.InitiativeRepository;
+import com.summa.model.Initiative;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +35,7 @@ public class SpawnService {
     private final DnaDomainRepository domainRepository;
     private final AskService askService;
     private final SpendLedgerService spendLedgerService;
+    private final InitiativeRepository initiativeRepository;
 
     @Value("${summa.spawn.depth-cap:2}")
     private int depthCap;
@@ -44,7 +47,8 @@ public class SpawnService {
                           AgentRepository agentRepository, MemberService memberService,
                           WorkspaceRepository workspaceRepository,
                           DnaDomainRepository domainRepository,
-                          AskService askService, SpendLedgerService spendLedgerService) {
+                          AskService askService, SpendLedgerService spendLedgerService,
+                          InitiativeRepository initiativeRepository) {
         this.spawnRepository = spawnRepository;
         this.auditService = auditService;
         this.governanceService = governanceService;
@@ -55,6 +59,7 @@ public class SpawnService {
         this.domainRepository = domainRepository;
         this.askService = askService;
         this.spendLedgerService = spendLedgerService;
+        this.initiativeRepository = initiativeRepository;
         this.depthCap = Math.max(2, depthCap);
     }
 
@@ -80,6 +85,51 @@ public class SpawnService {
         // SPW-021: Class must match — persistent hire needs persistent template,
         // ephemeral needs ephemeral-subagent template
         String effectiveSpawnClass = spawnClass != null ? spawnClass : "ephemeral";
+
+        // SPW-010: Ephemeral requester refused a persistent-hire request at write
+        if ("persistent".equals(effectiveSpawnClass)) {
+            Optional<Agent> requesterAgent = agentRepository.findById(requesterId);
+            if (requesterAgent.isPresent() && "ephemeral".equals(requesterAgent.get().getAgentClass())) {
+                throw new IllegalStateException("Ephemeral agents cannot request persistent hires");
+            }
+        }
+
+        // INT-080: Only active initiatives launch spawns — verify workspace bindings reference active initiatives
+        if (workspaceBindings != null && !workspaceBindings.isBlank() && !workspaceBindings.equals("[]")) {
+            try {
+                JsonNode bindings = OBJECT_MAPPER.readTree(workspaceBindings);
+                if (bindings.isArray()) {
+                    for (JsonNode binding : bindings) {
+                        String wsId = binding.asText();
+                        Optional<com.summa.model.Workspace> wsOpt = workspaceRepository.findById(wsId);
+                        if (wsOpt.isPresent()) {
+                            Workspace ws = wsOpt.get();
+                            if (ws.getInitiativeIds() != null && !ws.getInitiativeIds().isBlank()
+                                    && !ws.getInitiativeIds().equals("[]")) {
+                                JsonNode initIds = OBJECT_MAPPER.readTree(ws.getInitiativeIds());
+                                if (initIds.isArray()) {
+                                    for (JsonNode initIdNode : initIds) {
+                                        String initId = initIdNode.asText();
+                                        Optional<Initiative> initOpt = initiativeRepository.findById(initId);
+                                        if (initOpt.isPresent() && !"active".equals(initOpt.get().getStatus())) {
+                                            throw new IllegalStateException(
+                                                "Workspace binds to non-active initiative: " + initId
+                                                    + " (status: " + initOpt.get().getStatus() + ")");
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (IllegalStateException e) {
+                throw e;
+            } catch (Exception e) {
+                auditService.logSystem("SPAWN_PARSE_BINDINGS_FAIL", "spawn_request", UUID.randomUUID().toString(),
+                    String.format("{\"error\":\"%s\"}", e.getMessage()));
+            }
+        }
+
         if (templateId != null && !templateId.isBlank()) {
             Optional<RoleTemplate> templateOpt = templateRepository.findById(templateId);
             if (templateOpt.isEmpty()) {
