@@ -129,18 +129,66 @@ public class DnaDomainController {
         }
     }
 
-    // API-023: topology ops — split and merge are stubs for Phase 6
+    // API-023: topology ops — split and merge
     @PostMapping("/{id}/split")
-    public ResponseEntity<?> splitDomain(@PathVariable String id, @RequestBody Map<String, String> body) {
-        // DGV-010..013: governed split — stub for Phase 6
-        return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_IMPLEMENTED)
-                .body(Map.of("code", "not_implemented", "message", "Topology ops scheduled for Phase 6"));
+    public ResponseEntity<?> splitDomain(@PathVariable String id, @RequestBody Map<String, Object> body) {
+        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
+        try {
+            @SuppressWarnings("unchecked")
+            List<String> itemIds = body.get("itemIds") != null ? (List<String>) body.get("itemIds") : List.of();
+            @SuppressWarnings("unchecked")
+            List<String> workspaceIds = body.get("workspaceIds") != null ? (List<String>) body.get("workspaceIds") : List.of();
+            @SuppressWarnings("unchecked")
+            List<String> proposalIds = body.get("proposalIds") != null ? (List<String>) body.get("proposalIds") : List.of();
+
+            List<DnaDomain> children = domainService.split(
+                id, actor,
+                (String) body.get("ownerHumanId"),
+                (String) body.get("access"),
+                (String) body.get("store"),
+                (String) body.get("sod"),
+                (String) body.get("residency"),
+                (String) body.get("namedReaders"),
+                itemIds, workspaceIds, proposalIds
+            );
+            return ResponseEntity.ok(children);
+        } catch (IllegalArgumentException e) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "split", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
+        } catch (IllegalStateException e) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "split", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+        }
     }
 
     @PostMapping("/{id}/merge")
-    public ResponseEntity<?> mergeDomain(@PathVariable String id, @RequestBody Map<String, String> body) {
-        // DGV-014: governed merge — stub for Phase 6
-        return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_IMPLEMENTED)
-                .body(Map.of("code", "not_implemented", "message", "Topology ops scheduled for Phase 6"));
+    public ResponseEntity<?> mergeDomain(@PathVariable String id, @RequestBody Map<String, Object> body) {
+        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
+        try {
+            String sourceId = (String) body.get("sourceId");
+            if (sourceId == null || sourceId.isBlank()) {
+                throw new IllegalArgumentException("sourceId is required");
+            }
+            DnaDomain survivor = domainService.merge(
+                sourceId, id, actor,
+                (String) body.get("access"),
+                (String) body.get("namedReaders")
+            );
+            return ResponseEntity.ok(survivor);
+        } catch (IllegalArgumentException e) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "merge", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
+        } catch (IllegalStateException e) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "merge", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+        }
     }
 }

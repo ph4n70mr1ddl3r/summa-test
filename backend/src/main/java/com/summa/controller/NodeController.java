@@ -72,28 +72,66 @@ public class NodeController {
     }
 
     @PostMapping("/{id}/claims")
-    public ResponseEntity<?> claimWorkspace(@PathVariable String id, @RequestBody Map<String, String> body) {
+    public ResponseEntity<?> claimWorkspace(@PathVariable String id, @RequestBody Map<String, Object> body) {
         // API-060: acquire or renew a workspace claim as epoch-fenced lease
-        // TODO: implement WorkspaceService integration for epoch-fenced leases
-        return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_IMPLEMENTED)
-                .body(Map.of("code", "not_implemented", "message", "Workspace claim leasing is not yet implemented"));
+        try {
+            String workspaceId = (String) body.get("workspaceId");
+            if (workspaceId == null || workspaceId.isBlank()) {
+                throw new IllegalArgumentException("workspaceId is required");
+            }
+            int currentEpoch = body.get("epoch") != null ? ((Number) body.get("epoch")).intValue() : 0;
+            com.summa.model.Node node = nodeService.claimWorkspace(id, workspaceId, currentEpoch);
+            return ResponseEntity.ok(node);
+        } catch (IllegalArgumentException e) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "claim", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
+        } catch (IllegalStateException e) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "claim", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+        }
     }
 
     @PostMapping("/{id}/work/pull")
     public ResponseEntity<?> pullWork(@PathVariable String id) {
         // API-060: fetch queued runs for workspaces the node holds a live claim on
-        // TODO: implement work queue integration with WorkspaceService
-        return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_IMPLEMENTED)
-                .body(Map.of("code", "not_implemented", "message", "Work pull is not yet implemented"));
+        try {
+            List<com.summa.model.Run> runs = nodeService.pullWork(id);
+            return ResponseEntity.ok(runs);
+        } catch (IllegalArgumentException e) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "pull_work", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
+        } catch (IllegalStateException e) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "pull_work", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+        }
     }
 
     @PostMapping("/{id}/runs/{runId}/report")
     public ResponseEntity<?> reportRun(@PathVariable String id, @PathVariable String runId,
                                         @RequestBody Map<String, Object> body) {
         // API-060: land results, artifacts, and spend ledger lines
-        // TODO: implement run result landing with spend ledger integration
-        return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_IMPLEMENTED)
-                .body(Map.of("code", "not_implemented", "message", "Run reporting is not yet implemented"));
+        try {
+            String result = (String) body.get("result");
+            @SuppressWarnings("unchecked")
+            String artifacts = body.get("artifacts") != null ? body.get("artifacts").toString() : null;
+            long costTokens = body.get("costTokens") != null ? ((Number) body.get("costTokens")).longValue() : 0L;
+            double costUsd = body.get("costUsd") != null ? ((Number) body.get("costUsd")).doubleValue() : 0.0;
+            String memberId = (String) body.get("memberId");
+            com.summa.model.Run run = nodeService.reportRun(id, runId, result, artifacts, costTokens, costUsd, memberId);
+            return ResponseEntity.ok(run);
+        } catch (IllegalArgumentException e) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "report_run", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
+        } catch (IllegalStateException e) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "report_run", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+        }
     }
 
     @PostMapping("/{id}/revoke")

@@ -97,6 +97,11 @@ public class WorkspaceService {
         return saved;
     }
 
+    @Transactional
+    public Workspace updateWorkspace(Workspace ws) {
+        return workspaceRepository.save(ws);
+    }
+
     /**
      * CLC-040: Workspace archival walk.
      * - Initiative bindings drop (goal slice re-derives)
