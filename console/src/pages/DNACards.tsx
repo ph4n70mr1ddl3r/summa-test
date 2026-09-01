@@ -46,7 +46,10 @@ export default function DNACards() {
                 </span>
               </div>
               <pre className="mt-2 text-xs text-gray-400 bg-gray-900 rounded p-3 overflow-x-auto whitespace-pre-wrap">
-                {escapeHtml(card.definitionMd).slice(0, 200)}{escapeHtml(card.definitionMd).length > 200 ? '...' : ''}
+                {(() => {
+                const snippet = escapeHtml(card.definitionMd)
+                return <>{snippet.slice(0, 200)}{snippet.length > 200 ? '...' : ''}</>
+              })()}
               </pre>
               <p className="text-xs text-gray-500 mt-2">v{card.version} · Created {card.createdAt ?? '?'}</p>
             </div>

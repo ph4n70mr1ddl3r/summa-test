@@ -39,8 +39,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
   });
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`HTTP ${res.status}: ${text}`);
+    let message: string;
+    try {
+      const err = await res.json() as { code?: string; message?: string };
+      message = err.message || `HTTP ${res.status}`;
+    } catch {
+      const text = await res.text();
+      message = text || `HTTP ${res.status}`;
+    }
+    const err = new Error(message);
+    (err as unknown as { status: number }).status = res.status;
+    throw err;
   }
   return res.json() as Promise<T>;
 }
@@ -503,7 +512,7 @@ export const api = {
         body: JSON.stringify({ payload }),
       }),
     reviewQueue: (domainId?: string) =>
-      request<DnaProposal[]>(`/dna/proposals/review-queue${buildQuery(domainId ? { domainId } : undefined)}`),
+      request<DnaProposal[]>(`/dna/review-queue${buildQuery(domainId ? { domainId } : undefined)}`),
   },
   asks: {
     list: () =>

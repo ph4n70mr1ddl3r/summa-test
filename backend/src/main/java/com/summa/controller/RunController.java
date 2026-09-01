@@ -90,25 +90,35 @@ public class RunController {
             AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
             return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
                     .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
+        } catch (IllegalStateException e) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 
     @PostMapping("/{id}/complete")
-    public ResponseEntity<?> completeRun(@PathVariable String id, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<?> completeRun(@PathVariable String id, @RequestBody Map<String, String> body) {
         String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            String result = (String) body.get("result");
-            Long costTokens = convertToLong(body.get("costTokens"));
-            Double costUsd = convertToDouble(body.get("costUsd"));
-            
+            String result = body.get("result");
+            Long costTokens = body.containsKey("costTokens") && body.get("costTokens") != null ?
+                Long.parseLong(body.get("costTokens")) : null;
+            Double costUsd = body.containsKey("costUsd") && body.get("costUsd") != null ?
+                Double.parseDouble(body.get("costUsd")) : null;
+
             Run run = runService.complete(id, result, costTokens, costUsd);
             return ResponseEntity.ok(run);
         } catch (IllegalArgumentException e) {
             AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
             return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
                     .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
+        } catch (IllegalStateException e) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 
@@ -124,6 +134,10 @@ public class RunController {
             AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
             return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
                     .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
+        } catch (IllegalStateException e) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 
@@ -139,6 +153,10 @@ public class RunController {
             AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
             return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
                     .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
+        } catch (IllegalStateException e) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 

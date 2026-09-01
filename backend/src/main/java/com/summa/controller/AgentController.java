@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
+import com.summa.service.OffboardingWalkService;
 
 @RestController
 @RequestMapping("/agents")
@@ -188,7 +189,7 @@ public class AgentController {
                 "{\"agentId\":\"%s\",\"agentName\":\"%s\",\"class\":\"%s\",\"placement\":\"%s\",\"scopes\":\"%s\"}",
                 id, agent.getName(), agent.getAgentClass(), placement,
                 agent.getTemplateId() != null ? "templated" : "custom");
-            askService.create("promotion", actor, "admins",
+            askService.create("promotion", actor, OffboardingWalkService.ADMIN_BROADCAST,
                 snapshotPayload, "standard", "deny", 1,
                 Instant.now().plusSeconds(7 * 86400L), null, null);
             auditService.log(actor, "PROMOTE_REQUEST", "agent", id,

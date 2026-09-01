@@ -38,12 +38,13 @@ export default function AskInbox() {
       case 'question': return '?'
       case 'assignment': return '\u2192'
       case 'spawn_request': return '+'
+      case 'promotion': return '\u2191'
       default: return '\u2022'
     }
   }
 
   const formatDeadline = (deadline: number) => {
-    const d = new Date(deadline * 1000)
+    const d = new Date(deadline)
     return d.toLocaleString()
   }
 

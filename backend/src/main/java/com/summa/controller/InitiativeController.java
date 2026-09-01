@@ -49,8 +49,14 @@ public class InitiativeController {
         if (gate != null) return gate;
         try {
             String generatedId = UUID.randomUUID().toString();
-            Instant deadline = body.containsKey("deadline") ?
-                Instant.parse(body.get("deadline")) : null;
+            Instant deadline = null;
+            if (body.containsKey("deadline") && body.get("deadline") != null && !body.get("deadline").isBlank()) {
+                try {
+                    deadline = Instant.parse(body.get("deadline"));
+                } catch (java.time.DateTimeException e) {
+                    throw new IllegalArgumentException("Invalid deadline format: " + body.get("deadline"));
+                }
+            }
             Initiative initiative = initiativeService.create(
                 generatedId,
                 body.get("title"),

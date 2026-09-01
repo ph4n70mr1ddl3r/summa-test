@@ -60,10 +60,24 @@ public class DnaGoalController {
             }
             // Security: reject client-supplied IDs — always generate server-side
             String generatedId = java.util.UUID.randomUUID().toString();
-            Instant effectiveFrom = body.containsKey("effectiveFrom") ?
-                Instant.parse(body.get("effectiveFrom")) : Instant.now();
-            Instant effectiveTo = body.containsKey("effectiveTo") ?
-                Instant.parse(body.get("effectiveTo")) : null;
+            Instant effectiveFrom = null;
+            if (body.containsKey("effectiveFrom") && body.get("effectiveFrom") != null && !body.get("effectiveFrom").isBlank()) {
+                try {
+                    effectiveFrom = Instant.parse(body.get("effectiveFrom"));
+                } catch (DateTimeException e) {
+                    throw new IllegalArgumentException("Invalid effectiveFrom format: " + body.get("effectiveFrom"));
+                }
+            } else {
+                effectiveFrom = Instant.now();
+            }
+            Instant effectiveTo = null;
+            if (body.containsKey("effectiveTo") && body.get("effectiveTo") != null && !body.get("effectiveTo").isBlank()) {
+                try {
+                    effectiveTo = Instant.parse(body.get("effectiveTo"));
+                } catch (DateTimeException e) {
+                    throw new IllegalArgumentException("Invalid effectiveTo format: " + body.get("effectiveTo"));
+                }
+            }
 
             DnaGoal goal = goalService.create(
                 generatedId,
@@ -77,7 +91,7 @@ public class DnaGoalController {
                 actor
             );
             return ResponseEntity.ok(goal);
-        } catch (IllegalArgumentException | DateTimeException e) {
+        } catch (IllegalArgumentException e) {
             AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
             return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
                     .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));

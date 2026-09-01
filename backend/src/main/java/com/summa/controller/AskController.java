@@ -77,7 +77,7 @@ public class AskController {
                 body.get("payload"),
                 body.get("slaTier"),
                 body.get("expiryBehavior"),
-                body.containsKey("quorumRequired") && body.get("quorumRequired") != null ? Integer.parseInt(body.get("quorumRequired")) : null,
+                body.containsKey("quorumRequired") && body.get("quorumRequired") != null ? parseIntSafe(body.get("quorumRequired")) : null,
                 deadline,
                 body.get("initiativeId"),
                 body.get("workspaceId")
@@ -125,6 +125,10 @@ public class AskController {
             AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
             return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
                     .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
+        } catch (IllegalStateException e) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
 
@@ -137,9 +141,14 @@ public class AskController {
             Ask ask = askService.expire(id);
             return ResponseEntity.ok(ask);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "EXPIRE", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
-                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
+    }
+
+    private Integer parseIntSafe(String s) {
+        try { return Integer.parseInt(s); }
+        catch (NumberFormatException e) { throw new IllegalArgumentException("Invalid quorumRequired: " + s); }
     }
 }
