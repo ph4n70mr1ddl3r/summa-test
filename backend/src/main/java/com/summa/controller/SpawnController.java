@@ -3,7 +3,6 @@ package com.summa.controller;
 import com.summa.service.SpawnService;
 import com.summa.model.SpawnRequest;
 import com.summa.service.AuditService;
-import com.summa.model.AuditEvent;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -77,13 +76,9 @@ public class SpawnController {
             );
             return ResponseEntity.ok(request);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
@@ -96,13 +91,9 @@ public class SpawnController {
             SpawnRequest request = spawnService.approve(id, actor, actor);
             return ResponseEntity.ok(request);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
@@ -115,13 +106,9 @@ public class SpawnController {
             SpawnRequest request = spawnService.deny(id, actor);
             return ResponseEntity.ok(request);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 

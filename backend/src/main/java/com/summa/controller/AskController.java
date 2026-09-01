@@ -2,7 +2,6 @@ package com.summa.controller;
 
 import com.summa.service.AskService;
 import com.summa.model.Ask;
-import com.summa.model.AuditEvent;
 import com.summa.service.AuditService;
 import com.summa.security.WriteGate;
 import com.summa.security.RbacAuthorizationFilter;
@@ -57,18 +56,14 @@ public class AskController {
                 try {
                     deadlineSeconds = Long.parseLong(deadlineStr);
                 } catch (NumberFormatException e) {
-                    AuditEvent audit = auditService.logSystem("REFUSAL", "validation", "Invalid deadlineSeconds value", null);
-                    return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
-                            .body(Map.of("code", "validation", "message", "Invalid deadlineSeconds value", "audit_event_id", audit.getId()));
+                    return ControllerResponses.validation(auditService, "Invalid deadlineSeconds value");
                 }
             }
             Instant deadline;
             try {
                 deadline = Instant.now().plusSeconds(deadlineSeconds);
             } catch (Exception e) {
-                AuditEvent audit = auditService.logSystem("REFUSAL", "validation", "Invalid deadlineSeconds value", null);
-                return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
-                        .body(Map.of("code", "validation", "message", "Invalid deadlineSeconds value", "audit_event_id", audit.getId()));
+                return ControllerResponses.validation(auditService, "Invalid deadlineSeconds value");
             }
             Ask ask = askService.create(
                 body.get("kind"),
@@ -84,13 +79,9 @@ public class AskController {
             );
             return ResponseEntity.ok(ask);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
@@ -103,13 +94,9 @@ public class AskController {
             Ask ask = askService.respond(id, actor, body.get("response"));
             return ResponseEntity.ok(ask);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
@@ -122,13 +109,9 @@ public class AskController {
             Ask ask = askService.withdraw(id, actor);
             return ResponseEntity.ok(ask);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
@@ -141,9 +124,7 @@ public class AskController {
             Ask ask = askService.expire(id);
             return ResponseEntity.ok(ask);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.validation(auditService, e.getMessage());
         }
     }
 

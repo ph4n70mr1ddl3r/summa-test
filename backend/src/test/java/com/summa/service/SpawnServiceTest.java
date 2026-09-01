@@ -1,5 +1,7 @@
 package com.summa.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.summa.repository.SpawnRequestRepository;
 import com.summa.repository.RoleTemplateRepository;
 import com.summa.repository.AgentRepository;
@@ -54,6 +56,9 @@ class SpawnServiceTest {
 
     @Mock
     private InitiativeRepository initiativeRepository;
+
+    @Mock
+    private ObjectMapper objectMapper;
 
     @InjectMocks
     private SpawnService spawnService;
@@ -144,6 +149,19 @@ class SpawnServiceTest {
         request.setId("spawn-1");
         request.setSpawnClass("ephemeral");
         lenient().when(spawnRepository.save(any())).thenReturn(request);
+
+        // Stub ObjectMapper to return proper JsonNodes for scope validation
+        com.fasterxml.jackson.databind.ObjectMapper realMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        JsonNode parentScopes = null;
+        JsonNode childScopes = null;
+        try {
+            parentScopes = realMapper.readTree("{\"fs\":\"read\",\"shell\":\"none\"}");
+            childScopes = realMapper.readTree("{\"fs\":\"write\"}");
+        } catch (Exception ignored) {}
+        try {
+            org.mockito.Mockito.doReturn(parentScopes).when(objectMapper).readTree("{\"fs\":\"read\",\"shell\":\"none\"}");
+            org.mockito.Mockito.doReturn(childScopes).when(objectMapper).readTree("{\"fs\":\"write\"}");
+        } catch (Exception ignored) {}
 
         // scope ceiling requests fs:write which parent doesn't have — should fail
         assertThrows(IllegalStateException.class, () -> {

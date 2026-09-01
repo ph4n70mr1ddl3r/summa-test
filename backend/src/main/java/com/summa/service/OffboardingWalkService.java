@@ -191,14 +191,16 @@ public class OffboardingWalkService {
         // member-scoped proposals are auto-withdrawn with audit note.
         // We need to distinguish: proposals for domains the departing human owned go to successor;
         // all other open proposals by the departed member are withdrawn.
+        // Batch-fetch owned domains to avoid N+1 per-proposal lookups.
+        java.util.Set<String> ownedDomainIds = new java.util.HashSet<>();
+        for (DnaDomain domain : domainService.findAllIncludingArchived()) {
+            if (humanId.equals(domain.getOwnerHumanId())) {
+                ownedDomainIds.add(domain.getId());
+            }
+        }
         for (DnaProposal prop : proposalService.findAllOpen()) {
             if (!humanId.equals(prop.getProposedBy())) continue;
-            // Check if this proposal belongs to a domain owned by the departing human
-            boolean ownsDomain = false;
-            if (prop.getDomainId() != null) {
-                Optional<DnaDomain> domOpt = domainService.findById(prop.getDomainId());
-                ownsDomain = domOpt.filter(d -> humanId.equals(d.getOwnerHumanId())).isPresent();
-            }
+            boolean ownsDomain = prop.getDomainId() != null && ownedDomainIds.contains(prop.getDomainId());
             if (ownsDomain) {
                 prop.setProposedBy(finalTargetOwner);
                 proposalRepository.save(prop);

@@ -28,7 +28,6 @@ public class AskService {
     private static final long DEFAULT_CRITICAL_ASK_DEADLINE_HOURS = 1;
     private static final long DEFAULT_BULK_ASK_DEADLINE_HOURS = 24;
     private static final long DEFAULT_STANDARD_ASK_DEADLINE_HOURS = 24;
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final AskRepository askRepository;
     private final AuditService auditService;
@@ -311,7 +310,7 @@ public class AskService {
         if (!"question".equals(ask.getKind()) || !"bulk".equals(ask.getSlaTier())) return;
 
         try {
-            JsonNode payload = OBJECT_MAPPER.readTree(ask.getPayload());
+            JsonNode payload = objectMapper.readTree(ask.getPayload());
             String initiativeId = ask.getInitiativeId();
             String action = response != null ? response.trim() : "";
 

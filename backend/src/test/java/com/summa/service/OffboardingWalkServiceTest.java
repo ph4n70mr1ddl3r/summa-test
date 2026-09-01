@@ -217,7 +217,6 @@ class OffboardingWalkServiceTest {
         DnaDomain domain = new DnaDomain();
         domain.setId("d1");
         domain.setOwnerHumanId("h1");
-        when(domainService.findById("d1")).thenReturn(Optional.of(domain));
         when(domainService.findAllIncludingArchived()).thenReturn(java.util.List.of(domain));
 
         // Proposal for owned domain — should transfer to successor
@@ -257,7 +256,6 @@ class OffboardingWalkServiceTest {
         DnaDomain domain = new DnaDomain();
         domain.setId("d1");
         domain.setOwnerHumanId("other");
-        when(domainService.findById("d1")).thenReturn(Optional.of(domain));
         when(domainService.findAllIncludingArchived()).thenReturn(java.util.List.of(domain));
 
         // Proposal for non-owned domain — should be withdrawn

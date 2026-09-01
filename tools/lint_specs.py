@@ -42,7 +42,7 @@ DEF_RE = re.compile(r"^- \*\*([A-Z]{3})-(\d{3})\*\*")
 TOKEN_RE = re.compile(r"\b([A-Z]{3})-(\d{3})\b")
 RANGE_RE = re.compile(r"\b([A-Z]{3})-(\d{3})\s*(?:…|\.\.)\s*(?:([A-Z]{3})-)?(\d{3})\b")
 KEYWORD_RE = re.compile(
-    r"\b(shall|should|may|must|never|refus|forbid|denied?|carries|is|are|derives|evaluates)\b",
+    r"\b(shall|should|may|must|never|refus[ea]?|forbid|denied?|carries|is|are|derives|evaluates)\b",
     re.IGNORECASE,
 )
 PLAN_SEC_RE = re.compile(r"^#{2,4}\s+(\d+(?:\.\d+)*)\.?\s", re.M)

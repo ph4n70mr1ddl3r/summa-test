@@ -36,11 +36,10 @@ public class SpawnService {
     private final AskService askService;
     private final SpendLedgerService spendLedgerService;
     private final InitiativeRepository initiativeRepository;
+    private final ObjectMapper objectMapper;
 
     @Value("${summa.spawn.depth-cap:2}")
     private int depthCap;
-
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     public SpawnService(SpawnRequestRepository spawnRepository, AuditService auditService,
                           GovernanceService governanceService, RoleTemplateRepository templateRepository,
@@ -48,7 +47,8 @@ public class SpawnService {
                           WorkspaceRepository workspaceRepository,
                           DnaDomainRepository domainRepository,
                           AskService askService, SpendLedgerService spendLedgerService,
-                          InitiativeRepository initiativeRepository) {
+                          InitiativeRepository initiativeRepository,
+                          ObjectMapper objectMapper) {
         this.spawnRepository = spawnRepository;
         this.auditService = auditService;
         this.governanceService = governanceService;
@@ -60,6 +60,7 @@ public class SpawnService {
         this.askService = askService;
         this.spendLedgerService = spendLedgerService;
         this.initiativeRepository = initiativeRepository;
+        this.objectMapper = objectMapper;
         this.depthCap = Math.max(2, depthCap);
     }
 
@@ -97,7 +98,7 @@ public class SpawnService {
         // INT-080: Only active initiatives launch spawns — verify workspace bindings reference active initiatives
         if (workspaceBindings != null && !workspaceBindings.isBlank() && !workspaceBindings.equals("[]")) {
             try {
-                JsonNode bindings = OBJECT_MAPPER.readTree(workspaceBindings);
+                JsonNode bindings = objectMapper.readTree(workspaceBindings);
                 if (bindings.isArray()) {
                     for (JsonNode binding : bindings) {
                         String wsId = binding.asText();
@@ -106,7 +107,7 @@ public class SpawnService {
                             Workspace ws = wsOpt.get();
                             if (ws.getInitiativeIds() != null && !ws.getInitiativeIds().isBlank()
                                     && !ws.getInitiativeIds().equals("[]")) {
-                                JsonNode initIds = OBJECT_MAPPER.readTree(ws.getInitiativeIds());
+                                JsonNode initIds = objectMapper.readTree(ws.getInitiativeIds());
                                 if (initIds.isArray()) {
                                     for (JsonNode initIdNode : initIds) {
                                         String initId = initIdNode.asText();
@@ -157,7 +158,7 @@ public class SpawnService {
         String gateTarget = null;
         if ("persistent".equals(effectiveSpawnClass) && workspaceBindings != null && !workspaceBindings.isBlank()) {
             try {
-                JsonNode bindings = OBJECT_MAPPER.readTree(workspaceBindings);
+                JsonNode bindings = objectMapper.readTree(workspaceBindings);
                 if (bindings.isArray() && bindings.size() > 0) {
                     // Primary workspace is the first-bound entry
                     String primaryWorkspaceId = bindings.get(0).asText();
@@ -166,7 +167,7 @@ public class SpawnService {
                         Workspace ws = wsOpt.get();
                         String domainIdsStr = ws.getDomainIds();
                         if (domainIdsStr != null && !domainIdsStr.isBlank() && !domainIdsStr.equals("[]")) {
-                            JsonNode domIds = OBJECT_MAPPER.readTree(domainIdsStr);
+                            JsonNode domIds = objectMapper.readTree(domainIdsStr);
                             if (domIds.isArray() && domIds.size() > 0) {
                                 // DAT-090: first entry is primary domain
                                 String primaryDomainId = domIds.get(0).asText();
@@ -247,7 +248,7 @@ public class SpawnService {
         request.setApprovedAt(Instant.now());
 
         // SPW-011: Approved spawn creates an active agent
-        Agent agent = activateAgent(request, actor);
+        Agent agent = activateAgent(request, actor, approvedBy);
         request.setAgentId(agent.getId());
 
         SpawnRequest saved = spawnRepository.save(request);
@@ -257,7 +258,7 @@ public class SpawnService {
     }
 
     @Transactional
-    public Agent activateAgent(SpawnRequest request, String actor) {
+    public Agent activateAgent(SpawnRequest request, String actor, String approvedByHumanId) {
         String agentId = UUID.randomUUID().toString();
         String name = request.getCustomRole() != null ? request.getCustomRole()
             : (request.getPurpose() != null ? request.getPurpose() : "agent-" + agentId.substring(0, 8));
@@ -280,15 +281,18 @@ public class SpawnService {
         Agent agent = new Agent();
         agent.setId(agentId);
         agent.setName(name);
-        // SPW-046: Persistent hire ownership derives from the gate's accepting human at activation,
-        // not from the requester. Fall back to requester if no human is associated.
-        String ownerHumanId = request.getRequestedByHumanId();
+        // SPW-046: Ownership derives from the gate's accepting human at activation,
+        // not from the requester. Fall back to requestedByHumanId, then requester.
+        String ownerHumanId = approvedByHumanId;
+        if (ownerHumanId == null || ownerHumanId.isBlank()) {
+            ownerHumanId = request.getRequestedByHumanId();
+        }
         if (ownerHumanId == null || ownerHumanId.isBlank()) {
             ownerHumanId = request.getRequesterId();
             // Validate it is a human ID, not an agent ID — owner_human_id is a FK to humans(id)
             Optional<com.summa.model.Human> maybeHuman = memberService.findHuman(ownerHumanId);
             if (maybeHuman.isEmpty()) {
-                throw new IllegalStateException("Cannot activate spawn without a human owner: no requestedByHumanId and requester is not a human");
+                throw new IllegalStateException("Cannot activate spawn without a human owner: no approvedBy, requestedByHumanId, and requester is not a human");
             }
         }
         agent.setOwnerHumanId(ownerHumanId);
@@ -353,8 +357,8 @@ public class SpawnService {
             String parentScopes = template.getDefaultScopes();
             if (parentScopes == null || parentScopes.isBlank() || parentScopes.equals("{}")) return;
 
-            JsonNode parentJson = OBJECT_MAPPER.readTree(parentScopes);
-            JsonNode childJson = OBJECT_MAPPER.readTree(scopeCeiling);
+            JsonNode parentJson = objectMapper.readTree(parentScopes);
+            JsonNode childJson = objectMapper.readTree(scopeCeiling);
 
             // Validate: every key in child must exist in parent with equal or narrower value
             java.util.Iterator<String> childKeys = childJson.fieldNames();
