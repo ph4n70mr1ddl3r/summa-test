@@ -36,7 +36,7 @@ public class AgentService {
     private final RunRepository runRepository;
     private final int depthCap;
 
-    private static final long STALL_CHECK_INTERVAL_MS = 300000;
+    private static final long TTL_REAP_INTERVAL_MS = 300000;
 
     public AgentService(AgentRepository agentRepository, AuditService auditService,
                         MemberService memberService, AskRepository askRepository,
@@ -287,7 +287,7 @@ public class AgentService {
      * SPW-071: TTL reaper — grace window before killing mid-write; suspended workers halt-then-reap.
      * Runs every 5 minutes; reaps agents whose ttl_at has passed.
      */
-    @Scheduled(fixedRate = STALL_CHECK_INTERVAL_MS)
+    @Scheduled(fixedRate = TTL_REAP_INTERVAL_MS)
     @Transactional
     public void reapExpiredAgents() {
         Instant now = Instant.now();

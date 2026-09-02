@@ -166,7 +166,7 @@ public class GovernanceService {
     }
 
     private Object parseValue(String value) {
-        if (value == null) return "{}";
+        if (value == null) return null;
         try {
             if (value.matches("-?\\d+(\\.\\d+)?")) {
                 if (value.contains(".")) return Double.parseDouble(value);

@@ -44,7 +44,7 @@ export default function AskInbox() {
   }
 
   const formatDeadline = (deadline: number) => {
-    const d = new Date(deadline)
+    const d = new Date(deadline * 1000)
     return d.toLocaleString()
   }
 
@@ -218,6 +218,7 @@ export default function AskInbox() {
           <li>• question — seeks information or guidance</li>
           <li>• assignment — delegates work to a member</li>
           <li>• spawn_request — gates agent spawning</li>
+          <li>• promotion — elevates a custom hire to a templated role</li>
         </ul>
       </div>
 

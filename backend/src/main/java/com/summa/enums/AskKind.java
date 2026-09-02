@@ -4,7 +4,8 @@ public enum AskKind {
     APPROVAL("approval"),
     QUESTION("question"),
     ASSIGNMENT("assignment"),
-    SPAWN_REQUEST("spawn_request");
+    SPAWN_REQUEST("spawn_request"),
+    PROMOTION("promotion");
 
     private final String value;
 

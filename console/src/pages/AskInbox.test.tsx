@@ -37,7 +37,7 @@ describe('AskInbox page', () => {
   })
 
   it('calls respond API when submitting a response', async () => {
-    const ask = { id: 'ask-1', kind: 'question' as AskKind, slaTier: 'standard' as AskTier, from: 'agent-1', to: 'human-1', payload: '{}', deadline: Date.now() + 86400000, status: 'pending' as const }
+    const ask = { id: 'ask-1', kind: 'question' as AskKind, slaTier: 'standard' as AskTier, from: 'agent-1', to: 'human-1', payload: '{}', deadline: Math.floor(Date.now() / 1000) + 86400, status: 'pending' as const }
     vi.mocked(api.asks.listByStatus).mockResolvedValue([ask])
     vi.mocked(api.asks.respond).mockResolvedValue(ask)
     const { getByText, getAllByPlaceholderText } = render(<AskInbox />)
@@ -54,7 +54,7 @@ describe('AskInbox page', () => {
   })
 
   it('displays submit error when respond fails', async () => {
-    const ask = { id: 'ask-1', kind: 'question' as AskKind, slaTier: 'standard' as AskTier, from: 'agent-1', to: 'human-1', payload: '{}', deadline: Date.now() + 86400000, status: 'pending' as const }
+    const ask = { id: 'ask-1', kind: 'question' as AskKind, slaTier: 'standard' as AskTier, from: 'agent-1', to: 'human-1', payload: '{}', deadline: Math.floor(Date.now() / 1000) + 86400, status: 'pending' as const }
     vi.mocked(api.asks.listByStatus).mockResolvedValue([ask])
     vi.mocked(api.asks.respond).mockRejectedValue(new Error('Not eligible'))
     const { getByText, getAllByPlaceholderText } = render(<AskInbox />)
