@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
-import { api, type Group, type Human, type Agent } from '../services/api'
+import { api, type Group, type Member } from '../services/api'
 import { escapeHtml } from '../utils/escapeHtml'
-
-type Member = Human | Agent
 
 export default function OrgView() {
   const [members, setMembers] = useState<Member[]>([])

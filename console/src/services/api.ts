@@ -60,6 +60,7 @@ export interface Human {
   email: string;
   rbac: string;
   active: boolean;
+  kind?: 'human';
   createdAt?: number;
   auth?: string;
   timezone?: string;
@@ -74,6 +75,7 @@ export interface Agent {
   ownerHumanId: string;
   class: string;
   status: AgentStatus;
+  kind?: 'agent';
   templateId?: string;
   lineageDepth?: number;
   createdAt?: number;
@@ -86,6 +88,8 @@ export interface Agent {
   archivedAt?: number;
   updatedAt?: number;
 }
+
+export type Member = Human & { kind: 'human' } | Agent & { kind: 'agent' };
 
 export type AgentStatus = 'active' | 'suspended' | 'retiring' | 'archived' | 'requested';
 

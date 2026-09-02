@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, waitFor, fireEvent } from '@testing-library/react'
 import AskInbox from './AskInbox'
-import * as apiModule from '../services/api'
+import { api, type AskKind, type AskTier } from '../services/api'
 
 vi.mock('../services/api', () => ({
   api: {
@@ -20,7 +20,7 @@ describe('AskInbox page', () => {
   })
 
   it('renders the Ask Inbox heading', async () => {
-    vi.mocked(apiModule.api.asks.listByStatus).mockResolvedValue([])
+    vi.mocked(api.asks.listByStatus).mockResolvedValue([])
     const { container } = render(<AskInbox />)
     await waitFor(() => {
       expect(container.textContent).toContain('Ask Inbox')
@@ -28,7 +28,7 @@ describe('AskInbox page', () => {
   })
 
   it('shows ask kinds and SLA tiers after load', async () => {
-    vi.mocked(apiModule.api.asks.listByStatus).mockResolvedValue([])
+    vi.mocked(api.asks.listByStatus).mockResolvedValue([])
     const { container } = render(<AskInbox />)
     await waitFor(() => {
       expect(container.textContent).toContain('approval')
@@ -37,9 +37,9 @@ describe('AskInbox page', () => {
   })
 
   it('calls respond API when submitting a response', async () => {
-    const ask = { id: 'ask-1', kind: 'question', slaTier: 'standard', from: 'agent-1', to: 'human-1', payload: '{}', deadline: Date.now() + 86400000, status: 'pending' }
-    vi.mocked(apiModule.api.asks.listByStatus).mockResolvedValue([ask])
-    vi.mocked(apiModule.api.asks.respond).mockResolvedValue(ask)
+    const ask = { id: 'ask-1', kind: 'question' as AskKind, slaTier: 'standard' as AskTier, from: 'agent-1', to: 'human-1', payload: '{}', deadline: Date.now() + 86400000, status: 'pending' as const }
+    vi.mocked(api.asks.listByStatus).mockResolvedValue([ask])
+    vi.mocked(api.asks.respond).mockResolvedValue(ask)
     const { getByText, getAllByPlaceholderText } = render(<AskInbox />)
     await waitFor(() => {
       expect(getByText('Ask Inbox')).toBeInTheDocument()
@@ -49,14 +49,14 @@ describe('AskInbox page', () => {
     fireEvent.change(textarea, { target: { value: 'approved' } })
     fireEvent.click(getByText('Submit'))
     await waitFor(() => {
-      expect(apiModule.api.asks.respond).toHaveBeenCalledWith('ask-1', 'approved', 'console')
+      expect(api.asks.respond).toHaveBeenCalledWith('ask-1', 'approved', 'console')
     })
   })
 
   it('displays submit error when respond fails', async () => {
-    const ask = { id: 'ask-1', kind: 'question', slaTier: 'standard', from: 'agent-1', to: 'human-1', payload: '{}', deadline: Date.now() + 86400000, status: 'pending' }
-    vi.mocked(apiModule.api.asks.listByStatus).mockResolvedValue([ask])
-    vi.mocked(apiModule.api.asks.respond).mockRejectedValue(new Error('Not eligible'))
+    const ask = { id: 'ask-1', kind: 'question' as AskKind, slaTier: 'standard' as AskTier, from: 'agent-1', to: 'human-1', payload: '{}', deadline: Date.now() + 86400000, status: 'pending' as const }
+    vi.mocked(api.asks.listByStatus).mockResolvedValue([ask])
+    vi.mocked(api.asks.respond).mockRejectedValue(new Error('Not eligible'))
     const { getByText, getAllByPlaceholderText } = render(<AskInbox />)
     await waitFor(() => {
       expect(getByText('Ask Inbox')).toBeInTheDocument()

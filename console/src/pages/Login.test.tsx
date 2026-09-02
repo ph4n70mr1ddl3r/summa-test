@@ -71,7 +71,7 @@ describe('Login page', () => {
     })
     await waitFor(() => {
       const btn = getByRole('button', { name: /signing in/i })
-      expect(btn.disabled).toBe(true)
+      expect((btn as HTMLButtonElement).disabled).toBe(true)
     })
     await act(async () => {
       resolveLogin!({ token: 'fake-token', userId: 'u1', rbac: 'admin', name: 'Test User' })

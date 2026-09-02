@@ -36,6 +36,8 @@ public class AgentService {
     private final RunRepository runRepository;
     private final int depthCap;
 
+    private static final long STALL_CHECK_INTERVAL_MS = 300000;
+
     public AgentService(AgentRepository agentRepository, AuditService auditService,
                         MemberService memberService, AskRepository askRepository,
                         BoardTaskRepository boardTaskRepository,
@@ -306,6 +308,4 @@ public class AgentService {
             }
         }
     }
-
-    private static final long STALL_CHECK_INTERVAL_MS = 300000;
 }
