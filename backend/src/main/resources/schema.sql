@@ -185,7 +185,7 @@ CREATE INDEX IF NOT EXISTS idx_spend_ledger_kind ON spend_ledger(kind);
 
 CREATE TABLE IF NOT EXISTS asks (
     id TEXT PRIMARY KEY,
-    kind TEXT NOT NULL CHECK (kind IN ('approval', 'question', 'assignment', 'spawn_request')),
+    kind TEXT NOT NULL CHECK (kind IN ('approval', 'question', 'assignment', 'spawn_request', 'promotion')),
     "from" TEXT NOT NULL,
     "to" TEXT NOT NULL,
     payload TEXT NOT NULL DEFAULT '{}',
