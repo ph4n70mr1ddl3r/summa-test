@@ -87,9 +87,8 @@ public class InitiativeService {
                 List<String> depIds = objectMapper.readValue(dependsOn,
                     new com.fasterxml.jackson.core.type.TypeReference<List<String>>() {});
                 for (String depId : depIds) {
-                    findById(depId).orElseThrow(
+                    Initiative dep = findById(depId).orElseThrow(
                         () -> new IllegalArgumentException("Dependency initiative not found: " + depId));
-                    Initiative dep = findById(depId).orElseThrow();
                     if ("closed".equals(dep.getStatus())) {
                         throw new IllegalArgumentException(
                             "Cannot depend on closed initiative: " + depId);

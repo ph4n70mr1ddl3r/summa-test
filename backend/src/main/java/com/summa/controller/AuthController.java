@@ -38,7 +38,7 @@ public class AuthController {
         String password = body.get("password");
 
         if (email == null || email.isBlank()) {
-            var audit = auditService.logSystem("REFUSAL", "auth_login", email, "email is required");
+            var audit = auditService.logSystem("REFUSAL", "auth_login", "auth_login", "email is required");
             return ResponseEntity.badRequest().body(Map.of(
                 "code", "validation",
                 "message", "email is required",
@@ -49,7 +49,7 @@ public class AuthController {
         // Rate limit by email to prevent brute-force
         if (!rateLimiter.allow(email)) {
             long remaining = rateLimiter.getRemainingAttempts(email);
-            var audit = auditService.logSystem("REFUSAL", "auth_login", email, "Rate limited login attempt for: " + email);
+            var audit = auditService.logSystem("REFUSAL", "auth_login", "auth_login", "Rate limited login attempt for: " + email);
             return ResponseEntity.status(429).body(Map.of(
                 "code", "rate_limited",
                 "message", "Too many login attempts. Try again later.",

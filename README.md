@@ -11,7 +11,7 @@ A self-hosted platform where human employees and AI agents work as one organizat
 - Maven 3.9+
 - Python 3.10+ (spec lint tooling)
 
-### Start Single-Process Mode
+### Start Single-Process Mode (backend only)
 
 ```bash
 ./start.sh
@@ -24,7 +24,7 @@ A self-hosted platform where human employees and AI agents work as one organizat
 ```
 
 ### Access
-- Console: http://localhost:3000
+- Console: http://localhost:3000 (requires `./dev.sh` or full build)
 - API: http://localhost:8080/api
 - Bootstrap first admin: `POST /api/org/bootstrap`
 

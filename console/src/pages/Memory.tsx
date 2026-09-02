@@ -33,7 +33,8 @@ export default function Memory() {
       await api.memory.review(id, getCurrentActor())
       setReviewResult('Item reviewed and taint cleared')
       setReviewingId(null)
-      loadItems()
+      const cleanup = loadItems()
+      if (cleanup) cleanup()
     } catch (err) {
       setReviewResult(err instanceof Error ? err.message : String(err))
     }

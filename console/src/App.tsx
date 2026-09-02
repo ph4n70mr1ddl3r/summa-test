@@ -63,6 +63,7 @@ function ModeLabel() {
 }
 
 export default function App() {
+  const token = getAuthToken()
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-blue-600 focus:text-white focus:p-2">
@@ -94,10 +95,10 @@ export default function App() {
             </div>
             <div className="flex items-center space-x-4">
               <ModeLabel />
-              {getAuthToken() && (
+              {token && (
                 <span className="text-gray-500 text-xs">authenticated</span>
               )}
-              {getAuthToken() && <LogoutButton />}
+              {token && <LogoutButton />}
             </div>
           </div>
         </div>

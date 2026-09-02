@@ -35,7 +35,7 @@ export default function DNARules() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="font-medium text-gray-200">Rule {rule.id.slice(0, 8)}</p>
-                  <p className="text-sm text-gray-400 mt-1">Domain: {rule.domainId}</p>
+                  <p className="text-sm text-gray-400 mt-1">Domain: {escapeHtml(rule.domainId)}</p>
                 </div>
                 <span className={`text-xs px-2 py-1 rounded ${
                   rule.status === 'active' ? 'bg-green-900/50 text-green-400' :
@@ -46,7 +46,10 @@ export default function DNARules() {
                 </span>
               </div>
               <pre className="mt-2 text-xs text-gray-400 bg-gray-900 rounded p-3 overflow-x-auto whitespace-pre-wrap">
-                {escapeHtml(rule.statementMd).slice(0, 200)}{escapeHtml(rule.statementMd).length > 200 ? '...' : ''}
+                {(() => {
+                  const escaped = escapeHtml(rule.statementMd);
+                  return <>{escaped.slice(0, 200)}{escaped.length > 200 ? '...' : ''}</>
+                })()}
               </pre>
               <p className="text-xs text-gray-500 mt-2">
                 From: {rule.effectiveFrom ? new Date(rule.effectiveFrom * 1000).toLocaleDateString() : '∞'}

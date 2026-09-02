@@ -17,7 +17,7 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: Build and test backend
-        run: cd backend && mvn -q test
+        run: cd backend && mvn -q test -Ptest
 
   console-build:
     runs-on: ubuntu-latest

@@ -46,7 +46,7 @@ export default function DNAGoals() {
                     </p>
                   )}
                 </div>
-                <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300">{goal.status}</span>
+                <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300">{escapeHtml(goal.status)}</span>
               </div>
             </div>
           ))}

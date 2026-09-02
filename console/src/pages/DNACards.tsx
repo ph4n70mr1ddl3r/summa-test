@@ -47,11 +47,11 @@ export default function DNACards() {
               </div>
               <pre className="mt-2 text-xs text-gray-400 bg-gray-900 rounded p-3 overflow-x-auto whitespace-pre-wrap">
                 {(() => {
-                const snippet = escapeHtml(card.definitionMd)
-                return <>{snippet.slice(0, 200)}{snippet.length > 200 ? '...' : ''}</>
-              })()}
+                  const snippet = escapeHtml(card.definitionMd)
+                  return <>{snippet.slice(0, 200)}{snippet.length > 200 ? '...' : ''}</>
+                })()}
               </pre>
-              <p className="text-xs text-gray-500 mt-2">v{card.version} · Created {card.createdAt ?? '?'}</p>
+              <p className="text-xs text-gray-500 mt-2">v{card.version} · Created {card.createdAt ? new Date(card.createdAt * 1000).toLocaleDateString() : '?'}</p>
             </div>
           ))}
         </div>

@@ -69,7 +69,9 @@ public class JwtUtil {
         try {
             String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
             Map<String, Object> payload = MAPPER.readValue(payloadJson, new TypeReference<Map<String, Object>>() {});
-            Long exp = ((Number) payload.get("exp")).longValue();
+            Number expNum = (Number) payload.get("exp");
+            if (expNum == null) return null;
+            long exp = expNum.longValue();
             if (exp * SECONDS_TO_MILLIS < System.currentTimeMillis()) {
                 return null;
             }

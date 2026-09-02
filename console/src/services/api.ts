@@ -31,9 +31,9 @@ function loadUser() {
 let authToken: string | null = loadToken();
 let currentUser: { userId: string; rbac: string; name: string } | null = loadUser();
 
-export function setAuthToken(token: string | null, user?: { userId: string; rbac: string; name: string } | null | undefined) {
+export function setAuthToken(token: string | null, user?: { userId: string; rbac: string; name: string } | null) {
   authToken = token;
-  currentUser = user;
+  currentUser = user ?? null;
   try {
     if (token) {
       localStorage.setItem(TOKEN_KEY, token);
@@ -54,12 +54,16 @@ export function getAuthToken(): string | null {
   return authToken;
 }
 
-export function getCurrentUser() {
+export function getCurrentUser(): { userId: string; rbac: string; name: string } | null {
   return currentUser;
 }
 
 export function getCurrentActor(): string {
   return currentUser?.userId || 'system';
+}
+
+export function isAuthenticated(): boolean {
+  return !!authToken;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -516,7 +520,7 @@ export const api = {
         method: 'PATCH',
         body: JSON.stringify({ status }),
       }),
-    updateGoalWindow: (id: string, effectiveFrom?: number, effectiveTo?: number, _actor?: string) => {
+    updateGoalWindow: (id: string, effectiveFrom?: number, effectiveTo?: number, _actor: string = 'system') => {
       const body: Record<string, string> = {};
       if (effectiveFrom !== undefined) body.effectiveFrom = new Date(effectiveFrom * 1000).toISOString();
       if (effectiveTo !== undefined) body.effectiveTo = new Date(effectiveTo * 1000).toISOString();
@@ -530,21 +534,21 @@ export const api = {
     proposals: (status?: string) =>
       request<DnaProposal[]>(`/dna/proposals${buildQuery(status ? { status } : undefined)}`),
     publishProposal: (id: string, _actor: string) =>
-      request(`/dna/proposals/${id}/review`, {
+      request<DnaProposal>(`/dna/proposals/${id}/review`, {
         method: 'POST',
         body: JSON.stringify({ action: 'publish' }),
       }),
     reviewProposal: (id: string, action: string, _actor: string) =>
-      request(`/dna/proposals/${id}/review`, {
+      request<DnaProposal>(`/dna/proposals/${id}/review`, {
         method: 'POST',
         body: JSON.stringify({ action }),
       }),
     withdrawProposal: (id: string, _actor: string) =>
-      request(`/dna/proposals/${id}/withdraw`, {
+      request<DnaProposal>(`/dna/proposals/${id}/withdraw`, {
         method: 'POST',
       }),
     amendProposal: (id: string, payload: string, _actor: string) =>
-      request(`/dna/proposals/${id}/amend`, {
+      request<DnaProposal>(`/dna/proposals/${id}/amend`, {
         method: 'POST',
         body: JSON.stringify({ payload }),
       }),
@@ -673,7 +677,7 @@ export const api = {
       }),
     cancel: (id: string, _actor: string) =>
       request<Run>(`/runs/${id}/cancel`, { method: 'POST' }),
-    stats: () => request('/runs/stats'),
+    stats: () => request<Record<string, number>>('/runs/stats'),
   },
   auth: {
     login: (email: string, password: string) =>

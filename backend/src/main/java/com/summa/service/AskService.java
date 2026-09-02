@@ -175,10 +175,12 @@ public class AskService {
                          ask.getQuorumRequired(),
                          Instant.now().plusSeconds(successorDeadlineSeconds),
                          ask.getInitiativeId(), ask.getWorkspaceId());
-                     // Track depth by the successor's ID so the next expire cycle sees the correct depth
-                     successorDepth.put(successor.getId(), depth);
-                     auditService.logSystem("EXPIRE_SUCCESSOR_CREATED", "ask", successor.getId(),
-                         String.format("{\"originalId\":\"%s\",\"behavior\":\"%s\",\"depth\":%d}", ask.getId(), behavior, depth));
+                      // Track depth by the successor's ID so the next expire cycle sees the correct depth
+                      successorDepth.put(successor.getId(), depth);
+                      auditService.logSystem("EXPIRE_SUCCESSOR_CREATED", "ask", successor.getId(),
+                          String.format("{\"originalId\":\"%s\",\"behavior\":\"%s\",\"depth\":%d}", ask.getId(), behavior, depth));
+                      // Clean up the original ask's depth entry to prevent unbounded growth
+                      successorDepth.remove(ask.getId());
                 } catch (Exception e) {
                     auditService.logSystem("EXPIRE_SUCCESSOR_FAIL", "ask", ask.getId(),
                         String.format("{\"behavior\":\"%s\",\"error\":\"%s\"}", behavior, e.getMessage()));

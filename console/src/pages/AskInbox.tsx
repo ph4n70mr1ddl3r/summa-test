@@ -14,9 +14,11 @@ export default function AskInbox() {
   const loadAsks = () => {
     setLoading(true)
     setError(null)
+    let aborted = false
     api.asks.listByStatus('pending')
-      .then((data) => { setAsks(data); setLoading(false) })
-      .catch((err) => { setError(err instanceof Error ? err.message : String(err)); setLoading(false) })
+      .then((data) => { if (!aborted) { setAsks(data); setLoading(false) } })
+      .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
+    return () => { aborted = true }
   }
 
   useEffect(() => {
@@ -56,7 +58,8 @@ export default function AskInbox() {
       setSubmitSuccess('Response recorded')
       setRespondingId(null)
       setResponseText('')
-      loadAsks()
+      const cleanup = loadAsks()
+      if (cleanup) cleanup()
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err))
     }
@@ -65,7 +68,8 @@ export default function AskInbox() {
   const handleWithdraw = async (id: string) => {
     try {
       await api.asks.withdraw(id, getCurrentActor())
-      loadAsks()
+      const cleanup = loadAsks()
+      if (cleanup) cleanup()
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err))
     }

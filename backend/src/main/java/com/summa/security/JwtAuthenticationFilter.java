@@ -67,11 +67,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean isPublicPath(String path) {
-        for (String publicPath : PUBLIC_PATHS) {
-            if (path.equals(publicPath) || path.startsWith(publicPath + "/")) {
-                return true;
-            }
-        }
-        return false;
+        return PUBLIC_PATHS.contains(path);
     }
 }

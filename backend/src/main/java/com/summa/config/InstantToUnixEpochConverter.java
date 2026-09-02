@@ -9,11 +9,11 @@ public class InstantToUnixEpochConverter implements AttributeConverter<Instant, 
 
     @Override
     public Long convertToDatabaseColumn(Instant attribute) {
-        return attribute != null ? attribute.toEpochMilli() : null;
+        return attribute != null ? attribute.getEpochSecond() : null;
     }
 
     @Override
     public Instant convertToEntityAttribute(Long dbData) {
-        return dbData != null ? Instant.ofEpochMilli(dbData) : null;
+        return dbData != null ? Instant.ofEpochSecond(dbData) : null;
     }
 }
