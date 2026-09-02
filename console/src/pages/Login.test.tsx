@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, fireEvent, waitFor } from '@testing-library/react'
+import { render, fireEvent, waitFor, act } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import Login from './Login'
 import * as apiModule from '../services/api'
@@ -66,12 +66,17 @@ describe('Login page', () => {
     vi.mocked(apiModule.api.auth.login).mockImplementation(() => loginPromise)
     const { getByRole, container } = renderLogin()
     const form = container.querySelector('form') as HTMLFormElement
-    fireEvent.submit(form)
+    act(() => {
+      fireEvent.submit(form)
+    })
     await waitFor(() => {
       const btn = getByRole('button', { name: /signing in/i })
       expect(btn.disabled).toBe(true)
     })
-    resolveLogin!({ token: 'fake-token', userId: 'u1', rbac: 'admin', name: 'Test User' })
+    await act(async () => {
+      resolveLogin!({ token: 'fake-token', userId: 'u1', rbac: 'admin', name: 'Test User' })
+      await loginPromise
+    })
   })
 
   it('navigates to intended route after successful login', async () => {

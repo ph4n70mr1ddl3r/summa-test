@@ -29,7 +29,6 @@ public class InitiativeService {
     private static final long STALL_CHECK_INTERVAL_MS = 300000; // 5 minutes
     private static final long STALL_ASK_DEADLINE_SECONDS = 7 * 86400L; // 7 days
     private static final long STALL_ASK_DEDUP_WINDOW_SECONDS = 3600L; // 1 hour
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final Pattern KEYED_UNION_PATTERN = Pattern.compile("^[ha]?:.+$|^[a-zA-Z0-9_-]+$");
 
     private final InitiativeRepository initiativeRepository;
@@ -43,13 +42,15 @@ public class InitiativeService {
     private final DnaDecisionRepository dnaDecisionRepository;
     private final DnaGoalService dnaGoalService;
     private final MemberService memberService;
+    private final ObjectMapper objectMapper;
 
     public InitiativeService(InitiativeRepository initiativeRepository, BoardTaskRepository boardTaskRepository,
                               AuditService auditService, AskService askService,
                               AskRepository askRepository, TriggerRepository triggerRepository,
                               SpawnRequestRepository spawnRequestRepository,
                               DnaGoalRepository dnaGoalRepository, DnaDecisionRepository dnaDecisionRepository,
-                              DnaGoalService dnaGoalService, MemberService memberService) {
+                              DnaGoalService dnaGoalService, MemberService memberService,
+                              ObjectMapper objectMapper) {
         this.initiativeRepository = initiativeRepository;
         this.boardTaskRepository = boardTaskRepository;
         this.auditService = auditService;
@@ -61,6 +62,7 @@ public class InitiativeService {
         this.dnaDecisionRepository = dnaDecisionRepository;
         this.dnaGoalService = dnaGoalService;
         this.memberService = memberService;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
@@ -82,7 +84,7 @@ public class InitiativeService {
         // INT-070: Cycle detection in depends_on — edges name non-closed rows only
         if (dependsOn != null && !dependsOn.isBlank() && !dependsOn.equals("[]")) {
             try {
-                List<String> depIds = OBJECT_MAPPER.readValue(dependsOn,
+                List<String> depIds = objectMapper.readValue(dependsOn,
                     new com.fasterxml.jackson.core.type.TypeReference<List<String>>() {});
                 for (String depId : depIds) {
                     findById(depId).orElseThrow(
@@ -136,7 +138,7 @@ public class InitiativeService {
             Optional<Initiative> depOpt = initiativeRepository.findById(depId);
             if (depOpt.isPresent() && depOpt.get().getDependsOn() != null) {
                 try {
-                    List<String> grandchildDeps = OBJECT_MAPPER.readValue(
+                    List<String> grandchildDeps = objectMapper.readValue(
                         depOpt.get().getDependsOn(),
                         new com.fasterxml.jackson.core.type.TypeReference<List<String>>() {});
                     if (hasPathTo(target, grandchildDeps, visited)) return true;
@@ -272,7 +274,7 @@ public class InitiativeService {
                     String bindings = s.getWorkspaceBindings();
                     if (bindings == null || bindings.isBlank()) return false;
                     try {
-                        JsonNode node = OBJECT_MAPPER.readTree(bindings);
+                        JsonNode node = objectMapper.readTree(bindings);
                         if (node.isArray()) {
                             for (JsonNode el : node) {
                                 if (id.equals(el.asText())) return true;
@@ -428,7 +430,7 @@ public class InitiativeService {
             for (Ask ask : recent) {
                 if (ask.getCreatedAt() == null || ask.getCreatedAt().isBefore(cutoff)) continue;
                 try {
-                    com.fasterxml.jackson.databind.JsonNode node = OBJECT_MAPPER.readTree(ask.getPayload());
+                    com.fasterxml.jackson.databind.JsonNode node = objectMapper.readTree(ask.getPayload());
                     if (node.has("reason") && node.get("reason").asText().equals(reason)) {
                         return true;
                     }
@@ -458,7 +460,7 @@ public class InitiativeService {
             if (dep.getId().equals(closedId)) continue;
             if (dep.getDependsOn() == null || dep.getDependsOn().isBlank()) continue;
             try {
-                List<String> deps = OBJECT_MAPPER.readValue(dep.getDependsOn(),
+                List<String> deps = objectMapper.readValue(dep.getDependsOn(),
                     new com.fasterxml.jackson.core.type.TypeReference<List<String>>() {});
                 if (deps.contains(closedId)) {
                     // File coordination ask to the dependent's sponsor

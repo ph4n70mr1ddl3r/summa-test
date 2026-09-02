@@ -11,6 +11,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class DnaProposalService {
@@ -20,6 +22,7 @@ public class DnaProposalService {
     private final DnaDomainService domainService;
     private final MemberService memberService;
     private final AskService askService;
+    private final ObjectMapper objectMapper;
 
     private static final Pattern KEYED_UNION_PATTERN = Pattern.compile("^[ha]?:.+$|^[a-zA-Z0-9_-]+$");
 
@@ -28,13 +31,15 @@ public class DnaProposalService {
                                  AuditService auditService,
                                  DnaDomainService domainService,
                                  MemberService memberService,
-                                 AskService askService) {
+                                 AskService askService,
+                                 ObjectMapper objectMapper) {
         this.proposalRepository = proposalRepository;
         this.ruleRepository = ruleRepository;
         this.auditService = auditService;
         this.domainService = domainService;
         this.memberService = memberService;
         this.askService = askService;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
@@ -130,8 +135,7 @@ public class DnaProposalService {
             return issues;
         }
         try {
-            com.fasterxml.jackson.databind.JsonNode payload =
-                new com.fasterxml.jackson.databind.ObjectMapper().readTree(proposal.getPayload());
+            JsonNode payload = objectMapper.readTree(proposal.getPayload());
             String kind = proposal.getKind();
 
             if ("rule".equals(kind) && payload.has("supersedes_id")) {

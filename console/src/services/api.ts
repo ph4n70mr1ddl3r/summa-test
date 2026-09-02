@@ -109,7 +109,7 @@ export interface Ask {
 }
 
 export type AskStatus = 'pending' | 'answered' | 'expired' | 'withdrawn';
-export type AskKind = 'approval' | 'question' | 'assignment' | 'spawn_request';
+export type AskKind = 'approval' | 'question' | 'assignment' | 'spawn_request' | 'promotion';
 export type AskTier = 'critical' | 'standard' | 'bulk';
 
 export interface SpawnRequest {

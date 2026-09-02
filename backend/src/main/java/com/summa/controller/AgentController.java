@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
 import com.summa.service.OffboardingWalkService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 
 @RestController
 @RequestMapping("/agents")
@@ -25,14 +27,16 @@ public class AgentController {
     private final WriteGate writeGate;
     private final AskService askService;
     private final AskRepository askRepository;
+    private final ObjectMapper objectMapper;
 
     public AgentController(AgentService agentService, AuditService auditService, WriteGate writeGate,
-                           AskService askService, AskRepository askRepository) {
+                           AskService askService, AskRepository askRepository, ObjectMapper objectMapper) {
         this.agentService = agentService;
         this.auditService = auditService;
         this.writeGate = writeGate;
         this.askService = askService;
         this.askRepository = askRepository;
+        this.objectMapper = objectMapper;
     }
 
     @GetMapping
@@ -153,7 +157,7 @@ public class AgentController {
             boolean hasPromoForAgent = false;
             for (com.summa.model.Ask a : pendingPromoAsks) {
                 try {
-                    com.fasterxml.jackson.databind.JsonNode node = new com.fasterxml.jackson.databind.ObjectMapper().readTree(a.getPayload());
+                    JsonNode node = objectMapper.readTree(a.getPayload());
                     if (id.equals(node.get("agentId").asText())) {
                         hasPromoForAgent = true;
                         break;

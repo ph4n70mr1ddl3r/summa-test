@@ -5,6 +5,8 @@ import com.summa.repository.DnaRuleRepository;
 import com.summa.model.DnaProposal;
 import com.summa.model.DnaDomain;
 import com.summa.model.Ask;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -37,6 +39,9 @@ class DnaProposalServiceTest {
 
     @Mock
     private AskService askService;
+
+    @Mock
+    private ObjectMapper objectMapper;
 
     @InjectMocks
     private DnaProposalService proposalService;
@@ -130,6 +135,12 @@ class DnaProposalServiceTest {
         proposal.setDomainId("domain-1");
         proposal.setPayload("{\"supersedes_id\":\"rule-old\"}");
         when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
+        try {
+            JsonNode payload = new com.fasterxml.jackson.databind.ObjectMapper().readTree(proposal.getPayload());
+            when(objectMapper.readTree(proposal.getPayload())).thenReturn(payload);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         when(ruleRepository.findBySupersedesId("rule-old")).thenReturn(List.of());
         when(proposalRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
