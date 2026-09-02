@@ -31,7 +31,7 @@ public class DataHoldController {
 
     @PostMapping
     public ResponseEntity<?> createHold(@RequestBody Map<String, String> body) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -43,7 +43,7 @@ public class DataHoldController {
             );
             return ResponseEntity.ok(hold);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            AuditEvent audit = auditService.logSystem("REFUSAL", "validation", e.getMessage(), null);
             return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
                     .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
         } catch (IllegalStateException e) {
@@ -55,7 +55,7 @@ public class DataHoldController {
 
     @PostMapping("/{id}/release")
     public ResponseEntity<?> releaseHold(@PathVariable String id) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {

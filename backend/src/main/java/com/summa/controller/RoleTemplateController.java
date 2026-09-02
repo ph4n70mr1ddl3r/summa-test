@@ -38,7 +38,7 @@ public class RoleTemplateController {
 
     @PostMapping
     public ResponseEntity<?> createTemplate(@RequestBody Map<String, String> body) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -50,7 +50,7 @@ public class RoleTemplateController {
             );
             return ResponseEntity.ok(template);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            AuditEvent audit = auditService.logSystem("REFUSAL", "validation", e.getMessage(), null);
             return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
                     .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
         } catch (IllegalStateException e) {
@@ -62,7 +62,7 @@ public class RoleTemplateController {
 
     @PostMapping("/{id}/publish")
     public ResponseEntity<?> publish(@PathVariable String id) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -77,7 +77,7 @@ public class RoleTemplateController {
 
     @PostMapping("/{id}/retire")
     public ResponseEntity<?> retire(@PathVariable String id) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {

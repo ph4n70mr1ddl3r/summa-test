@@ -18,7 +18,7 @@ export default function Login() {
     setLoading(true)
     try {
       const result = await api.auth.login(email, password)
-      setAuthToken(result.token)
+      setAuthToken(result.token, { userId: result.userId, rbac: result.rbac, name: result.name })
       navigate(from, { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))

@@ -22,6 +22,7 @@ const navItems: NavItem[] = [
   { to: '/nodes', label: 'Nodes' },
   { to: '/role-templates', label: 'Roles' },
   { to: '/memory', label: 'Memory' },
+  { to: '/initiatives', label: 'Initiatives' },
 ]
 
 function AuthGuard({ children }: { children: React.ReactNode }) {

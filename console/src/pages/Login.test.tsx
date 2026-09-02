@@ -45,7 +45,7 @@ describe('Login page', () => {
     fireEvent.change(getByLabelText(/password/i), { target: { value: 'password123' } })
     fireEvent.click(getByText('Sign in'))
     await waitFor(() => {
-      expect(apiModule.setAuthToken).toHaveBeenCalledWith('fake-token')
+      expect(apiModule.setAuthToken).toHaveBeenCalledWith('fake-token', { userId: 'u1', rbac: 'admin', name: 'Test User' })
     })
   })
 
@@ -91,7 +91,7 @@ describe('Login page', () => {
     fireEvent.change(getByLabelText(/password/i), { target: { value: 'password123' } })
     fireEvent.click(getByText('Sign in'))
     await waitFor(() => {
-      expect(apiModule.setAuthToken).toHaveBeenCalledWith('fake-token')
+      expect(apiModule.setAuthToken).toHaveBeenCalledWith('fake-token', { userId: 'u1', rbac: 'admin', name: 'Test User' })
     })
   })
 })

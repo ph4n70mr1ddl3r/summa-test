@@ -78,7 +78,7 @@ public class AgentController {
 
     @PostMapping("/{id}/deny")
     public ResponseEntity<?> deny(@PathVariable String id) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -93,7 +93,7 @@ public class AgentController {
 
     @PostMapping("/{id}/suspend")
     public ResponseEntity<?> suspend(@PathVariable String id) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -108,7 +108,7 @@ public class AgentController {
 
     @PostMapping("/{id}/resume")
     public ResponseEntity<?> resume(@PathVariable String id) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -123,7 +123,7 @@ public class AgentController {
 
     @PostMapping("/{id}/retire")
     public ResponseEntity<?> retire(@PathVariable String id) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -138,7 +138,7 @@ public class AgentController {
 
     @PostMapping("/{id}/archive")
     public ResponseEntity<?> archive(@PathVariable String id) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -154,7 +154,7 @@ public class AgentController {
     @PostMapping("/{id}/promote")
     public ResponseEntity<?> promote(@PathVariable String id, @RequestBody Map<String, String> body) {
         // API-033: files promotion ask for customRole hire per TPL-040..046
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {

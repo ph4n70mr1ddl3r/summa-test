@@ -38,7 +38,7 @@ public class GroupController {
 
     @PostMapping
     public ResponseEntity<?> createGroup(@RequestBody Map<String, String> body) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -56,7 +56,7 @@ public class GroupController {
 
     @PostMapping("/{id}/archive")
     public ResponseEntity<?> archiveGroup(@PathVariable String id) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -71,7 +71,7 @@ public class GroupController {
 
     @PutMapping("/{id}/leader")
     public ResponseEntity<?> setLeader(@PathVariable String id, @RequestBody Map<String, String> body) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {

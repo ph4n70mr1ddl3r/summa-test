@@ -83,7 +83,7 @@ public class GovernanceController {
 
     @PutMapping("/policies")
     public ResponseEntity<?> updatePolicy(@RequestBody Map<String, Object> body) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         for (String key : body.keySet()) {
@@ -99,7 +99,7 @@ public class GovernanceController {
 
     @PutMapping("/quotas")
     public ResponseEntity<?> updateQuotas(@RequestBody Map<String, Object> body) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         for (String key : body.keySet()) {
@@ -116,7 +116,7 @@ public class GovernanceController {
     @PostMapping("/spend/overruns/{id}/ack")
     public ResponseEntity<?> ackSpendOverrun(@PathVariable String id) {
         // API-051: admin; lifts the SPW-035 reserve gate
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         // Admin-only check per API-051

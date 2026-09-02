@@ -23,6 +23,7 @@ import Memory from './pages/Memory.tsx'
 import Groups from './pages/Groups.tsx'
 import NotFound from './pages/NotFound.tsx'
 import Login from './pages/Login.tsx'
+import Initiatives from './pages/Initiatives.tsx'
 
 document.title = 'Summa'
 
@@ -50,6 +51,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="nodes" element={<Nodes />} />
           <Route path="role-templates" element={<RoleTemplates />} />
           <Route path="memory" element={<Memory />} />
+          <Route path="initiatives" element={<Initiatives />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

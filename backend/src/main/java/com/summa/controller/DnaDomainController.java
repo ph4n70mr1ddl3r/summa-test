@@ -38,7 +38,7 @@ public class DnaDomainController {
 
     @PostMapping
     public ResponseEntity<?> createDomain(@RequestBody Map<String, String> body) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -67,7 +67,7 @@ public class DnaDomainController {
 
     @PostMapping("/{id}/archive")
     public ResponseEntity<?> archiveDomain(@PathVariable String id) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -86,7 +86,7 @@ public class DnaDomainController {
 
     @PostMapping("/{id}/rename")
     public ResponseEntity<?> renameDomain(@PathVariable String id, @RequestBody Map<String, String> body) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -101,7 +101,7 @@ public class DnaDomainController {
 
     @PatchMapping("/{id}/owner")
     public ResponseEntity<?> updateOwner(@PathVariable String id, @RequestBody Map<String, String> body) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -116,7 +116,7 @@ public class DnaDomainController {
 
     @PatchMapping("/{id}/access")
     public ResponseEntity<?> updateAccess(@PathVariable String id, @RequestBody Map<String, String> body) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -132,7 +132,7 @@ public class DnaDomainController {
     // API-023: topology ops — split and merge
     @PostMapping("/{id}/split")
     public ResponseEntity<?> splitDomain(@PathVariable String id, @RequestBody Map<String, Object> body) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -167,7 +167,7 @@ public class DnaDomainController {
 
     @PostMapping("/{id}/merge")
     public ResponseEntity<?> mergeDomain(@PathVariable String id, @RequestBody Map<String, Object> body) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {

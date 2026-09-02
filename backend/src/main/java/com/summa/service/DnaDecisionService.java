@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+import com.summa.util.ScanUtils;
 
 @Service
 public class DnaDecisionService {
@@ -30,8 +30,8 @@ public class DnaDecisionService {
     public DnaDecision create(String id, String domainId, String contextMd, String outcomeMd,
                                String decidedBy, String provenance, String actor) {
         validateKeyedUnion(decidedBy, "decidedBy");
-        scanForSecrets(contextMd, actor, "dna_decision", id);
-        scanForSecrets(outcomeMd, actor, "dna_decision", id);
+        ScanUtils.scanForSecrets(contextMd, actor, "dna_decision", id, secretsScanner, auditService);
+        ScanUtils.scanForSecrets(outcomeMd, actor, "dna_decision", id, secretsScanner, auditService);
 
         DnaDecision decision = new DnaDecision();
         decision.setId(id);
@@ -65,15 +65,6 @@ public class DnaDecisionService {
         }
         if (!KEYED_UNION_PATTERN.matcher(value).matches()) {
             throw new IllegalArgumentException(fieldName + " must be a valid keyed union (h:<human-id> or a:<agent-id>)");
-        }
-    }
-
-    private void scanForSecrets(String content, String actor, String objectType, String objectId) {
-        if (content != null && secretsScanner.hasSecrets(content)) {
-            auditService.logSystem("SECRET_DETECTED", objectType, objectId,
-                String.format("{\"actor\":\"%s\",\"findings\":[%s]}", actor,
-                    secretsScanner.scan(content).stream().map(f -> "\"" + f + "\"").collect(Collectors.joining(","))));
-            throw new IllegalStateException("Content contains secrets and cannot be written");
         }
     }
 }

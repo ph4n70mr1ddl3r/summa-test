@@ -12,6 +12,7 @@ vi.mock('../services/api', () => ({
       withdraw: vi.fn(),
     },
   },
+  getCurrentActor: vi.fn().mockReturnValue('system'),
 }))
 
 describe('AskInbox page', () => {
@@ -49,7 +50,7 @@ describe('AskInbox page', () => {
     fireEvent.change(textarea, { target: { value: 'approved' } })
     fireEvent.click(getByText('Submit'))
     await waitFor(() => {
-      expect(api.asks.respond).toHaveBeenCalledWith('ask-1', 'approved', 'console')
+      expect(api.asks.respond).toHaveBeenCalledWith('ask-1', 'approved', 'system')
     })
   })
 

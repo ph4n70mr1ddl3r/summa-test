@@ -18,7 +18,7 @@ humans         (id, name, email, rbac 'admin'|'owner'|'member'|'viewer', auth js
                 -- default — SEC-001's OIDC path leaves it null); when set, /auth/login accepts
                 -- email+password as an alternative to OIDC; hashed, never returned in
                 -- responses; SEC-001/CFG-020 govern when it is used
-agents         + owner_human_id, class 'persistent'|'ephemeral', spawned_by member?, ttl_at,
+agents         + owner_human_id, class 'persistent'|'ephemeral'|'ephemeral-subagent', spawned_by member?, ttl_at,
                 budget_cap, lineage_depth, template_id?, template_version?,
                 status 'requested'|'active'|'suspended'|'retiring'|'archived',
                 created_at, updated_at?, suspended_at?, retired_at?, archived_at?

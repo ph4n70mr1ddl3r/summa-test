@@ -50,7 +50,7 @@ public class SpawnController {
 
     @PostMapping
     public ResponseEntity<?> createRequest(@RequestBody Map<String, String> body) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -89,7 +89,7 @@ public class SpawnController {
 
     @PostMapping("/{id}/approve")
     public ResponseEntity<?> approve(@PathVariable String id) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         if (!memberService.isAdmin(actor)) {
@@ -110,7 +110,7 @@ public class SpawnController {
 
     @PostMapping("/{id}/deny")
     public ResponseEntity<?> deny(@PathVariable String id) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         if (!memberService.isAdmin(actor)) {

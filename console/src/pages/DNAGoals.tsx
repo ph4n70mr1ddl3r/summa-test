@@ -37,7 +37,7 @@ export default function DNAGoals() {
                   <p className="font-medium text-gray-200">{escapeHtml(goal.statementMd)}</p>
                   <p className="text-sm text-gray-400 mt-1">
                     Owner: {escapeHtml(goal.owner)} | Inject: {escapeHtml(goal.inject)}
-                    {goal.quarter && <span> | Q{escapeHtml(goal.quarter)}</span>}
+                    {goal.quarter && <span> | Q{escapeHtml(String(goal.quarter))}</span>}
                   </p>
                   {goal.effectiveFrom && (
                     <p className="text-xs text-gray-500 mt-1">

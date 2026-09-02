@@ -37,7 +37,7 @@ describe('DNADecisions page', () => {
     ])
     render(<DNADecisions />)
     await waitFor(() => {
-      expect(screen.getByText('1 decisions')).toBeInTheDocument()
+      expect(screen.getByText('1 decision')).toBeInTheDocument()
     })
   })
 })

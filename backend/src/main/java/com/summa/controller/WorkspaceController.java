@@ -42,7 +42,7 @@ public class WorkspaceController {
 
     @PostMapping
     public ResponseEntity<?> createWorkspace(@RequestBody Map<String, String> body) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -60,7 +60,7 @@ public class WorkspaceController {
             );
             return ResponseEntity.ok(ws);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            AuditEvent audit = auditService.logSystem("REFUSAL", "validation", e.getMessage(), null);
             return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
                     .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
         } catch (IllegalStateException e) {
@@ -73,7 +73,7 @@ public class WorkspaceController {
     @PostMapping("/{id}/rebind")
     public ResponseEntity<?> rebind(@PathVariable String id,
                                      @RequestBody Map<String, String> body) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -88,7 +88,7 @@ public class WorkspaceController {
 
     @PostMapping("/{id}/archive")
     public ResponseEntity<?> archive(@PathVariable String id) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         if (!memberService.isAdmin(actor)) {

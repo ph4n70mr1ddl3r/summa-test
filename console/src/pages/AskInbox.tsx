@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api, type Ask } from '../services/api'
+import { api, getCurrentActor, type Ask } from '../services/api'
 import { escapeHtml } from '../utils/escapeHtml'
 
 export default function AskInbox() {
@@ -52,7 +52,7 @@ export default function AskInbox() {
     setSubmitError(null)
     setSubmitSuccess(null)
     try {
-      await api.asks.respond(id, responseText, 'console')
+      await api.asks.respond(id, responseText, getCurrentActor())
       setSubmitSuccess('Response recorded')
       setRespondingId(null)
       setResponseText('')
@@ -64,7 +64,7 @@ export default function AskInbox() {
 
   const handleWithdraw = async (id: string) => {
     try {
-      await api.asks.withdraw(id, 'console')
+      await api.asks.withdraw(id, getCurrentActor())
       loadAsks()
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err))

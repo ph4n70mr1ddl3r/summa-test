@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import com.summa.util.ScanUtils;
 
 @Service
 public class DnaCardService {
@@ -24,7 +24,7 @@ public class DnaCardService {
     @Transactional
     public DnaCard create(String id, String domainId, String title, String definitionMd,
                           String provenance, String actor) {
-        scanForSecrets(definitionMd, actor, "dna_card", id);
+        ScanUtils.scanForSecrets(definitionMd, actor, "dna_card", id, secretsScanner, auditService);
         DnaCard card = new DnaCard();
         card.setId(id);
         card.setDomainId(domainId);
@@ -85,7 +85,7 @@ public class DnaCardService {
     @Transactional
     public DnaCard createDraft(String id, String domainId, String title, String definitionMd,
                                  String provenance, String actor) {
-        scanForSecrets(definitionMd, actor, "dna_card", id);
+        ScanUtils.scanForSecrets(definitionMd, actor, "dna_card", id, secretsScanner, auditService);
         DnaCard card = new DnaCard();
         card.setId(id);
         card.setDomainId(domainId);
@@ -98,14 +98,5 @@ public class DnaCardService {
         auditService.log(actor, "CREATE_DRAFT", "dna_card", id,
             String.format("{\"domainId\":\"%s\",\"title\":\"%s\"}", domainId, title));
         return saved;
-    }
-
-    private void scanForSecrets(String content, String actor, String objectType, String objectId) {
-        if (content != null && secretsScanner.hasSecrets(content)) {
-            auditService.logSystem("SECRET_DETECTED", objectType, objectId,
-                String.format("{\"actor\":\"%s\",\"findings\":[%s]}", actor,
-                    secretsScanner.scan(content).stream().map(f -> "\"" + f + "\"").collect(Collectors.joining(","))));
-            throw new IllegalStateException("Content contains secrets and cannot be written");
-        }
     }
 }

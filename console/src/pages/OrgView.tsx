@@ -76,7 +76,9 @@ export default function OrgView() {
                     <span className="text-xs text-gray-500">{a.class}</span>
                     <span className={`text-xs px-2 py-0.5 rounded ${
                       a.status === 'active' ? 'bg-green-900/50 text-green-400' :
+                      a.status === 'requested' ? 'bg-blue-900/50 text-blue-400' :
                       a.status === 'suspended' ? 'bg-yellow-900/50 text-yellow-400' :
+                      a.status === 'retiring' ? 'bg-orange-900/50 text-orange-400' :
                       'bg-gray-600 text-gray-400'
                     }`}>
                       {a.status}

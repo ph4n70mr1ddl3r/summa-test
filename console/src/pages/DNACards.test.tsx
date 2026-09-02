@@ -37,7 +37,7 @@ describe('DNACards page', () => {
     ])
     render(<DNACards />)
     await waitFor(() => {
-      expect(screen.getByText('1 cards')).toBeInTheDocument()
+      expect(screen.getByText('1 card')).toBeInTheDocument()
       expect(screen.getByText('Test Card')).toBeInTheDocument()
     })
   })

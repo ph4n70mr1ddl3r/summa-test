@@ -44,7 +44,7 @@ public class InitiativeController {
 
     @PostMapping
     public ResponseEntity<?> createInitiative(@RequestBody Map<String, String> body) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -69,7 +69,7 @@ public class InitiativeController {
             );
             return ResponseEntity.ok(initiative);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            AuditEvent audit = auditService.logSystem("REFUSAL", "validation", e.getMessage(), null);
             return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
                     .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
         } catch (IllegalStateException e) {
@@ -81,7 +81,7 @@ public class InitiativeController {
 
     @PostMapping("/{id}/activate")
     public ResponseEntity<?> activate(@PathVariable String id) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -100,7 +100,7 @@ public class InitiativeController {
 
     @PostMapping("/{id}/pause")
     public ResponseEntity<?> pause(@PathVariable String id) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -119,7 +119,7 @@ public class InitiativeController {
 
     @PostMapping("/{id}/resume")
     public ResponseEntity<?> resume(@PathVariable String id) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -138,7 +138,7 @@ public class InitiativeController {
 
     @PostMapping("/{id}/close")
     public ResponseEntity<?> close(@PathVariable String id) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {

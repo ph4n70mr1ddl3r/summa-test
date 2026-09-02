@@ -1,5 +1,15 @@
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 const TOKEN_KEY = 'summa_auth_token';
+const USER_KEY = 'summa_user';
+
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
 
 function loadToken(): string | null {
   try {
@@ -9,23 +19,47 @@ function loadToken(): string | null {
   }
 }
 
-let authToken: string | null = loadToken();
+function loadUser() {
+  try {
+    const raw = localStorage.getItem(USER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
 
-export function setAuthToken(token: string | null) {
+let authToken: string | null = loadToken();
+let currentUser: { userId: string; rbac: string; name: string } | null = loadUser();
+
+export function setAuthToken(token: string | null, user?: { userId: string; rbac: string; name: string } | null | undefined) {
   authToken = token;
+  currentUser = user;
   try {
     if (token) {
       localStorage.setItem(TOKEN_KEY, token);
     } else {
       localStorage.removeItem(TOKEN_KEY);
     }
+    if (user) {
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(USER_KEY);
+    }
   } catch {
-    // localStorage unavailable — token still works in memory for this session
+    // storage unavailable — values still work in memory for this session
   }
 }
 
 export function getAuthToken(): string | null {
   return authToken;
+}
+
+export function getCurrentUser() {
+  return currentUser;
+}
+
+export function getCurrentActor(): string {
+  return currentUser?.userId || 'system';
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -47,8 +81,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       const text = await res.text();
       message = text || `HTTP ${res.status}`;
     }
-    const err = new Error(message);
-    (err as unknown as { status: number }).status = res.status;
+    const err = new ApiError(message, res.status);
     throw err;
   }
   return res.json() as Promise<T>;

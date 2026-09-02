@@ -10,6 +10,7 @@ vi.mock('../services/api', () => ({
       archive: vi.fn(),
     },
   },
+  getCurrentActor: vi.fn().mockReturnValue('system'),
 }))
 
 describe('Groups page', () => {
@@ -62,7 +63,7 @@ describe('Groups page', () => {
     const archiveBtn = screen.getByText('Archive')
     archiveBtn.click()
     await waitFor(() => {
-      expect(apiModule.api.groups.archive).toHaveBeenCalledWith('g1', 'console')
+      expect(apiModule.api.groups.archive).toHaveBeenCalledWith('g1', 'system')
     })
   })
 

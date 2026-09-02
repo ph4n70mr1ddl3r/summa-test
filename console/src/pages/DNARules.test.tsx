@@ -37,7 +37,7 @@ describe('DNARules page', () => {
     ])
     render(<DNARules />)
     await waitFor(() => {
-      expect(screen.getByText('1 rules')).toBeInTheDocument()
+      expect(screen.getByText('1 rule')).toBeInTheDocument()
     })
   })
 })

@@ -4,7 +4,7 @@ Source: PLAN.md §8.10.
 
 ## Kinds, tiers, expiry
 
-- **ASK-001** — Ask kinds: `approval | question | assignment | spawn_request`; fields per
+- **ASK-001** — Ask kinds: `approval | question | assignment | spawn_request | promotion`; fields per
   DAT-010. Asks carry payload, deadline, SLA tier (`critical | standard | bulk`), escalation
   policy, expiry behavior (`deny | escalate | reassign`), optional initiative/workspace
   linkage, quorum count, responses ledger, collapsed count. The spawn gates file their

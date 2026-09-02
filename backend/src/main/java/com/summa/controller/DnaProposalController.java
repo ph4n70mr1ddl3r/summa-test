@@ -46,7 +46,7 @@ public class DnaProposalController {
 
     @PostMapping("/proposals")
     public ResponseEntity<?> createProposal(@RequestBody Map<String, String> body) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -60,7 +60,7 @@ public class DnaProposalController {
             );
             return ResponseEntity.ok(proposal);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            AuditEvent audit = auditService.logSystem("REFUSAL", "validation", e.getMessage(), null);
             return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
                     .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
         } catch (IllegalStateException e) {
@@ -72,7 +72,7 @@ public class DnaProposalController {
 
     @PostMapping("/proposals/{id}/review")
     public ResponseEntity<?> reviewProposal(@PathVariable String id, @RequestBody Map<String, String> body) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         // API-022: single review endpoint with action in body
@@ -82,7 +82,7 @@ public class DnaProposalController {
                 DnaProposal proposal = proposalService.publish(id, actor, actor);
                 return ResponseEntity.ok(proposal);
             } catch (IllegalArgumentException e) {
-                AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+                AuditEvent audit = auditService.logSystem("REFUSAL", "validation", e.getMessage(), null);
                 return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
                         .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
             } catch (IllegalStateException e) {
@@ -95,7 +95,7 @@ public class DnaProposalController {
                 DnaProposal proposal = proposalService.reject(id, actor, actor);
                 return ResponseEntity.ok(proposal);
             } catch (IllegalArgumentException e) {
-                AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+                AuditEvent audit = auditService.logSystem("REFUSAL", "validation", e.getMessage(), null);
                 return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
                         .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
             } catch (IllegalStateException e) {
@@ -112,7 +112,7 @@ public class DnaProposalController {
 
     @PostMapping("/proposals/{id}/withdraw")
     public ResponseEntity<?> withdrawProposal(@PathVariable String id) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
@@ -127,7 +127,7 @@ public class DnaProposalController {
 
     @PostMapping("/proposals/{id}/amend")
     public ResponseEntity<?> amendProposal(@PathVariable String id, @RequestBody Map<String, String> body) {
-        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {

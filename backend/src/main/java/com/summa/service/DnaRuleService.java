@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import com.summa.util.ScanUtils;
 
 @Service
 public class DnaRuleService {
@@ -28,7 +28,7 @@ public class DnaRuleService {
     public DnaRule create(String id, String domainId, String statementMd, String machineHint,
                           Instant effectiveFrom, Instant effectiveTo, String supersedesId,
                           String actor) {
-        scanForSecrets(statementMd, actor, "dna_rule", id);
+        ScanUtils.scanForSecrets(statementMd, actor, "dna_rule", id, secretsScanner, auditService);
         // Validate effective date ordering
         if (effectiveTo != null && effectiveFrom != null && effectiveTo.isBefore(effectiveFrom)) {
             throw new IllegalArgumentException("effectiveTo must not be before effectiveFrom");
@@ -134,14 +134,5 @@ public class DnaRuleService {
         auditService.log(actor, "SUPERSEDE_RULE", "dna_rule", id,
             String.format("{\"supersedes\":\"%s\"}", supersedesId));
         return saved;
-    }
-
-    private void scanForSecrets(String content, String actor, String objectType, String objectId) {
-        if (content != null && secretsScanner.hasSecrets(content)) {
-            auditService.logSystem("SECRET_DETECTED", objectType, objectId,
-                String.format("{\"actor\":\"%s\",\"findings\":[%s]}", actor,
-                    secretsScanner.scan(content).stream().map(f -> "\"" + f + "\"").collect(Collectors.joining(","))));
-            throw new IllegalStateException("Content contains secrets and cannot be written");
-        }
     }
 }
