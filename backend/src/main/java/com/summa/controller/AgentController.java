@@ -76,6 +76,21 @@ public class AgentController {
         return ResponseEntity.ok(lineage);
     }
 
+    @PostMapping("/{id}/deny")
+    public ResponseEntity<?> deny(@PathVariable String id) {
+        String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
+        try {
+            Agent agent = agentService.deny(id, actor);
+            return ResponseEntity.ok(agent);
+        } catch (IllegalArgumentException e) {
+            return ControllerResponses.validation(auditService, e.getMessage());
+        } catch (IllegalStateException e) {
+            return ControllerResponses.gate(auditService, e.getMessage());
+        }
+    }
+
     @PostMapping("/{id}/suspend")
     public ResponseEntity<?> suspend(@PathVariable String id) {
         String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";

@@ -60,6 +60,12 @@ public class MemberService {
         return agent != null && agent.isActive() && !agent.isEphemeral();
     }
 
+    public boolean isAdmin(String actorId) {
+        if (actorId == null || "system".equals(actorId)) return false;
+        Optional<Human> humanOpt = findHuman(actorId);
+        return humanOpt.isPresent() && RbacRole.ADMIN.getValue().equals(humanOpt.get().getRbac());
+    }
+
     @Transactional
     public Human saveHuman(Human human) {
         return humanRepository.save(human);

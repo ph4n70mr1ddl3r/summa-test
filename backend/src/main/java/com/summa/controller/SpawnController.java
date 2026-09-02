@@ -3,6 +3,8 @@ package com.summa.controller;
 import com.summa.service.SpawnService;
 import com.summa.model.SpawnRequest;
 import com.summa.service.AuditService;
+import com.summa.model.AuditEvent;
+import com.summa.service.MemberService;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,11 +18,14 @@ public class SpawnController {
     private final SpawnService spawnService;
     private final AuditService auditService;
     private final WriteGate writeGate;
+    private final MemberService memberService;
 
-    public SpawnController(SpawnService spawnService, AuditService auditService, WriteGate writeGate) {
+    public SpawnController(SpawnService spawnService, AuditService auditService, WriteGate writeGate,
+                           MemberService memberService) {
         this.spawnService = spawnService;
         this.auditService = auditService;
         this.writeGate = writeGate;
+        this.memberService = memberService;
     }
 
     @GetMapping
@@ -87,6 +92,12 @@ public class SpawnController {
         String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        if (!memberService.isAdmin(actor)) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "admin_only", "Spawn approve requires admin role", actor);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body(Map.of("code", "admin_only", "message", "Spawn approve requires admin role",
+                            "audit_event_id", audit.getId()));
+        }
         try {
             SpawnRequest request = spawnService.approve(id, actor, actor);
             return ResponseEntity.ok(request);
@@ -102,6 +113,12 @@ public class SpawnController {
         String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        if (!memberService.isAdmin(actor)) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "admin_only", "Spawn deny requires admin role", actor);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body(Map.of("code", "admin_only", "message", "Spawn deny requires admin role",
+                            "audit_event_id", audit.getId()));
+        }
         try {
             SpawnRequest request = spawnService.deny(id, actor);
             return ResponseEntity.ok(request);

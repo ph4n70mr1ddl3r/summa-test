@@ -9,6 +9,8 @@ import com.summa.model.Initiative;
 import com.summa.model.Trigger;
 import com.summa.repository.PlaybookRepository;
 import com.summa.model.Playbook;
+import com.summa.repository.SpawnRequestRepository;
+import com.summa.model.SpawnRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -27,12 +29,14 @@ public class WorkspaceService {
     private final InitiativeRepository initiativeRepository;
     private final TriggerRepository triggerRepository;
     private final PlaybookRepository playbookRepository;
+    private final SpawnRequestRepository spawnRequestRepository;
 
     public WorkspaceService(WorkspaceRepository workspaceRepository, DnaDomainRepository domainRepository,
                             AuditService auditService, ObjectMapper objectMapper,
                             InitiativeRepository initiativeRepository,
                             TriggerRepository triggerRepository,
-                            PlaybookRepository playbookRepository) {
+                            PlaybookRepository playbookRepository,
+                            SpawnRequestRepository spawnRequestRepository) {
         this.workspaceRepository = workspaceRepository;
         this.domainRepository = domainRepository;
         this.auditService = auditService;
@@ -40,6 +44,7 @@ public class WorkspaceService {
         this.initiativeRepository = initiativeRepository;
         this.triggerRepository = triggerRepository;
         this.playbookRepository = playbookRepository;
+        this.spawnRequestRepository = spawnRequestRepository;
     }
 
     @Transactional
@@ -142,6 +147,15 @@ public class WorkspaceService {
                 .toList();
         for (Playbook pb : boundPlaybooks) {
             auditService.logSystem("ARCHIVE_NOTE_PLAYBOOK", "playbook", pb.getId(),
+                String.format("{\"workspaceId\":\"%s\",\"reason\":\"workspace_archived\"}", id));
+        }
+
+        // CLC-040: Archive pending spawn requests binding to this workspace
+        List<SpawnRequest> pendingSpawns = spawnRequestRepository.findPendingByWorkspaceBinding(id);
+        for (SpawnRequest sr : pendingSpawns) {
+            sr.setStatus("archived");
+            spawnRequestRepository.save(sr);
+            auditService.logSystem("ARCHIVE_PENDING_SPAWN", "spawn_request", sr.getId(),
                 String.format("{\"workspaceId\":\"%s\",\"reason\":\"workspace_archived\"}", id));
         }
 

@@ -1,5 +1,6 @@
 package com.summa.service;
 
+import com.summa.constants.Defaults;
 import com.summa.repository.AskRepository;
 import com.summa.model.Ask;
 import com.summa.model.Human;
@@ -25,10 +26,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 @Service
 public class AskService {
-    private static final long DEFAULT_CRITICAL_ASK_DEADLINE_HOURS = 1;
-    private static final long DEFAULT_BULK_ASK_DEADLINE_HOURS = 24;
-    private static final long DEFAULT_STANDARD_ASK_DEADLINE_HOURS = 24;
-
     private final AskRepository askRepository;
     private final AuditService auditService;
     private final MemberService memberService;
@@ -201,7 +198,7 @@ public class AskService {
                 originalAsk.getId(), originalAsk.getKind(), originalAsk.getSlaTier());
             create("question", "system", OffboardingWalkService.ADMIN_BROADCAST,
                 payload, "critical", "deny", 1,
-                Instant.now().plusSeconds(DEFAULT_CRITICAL_ASK_DEADLINE_HOURS * 3600L),
+                Instant.now().plusSeconds(Defaults.DEFAULT_CRITICAL_ASK_DEADLINE_HOURS * 3600L),
                 originalAsk.getInitiativeId(), originalAsk.getWorkspaceId());
             auditService.logSystem("ORG_STALL_BROADCAST", "ask", originalAsk.getId(),
                 "{\"reason\":\"chain_exhausted\",\"originalAskId\":\"%s\"}".formatted(originalAsk.getId()));
@@ -351,17 +348,17 @@ public class AskService {
         if ("critical".equals(tier)) {
             Object val = governanceService.getSetting("asks-tier-critical-deadline-hours");
             if (val instanceof Number) return ((Number) val).longValue() * 3600L;
-            return DEFAULT_CRITICAL_ASK_DEADLINE_HOURS * 3600L;
+            return Defaults.DEFAULT_CRITICAL_ASK_DEADLINE_HOURS * 3600L;
         }
         if ("bulk".equals(tier)) {
             Object val = governanceService.getSetting("asks-tier-bulk-deadline-hours");
             if (val instanceof Number) return ((Number) val).longValue() * 3600L;
-            return DEFAULT_BULK_ASK_DEADLINE_HOURS * 3600L;
+            return Defaults.DEFAULT_BULK_ASK_DEADLINE_HOURS * 3600L;
         }
         // standard tier: next digest is not a fixed deadline — use configurable hours (default 24)
         Object val = governanceService.getSetting("asks-tier-standard-deadline-hours");
         if (val instanceof Number) return ((Number) val).longValue() * 3600L;
-        return DEFAULT_STANDARD_ASK_DEADLINE_HOURS * 3600L;
+        return Defaults.DEFAULT_STANDARD_ASK_DEADLINE_HOURS * 3600L;
     }
 
     private void recordResponse(Ask ask, String responder, String response) {

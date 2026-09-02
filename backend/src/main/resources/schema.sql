@@ -470,6 +470,7 @@ CREATE TABLE IF NOT EXISTS spawn_requests (
     budget_cap REAL,
     ttl_hours INTEGER,
     requested_by_human_id TEXT,
+    gate_target TEXT,
     status TEXT NOT NULL DEFAULT 'requested' CHECK (status IN ('requested', 'approved', 'denied', 'expired', 'archived')),
     approved_by TEXT,
     approved_at INTEGER,

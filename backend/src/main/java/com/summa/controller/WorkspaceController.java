@@ -4,6 +4,7 @@ import com.summa.service.WorkspaceService;
 import com.summa.model.Workspace;
 import com.summa.service.AuditService;
 import com.summa.model.AuditEvent;
+import com.summa.service.MemberService;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,11 +18,14 @@ public class WorkspaceController {
     private final WorkspaceService workspaceService;
     private final AuditService auditService;
     private final WriteGate writeGate;
+    private final MemberService memberService;
 
-    public WorkspaceController(WorkspaceService workspaceService, AuditService auditService, WriteGate writeGate) {
+    public WorkspaceController(WorkspaceService workspaceService, AuditService auditService, WriteGate writeGate,
+                               MemberService memberService) {
         this.workspaceService = workspaceService;
         this.auditService = auditService;
         this.writeGate = writeGate;
+        this.memberService = memberService;
     }
 
     @GetMapping
@@ -87,6 +91,12 @@ public class WorkspaceController {
         String actor = RbacAuthorizationFilter.getCurrentActor() != null ? RbacAuthorizationFilter.getCurrentActor() : "system";
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        if (!memberService.isAdmin(actor)) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "admin_only", "Workspace archive requires admin role", actor);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body(Map.of("code", "admin_only", "message", "Workspace archive requires admin role",
+                            "audit_event_id", audit.getId()));
+        }
         try {
             Workspace ws = workspaceService.archive(id, actor);
             return ResponseEntity.ok(ws);

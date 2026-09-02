@@ -170,7 +170,6 @@ public class OrgController {
             }
 
             orgService.erasure(id, actor);
-            auditService.log(actor, "ERASURE", "human", id, null);
             return ResponseEntity.ok(Map.of("status", "erased", "id", id));
         } catch (IllegalArgumentException e) {
             AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
