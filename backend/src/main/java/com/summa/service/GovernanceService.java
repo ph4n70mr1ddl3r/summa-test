@@ -50,7 +50,7 @@ public class GovernanceService {
         if (type.isInstance(value)) return type.cast(value);
         if (type == Integer.class || type == int.class) {
             if (value instanceof Number) return type.cast(((Number) value).intValue());
-            try { return type.cast((int) Double.parseDouble(value.toString())); }
+            try { return type.cast((int) Math.round(Double.parseDouble(value.toString()))); }
             catch (NumberFormatException ignored) {
                 try { return type.cast(Integer.parseInt(value.toString())); }
                 catch (NumberFormatException ignored2) {}
@@ -58,7 +58,13 @@ public class GovernanceService {
             return null;
         }
         if (type == Long.class || type == long.class) {
-            return type.cast(Long.parseLong(value.toString()));
+            if (value instanceof Number) return type.cast(((Number) value).longValue());
+            try { return type.cast((long) Math.round(Double.parseDouble(value.toString()))); }
+            catch (NumberFormatException ignored) {
+                try { return type.cast(Long.parseLong(value.toString())); }
+                catch (NumberFormatException ignored2) {}
+            }
+            return null;
         }
         if (type == Double.class || type == double.class) {
             return type.cast(Double.parseDouble(value.toString()));

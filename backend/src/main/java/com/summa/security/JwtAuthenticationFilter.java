@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Value("${summa.auth.jwt-expiration:86400000}")
     private long jwtExpiration;
+
+    @PostConstruct
+    public void validateSecret() {
+        if (jwtSecret == null || jwtSecret.isBlank()) {
+            throw new IllegalStateException("summa.auth.jwt-secret must not be blank");
+        }
+        if (jwtSecret.length() < 32) {
+            throw new IllegalStateException("summa.auth.jwt-secret must be at least 32 characters (256 bits recommended), got " + jwtSecret.length());
+        }
+    }
 
     public static final List<String> PUBLIC_PATHS = List.of(
         "/api/auth/login", "/api/health", "/api/info",

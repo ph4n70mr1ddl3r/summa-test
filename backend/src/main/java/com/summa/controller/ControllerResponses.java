@@ -31,4 +31,10 @@ public final class ControllerResponses {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(Map.of("code", "not_found", "message", message, "audit_event_id", event.getId()));
     }
+
+    public static ResponseEntity<Map<String, Object>> conflict(AuditService audit, String message) {
+        AuditEvent event = audit.logSystem("REFUSAL", "conflict", message, null);
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("code", "conflict", "message", message, "audit_event_id", event.getId()));
+    }
 }

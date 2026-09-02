@@ -278,6 +278,7 @@ public class AgentService {
             Optional<Human> owner = memberService.findHuman(agent.get().getOwnerHumanId());
             if (owner.isPresent()) return owner;
             currentId = agent.get().getSpawnedBy();
+            if (currentId == null) break;
             depth++;
         }
         return Optional.empty();

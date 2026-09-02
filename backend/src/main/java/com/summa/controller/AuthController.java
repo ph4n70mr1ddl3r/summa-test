@@ -145,6 +145,18 @@ public class AuthController {
             var audit = auditService.logSystem("REFUSAL", "auth_change_password", actor, "newPassword too short");
             return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", "newPassword must be at least 8 characters", "audit_event_id", audit.getId()));
         }
+        if (!newPassword.matches(".*[A-Z].*")) {
+            var audit = auditService.logSystem("REFUSAL", "auth_change_password", actor, "newPassword missing uppercase");
+            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", "newPassword must contain at least one uppercase letter", "audit_event_id", audit.getId()));
+        }
+        if (!newPassword.matches(".*[a-z].*")) {
+            var audit = auditService.logSystem("REFUSAL", "auth_change_password", actor, "newPassword missing lowercase");
+            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", "newPassword must contain at least one lowercase letter", "audit_event_id", audit.getId()));
+        }
+        if (!newPassword.matches(".*\\d.*")) {
+            var audit = auditService.logSystem("REFUSAL", "auth_change_password", actor, "newPassword missing digit");
+            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", "newPassword must contain at least one digit", "audit_event_id", audit.getId()));
+        }
 
         var humanOpt = orgService.findHuman(actor);
         if (humanOpt.isEmpty()) {

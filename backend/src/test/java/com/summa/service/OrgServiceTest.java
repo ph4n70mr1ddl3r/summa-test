@@ -43,7 +43,7 @@ class OrgServiceTest {
         human.setRbac("admin");
         when(humanRepository.save(any())).thenReturn(human);
 
-        Human result = orgService.bootstrap("Test Admin", "admin@test.com", "admin", "testpass");
+        Human result = orgService.bootstrap("Test Admin", "admin@test.com", "admin", "Testpass1");
 
         assertNotNull(result);
         assertEquals("admin", result.getRbac());

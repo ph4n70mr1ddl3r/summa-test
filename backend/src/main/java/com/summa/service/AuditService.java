@@ -28,7 +28,7 @@ public class AuditService {
     public AuditEvent log(String actor, String action, String objectType, String objectId, String nodeId, String detail) {
         AuditEvent event = new AuditEvent();
         event.setId(UUID.randomUUID().toString());
-        event.setActor(actor);
+        event.setActor(actor != null ? actor : "system");
         event.setAction(action);
         event.setObjectType(objectType);
         event.setObjectId(objectId);

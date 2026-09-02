@@ -63,8 +63,13 @@ public class BackupService {
             throw new IllegalArgumentException("Backup file not found: " + backupPath);
         }
 
-        // Prevent path traversal: resolve to absolute and verify it's within allowed dirs
-        Path resolved = backupFile.toAbsolutePath().normalize();
+        // Prevent path traversal: resolve symlinks and verify it's within allowed dirs
+        Path resolved;
+        try {
+            resolved = backupFile.toRealPath(LinkOption.NOFOLLOW_LINKS);
+        } catch (java.io.IOException e) {
+            resolved = backupFile.toAbsolutePath().normalize();
+        }
         Path tmpDir = Paths.get(System.getProperty("java.io.tmpdir")).toAbsolutePath().normalize();
         Path dataDir = Paths.get(expandPath(dbPath)).getParent().toAbsolutePath().normalize();
         if (!resolved.startsWith(tmpDir) && !resolved.startsWith(dataDir)) {
@@ -72,11 +77,15 @@ public class BackupService {
         }
 
         Path restoreDir = Files.createTempDirectory("summa-restore-");
-        
+
         try (java.util.zip.ZipInputStream zis = new java.util.zip.ZipInputStream(Files.newInputStream(backupFile))) {
             java.util.zip.ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
-                Path outputPath = restoreDir.resolve(entry.getName());
+                Path outputPath = restoreDir.resolve(entry.getName()).normalize();
+                if (!outputPath.startsWith(restoreDir)) {
+                    zis.closeEntry();
+                    throw new IllegalArgumentException("Zip entry escapes restore directory: " + entry.getName());
+                }
                 if (entry.isDirectory()) {
                     Files.createDirectories(outputPath);
                 } else {

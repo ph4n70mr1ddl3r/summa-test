@@ -169,16 +169,4 @@ public class RunController {
             "failed", runService.countByStatus("failed")
         ));
     }
-
-    private Long convertToLong(Object val) {
-        if (val == null) return null;
-        if (val instanceof Number n) return n.longValue();
-        try { return Long.parseLong(val.toString()); } catch (NumberFormatException e) { return null; }
-    }
-
-    private Double convertToDouble(Object val) {
-        if (val == null) return null;
-        if (val instanceof Number n) return n.doubleValue();
-        try { return Double.parseDouble(val.toString()); } catch (NumberFormatException e) { return null; }
-    }
 }
