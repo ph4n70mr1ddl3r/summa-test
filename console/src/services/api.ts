@@ -548,6 +548,11 @@ export const api = {
         method: 'PUT',
         body: JSON.stringify({ rbac }),
       }),
+    demote: (id: string, rbac: string, _actor: string) =>
+      request<Human>(`/org/humans/${id}/demote`, {
+        method: 'PUT',
+        body: JSON.stringify({ rbac }),
+      }),
     setDeputy: (id: string, deputyId: string, _actor: string) =>
       request<Human>(`/org/humans/${id}/deputy`, {
         method: 'PUT',

@@ -62,6 +62,7 @@ public class GovernanceService {
             return null;
         }
         if (type == Double.class || type == double.class) {
+            if (value instanceof Number) return type.cast(((Number) value).doubleValue());
             return type.cast(Double.parseDouble(value.toString()));
         }
         if (type == Boolean.class || type == boolean.class) {
