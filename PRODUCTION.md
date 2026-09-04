@@ -3,7 +3,10 @@
 ## Quick Start
 
 ```bash
-# Single-process mode (development/small team)
+# Single-process mode (development/small team).
+# The script runs the packaged JAR, so build it first:
+npm run build:backend
+export SUMMA_JWT_SECRET=$(openssl rand -hex 32)
 ./start.sh
 
 # Dev mode (backend + console hot-reload)
@@ -35,7 +38,7 @@ Kubernetes (prod): decomposed services
 |-----------|------|-------------|
 | SQLite DB | `~/.summa/summa.db` | All runtime state (WAL mode) |
 | DNA Git Repo | `~/.summa/dna` | Canonical DNA store (markdown) |
-| Logs | `target/logs/` | Application logs |
+| Logs | stdout/stderr | Application logs (collect via `journald` / `docker compose logs`) |
 
 ## Environment Variables
 
@@ -43,17 +46,27 @@ Kubernetes (prod): decomposed services
 |----------|---------|-------------|
 | `SUMMA_DB_PATH` | `~/.summa/summa.db` | SQLite database path |
 | `SUMMA_DNA_REPO` | `~/.summa/dna` | DNA git repository path |
-| `SUMMA_JWT_SECRET` | *(required)* | JWT signing secret (256+ bits) |
+| `SUMMA_JWT_SECRET` | *(required)* | JWT signing secret (256+ bits; generate with `openssl rand -hex 32`) |
 | `SUMMA_SPEND_CEILING` | `1000000` | Org spend ceiling |
-| `SUMMA_OIDC_ISSUER` | | Keycloak issuer URI |
-| `SUMMA_OIDC_CLIENT_ID` | | OIDC client ID |
-| `SUMMA_OIDC_CLIENT_SECRET` | | OIDC client secret |
+| `SUMMA_CORS_ORIGINS` | *(localhost only)* | Extra CORS origins, comma-separated (e.g. `https://app.example.com`) |
+| `SPRING_PROFILES_ACTIVE` | `prod` in Docker | Spring profile (`dev` for local hot-reload) |
+| `VITE_API_URL` | `/api` | API base URL baked into the console bundle at build time |
+| `VITE_SUMMA_MODE` | `single-process` | Console mode badge: `single-process` or `multi-node` |
+| `SUMMA_OIDC_ISSUER` | *(planned)* | Keycloak issuer URI (not yet wired — see note below) |
+| `SUMMA_OIDC_CLIENT_ID` | *(planned)* | OIDC client ID (not yet wired) |
+| `SUMMA_OIDC_CLIENT_SECRET` | *(planned)* | OIDC client secret (not yet wired) |
+
+> **OIDC note:** `SUMMA_OIDC_*` is reserved for a planned Keycloak integration.
+> Human auth today is email + password via `POST /api/auth/login`.
 
 ## API Endpoints
 
+Abridged — the full surface with REQ IDs lives in `specs/17-api-surface.md`
+(the controllers under `backend/src/main/java/com/summa/controller/` are authoritative).
+
 ### Auth & Bootstrap
-- `POST /api/auth/login` — OIDC token exchange
-- `POST /api/org/bootstrap` — First-run company + admin creation
+- `POST /api/auth/login` — Email + password login (returns JWT)
+- `POST /api/org/bootstrap` — First-run company + admin creation (public, first-run only)
 
 ### Organization
 - `GET /api/org/humans` — List humans
@@ -117,7 +130,7 @@ Kubernetes (prod): decomposed services
 - `POST /api/admin/secrets/scan` — Scan for leaked secrets
 
 ### Auth
-- `POST /api/auth/login` — OIDC token exchange
+- `POST /api/auth/login` — Email + password login (returns JWT)
 - `PUT /api/auth/change-password` — Change password
 - `GET /api/auth/pats` — List PATs
 - `POST /api/auth/pats` — Create PAT
@@ -180,7 +193,8 @@ docker run -d \
 
 ### Docker Compose
 ```bash
-docker-compose up -d
+export SUMMA_JWT_SECRET=$(openssl rand -hex 32)
+docker compose up -d --build
 ```
 
 ### OCI Images (Podman)
@@ -205,11 +219,10 @@ curl -X POST http://localhost:8080/api/admin/backup/restore \
 
 ## Security Checklist
 
-- [ ] Set `SUMMA_JWT_SECRET` to a 256-bit random value
-- [ ] Configure OIDC/Keycloak for human auth
+- [ ] Set `SUMMA_JWT_SECRET` to a 256-bit random value (`openssl rand -hex 32`)
 - [ ] Enable TLS behind reverse proxy
 - [ ] Set protected branches on DNA repo
-- [ ] Configure firewall for port 8080
+- [ ] Configure firewall for ports 8080 (API) and 3000 (console, compose only)
 - [ ] Rotate JWT secret annually
 - [ ] Back up database and DNA repo daily
 

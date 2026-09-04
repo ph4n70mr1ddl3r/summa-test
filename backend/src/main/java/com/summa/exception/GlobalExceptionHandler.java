@@ -56,11 +56,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<Map<String, Object>> handleDataIntegrity(DataIntegrityViolationException e) {
-        AuditEvent audit = auditService.logSystem("REFUSAL", "conflict", e.getMessage(), null);
+        // Never leak SQL/schema text to clients — log the detail, return a generic code.
+        log.warn("Data integrity conflict: {}", e.getMostSpecificCause() != null
+                ? e.getMostSpecificCause().getMessage() : e.getMessage());
+        AuditEvent audit = auditService.logSystem("REFUSAL", "conflict", "Resource conflict", null);
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(Map.of(
                     "code", "conflict",
-                    "message", "Resource conflict: " + (e.getMostSpecificCause() != null ? e.getMostSpecificCause().getMessage() : e.getMessage()),
+                    "message", "Resource conflict: the request violates a uniqueness or integrity constraint",
                     "audit_event_id", audit.getId()
                 ));
     }

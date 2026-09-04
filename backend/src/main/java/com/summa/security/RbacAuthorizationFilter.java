@@ -47,6 +47,17 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                       FilterChain filterChain) throws ServletException, IOException {
+        // Public endpoints (health, login, bootstrap, ...) carry no actor by design.
+        // JwtAuthenticationFilter already let them through — do not 401 them here,
+        // otherwise /api/health breaks and fresh installs can never bootstrap.
+        String path = request.getRequestURI();
+        String normalized = path != null && path.endsWith("/") && path.length() > 1
+                ? path.substring(0, path.length() - 1) : path;
+        if (JwtAuthenticationFilter.PUBLIC_PATHS.contains(path)
+                || JwtAuthenticationFilter.PUBLIC_PATHS.contains(normalized)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
         String actor = (String) request.getAttribute("actor");
         if (actor == null) {
             // Do not trust X-Actor header from unauthenticated clients.

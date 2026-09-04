@@ -60,6 +60,20 @@ public class JwtUtil {
             return null;
         }
 
+        // Enforce alg=HS256: reject tokens that declare a different algorithm
+        // (e.g. alg=none confusion) before checking the signature.
+        try {
+            String headerJson = new String(Base64.getUrlDecoder().decode(parts[0]), StandardCharsets.UTF_8);
+            Map<String, Object> header = MAPPER.readValue(headerJson, new TypeReference<Map<String, Object>>() {});
+            Object alg = header.get("alg");
+            if (!"HS256".equals(alg)) {
+                return null;
+            }
+        } catch (Exception e) {
+            log.warn("JWT header parse failure: {}", e.getMessage());
+            return null;
+        }
+
         String signatureInput = parts[0] + "." + parts[1];
         String expectedSignature = base64UrlEncode(hmacSha256(signatureInput, secret));
         if (!constantTimeEquals(expectedSignature, parts[2])) {

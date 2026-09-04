@@ -12,6 +12,7 @@ services:
       - SUMMA_DB_PATH=/data/db/summa.db
       - SUMMA_DNA_REPO=/data/dna
       - SUMMA_JWT_SECRET=${SUMMA_JWT_SECRET:?SUMMA_JWT_SECRET must be set}
+      - SPRING_PROFILES_ACTIVE=prod
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:8080/api/health || exit 1"]
       interval: 30s
@@ -29,8 +30,12 @@ services:
 
   console:
     build:
-      context: console
-      dockerfile: ../Dockerfile.console
+      context: .
+      dockerfile: Dockerfile.console
+      args:
+        # Baked into the Vite bundle at build time — override for non-default setups.
+        VITE_API_URL: ${VITE_API_URL:-/api}
+        VITE_SUMMA_MODE: ${VITE_SUMMA_MODE:-single-process}
     restart: unless-stopped
     ports:
       - "3000:80"

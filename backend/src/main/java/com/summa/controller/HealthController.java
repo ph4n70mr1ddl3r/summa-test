@@ -28,7 +28,7 @@ public class HealthController {
         } catch (Exception e) {
             // database unavailable
         }
-        return ResponseEntity.ok(Map.of(
+        Map<String, Object> body = Map.of(
             "status", dbStatus.equals("UP") ? "UP" : "DEGRADED",
             "service", "summa",
             "mode", mode,
@@ -36,6 +36,11 @@ public class HealthController {
                 "database", dbStatus,
                 "git_store", "UP"
             )
-        ));
+        );
+        // Return 503 when degraded so container healthchecks and LBs fail fast.
+        if (!dbStatus.equals("UP")) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE).body(body);
+        }
+        return ResponseEntity.ok(body);
     }
 }

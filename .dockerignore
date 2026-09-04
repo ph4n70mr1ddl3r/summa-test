@@ -1,5 +1,7 @@
 node_modules
 console/node_modules
+# Backend is built inside the Docker multi-stage build from src+pom;
+# local build output must not pollute the context.
 backend/target
 .git
 .gitignore
@@ -18,4 +20,5 @@ opencode.json
 opencode.jsonc
 **/AGENTS.md
 **/.gitignore
-package-lock.json
+# Root lockfile only — console/package-lock.json MUST stay in context for `npm ci`.
+/package-lock.json

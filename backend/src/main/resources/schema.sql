@@ -174,14 +174,10 @@ CREATE TABLE IF NOT EXISTS dna_proposals (
 CREATE INDEX IF NOT EXISTS idx_dna_proposals_domain ON dna_proposals(domain_id);
 CREATE INDEX IF NOT EXISTS idx_agents_status ON agents(status);
 CREATE INDEX IF NOT EXISTS idx_agents_owner ON agents(owner_human_id);
-CREATE INDEX IF NOT EXISTS idx_initiatives_status ON initiatives(status);
 CREATE INDEX IF NOT EXISTS idx_dna_goals_domain ON dna_goals(domain_id);
 CREATE INDEX IF NOT EXISTS idx_dna_goals_status ON dna_goals(status);
-CREATE INDEX IF NOT EXISTS idx_group_memberships_member ON group_memberships(member_id);
-CREATE INDEX IF NOT EXISTS idx_memory_items_tier ON memory_items(tier);
-CREATE INDEX IF NOT EXISTS idx_memory_items_workspace ON memory_items(workspace_id);
-CREATE INDEX IF NOT EXISTS idx_spend_ledger_member ON spend_ledger(member_id);
-CREATE INDEX IF NOT EXISTS idx_spend_ledger_kind ON spend_ledger(kind);
+-- NOTE: indexes on initiatives/group_memberships/memory_items/spend_ledger live
+-- directly after their CREATE TABLEs below (SQLite requires the table to exist).
 
 CREATE TABLE IF NOT EXISTS asks (
     id TEXT PRIMARY KEY,
@@ -227,6 +223,8 @@ CREATE TABLE IF NOT EXISTS initiatives (
     FOREIGN KEY (decision_ref) REFERENCES dna_decisions(id) ON DELETE SET NULL
     -- sponsor and lead are keyed unions per DAT-120: h:<humans.id> or a:<agents.id>
 );
+
+CREATE INDEX IF NOT EXISTS idx_initiatives_status ON initiatives(status);
 
 CREATE TABLE IF NOT EXISTS board_tasks (
     id TEXT PRIMARY KEY,
@@ -311,6 +309,9 @@ CREATE TABLE IF NOT EXISTS spend_ledger (
     FOREIGN KEY (spawn_id) REFERENCES spawn_requests(id) ON DELETE SET NULL
 );
 
+CREATE INDEX IF NOT EXISTS idx_spend_ledger_member ON spend_ledger(member_id);
+CREATE INDEX IF NOT EXISTS idx_spend_ledger_kind ON spend_ledger(kind);
+
 CREATE TABLE IF NOT EXISTS trigger_firings (
     id TEXT PRIMARY KEY,
     trigger_id TEXT NOT NULL,
@@ -354,10 +355,13 @@ CREATE TABLE IF NOT EXISTS groups (
     leader_member_id TEXT,
     status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'archived')),
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
-    updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
-    UNIQUE(name) WHERE status != 'archived'
+    updated_at INTEGER NOT NULL DEFAULT (unixepoch())
     -- leader_member_id is a keyed union per DAT-120: h:<humans.id> or a:<agents.id>
 );
+
+-- Partial uniqueness (names may be reused once archived) as a separate partial
+-- index: SQLite does not allow WHERE clauses on inline table constraints.
+CREATE UNIQUE INDEX IF NOT EXISTS uq_groups_name_active ON groups(name) WHERE status != 'archived';
 
 CREATE TABLE IF NOT EXISTS group_memberships (
     group_id TEXT NOT NULL,
@@ -369,6 +373,8 @@ CREATE TABLE IF NOT EXISTS group_memberships (
     FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE
     -- member_id and added_by are keyed unions per DAT-120: h:<humans.id> or a:<agents.id>
 );
+
+CREATE INDEX IF NOT EXISTS idx_group_memberships_member ON group_memberships(member_id);
 
 CREATE TABLE IF NOT EXISTS audit_events (
     id TEXT PRIMARY KEY,
@@ -425,6 +431,9 @@ CREATE TABLE IF NOT EXISTS memory_items (
     FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE SET NULL,
     FOREIGN KEY (reviewed_by) REFERENCES humans(id) ON DELETE SET NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_memory_items_tier ON memory_items(tier);
+CREATE INDEX IF NOT EXISTS idx_memory_items_workspace ON memory_items(workspace_id);
 
 CREATE TABLE IF NOT EXISTS runs (
     id TEXT PRIMARY KEY,
@@ -497,8 +506,12 @@ CREATE TABLE IF NOT EXISTS messages (
 
 CREATE INDEX IF NOT EXISTS idx_messages_run ON messages(run_id, timestamp);
 
--- FTS5 virtual table for DNA search
+-- FTS5 virtual table for DNA search.
+-- NOTE: source tables use TEXT UUID primary keys, which cannot be stored in
+-- the implicit FTS5 integer rowid. We therefore keep an explicit UNINDEXED
+-- `id` column and join/delete on it instead of rowid.
 CREATE VIRTUAL TABLE IF NOT EXISTS dna_search_index USING fts5(
+    id UNINDEXED,
     title,
     definition_md,
     statement_md,
@@ -510,19 +523,17 @@ CREATE VIRTUAL TABLE IF NOT EXISTS dna_search_index USING fts5(
     content,
     status,
     domain_id,
-    kind,
-    separate_digits = 0,
-    order = fts5
+    kind
 );
 
 -- Create triggers to keep FTS index in sync
 CREATE TRIGGER IF NOT EXISTS dna_cards_ai AFTER INSERT ON dna_cards BEGIN
-    INSERT INTO dna_search_index (rowid, title, definition_md, domain_id, kind, status)
+    INSERT INTO dna_search_index (id, title, definition_md, domain_id, kind, status)
     VALUES (new.id, new.title, new.definition_md, new.domain_id, 'card', new.status);
 END;
 
 CREATE TRIGGER IF NOT EXISTS dna_cards_ad AFTER DELETE ON dna_cards BEGIN
-    DELETE FROM dna_search_index WHERE rowid = old.id;
+    DELETE FROM dna_search_index WHERE id = old.id;
 END;
 
 CREATE TRIGGER IF NOT EXISTS dna_cards_au AFTER UPDATE ON dna_cards BEGIN
@@ -532,16 +543,16 @@ CREATE TRIGGER IF NOT EXISTS dna_cards_au AFTER UPDATE ON dna_cards BEGIN
         domain_id = new.domain_id,
         kind = 'card',
         status = new.status
-    WHERE rowid = old.id;
+    WHERE id = old.id;
 END;
 
 CREATE TRIGGER IF NOT EXISTS dna_rules_ai AFTER INSERT ON dna_rules BEGIN
-    INSERT INTO dna_search_index (rowid, statement_md, domain_id, kind, status)
+    INSERT INTO dna_search_index (id, statement_md, domain_id, kind, status)
     VALUES (new.id, new.statement_md, new.domain_id, 'rule', new.status);
 END;
 
 CREATE TRIGGER IF NOT EXISTS dna_rules_ad AFTER DELETE ON dna_rules BEGIN
-    DELETE FROM dna_search_index WHERE rowid = old.id;
+    DELETE FROM dna_search_index WHERE id = old.id;
 END;
 
 CREATE TRIGGER IF NOT EXISTS dna_rules_au AFTER UPDATE ON dna_rules BEGIN
@@ -550,26 +561,26 @@ CREATE TRIGGER IF NOT EXISTS dna_rules_au AFTER UPDATE ON dna_rules BEGIN
         domain_id = new.domain_id,
         kind = 'rule',
         status = new.status
-    WHERE rowid = old.id;
+    WHERE id = old.id;
 END;
 
 CREATE TRIGGER IF NOT EXISTS dna_decisions_ai AFTER INSERT ON dna_decisions BEGIN
-    INSERT INTO dna_search_index (rowid, context_md, outcome_md, domain_id, kind, status)
+    INSERT INTO dna_search_index (id, context_md, outcome_md, domain_id, kind, status)
     VALUES (new.id, new.context_md, new.outcome_md, new.domain_id, 'decision', 'active');
 END;
 
 CREATE TRIGGER IF NOT EXISTS dna_glossary_ai AFTER INSERT ON dna_glossary BEGIN
-    INSERT INTO dna_search_index (rowid, term, definition, domain_id, kind, status)
+    INSERT INTO dna_search_index (id, term, definition, domain_id, kind, status)
     VALUES (new.id, new.term, new.definition, new.domain_id, 'glossary', new.status);
 END;
 
 CREATE TRIGGER IF NOT EXISTS dna_goals_ai AFTER INSERT ON dna_goals BEGIN
-    INSERT INTO dna_search_index (rowid, statement_md, domain_id, kind, status)
+    INSERT INTO dna_search_index (id, statement_md, domain_id, kind, status)
     VALUES (new.id, new.statement_md, new.domain_id, 'goal', new.status);
 END;
 
 CREATE TRIGGER IF NOT EXISTS dna_decisions_ad AFTER DELETE ON dna_decisions BEGIN
-    DELETE FROM dna_search_index WHERE rowid = old.id;
+    DELETE FROM dna_search_index WHERE id = old.id;
 END;
 
 CREATE TRIGGER IF NOT EXISTS dna_decisions_au AFTER UPDATE ON dna_decisions BEGIN
@@ -579,11 +590,11 @@ CREATE TRIGGER IF NOT EXISTS dna_decisions_au AFTER UPDATE ON dna_decisions BEGI
         domain_id = new.domain_id,
         kind = 'decision',
         status = 'active'
-    WHERE rowid = old.id;
+    WHERE id = old.id;
 END;
 
 CREATE TRIGGER IF NOT EXISTS dna_glossary_ad AFTER DELETE ON dna_glossary BEGIN
-    DELETE FROM dna_search_index WHERE rowid = old.id;
+    DELETE FROM dna_search_index WHERE id = old.id;
 END;
 
 CREATE TRIGGER IF NOT EXISTS dna_glossary_au AFTER UPDATE ON dna_glossary BEGIN
@@ -593,11 +604,11 @@ CREATE TRIGGER IF NOT EXISTS dna_glossary_au AFTER UPDATE ON dna_glossary BEGIN
         domain_id = new.domain_id,
         kind = 'glossary',
         status = new.status
-    WHERE rowid = old.id;
+    WHERE id = old.id;
 END;
 
 CREATE TRIGGER IF NOT EXISTS dna_goals_ad AFTER DELETE ON dna_goals BEGIN
-    DELETE FROM dna_search_index WHERE rowid = old.id;
+    DELETE FROM dna_search_index WHERE id = old.id;
 END;
 
 CREATE TRIGGER IF NOT EXISTS dna_goals_au AFTER UPDATE ON dna_goals BEGIN
@@ -606,5 +617,5 @@ CREATE TRIGGER IF NOT EXISTS dna_goals_au AFTER UPDATE ON dna_goals BEGIN
         domain_id = new.domain_id,
         kind = 'goal',
         status = new.status
-    WHERE rowid = old.id;
+    WHERE id = old.id;
 END;

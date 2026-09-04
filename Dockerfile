@@ -1,3 +1,14 @@
+FROM maven:3.9-eclipse-temurin-21-alpine AS builder
+
+WORKDIR /build
+
+COPY backend/pom.xml backend/pom.xml
+# Pre-fetch dependencies for better layer caching
+RUN cd backend && mvn -q -B dependency:go-offline
+
+COPY backend/src backend/src
+RUN cd backend && mvn -q -B clean package -DskipTests
+
 FROM eclipse-temurin:21-jre-alpine
 LABEL maintainer="summa-team"
 LABEL org.opencontainers.image.source="https://github.com/summa-org/summa"
@@ -7,7 +18,7 @@ WORKDIR /app
 # Install curl for healthcheck
 RUN apk add --no-cache curl
 
-COPY backend/target/summa-backend-0.1.0-SNAPSHOT.jar app.jar
+COPY --from=builder /build/backend/target/summa-backend-0.1.0-SNAPSHOT.jar app.jar
 
 # Create data directories and non-root user
 RUN addgroup -g 1000 -S summa && adduser -u 1000 -S summa -G summa && \
@@ -15,6 +26,7 @@ RUN addgroup -g 1000 -S summa && adduser -u 1000 -S summa -G summa && \
 
 ENV SUMMA_DB_PATH=/data/db/summa.db \
     SUMMA_DNA_REPO=/data/dna \
+    SPRING_PROFILES_ACTIVE=prod \
     JAVA_OPTS="-Xmx512m -Xms256m"
 
 EXPOSE 8080

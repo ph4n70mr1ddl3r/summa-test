@@ -40,6 +40,16 @@ public class OrgService {
             throw new IllegalStateException("Company already bootstrapped");
         }
 
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Name is required");
+        }
+        if (email == null || email.isBlank()
+                || !email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+            throw new IllegalArgumentException("A valid email is required");
+        }
+        // First user owns the org: force admin regardless of client-supplied rbac.
+        // Accepting an arbitrary rbac here could brick the org with a viewer-only user.
+        String effectiveRbac = "admin";
         if (password == null || password.length() < 8) {
             throw new IllegalArgumentException("Password must be at least 8 characters");
         }
@@ -57,14 +67,38 @@ public class OrgService {
         human.setId(UUID.randomUUID().toString());
         human.setName(name);
         human.setEmail(email);
-        human.setRbac(rbac != null ? rbac : "admin");
+        human.setRbac(effectiveRbac);
         human.setAuth("{}");
         human.setPasswordHash(passwordUtil.hash(password));
 
         Human saved = humanRepository.save(human);
         auditService.log("system", "BOOTSTRAP", "human", saved.getId(),
-            String.format("{\"name\":\"%s\",\"rbac\":\"%s\"}", name, rbac));
+            "{\"name\":" + jsonString(name) + ",\"rbac\":" + jsonString(effectiveRbac) + "}");
         return saved;
+    }
+
+    /**
+     * Minimal JSON string escaper for audit payloads (avoids pulling
+     * ObjectMapper into this service and prevents log/JSON injection).
+     */
+    static String jsonString(String value) {
+        if (value == null) return "null";
+        StringBuilder sb = new StringBuilder("\"");
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            switch (c) {
+                case '"' -> sb.append("\\\"");
+                case '\\' -> sb.append("\\\\");
+                case '\n' -> sb.append("\\n");
+                case '\r' -> sb.append("\\r");
+                case '\t' -> sb.append("\\t");
+                default -> {
+                    if (c < 0x20) sb.append(String.format("\\u%04x", (int) c));
+                    else sb.append(c);
+                }
+            }
+        }
+        return sb.append("\"").toString();
     }
 
     @Transactional

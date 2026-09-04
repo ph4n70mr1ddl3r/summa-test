@@ -34,18 +34,25 @@ public class DnaReadService {
      * Implements DRP-030: search serves living corpus (active items only).
      */
     public List<Map<String, Object>> search(String query, String domainId, int limit) {
+        if (query == null || query.isBlank()) {
+            throw new IllegalArgumentException("Search query must not be blank");
+        }
+        int safeLimit = Math.min(Math.max(limit, 1), 100);
+        // FTS5 matches against the table (not a single column) and user input
+        // must be quoted — raw input can inject FTS5 operators (e.g. `"`, `*`, `OR`).
+        String match = "\"" + query.replace("\"", "\"\"") + "\"*";
         String sql = "SELECT id, title, definition_md, statement_md, context_md, outcome_md, " +
                      "term, definition, content_md, domain_id, kind, status " +
                      "FROM dna_search_index " +
-                     "WHERE kind MATCH ? AND status = 'active' " +
+                     "WHERE dna_search_index MATCH ? AND status = 'active' " +
                      (domainId != null ? "AND domain_id = ? " : "") +
                      "ORDER BY rank LIMIT ?";
 
         Object[] params;
         if (domainId != null) {
-            params = new Object[]{query + "*", domainId, limit};
+            params = new Object[]{match, domainId, safeLimit};
         } else {
-            params = new Object[]{query + "*", limit};
+            params = new Object[]{match, safeLimit};
         }
 
         return jdbcTemplate.query(sql, rs -> {

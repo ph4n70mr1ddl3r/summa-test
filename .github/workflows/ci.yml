@@ -17,7 +17,7 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: Build and test backend
-        run: cd backend && mvn -q test -Ptest
+        run: cd backend && mvn -B test
 
   console-build:
     runs-on: ubuntu-latest
@@ -30,6 +30,8 @@ jobs:
           cache-dependency-path: console/package-lock.json
       - name: Install console deps
         run: cd console && npm ci
+      - name: Lint console
+        run: cd console && npm run lint
       - name: Build console
         run: cd console && npm run build
       - name: Run console tests

@@ -34,7 +34,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     public static final List<String> PUBLIC_PATHS = List.of(
         "/api/auth/login", "/api/health", "/api/info",
-        "/api/nodes/enroll"
+        "/api/nodes/enroll", "/api/org/bootstrap"
     );
 
     @Override
@@ -67,6 +67,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean isPublicPath(String path) {
-        return PUBLIC_PATHS.contains(path);
+        if (path == null) return false;
+        if (PUBLIC_PATHS.contains(path)) return true;
+        // Tolerate a trailing slash (e.g. /api/health/) without opening prefixes.
+        if (path.endsWith("/") && path.length() > 1) {
+            return PUBLIC_PATHS.contains(path.substring(0, path.length() - 1));
+        }
+        return false;
     }
 }

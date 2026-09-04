@@ -126,22 +126,38 @@ public class DnaGoalController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        final Instant effectiveFrom;
+        final Instant effectiveTo;
         try {
-            Instant effectiveFrom = body.containsKey("effectiveFrom") ?
-                Instant.parse(body.get("effectiveFrom")) : null;
-            Instant effectiveTo = body.containsKey("effectiveTo") ?
-                Instant.parse(body.get("effectiveTo")) : null;
-
-            DnaGoal goal = goalService.updateWindow(id, effectiveFrom, effectiveTo, actor);
-            return ResponseEntity.ok(goal);
-        } catch (DateTimeException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            effectiveFrom = parseOptionalInstant(body.get("effectiveFrom"), "effectiveFrom");
+            effectiveTo = parseOptionalInstant(body.get("effectiveTo"), "effectiveTo");
+        } catch (DateTimeException | IllegalArgumentException e) {
+            AuditEvent audit = auditService.logSystem("REFUSAL", "validation", e.getMessage(), null);
             return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
                     .body(Map.of("code", "validation", "message", "Invalid date format: " + e.getMessage(), "audit_event_id", audit.getId()));
+        }
+        try {
+            DnaGoal goal = goalService.updateWindow(id, effectiveFrom, effectiveTo, actor);
+            return ResponseEntity.ok(goal);
         } catch (IllegalArgumentException e) {
             AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
             return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
                     .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
+        }
+    }
+
+    /**
+     * Parse an optional ISO-8601 instant. Blank/missing values clear the field
+     * (null) instead of throwing — {@code Instant.parse(null)} would NPE into a 500.
+     */
+    private static Instant parseOptionalInstant(String value, String field) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return Instant.parse(value.trim());
+        } catch (DateTimeException e) {
+            throw new IllegalArgumentException("Invalid " + field + " format: " + value);
         }
     }
 }

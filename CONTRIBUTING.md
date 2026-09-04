@@ -64,8 +64,8 @@ cd backend && mvn test
 # Console tests
 cd console && npm test
 
-# Full suite
-mvn test && npm test && python3 tools/lint_specs.py
+# Full suite from the repo root
+npm test   # backend + specs + console
 ```
 
 ## Commit Messages

@@ -88,6 +88,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const err = new ApiError(message, res.status);
     throw err;
   }
+  if (res.status === 204) {
+    return undefined as T;
+  }
   return res.json() as Promise<T>;
 }
 
@@ -491,8 +494,10 @@ export const api = {
       }),
     decisions: (domainId?: string) =>
       request<DnaDecision[]>(`/dna/decisions${buildQuery(domainId ? { domainId } : undefined)}`),
-    search: (query: string) =>
-      request<DnaCard[]>(`/dna/search${buildQuery({ q: query })}`),
+    search: async (query: string) => {
+      const res = await request<{ results: DnaCard[]; count: number }>(`/dna/search${buildQuery({ q: query })}`);
+      return res.results;
+    },
     domains: () => request<DnaDomain[]>('/dna/domains'),
     archiveDomain: (id: string, _actor: string) =>
       request<DnaDomain>(`/dna/domains/${id}/archive`, {
@@ -604,7 +609,10 @@ export const api = {
         method: 'POST',
       }),
     members: () => request<{ members: (Human | Agent)[]; total: number }>('/org/members'),
-    lineage: (memberId: string) => request<string[]>(`/org/lineage${buildQuery({ memberId })}`),
+    lineage: async (memberId: string) => {
+      const res = await request<{ memberId: string; lineage: string[] }>(`/org/lineage${buildQuery({ memberId })}`);
+      return res.lineage;
+    },
     audit: (limit?: number, objectType?: string, objectId?: string) =>
       request<unknown[]>(`/org/audit${buildQuery({
         ...(limit !== undefined ? { limit: String(limit) } : {}),

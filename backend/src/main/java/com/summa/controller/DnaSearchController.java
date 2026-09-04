@@ -26,8 +26,16 @@ public class DnaSearchController {
             @RequestParam(required = false) String domainId,
             @RequestParam(defaultValue = "20") int limit) {
         try {
-            List<Map<String, Object>> results = dnaReadService.search(q, domainId, limit);
+            if (q == null || q.isBlank()) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
+                        .body(Map.of("code", "validation", "message", "Query parameter 'q' is required"));
+            }
+            int safeLimit = Math.min(Math.max(limit, 1), 100);
+            List<Map<String, Object>> results = dnaReadService.search(q, domainId, safeLimit);
             return ResponseEntity.ok(Map.of("results", results, "count", results.size()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body(Map.of("code", "validation", "message", e.getMessage()));
         } catch (Exception e) {
             AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
             return ResponseEntity.status(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR)

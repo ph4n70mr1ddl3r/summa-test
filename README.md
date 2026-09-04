@@ -14,6 +14,9 @@ A self-hosted platform where human employees and AI agents work as one organizat
 ### Start Single-Process Mode (backend only)
 
 ```bash
+# Build the backend JAR first (./start.sh runs the packaged JAR)
+npm run build:backend
+export SUMMA_JWT_SECRET=$(openssl rand -hex 32)
 ./start.sh
 ```
 
@@ -24,9 +27,10 @@ A self-hosted platform where human employees and AI agents work as one organizat
 ```
 
 ### Access
-- Console: http://localhost:3000 (requires `./dev.sh` or full build)
+- Console: http://localhost:3000 (requires `./dev.sh` or `docker compose up -d`)
 - API: http://localhost:8080/api
-- Bootstrap first admin: `POST /api/org/bootstrap`
+- Health: `GET /api/health` (no auth required)
+- Bootstrap first admin: `POST /api/org/bootstrap` (no auth required, first-run only — always creates an `admin`)
 
 ## Architecture
 
@@ -61,6 +65,9 @@ python3 tools/test_lint.py
 
 ## Phases
 
+Status as of 2026-09-04; normative scope lives in `PLAN.md` and `specs/`
+(see `specs/21-delivery-and-acceptance.md` for the full 0–8b phase table with entry/exit criteria).
+
 | Phase | Deliverable | Status |
 |-------|-------------|--------|
 | 0. Foundations | Repo, CI, single-process skeleton | Complete |
@@ -71,6 +78,8 @@ python3 tools/test_lint.py
 | 5. Playbooks | DSL + sandbox | Pending |
 | 6. Multi-human | RBAC, ask routing, node registration | Pending |
 | 7. Spawning | Ephemeral workers, policy engine | Pending |
+| 8a. Hardening | Security review, backup/restore drills | Pending |
+| 8b. Delivery & Acceptance | Demos DLV-050…055, cut-over | Pending |
 
 ## License
 

@@ -12,21 +12,29 @@ summa/
 │   │   ├── model/         # JPA entities (DAT-010)
 │   │   ├── enums/         # Type enums
 │   │   ├── security/      # Auth filters
-│   │   ├── config/        # App configuration
-│   │   └── exception/     # Exception handlers
+│   │   ├── config/        # App configuration (incl. SchemaInitializer, WebConfig)
+│   │   ├── exception/     # Exception handlers
+│   │   └── util/          # Shared utilities
+│   ├── src/main/resources/  # application*.yml, schema.sql (applied by SchemaInitializer)
 │   └── src/test/java/     # Unit tests
 ├── console/           # React 19 + TypeScript + Vite
 │   ├── src/
 │   │   ├── pages/       # Route components
 │   │   ├── services/    # API client
 │   │   └── components/  # Reusable UI (placeholder)
-│   └── public/
-├── specs/             # Normative requirements (497 REQs)
-├── tools/             # Lint tooling
-├── Dockerfile
+│   ├── public/
+│   ├── nginx.conf     # Compose reverse proxy (/api → backend)
+│   └── vite/vitest/eslint configs
+├── specs/             # Normative requirements (see specs/README.md, specs/TRACEABILITY.md)
+├── tools/             # Lint tooling + fixtures (tools/fixtures/)
+├── .github/workflows/ # CI (backend tests, console build+lint, spec lint)
+├── Dockerfile         # Multi-stage backend image (builds JAR from source)
+├── Dockerfile.console # Console build (repo-root context) + nginx
 ├── docker-compose.yml
 └── start.sh / dev.sh
 ```
+
+> Abbreviated — `find backend console specs tools .github -maxdepth 3` shows the full tree.
 
 ## Running Locally
 
@@ -52,9 +60,13 @@ cd console && npm run dev
 ## Testing
 
 ```bash
-# All tests
-mvn test
-npm test
+# Full suite from the repo root (orchestrated by root package.json)
+npm test            # backend (mvn) + spec self-tests + console (vitest)
+
+# Targeted runs
+npm run test:backend   # == cd backend && mvn test
+npm run test:console   # == cd console && npm test
+npm run test:specs     # == python3 tools/test_lint.py
 
 # Spec lint
 python3 tools/lint_specs.py

@@ -30,6 +30,8 @@ spring:
 
 summa:
   mode: single-process
+  cors:
+    origins: ${SUMMA_CORS_ORIGINS:}
   database:
     path: ${SUMMA_DB_PATH:/data/db/summa.db}
     wal-mode: true
@@ -38,7 +40,7 @@ summa:
     branch: main
     commit-author: summa <summa@local>
   auth:
-    jwt-secret: ${SUMMA_JWT_SECRET}
+    jwt-secret: ${SUMMA_JWT_SECRET:}
     jwt-expiration: 86400000
     pat-default-expiry-days: 90
   node:

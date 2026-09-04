@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom'
 import { getAuthToken, setAuthToken } from './services/api'
 
 interface NavItem {
@@ -26,13 +26,11 @@ const navItems: NavItem[] = [
 ]
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
-  const navigate = useNavigate()
   const location = useLocation()
   const token = getAuthToken()
 
   if (!token) {
-    navigate('/login', { state: { from: location } })
-    return null
+    return <Navigate to="/login" state={{ from: location }} replace />
   }
 
   return <>{children}</>
