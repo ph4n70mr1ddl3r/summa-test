@@ -50,8 +50,13 @@ public class DnaGlossaryController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
+            if (body.get("term") == null || body.get("term").isBlank()) {
+                throw new IllegalArgumentException("term is required");
+            }
+            // Security: reject client-supplied IDs — always generate server-side
+            String generatedId = java.util.UUID.randomUUID().toString();
             DnaGlossary entry = glossaryService.create(
-                body.get("id"),
+                generatedId,
                 body.get("domainId"),
                 body.get("term"),
                 body.get("definition"),

@@ -49,8 +49,10 @@ public class WorkspaceController {
             if (body.get("name") == null || body.get("name").isBlank()) {
                 throw new IllegalArgumentException("name is required");
             }
+            // Security: reject client-supplied IDs — always generate server-side
+            String generatedId = java.util.UUID.randomUUID().toString();
             Workspace ws = workspaceService.create(
-                body.get("id"),
+                generatedId,
                 body.get("name"),
                 body.get("kind"),
                 body.get("domainIds"),

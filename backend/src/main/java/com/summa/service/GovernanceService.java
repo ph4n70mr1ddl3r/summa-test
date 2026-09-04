@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
@@ -20,11 +21,14 @@ public class GovernanceService {
     private static final Logger log = LoggerFactory.getLogger(GovernanceService.class);
     private final GovernanceSettingRepository settingRepository;
     private final SpendLedgerRepository spendLedgerRepository;
+    private final ObjectMapper objectMapper;
 
     public GovernanceService(GovernanceSettingRepository settingRepository,
-                              SpendLedgerRepository spendLedgerRepository) {
+                              SpendLedgerRepository spendLedgerRepository,
+                              ObjectMapper objectMapper) {
         this.settingRepository = settingRepository;
         this.spendLedgerRepository = spendLedgerRepository;
+        this.objectMapper = objectMapper;
     }
 
     public Map<String, Object> getAllSettings() {
@@ -184,6 +188,11 @@ public class GovernanceService {
 
     private String serializeValue(Object value) {
         if (value == null) return "{}";
-        return value.toString();
+        if (value instanceof String) return (String) value;
+        try {
+            return objectMapper.writeValueAsString(value);
+        } catch (Exception e) {
+            return value.toString();
+        }
     }
 }

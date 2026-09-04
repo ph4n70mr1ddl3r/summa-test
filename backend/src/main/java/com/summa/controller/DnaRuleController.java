@@ -48,13 +48,15 @@ public class DnaRuleController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            Instant effectiveFrom = body.containsKey("effectiveFrom") ? 
-                Instant.parse(body.get("effectiveFrom")) : Instant.now();
-            Instant effectiveTo = body.containsKey("effectiveTo") ? 
-                Instant.parse(body.get("effectiveTo")) : null;
-            
+            Instant effectiveFrom = body.containsKey("effectiveFrom") && body.get("effectiveFrom") != null && !body.get("effectiveFrom").isBlank() ?
+                parseOptionalInstant(body.get("effectiveFrom")) : Instant.now();
+            Instant effectiveTo = body.containsKey("effectiveTo") && body.get("effectiveTo") != null && !body.get("effectiveTo").isBlank() ?
+                parseOptionalInstant(body.get("effectiveTo")) : null;
+
+            // Security: reject client-supplied IDs — always generate server-side
+            String generatedId = java.util.UUID.randomUUID().toString();
             DnaRule rule = ruleService.create(
-                body.get("id"),
+                generatedId,
                 body.get("domainId"),
                 body.get("statementMd"),
                 body.get("machineHint"),
@@ -81,8 +83,8 @@ public class DnaRuleController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            Instant effectiveTo = body.containsKey("effectiveTo") ?
-                Instant.parse(body.get("effectiveTo")) : null;
+            Instant effectiveTo = body.containsKey("effectiveTo") && body.get("effectiveTo") != null && !body.get("effectiveTo").isBlank() ?
+                parseOptionalInstant(body.get("effectiveTo")) : null;
 
             DnaRule rule = ruleService.update(
                 id,
@@ -115,6 +117,22 @@ public class DnaRuleController {
             AuditEvent audit = auditService.logSystem("REFUSAL", "validation", e.getMessage(), null);
             return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
                     .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
+        }
+    }
+
+    /**
+     * Parse an optional ISO-8601 instant. Blank/missing values return null.
+     */
+    private static Instant parseOptionalInstant(String value) {
+        if (value == null || value.isBlank()) return null;
+        try {
+            return Instant.parse(value.trim());
+        } catch (java.time.DateTimeException e) {
+            try {
+                return Instant.ofEpochSecond(Long.parseLong(value.trim()));
+            } catch (NumberFormatException nfe) {
+                throw new IllegalArgumentException("Invalid instant format: " + value);
+            }
         }
     }
 }
