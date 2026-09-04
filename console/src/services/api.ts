@@ -181,6 +181,11 @@ export interface SpawnRequest {
 }
 
 export type SpawnStatus = 'requested' | 'approved' | 'denied' | 'expired' | 'archived';
+export interface SpawnStats {
+  requested: number;
+  approved: number;
+  archived: number;
+}
 
 export interface Initiative {
   id: string;
@@ -193,7 +198,7 @@ export interface Initiative {
   decisionRef?: string;
   businessBudget?: string;
   closedAt?: number;
-  dependsOn?: string;
+  dependsOn?: string[];
   updatedAt?: number;
 }
 
@@ -265,7 +270,7 @@ export interface DnaDecision {
 export interface DnaProposal {
   id: string;
   domainId?: string;
-  kind: string;
+  kind: DnaProposalKind;
   payload: string;
   revision: number;
   proposedBy: string;
@@ -278,6 +283,7 @@ export interface DnaProposal {
 }
 
 export type DnaProposalStatus = 'open' | 'published' | 'rejected' | 'withdrawn';
+export type DnaProposalKind = 'card' | 'rule' | 'decision' | 'goal' | 'glossary' | 'edit';
 
 export interface DnaGoal {
   id: string;
@@ -286,7 +292,7 @@ export interface DnaGoal {
   statementMd: string;
   owner: string;
   status: DnaGoalStatus;
-  inject: string;
+  inject: InjectMode;
   effectiveFrom: number;
   effectiveTo?: number;
   createdAt?: number;
@@ -294,6 +300,7 @@ export interface DnaGoal {
 }
 
 export type DnaGoalStatus = 'active' | 'met' | 'missed' | 'retired';
+export type InjectMode = 'always' | 'linked';
 
 export interface DnaGlossary {
   id: string;
@@ -338,7 +345,7 @@ export type BoardTaskStatus = 'open' | 'in_progress' | 'done' | 'cancelled';
 export interface Trigger {
   id: string;
   name: string;
-  kind: string;
+  kind: TriggerKind;
   expression: string;
   agentId: string;
   workspaceId?: string;
@@ -352,6 +359,7 @@ export interface Trigger {
 
 export type TriggerCriticality = 'critical' | 'standard';
 export type TriggerStatus = 'active' | 'paused' | 'archived';
+export type TriggerKind = 'schedule' | 'api' | 'event';
 
 export interface Workspace {
   id: string;
@@ -641,7 +649,7 @@ export const api = {
       request<SpawnRequest>(`/spawn/${id}/deny`, {
         method: 'POST',
       }),
-    stats: () => request('/spawn/stats'),
+    stats: () => request<SpawnStats>('/spawn/stats'),
   },
   initiatives: {
     list: (status?: string) =>

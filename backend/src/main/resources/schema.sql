@@ -589,8 +589,7 @@ CREATE TRIGGER IF NOT EXISTS dna_decisions_au AFTER UPDATE ON dna_decisions BEGI
         context_md = new.context_md,
         outcome_md = new.outcome_md,
         domain_id = new.domain_id,
-        kind = 'decision',
-        status = 'active'
+        kind = 'decision'
     WHERE id = old.id;
 END;
 

@@ -83,6 +83,8 @@ Abridged — the full surface with REQ IDs lives in `specs/17-api-surface.md`
 - `GET /api/dna/goals` — List goals
 - `GET /api/dna/proposals` — Review queue
 - `GET /api/dna/search?q=...&domainId=<id>&limit=<n>` — FTS5 search (limit defaults to 20, max 100)
+- `GET /api/dna/search/org-snapshot` — Full org DNA snapshot for injection layers
+- `GET /api/dna/search/domains` — Domain list with metadata
 
 ### Asks
 - `GET /api/asks` — List asks

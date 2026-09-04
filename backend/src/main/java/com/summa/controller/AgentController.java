@@ -163,7 +163,7 @@ public class AgentController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            com.summa.model.Agent agent = agentService.findById(id)
+            Agent agent = agentService.findById(id)
                     .orElseThrow(() -> new IllegalArgumentException("Agent not found: " + id));
             // TPL-040: Only customRole hires (template_id null) are eligible for promotion
             if (agent.getTemplateId() != null) {
@@ -171,11 +171,11 @@ public class AgentController {
             }
             // TPL-046: One live promotion ask per hire — refuse if already pending
             // Check asks TO the agent being promoted, not asks TO the actor
-            List<com.summa.model.Ask> pendingPromoAsks = askRepository.findByToAndStatusPending(id).stream()
+            List<Ask> pendingPromoAsks = askRepository.findByToAndStatusPending(id).stream()
                     .filter(a -> "promotion".equals(a.getKind()))
                     .toList();
             boolean hasPromoForAgent = false;
-            for (com.summa.model.Ask a : pendingPromoAsks) {
+            for (Ask a : pendingPromoAsks) {
                 try {
                     JsonNode node = objectMapper.readTree(a.getPayload());
                     if (id.equals(node.get("agentId").asText())) {

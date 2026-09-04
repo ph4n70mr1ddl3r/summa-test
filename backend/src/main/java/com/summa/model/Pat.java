@@ -16,7 +16,7 @@ public class Pat {
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 
-    @Column(name = "token_hash", nullable = false, length = 64)
+    @Column(name = "token_hash", nullable = false, length = 64, unique = true)
     private String tokenHash;
 
     @Column(name = "scopes", nullable = false, columnDefinition = "TEXT")

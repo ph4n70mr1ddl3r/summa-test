@@ -27,7 +27,7 @@ spring:
     allow-bean-definition-overriding: false
 
 summa:
-  mode: dev
+  mode: single-process
   cors:
     origins: ${SUMMA_CORS_ORIGINS:}
   database:

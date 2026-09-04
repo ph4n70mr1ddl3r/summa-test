@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import { api, type SpawnRequest } from '../services/api'
+import { api, type SpawnRequest, type SpawnStats } from '../services/api'
 import { escapeHtml } from '../utils/escapeHtml'
 
 export default function Spawning() {
   const [requests, setRequests] = useState<SpawnRequest[]>([])
-  const [stats, setStats] = useState<{ requested: number; approved: number; archived: number } | null>(null)
+  const [stats, setStats] = useState<SpawnStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -16,7 +16,7 @@ export default function Spawning() {
     ]).then(([r, s]) => {
       if (aborted) return
       setRequests(r)
-      setStats(s as { requested: number; approved: number; archived: number } | null)
+      setStats(s)
       setLoading(false)
     }).catch((e) => {
       if (aborted) return

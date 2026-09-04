@@ -9,6 +9,7 @@ import com.summa.repository.InitiativeRepository;
 import com.summa.repository.AgentRepository;
 import com.summa.repository.PatRepository;
 import com.summa.repository.GroupRepository;
+import com.summa.repository.RoleTemplateRepository;
 import com.summa.model.Agent;
 import com.summa.model.Ask;
 import com.summa.model.BoardTask;
@@ -20,14 +21,17 @@ import com.summa.model.GroupMembership;
 import com.summa.model.Human;
 import com.summa.model.Initiative;
 import com.summa.model.Pat;
+import com.summa.model.RoleTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class OffboardingWalkService {
@@ -53,6 +57,7 @@ public class OffboardingWalkService {
     private final BoardTaskRepository boardTaskRepository;
     private final PatRepository patRepository;
     private final GroupRepository groupRepository;
+    private final RoleTemplateRepository roleTemplateRepository;
 
     public OffboardingWalkService(MemberService memberService, AgentService agentService,
                                     InitiativeService initiativeService, BoardTaskService boardTaskService,
@@ -67,7 +72,8 @@ public class OffboardingWalkService {
                                     AskRepository askRepository,
                                     BoardTaskRepository boardTaskRepository,
                                     PatRepository patRepository,
-                                    GroupRepository groupRepository) {
+                                    GroupRepository groupRepository,
+                                    RoleTemplateRepository roleTemplateRepository) {
         this.memberService = memberService;
         this.agentService = agentService;
         this.initiativeService = initiativeService;
@@ -87,6 +93,7 @@ public class OffboardingWalkService {
         this.boardTaskRepository = boardTaskRepository;
         this.patRepository = patRepository;
         this.groupRepository = groupRepository;
+        this.roleTemplateRepository = roleTemplateRepository;
     }
 
     /**
@@ -129,7 +136,7 @@ public class OffboardingWalkService {
         for (Agent agent : agentService.findByOwner(humanId)) {
             agent.setOwnerHumanId(finalTargetOwner);
             // Retire personal assistants (CLC-051: mirrored scopes die with member)
-            if (agent.getTemplateId() != null && agent.getTemplateId().contains("personal-assistant")) {
+            if (isPersonalAssistant(agent)) {
                 agentService.retire(agent.getId(), actor);
             } else {
                 agentRepository.save(agent);
@@ -192,7 +199,7 @@ public class OffboardingWalkService {
         // We need to distinguish: proposals for domains the departing human owned go to successor;
         // all other open proposals by the departed member are withdrawn.
         // Batch-fetch owned domains to avoid N+1 per-proposal lookups.
-        java.util.Set<String> ownedDomainIds = new java.util.HashSet<>();
+        Set<String> ownedDomainIds = new HashSet<>();
         for (DnaDomain domain : domainService.findAllIncludingArchived()) {
             if (humanId.equals(domain.getOwnerHumanId())) {
                 ownedDomainIds.add(domain.getId());
@@ -338,8 +345,7 @@ public class OffboardingWalkService {
         // OFB-030/033: Re-own or retire dependent agents; personal assistants always retire
         for (Agent agent : agentService.findByOwner(humanId)) {
             // CLC-051: demotion to viewer retires the assistant (mirrored viewer scopes are read-only)
-            if ("viewer".equals(newRbac) && agent.getTemplateId() != null
-                    && agent.getTemplateId().contains("personal-assistant")) {
+            if ("viewer".equals(newRbac) && isPersonalAssistant(agent)) {
                 agentService.retire(agent.getId(), actor);
                 agentsRetired++;
             } else if ("viewer".equals(newRbac)) {
@@ -383,7 +389,7 @@ public class OffboardingWalkService {
         }
 
         // OFB-031: Re-own or retire owned goals (active only)
-        for (com.summa.model.DnaGoal goal : goalService.findAllActiveWindowed(Instant.now())) {
+        for (DnaGoal goal : goalService.findAllActiveWindowed(Instant.now())) {
             if (humanId.equals(goal.getOwner()) && "active".equals(goal.getStatus())) {
                 if ("viewer".equals(newRbac)) {
                     goal.setStatus("retired");
@@ -410,7 +416,7 @@ public class OffboardingWalkService {
         }
 
         // OFB-031: Transfer group leadership posts
-        for (com.summa.model.Group group : groupRepository.findAll()) {
+        for (Group group : groupRepository.findAll()) {
             if (humanId.equals(group.getLeaderMemberId()) && group.isActive()) {
                 group.setLeaderMemberId(targetOwner);
                 groupRepository.save(group);
@@ -436,7 +442,7 @@ public class OffboardingWalkService {
         }
 
         // OFB-031: Return board-task assignments to pool or reassign
-        for (com.summa.model.BoardTask task : boardTaskRepository.findByAssigneeMemberId(humanId)) {
+        for (BoardTask task : boardTaskRepository.findByAssigneeMemberId(humanId)) {
             if ("viewer".equals(newRbac)) {
                 task.setAssigneeMemberId(null);
                 task.setStatus("open");
@@ -446,7 +452,7 @@ public class OffboardingWalkService {
         }
 
         // OFB-015: Revoke PATs — credential-death on any role reduction
-        for (com.summa.model.Pat pat : patRepository.findByMemberId(humanId)) {
+        for (Pat pat : patRepository.findByMemberId(humanId)) {
             if (pat.getRevokedAt() == null) {
                 pat.setRevokedAt(Instant.now());
                 patRepository.save(pat);
@@ -477,6 +483,14 @@ public class OffboardingWalkService {
             String.format("{\"oldRbac\":\"%s\",\"newRbac\":\"%s\",\"result\":%s}", currentRbac, newRbac, result));
 
         return result;
+    }
+
+    private boolean isPersonalAssistant(Agent agent) {
+        if (agent.getTemplateId() == null) return false;
+        return roleTemplateRepository.findById(agent.getTemplateId())
+                .map(RoleTemplate::getName)
+                .map(name -> name.contains("personal-assistant"))
+                .orElse(false);
     }
 
     private String findAnyAdminId() {
