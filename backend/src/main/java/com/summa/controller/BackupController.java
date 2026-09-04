@@ -2,6 +2,7 @@ package com.summa.controller;
 
 import com.summa.security.WriteGate;
 import com.summa.security.RbacAuthorizationFilter;
+import com.summa.enums.RbacRole;
 import com.summa.service.BackupService;
 import com.summa.service.OrgService;
 import com.summa.service.AuditService;
@@ -31,11 +32,11 @@ public class BackupController {
 
     @PostMapping
     public ResponseEntity<?> createBackup(@RequestBody Map<String, String> body) {
-        String actor = RbacAuthorizationFilter.getCurrentActor();
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         Optional<Human> actorOpt = orgService.findHuman(actor);
-        if (actorOpt.isEmpty() || !"admin".equals(actorOpt.get().getRbac())) {
+        if (actorOpt.isEmpty() || !RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac())) {
             var audit = auditService.logSystem("REFUSAL", "backup_create", actor, "Non-admin backup attempt");
             return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
                     .body(Map.of("code", "eligibility", "message", "Backup requires admin role", "audit_event_id", audit.getId()));
@@ -65,11 +66,11 @@ public class BackupController {
 
     @PostMapping("/restore")
     public ResponseEntity<?> restore(@RequestBody Map<String, String> body) {
-        String actor = RbacAuthorizationFilter.getCurrentActor();
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         Optional<Human> actorOpt = orgService.findHuman(actor);
-        if (actorOpt.isEmpty() || !"admin".equals(actorOpt.get().getRbac())) {
+        if (actorOpt.isEmpty() || !RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac())) {
             var audit = auditService.logSystem("REFUSAL", "backup_restore", actor, "Non-admin restore attempt");
             return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
                     .body(Map.of("code", "eligibility", "message", "Restore requires admin role", "audit_event_id", audit.getId()));

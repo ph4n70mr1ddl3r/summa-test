@@ -133,7 +133,7 @@ Abridged — the full surface with REQ IDs lives in `specs/17-api-surface.md`
 - `PUT /api/governance/quotas` — Update quotas
 - `POST /api/governance/spend/overruns/{id}/ack` — Acknowledge spend overrun
 
-### Admin
+### Health
 - `GET /api/health` — Health check
 - `GET /api/info` — Version info
 - `POST /api/admin/backup` — Create backup

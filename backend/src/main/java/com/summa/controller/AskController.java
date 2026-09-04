@@ -72,7 +72,7 @@ public class AskController {
                 body.get("payload"),
                 body.get("slaTier"),
                 body.get("expiryBehavior"),
-                body.containsKey("quorumRequired") && body.get("quorumRequired") != null ? parseIntSafe(body.get("quorumRequired")) : null,
+                body.containsKey("quorumRequired") && body.get("quorumRequired") != null && !body.get("quorumRequired").isBlank() ? parseIntSafe(body.get("quorumRequired")) : null,
                 deadline,
                 body.get("initiativeId"),
                 body.get("workspaceId")

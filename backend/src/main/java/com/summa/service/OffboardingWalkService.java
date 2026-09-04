@@ -31,7 +31,7 @@ import java.util.Optional;
 
 @Service
 public class OffboardingWalkService {
-    // Re-exported from AskService for broadcast-target addressability
+    // Broadcast target for delegation chains when no eligible member is reachable
     public static final String ADMIN_BROADCAST = "admins";
 
     private final MemberService memberService;

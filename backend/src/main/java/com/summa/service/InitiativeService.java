@@ -3,14 +3,12 @@ package com.summa.service;
 import com.summa.repository.InitiativeRepository;
 import com.summa.repository.BoardTaskRepository;
 import com.summa.repository.AskRepository;
-import com.summa.repository.TriggerRepository;
 import com.summa.repository.SpawnRequestRepository;
 import com.summa.repository.DnaGoalRepository;
 import com.summa.repository.DnaDecisionRepository;
 import com.summa.model.Initiative;
 import com.summa.model.BoardTask;
 import com.summa.model.Ask;
-import com.summa.model.Trigger;
 import com.summa.model.SpawnRequest;
 import com.summa.model.Human;
 import com.summa.model.Agent;
@@ -36,7 +34,6 @@ public class InitiativeService {
     private final AuditService auditService;
     private final AskService askService;
     private final AskRepository askRepository;
-    private final TriggerRepository triggerRepository;
     private final SpawnRequestRepository spawnRequestRepository;
     private final DnaGoalRepository dnaGoalRepository;
     private final DnaDecisionRepository dnaDecisionRepository;
@@ -46,7 +43,7 @@ public class InitiativeService {
 
     public InitiativeService(InitiativeRepository initiativeRepository, BoardTaskRepository boardTaskRepository,
                               AuditService auditService, AskService askService,
-                              AskRepository askRepository, TriggerRepository triggerRepository,
+                              AskRepository askRepository,
                               SpawnRequestRepository spawnRequestRepository,
                               DnaGoalRepository dnaGoalRepository, DnaDecisionRepository dnaDecisionRepository,
                               DnaGoalService dnaGoalService, MemberService memberService,
@@ -56,7 +53,6 @@ public class InitiativeService {
         this.auditService = auditService;
         this.askService = askService;
         this.askRepository = askRepository;
-        this.triggerRepository = triggerRepository;
         this.spawnRequestRepository = spawnRequestRepository;
         this.dnaGoalRepository = dnaGoalRepository;
         this.dnaDecisionRepository = dnaDecisionRepository;

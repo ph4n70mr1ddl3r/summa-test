@@ -38,7 +38,7 @@ public class WebConfig implements WebMvcConfigurer {
             for (String origin : extraCorsOrigins.split(",")) {
                 String o = origin.trim();
                 if (!o.isEmpty()) {
-                    mapping.allowedOrigins(o);
+                    mapping.allowedOriginPatterns(o + "/*", o);
                 }
             }
         }

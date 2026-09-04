@@ -63,10 +63,10 @@ public class BackupService {
             throw new IllegalArgumentException("Backup file not found: " + backupPath);
         }
 
-        // Prevent path traversal: resolve symlinks and verify it's within allowed dirs
+        // Prevent path traversal: resolve symlinks fully and verify it's within allowed dirs
         Path resolved;
         try {
-            resolved = backupFile.toRealPath(LinkOption.NOFOLLOW_LINKS);
+            resolved = backupFile.toRealPath();
         } catch (java.io.IOException e) {
             resolved = backupFile.toAbsolutePath().normalize();
         }

@@ -78,6 +78,10 @@ public class DnaGoalService {
         DnaGoal goal = goalRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Goal not found: " + id));
 
+        // Schema requires effective_from NOT NULL; rejecting a clear-of-both would violate the constraint.
+        if (effectiveFrom == null && effectiveTo == null) {
+            throw new IllegalArgumentException("At least one of effectiveFrom or effectiveTo must be provided");
+        }
         if (effectiveFrom != null) goal.setEffectiveFrom(effectiveFrom);
         if (effectiveTo != null) goal.setEffectiveTo(effectiveTo);
 

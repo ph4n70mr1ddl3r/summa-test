@@ -11,11 +11,12 @@ import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
-import java.util.HashSet;
+import com.summa.enums.RbacRole;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.Set;
+import java.util.HashSet;
 
 @RestController
 @RequestMapping("/governance")
@@ -117,7 +118,7 @@ public class GovernanceController {
         if (gate != null) return gate;
         // Admin-only check per API-051
         Optional<Human> actorOpt = memberService.findHuman(actor);
-        if (actorOpt.isEmpty() || !"admin".equals(actorOpt.get().getRbac())) {
+        if (actorOpt.isEmpty() || !RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac())) {
             return ControllerResponses.gate(auditService, "Admin access required to acknowledge spend overruns");
         }
         try {

@@ -10,7 +10,10 @@ import java.util.regex.Pattern;
 @Service
 public class AuditService {
     // Patterns to redact sensitive data from audit log details
-    private static final Pattern PASSWORD_PATTERN = Pattern.compile("(?i)(password|passwd|pwd|secret|token_hash)\\s*[:=]\\s*\"[^\"]{3,}\"");
+    private static final Pattern PASSWORD_PATTERN = Pattern.compile(
+        "(?i)(password|passwd|pwd|secret|token_hash)\\s*[:=]\\s*\"[^\"]{3,}\"|" +
+        "(?i)(password|passwd|pwd|secret|token_hash)\\s*[:=]\\s*([^\\s,;}{\"]{3,})"
+    );
     private static final Pattern EMAIL_PATTERN = Pattern.compile("(?i)(email|mail)\\s*[:=]\\s*\"[^\"]+@[^\"]+\"");
 
     private final AuditEventRepository auditEventRepository;
@@ -55,8 +58,28 @@ public class AuditService {
             objectMapper.readTree(detail);
             return detail;
         } catch (Exception e) {
-            return "{}";
+            return "{\"raw\":" + jsonStringForAudit(detail) + "}";
         }
+    }
+
+    private String jsonStringForAudit(String value) {
+        if (value == null) return "null";
+        StringBuilder sb = new StringBuilder("\"");
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            switch (c) {
+                case '"' -> sb.append("\\\"");
+                case '\\' -> sb.append("\\\\");
+                case '\n' -> sb.append("\\n");
+                case '\r' -> sb.append("\\r");
+                case '\t' -> sb.append("\\t");
+                default -> {
+                    if (c < 0x20) sb.append(String.format("\\u%04x", (int) c));
+                    else sb.append(c);
+                }
+            }
+        }
+        return sb.append("\"").toString();
     }
 
     private String sanitizeSensitive(String detail) {

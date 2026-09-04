@@ -187,15 +187,22 @@ public class AgentController {
                 throw new IllegalArgumentException("placement is required (template name or 'new:<name>:<version>')");
             }
             // TPL-040: Snapshot identity files and effective scopes at creation
-            String snapshotPayload = String.format(
-                "{\"agentId\":\"%s\",\"agentName\":\"%s\",\"class\":\"%s\",\"placement\":\"%s\",\"scopes\":\"%s\"}",
-                id, agent.getName(), agent.getAgentClass(), placement,
-                agent.getTemplateId() != null ? "templated" : "custom");
+            Map<String, String> snapshotMap = new java.util.HashMap<>();
+            snapshotMap.put("agentId", id);
+            snapshotMap.put("agentName", agent.getName());
+            snapshotMap.put("class", agent.getAgentClass());
+            snapshotMap.put("placement", placement);
+            snapshotMap.put("scopes", agent.getTemplateId() != null ? "templated" : "custom");
+            String snapshotPayload;
+            try {
+                snapshotPayload = objectMapper.writeValueAsString(snapshotMap);
+            } catch (Exception e) {
+                throw new IllegalStateException("Failed to serialize promotion snapshot: " + e.getMessage());
+            }
             askService.create("promotion", actor, OffboardingWalkService.ADMIN_BROADCAST,
                 snapshotPayload, "standard", "deny", 1,
                 Instant.now().plusSeconds(7 * 86400L), null, null);
-            auditService.log(actor, "PROMOTE_REQUEST", "agent", id,
-                String.format("{\"placement\":\"%s\"}", placement));
+            auditService.log(actor, "PROMOTE_REQUEST", "agent", id, snapshotPayload);
             return ResponseEntity.ok(Map.of("message", "Promotion ask filed", "agentId", id, "placement", placement));
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
