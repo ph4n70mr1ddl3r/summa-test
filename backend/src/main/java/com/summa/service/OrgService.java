@@ -126,7 +126,7 @@ public class OrgService {
 
         Human saved = humanRepository.save(human);
         auditService.log("system", "CREATE_HUMAN", "human", saved.getId(),
-            String.format("{\"name\":\"%s\",\"rbac\":\"%s\"}", name, rbac));
+            String.format("{\"name\":%s,\"rbac\":%s}", jsonString(name), jsonString(rbac)));
         return saved;
     }
 

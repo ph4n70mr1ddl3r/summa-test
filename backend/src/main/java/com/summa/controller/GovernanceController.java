@@ -50,6 +50,7 @@ public class GovernanceController {
         quotas.put("spawn-org-wide-max-active-agents", all.get("spawn-org-wide-max-active-agents"));
         quotas.put("spawn-depth-cap", all.get("spawn-depth-cap"));
         quotas.put("asks-tier-critical-deadline-hours", all.get("asks-tier-critical-deadline-hours"));
+        quotas.put("asks-tier-standard-deadline-hours", all.get("asks-tier-standard-deadline-hours"));
         quotas.put("asks-tier-bulk-deadline-hours", all.get("asks-tier-bulk-deadline-hours"));
         quotas.put("asks-storm-collapse-window-hours", all.get("asks-storm-collapse-window-hours"));
         quotas.put("asks-rate-limit-per-source-per-hour", all.get("asks-rate-limit-per-source-per-hour"));

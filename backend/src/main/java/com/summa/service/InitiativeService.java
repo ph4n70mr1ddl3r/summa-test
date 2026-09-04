@@ -112,7 +112,7 @@ public class InitiativeService {
 
         Initiative saved = initiativeRepository.save(initiative);
         auditService.log(sponsor, "CREATE", "initiative", id,
-            String.format("{\"title\":\"%s\",\"lead\":\"%s\"}", title, lead));
+            String.format("{\"title\":%s,\"lead\":%s}", jsonString(title), jsonString(lead)));
         return saved;
     }
 
@@ -433,6 +433,26 @@ public class InitiativeService {
             }
         } catch (Exception ignored) {}
         return false;
+    }
+
+    private static String jsonString(String value) {
+        if (value == null) return "null";
+        StringBuilder sb = new StringBuilder("\"");
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            switch (c) {
+                case '"' -> sb.append("\\\"");
+                case '\\' -> sb.append("\\\\");
+                case '\n' -> sb.append("\\n");
+                case '\r' -> sb.append("\\r");
+                case '\t' -> sb.append("\\t");
+                default -> {
+                    if (c < 0x20) sb.append(String.format("\\u%04x", (int) c));
+                    else sb.append(c);
+                }
+            }
+        }
+        return sb.append("\"").toString();
     }
 
     private void validateKeyedUnion(String value, String fieldName) {

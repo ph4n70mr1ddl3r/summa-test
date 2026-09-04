@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
 import com.summa.service.OffboardingWalkService;
+import com.summa.repository.RoleTemplateRepository;
+import com.summa.model.RoleTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -27,15 +29,18 @@ public class AgentController {
     private final WriteGate writeGate;
     private final AskService askService;
     private final AskRepository askRepository;
+    private final RoleTemplateRepository roleTemplateRepository;
     private final ObjectMapper objectMapper;
 
     public AgentController(AgentService agentService, AuditService auditService, WriteGate writeGate,
-                           AskService askService, AskRepository askRepository, ObjectMapper objectMapper) {
+                           AskService askService, AskRepository askRepository,
+                           RoleTemplateRepository roleTemplateRepository, ObjectMapper objectMapper) {
         this.agentService = agentService;
         this.auditService = auditService;
         this.writeGate = writeGate;
         this.askService = askService;
         this.askRepository = askRepository;
+        this.roleTemplateRepository = roleTemplateRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -185,6 +190,13 @@ public class AgentController {
             String placement = body.get("placement");
             if (placement == null || placement.isBlank()) {
                 throw new IllegalArgumentException("placement is required (template name or 'new:<name>:<version>')");
+            }
+            // TPL-040: Validate placement references an active template (or is a new role designation)
+            if (!placement.startsWith("new:")) {
+                Optional<RoleTemplate> tmplOpt = roleTemplateRepository.findByName(placement);
+                if (tmplOpt.isEmpty() || !"active".equals(tmplOpt.get().getStatus())) {
+                    throw new IllegalArgumentException("Placement template not found or not active: " + placement);
+                }
             }
             // TPL-040: Snapshot identity files and effective scopes at creation
             Map<String, String> snapshotMap = new java.util.HashMap<>();

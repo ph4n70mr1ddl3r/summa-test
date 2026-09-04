@@ -53,8 +53,7 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         String normalized = path != null && path.endsWith("/") && path.length() > 1
                 ? path.substring(0, path.length() - 1) : path;
-        if (JwtAuthenticationFilter.PUBLIC_PATHS.contains(path)
-                || JwtAuthenticationFilter.PUBLIC_PATHS.contains(normalized)) {
+        if (JwtAuthenticationFilter.PUBLIC_PATHS.contains(path)) {
             filterChain.doFilter(request, response);
             return;
         }
