@@ -39,14 +39,7 @@ These checks verify:
 
 ### Adding a New Endpoint
 
-1. Add model entity in `backend/src/main/java/com/summa/model/`
-2. Add repository in `backend/src/main/java/com/summa/repository/`
-3. Add service in `backend/src/main/java/com/summa/service/`
-4. Add controller in `backend/src/main/java/com/summa/controller/`
-5. Add test in `backend/src/test/java/com/summa/service/`
-6. Update `specs/17-api-surface.md` with new REQ IDs
-7. Update `specs/TRACEABILITY.md`
-8. Run `python3 tools/lint_specs.py`
+See `DEVELOPMENT.md#adding-a-new-endpoint` for the full procedure.
 
 ## Code Style
 

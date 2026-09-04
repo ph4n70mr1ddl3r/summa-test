@@ -34,30 +34,31 @@ Kubernetes (prod): decomposed services
 
 ## Data Storage
 
-| Component | Path | Description |
-|-----------|------|-------------|
-| SQLite DB | `~/.summa/summa.db` | All runtime state (WAL mode) |
-| DNA Git Repo | `~/.summa/dna` | Canonical DNA store (markdown) |
-| Logs | stdout/stderr | Application logs (collect via `journald` / `docker compose logs`) |
+| Component | Path (local) | Path (Docker/prod) | Description |
+|-----------|--------------|---------------------|-------------|
+| SQLite DB | `~/.summa/summa.db` | `/data/db/summa.db` | All runtime state (WAL mode) |
+| DNA Git Repo | `~/.summa/dna` | `/data/dna` | Canonical DNA store (markdown) |
+| Logs | stdout/stderr | stdout/stderr | Application logs (collect via `journald` / `docker compose logs`) |
+
+> Override paths via `SUMMA_DB_PATH` and `SUMMA_DNA_REPO`. In containers, `~` is not expanded — use absolute paths.
 
 ## Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `SUMMA_DB_PATH` | `~/.summa/summa.db` | SQLite database path |
-| `SUMMA_DNA_REPO` | `~/.summa/dna` | DNA git repository path |
+| `SUMMA_DB_PATH` | `~/.summa/summa.db` (local) · `/data/db/summa.db` (Docker/prod) | SQLite database path (`~` is not expanded in containers — use absolute paths) |
+| `SUMMA_DNA_REPO` | `~/.summa/dna` (local) · `/data/dna` (Docker/prod) | DNA git repository path |
 | `SUMMA_JWT_SECRET` | *(required)* | JWT signing secret (256+ bits; generate with `openssl rand -hex 32`) |
 | `SUMMA_SPEND_CEILING` | `1000000` | Org spend ceiling |
-| `SUMMA_CORS_ORIGINS` | *(localhost only)* | Extra CORS origins, comma-separated (e.g. `https://app.example.com`) |
-| `SPRING_PROFILES_ACTIVE` | `prod` in Docker | Spring profile (`dev` for local hot-reload) |
+| `SUMMA_CORS_ORIGINS` | *(empty = localhost + 127.0.0.1 only)* | Extra CORS origins, comma-separated (e.g. `https://app.example.com`) |
+| `SPRING_PROFILES_ACTIVE` | `prod` (Dockerfile, docker-compose, start.sh) · `dev` (dev.sh, hot-reload) | Spring profile |
 | `VITE_API_URL` | `/api` | API base URL baked into the console bundle at build time |
 | `VITE_SUMMA_MODE` | `single-process` | Console mode badge: `single-process` or `multi-node` |
-| `SUMMA_OIDC_ISSUER` | *(planned)* | Keycloak issuer URI (not yet wired — see note below) |
-| `SUMMA_OIDC_CLIENT_ID` | *(planned)* | OIDC client ID (not yet wired) |
-| `SUMMA_OIDC_CLIENT_SECRET` | *(planned)* | OIDC client secret (not yet wired) |
+| `SUMMA_OIDC_ISSUER` | *(reserved)* | Keycloak issuer URI — **not yet wired**. Human auth today is email+password via `POST /api/auth/login`. See OIDC note below. |
+| `SUMMA_OIDC_CLIENT_ID` | *(reserved)* | OIDC client ID — not yet wired |
+| `SUMMA_OIDC_CLIENT_SECRET` | *(reserved)* | OIDC client secret — not yet wired |
 
-> **OIDC note:** `SUMMA_OIDC_*` is reserved for a planned Keycloak integration.
-> Human auth today is email + password via `POST /api/auth/login`.
+> **OIDC note:** `SUMMA_OIDC_*` variables are reserved for a planned Keycloak integration. Human auth today is email + password via `POST /api/auth/login`. Keycloak OIDC was decided per PLAN §14.2 / SEC-001 but not yet implemented — these variables have no effect.
 
 ## API Endpoints
 
@@ -66,7 +67,7 @@ Abridged — the full surface with REQ IDs lives in `specs/17-api-surface.md`
 
 ### Auth & Bootstrap
 - `POST /api/auth/login` — Email + password login (returns JWT)
-- `POST /api/org/bootstrap` — First-run company + admin creation (public, first-run only)
+- `POST /api/org/bootstrap` — First-run company + admin creation (public, first-run only; body: `{"name": "<string>", "email": "<email>", "password": "<8+ chars, upper+lower+digit>"}`). Always creates an `admin`; `rbac` is ignored.
 
 ### Organization
 - `GET /api/org/humans` — List humans
@@ -81,7 +82,7 @@ Abridged — the full surface with REQ IDs lives in `specs/17-api-surface.md`
 - `GET /api/dna/glossary` — List glossary entries
 - `GET /api/dna/goals` — List goals
 - `GET /api/dna/proposals` — Review queue
-- `GET /api/dna/search?q=...` — FTS5 search
+- `GET /api/dna/search?q=...&domainId=<id>&limit=<n>` — FTS5 search (limit defaults to 20, max 100)
 
 ### Asks
 - `GET /api/asks` — List asks
@@ -100,7 +101,13 @@ Abridged — the full surface with REQ IDs lives in `specs/17-api-surface.md`
 
 ### Agents
 - `GET /api/agents` — List agents
-- `POST /api/agents/{id}/suspend|resume|retire|archive`
+- `GET /api/agents/{id}` — Get agent
+- `POST /api/agents/{id}/suspend` — Suspend agent
+- `POST /api/agents/{id}/resume` — Resume agent
+- `POST /api/agents/{id}/retire` — Retire agent
+- `POST /api/agents/{id}/archive` — Archive agent
+- `POST /api/agents/{id}/deny` — Deny agent spawn request
+- `POST /api/agents/{id}/promote` — Promote agent
 - `GET /api/agents/{id}/lineage` — Lineage graph
 
 ### Spawn
@@ -119,8 +126,12 @@ Abridged — the full surface with REQ IDs lives in `specs/17-api-surface.md`
 - `POST /api/triggers/{id}/pause|resume|archive`
 
 ### Governance
-- `GET /api/governance/policies|quotas|spend`
-- `PUT /api/governance/policies|quotas`
+- `GET /api/governance/policies` — List policies
+- `GET /api/governance/quotas` — List quotas
+- `GET /api/governance/spend` — View spend
+- `PUT /api/governance/policies` — Update policies
+- `PUT /api/governance/quotas` — Update quotas
+- `POST /api/governance/spend/overruns/{id}/ack` — Acknowledge spend overrun
 
 ### Admin
 - `GET /api/health` — Health check
@@ -130,7 +141,6 @@ Abridged — the full surface with REQ IDs lives in `specs/17-api-surface.md`
 - `POST /api/admin/secrets/scan` — Scan for leaked secrets
 
 ### Auth
-- `POST /api/auth/login` — Email + password login (returns JWT)
 - `PUT /api/auth/change-password` — Change password
 - `GET /api/auth/pats` — List PATs
 - `POST /api/auth/pats` — Create PAT
@@ -176,31 +186,41 @@ Abridged — the full surface with REQ IDs lives in `specs/17-api-surface.md`
 - `GET /api/workspaces` — List workspaces
 - `GET /api/workspaces/{id}` — Get workspace
 - `POST /api/workspaces` — Create workspace
-- `POST /api/workspaces/{id}/rebind` — Rebind workspace to member
+- `POST /api/workspaces/{id}/rebind` — Rebind workspace to node (body: `{"targetNodeId": "<node-id>"}`)
 - `POST /api/workspaces/{id}/archive` — Archive workspace
 
 ## Deployment
 
-### Single Container (recommended)
+### Single Container (API only, no console)
 ```bash
 docker run -d \
   -p 8080:8080 \
   -v summa-data:/data \
   -e SUMMA_JWT_SECRET=<your-secret> \
-  -e SUMMA_OIDC_ISSUER=https://keycloak.example.com/realms/summa \
   summa:latest
 ```
+> This image serves the API on `:8080` only. The console is available via `./dev.sh` (:3000) or the `docker compose up -d` console service.
 
 ### Docker Compose
 ```bash
+# Either: set in your environment
 export SUMMA_JWT_SECRET=$(openssl rand -hex 32)
+# Or: copy .env.example and fill in the secret
+cp .env.example .env
+# (then edit .env to set SUMMA_JWT_SECRET)
+
 docker compose up -d --build
 ```
+> `docker-compose.yml` uses `${SUMMA_JWT_SECRET:?...}` which fails fast if the variable is unset. Compose auto-loads `.env` from the current directory.
 
 ### OCI Images (Podman)
 ```bash
 podman build -t summa .
-podman run -d -p 8080:8080 summa
+podman run -d \
+  -p 8080:8080 \
+  -v summa-data:/data \
+  -e SUMMA_JWT_SECRET=$(openssl rand -hex 32) \
+  summa
 ```
 
 ## Backup & Restore
@@ -209,20 +229,21 @@ podman run -d -p 8080:8080 summa
 # Create backup
 curl -X POST http://localhost:8080/api/admin/backup \
   -H 'Content-Type: application/json' \
-  -d '{"backupDir": "/backups"}'
+  -d '{"backupDir": "/tmp"}'
 
 # Restore
 curl -X POST http://localhost:8080/api/admin/backup/restore \
   -H 'Content-Type: application/json' \
-  -d '{"backupPath": "/backups/summa-backup-2026-01-01T00-00-00Z.zip"}'
+  -d '{"backupPath": "/tmp/summa-backup-2026-01-01T00-00-00Z.zip"}'
 ```
+> Backups must reside under the JVM's `java.io.tmpdir` (typically `/tmp`). Paths outside this root are rejected with 400.
 
 ## Security Checklist
 
 - [ ] Set `SUMMA_JWT_SECRET` to a 256-bit random value (`openssl rand -hex 32`)
 - [ ] Enable TLS behind reverse proxy
 - [ ] Set protected branches on DNA repo
-- [ ] Configure firewall for ports 8080 (API) and 3000 (console, compose only)
+- [ ] Configure firewall for ports 8080 (API, always) and 3000 (console, dev.sh / compose only)
 - [ ] Rotate JWT secret annually
 - [ ] Back up database and DNA repo daily
 
@@ -236,6 +257,7 @@ curl -X POST http://localhost:8080/api/admin/backup/restore \
 ## Troubleshooting
 
 ### Database locked
+> Requires `sqlite3` CLI (`apt install sqlite3`).
 ```bash
 # Check WAL mode
 sqlite3 ~/.summa/summa.db "PRAGMA journal_mode;"
@@ -244,18 +266,29 @@ sqlite3 ~/.summa/summa.db "PRAGMA journal_mode;"
 
 ### DNA repo divergence
 ```bash
+# Backup first — divergence quarantines per PLAN §4.5; prefer console review queue over force-push
+cp -a ~/.summa/dna /tmp/dna-backup-$(date +%F)
 cd ~/.summa/dna
+git status
 git log --oneline -5
-# If diverged: git reset --hard origin/main
+# Only after confirming plane state: do NOT run git reset --hard unless you have reviewed the divergence
 ```
 
 ### Last admin guard
-Cannot offboard the last active admin. Create a second admin first:
+Cannot offboard the last active admin. Create a second admin first via bootstrap or by promoting an existing human:
 ```bash
-curl -X POST http://localhost:8080/api/org/humans \
+# Option A: promote an existing human to admin
+curl -X PUT http://localhost:8080/api/org/humans/<id>/rbac \
   -H 'Content-Type: application/json' \
-  -d '{"name":"New Admin","email":"admin2@example.com","rbac":"admin"}'
+  -H 'Authorization: Bearer <jwt>' \
+  -d '{"rbac":"admin"}'
+
+# Option B: re-bootstrap (only works if org was never bootstrapped)
+curl -X POST http://localhost:8080/api/org/bootstrap \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Admin","email":"admin@example.com","password":"ChangeMe123"}'
 ```
+> `password` must be ≥8 characters with at least one uppercase, one lowercase, and one digit.
 
 ## Spec Compliance
 

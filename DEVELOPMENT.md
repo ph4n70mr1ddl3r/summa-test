@@ -39,11 +39,11 @@ summa/
 ## Running Locally
 
 ```bash
-# Start everything
+# Start everything (recommended — sets dev profile, polls health gate)
 ./dev.sh
 
-# Or just backend
-cd backend && mvn spring-boot:run
+# Or just backend (defaults to no profile; for hot-reload use dev.sh instead)
+cd backend && mvn spring-boot:run -Dspring-boot.run.profiles=dev
 
 # Or just console
 cd console && npm run dev
@@ -123,4 +123,10 @@ See `PRODUCTION.md` for full deployment guide.
 - Phase 2 (Identity/Memory): In Progress
 - Phase 3 (DNA v1): In Progress
 - Phase 4 (Automation): In Progress
-- Phase 5-7: Pending
+- Phase 5 (Playbooks): Pending
+- Phase 6 (Multi-human): Pending
+- Phase 7 (Spawning): Pending
+- Phase 8a (Hardening): Pending
+- Phase 8b (Delivery & Acceptance): Pending
+
+See `README.md` Phases table and `specs/21-delivery-and-acceptance.md` for full entry/exit criteria.

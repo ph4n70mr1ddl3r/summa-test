@@ -1,7 +1,7 @@
 # Summa — SDD Specification Suite
 
 This directory is the **normative requirements corpus** for the Summa platform, derived from
-`PLAN.md` (v2.61). `PLAN.md` is the design rationale — the "why", with history;
+`PLAN.md` (v2.64). `PLAN.md` is the design rationale — the "why", with history;
 these specs are the implementation contract — the "what", discrete and testable. When the two
 disagree, fix one of them in the same change; never implement against a discrepancy silently.
 

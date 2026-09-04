@@ -1,5 +1,5 @@
 # Summa — Operating System for a Hybrid Human + AI Company
-> Derived from `PLAN.md` (v2.61). The normative requirements are in `specs/`.
+> Derived from `PLAN.md` (v2.64). The normative requirements are in `specs/`.
 
 A self-hosted platform where human employees and AI agents work as one organization. A governed **Company DNA** — the shared knowledge, rules, decisions, and goals of the company — keeps every member coherent.
 
