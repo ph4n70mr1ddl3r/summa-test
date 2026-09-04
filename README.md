@@ -72,13 +72,13 @@ Status as of 2026-09-04; normative scope lives in `PLAN.md` and `specs/`
 |-------|-------------|--------|
 | 0. Foundations | Repo, CI, single-process skeleton | Complete |
 | 1. MVP Agent | Chat with local work, model gateway | Complete |
-| 2. Identity | Role catalog, memory tiers, skills | In Progress |
-| 3. DNA v1 | Store, domains, proposals, review queue | In Progress |
-| 4. Automation | Triggers, PATs, task board | In Progress |
+| 2. Identity | Role catalog, memory tiers, skills | Complete |
+| 3. DNA v1 | Store, domains, proposals, review queue | Complete |
+| 4. Automation | Triggers, PATs, task board | Complete |
 | 5. Playbooks | DSL + sandbox | Pending |
-| 6. Multi-human | RBAC, ask routing, node registration | Pending |
-| 7. Spawning | Ephemeral workers, policy engine | Pending |
-| 8a. Hardening | Security review, backup/restore drills | Pending |
+| 6. Multi-human | RBAC, ask routing, node registration | Complete |
+| 7. Spawning | Ephemeral workers, policy engine | Complete |
+| 8a. Hardening | Security review, backup/restore drills | In Progress |
 | 8b. Delivery & Acceptance | Demos DLV-050…055, cut-over | Pending |
 
 ## License

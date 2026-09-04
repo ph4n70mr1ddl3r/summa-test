@@ -71,7 +71,9 @@ public class Human {
     public void setEmail(String email) { this.email = email; }
     public String getRbac() { return rbac; }
     public void setRbac(String rbac) { this.rbac = rbac; }
+    @JsonIgnore
     public String getAuth() { return auth; }
+    @JsonIgnore
     public void setAuth(String auth) { this.auth = auth; }
     public String getDeputyMemberId() { return deputyMemberId; }
     public void setDeputyMemberId(String deputyMemberId) { this.deputyMemberId = deputyMemberId; }
@@ -86,6 +88,7 @@ public class Human {
     public Instant getDeactivatedAt() { return deactivatedAt; }
     public void setDeactivatedAt(Instant deactivatedAt) { this.deactivatedAt = deactivatedAt; }
     public String getPasswordHash() { return passwordHash; }
+    @JsonIgnore
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
     public boolean isActive() { return deactivatedAt == null; }
 }

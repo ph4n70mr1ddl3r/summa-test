@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api, getCurrentActor, type Group } from '../services/api'
+import { api, type Group } from '../services/api'
 import { escapeHtml } from '../utils/escapeHtml'
 
 export default function Groups() {
@@ -24,7 +24,7 @@ export default function Groups() {
 
   const handleArchive = async (id: string) => {
     try {
-      await api.groups.archive(id, getCurrentActor())
+      await api.groups.archive(id)
       const cleanup = loadGroups()
       if (cleanup) cleanup()
     } catch (err) {

@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom'
-import { getAuthToken, setAuthToken } from './services/api'
+import { setAuthToken, isAuthenticated } from './services/api'
 
 interface NavItem {
   to: string
@@ -27,9 +27,9 @@ const navItems: NavItem[] = [
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const location = useLocation()
-  const token = getAuthToken()
 
-  if (!token) {
+  if (!isAuthenticated()) {
+    setAuthToken(null)
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
@@ -61,7 +61,7 @@ function ModeLabel() {
 }
 
 export default function App() {
-  const token = getAuthToken()
+  const authed = isAuthenticated()
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-blue-600 focus:text-white focus:p-2">
@@ -93,10 +93,10 @@ export default function App() {
             </div>
             <div className="flex items-center space-x-4">
               <ModeLabel />
-              {token && (
+              {authed && (
                 <span className="text-gray-500 text-xs">authenticated</span>
               )}
-              {token && <LogoutButton />}
+              {authed && <LogoutButton />}
             </div>
           </div>
         </div>

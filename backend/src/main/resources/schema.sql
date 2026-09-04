@@ -174,6 +174,7 @@ CREATE TABLE IF NOT EXISTS dna_proposals (
 CREATE INDEX IF NOT EXISTS idx_dna_proposals_domain ON dna_proposals(domain_id);
 CREATE INDEX IF NOT EXISTS idx_agents_status ON agents(status);
 CREATE INDEX IF NOT EXISTS idx_agents_owner ON agents(owner_human_id);
+CREATE INDEX IF NOT EXISTS idx_agents_template ON agents(template_id);
 CREATE INDEX IF NOT EXISTS idx_dna_goals_domain ON dna_goals(domain_id);
 CREATE INDEX IF NOT EXISTS idx_dna_goals_status ON dna_goals(status);
 -- NOTE: indexes on initiatives/group_memberships/memory_items/spend_ledger live

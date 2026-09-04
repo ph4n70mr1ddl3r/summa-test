@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api, getCurrentActor, type MemoryItem } from '../services/api'
+import { api, type MemoryItem } from '../services/api'
 import { escapeHtml } from '../utils/escapeHtml'
 
 export default function Memory() {
@@ -30,7 +30,7 @@ export default function Memory() {
   const handleReview = async (id: string) => {
     setReviewResult(null)
     try {
-      await api.memory.review(id, getCurrentActor())
+      await api.memory.review(id)
       setReviewResult('Item reviewed and taint cleared')
       setReviewingId(null)
       const cleanup = loadItems()

@@ -40,7 +40,8 @@ public class SchemaInitializer {
                         if (msg != null && (msg.contains("already exists") || msg.contains("table") && msg.contains("exists"))) {
                             // Expected — schema already initialized
                         } else {
-                            log.warn("Schema init warning: {}", msg);
+                            log.error("Schema init failure: {}", msg);
+                            throw new RuntimeException("Schema initialization failed: " + msg, e);
                         }
                     }
                 }

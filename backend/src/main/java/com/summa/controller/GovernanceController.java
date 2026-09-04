@@ -88,9 +88,7 @@ public class GovernanceController {
         if (gate != null) return gate;
         for (String key : body.keySet()) {
             if (!POLICY_KEYS.contains(key)) {
-                AuditEvent audit = auditService.logSystem("REFUSAL", "governance_update_policy", actor, "Unknown policy key: " + key);
-                return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
-                        .body(Map.of("code", "validation", "message", "Unknown policy key: " + key, "audit_event_id", audit.getId()));
+                return ControllerResponses.validation(auditService, "Unknown policy key: " + key);
             }
         }
         body.forEach((key, value) -> governanceService.setSetting(key, value, actor));
@@ -104,9 +102,7 @@ public class GovernanceController {
         if (gate != null) return gate;
         for (String key : body.keySet()) {
             if (!QUOTA_KEYS.contains(key)) {
-                AuditEvent audit = auditService.logSystem("REFUSAL", "governance_update_quota", actor, "Unknown quota key: " + key);
-                return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
-                        .body(Map.of("code", "validation", "message", "Unknown quota key: " + key, "audit_event_id", audit.getId()));
+                return ControllerResponses.validation(auditService, "Unknown quota key: " + key);
             }
         }
         body.forEach((key, value) -> governanceService.setSetting(key, value, actor));
@@ -122,9 +118,7 @@ public class GovernanceController {
         // Admin-only check per API-051
         Optional<Human> actorOpt = memberService.findHuman(actor);
         if (actorOpt.isEmpty() || !"admin".equals(actorOpt.get().getRbac())) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "eligibility", "Admin access required to acknowledge spend overruns", null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "eligibility", "message", "Admin access required to acknowledge spend overruns", "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, "Admin access required to acknowledge spend overruns");
         }
         try {
             SpendLedger ledger = spendLedgerService.findById(id)
@@ -135,9 +129,7 @@ public class GovernanceController {
             return ResponseEntity.ok(Map.of("status", "overrun_acknowledged", "rowId", id,
                     "haltTripped", governanceService.isSpendHaltTripped()));
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
-                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 }

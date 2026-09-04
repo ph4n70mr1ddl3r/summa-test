@@ -20,11 +20,14 @@ import java.security.SecureRandom;
 import java.util.Base64;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 public class NodeService {
     private static final long ENROLLMENT_TOKEN_TTL_SECONDS = 3600L; // 1 hour
-    private static final long DEFAULT_LEASE_INTERVAL_SECONDS = 300L; // 5 minutes
+
+    @Value("${summa.node.lease-interval-seconds:30}")
+    private long leaseIntervalSeconds;
 
     private final NodeRepository nodeRepository;
     private final AuditService auditService;
@@ -181,7 +184,7 @@ public class NodeService {
         // Bump epoch and set lease expiry
         int newEpoch = ws.getClaimEpoch() != null ? ws.getClaimEpoch() + 1 : 1;
         ws.setClaimEpoch(newEpoch);
-        ws.setLeaseExpiresAt(Instant.now().plusSeconds(DEFAULT_LEASE_INTERVAL_SECONDS));
+        ws.setLeaseExpiresAt(Instant.now().plusSeconds(leaseIntervalSeconds));
         workspaceService.updateWorkspace(ws);
 
         // Store claim on node

@@ -120,13 +120,13 @@ See `PRODUCTION.md` for full deployment guide.
 
 - Phase 0 (Foundations): Complete
 - Phase 1 (MVP Agent): Complete
-- Phase 2 (Identity/Memory): In Progress
-- Phase 3 (DNA v1): In Progress
-- Phase 4 (Automation): In Progress
+- Phase 2 (Identity/Memory): Complete
+- Phase 3 (DNA v1): Complete
+- Phase 4 (Automation): Complete
 - Phase 5 (Playbooks): Pending
-- Phase 6 (Multi-human): Pending
-- Phase 7 (Spawning): Pending
-- Phase 8a (Hardening): Pending
+- Phase 6 (Multi-human): Complete
+- Phase 7 (Spawning): Complete
+- Phase 8a (Hardening): In Progress
 - Phase 8b (Delivery & Acceptance): Pending
 
 See `README.md` Phases table and `specs/21-delivery-and-acceptance.md` for full entry/exit criteria.

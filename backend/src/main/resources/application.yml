@@ -53,7 +53,6 @@ summa:
     budget-window-days: 30
   asks:
     tier-critical-deadline-hours: 1
-    tier-standard-deadline: next-digest
     tier-bulk-deadline-hours: 24
     storm-collapse-window-hours: 1
     rate-limit-per-source-per-hour: 60
