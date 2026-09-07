@@ -156,8 +156,7 @@ public class DnaProposalService {
                 }
             }
         } catch (Exception e) {
-            auditService.logSystem("CONTRADICTION_CHECK_FAIL", "dna_proposal", proposal.getId(),
-                String.format("{\"error\":\"%s\"}", e.getMessage()));
+            issues.add("Payload parse error: " + e.getMessage());
         }
         return issues;
     }

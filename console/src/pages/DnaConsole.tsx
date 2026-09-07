@@ -17,7 +17,7 @@ export default function DNAConsole() {
       api.dna.domains(),
       api.dna.cards(),
       api.dna.goals(),
-      api.dna.proposals('open'),
+      api.dna.reviewQueue(),
     ]).then(([d, c, g, p]) => {
       if (aborted) return
       setDomains(d)

@@ -11,4 +11,5 @@ public final class Defaults {
     public static final long DEFAULT_CRITICAL_ASK_DEADLINE_HOURS = 1;
     public static final long DEFAULT_BULK_ASK_DEADLINE_HOURS = 24;
     public static final long DEFAULT_STANDARD_ASK_DEADLINE_HOURS = 24;
+    public static final String SYSTEM_ACTOR = "system";
 }

@@ -490,6 +490,10 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ placement }),
       }),
+    deny: (id: string) =>
+      request<Agent>(`/agents/${id}/deny`, {
+        method: 'POST',
+      }),
   },
   dna: {
     cards: (domainId?: string) =>

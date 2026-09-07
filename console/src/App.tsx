@@ -28,7 +28,14 @@ const navItems: NavItem[] = [
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const location = useLocation()
 
-  if (!isAuthenticated()) {
+  let authed = false
+  try {
+    authed = isAuthenticated()
+  } catch {
+    // Corrupted token — treat as unauthenticated
+  }
+
+  if (!authed) {
     setAuthToken(null)
     return <Navigate to="/login" state={{ from: location }} replace />
   }
@@ -61,7 +68,12 @@ function ModeLabel() {
 }
 
 export default function App() {
-  const authed = isAuthenticated()
+  let authed = false
+  try {
+    authed = isAuthenticated()
+  } catch {
+    // Corrupted token — treat as unauthenticated
+  }
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-blue-600 focus:text-white focus:p-2">

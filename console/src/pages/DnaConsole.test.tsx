@@ -10,7 +10,7 @@ vi.mock('../services/api', () => ({
       domains: vi.fn(),
       cards: vi.fn(),
       goals: vi.fn(),
-      proposals: vi.fn(),
+      reviewQueue: vi.fn(),
     },
   },
 }))
@@ -28,7 +28,7 @@ describe('DnaConsole page', () => {
     vi.mocked(apiModule.api.dna.domains).mockResolvedValue([])
     vi.mocked(apiModule.api.dna.cards).mockResolvedValue([])
     vi.mocked(apiModule.api.dna.goals).mockResolvedValue([])
-    vi.mocked(apiModule.api.dna.proposals).mockResolvedValue([])
+    vi.mocked(apiModule.api.dna.reviewQueue).mockResolvedValue([])
 
     render(wrapper(<DnaConsole />))
     await waitFor(() => expect(screen.getByText('DNA Console')).toBeInTheDocument())
@@ -40,7 +40,7 @@ describe('DnaConsole page', () => {
     ])
     vi.mocked(apiModule.api.dna.cards).mockResolvedValue([])
     vi.mocked(apiModule.api.dna.goals).mockResolvedValue([])
-    vi.mocked(apiModule.api.dna.proposals).mockResolvedValue([])
+    vi.mocked(apiModule.api.dna.reviewQueue).mockResolvedValue([])
 
     render(wrapper(<DnaConsole />))
     await waitFor(() => expect(screen.getByText('Domains (1)')).toBeInTheDocument())
@@ -50,7 +50,7 @@ describe('DnaConsole page', () => {
     vi.mocked(apiModule.api.dna.domains).mockResolvedValue([])
     vi.mocked(apiModule.api.dna.cards).mockResolvedValue([])
     vi.mocked(apiModule.api.dna.goals).mockResolvedValue([])
-    vi.mocked(apiModule.api.dna.proposals).mockResolvedValue([
+    vi.mocked(apiModule.api.dna.reviewQueue).mockResolvedValue([
       { id: 'p1', kind: 'rule', payload: '{}', revision: 1, proposedBy: 'h1', provenance: '', status: 'open' },
     ])
 
@@ -62,7 +62,7 @@ describe('DnaConsole page', () => {
     vi.mocked(apiModule.api.dna.domains).mockResolvedValue([])
     vi.mocked(apiModule.api.dna.cards).mockResolvedValue([])
     vi.mocked(apiModule.api.dna.goals).mockResolvedValue([])
-    vi.mocked(apiModule.api.dna.proposals).mockResolvedValue([])
+    vi.mocked(apiModule.api.dna.reviewQueue).mockResolvedValue([])
 
     render(wrapper(<DnaConsole />))
     await waitFor(() => {

@@ -55,6 +55,7 @@ public class Human {
             createdAt = Instant.now();
         }
         if (updatedAt == null) updatedAt = Instant.now();
+        if (rbac == null || rbac.isBlank()) rbac = "member";
     }
 
     @PreUpdate

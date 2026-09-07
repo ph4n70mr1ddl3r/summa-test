@@ -87,4 +87,5 @@ public class DnaProposal {
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
     public boolean isOpen() { return "open".equals(status); }
     public boolean isPublished() { return "published".equals(status); }
+    public boolean isReviewable() { return "open".equals(status) && reviewedBy == null; }
 }

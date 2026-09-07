@@ -61,7 +61,7 @@ public class MemberService {
     }
 
     public boolean isAdmin(String actorId) {
-        if (actorId == null || "system".equals(actorId)) return false;
+        if (actorId == null || com.summa.constants.Defaults.SYSTEM_ACTOR.equals(actorId)) return false;
         Optional<Human> humanOpt = findHuman(actorId);
         return humanOpt.isPresent() && RbacRole.ADMIN.getValue().equals(humanOpt.get().getRbac());
     }

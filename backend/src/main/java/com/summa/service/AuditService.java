@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import static com.summa.constants.Defaults.SYSTEM_ACTOR;
 
 @Service
 public class AuditService {
@@ -31,10 +32,10 @@ public class AuditService {
     public AuditEvent log(String actor, String action, String objectType, String objectId, String nodeId, String detail) {
         AuditEvent event = new AuditEvent();
         event.setId(UUID.randomUUID().toString());
-        event.setActor(actor != null ? actor : "system");
-        event.setAction(action);
-        event.setObjectType(objectType);
-        event.setObjectId(objectId);
+        event.setActor(actor != null ? actor : SYSTEM_ACTOR);
+        event.setAction(action != null ? action : "unknown");
+        event.setObjectType(objectType != null ? objectType : "unknown");
+        event.setObjectId(objectId != null ? objectId : "unknown");
         event.setDetail(detail != null && !detail.isBlank() ? sanitizeJson(sanitizeSensitive(detail)) : "{}");
         event.setOrigin("live");
         event.setNodeId(nodeId);
@@ -42,7 +43,7 @@ public class AuditService {
     }
 
     public AuditEvent logSystem(String action, String objectType, String objectId, String detail) {
-        return log("system", action, objectType, objectId, null, detail);
+        return log(SYSTEM_ACTOR, action, objectType, objectId, null, detail);
     }
 
     public AuditEvent logWithNode(String actor, String action, String objectType, String objectId,
