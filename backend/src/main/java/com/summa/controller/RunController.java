@@ -3,7 +3,6 @@ package com.summa.controller;
 import com.summa.service.RunService;
 import com.summa.model.Run;
 import com.summa.service.AuditService;
-import com.summa.model.AuditEvent;
 import com.summa.security.WriteGate;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -68,13 +67,9 @@ public class RunController {
             );
             return ResponseEntity.ok(run);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "validation", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
@@ -87,13 +82,9 @@ public class RunController {
             Run run = runService.start(id);
             return ResponseEntity.ok(run);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
-                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalStateException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
@@ -112,13 +103,9 @@ public class RunController {
             Run run = runService.complete(id, result, costTokens, costUsd);
             return ResponseEntity.ok(run);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
-                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalStateException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
@@ -131,13 +118,9 @@ public class RunController {
             Run run = runService.fail(id, body.get("errorMessage"));
             return ResponseEntity.ok(run);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
-                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalStateException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
@@ -150,13 +133,9 @@ public class RunController {
             Run run = runService.cancel(id);
             return ResponseEntity.ok(run);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
-                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalStateException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 

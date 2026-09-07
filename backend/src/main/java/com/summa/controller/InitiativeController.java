@@ -3,7 +3,6 @@ package com.summa.controller;
 import com.summa.service.InitiativeService;
 import com.summa.model.Initiative;
 import com.summa.service.AuditService;
-import com.summa.model.AuditEvent;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -69,13 +68,9 @@ public class InitiativeController {
             );
             return ResponseEntity.ok(initiative);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "validation", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
@@ -88,13 +83,9 @@ public class InitiativeController {
             Initiative initiative = initiativeService.activate(id, actor);
             return ResponseEntity.ok(initiative);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
-                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalStateException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
@@ -107,13 +98,9 @@ public class InitiativeController {
             Initiative initiative = initiativeService.pause(id, actor);
             return ResponseEntity.ok(initiative);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
-                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalStateException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
@@ -126,13 +113,9 @@ public class InitiativeController {
             Initiative initiative = initiativeService.resume(id, actor);
             return ResponseEntity.ok(initiative);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
-                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalStateException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
@@ -145,13 +128,9 @@ public class InitiativeController {
             Initiative initiative = initiativeService.close(id, actor);
             return ResponseEntity.ok(initiative);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
-                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalStateException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 }

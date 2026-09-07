@@ -2,7 +2,8 @@ package com.summa.controller;
 
 import com.summa.service.DnaReadService;
 import com.summa.service.AuditService;
-import com.summa.model.AuditEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
@@ -12,6 +13,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/dna/search")
 public class DnaSearchController {
+    private static final Logger log = LoggerFactory.getLogger(DnaSearchController.class);
     private final DnaReadService dnaReadService;
     private final AuditService auditService;
 
@@ -37,9 +39,9 @@ public class DnaSearchController {
             return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
                     .body(Map.of("code", "validation", "message", e.getMessage()));
         } catch (Exception e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            log.error("Search failed", e);
             return ResponseEntity.status(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("code", "internal", "message", e.getMessage(), "audit_event_id", audit.getId()));
+                    .body(Map.of("code", "internal", "message", "Internal server error"));
         }
     }
 

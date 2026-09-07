@@ -3,7 +3,6 @@ package com.summa.service;
 import com.summa.repository.InitiativeRepository;
 import com.summa.repository.BoardTaskRepository;
 import com.summa.repository.AskRepository;
-import com.summa.repository.TriggerRepository;
 import com.summa.repository.SpawnRequestRepository;
 import com.summa.repository.DnaGoalRepository;
 import com.summa.repository.DnaDecisionRepository;
@@ -41,9 +40,6 @@ class InitiativeServiceTest {
 
     @Mock
     private AskRepository askRepository;
-
-    @Mock
-    private TriggerRepository triggerRepository;
 
     @Mock
     private SpawnRequestRepository spawnRequestRepository;

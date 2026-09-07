@@ -3,7 +3,6 @@ package com.summa.controller;
 import com.summa.service.DnaProposalService;
 import com.summa.model.DnaProposal;
 import com.summa.service.AuditService;
-import com.summa.model.AuditEvent;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -62,13 +61,9 @@ public class DnaProposalController {
             );
             return ResponseEntity.ok(proposal);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "validation", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
@@ -84,31 +79,21 @@ public class DnaProposalController {
                 DnaProposal proposal = proposalService.publish(id, actor, actor);
                 return ResponseEntity.ok(proposal);
             } catch (IllegalArgumentException e) {
-                AuditEvent audit = auditService.logSystem("REFUSAL", "validation", e.getMessage(), null);
-                return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
-                        .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
+                return ControllerResponses.validation(auditService, e.getMessage());
             } catch (IllegalStateException e) {
-                AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                        .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+                return ControllerResponses.gate(auditService, e.getMessage());
             }
         } else if ("reject".equals(action)) {
             try {
                 DnaProposal proposal = proposalService.reject(id, actor, actor);
                 return ResponseEntity.ok(proposal);
             } catch (IllegalArgumentException e) {
-                AuditEvent audit = auditService.logSystem("REFUSAL", "validation", e.getMessage(), null);
-                return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
-                        .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
+                return ControllerResponses.validation(auditService, e.getMessage());
             } catch (IllegalStateException e) {
-                AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                        .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+                return ControllerResponses.gate(auditService, e.getMessage());
             }
         } else {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", "action must be 'publish' or 'reject'", null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body(Map.of("code", "validation", "message", "action must be 'publish' or 'reject'", "audit_event_id", audit.getId()));
+            return ControllerResponses.validation(auditService, "action must be 'publish' or 'reject'");
         }
     }
 
@@ -121,9 +106,7 @@ public class DnaProposalController {
             DnaProposal proposal = proposalService.withdraw(id, actor);
             return ResponseEntity.ok(proposal);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
-                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 
@@ -136,13 +119,9 @@ public class DnaProposalController {
             DnaProposal proposal = proposalService.amend(id, body.get("payload"), actor);
             return ResponseEntity.ok(proposal);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
-                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalStateException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 

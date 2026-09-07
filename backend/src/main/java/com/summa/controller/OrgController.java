@@ -50,9 +50,7 @@ public class OrgController {
             );
             return ResponseEntity.ok(Map.of("id", human.getId(), "email", human.getEmail(), "rbac", human.getRbac()));
         } catch (IllegalStateException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
@@ -68,9 +66,7 @@ public class OrgController {
         if (humanOpt.isPresent()) {
             return ResponseEntity.ok(humanOpt.get());
         }
-        AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", "Human not found: " + id, null);
-        return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
-                .body(Map.of("code", "not_found", "message", "Human not found: " + id, "audit_event_id", audit.getId()));
+        return ControllerResponses.notFound(auditService, "Human not found: " + id);
     }
 
     @PutMapping("/humans/{id}/rbac")
@@ -82,13 +78,9 @@ public class OrgController {
             Human human = orgService.updateRbac(id, body.get("rbac"), actor);
             return ResponseEntity.ok(human);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "validation", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
@@ -99,21 +91,15 @@ public class OrgController {
         if (gate != null) return gate;
         String newRbac = body.get("rbac");
         if (newRbac == null || newRbac.isBlank()) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "validation", "rbac is required for demote", null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body(Map.of("code", "validation", "message", "rbac is required", "audit_event_id", audit.getId()));
+            return ControllerResponses.validation(auditService, "rbac is required for demote");
         }
         try {
             Human human = orgService.demote(id, newRbac, actor);
             return ResponseEntity.ok(human);
         } catch (IllegalStateException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
-                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 
@@ -126,9 +112,7 @@ public class OrgController {
             Human human = orgService.setDeputy(id, body.get("deputyMemberId"), actor);
             return ResponseEntity.ok(human);
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "validation", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.validation(auditService, e.getMessage());
         }
     }
 
@@ -141,13 +125,9 @@ public class OrgController {
             Human human = orgService.offboard(id, actor);
             return ResponseEntity.ok(human);
         } catch (IllegalStateException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
-                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 
@@ -172,9 +152,7 @@ public class OrgController {
             orgService.erasure(id, actor);
             return ResponseEntity.ok(Map.of("status", "erased", "id", id));
         } catch (IllegalArgumentException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
-                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 

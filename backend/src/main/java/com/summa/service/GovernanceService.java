@@ -123,7 +123,7 @@ public class GovernanceService {
         } catch (jakarta.persistence.PersistenceException e) {
             // SEC-011/SPW-060: Fail-closed on DB errors — a corrupted ledger must
             // trip the breaker rather than silently allow unchecked spending.
-            log.error("[SUMMA] spend halt evaluation failed (DB), tripping breaker: {}", e.getMessage());
+            log.error("[SUMMA] spend halt evaluation failed (DB error), tripping breaker: {}", e.getMessage());
             return true;
         } catch (Exception e) {
             log.error("[SUMMA] spend halt evaluation failed, tripping breaker: {}", e.getMessage());
