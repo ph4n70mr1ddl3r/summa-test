@@ -8,6 +8,7 @@ import com.summa.model.DnaRule;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -130,7 +131,7 @@ public class DnaProposalService {
      * Covers rule-vs-rule, goal-vs-goal, decision-vs-rule, and quorum-vs-pool shortfalls.
      */
     private List<String> detectContradictions(DnaProposal proposal) {
-        List<String> issues = new java.util.ArrayList<>();
+        List<String> issues = new ArrayList<>();
         if (proposal.getDomainId() == null || proposal.getDomainId().isBlank()) {
             return issues;
         }

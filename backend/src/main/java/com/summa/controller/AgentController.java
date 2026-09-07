@@ -13,6 +13,8 @@ import com.summa.security.RbacAuthorizationFilter;
 import java.time.Instant;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import com.summa.service.OffboardingWalkService;
@@ -199,7 +201,7 @@ public class AgentController {
                 }
             }
             // TPL-040: Snapshot identity files and effective scopes at creation
-            Map<String, String> snapshotMap = new java.util.HashMap<>();
+            Map<String, String> snapshotMap = new HashMap<>();
             snapshotMap.put("agentId", id);
             snapshotMap.put("agentName", agent.getName());
             snapshotMap.put("class", agent.getAgentClass());

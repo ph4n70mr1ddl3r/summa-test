@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/dna/glossary")
@@ -54,7 +55,7 @@ public class DnaGlossaryController {
                 throw new IllegalArgumentException("term is required");
             }
             // Security: reject client-supplied IDs — always generate server-side
-            String generatedId = java.util.UUID.randomUUID().toString();
+            String generatedId = UUID.randomUUID().toString();
             DnaGlossary entry = glossaryService.create(
                 generatedId,
                 body.get("domainId"),

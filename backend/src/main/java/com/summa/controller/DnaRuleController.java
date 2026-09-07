@@ -12,6 +12,7 @@ import java.time.DateTimeException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/dna/rules")
@@ -54,7 +55,7 @@ public class DnaRuleController {
                 parseOptionalInstant(body.get("effectiveTo")) : null;
 
             // Security: reject client-supplied IDs — always generate server-side
-            String generatedId = java.util.UUID.randomUUID().toString();
+            String generatedId = UUID.randomUUID().toString();
             DnaRule rule = ruleService.create(
                 generatedId,
                 body.get("domainId"),
@@ -67,7 +68,7 @@ public class DnaRuleController {
             );
             return ResponseEntity.ok(rule);
         } catch (IllegalArgumentException | DateTimeException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
+            AuditEvent audit = auditService.logSystem("REFUSAL", "validation", e.getMessage(), null);
             return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
                     .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
         } catch (IllegalStateException e) {
@@ -95,9 +96,9 @@ public class DnaRuleController {
             );
             return ResponseEntity.ok(rule);
         } catch (IllegalArgumentException | DateTimeException e) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "not_found", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
-                    .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
+            AuditEvent audit = auditService.logSystem("REFUSAL", "validation", e.getMessage(), null);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
         } catch (IllegalStateException e) {
             AuditEvent audit = auditService.logSystem("REFUSAL", "error", e.getMessage(), null);
             return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)

@@ -18,8 +18,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 @Service
@@ -121,7 +124,7 @@ public class InitiativeService {
      * Walks the dependency graph from each dep; if any path reaches 'id', there's a cycle.
      */
     private boolean wouldCreateCycle(String newId, List<String> deps) {
-        java.util.Set<String> visited = new java.util.HashSet<>();
+        Set<String> visited = new HashSet<>();
         return hasPathTo(newId, deps, visited);
     }
 
@@ -352,7 +355,7 @@ public class InitiativeService {
         // INT-062: Clock runs while active AND proposed; paused suspends it; closed stops it
         List<Initiative> active = initiativeRepository.findByStatus("active");
         List<Initiative> proposed = initiativeRepository.findByStatus("proposed");
-        List<Initiative> all = new java.util.ArrayList<>(active);
+        List<Initiative> all = new ArrayList<>(active);
         all.addAll(proposed);
 
         for (Initiative init : all) {

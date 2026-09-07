@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/workspaces")
@@ -50,7 +51,7 @@ public class WorkspaceController {
                 throw new IllegalArgumentException("name is required");
             }
             // Security: reject client-supplied IDs — always generate server-side
-            String generatedId = java.util.UUID.randomUUID().toString();
+            String generatedId = UUID.randomUUID().toString();
             Workspace ws = workspaceService.create(
                 generatedId,
                 body.get("name"),

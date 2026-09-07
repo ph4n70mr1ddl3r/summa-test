@@ -8,6 +8,8 @@ server:
     min-response-size: 1024
 
 spring:
+  application:
+    name: summa
   datasource:
     url: jdbc:sqlite:${SUMMA_DB_PATH:/data/db/summa.db}
     driver-class-name: org.sqlite.JDBC
@@ -27,6 +29,8 @@ spring:
   sql:
     init:
       mode: never
+  main:
+    allow-bean-definition-overriding: false
 
 summa:
   mode: single-process

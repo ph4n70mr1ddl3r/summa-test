@@ -8,6 +8,8 @@ import com.summa.model.Agent;
 import com.summa.model.Human;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -56,9 +58,9 @@ public class DnaReadService {
         }
 
         return jdbcTemplate.query(sql, rs -> {
-            List<Map<String, Object>> results = new java.util.ArrayList<>();
+            List<Map<String, Object>> results = new ArrayList<>();
             while (rs.next()) {
-                Map<String, Object> row = new java.util.HashMap<>();
+                Map<String, Object> row = new HashMap<>();
                 row.put("id", rs.getString("id"));
                 row.put("kind", rs.getString("kind"));
                 row.put("domain_id", rs.getString("domain_id"));
@@ -96,7 +98,7 @@ public class DnaReadService {
         List<Agent> activeAgents = memberService.findAllActiveAgents();
         List<DnaDomain> domains = domainRepository.findAllActive();
         
-        Map<String, Object> snapshot = new java.util.LinkedHashMap<>();
+        Map<String, Object> snapshot = new LinkedHashMap<>();
         snapshot.put("humans", activeHumans.stream().map(h -> Map.of(
             "id", h.getId(),
             "name", h.getName(),

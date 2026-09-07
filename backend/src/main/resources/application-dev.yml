@@ -4,6 +4,8 @@ server:
     context-path: /api
 
 spring:
+  application:
+    name: summa
   datasource:
     url: jdbc:sqlite:${SUMMA_DB_PATH:${user.home}/.summa/summa.db}
     driver-class-name: org.sqlite.JDBC

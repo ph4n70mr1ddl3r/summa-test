@@ -12,6 +12,7 @@ import java.time.DateTimeException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/dna/goals")
@@ -59,7 +60,7 @@ public class DnaGoalController {
                 throw new IllegalArgumentException("owner is required");
             }
             // Security: reject client-supplied IDs — always generate server-side
-            String generatedId = java.util.UUID.randomUUID().toString();
+            String generatedId = UUID.randomUUID().toString();
             Instant effectiveFrom = null;
             if (body.containsKey("effectiveFrom") && body.get("effectiveFrom") != null && !body.get("effectiveFrom").isBlank()) {
                 try {

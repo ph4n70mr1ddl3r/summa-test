@@ -13,6 +13,7 @@ import com.summa.service.WorkspaceService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -226,7 +227,7 @@ public class NodeService {
         }
 
         // Return queued runs for those workspaces
-        List<Run> result = new java.util.ArrayList<>();
+        List<Run> result = new ArrayList<>();
         for (String wsId : workspaceIds) {
             result.addAll(runRepository.findByWorkspaceId(wsId).stream()
                     .filter(r -> "queued".equals(r.getStatus()))
