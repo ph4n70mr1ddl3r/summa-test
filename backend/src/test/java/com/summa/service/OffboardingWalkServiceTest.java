@@ -1,5 +1,6 @@
 package com.summa.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.summa.repository.AgentRepository;
 import com.summa.repository.GroupMembershipRepository;
 import com.summa.repository.PatRepository;
@@ -9,6 +10,7 @@ import com.summa.repository.DnaGoalRepository;
 import com.summa.repository.DnaProposalRepository;
 import com.summa.repository.AskRepository;
 import com.summa.repository.GroupRepository;
+import com.summa.repository.RoleTemplateRepository;
 import com.summa.model.Human;
 import com.summa.model.Agent;
 import com.summa.model.Initiative;
@@ -51,6 +53,8 @@ class OffboardingWalkServiceTest {
     @Mock private BoardTaskRepository boardTaskRepository;
     @Mock private PatRepository patRepository;
     @Mock private GroupRepository groupRepository;
+    @Mock private RoleTemplateRepository roleTemplateRepository;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @InjectMocks
     private OffboardingWalkService walkService;

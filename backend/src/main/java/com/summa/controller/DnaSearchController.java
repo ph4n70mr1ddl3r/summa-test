@@ -2,11 +2,12 @@ package com.summa.controller;
 
 import com.summa.service.DnaReadService;
 import com.summa.service.AuditService;
+import com.summa.security.RbacAuthorizationFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.summa.security.RbacAuthorizationFilter;
 import java.util.List;
 import java.util.Map;
 
@@ -29,18 +30,18 @@ public class DnaSearchController {
             @RequestParam(defaultValue = "20") int limit) {
         try {
             if (q == null || q.isBlank()) {
-                return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
+                return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
                         .body(Map.of("code", "validation", "message", "Query parameter 'q' is required"));
             }
             int safeLimit = Math.min(Math.max(limit, 1), 100);
             List<Map<String, Object>> results = dnaReadService.search(q, domainId, safeLimit);
             return ResponseEntity.ok(Map.of("results", results, "count", results.size()));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
                     .body(Map.of("code", "validation", "message", e.getMessage()));
         } catch (Exception e) {
             log.error("Search failed", e);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("code", "internal", "message", "Internal server error"));
         }
     }

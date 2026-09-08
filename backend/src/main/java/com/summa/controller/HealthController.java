@@ -1,6 +1,7 @@
 package com.summa.controller;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -39,7 +40,7 @@ public class HealthController {
         );
         // Return 503 when degraded so container healthchecks and LBs fail fast.
         if (!dbStatus.equals("UP")) {
-            return ResponseEntity.status(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE).body(body);
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(body);
         }
         return ResponseEntity.ok(body);
     }

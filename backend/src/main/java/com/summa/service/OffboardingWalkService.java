@@ -1,5 +1,6 @@
 package com.summa.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.summa.repository.AskRepository;
 import com.summa.repository.BoardTaskRepository;
 import com.summa.repository.DnaGoalRepository;
@@ -58,22 +59,24 @@ public class OffboardingWalkService {
     private final PatRepository patRepository;
     private final GroupRepository groupRepository;
     private final RoleTemplateRepository roleTemplateRepository;
+    private final ObjectMapper objectMapper;
 
     public OffboardingWalkService(MemberService memberService, AgentService agentService,
-                                    InitiativeService initiativeService, BoardTaskService boardTaskService,
-                                    DnaProposalService proposalService, AuditService auditService,
-                                    AskService askService, SpawnService spawnService,
-                                    DnaDomainService domainService, DnaGoalService goalService,
-                                    GroupMembershipRepository groupMembershipRepository,
-                                    AgentRepository agentRepository,
-                                    InitiativeRepository initiativeRepository,
-                                    DnaGoalRepository goalRepository,
-                                    DnaProposalRepository proposalRepository,
-                                    AskRepository askRepository,
-                                    BoardTaskRepository boardTaskRepository,
-                                    PatRepository patRepository,
-                                    GroupRepository groupRepository,
-                                    RoleTemplateRepository roleTemplateRepository) {
+                                     InitiativeService initiativeService, BoardTaskService boardTaskService,
+                                     DnaProposalService proposalService, AuditService auditService,
+                                     AskService askService, SpawnService spawnService,
+                                     DnaDomainService domainService, DnaGoalService goalService,
+                                     GroupMembershipRepository groupMembershipRepository,
+                                     AgentRepository agentRepository,
+                                     InitiativeRepository initiativeRepository,
+                                     DnaGoalRepository goalRepository,
+                                     DnaProposalRepository proposalRepository,
+                                     AskRepository askRepository,
+                                     BoardTaskRepository boardTaskRepository,
+                                     PatRepository patRepository,
+                                     GroupRepository groupRepository,
+                                     RoleTemplateRepository roleTemplateRepository,
+                                     ObjectMapper objectMapper) {
         this.memberService = memberService;
         this.agentService = agentService;
         this.initiativeService = initiativeService;
@@ -94,6 +97,7 @@ public class OffboardingWalkService {
         this.patRepository = patRepository;
         this.groupRepository = groupRepository;
         this.roleTemplateRepository = roleTemplateRepository;
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -190,7 +194,7 @@ public class OffboardingWalkService {
                 groupRepository.save(group);
                 groupsLeadershipTransferred++;
                 auditService.log(actor, "OFFBOARD_TRANSFER_GROUP_LEADER", "group", group.getId(),
-                    String.format("{\"newLeader\":\"%s\",\"reason\":\"member_departed\"}", finalTargetOwner));
+                    toJson(Map.of("newLeader", finalTargetOwner, "reason", "member_departed"), objectMapper));
             }
         }
 
@@ -213,7 +217,7 @@ public class OffboardingWalkService {
                 proposalRepository.save(prop);
                 proposalsTransferred++;
                 auditService.logSystem("OFFBOARD_TRANSFER_PROPOSAL", "dna_proposal", prop.getId(),
-                    String.format("{\"domainId\":\"%s\",\"newProposer\":\"%s\"}", prop.getDomainId(), finalTargetOwner));
+                    toJson(Map.of("domainId", prop.getDomainId(), "newProposer", finalTargetOwner), objectMapper));
             } else {
                 // Member-scoped proposal: auto-withdraw with audit note
                 prop.setStatus("withdrawn");
@@ -240,7 +244,7 @@ public class OffboardingWalkService {
                     asksReassigned++;
                 }
                 auditService.logSystem("OFFBOARD_REASSIGN_ASK_TO", "ask", ask.getId(),
-                    String.format("{\"newTo\":\"%s\",\"reason\":\"member_departed\"}", ask.getTo()));
+                    toJson(Map.of("newTo", ask.getTo(), "reason", "member_departed"), objectMapper));
             } else if (humanId.equals(ask.getFrom())) {
                 // Close asks from the departing member with audit note
                 ask.setStatus("withdrawn");
@@ -257,7 +261,7 @@ public class OffboardingWalkService {
             boardTaskRepository.save(task);
             tasksReassigned++;
             auditService.logSystem("OFFBOARD_REASSIGN_TASK", "board_task", task.getId(),
-                String.format("{\"newAssignee\":\"%s\",\"reason\":\"member_departed\"}", finalTargetOwner));
+                toJson(Map.of("newAssignee", finalTargetOwner, "reason", "member_departed"), objectMapper));
         }
 
         // OFB-015: Revoke PATs and terminate sessions
@@ -294,7 +298,7 @@ public class OffboardingWalkService {
         result.put("groupsLeadershipTransferred", groupsLeadershipTransferred);
 
         auditService.log(actor, "OFFBOARD_WALK", "human", humanId,
-            String.format("{\"successorId\":\"%s\",\"result\":%s}", finalTargetOwner, result));
+            toJson(Map.of("successorId", finalTargetOwner, "result", result), objectMapper));
 
         return result;
     }
@@ -367,7 +371,7 @@ public class OffboardingWalkService {
                 proposalRepository.save(prop);
                 proposalsWithdrawn++;
                 auditService.logSystem("DEMOTE_WITHDRAW_PROPOSAL", "dna_proposal", prop.getId(),
-                    String.format("{\"humanId\":\"%s\",\"newRbac\":\"%s\"}", humanId, newRbac));
+                    toJson(Map.of("humanId", humanId, "newRbac", newRbac), objectMapper));
             }
         }
 
@@ -422,7 +426,7 @@ public class OffboardingWalkService {
                 groupRepository.save(group);
                 groupLeadershipsTransferred++;
                 auditService.log(actor, "DEMOTE_TRANSFER_GROUP_LEADER", "group", group.getId(),
-                    String.format("{\"newLeader\":\"%s\",\"reason\":\"member_demoted\"}", targetOwner));
+                    toJson(Map.of("newLeader", targetOwner, "reason", "member_demoted"), objectMapper));
             }
         }
 
@@ -437,7 +441,7 @@ public class OffboardingWalkService {
                 askRepository.save(ask);
                 asksClosed++;
                 auditService.logSystem("DEMOTE_CLOSE_ASK_FROM", "ask", ask.getId(),
-                    String.format("{\"humanId\":\"%s\",\"newRbac\":\"%s\"}", humanId, newRbac));
+                    toJson(Map.of("humanId", humanId, "newRbac", newRbac), objectMapper));
             }
         }
 
@@ -480,9 +484,17 @@ public class OffboardingWalkService {
         result.put("changed", true);
 
         auditService.log(actor, "DEMOTE_WALK", "human", humanId,
-            String.format("{\"oldRbac\":\"%s\",\"newRbac\":\"%s\",\"result\":%s}", currentRbac, newRbac, result));
+            toJson(Map.of("oldRbac", currentRbac, "newRbac", newRbac, "result", result), objectMapper));
 
         return result;
+    }
+
+    private static String toJson(Map<String, Object> map, ObjectMapper mapper) {
+        try {
+            return mapper.writeValueAsString(map);
+        } catch (Exception e) {
+            return "{}";
+        }
     }
 
     private boolean isPersonalAssistant(Agent agent) {

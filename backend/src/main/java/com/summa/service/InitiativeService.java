@@ -12,6 +12,7 @@ import com.summa.model.Ask;
 import com.summa.model.SpawnRequest;
 import com.summa.model.Human;
 import com.summa.model.Agent;
+import com.summa.model.DnaGoal;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -176,7 +178,7 @@ public class InitiativeService {
         if (!initiative.getSponsor().equals(actor)) {
             // INT-021: Re-validate goal liveness at respond time
             if (initiative.getGoalRef() != null && !initiative.getGoalRef().isBlank()) {
-                Optional<com.summa.model.DnaGoal> goalOpt = dnaGoalRepository.findById(initiative.getGoalRef());
+                Optional<DnaGoal> goalOpt = dnaGoalRepository.findById(initiative.getGoalRef());
                 if (goalOpt.isEmpty() || !"active".equals(goalOpt.get().getStatus())) {
                     // Goal died mid-wait: audit-only activation, file successor ask
                     auditService.logSystem("ACTIVATE_GOAL_DIED", "initiative", id,
@@ -380,7 +382,7 @@ public class InitiativeService {
                                 Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
                         } catch (Exception e) {
                             auditService.logSystem("STALL_ASK_FAIL", "initiative", init.getId(),
-                                String.format("{\"error\":\"%s\"}", e.getMessage()));
+                                toJson(Map.of("error", e.getMessage()), objectMapper));
                         }
                     }
                 }
@@ -389,7 +391,7 @@ public class InitiativeService {
             // INT-050: Direction ask — goal window ended
             if (init.getGoalRef() != null && !init.getGoalRef().isBlank()) {
                 try {
-                    Optional<com.summa.model.DnaGoal> goalOpt = dnaGoalService.findById(init.getGoalRef());
+                    Optional<DnaGoal> goalOpt = dnaGoalService.findById(init.getGoalRef());
                     boolean windowEnded = goalOpt.filter(g ->
                             g.getEffectiveTo() != null && g.getEffectiveTo().isBefore(now))
                             .isPresent();
@@ -399,20 +401,18 @@ public class InitiativeService {
                         String reason = windowEnded ? "window_ended" : "goal_terminal";
                         // Dedup: skip if a direction ask was filed recently for this initiative
                         if (!hasRecentStallAsk(init.getId(), "direction_" + reason, dedupCutoff)) {
-                            String goalStatus = goalOpt.map(com.summa.model.DnaGoal::getStatus).orElse("unknown");
-                            askService.create("question", "system", init.getSponsor(),
-                                String.format("{\"initiativeId\":\"%s\",\"goalRef\":\"%s\",\"reason\":\"%s\",\"goalStatus\":\"%s\"}",
-                                    init.getId(), init.getGoalRef(), reason, goalStatus),
-                                "bulk", "escalate", 1,
-                                Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
-                            auditService.logSystem("DIRECTION_ASK_CREATED", "initiative", init.getId(),
-                                String.format("{\"goalRef\":\"%s\",\"sponsor\":\"%s\",\"reason\":\"%s\"}",
-                                    init.getGoalRef(), init.getSponsor(), reason));
+                            String goalStatus = goalOpt.map(DnaGoal::getStatus).orElse("unknown");
+                             askService.create("question", "system", init.getSponsor(),
+                                 objectMapper.writeValueAsString(Map.of("initiativeId", init.getId(), "goalRef", init.getGoalRef(), "reason", reason, "goalStatus", goalStatus)),
+                                 "bulk", "escalate", 1,
+                                 Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
+                             auditService.logSystem("DIRECTION_ASK_CREATED", "initiative", init.getId(),
+                                 objectMapper.writeValueAsString(Map.of("goalRef", init.getGoalRef(), "sponsor", init.getSponsor(), "reason", reason)));
                         }
                     }
                 } catch (Exception e) {
                     auditService.logSystem("DIRECTION_ASK_FAIL", "initiative", init.getId(),
-                        String.format("{\"error\":\"%s\"}", e.getMessage()));
+                        toJson(Map.of("error", e.getMessage()), objectMapper));
                 }
             }
         }
@@ -436,6 +436,14 @@ public class InitiativeService {
             }
         } catch (Exception ignored) {}
         return false;
+    }
+
+    private static String toJson(Map<String, Object> map, ObjectMapper mapper) {
+        try {
+            return mapper.writeValueAsString(map);
+        } catch (Exception e) {
+            return "{}";
+        }
     }
 
     private static String jsonString(String value) {

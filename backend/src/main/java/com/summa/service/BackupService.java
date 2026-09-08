@@ -68,7 +68,12 @@ public class BackupService {
         try {
             resolved = backupFile.toRealPath();
         } catch (java.io.IOException e) {
+            // If toRealPath fails (e.g., non-existent file), fall back to normalize without resolving symlinks
+            // but we still require the file to exist for safety
             resolved = backupFile.toAbsolutePath().normalize();
+            if (!Files.exists(backupFile)) {
+                throw new IllegalArgumentException("Backup file not found: " + backupPath);
+            }
         }
         Path tmpDir = Paths.get(System.getProperty("java.io.tmpdir")).toAbsolutePath().normalize();
         Path dataDir = Paths.get(expandPath(dbPath)).getParent().toAbsolutePath().normalize();

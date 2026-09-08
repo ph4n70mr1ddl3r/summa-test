@@ -22,7 +22,8 @@ export default function AskInbox() {
   }
 
   useEffect(() => {
-    loadAsks()
+    const cleanup = loadAsks()
+    return cleanup
   }, [])
 
   const tierColor = (tier: string) => {

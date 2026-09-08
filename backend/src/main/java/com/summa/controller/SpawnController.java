@@ -1,14 +1,16 @@
 package com.summa.controller;
 
-import com.summa.service.SpawnService;
-import com.summa.model.SpawnRequest;
-import com.summa.service.AuditService;
-import com.summa.model.AuditEvent;
-import com.summa.service.MemberService;
+import com.summa.enums.AgentClass;
+import com.summa.security.RbacAuthorizationFilter;
 import com.summa.security.WriteGate;
+import com.summa.service.AuditService;
+import com.summa.service.MemberService;
+import com.summa.service.SpawnService;
+import com.summa.model.AuditEvent;
+import com.summa.model.SpawnRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.summa.security.RbacAuthorizationFilter;
 import java.util.List;
 import java.util.Map;
 
@@ -61,7 +63,7 @@ public class SpawnController {
             String rawClass = body.get("class");
             String effectiveClass = rawClass != null && !rawClass.isBlank() ? rawClass : "ephemeral";
             try {
-                com.summa.enums.AgentClass.valueOf(effectiveClass.toUpperCase().replace("-", "_"));
+                AgentClass.valueOf(effectiveClass.toUpperCase().replace("-", "_"));
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Invalid spawn class: " + effectiveClass
                     + ". Must be one of: persistent, ephemeral, ephemeral-subagent");
@@ -94,7 +96,7 @@ public class SpawnController {
         if (gate != null) return gate;
         if (!memberService.isAdmin(actor)) {
             AuditEvent audit = auditService.logSystem("REFUSAL", "admin_only", "Spawn approve requires admin role", actor);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("code", "admin_only", "message", "Spawn approve requires admin role",
                             "audit_event_id", audit.getId()));
         }
@@ -115,7 +117,7 @@ public class SpawnController {
         if (gate != null) return gate;
         if (!memberService.isAdmin(actor)) {
             AuditEvent audit = auditService.logSystem("REFUSAL", "admin_only", "Spawn deny requires admin role", actor);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("code", "admin_only", "message", "Spawn deny requires admin role",
                             "audit_event_id", audit.getId()));
         }

@@ -3,10 +3,13 @@ package com.summa.controller;
 import com.summa.security.WriteGate;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.enums.RbacRole;
+import com.summa.model.Human;
+import com.summa.security.RbacAuthorizationFilter;
+import com.summa.security.WriteGate;
+import com.summa.service.AuditService;
 import com.summa.service.BackupService;
 import com.summa.service.OrgService;
-import com.summa.service.AuditService;
-import com.summa.model.Human;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.nio.file.Path;
@@ -38,7 +41,7 @@ public class BackupController {
         Optional<Human> actorOpt = orgService.findHuman(actor);
         if (actorOpt.isEmpty() || !RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac())) {
             var audit = auditService.logSystem("REFUSAL", "backup_create", actor, "Non-admin backup attempt");
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("code", "eligibility", "message", "Backup requires admin role", "audit_event_id", audit.getId()));
         }
         try {
@@ -48,12 +51,12 @@ public class BackupController {
              try {
                  backupDirPath = Paths.get(rawBackupDir).toRealPath();
              } catch (java.io.IOException e) {
-                 return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
-                         .body(Map.of("code", "validation", "message", "backupDir path is inaccessible: " + e.getMessage()));
+              return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                          .body(Map.of("code", "validation", "message", "backupDir path is inaccessible: " + e.getMessage()));
              }
              if (!backupDirPath.startsWith(validRoot)) {
-                 return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
-                         .body(Map.of("code", "validation", "message", "backupDir must be under tmpdir"));
+                  return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                          .body(Map.of("code", "validation", "message", "backupDir must be under tmpdir"));
              }
             String path = backupService.createBackup(backupDirPath.toString());
             auditService.log(actor, "CREATE_BACKUP", "backup", path, null);
@@ -72,7 +75,7 @@ public class BackupController {
         Optional<Human> actorOpt = orgService.findHuman(actor);
         if (actorOpt.isEmpty() || !RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac())) {
             var audit = auditService.logSystem("REFUSAL", "backup_restore", actor, "Non-admin restore attempt");
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("code", "eligibility", "message", "Restore requires admin role", "audit_event_id", audit.getId()));
         }
         try {
@@ -86,12 +89,12 @@ public class BackupController {
              try {
                  backupFilePath = Paths.get(rawPath).toRealPath();
              } catch (java.io.IOException e) {
-                 return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
-                         .body(Map.of("code", "validation", "message", "backupPath is inaccessible: " + e.getMessage()));
+                  return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                          .body(Map.of("code", "validation", "message", "backupPath is inaccessible: " + e.getMessage()));
              }
              if (!backupFilePath.startsWith(validRoot)) {
-                 return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
-                         .body(Map.of("code", "validation", "message", "backupPath must be under tmpdir"));
+                  return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                          .body(Map.of("code", "validation", "message", "backupPath must be under tmpdir"));
              }
             backupService.restore(backupFilePath.toString());
             auditService.log(actor, "RESTORE_BACKUP", "backup", backupFilePath.toString(), null);

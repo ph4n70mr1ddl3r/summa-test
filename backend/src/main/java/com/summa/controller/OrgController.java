@@ -1,22 +1,23 @@
 package com.summa.controller;
 
-import com.summa.service.OrgService;
-import com.summa.service.AuditService;
-import com.summa.service.MemberService;
-import com.summa.service.DataHoldService;
-import com.summa.service.AgentService;
-import com.summa.model.Human;
-import com.summa.model.AuditEvent;
 import com.summa.model.Agent;
+import com.summa.model.AuditEvent;
 import com.summa.model.DataHold;
+import com.summa.model.Human;
+import com.summa.security.RbacAuthorizationFilter;
 import com.summa.security.WriteGate;
+import com.summa.service.AgentService;
+import com.summa.service.AuditService;
+import com.summa.service.DataHoldService;
+import com.summa.service.MemberService;
+import com.summa.service.OrgService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.summa.security.RbacAuthorizationFilter;
-import java.util.Map;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -143,7 +144,7 @@ public class OrgController {
             List<DataHold> holds = dataHoldService.findBySubject("human", id);
             if (!holds.isEmpty()) {
                 AuditEvent audit = auditService.logSystem("REFUSAL", "data_hold", "Active data holds prevent erasure", id);
-                return ResponseEntity.status(org.springframework.http.HttpStatus.CONFLICT)
+                return ResponseEntity.status(HttpStatus.CONFLICT)
                         .body(Map.of("code", "data_hold", "message", "Active data holds prevent erasure",
                                 "audit_event_id", audit.getId(), "holds",
                                 holds.stream().map(h -> Map.of("id", h.getId(), "kind", h.getKind(), "reason", h.getReasonMd() != null ? h.getReasonMd() : "")).toList()));

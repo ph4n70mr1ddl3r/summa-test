@@ -188,7 +188,20 @@ class SpawnServiceTest {
         SpawnRequest request = new SpawnRequest();
         request.setId("spawn-1");
         request.setSpawnClass("ephemeral");
-        when(spawnRepository.save(any())).thenReturn(request);
+        lenient().when(spawnRepository.save(any())).thenReturn(request);
+
+        // Stub ObjectMapper to return proper JsonNodes for scope validation
+        com.fasterxml.jackson.databind.ObjectMapper realMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        JsonNode parentScopes = null;
+        JsonNode childScopes = null;
+        try {
+            parentScopes = realMapper.readTree("{\"fs\":\"readwrite\",\"shell\":\"exec\"}");
+            childScopes = realMapper.readTree("{\"fs\":\"readwrite\"}");
+        } catch (Exception ignored) {}
+        try {
+            org.mockito.Mockito.doReturn(parentScopes).when(objectMapper).readTree("{\"fs\":\"readwrite\",\"shell\":\"exec\"}");
+            org.mockito.Mockito.doReturn(childScopes).when(objectMapper).readTree("{\"fs\":\"readwrite\"}");
+        } catch (Exception ignored) {}
 
         SpawnRequest result = spawnService.create("agent-1", null, null, "ephemeral",
             "Do task", "[]", "{\"fs\":\"readwrite\"}", null, 24, "human-1", "actor");

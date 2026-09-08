@@ -1,6 +1,7 @@
 package com.summa.exception;
 
 import com.summa.model.AuditEvent;
+import com.summa.security.RbacAuthorizationFilter;
 import com.summa.service.AuditService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,9 +22,18 @@ public class GlobalExceptionHandler {
         this.auditService = auditService;
     }
 
+    private String currentActor() {
+        try {
+            return RbacAuthorizationFilter.getCurrentActorOrDefault();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException e) {
-        AuditEvent audit = auditService.logSystem("REFUSAL", "http_request", e.getMessage(), null);
+        String actor = currentActor();
+        AuditEvent audit = auditService.log(actor, "REFUSAL", "http_request", "validation", e.getMessage());
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
                 .body(Map.of(
                     "code", "validation",
@@ -34,7 +44,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalState(IllegalStateException e) {
-        AuditEvent audit = auditService.logSystem("REFUSAL", "http_request", e.getMessage(), null);
+        String actor = currentActor();
+        AuditEvent audit = auditService.log(actor, "REFUSAL", "http_request", "gate", e.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(Map.of(
                     "code", "gate",
@@ -45,7 +56,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(EntityNotFoundException e) {
-        AuditEvent audit = auditService.logSystem("REFUSAL", "http_request", e.getMessage(), null);
+        String actor = currentActor();
+        AuditEvent audit = auditService.log(actor, "REFUSAL", "http_request", "not_found", e.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(Map.of(
                     "code", "not_found",
@@ -59,7 +71,8 @@ public class GlobalExceptionHandler {
         // Never leak SQL/schema text to clients — log the detail, return a generic code.
         log.warn("Data integrity conflict: {}", e.getMostSpecificCause() != null
                 ? e.getMostSpecificCause().getMessage() : e.getMessage());
-        AuditEvent audit = auditService.logSystem("REFUSAL", "conflict", "Resource conflict", null);
+        String actor = currentActor();
+        AuditEvent audit = auditService.log(actor, "REFUSAL", "conflict", "resource_conflict", "Resource conflict: the request violates a uniqueness or integrity constraint");
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(Map.of(
                     "code", "conflict",
@@ -71,7 +84,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneric(Exception e) {
         log.error("Unhandled exception", e);
-        AuditEvent audit = auditService.logSystem("REFUSAL", "http_request", e.getMessage(), null);
+        String actor = currentActor();
+        AuditEvent audit = auditService.log(actor, "REFUSAL", "http_request", "internal_error", "Internal server error");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of(
                     "code", "internal",

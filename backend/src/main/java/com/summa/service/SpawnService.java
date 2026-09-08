@@ -13,6 +13,7 @@ import com.summa.repository.DnaDomainRepository;
 import com.summa.model.DnaDomain;
 import com.summa.repository.InitiativeRepository;
 import com.summa.model.Initiative;
+import com.summa.model.Human;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -102,7 +103,7 @@ public class SpawnService {
                 if (bindings.isArray()) {
                     for (JsonNode binding : bindings) {
                         String wsId = binding.asText();
-                        Optional<com.summa.model.Workspace> wsOpt = workspaceRepository.findById(wsId);
+                        Optional<Workspace> wsOpt = workspaceRepository.findById(wsId);
                         if (wsOpt.isPresent()) {
                             Workspace ws = wsOpt.get();
                             if (ws.getInitiativeIds() != null && !ws.getInitiativeIds().isBlank()
@@ -123,12 +124,13 @@ public class SpawnService {
                         }
                     }
                 }
-            } catch (IllegalStateException e) {
-                throw e;
-            } catch (Exception e) {
-                auditService.logSystem("SPAWN_PARSE_BINDINGS_FAIL", "spawn_request", UUID.randomUUID().toString(),
-                    String.format("{\"error\":\"%s\"}", e.getMessage()));
-            }
+        } catch (IllegalStateException e) {
+            throw e;
+        } catch (Exception e) {
+            auditService.logSystem("SPAWN_PARSE_BINDINGS_FAIL", "spawn_request", UUID.randomUUID().toString(),
+                String.format("{\"error\":\"%s\"}", e.getMessage()));
+            throw new IllegalStateException("Invalid workspace bindings JSON: " + e.getMessage());
+        }
         }
 
         // SPW-030: Scope delegation — child's scopes must be ⊆ parent's scopes
@@ -290,7 +292,7 @@ public class SpawnService {
         if (ownerHumanId == null || ownerHumanId.isBlank()) {
             ownerHumanId = request.getRequesterId();
             // Validate it is a human ID, not an agent ID — owner_human_id is a FK to humans(id)
-            Optional<com.summa.model.Human> maybeHuman = memberService.findHuman(ownerHumanId);
+            Optional<Human> maybeHuman = memberService.findHuman(ownerHumanId);
             if (maybeHuman.isEmpty()) {
                 throw new IllegalStateException("Cannot activate spawn without a human owner: no approvedBy, requestedByHumanId, and requester is not a human");
             }
@@ -382,6 +384,7 @@ public class SpawnService {
         } catch (Exception e) {
             auditService.logSystem("SPAWN_SCOPE_VALIDATE_FAIL", "spawn_request", UUID.randomUUID().toString(),
                 String.format("{\"requesterId\":\"%s\",\"error\":\"%s\"}", requesterId, e.getMessage()));
+            throw new IllegalStateException("Scope ceiling validation failed: " + e.getMessage());
         }
     }
 

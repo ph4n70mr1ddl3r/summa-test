@@ -4,8 +4,6 @@ spring:
     properties:
       eclipselink:
         show-sql: true
-  main:
-    allow-bean-definition-overriding: false
 
 logging:
   level:

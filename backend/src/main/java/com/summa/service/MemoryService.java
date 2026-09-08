@@ -2,6 +2,8 @@ package com.summa.service;
 
 import com.summa.repository.MemoryItemRepository;
 import com.summa.model.MemoryItem;
+import com.summa.model.Workspace;
+import com.summa.model.DnaDomain;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
@@ -87,15 +89,15 @@ public class MemoryService {
             }
             // Find the workspace and check if reviewer owns any of its domains
             boolean isDomainOwner = false;
-            Optional<com.summa.model.Workspace> wsOpt = workspaceService.findById(item.getWorkspaceId());
+            Optional<Workspace> wsOpt = workspaceService.findById(item.getWorkspaceId());
             if (wsOpt.isPresent()) {
-                com.summa.model.Workspace ws = wsOpt.get();
+                Workspace ws = wsOpt.get();
                 try {
                     List<String> domainIds = objectMapper.readValue(
                         ws.getDomainIds(),
                         new TypeReference<List<String>>() {});
                     for (String domId : domainIds) {
-                        Optional<com.summa.model.DnaDomain> domainOpt = domainService.findById(domId);
+                        Optional<DnaDomain> domainOpt = domainService.findById(domId);
                         if (domainOpt.isPresent() && domainOpt.get().getOwnerHumanId().equals(reviewerId)) {
                             isDomainOwner = true;
                             break;

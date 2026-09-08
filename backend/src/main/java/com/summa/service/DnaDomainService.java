@@ -3,11 +3,16 @@ package com.summa.service;
 import com.summa.repository.DnaDomainRepository;
 import com.summa.model.DnaDomain;
 import com.summa.repository.DnaCardRepository;
+import com.summa.model.DnaCard;
 import com.summa.repository.DnaProposalRepository;
+import com.summa.model.DnaProposal;
 import com.summa.repository.WorkspaceRepository;
 import com.summa.repository.DnaRuleRepository;
+import com.summa.model.DnaRule;
 import com.summa.repository.DnaGlossaryRepository;
+import com.summa.model.DnaGlossary;
 import com.summa.repository.DnaGoalRepository;
+import com.summa.model.DnaGoal;
 import com.summa.repository.DnaDecisionRepository;
 import com.summa.repository.DataHoldRepository;
 import com.summa.repository.AskRepository;
@@ -259,13 +264,13 @@ public class DnaDomainService {
         }
 
         // Move cards (ids stable)
-        for (com.summa.model.DnaCard card : cardRepository.findByDomainId(sourceId)) {
+        for (DnaCard card : cardRepository.findByDomainId(sourceId)) {
             card.setDomainId(survivorId);
             cardRepository.save(card);
         }
 
         // Move rules (ids stable)
-        for (com.summa.model.DnaRule rule : ruleRepository.findByDomainId(sourceId)) {
+        for (DnaRule rule : ruleRepository.findByDomainId(sourceId)) {
             rule.setDomainId(survivorId);
             ruleRepository.save(rule);
         }
@@ -277,19 +282,19 @@ public class DnaDomainService {
         }
 
         // Move glossary (ids stable)
-        for (com.summa.model.DnaGlossary g : glossaryRepository.findByDomainId(sourceId)) {
+        for (DnaGlossary g : glossaryRepository.findByDomainId(sourceId)) {
             g.setDomainId(survivorId);
             glossaryRepository.save(g);
         }
 
         // Move goals (ids stable)
-        for (com.summa.model.DnaGoal goal : goalRepository.findByDomainId(sourceId)) {
+        for (DnaGoal goal : goalRepository.findByDomainId(sourceId)) {
             goal.setDomainId(survivorId);
             goalRepository.save(goal);
         }
 
         // Remap proposals (ids stable per DGV-042)
-        for (com.summa.model.DnaProposal prop : proposalRepository.findByDomainId(sourceId)) {
+        for (DnaProposal prop : proposalRepository.findByDomainId(sourceId)) {
             prop.setDomainId(survivorId);
             proposalRepository.save(prop);
         }

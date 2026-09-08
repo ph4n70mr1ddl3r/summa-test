@@ -111,9 +111,14 @@ export default function Memory() {
                   </button>
                 )}
               </div>
-              <pre className="mt-2 text-xs text-gray-400 bg-gray-900 rounded p-3 overflow-x-auto whitespace-pre-wrap">
-                {escapeHtml(item.contentMd).slice(0, 300)}{escapeHtml(item.contentMd).length > 300 ? '...' : ''}
-              </pre>
+              {(() => {
+                const contentPreview = escapeHtml(item.contentMd)
+                return (
+                  <pre className="mt-2 text-xs text-gray-400 bg-gray-900 rounded p-3 overflow-x-auto whitespace-pre-wrap">
+                    {contentPreview.slice(0, 300)}{contentPreview.length > 300 ? '...' : ''}
+                  </pre>
+                )
+              })()}
               {reviewingId === item.id && (
                 <div className="mt-3 space-y-2">
                   <p className="text-sm text-yellow-400">Review this item to clear taint?</p>

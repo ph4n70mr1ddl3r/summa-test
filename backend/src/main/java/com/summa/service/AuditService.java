@@ -85,6 +85,25 @@ public class AuditService {
 
     private String sanitizeSensitive(String detail) {
         if (detail == null) return "{}";
+        // Sanitize by rebuilding as a proper JSON object when possible,
+        // otherwise apply regex redaction to the raw string.
+        try {
+            // Try to parse as JSON object, redact sensitive keys, then re-serialize
+            com.fasterxml.jackson.databind.JsonNode node = objectMapper.readTree(detail);
+            if (node.isObject()) {
+                com.fasterxml.jackson.databind.node.ObjectNode obj = (com.fasterxml.jackson.databind.node.ObjectNode) node;
+                java.util.Iterator<String> fields = obj.fieldNames();
+                while (fields.hasNext()) {
+                    String key = fields.next();
+                    if (key.toLowerCase().matches(".*(password|passwd|pwd|secret|token_hash|api_key|apikey|access_key|auth_token|bearer_token|session_token).*")) {
+                        obj.set(key, objectMapper.valueToTree("[REDACTED]"));
+                    }
+                }
+                return obj.toString();
+            }
+        } catch (Exception ignored) {
+            // Not valid JSON — fall through to regex-based redaction
+        }
         String sanitized = PASSWORD_PATTERN.matcher(detail).replaceAll("\"$1\":\"[REDACTED]\"");
         sanitized = EMAIL_PATTERN.matcher(sanitized).replaceAll("\"$1\":\"[REDACTED]\"");
         return sanitized;

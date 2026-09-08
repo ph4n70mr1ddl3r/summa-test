@@ -1,13 +1,15 @@
 package com.summa.controller;
 
-import com.summa.service.NodeService;
-import com.summa.model.Node;
-import com.summa.service.AuditService;
 import com.summa.model.AuditEvent;
+import com.summa.model.Node;
+import com.summa.model.Run;
+import com.summa.security.RbacAuthorizationFilter;
 import com.summa.security.WriteGate;
+import com.summa.service.AuditService;
+import com.summa.service.NodeService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.summa.security.RbacAuthorizationFilter;
 import java.util.List;
 import java.util.Map;
 
@@ -74,15 +76,15 @@ public class NodeController {
                 throw new IllegalArgumentException("workspaceId is required");
             }
             int currentEpoch = body.get("epoch") != null ? Integer.parseInt(body.get("epoch").toString()) : 0;
-            com.summa.model.Node node = nodeService.claimWorkspace(id, workspaceId, currentEpoch);
+            Node node = nodeService.claimWorkspace(id, workspaceId, currentEpoch);
             return ResponseEntity.ok(node);
         } catch (IllegalArgumentException e) {
             AuditEvent audit = auditService.logSystem("REFUSAL", "claim", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY)
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
                     .body(Map.of("code", "validation", "message", e.getMessage(), "audit_event_id", audit.getId()));
         } catch (IllegalStateException e) {
             AuditEvent audit = auditService.logSystem("REFUSAL", "claim", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
@@ -91,15 +93,15 @@ public class NodeController {
     public ResponseEntity<?> pullWork(@PathVariable String id) {
         // API-060: fetch queued runs for workspaces the node holds a live claim on
         try {
-            List<com.summa.model.Run> runs = nodeService.pullWork(id);
+            List<Run> runs = nodeService.pullWork(id);
             return ResponseEntity.ok(runs);
         } catch (IllegalArgumentException e) {
             AuditEvent audit = auditService.logSystem("REFUSAL", "pull_work", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
         } catch (IllegalStateException e) {
             AuditEvent audit = auditService.logSystem("REFUSAL", "pull_work", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }
@@ -115,15 +117,15 @@ public class NodeController {
             long costTokens = body.get("costTokens") != null ? ((Number) body.get("costTokens")).longValue() : 0L;
             double costUsd = body.get("costUsd") != null ? ((Number) body.get("costUsd")).doubleValue() : 0.0;
             String memberId = (String) body.get("memberId");
-            com.summa.model.Run run = nodeService.reportRun(id, runId, result, artifacts, costTokens, costUsd, memberId);
+            Run run = nodeService.reportRun(id, runId, result, artifacts, costTokens, costUsd, memberId);
             return ResponseEntity.ok(run);
         } catch (IllegalArgumentException e) {
             AuditEvent audit = auditService.logSystem("REFUSAL", "report_run", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("code", "not_found", "message", e.getMessage(), "audit_event_id", audit.getId()));
         } catch (IllegalStateException e) {
             AuditEvent audit = auditService.logSystem("REFUSAL", "report_run", e.getMessage(), null);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("code", "gate", "message", e.getMessage(), "audit_event_id", audit.getId()));
         }
     }

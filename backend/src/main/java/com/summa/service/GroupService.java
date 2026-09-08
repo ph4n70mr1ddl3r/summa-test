@@ -2,6 +2,8 @@ package com.summa.service;
 
 import com.summa.repository.GroupRepository;
 import com.summa.model.Group;
+import com.summa.model.Human;
+import com.summa.model.Agent;
 import com.summa.service.MemberService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,11 +68,11 @@ public class GroupService {
                 .orElseThrow(() -> new IllegalArgumentException("Group not found: " + id));
 
         // ORG-042: Validate leader eligibility — active human, not viewer, not ephemeral
-        Optional<com.summa.model.Human> leaderOpt = memberService.findHuman(leaderMemberId);
+        Optional<Human> leaderOpt = memberService.findHuman(leaderMemberId);
         if (leaderOpt.isEmpty()) {
             throw new IllegalStateException("Leader member not found: " + leaderMemberId);
         }
-        com.summa.model.Human leader = leaderOpt.get();
+        Human leader = leaderOpt.get();
         if (!leader.isActive()) {
             throw new IllegalStateException("Leader must be active: " + leaderMemberId);
         }
@@ -78,7 +80,7 @@ public class GroupService {
             throw new IllegalStateException("Viewers cannot be group leaders: " + leaderMemberId);
         }
         // Check not ephemeral agent
-        Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(leaderMemberId);
+        Optional<Agent> agentOpt = memberService.findAgent(leaderMemberId);
         if (agentOpt.isPresent() && agentOpt.get().isEphemeral()) {
             throw new IllegalStateException("Ephemeral agents cannot be group leaders: " + leaderMemberId);
         }

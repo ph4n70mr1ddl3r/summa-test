@@ -30,7 +30,10 @@ export default function DNADecisions() {
         </div>
       ) : (
         <div className="space-y-3">
-          {decisions.map((d) => (
+          {decisions.map((d) => {
+            const contextPreview = escapeHtml(d.contextMd)
+            const outcomePreview = escapeHtml(d.outcomeMd)
+            return (
             <div key={d.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>
@@ -39,16 +42,17 @@ export default function DNADecisions() {
                 </div>
               </div>
               <pre className="mt-2 text-xs text-gray-400 bg-gray-900 rounded p-3 overflow-x-auto whitespace-pre-wrap">
-                {escapeHtml(d.contextMd).slice(0, 150)}{escapeHtml(d.contextMd).length > 150 ? '...' : ''}
+                {contextPreview.slice(0, 150)}{contextPreview.length > 150 ? '...' : ''}
               </pre>
               <pre className="mt-1 text-xs text-gray-500 bg-gray-900 rounded p-3 overflow-x-auto whitespace-pre-wrap">
-                {escapeHtml(d.outcomeMd).slice(0, 150)}{escapeHtml(d.outcomeMd).length > 150 ? '...' : ''}
+                {outcomePreview.slice(0, 150)}{outcomePreview.length > 150 ? '...' : ''}
               </pre>
               <p className="text-xs text-gray-500 mt-2">
                 Decided: {new Date(d.decidedAt * 1000).toLocaleString()}
               </p>
             </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
