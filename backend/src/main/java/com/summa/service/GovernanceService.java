@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.PersistenceException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -120,7 +121,7 @@ public class GovernanceService {
             double reserved = reservedObj != null ? reservedObj : 0.0;
             double unsettled = unsettledObj != null ? unsettledObj : 0.0;
             return (reserved + unsettled) >= ceiling;
-        } catch (jakarta.persistence.PersistenceException e) {
+        } catch (PersistenceException e) {
             // SEC-011/SPW-060: Fail-closed on DB errors — a corrupted ledger must
             // trip the breaker rather than silently allow unchecked spending.
             log.error("[SUMMA] spend halt evaluation failed (DB error), tripping breaker: {}", e.getMessage());

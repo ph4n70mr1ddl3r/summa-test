@@ -95,10 +95,16 @@ public class RunController {
         if (gate != null) return gate;
         try {
             String result = body.get("result");
-            Long costTokens = body.containsKey("costTokens") && body.get("costTokens") != null ?
-                Long.parseLong(body.get("costTokens")) : null;
-            Double costUsd = body.containsKey("costUsd") && body.get("costUsd") != null ?
-                Double.parseDouble(body.get("costUsd")) : null;
+            Long costTokens = null;
+            Double costUsd = null;
+            if (body.containsKey("costTokens") && body.get("costTokens") != null && !body.get("costTokens").isBlank()) {
+                try { costTokens = Long.parseLong(body.get("costTokens")); }
+                catch (NumberFormatException e) { throw new IllegalArgumentException("Invalid costTokens: " + body.get("costTokens")); }
+            }
+            if (body.containsKey("costUsd") && body.get("costUsd") != null && !body.get("costUsd").isBlank()) {
+                try { costUsd = Double.parseDouble(body.get("costUsd")); }
+                catch (NumberFormatException e) { throw new IllegalArgumentException("Invalid costUsd: " + body.get("costUsd")); }
+            }
 
             Run run = runService.complete(id, result, costTokens, costUsd);
             return ResponseEntity.ok(run);

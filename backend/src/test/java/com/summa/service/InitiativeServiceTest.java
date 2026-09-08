@@ -67,7 +67,7 @@ class InitiativeServiceTest {
         init.setStatus("proposed");
         when(initiativeRepository.save(any())).thenReturn(init);
 
-        Initiative result = initiativeService.create("i1", "Launch product", "h1", "h1", null, null,
+        Initiative result = initiativeService.create("i1", "Launch product", "h:h1", "h:h1", null, null,
             Instant.now().plusSeconds(86400), "[]");
 
         assertNotNull(result);

@@ -73,7 +73,7 @@ public class NodeController {
             if (workspaceId == null || workspaceId.isBlank()) {
                 throw new IllegalArgumentException("workspaceId is required");
             }
-            int currentEpoch = body.get("epoch") != null ? ((Number) body.get("epoch")).intValue() : 0;
+            int currentEpoch = body.get("epoch") != null ? Integer.parseInt(body.get("epoch").toString()) : 0;
             com.summa.model.Node node = nodeService.claimWorkspace(id, workspaceId, currentEpoch);
             return ResponseEntity.ok(node);
         } catch (IllegalArgumentException e) {

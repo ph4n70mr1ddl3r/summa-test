@@ -30,7 +30,7 @@ public class InitiativeService {
     private static final long STALL_CHECK_INTERVAL_MS = 300000; // 5 minutes
     private static final long STALL_ASK_DEADLINE_SECONDS = 7 * 86400L; // 7 days
     private static final long STALL_ASK_DEDUP_WINDOW_SECONDS = 3600L; // 1 hour
-    private static final Pattern KEYED_UNION_PATTERN = Pattern.compile("^[ha]?:.+$|^[a-zA-Z0-9_-]+$");
+    private static final Pattern KEYED_UNION_PATTERN = Pattern.compile("^[ha]:.+$");
 
     private final InitiativeRepository initiativeRepository;
     private final BoardTaskRepository boardTaskRepository;
@@ -405,13 +405,13 @@ public class InitiativeService {
                                     init.getId(), init.getGoalRef(), reason, goalStatus),
                                 "bulk", "escalate", 1,
                                 Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
-                            auditService.logSystem("DIRECTION_ask_CREATED", "initiative", init.getId(),
+                            auditService.logSystem("DIRECTION_ASK_CREATED", "initiative", init.getId(),
                                 String.format("{\"goalRef\":\"%s\",\"sponsor\":\"%s\",\"reason\":\"%s\"}",
                                     init.getGoalRef(), init.getSponsor(), reason));
                         }
                     }
                 } catch (Exception e) {
-                    auditService.logSystem("DIRECTION_ask_FAIL", "initiative", init.getId(),
+                    auditService.logSystem("DIRECTION_ASK_FAIL", "initiative", init.getId(),
                         String.format("{\"error\":\"%s\"}", e.getMessage()));
                 }
             }
