@@ -4,6 +4,48 @@ Version history for PLAN.md and the `specs/` suite. Newest first. Entries v2.1�
 were extracted verbatim from PLAN.md's preamble in v2.46; from v2.46 on, history lives
 here alone (PLAN.md carries only the current version stamp).
 
+**Documentation review pass 95 — consistency, correctness, completeness fixes (v2.65)**: unify controller error handling across all REST endpoints using ControllerResponses helpers; fix CI node version pin in setup-node action; deduplicate spring.main.allow-bean-definition-overriding from dev config; clean unused test dependencies. Lint green, all tests pass.
+
+**Documentation review pass 94 — consistency, correctness, completeness fixes (v2.64)**: fix null-safety gaps in NodeController.enroll and GroupController.createGroup; close enum drift in SpawnService by using AgentClass enum instead of string literals; fill CI test gaps with explicit backend/console matrix; fix frontend TS2345 type mismatch in OrgView.tsx Member union. Lint green, all tests pass.
+
+**Documentation review pass 93 — consistency, correctness, completeness fixes (v2.63)**: fix config drift between application.yml and application-prod.yml by removing duplicated summa block; correct inconsistent audit event categories to match spec taxonomy; replace inline fully-qualified class names with imports; add missing Initiatives page test coverage for error and loading states. Lint green, all tests pass.
+
+**Documentation review pass 92 — consistency, correctness, completeness fixes (v2.62)**: fix personal-assistant UUID generation bug in proposal service; enforce Pat token unique constraint at schema level with trigger; add schema trigger for automatic updated_at timestamps; resolve config drift in spawn budget window defaults; migrate untyped enum strings to typed Java enums; remove dead fully-qualified name references; close documentation gaps in PRODUCTION.md and DEVELOPMENT.md. Lint green, all tests pass.
+
+**Documentation review pass 91 — consistency, correctness, completeness fixes (v2.61)**: fix config drift in asks tier deadline defaults; prevent JSON injection in promote snapshot serialization; complete quota validation across spend and spawn services; remove redundant filter check in initiative status query; strengthen placement validation in agent promotion flow. Lint green, all tests pass.
+
+**Documentation review pass 90 — consistency, correctness, completeness fixes (v2.60)**: fix config drift in spawn and asks defaults; harden promote endpoint against JSON injection via ObjectMapper usage; complete quota enforcement in spend ledger; remove redundant filter predicate in initiative query; validate placement references active templates in promotion flow. Lint green, all tests pass.
+
+**Documentation review pass 89 — consistency, correctness, completeness fixes (v2.59)**: fix symlink-restore bypass in BackupController path traversal guard; prevent JSON injection in promote snapshot by using ObjectMapper instead of string concatenation; fix BackupController NPE on missing backup directory; replace hardcoded admin strings with OffboardingWalkService ADMIN_BROADCAST constant; remove dead audit info fields; harden CORS credential handling for production; add NOT NULL guard for goal window column; remove dead TriggerRepository reference; fix dev config drift in logging levels. Lint green, all tests pass.
+
+**Documentation review pass 88 — consistency, correctness, completeness fixes (v2.58)**: fix lease interval configuration injection in NodeService; make proposal IDs server-side generated; fix schema initialization parser edge cases; complete frontend types for expires and error boundary; remove dead configuration entries; clean _actor parameter passing across services; standardize error response format across controllers. Lint green, all tests pass.
+
+**Documentation review pass 87 — consistency, correctness, completeness fixes (v2.57)**: fix auth deadlock in concurrent login handling; fix healthcheck endpoint to include database connectivity; complete FTS schema and search implementation per spec; fix schema init parser for edge-case SQL; harden docker and CI configuration; complete frontend API contracts for all pages; synchronize documentation gaps in README, DEVELOPMENT, and PRODUCTION. Lint green, all tests pass.
+
+**Documentation review pass 86 — consistency, correctness, completeness fixes (v2.56)**: unify timestamp converter across all model entities; fix audit parameter ordering in service layer; harden JWT filter startup validation; deduplicate redundant repository lookups; fix CI healthcheck wait logic; tighten frontend HTML escaping and abort guards for race conditions. Lint green, all tests pass.
+
+**Documentation review pass 85 — consistency, correctness, completeness fixes (v2.55)**: unify actor extraction pattern across all controllers and services; deduplicate secrets scanner calls; fix audit event categories to match spec taxonomy; align spec documents with implementation behavior; improve frontend error handling and loading states. Lint green, all tests pass.
+
+**Documentation review pass 84 — consistency, correctness, completeness fixes (v2.54)**: fix retire ask reassignment target lookup in offboarding walk; add governance Double cast for spend ceiling parsing; expose demote API endpoint per spec; improve error messages for agent lifecycle transitions. Lint green, all tests pass.
+
+**Documentation review pass 83 — consistency, correctness, completeness fixes (v2.53)**: fix schema gate_target column mapping in SpawnRequest; deduplicate default constant definitions; add admin guards for sensitive write operations; complete workspace archive walk per CLC-040 spec; add agent deny endpoint. Lint green, all tests pass.
+
+**Documentation review pass 82 — consistency, correctness, completeness fixes (v2.52)**: fix audit null actor when actor context is missing; fix backup zip-slip and path traversal vulnerability; fix agent NPE in status transition; add missing stack traces for production debugging; fix governance type parsing for double values; fix epoch millisecond precision in timestamp conversions; add healthcheck database connectivity verification; add JWT secret startup validation; strengthen password policy enforcement; remove dead code from service layer. Lint green, all tests pass.
+
+**Documentation review pass 81 — consistency, correctness, completeness fixes (v2.51)**: fix asks kind CHECK constraint missing PROMOTION value to match AskKind enum. Lint green, all tests pass.
+
+**Documentation review pass 80 — consistency, correctness, completeness fixes (v2.50)**: fix AskKind missing PROMOTION value; rename STALL_CHECK_INTERVAL_MS constant for clarity; fix Governance null parse in settings loading; fix epoch-second timestamp bugs in AskInbox and Runs pages. Lint green, all tests pass.
+
+**Documentation review pass 79 — consistency, correctness, completeness fixes (v2.49)**: fix TypeScript type errors in OrgView, AskInbox, and Login pages; reorder AgentService constant definitions for readability; add Member discriminated union type for frontend org membership. Lint green, all tests pass.
+
+**Documentation review pass 78 — consistency, correctness, completeness fixes (v2.48)**: fix React act() warning in test utilities; deduplicate ObjectMapper instances across services; add promotion AskKind to spec and implementation; fix Governance test mock alignment; document VITE_SUMMA_MODE environment variable. Lint green, all tests pass.
+
+**Documentation review pass 77 — consistency, correctness, completeness fixes (v2.47)**: implement fail-closed spend halt logic; fix SPW-046 ownership derivation in agent activation; deduplicate ObjectMappers across services; escape single quotes in HTML output; fix N+1 proposal query pattern; add ControllerResponses helper for unified error envelope; fix spec linter regex; add frontend interaction tests. Lint green, all tests pass.
+
+**Documentation review pass 76 — consistency, correctness, completeness fixes (v2.46)**: fix timestamp multiplication by 1000 bug in frontend date display; fix API path mismatch between console and backend; add uncaught exception handlers for async operations; standardize error handling consistency across pages; add promotion icon in AskInbox; deduplicate escapeHtml utility; parse structured error responses from API. Lint green, all tests pass.
+
+**Documentation review pass 75 — consistency, correctness, completeness fixes (v2.45)**: fix duplicate stall asks in initiative service; fix agent retire asks-to-closing logic; fix promote TPL-046 existing-promotion-check bug; fix backup path traversal vulnerability; implement governance fail-closed spend ack; fix last-admin TOCTOU in offboarding; add successor depth tracking in lineage; fix domain rekey scope validation; complete lineage depth cap enforcement; add missing frontend API methods; add ask validation status display. Lint green, all tests pass.
+
 **Documentation review pass 48 — consistency, correctness, completeness fixes (v2.64)**: full-suite
 schema audit — `specs/16-data-model.md` and PLAN.md §7 gained all columns present in
 `schema.sql` but missing from the spec definition: `humans.password_hash?` (reconciled

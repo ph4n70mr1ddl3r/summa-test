@@ -15,7 +15,7 @@ export default function OrgView() {
       api.groups.list(),
     ]).then(([m, g]) => {
       if (aborted) return
-      setMembers(m.members)
+      setMembers(m.members as Member[])
       setGroups(g)
       setLoading(false)
     }).catch((e) => {

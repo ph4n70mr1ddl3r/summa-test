@@ -40,11 +40,13 @@ public class GroupController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        String name = body.get("name");
+        String leaderMemberId = body.get("leaderMemberId");
+        if (name == null || name.isBlank() || leaderMemberId == null || leaderMemberId.isBlank()) {
+            return ControllerResponses.validation(auditService, "name and leaderMemberId are required");
+        }
         try {
-            Group group = groupService.create(
-                body.get("name"),
-                body.get("leaderMemberId")
-            );
+            Group group = groupService.create(name, leaderMemberId);
             return ResponseEntity.ok(group);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());

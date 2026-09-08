@@ -38,18 +38,18 @@ public class NodeController {
 
     @PostMapping("/enroll")
     public ResponseEntity<?> enroll(@RequestBody Map<String, String> body) {
+        String name = body.get("name");
+        String kind = body.get("kind");
+        String pubkey = body.get("pubkey");
+        if (name == null || name.isBlank() || kind == null || kind.isBlank() || pubkey == null || pubkey.isBlank()) {
+            return ControllerResponses.validation(auditService, "name, kind, and pubkey are required");
+        }
         try {
-            Node node = nodeService.enroll(
-                body.get("name"),
-                body.get("kind"),
-                body.get("pubkey")
-            );
+            Node node = nodeService.enroll(name, kind, pubkey);
             return ResponseEntity.ok(Map.of(
                 "id", node.getId(),
                 "enrollmentToken", nodeService.generateEnrollmentToken(node.getId())
             ));
-        } catch (IllegalArgumentException e) {
-            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         }

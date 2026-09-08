@@ -1,5 +1,6 @@
 package com.summa.service;
 
+import com.summa.enums.AgentClass;
 import com.summa.repository.SpawnRequestRepository;
 import com.summa.model.SpawnRequest;
 import com.summa.repository.RoleTemplateRepository;
@@ -88,8 +89,8 @@ public class SpawnService {
         String effectiveSpawnClass = spawnClass != null ? spawnClass : "ephemeral";
 
         // SPW-010: Ephemeral requester refused a persistent-hire request at write
-        if ("persistent".equals(effectiveSpawnClass)) {
-            if (requesterOpt.isPresent() && "ephemeral".equals(requesterOpt.get().getAgentClass())) {
+        if (AgentClass.PERSISTENT.getValue().equals(effectiveSpawnClass)) {
+            if (requesterOpt.isPresent() && AgentClass.EPHEMERAL.getValue().equals(requesterOpt.get().getAgentClass())) {
                 throw new IllegalStateException("Ephemeral agents cannot request persistent hires");
             }
         }
@@ -145,7 +146,7 @@ public class SpawnService {
                 throw new IllegalStateException("Template is not active: " + templateId
                     + " (status: " + template.getStatus() + ")");
             }
-            String requiredClass = "ephemeral".equals(effectiveSpawnClass) ? "ephemeral-subagent" : "persistent";
+            String requiredClass = AgentClass.EPHEMERAL.getValue().equals(effectiveSpawnClass) ? "ephemeral-subagent" : "persistent";
             if (!requiredClass.equals(template.getAgentClass())) {
                 throw new IllegalStateException("Template class mismatch: request class="
                     + effectiveSpawnClass + " but template class=" + template.getAgentClass());
@@ -155,7 +156,7 @@ public class SpawnService {
         // SPW-040: Determine the approval gate for persistent hires
         // Gate routes to the owner of the primary domain of the hire's primary workspace
         String gateTarget = null;
-        if ("persistent".equals(effectiveSpawnClass) && workspaceBindings != null && !workspaceBindings.isBlank()) {
+        if (AgentClass.PERSISTENT.getValue().equals(effectiveSpawnClass) && workspaceBindings != null && !workspaceBindings.isBlank()) {
             try {
                 JsonNode bindings = objectMapper.readTree(workspaceBindings);
                 if (bindings.isArray() && bindings.size() > 0) {

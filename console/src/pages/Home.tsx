@@ -64,18 +64,18 @@ function ApiStatusCheck() {
   const [status, setStatus] = useState<'ok' | 'error' | 'loading'>('loading')
 
   useEffect(() => {
-    let cancelled = false
+    let aborted = false
     const check = async () => {
       try {
         await api.health()
-        if (!cancelled) setStatus('ok')
+        if (!aborted) setStatus('ok')
       } catch {
-        if (!cancelled) setStatus('error')
+        if (!aborted) setStatus('error')
       }
     }
     check()
     const interval = setInterval(check, 30000)
-    return () => { cancelled = true; clearInterval(interval) }
+    return () => { aborted = true; clearInterval(interval) }
   }, [])
 
   return (
