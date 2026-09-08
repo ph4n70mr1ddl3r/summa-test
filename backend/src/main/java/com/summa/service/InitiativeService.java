@@ -13,11 +13,14 @@ import com.summa.model.SpawnRequest;
 import com.summa.model.Human;
 import com.summa.model.Agent;
 import com.summa.model.DnaGoal;
+import com.summa.util.JsonHelpers;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -86,7 +89,7 @@ public class InitiativeService {
         if (dependsOn != null && !dependsOn.isBlank() && !dependsOn.equals("[]")) {
             try {
                 List<String> depIds = objectMapper.readValue(dependsOn,
-                    new com.fasterxml.jackson.core.type.TypeReference<List<String>>() {});
+                    new TypeReference<List<String>>() {});
                 for (String depId : depIds) {
                     Initiative dep = findById(depId).orElseThrow(
                         () -> new IllegalArgumentException("Dependency initiative not found: " + depId));
@@ -100,7 +103,7 @@ public class InitiativeService {
                     throw new IllegalArgumentException(
                         "Adding these dependencies would create a cycle: " + depIds);
                 }
-            } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            } catch (JsonProcessingException e) {
                 throw new IllegalArgumentException("Invalid dependsOn format: " + e.getMessage());
             }
         }
@@ -140,7 +143,7 @@ public class InitiativeService {
                 try {
                     List<String> grandchildDeps = objectMapper.readValue(
                         depOpt.get().getDependsOn(),
-                        new com.fasterxml.jackson.core.type.TypeReference<List<String>>() {});
+                        new TypeReference<List<String>>() {});
                     if (hasPathTo(target, grandchildDeps, visited)) return true;
                 } catch (Exception ignored) {}
             }
@@ -439,31 +442,11 @@ public class InitiativeService {
     }
 
     private static String toJson(Map<String, Object> map, ObjectMapper mapper) {
-        try {
-            return mapper.writeValueAsString(map);
-        } catch (Exception e) {
-            return "{}";
-        }
+        return JsonHelpers.toJson(map, mapper);
     }
 
     private static String jsonString(String value) {
-        if (value == null) return "null";
-        StringBuilder sb = new StringBuilder("\"");
-        for (int i = 0; i < value.length(); i++) {
-            char c = value.charAt(i);
-            switch (c) {
-                case '"' -> sb.append("\\\"");
-                case '\\' -> sb.append("\\\\");
-                case '\n' -> sb.append("\\n");
-                case '\r' -> sb.append("\\r");
-                case '\t' -> sb.append("\\t");
-                default -> {
-                    if (c < 0x20) sb.append(String.format("\\u%04x", (int) c));
-                    else sb.append(c);
-                }
-            }
-        }
-        return sb.append("\"").toString();
+        return JsonHelpers.jsonString(value);
     }
 
     private void validateKeyedUnion(String value, String fieldName) {
@@ -487,7 +470,7 @@ public class InitiativeService {
             if (dep.getDependsOn() == null || dep.getDependsOn().isBlank()) continue;
             try {
                 List<String> deps = objectMapper.readValue(dep.getDependsOn(),
-                    new com.fasterxml.jackson.core.type.TypeReference<List<String>>() {});
+                    new TypeReference<List<String>>() {});
                 if (deps.contains(closedId)) {
                     // File coordination ask to the dependent's sponsor
                     String askTo = isMemberActive(dep.getSponsor())

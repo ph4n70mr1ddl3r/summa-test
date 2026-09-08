@@ -23,6 +23,7 @@ import com.summa.model.Human;
 import com.summa.model.Initiative;
 import com.summa.model.Pat;
 import com.summa.model.RoleTemplate;
+import com.summa.util.JsonHelpers;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -490,11 +491,7 @@ public class OffboardingWalkService {
     }
 
     private static String toJson(Map<String, Object> map, ObjectMapper mapper) {
-        try {
-            return mapper.writeValueAsString(map);
-        } catch (Exception e) {
-            return "{}";
-        }
+        return JsonHelpers.toJson(map, mapper);
     }
 
     private boolean isPersonalAssistant(Agent agent) {

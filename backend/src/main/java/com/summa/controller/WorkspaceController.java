@@ -5,7 +5,6 @@ import com.summa.security.WriteGate;
 import com.summa.service.AuditService;
 import com.summa.service.MemberService;
 import com.summa.service.WorkspaceService;
-import com.summa.model.AuditEvent;
 import com.summa.model.Workspace;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -90,10 +89,7 @@ public class WorkspaceController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         if (!memberService.isAdmin(actor)) {
-            AuditEvent audit = auditService.logSystem("REFUSAL", "admin_only", "Workspace archive requires admin role", actor);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "admin_only", "message", "Workspace archive requires admin role",
-                            "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, "Workspace archive requires admin role");
         }
         try {
             Workspace ws = workspaceService.archive(id, actor);

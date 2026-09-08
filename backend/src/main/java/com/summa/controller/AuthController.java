@@ -38,12 +38,7 @@ public class AuthController {
         String password = body.get("password");
 
         if (email == null || email.isBlank()) {
-            var audit = auditService.logSystem("REFUSAL", "auth_login", "auth_login", "email is required");
-            return ResponseEntity.badRequest().body(Map.of(
-                "code", "validation",
-                "message", "email is required",
-                "audit_event_id", audit.getId()
-            ));
+            return ControllerResponses.validation(auditService, "email is required");
         }
 
         // Rate limit by email to prevent brute-force
@@ -134,28 +129,22 @@ public class AuthController {
         String newPassword = body.get("newPassword");
 
         if (currentPassword == null || currentPassword.isBlank()) {
-            var audit = auditService.logSystem("REFUSAL", "auth_change_password", actor, "currentPassword is required");
-            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", "currentPassword is required", "audit_event_id", audit.getId()));
+            return ControllerResponses.validation(auditService, "currentPassword is required");
         }
         if (newPassword == null || newPassword.isBlank()) {
-            var audit = auditService.logSystem("REFUSAL", "auth_change_password", actor, "newPassword is required");
-            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", "newPassword is required", "audit_event_id", audit.getId()));
+            return ControllerResponses.validation(auditService, "newPassword is required");
         }
         if (newPassword.length() < 8) {
-            var audit = auditService.logSystem("REFUSAL", "auth_change_password", actor, "newPassword too short");
-            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", "newPassword must be at least 8 characters", "audit_event_id", audit.getId()));
+            return ControllerResponses.validation(auditService, "newPassword must be at least 8 characters");
         }
         if (!newPassword.matches(".*[A-Z].*")) {
-            var audit = auditService.logSystem("REFUSAL", "auth_change_password", actor, "newPassword missing uppercase");
-            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", "newPassword must contain at least one uppercase letter", "audit_event_id", audit.getId()));
+            return ControllerResponses.validation(auditService, "newPassword must contain at least one uppercase letter");
         }
         if (!newPassword.matches(".*[a-z].*")) {
-            var audit = auditService.logSystem("REFUSAL", "auth_change_password", actor, "newPassword missing lowercase");
-            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", "newPassword must contain at least one lowercase letter", "audit_event_id", audit.getId()));
+            return ControllerResponses.validation(auditService, "newPassword must contain at least one lowercase letter");
         }
         if (!newPassword.matches(".*\\d.*")) {
-            var audit = auditService.logSystem("REFUSAL", "auth_change_password", actor, "newPassword missing digit");
-            return ResponseEntity.badRequest().body(Map.of("code", "validation", "message", "newPassword must contain at least one digit", "audit_event_id", audit.getId()));
+            return ControllerResponses.validation(auditService, "newPassword must contain at least one digit");
         }
 
         var humanOpt = orgService.findHuman(actor);

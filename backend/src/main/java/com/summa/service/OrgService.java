@@ -5,6 +5,7 @@ import com.summa.repository.AuditEventRepository;
 import com.summa.model.Human;
 import com.summa.model.AuditEvent;
 import com.summa.security.PasswordUtil;
+import com.summa.util.JsonHelpers;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -73,7 +74,7 @@ public class OrgService {
 
         Human saved = humanRepository.save(human);
         auditService.log("system", "BOOTSTRAP", "human", saved.getId(),
-            "{\"name\":" + jsonString(name) + ",\"rbac\":" + jsonString(effectiveRbac) + "}");
+            "{\"name\":" + JsonHelpers.jsonString(name) + ",\"rbac\":" + JsonHelpers.jsonString(effectiveRbac) + "}");
         return saved;
     }
 
@@ -82,23 +83,7 @@ public class OrgService {
      * ObjectMapper into this service and prevents log/JSON injection).
      */
     static String jsonString(String value) {
-        if (value == null) return "null";
-        StringBuilder sb = new StringBuilder("\"");
-        for (int i = 0; i < value.length(); i++) {
-            char c = value.charAt(i);
-            switch (c) {
-                case '"' -> sb.append("\\\"");
-                case '\\' -> sb.append("\\\\");
-                case '\n' -> sb.append("\\n");
-                case '\r' -> sb.append("\\r");
-                case '\t' -> sb.append("\\t");
-                default -> {
-                    if (c < 0x20) sb.append(String.format("\\u%04x", (int) c));
-                    else sb.append(c);
-                }
-            }
-        }
-        return sb.append("\"").toString();
+        return JsonHelpers.jsonString(value);
     }
 
     @Transactional
