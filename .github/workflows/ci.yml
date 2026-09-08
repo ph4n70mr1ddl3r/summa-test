@@ -60,6 +60,16 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-      - name: Build backend on ${{ matrix.os }}
-        run: cd backend && mvn -q -DskipTests package
+      - name: Build and test backend on ${{ matrix.os }}
+        run: cd backend && mvn -B test
         shell: bash
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build backend Docker image
+        run: docker build -f Dockerfile -t summa-backend:test .
+      - name: Build console Docker image
+        run: docker build -f Dockerfile.console -t summa-console:test .

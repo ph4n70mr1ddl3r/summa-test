@@ -5,6 +5,7 @@ import com.summa.model.RoleTemplate;
 import com.summa.repository.AgentRepository;
 import com.summa.model.Agent;
 import com.summa.repository.SpawnRequestRepository;
+import com.summa.constants.Defaults;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -41,7 +42,7 @@ public class RoleTemplateService {
         template.setStatus("draft");
 
         RoleTemplate saved = templateRepository.save(template);
-        auditService.log("system", "CREATE", "role_template", template.getId(),
+        auditService.log(Defaults.SYSTEM_ACTOR, "CREATE", "role_template", template.getId(),
             String.format("{\"name\":\"%s\",\"class\":\"%s\"}", name, agentClass));
         return saved;
     }

@@ -1,0 +1,35 @@
+spring:
+  datasource:
+    url: jdbc:sqlite::memory:?journal_mode=WAL&cache=shared
+    driver-class-name: org.sqlite.JDBC
+  jpa:
+    database-platform: org.eclipse.persistence.platform.database.SQLiteDialect
+    hibernate:
+      ddl-auto: none
+    properties:
+      eclipselink:
+        jdbc:
+          batch-writing: delayed
+        batching:
+          size: 50
+        jpa:
+          convertors: com.summa.config.InstantToUnixEpochConverter
+      eclipselink.cache.shared.default: false
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+
+summa:
+  auth:
+    jwt-secret: test-jwt-secret-for-unit-tests-only-do-not-use-in-production
+  database:
+    path: :memory:
+  cors:
+    origins: ""
+
+logging:
+  level:
+    com.summa: DEBUG
+    org.springframework.security: DEBUG
+    org.eclipse.persistence: WARN

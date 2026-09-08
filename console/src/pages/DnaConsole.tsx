@@ -52,7 +52,7 @@ export default function DNAConsole() {
             {domains.map((d) => (
               <div key={d.id} className="flex items-center justify-between bg-gray-700 rounded px-3 py-2">
                 <span className="text-gray-200 text-sm">{escapeHtml(d.name)}</span>
-                <span className={`text-xs px-2 py-0.5 rounded ${d.access === 'public' ? 'bg-green-900/50 text-green-400' : 'bg-yellow-900/50 text-yellow-400'}`}>
+                <span className={`text-xs px-2 py-0.5 rounded ${d.access === 'public' ? 'bg-green-900/50 text-green-400' : d.access === 'domain' ? 'bg-blue-900/50 text-blue-400' : 'bg-yellow-900/50 text-yellow-400'}`}>
                   {escapeHtml(d.access)}
                 </span>
               </div>

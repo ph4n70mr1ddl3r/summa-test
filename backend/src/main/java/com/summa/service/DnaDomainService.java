@@ -311,7 +311,8 @@ public class DnaDomainService {
                     workspaceRepository.save(ws);
                 }
             } catch (Exception e) {
-                // skip malformed
+                auditService.logSystem("MERGE_SKIP_MALFORMED_WS", "workspace", ws.getId(),
+                    String.format("{\"error\":\"%s\"}", e.getMessage()));
             }
         }
 

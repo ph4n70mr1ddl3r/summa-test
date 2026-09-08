@@ -4,7 +4,7 @@ import { escapeHtml } from '../utils/escapeHtml'
 
 function parseParticipantsCount(participants: string): number {
   try {
-    const arr = JSON.parse(participants ?? '[]')
+    const arr = JSON.parse(participants)
     return Array.isArray(arr) ? arr.length : 0
   } catch {
     return 0

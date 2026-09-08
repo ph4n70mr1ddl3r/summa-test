@@ -15,7 +15,9 @@ summa/
 │   │   ├── config/        # App configuration (incl. SchemaInitializer, WebConfig)
 │   │   ├── exception/     # Exception handlers
 │   │   └── util/          # Shared utilities
-│   ├── src/main/resources/  # application*.yml, schema.sql (applied by SchemaInitializer)
+│   ├── src/main/resources/  # application*.yml, schema.sql
+│   │                           # schema.sql is the ground-truth DDL; SchemaInitializer applies it at startup
+│   │                           # when spring.sql.init.mode is 'always' (test/dev); never 'never' in prod
 │   └── src/test/java/     # Unit tests
 ├── console/           # React 19 + TypeScript + Vite
 │   ├── src/

@@ -10,6 +10,7 @@ import com.summa.model.Workspace;
 import com.summa.model.Run;
 import com.summa.model.SpendLedger;
 import com.summa.service.WorkspaceService;
+import com.summa.constants.Defaults;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -63,7 +64,7 @@ public class NodeService {
         node.setEnrolledAt(Instant.now());
 
         Node saved = nodeRepository.save(node);
-        auditService.log("system", "ENROLL", "node", node.getId(),
+        auditService.log(Defaults.SYSTEM_ACTOR, "ENROLL", "node", node.getId(),
             String.format("{\"name\":\"%s\",\"kind\":\"%s\",\"token_expires_at\":%d}",
                 name, kind, Instant.now().getEpochSecond() + ENROLLMENT_TOKEN_TTL_SECONDS));
         return saved;

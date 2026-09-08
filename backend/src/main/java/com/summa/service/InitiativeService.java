@@ -35,7 +35,7 @@ public class InitiativeService {
     private static final long STALL_CHECK_INTERVAL_MS = 300000; // 5 minutes
     private static final long STALL_ASK_DEADLINE_SECONDS = 7 * 86400L; // 7 days
     private static final long STALL_ASK_DEDUP_WINDOW_SECONDS = 3600L; // 1 hour
-    private static final Pattern KEYED_UNION_PATTERN = Pattern.compile("^[ha]:.+$");
+    private static final Pattern KEYED_UNION_PATTERN = Pattern.compile("^[ha]?:.+$|^[a-zA-Z0-9_-]+$");
 
     private final InitiativeRepository initiativeRepository;
     private final BoardTaskRepository boardTaskRepository;
@@ -147,7 +147,7 @@ public class InitiativeService {
                     if (hasPathTo(target, grandchildDeps, visited)) return true;
                 } catch (Exception ignored) {}
             }
-            visited.remove(depId);
+            // Do not backtrack — visited set must persist for correct cycle detection
         }
         return false;
     }

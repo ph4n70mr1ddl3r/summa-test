@@ -5,6 +5,7 @@ import com.summa.model.Group;
 import com.summa.model.Human;
 import com.summa.model.Agent;
 import com.summa.service.MemberService;
+import com.summa.constants.Defaults;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -38,7 +39,7 @@ public class GroupService {
         group.setLeaderMemberId(leaderMemberId);
 
         Group saved = groupRepository.save(group);
-        auditService.log("system", "CREATE", "group", group.getId(), 
+        auditService.log(Defaults.SYSTEM_ACTOR, "CREATE", "group", group.getId(), 
             String.format("{\"name\":\"%s\"}", name));
         return saved;
     }

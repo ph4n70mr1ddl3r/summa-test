@@ -15,25 +15,25 @@ public final class ControllerResponses {
     private ControllerResponses() {}
 
     public static ResponseEntity<Map<String, Object>> validation(AuditService audit, String message) {
-        AuditEvent event = audit.logSystem("REFUSAL", "validation", message, null);
+        AuditEvent event = audit.logSystem("REFUSAL", "validation", null, message);
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
                 .body(Map.of("code", "validation", "message", message, "audit_event_id", event.getId()));
     }
 
     public static ResponseEntity<Map<String, Object>> gate(AuditService audit, String message) {
-        AuditEvent event = audit.logSystem("REFUSAL", "gate", message, null);
+        AuditEvent event = audit.logSystem("REFUSAL", "gate", null, message);
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(Map.of("code", "gate", "message", message, "audit_event_id", event.getId()));
     }
 
     public static ResponseEntity<Map<String, Object>> notFound(AuditService audit, String message) {
-        AuditEvent event = audit.logSystem("REFUSAL", "not_found", message, null);
+        AuditEvent event = audit.logSystem("REFUSAL", "not_found", null, message);
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(Map.of("code", "not_found", "message", message, "audit_event_id", event.getId()));
     }
 
     public static ResponseEntity<Map<String, Object>> conflict(AuditService audit, String message) {
-        AuditEvent event = audit.logSystem("REFUSAL", "conflict", message, null);
+        AuditEvent event = audit.logSystem("REFUSAL", "conflict", null, message);
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(Map.of("code", "conflict", "message", message, "audit_event_id", event.getId()));
     }

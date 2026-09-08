@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Optional;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
-import java.util.ArrayList;
+import com.summa.constants.Defaults;
 
 @Service
 public class WorkspaceService {
@@ -122,6 +122,10 @@ public class WorkspaceService {
     public Workspace archive(String id, String actor) {
         Workspace ws = workspaceRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Workspace not found: " + id));
+
+        if (ws.isArchived()) {
+            throw new IllegalStateException("Workspace is already archived");
+        }
 
         // Drop initiative bindings — goal slice re-derives at once
         ws.setInitiativeIds("[]");

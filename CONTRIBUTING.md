@@ -32,10 +32,11 @@ These checks verify:
 
 1. Determine the prefix (see `DEVELOPMENT.md` section on IDs).
 2. Add the requirement to the appropriate spec module in `specs/`.
-3. Run `python3 tools/lint_specs.py` to validate.
-4. Implement the behavior in `backend/` or `console/`.
-5. Add tests.
-6. Update `specs/TRACEABILITY.md`.
+3. If the requirement touches the data model, update `specs/16-data-model.md` and `backend/src/main/resources/schema.sql`.
+4. Run `python3 tools/lint_specs.py` to validate.
+5. Implement the behavior in `backend/` or `console/`.
+6. Add tests.
+7. Update `specs/TRACEABILITY.md`.
 
 ### Adding a New Endpoint
 

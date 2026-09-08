@@ -18,7 +18,7 @@ humans         (id, name, email, rbac 'admin'|'owner'|'member'|'viewer', auth js
                 -- default — SEC-001's OIDC path leaves it null); when set, /auth/login accepts
                 -- email+password as an alternative to OIDC; hashed, never returned in
                 -- responses; SEC-001/CFG-020 govern when it is used
-agents         + owner_human_id, class 'persistent'|'ephemeral'|'ephemeral-subagent', spawned_by member?, ttl_at,
+agents         + owner_human_id, name, class 'persistent'|'ephemeral'|'ephemeral-subagent', spawned_by member?, ttl_at,
                 budget_cap, lineage_depth, template_id?, template_version?,
                 status 'requested'|'active'|'suspended'|'retiring'|'archived',
                 created_at, updated_at?, suspended_at?, retired_at?, archived_at?
@@ -47,7 +47,7 @@ dna_proposals  (id, kind 'card'|'rule'|'decision'|'goal'|'glossary'|'edit', payl
                 revision int default 1, proposed_by member, provenance json,
                 status 'open'|'published'|'rejected'|'withdrawn', reviewed_by?, created_at,
                 reviewed_at?, review_by?, domain_id?, updated_at?)
-asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request', from member,
+asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request'|'promotion', from member,
                 to member, payload json, initiative_id?, workspace_id?,
                 status 'pending'|'answered'|'expired'|'withdrawn', deadline, created_at, updated_at?,
                 sla_tier 'critical'|'standard'|'bulk', escalation json,
@@ -56,18 +56,24 @@ asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request', fro
 initiatives    (id, title, goal_ref?, decision_ref?, sponsor member, lead member,
                 status 'proposed'|'active'|'paused'|'closed', business_budget json?,
                 deadline?, closed_at?, depends_on json?, created_at, updated_at?)
-board_tasks    + assignee_member_id?, initiative_id?, created_by member?, created_at,
+board_tasks    (id, title, description, assignee_member_id?, initiative_id?, created_by member?, created_at,
                 updated_at?, status 'open'|'in_progress'|'done'|'cancelled' default 'open',
-                priority int default 0, due_at?, completed_at?
-                (runs carry initiative_id? likewise)
-workspaces     + initiative_ids json?, domain_ids json?, node_id?, claim_epoch int default 0,
+                priority int default 0, due_at?, completed_at?)
+runs           (id, agent_id member, workspace_id?, initiative_id?, trigger_id?, playbook_id?, parent_run_id?,
+                status 'queued'|'running'|'completed'|'failed'|'cancelled'|'suspended' default 'queued',
+                prompt text default '', result?, artifacts json default '[]', error_message?,
+                cost_tokens int default 0, cost_usd double default 0,
+                created_at, started_at?, completed_at?, updated_at?)
+messages       (id, run_id, role 'system'|'user'|'assistant'|'tool', content text default '', timestamp,
+                created_at)
+workspaces     (id, name, kind 'project'|'personal'|'system' default 'project', initiative_ids json?, domain_ids json?, node_id?, claim_epoch int default 0,
                 lease_expires_at?, participants json, archived_at?,
-                created_at, updated_at?
-triggers       + criticality 'standard'|'critical' default 'standard',
+                created_at, updated_at?)
+triggers       (id, name, criticality 'standard'|'critical' default 'standard',
                 kind 'schedule'|'api'|'event' default 'schedule', expression text default '',
                 agent_id member, workspace_id?, status 'active'|'paused'|'archived' default 'active',
-                config json default '{}', last_fired_at?, created_at, updated_at?
-playbooks      + criticality 'standard'|'critical' default 'standard',
+                config json default '{}', last_fired_at?, created_at, updated_at?)
+playbooks      (id, name, criticality 'standard'|'critical' default 'standard',
                 version int default 1, body json default '{}', status 'draft'|'active'|'retired'
                 default 'active', created_by member?, created_at, updated_at?
 spend_ledger   (id, member_id, run_id?, spawn_id?, kind 'reserve'|'settle'|'release',
@@ -122,7 +128,7 @@ memory_items   (id, tier 'personal'|'project'|'proposal', member_id?, workspace_
   displacement effective at the superseder's `effective_from` (DNC-023).
 - **DAT-070** — `dna_proposals.proposed_by` must hold a write surface (DWP-010); revisions
   serialize on the domain lock (DWP-031); kind is revision-immutable (DWP-033).
-- **DAT-080** — `asks`: quorum addressing per ASK-051; responses ledger behind N-of-M;
+- **DAT-080** — `asks`: kind includes `approval|question|assignment|spawn_request|promotion`; quorum addressing per ASK-051; responses ledger behind N-of-M;
   `collapsed_count` folds identical asks (ASK-100); `workspace_id` keys the domain-owner
   escalation hop and digest grouping; the system originator (ASK-031) is a reserved
   non-member value of `from`; `to` reserves the broadcast addressee `admins` — every
