@@ -48,12 +48,12 @@ public class DnaDomainController {
                 throw new IllegalArgumentException("ownerHumanId is required");
             }
             DnaDomain domain = domainService.create(
-                body.get("id"),
+                java.util.UUID.randomUUID().toString(),
                 body.get("name"),
                 body.get("ownerHumanId"),
                 body.get("access"),
                 body.get("store"),
-                body.containsKey("reviewSlaDays") ? Integer.parseInt(body.get("reviewSlaDays")) : null,
+                body.containsKey("reviewSlaDays") ? parseIntSafe(body.get("reviewSlaDays")) : null,
                 body.get("residency")
             );
             return ResponseEntity.ok(domain);
@@ -169,5 +169,10 @@ public class DnaDomainController {
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         }
+    }
+
+    private Integer parseIntSafe(String s) {
+        try { return Integer.parseInt(s); }
+        catch (NumberFormatException e) { throw new IllegalArgumentException("Invalid reviewSlaDays: " + s); }
     }
 }

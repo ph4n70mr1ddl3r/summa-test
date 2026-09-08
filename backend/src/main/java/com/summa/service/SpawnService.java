@@ -24,6 +24,7 @@ import java.util.UUID;
 import java.util.Map;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.summa.util.JsonHelpers;
 
 @Service
 public class SpawnService {
@@ -209,7 +210,7 @@ public class SpawnService {
 
         SpawnRequest saved = spawnRepository.save(request);
         auditService.log(actor, "CREATE_SPAWN", "spawn_request", saved.getId(),
-            String.format("{\"class\":\"%s\",\"templateId\":\"%s\",\"gateTarget\":\"%s\"}", effectiveSpawnClass, templateId, gateTarget));
+            String.format("{\"class\":%s,\"templateId\":%s,\"gateTarget\":%s}", JsonHelpers.jsonString(effectiveSpawnClass), JsonHelpers.jsonString(templateId), JsonHelpers.jsonString(gateTarget)));
         return saved;
     }
 
@@ -255,7 +256,7 @@ public class SpawnService {
 
         SpawnRequest saved = spawnRepository.save(request);
         auditService.log(actor, "APPROVE_SPAWN", "spawn_request", id,
-            String.format("{\"approvedBy\":\"%s\",\"agentId\":\"%s\"}", approvedBy, agent.getId()));
+            String.format("{\"approvedBy\":%s,\"agentId\":%s}", JsonHelpers.jsonString(approvedBy), JsonHelpers.jsonString(agent.getId())));
         return saved;
     }
 
@@ -308,7 +309,7 @@ public class SpawnService {
 
         Agent saved = agentRepository.save(agent);
         auditService.log(actor, "SPAWN_AGENT", "agent", agentId,
-            String.format("{\"requestId\":\"%s\",\"class\":\"%s\"}", request.getId(), request.getSpawnClass()));
+            String.format("{\"requestId\":%s,\"class\":%s}", JsonHelpers.jsonString(request.getId()), JsonHelpers.jsonString(request.getSpawnClass())));
         return saved;
     }
 

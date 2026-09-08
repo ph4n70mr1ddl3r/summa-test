@@ -28,13 +28,7 @@ const navItems: NavItem[] = [
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const location = useLocation()
-
-  let authed = false
-  try {
-    authed = isAuthenticated()
-  } catch {
-    // Corrupted token — treat as unauthenticated
-  }
+  const authed = useIsAuthenticated()
 
   if (!authed) {
     setAuthToken(null)
@@ -42,6 +36,16 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   }
 
   return <>{children}</>
+}
+
+function useIsAuthenticated(): boolean {
+  let authed = false
+  try {
+    authed = isAuthenticated()
+  } catch {
+    // Corrupted token — treat as unauthenticated
+  }
+  return authed
 }
 
 function LogoutButton() {
@@ -69,12 +73,7 @@ function ModeLabel() {
 }
 
 export default function App() {
-  let authed = false
-  try {
-    authed = isAuthenticated()
-  } catch {
-    // Corrupted token — treat as unauthenticated
-  }
+  const authed = useIsAuthenticated()
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-blue-600 focus:text-white focus:p-2">

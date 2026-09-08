@@ -22,6 +22,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import com.summa.model.Human;
+import com.summa.util.JsonHelpers;
 
 @Service
 public class AgentService {
@@ -76,7 +77,7 @@ public class AgentService {
 
         Agent saved = agentRepository.save(agent);
         auditService.log(ownerHumanId, "CREATE_AGENT", "agent", id,
-            String.format("{\"name\":\"%s\",\"class\":\"%s\"}", name, agentClass));
+            String.format("{\"name\":%s,\"class\":%s}", JsonHelpers.jsonString(name), JsonHelpers.jsonString(agentClass)));
         return saved;
     }
 
@@ -109,8 +110,8 @@ public class AgentService {
         for (Run run : findRunningRuns(id)) {
             run.setStatus("suspended");
             runRepository.save(run);
-            auditService.logSystem("SUSPEND_HALT_RUN", "run", run.getId(),
-                String.format("{\"agentId\":\"%s\",\"reason\":\"agent_suspended\"}", id));
+                auditService.logSystem("SUSPEND_HALT_RUN", "run", run.getId(),
+                    String.format("{\"agentId\":%s,\"reason\":\"agent_suspended\"}", JsonHelpers.jsonString(id)));
         }
 
         auditService.log(actor, "SUSPEND", "agent", id, null);
@@ -152,7 +153,7 @@ public class AgentService {
             ask.setStatus("withdrawn");
             askRepository.save(ask);
             auditService.logSystem("RETIRE_CLOSE_ASK_FROM", "ask", ask.getId(),
-                String.format("{\"agentId\":\"%s\",\"reason\":\"agent_retiring\"}", id));
+                String.format("{\"agentId\":%s,\"reason\":\"agent_retiring\"}", JsonHelpers.jsonString(id)));
         }
 
         // ASK-061: Reassign asks TO the retiring agent up the chain
@@ -167,7 +168,7 @@ public class AgentService {
             ask.setTo(newTo);
             askRepository.save(ask);
             auditService.logSystem("RETIRE_REASSIGN_ASK_TO", "ask", ask.getId(),
-                String.format("{\"agentId\":\"%s\",\"newTo\":\"%s\",\"reason\":\"agent_retiring\"}", id, newTo));
+                String.format("{\"agentId\":%s,\"newTo\":%s,\"reason\":\"agent_retiring\"}", JsonHelpers.jsonString(id), JsonHelpers.jsonString(newTo)));
         }
 
         // 2. Cancel board tasks assigned to the agent
@@ -176,7 +177,7 @@ public class AgentService {
                 task.setStatus("cancelled");
                 boardTaskRepository.save(task);
                 auditService.logSystem("RETIRE_CANCEL_TASK", "board_task", task.getId(),
-                    String.format("{\"agentId\":\"%s\",\"reason\":\"agent_retiring\"}", id));
+                    String.format("{\"agentId\":%s,\"reason\":\"agent_retiring\"}", JsonHelpers.jsonString(id)));
             }
         }
 
@@ -186,7 +187,7 @@ public class AgentService {
                 spawn.setStatus("archived");
                 spawnRequestRepository.save(spawn);
                 auditService.logSystem("RETIRE_ARCHIVE_SPAWN", "spawn_request", spawn.getId(),
-                    String.format("{\"agentId\":\"%s\",\"reason\":\"agent_retiring\"}", id));
+                    String.format("{\"agentId\":%s,\"reason\":\"agent_retiring\"}", JsonHelpers.jsonString(id)));
             }
         }
 
@@ -196,7 +197,7 @@ public class AgentService {
                 trigger.setStatus("paused");
                 triggerRepository.save(trigger);
                 auditService.logSystem("RETIRE_PAUSE_TRIGGER", "trigger", trigger.getId(),
-                    String.format("{\"agentId\":\"%s\",\"reason\":\"agent_retiring\"}", id));
+                    String.format("{\"agentId\":%s,\"reason\":\"agent_retiring\"}", JsonHelpers.jsonString(id)));
             }
         }
 
@@ -206,7 +207,7 @@ public class AgentService {
                 init.setStatus("paused");
                 initiativeRepository.save(init);
                 auditService.logSystem("RETIRE_PAUSE_INITIATIVE", "initiative", init.getId(),
-                    String.format("{\"agentId\":\"%s\",\"reason\":\"agent_retiring\"}", id));
+                    String.format("{\"agentId\":%s,\"reason\":\"agent_retiring\"}", JsonHelpers.jsonString(id)));
             }
         }
 

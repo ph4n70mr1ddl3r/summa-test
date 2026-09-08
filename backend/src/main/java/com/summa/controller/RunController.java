@@ -4,8 +4,6 @@ import com.summa.service.RunService;
 import com.summa.model.Run;
 import com.summa.service.AuditService;
 import com.summa.security.WriteGate;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
@@ -30,7 +28,7 @@ public class RunController {
             @RequestParam(required = false) String agentId,
             @RequestParam(required = false) String workspaceId,
             @RequestParam(required = false) String status,
-            @RequestParam(defaultValue = "50") @Min(1) @Max(200) int limit) {
+            @RequestParam(defaultValue = "50") int limit) {
         List<Run> all;
         if (agentId != null) {
             all = runService.findByAgent(agentId);

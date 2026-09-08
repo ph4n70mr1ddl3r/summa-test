@@ -321,6 +321,10 @@ export interface DnaDomain {
   ownerHumanId: string;
   access: DomainAccess;
   status: DnaDomainStatus;
+  store?: string;
+  reviewSlaDays?: number;
+  residency?: string;
+  namedReaders?: string;
 }
 
 export type DomainAccess = 'public' | 'domain' | 'named';

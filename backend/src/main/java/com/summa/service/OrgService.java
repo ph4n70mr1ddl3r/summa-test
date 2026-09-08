@@ -161,7 +161,7 @@ public class OrgService {
         human.setRbac(newRbac);
         Human saved = humanRepository.save(human);
         auditService.log(actor, "UPDATE_RBAC", "human", id,
-            String.format("{\"newRbac\":\"%s\"}", newRbac));
+            String.format("{\"newRbac\":%s}", JsonHelpers.jsonString(newRbac)));
         return saved;
     }
 
@@ -191,7 +191,7 @@ public class OrgService {
         human.setDeputyMemberId(deputyId);
         Human saved = humanRepository.save(human);
         auditService.log(actor, "SET_DEPUTY", "human", id,
-            String.format("{\"deputyId\":\"%s\"}", deputyId));
+            String.format("{\"deputyId\":%s}", JsonHelpers.jsonString(deputyId)));
         return saved;
     }
 
@@ -230,7 +230,7 @@ public class OrgService {
         offboardingWalkService.walkDemote(id, newRbac, actor);
 
         auditService.log(actor, "DEMOTE", "human", id,
-            String.format("{\"newRbac\":\"%s\"}", newRbac));
+            String.format("{\"newRbac\":%s}", JsonHelpers.jsonString(newRbac)));
         return human;
     }
 

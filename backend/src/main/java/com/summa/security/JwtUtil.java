@@ -92,8 +92,7 @@ public class JwtUtil {
             }
             Number nbfNum = (Number) payload.get("nbf");
             Long nbf = nbfNum != null ? nbfNum.longValue() : null;
-            if (nbf != null && nbf > 0 && nbf < 0L) return null; // overflow guard
-            if (nbf != null && Long.compare(nbf * SECONDS_TO_MILLIS, System.currentTimeMillis()) > 0) {
+            if (nbf != null && nbf > 0 && Long.compare(nbf * SECONDS_TO_MILLIS, System.currentTimeMillis()) > 0) {
                 return null;
             }
             return payload;
