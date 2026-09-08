@@ -41,7 +41,7 @@ describe('Spawning page', () => {
     vi.mocked(apiModule.api.spawn.stats).mockResolvedValue({ requested: 1, approved: 0, archived: 0 })
     render(<Spawning />)
     await waitFor(() => {
-      expect(screen.getByText('Pending: 1')).toBeInTheDocument()
+      expect(screen.getByText('Requested: 1')).toBeInTheDocument()
     })
   })
 

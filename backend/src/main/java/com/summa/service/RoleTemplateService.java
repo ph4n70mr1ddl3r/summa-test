@@ -65,9 +65,11 @@ public class RoleTemplateService {
                 .orElseThrow(() -> new IllegalArgumentException("Template not found: " + id));
 
         // TPL-003: Class is immutable across a name's versions — check against any existing row
-        List<RoleTemplate> sameName = templateRepository.findByClassAndName(template.getAgentClass(), template.getName());
+        List<RoleTemplate> sameName = templateRepository.findAll().stream()
+                .filter(t -> t.getName().equals(template.getName()) && !t.getId().equals(id))
+                .toList();
         for (RoleTemplate existing : sameName) {
-            if (!existing.getId().equals(id) && !existing.getAgentClass().equals(template.getAgentClass())) {
+            if (!existing.getAgentClass().equals(template.getAgentClass())) {
                 throw new IllegalStateException(
                     "Class flip refused: name '" + template.getName() + "' already has class '" + existing.getAgentClass() + "'");
             }

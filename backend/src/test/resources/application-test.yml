@@ -5,9 +5,12 @@ spring:
     username: sa
     password:
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
-    hibernate:
-      ddl-auto: create-drop
+    database-platform: org.eclipse.persistence.platform.database.H2Platform
+    properties:
+      eclipselink:
+        target-database: h2
+        ddl-generation: create-tables-drop-tables
+        ddl-generation-output-mode: both
     show-sql: false
   sql:
     init:
@@ -22,4 +25,3 @@ logging:
   level:
     com.summa: DEBUG
     org.springframework: INFO
-    org.hibernate: DEBUG

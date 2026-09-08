@@ -1,6 +1,8 @@
 package com.summa.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.DateTimeException;
+import java.time.Instant;
 import java.util.Map;
 
 /**
@@ -35,5 +37,22 @@ public final class JsonHelpers {
             }
         }
         return sb.append("\"").toString();
+    }
+
+    /**
+     * Parse an optional ISO-8601 instant. Blank/missing values return null.
+     * Accepts both ISO-8601 strings and epoch-second long values.
+     */
+    public static Instant parseOptionalInstant(String value, String field) {
+        if (value == null || value.isBlank()) return null;
+        try {
+            return Instant.parse(value.trim());
+        } catch (DateTimeException e) {
+            try {
+                return Instant.ofEpochSecond(Long.parseLong(value.trim()));
+            } catch (NumberFormatException nfe) {
+                throw new IllegalArgumentException("Invalid " + field + " format: " + value);
+            }
+        }
     }
 }

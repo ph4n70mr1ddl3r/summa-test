@@ -147,6 +147,7 @@ public class InitiativeService {
                     if (hasPathTo(target, grandchildDeps, visited)) return true;
                 } catch (Exception ignored) {}
             }
+            visited.remove(depId);
         }
         return false;
     }

@@ -35,7 +35,7 @@ export default function Spawning() {
         <h2 className="text-2xl font-bold">Spawning</h2>
         {stats && (
           <div className="flex space-x-4 text-sm">
-            <span className="text-yellow-400">Pending: {stats.requested}</span>
+            <span className="text-yellow-400">Requested: {stats.requested}</span>
             <span className="text-green-400">Approved: {stats.approved}</span>
             <span className="text-gray-400">Archived: {stats.archived}</span>
           </div>

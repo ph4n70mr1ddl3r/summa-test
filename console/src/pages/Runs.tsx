@@ -35,7 +35,7 @@ export default function Runs() {
           >
             All ({runs.length})
           </button>
-          {(['queued', 'running', 'completed', 'failed', 'cancelled'] as const).map(s => (
+          {(['queued', 'running', 'suspended', 'completed', 'failed', 'cancelled'] as const).map(s => (
             statusCounts[s] > 0 && (
               <button
                 key={s}

@@ -7,6 +7,7 @@ import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
+import com.summa.util.JsonHelpers;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.util.List;
@@ -49,9 +50,9 @@ public class DnaRuleController {
         if (gate != null) return gate;
         try {
             Instant effectiveFrom = body.containsKey("effectiveFrom") && body.get("effectiveFrom") != null && !body.get("effectiveFrom").isBlank() ?
-                parseOptionalInstant(body.get("effectiveFrom")) : Instant.now();
+                JsonHelpers.parseOptionalInstant(body.get("effectiveFrom"), "effectiveFrom") : Instant.now();
             Instant effectiveTo = body.containsKey("effectiveTo") && body.get("effectiveTo") != null && !body.get("effectiveTo").isBlank() ?
-                parseOptionalInstant(body.get("effectiveTo")) : null;
+                JsonHelpers.parseOptionalInstant(body.get("effectiveTo"), "effectiveTo") : null;
 
             // Security: reject client-supplied IDs — always generate server-side
             String generatedId = UUID.randomUUID().toString();
@@ -80,7 +81,7 @@ public class DnaRuleController {
         if (gate != null) return gate;
         try {
             Instant effectiveTo = body.containsKey("effectiveTo") && body.get("effectiveTo") != null && !body.get("effectiveTo").isBlank() ?
-                parseOptionalInstant(body.get("effectiveTo")) : null;
+                JsonHelpers.parseOptionalInstant(body.get("effectiveTo"), "effectiveTo") : null;
 
             DnaRule rule = ruleService.update(
                 id,
@@ -107,22 +108,6 @@ public class DnaRuleController {
             return ResponseEntity.ok(rule);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
-        }
-    }
-
-    /**
-     * Parse an optional ISO-8601 instant. Blank/missing values return null.
-     */
-    private static Instant parseOptionalInstant(String value) {
-        if (value == null || value.isBlank()) return null;
-        try {
-            return Instant.parse(value.trim());
-        } catch (java.time.DateTimeException e) {
-            try {
-                return Instant.ofEpochSecond(Long.parseLong(value.trim()));
-            } catch (NumberFormatException nfe) {
-                throw new IllegalArgumentException("Invalid instant format: " + value);
-            }
         }
     }
 }

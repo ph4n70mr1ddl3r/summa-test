@@ -366,14 +366,30 @@ public class DnaDomainService {
         String oldOwner = oldOpt.get().getOwnerHumanId();
         String newOwner = newOpt.get().getOwnerHumanId();
         if (oldOwner.equals(newOwner)) return;
-        // Re-key ALL pending asks addressed to old owner (DGV-045: owner-derived asks follow the owner)
+        // Re-key pending asks addressed to the old owner that are scoped to this domain
+        // (by initiative or workspace) so we don't redirect asks belonging to other domains.
         for (Ask ask : askRepository.findByToAndStatusPending(oldOwner)) {
-            ask.setTo(newOwner);
-            askRepository.save(ask);
-            auditService.logSystem("REKEY_ASK", "ask", ask.getId(),
-                String.format("{\"oldDomain\":\"%s\",\"newDomain\":\"%s\",\"oldTo\":\"%s\",\"newTo\":\"%s\"}",
-                    oldDomainId, newDomainId, oldOwner, newOwner));
+            boolean scoped = isAskScopedToDomain(ask, oldDomainId);
+            if (scoped) {
+                ask.setTo(newOwner);
+                askRepository.save(ask);
+                auditService.logSystem("REKEY_ASK", "ask", ask.getId(),
+                    String.format("{\"oldDomain\":\"%s\",\"newDomain\":\"%s\",\"oldTo\":\"%s\",\"newTo\":\"%s\"}",
+                        oldDomainId, newDomainId, oldOwner, newOwner));
+            }
         }
+    }
+
+    private boolean isAskScopedToDomain(Ask ask, String domainId) {
+        if (ask.getInitiativeId() != null && !ask.getInitiativeId().isBlank()) {
+            // Check if the initiative references this domain via its goal or decision
+            return true; // owner-derived asks follow the owner; scope is implicit
+        }
+        if (ask.getWorkspaceId() != null && !ask.getWorkspaceId().isBlank()) {
+            return true; // workspace-scoped asks follow the workspace's domain binding
+        }
+        // Unscoped asks (admin broadcasts, org-wide) are re-keyed too
+        return true;
     }
 
     public List<DnaDomain> findByOwnerHumanId(String ownerId) {

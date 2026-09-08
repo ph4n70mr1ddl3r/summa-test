@@ -2,6 +2,7 @@ package com.summa.security;
 
 import org.springframework.stereotype.Component;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -69,21 +70,16 @@ public class RateLimiter {
             return;
         }
         Instant now = Instant.now();
-        windowStarts.entrySet().removeIf(e -> {
-            boolean expired = e.getValue().plusSeconds(WINDOW_SECONDS).isBefore(now);
-            if (expired) {
-                attemptCounts.remove(e.getKey());
-            }
-            return expired;
-        });
-        // Still over cap (all in current window): drop an arbitrary slice.
-        if (attemptCounts.size() > MAX_KEYS * 2) {
-            int toRemove = attemptCounts.size() - MAX_KEYS;
-            var it = attemptCounts.keySet().iterator();
-            while (toRemove-- > 0 && it.hasNext()) {
-                String key = it.next();
-                it.remove();
+        // Use a snapshot to avoid ConcurrentModificationException during removal.
+        var keys = new ArrayList<String>(windowStarts.keySet());
+        int removed = 0;
+        for (String key : keys) {
+            if (removed >= attemptCounts.size() - MAX_KEYS) break;
+            Instant window = windowStarts.get(key);
+            if (window != null && window.plusSeconds(WINDOW_SECONDS).isBefore(now)) {
+                attemptCounts.remove(key);
                 windowStarts.remove(key);
+                removed++;
             }
         }
     }

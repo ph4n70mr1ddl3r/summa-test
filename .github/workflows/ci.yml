@@ -29,7 +29,7 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: Build and test backend
-        run: cd backend && mvn -B test
+        run: cd backend && mvn -B test -Dspring.profiles.active=test
 
   console-build:
     runs-on: ubuntu-latest

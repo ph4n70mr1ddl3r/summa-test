@@ -7,6 +7,7 @@ import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
+import com.summa.util.JsonHelpers;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.util.List;
@@ -65,7 +66,11 @@ public class DnaGoalController {
                 try {
                     effectiveFrom = Instant.parse(body.get("effectiveFrom"));
                 } catch (DateTimeException e) {
-                    throw new IllegalArgumentException("Invalid effectiveFrom format: " + body.get("effectiveFrom"));
+                    try {
+                        effectiveFrom = Instant.ofEpochSecond(Long.parseLong(body.get("effectiveFrom")));
+                    } catch (NumberFormatException nfe) {
+                        throw new IllegalArgumentException("Invalid effectiveFrom format: " + body.get("effectiveFrom"));
+                    }
                 }
             } else {
                 effectiveFrom = Instant.now();
@@ -75,7 +80,11 @@ public class DnaGoalController {
                 try {
                     effectiveTo = Instant.parse(body.get("effectiveTo"));
                 } catch (DateTimeException e) {
-                    throw new IllegalArgumentException("Invalid effectiveTo format: " + body.get("effectiveTo"));
+                    try {
+                        effectiveTo = Instant.ofEpochSecond(Long.parseLong(body.get("effectiveTo")));
+                    } catch (NumberFormatException nfe) {
+                        throw new IllegalArgumentException("Invalid effectiveTo format: " + body.get("effectiveTo"));
+                    }
                 }
             }
 
@@ -121,8 +130,8 @@ public class DnaGoalController {
         final Instant effectiveFrom;
         final Instant effectiveTo;
         try {
-            effectiveFrom = parseOptionalInstant(body.get("effectiveFrom"), "effectiveFrom");
-            effectiveTo = parseOptionalInstant(body.get("effectiveTo"), "effectiveTo");
+            effectiveFrom = JsonHelpers.parseOptionalInstant(body.get("effectiveFrom"), "effectiveFrom");
+            effectiveTo = JsonHelpers.parseOptionalInstant(body.get("effectiveTo"), "effectiveTo");
         } catch (DateTimeException | IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, "Invalid date format: " + e.getMessage());
         }
@@ -131,21 +140,6 @@ public class DnaGoalController {
             return ResponseEntity.ok(goal);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.notFound(auditService, e.getMessage());
-        }
-    }
-
-    /**
-     * Parse an optional ISO-8601 instant. Blank/missing values clear the field
-     * (null) instead of throwing — {@code Instant.parse(null)} would NPE into a 500.
-     */
-    private static Instant parseOptionalInstant(String value, String field) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        try {
-            return Instant.parse(value.trim());
-        } catch (DateTimeException e) {
-            throw new IllegalArgumentException("Invalid " + field + " format: " + value);
         }
     }
 }
