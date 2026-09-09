@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/nodes")
@@ -32,9 +33,11 @@ public class NodeController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getNode(@PathVariable String id) {
-        return nodeService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<Node> entOpt = nodeService.findById(id);
+        if (entOpt.isPresent()) {
+            return ResponseEntity.ok(entOpt.get());
+        }
+        return ControllerResponses.notFound(auditService, "Node not found: " + id);
     }
 
     @PostMapping("/enroll")

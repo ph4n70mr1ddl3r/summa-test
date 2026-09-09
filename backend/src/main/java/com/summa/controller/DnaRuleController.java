@@ -8,10 +8,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.util.JsonHelpers;
-import java.time.DateTimeException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -38,9 +38,11 @@ public class DnaRuleController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getRule(@PathVariable String id) {
-        return ruleService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<DnaRule> entOpt = ruleService.findById(id);
+        if (entOpt.isPresent()) {
+            return ResponseEntity.ok(entOpt.get());
+        }
+        return ControllerResponses.notFound(auditService, "Rule not found: " + id);
     }
 
     @PostMapping
@@ -67,7 +69,7 @@ public class DnaRuleController {
                 actor
             );
             return ResponseEntity.ok(rule);
-        } catch (IllegalArgumentException | DateTimeException e) {
+        } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
@@ -91,14 +93,14 @@ public class DnaRuleController {
                 actor
             );
             return ResponseEntity.ok(rule);
-        } catch (IllegalArgumentException | DateTimeException e) {
+        } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
-    @PostMapping("/{id}/supersede/{supersedesId}")
+    @PostMapping("/{id}/supersede")
     public ResponseEntity<?> supersede(@PathVariable String id, @PathVariable String supersedesId) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);

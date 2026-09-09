@@ -32,6 +32,28 @@ public class DnaReadService {
     }
 
     /**
+     * Sanitize FTS5 query input by escaping or rejecting special operators.
+     * Prevents injection of FTS5 operators (*, OR, NOT, phrase syntax) via user input.
+     */
+    private static String sanitizeFtsQuery(String query) {
+        // Reject or neutralize FTS5 boolean operators and wildcards
+        String sanitized = query
+            .replace("*", "")
+            .replace("OR", "")
+            .replace("AND", "")
+            .replace("NOT", "")
+            .replace("|", "")
+            .replace("(", "")
+            .replace(")", "")
+            .replace("[", "")
+            .replace("]", "")
+            .replace("{", "")
+            .replace("}", "")
+            .replace("\"", "\"\"");
+        return sanitized.trim();
+    }
+
+    /**
      * Search DNA using FTS5 full-text search.
      * Implements DRP-030: search serves living corpus (active items only).
      */
@@ -42,7 +64,11 @@ public class DnaReadService {
         int safeLimit = Math.min(Math.max(limit, 1), 100);
         // FTS5 matches against the table (not a single column) and user input
         // must be quoted — raw input can inject FTS5 operators (e.g. `"`, `*`, `OR`).
-        String match = "\"" + query.replace("\"", "\"\"") + "\"*";
+        String safeQuery = sanitizeFtsQuery(query);
+        if (safeQuery.isBlank()) {
+            throw new IllegalArgumentException("Search query contains only FTS5 operators");
+        }
+        String match = "\"" + safeQuery + "\"*";
         String sql = "SELECT id, title, definition_md, statement_md, context_md, outcome_md, " +
                      "term, definition, content_md, domain_id, kind, status " +
                      "FROM dna_search_index " +

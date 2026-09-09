@@ -61,7 +61,7 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
       - name: Build and test backend on ${{ matrix.os }}
-        run: cd backend && mvn -B test
+        run: cd backend && mvn -B test -Dspring.profiles.active=test
         shell: bash
 
   docker-build:

@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/spawn")
@@ -44,9 +45,11 @@ public class SpawnController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getRequest(@PathVariable String id) {
-        return spawnService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<SpawnRequest> entOpt = spawnService.findById(id);
+        if (entOpt.isPresent()) {
+            return ResponseEntity.ok(entOpt.get());
+        }
+        return ControllerResponses.notFound(auditService, "Spawn request not found: " + id);
     }
 
     @PostMapping
@@ -82,6 +85,9 @@ public class SpawnController {
             );
             return ResponseEntity.ok(request);
         } catch (IllegalArgumentException e) {
+            if (e.getMessage().contains("ttlHours") && e.getMessage().contains("must be positive")) {
+                return ControllerResponses.validation(auditService, e.getMessage());
+            }
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
@@ -135,7 +141,12 @@ public class SpawnController {
     }
 
     private Integer parseIntSafe(String s) {
-        try { return Integer.parseInt(s); }
-        catch (NumberFormatException e) { throw new IllegalArgumentException("Invalid ttlHours: " + s); }
+        try {
+            int val = Integer.parseInt(s);
+            if (val <= 0) throw new IllegalArgumentException("ttlHours must be positive");
+            return val;
+        } catch (IllegalArgumentException e) {
+            throw e;
+        }
     }
 }

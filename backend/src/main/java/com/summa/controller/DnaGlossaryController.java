@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -39,9 +40,11 @@ public class DnaGlossaryController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getEntry(@PathVariable String id) {
-        return glossaryService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<DnaGlossary> entOpt = glossaryService.findById(id);
+        if (entOpt.isPresent()) {
+            return ResponseEntity.ok(entOpt.get());
+        }
+        return ControllerResponses.notFound(auditService, "Glossary entry not found: " + id);
     }
 
     @PostMapping
@@ -50,6 +53,9 @@ public class DnaGlossaryController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
+            if (body.get("domainId") == null || body.get("domainId").isBlank()) {
+                throw new IllegalArgumentException("domainId is required");
+            }
             if (body.get("term") == null || body.get("term").isBlank()) {
                 throw new IllegalArgumentException("term is required");
             }

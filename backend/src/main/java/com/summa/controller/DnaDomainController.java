@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/dna/domains")
@@ -30,9 +31,11 @@ public class DnaDomainController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getDomain(@PathVariable String id) {
-        return domainService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<DnaDomain> entOpt = domainService.findById(id);
+        if (entOpt.isPresent()) {
+            return ResponseEntity.ok(entOpt.get());
+        }
+        return ControllerResponses.notFound(auditService, "Domain not found: " + id);
     }
 
     @PostMapping

@@ -49,4 +49,14 @@ describe('Governance page', () => {
     render(<Governance />)
     await waitFor(() => expect(screen.getByText('Spend')).toBeInTheDocument())
   })
+
+  it('shows error state on API failure', async () => {
+    vi.mocked(apiModule.api.governance.policies).mockRejectedValue(new Error('Network error'))
+    vi.mocked(apiModule.api.governance.quotas).mockRejectedValue(new Error('Network error'))
+    vi.mocked(apiModule.api.governance.spend).mockRejectedValue(new Error('Network error'))
+    render(<Governance />)
+    await waitFor(() => {
+      expect(screen.getByText(/error/i)).toBeInTheDocument()
+    })
+  })
 })

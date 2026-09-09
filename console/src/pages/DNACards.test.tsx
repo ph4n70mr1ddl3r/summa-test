@@ -47,4 +47,12 @@ describe('DNACards page', () => {
     const { container } = render(<DNACards />)
     expect(container.textContent).toContain('Loading...')
   })
+
+  it('shows error state on API failure', async () => {
+    vi.mocked(apiModule.api.dna.cards).mockRejectedValue(new Error('Network error'))
+    render(<DNACards />)
+    await waitFor(() => {
+      expect(screen.getByText(/error/i)).toBeInTheDocument()
+    })
+  })
 })

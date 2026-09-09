@@ -8,10 +8,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.util.JsonHelpers;
-import java.time.DateTimeException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -42,9 +42,11 @@ public class DnaGoalController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getGoal(@PathVariable String id) {
-        return goalService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<DnaGoal> entOpt = goalService.findById(id);
+        if (entOpt.isPresent()) {
+            return ResponseEntity.ok(entOpt.get());
+        }
+        return ControllerResponses.notFound(auditService, "Goal not found: " + id);
     }
 
     @PostMapping
@@ -61,32 +63,14 @@ public class DnaGoalController {
             }
             // Security: reject client-supplied IDs — always generate server-side
             String generatedId = UUID.randomUUID().toString();
-            Instant effectiveFrom = null;
-            if (body.containsKey("effectiveFrom") && body.get("effectiveFrom") != null && !body.get("effectiveFrom").isBlank()) {
-                try {
-                    effectiveFrom = Instant.parse(body.get("effectiveFrom"));
-                } catch (DateTimeException e) {
-                    try {
-                        effectiveFrom = Instant.ofEpochSecond(Long.parseLong(body.get("effectiveFrom")));
-                    } catch (NumberFormatException nfe) {
-                        throw new IllegalArgumentException("Invalid effectiveFrom format: " + body.get("effectiveFrom"));
-                    }
-                }
-            } else {
-                effectiveFrom = Instant.now();
+            Instant effectiveFrom;
+            try {
+                effectiveFrom = JsonHelpers.parseOptionalInstant(body.get("effectiveFrom"), "effectiveFrom");
+                if (effectiveFrom == null) effectiveFrom = Instant.now();
+            } catch (IllegalArgumentException e) {
+                throw e;
             }
-            Instant effectiveTo = null;
-            if (body.containsKey("effectiveTo") && body.get("effectiveTo") != null && !body.get("effectiveTo").isBlank()) {
-                try {
-                    effectiveTo = Instant.parse(body.get("effectiveTo"));
-                } catch (DateTimeException e) {
-                    try {
-                        effectiveTo = Instant.ofEpochSecond(Long.parseLong(body.get("effectiveTo")));
-                    } catch (NumberFormatException nfe) {
-                        throw new IllegalArgumentException("Invalid effectiveTo format: " + body.get("effectiveTo"));
-                    }
-                }
-            }
+            Instant effectiveTo = JsonHelpers.parseOptionalInstant(body.get("effectiveTo"), "effectiveTo");
 
             DnaGoal goal = goalService.create(
                 generatedId,
@@ -132,7 +116,7 @@ public class DnaGoalController {
         try {
             effectiveFrom = JsonHelpers.parseOptionalInstant(body.get("effectiveFrom"), "effectiveFrom");
             effectiveTo = JsonHelpers.parseOptionalInstant(body.get("effectiveTo"), "effectiveTo");
-        } catch (DateTimeException | IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, "Invalid date format: " + e.getMessage());
         }
         try {

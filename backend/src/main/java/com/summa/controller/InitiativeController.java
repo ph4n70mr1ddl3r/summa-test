@@ -7,9 +7,11 @@ import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
+import com.summa.util.JsonHelpers;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -36,9 +38,11 @@ public class InitiativeController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getInitiative(@PathVariable String id) {
-        return initiativeService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<Initiative> entOpt = initiativeService.findById(id);
+        if (entOpt.isPresent()) {
+            return ResponseEntity.ok(entOpt.get());
+        }
+        return ControllerResponses.notFound(auditService, "Initiative not found: " + id);
     }
 
     @PostMapping
@@ -47,15 +51,17 @@ public class InitiativeController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            String generatedId = UUID.randomUUID().toString();
-            Instant deadline = null;
-            if (body.containsKey("deadline") && body.get("deadline") != null && !body.get("deadline").isBlank()) {
-                try {
-                    deadline = Instant.parse(body.get("deadline"));
-                } catch (java.time.DateTimeException e) {
-                    throw new IllegalArgumentException("Invalid deadline format: " + body.get("deadline"));
-                }
+            if (body.get("title") == null || body.get("title").isBlank()) {
+                throw new IllegalArgumentException("title is required");
             }
+            if (body.get("sponsor") == null || body.get("sponsor").isBlank()) {
+                throw new IllegalArgumentException("sponsor is required");
+            }
+            if (body.get("lead") == null || body.get("lead").isBlank()) {
+                throw new IllegalArgumentException("lead is required");
+            }
+            String generatedId = UUID.randomUUID().toString();
+            Instant deadline = JsonHelpers.parseOptionalInstant(body.get("deadline"), "deadline");
             Initiative initiative = initiativeService.create(
                 generatedId,
                 body.get("title"),

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -39,9 +40,11 @@ public class DnaProposalController {
 
     @GetMapping("/proposals/{id}")
     public ResponseEntity<?> getProposal(@PathVariable String id) {
-        return proposalService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<DnaProposal> entOpt = proposalService.findById(id);
+        if (entOpt.isPresent()) {
+            return ResponseEntity.ok(entOpt.get());
+        }
+        return ControllerResponses.notFound(auditService, "Proposal not found: " + id);
     }
 
     @PostMapping("/proposals")

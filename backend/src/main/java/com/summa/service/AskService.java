@@ -24,6 +24,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 
+/**
+ * Bounded map entry with expiry support for storm collapse tracking.
+ */
+class ExpiringEntry<V> {
+    final V value;
+    final long expiryEpochSeconds;
+    ExpiringEntry(V value, long expiryEpochSeconds) {
+        this.value = value;
+        this.expiryEpochSeconds = expiryEpochSeconds;
+    }
+}
+
 @Service
 public class AskService {
     private final AskRepository askRepository;
@@ -35,8 +47,9 @@ public class AskService {
     private static final int MAX_EXPIRE_SUCCESSOR_DEPTH = 5;
 
     // ASK-100: Storm collapse window — tracks recent ask creation by (kind, to, payloadHash)
-    private final ConcurrentHashMap<String, Instant> collapseWindowTimestamps = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, Integer> successorDepth = new ConcurrentHashMap<>();
+    // Uses bounded maps with TTL-based eviction to prevent unbounded memory growth.
+    private final ConcurrentHashMap<String, ExpiringEntry<Instant>> collapseWindowTimestamps = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, ExpiringEntry<Integer>> successorDepth = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper;
 
     public AskService(AskRepository askRepository, AuditService auditService, MemberService memberService,
@@ -49,6 +62,17 @@ public class AskService {
         this.governanceService = governanceService;
         this.stormCollapseWindowSeconds = stormCollapseWindowHours * 3600L;
         this.objectMapper = objectMapper;
+    }
+
+    /**
+     * Purge expired entries from collapse window and successor depth maps.
+     * Called periodically to prevent unbounded memory growth.
+     */
+    @Scheduled(fixedRate = 3600000)
+    public void purgeExpiredEntries() {
+        long nowSeconds = Instant.now().getEpochSecond();
+        collapseWindowTimestamps.entrySet().removeIf(e -> e.getValue().expiryEpochSeconds <= nowSeconds);
+        successorDepth.entrySet().removeIf(e -> e.getValue().expiryEpochSeconds <= nowSeconds);
     }
 
     @Transactional
@@ -78,8 +102,10 @@ public class AskService {
         // originator-scoped, but the collapse key is communal).
         String collapseKey = buildCollapseKey(kind, to, payload);
         Instant now = Instant.now();
-        Instant lastCreated = collapseWindowTimestamps.get(collapseKey);
-        if (lastCreated != null && now.getEpochSecond() - lastCreated.getEpochSecond() < stormCollapseWindowSeconds) {
+        long nowSeconds = now.getEpochSecond();
+         ExpiringEntry<Instant> lastCreatedEntry = collapseWindowTimestamps.get(collapseKey);
+         Instant lastCreated = lastCreatedEntry != null ? lastCreatedEntry.value : null;
+        if (lastCreated != null && nowSeconds - lastCreated.getEpochSecond() < stormCollapseWindowSeconds) {
             // Collapse: increment collapsed_count on nearest pending canonical
             List<Ask> candidates = findPendingByKindAndTo(kind, to);
             if (!candidates.isEmpty()) {
@@ -91,7 +117,7 @@ public class AskService {
                 return saved;
             }
         }
-        collapseWindowTimestamps.put(collapseKey, now);
+        collapseWindowTimestamps.put(collapseKey, new ExpiringEntry<>(now, nowSeconds + stormCollapseWindowSeconds));
 
         Ask saved = askRepository.save(ask);
         auditService.log(from, "CREATE", "ask", ask.getId(),
@@ -155,8 +181,9 @@ public class AskService {
             } else if ("escalate".equals(behavior) || "reassign".equals(behavior)) {
                 expire(ask.getId());
                 try {
-                     int depth = successorDepth.getOrDefault(ask.getId(), 0) + 1;
-                     if (depth > MAX_EXPIRE_SUCCESSOR_DEPTH) {
+                      int depth = (successorDepth.get(ask.getId()) != null ? successorDepth.get(ask.getId()).value : 0) + 1;
+                      long expireNowSeconds = Instant.now().getEpochSecond();
+                      if (depth > MAX_EXPIRE_SUCCESSOR_DEPTH) {
                          // ASK-057: Chain exhausted — broadcast org-stall alert
                          broadcastOrgStall(ask);
                          auditService.logSystem("EXPIRE_CHAIN_EXHAUSTED", "ask", ask.getId(),
@@ -176,11 +203,11 @@ public class AskService {
                          Instant.now().plusSeconds(successorDeadlineSeconds),
                          ask.getInitiativeId(), ask.getWorkspaceId());
                       // Track depth by the successor's ID so the next expire cycle sees the correct depth
-                      successorDepth.put(successor.getId(), depth);
-                      auditService.logSystem("EXPIRE_SUCCESSOR_CREATED", "ask", successor.getId(),
-                          String.format("{\"originalId\":\"%s\",\"behavior\":\"%s\",\"depth\":%d}", ask.getId(), behavior, depth));
-                      // Clean up the original ask's depth entry to prevent unbounded growth
-                      successorDepth.remove(ask.getId());
+                       successorDepth.put(successor.getId(), new ExpiringEntry<>(depth, expireNowSeconds + stormCollapseWindowSeconds));
+                       auditService.logSystem("EXPIRE_SUCCESSOR_CREATED", "ask", successor.getId(),
+                           String.format("{\"originalId\":\"%s\",\"behavior\":\"%s\",\"depth\":%d}", ask.getId(), behavior, depth));
+                       // Clean up the original ask's depth entry to prevent unbounded growth
+                       successorDepth.remove(ask.getId());
                 } catch (Exception e) {
                     auditService.logSystem("EXPIRE_SUCCESSOR_FAIL", "ask", ask.getId(),
                         String.format("{\"behavior\":\"%s\",\"error\":\"%s\"}", behavior, e.getMessage()));

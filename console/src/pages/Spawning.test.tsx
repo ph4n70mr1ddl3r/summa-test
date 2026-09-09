@@ -51,4 +51,12 @@ describe('Spawning page', () => {
     render(<Spawning />)
     await waitFor(() => expect(screen.getByText('Gates')).toBeInTheDocument())
   })
+
+  it('shows error state on API failure', async () => {
+    vi.mocked(apiModule.api.spawn.list).mockRejectedValue(new Error('Network error'))
+    render(<Spawning />)
+    await waitFor(() => {
+      expect(screen.getByText(/error/i)).toBeInTheDocument()
+    })
+  })
 })

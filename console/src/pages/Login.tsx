@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { api, setAuthToken } from '../services/api'
+import { escapeHtml } from '../utils/escapeHtml'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -38,7 +39,7 @@ export default function Login() {
         <form onSubmit={handleSubmit} className="bg-gray-800 rounded-lg p-6 border border-gray-700 space-y-4">
           {error && (
             <div className="bg-red-900/30 border border-red-700 rounded p-3 text-sm text-red-400" role="alert">
-              {error}
+              {escapeHtml(error)}
             </div>
           )}
 

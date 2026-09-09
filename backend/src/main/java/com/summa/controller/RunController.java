@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/runs")
@@ -44,9 +45,11 @@ public class RunController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getRun(@PathVariable String id) {
-        return runService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<Run> entOpt = runService.findById(id);
+        if (entOpt.isPresent()) {
+            return ResponseEntity.ok(entOpt.get());
+        }
+        return ControllerResponses.notFound(auditService, "Run not found: " + id);
     }
 
     @PostMapping

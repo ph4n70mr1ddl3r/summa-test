@@ -40,4 +40,12 @@ describe('DNARules page', () => {
       expect(screen.getByText('1 rule')).toBeInTheDocument()
     })
   })
+
+  it('shows error state on API failure', async () => {
+    vi.mocked(apiModule.api.dna.rules).mockRejectedValue(new Error('Network error'))
+    render(<DNARules />)
+    await waitFor(() => {
+      expect(screen.getByText(/error/i)).toBeInTheDocument()
+    })
+  })
 })

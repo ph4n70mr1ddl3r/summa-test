@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -35,9 +36,11 @@ public class DnaDecisionController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getDecision(@PathVariable String id) {
-        return decisionService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<DnaDecision> entOpt = decisionService.findById(id);
+        if (entOpt.isPresent()) {
+            return ResponseEntity.ok(entOpt.get());
+        }
+        return ControllerResponses.notFound(auditService, "Decision not found: " + id);
     }
 
     @PostMapping
@@ -46,6 +49,18 @@ public class DnaDecisionController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
+            if (body.get("domainId") == null || body.get("domainId").isBlank()) {
+                throw new IllegalArgumentException("domainId is required");
+            }
+            if (body.get("contextMd") == null || body.get("contextMd").isBlank()) {
+                throw new IllegalArgumentException("contextMd is required");
+            }
+            if (body.get("outcomeMd") == null || body.get("outcomeMd").isBlank()) {
+                throw new IllegalArgumentException("outcomeMd is required");
+            }
+            if (body.get("decidedBy") == null || body.get("decidedBy").isBlank()) {
+                throw new IllegalArgumentException("decidedBy is required");
+            }
             String generatedId = UUID.randomUUID().toString();
             DnaDecision decision = decisionService.create(
                 generatedId,

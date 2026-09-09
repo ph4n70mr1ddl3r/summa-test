@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/asks")
@@ -39,9 +40,11 @@ public class AskController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getAsk(@PathVariable String id) {
-        return askService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<Ask> entOpt = askService.findById(id);
+        if (entOpt.isPresent()) {
+            return ResponseEntity.ok(entOpt.get());
+        }
+        return ControllerResponses.notFound(auditService, "Ask not found: " + id);
     }
 
     @PostMapping

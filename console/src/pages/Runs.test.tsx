@@ -49,4 +49,12 @@ describe('Runs page', () => {
     render(<Runs />)
     await waitFor(() => expect(screen.getByText('running (1)')).toBeInTheDocument())
   })
+
+  it('shows error state on API failure', async () => {
+    vi.mocked(apiModule.api.runs.list).mockRejectedValue(new Error('Network error'))
+    render(<Runs />)
+    await waitFor(() => {
+      expect(screen.getByText(/error/i)).toBeInTheDocument()
+    })
+  })
 })

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/org/groups")
@@ -30,9 +31,11 @@ public class GroupController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getGroup(@PathVariable String id) {
-        return groupService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<Group> entOpt = groupService.findById(id);
+        if (entOpt.isPresent()) {
+            return ResponseEntity.ok(entOpt.get());
+        }
+        return ControllerResponses.notFound(auditService, "Group not found: " + id);
     }
 
     @PostMapping

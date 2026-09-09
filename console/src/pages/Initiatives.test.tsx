@@ -55,4 +55,12 @@ describe('Initiatives page', () => {
       expect(container.textContent).toContain('l1')
     })
   })
+
+  it('shows error state on API failure', async () => {
+    vi.mocked(apiModule.api.initiatives.list).mockRejectedValue(new Error('Network error'))
+    const { container } = render(<Initiatives />)
+    await waitFor(() => {
+      expect(container.textContent).toContain('Error')
+    })
+  })
 })

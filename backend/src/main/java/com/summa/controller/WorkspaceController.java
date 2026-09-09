@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -36,9 +37,11 @@ public class WorkspaceController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getWorkspace(@PathVariable String id) {
-        return workspaceService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<Workspace> entOpt = workspaceService.findById(id);
+        if (entOpt.isPresent()) {
+            return ResponseEntity.ok(entOpt.get());
+        }
+        return ControllerResponses.notFound(auditService, "Workspace not found: " + id);
     }
 
     @PostMapping

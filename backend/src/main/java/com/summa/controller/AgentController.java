@@ -60,9 +60,11 @@ public class AgentController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getAgent(@PathVariable String id) {
-        return agentService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<Agent> entOpt = agentService.findById(id);
+        if (entOpt.isPresent()) {
+            return ResponseEntity.ok(entOpt.get());
+        }
+        return ControllerResponses.notFound(auditService, "Agent not found: " + id);
     }
 
     @GetMapping("/{id}/lineage")

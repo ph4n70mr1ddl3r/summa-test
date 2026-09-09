@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/triggers")
@@ -34,9 +35,11 @@ public class TriggerController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getTrigger(@PathVariable String id) {
-        return triggerService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<Trigger> entOpt = triggerService.findById(id);
+        if (entOpt.isPresent()) {
+            return ResponseEntity.ok(entOpt.get());
+        }
+        return ControllerResponses.notFound(auditService, "Trigger not found: " + id);
     }
 
     @PostMapping

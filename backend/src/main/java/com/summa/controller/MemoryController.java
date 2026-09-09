@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/memory")
@@ -42,9 +43,11 @@ public class MemoryController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getMemory(@PathVariable String id) {
-        return memoryService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<MemoryItem> entOpt = memoryService.findById(id);
+        if (entOpt.isPresent()) {
+            return ResponseEntity.ok(entOpt.get());
+        }
+        return ControllerResponses.notFound(auditService, "Memory item not found: " + id);
     }
 
     @PostMapping

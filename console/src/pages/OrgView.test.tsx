@@ -90,4 +90,13 @@ describe('OrgView page', () => {
       expect(container.textContent).toContain('No groups configured')
     })
   })
+
+  it('shows error state on API failure', async () => {
+    vi.mocked(apiModule.api.org.members).mockRejectedValue(new Error('Network error'))
+    vi.mocked(apiModule.api.groups.list).mockRejectedValue(new Error('Network error'))
+    const { container } = render(<OrgView />)
+    await waitFor(() => {
+      expect(container.textContent).toContain('Error')
+    })
+  })
 })

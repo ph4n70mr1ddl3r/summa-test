@@ -44,7 +44,7 @@ public class AuthController {
         // Rate limit by email to prevent brute-force
         if (!rateLimiter.allow(email)) {
             long remaining = rateLimiter.getRemainingAttempts(email);
-            var audit = auditService.logSystem("REFUSAL", "auth_login", "auth_login", "Rate limited login attempt for: " + email);
+            var audit = auditService.logSystem("REFUSAL", "auth_login", email, "Rate limited login attempt for: " + email);
             return ResponseEntity.status(429).body(Map.of(
                 "code", "rate_limited",
                 "message", "Too many login attempts. Try again later.",

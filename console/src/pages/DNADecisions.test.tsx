@@ -40,4 +40,12 @@ describe('DNADecisions page', () => {
       expect(screen.getByText('1 decision')).toBeInTheDocument()
     })
   })
+
+  it('shows error state on API failure', async () => {
+    vi.mocked(apiModule.api.dna.decisions).mockRejectedValue(new Error('Network error'))
+    render(<DNADecisions />)
+    await waitFor(() => {
+      expect(screen.getByText(/error/i)).toBeInTheDocument()
+    })
+  })
 })

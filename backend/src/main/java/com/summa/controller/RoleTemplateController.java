@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/role-templates")
@@ -30,9 +31,11 @@ public class RoleTemplateController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getTemplate(@PathVariable String id) {
-        return templateService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<RoleTemplate> entOpt = templateService.findById(id);
+        if (entOpt.isPresent()) {
+            return ResponseEntity.ok(entOpt.get());
+        }
+        return ControllerResponses.notFound(auditService, "Role template not found: " + id);
     }
 
     @PostMapping

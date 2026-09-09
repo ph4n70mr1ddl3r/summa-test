@@ -7,9 +7,11 @@ import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
+import com.summa.util.JsonHelpers;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/board-tasks")
@@ -43,9 +45,11 @@ public class BoardTaskController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getTask(@PathVariable String id) {
-        return taskService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<BoardTask> entOpt = taskService.findById(id);
+        if (entOpt.isPresent()) {
+            return ResponseEntity.ok(entOpt.get());
+        }
+        return ControllerResponses.notFound(auditService, "Task not found: " + id);
     }
 
     @PostMapping
@@ -62,7 +66,7 @@ public class BoardTaskController {
                     throw new IllegalArgumentException("priority must be a valid integer");
                 }
             }
-            Instant dueAt = body.containsKey("dueAt") ? Instant.parse(body.get("dueAt")) : null;
+            Instant dueAt = JsonHelpers.parseOptionalInstant(body.get("dueAt"), "dueAt");
             
             BoardTask task = taskService.create(
                 body.get("title"),
