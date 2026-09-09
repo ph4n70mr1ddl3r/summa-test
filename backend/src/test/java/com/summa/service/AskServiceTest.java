@@ -2,6 +2,7 @@ package com.summa.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.summa.repository.AskRepository;
+import com.summa.repository.InitiativeRepository;
 import com.summa.model.Ask;
 import com.summa.model.Human;
 import org.junit.jupiter.api.Test;
@@ -30,10 +31,13 @@ class AskServiceTest {
     @Mock
     private GovernanceService governanceService;
 
+    @Mock
+    private InitiativeRepository initiativeRepository;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private AskService buildService() {
-        return new AskService(askRepository, auditService, memberService, governanceService, 1L, objectMapper);
+        return new AskService(askRepository, auditService, memberService, governanceService, initiativeRepository, 1L, objectMapper);
     }
 
     @Test

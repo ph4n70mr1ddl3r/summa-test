@@ -117,8 +117,8 @@ Source: PLAN.md §8.10.
 - **ASK-057** — Chain exhaustion — the broadcast finds no active recipient or the SLA
   expires without a valid response (ASK-054) — expires the ask per its expiry behavior
   (an unanswered approval is a no; an exhausted assignment returns the task to the board
-  pool with a digest line) and broadcasts a critical-tier org-stall alert to every active
-  human.
+  pool with a digest line) and broadcasts a critical-tier org-stall alert to every human
+  (viewers included, read-only, per ASK-058).
 - **ASK-058** — The org-stall broadcast is an alert, not an ask: it renders to every active
   human — viewers included, read-only — because the never-a-target guard governs members the
   org waits on for an answer and an awareness blast waits on no one.

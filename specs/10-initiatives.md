@@ -18,6 +18,10 @@ Source: PLAN.md §5.1.
 - **INT-011** — A new initiative's `goal_ref` names a live goal at write — an initiative is
   never born pointed at history; the only way it comes to address a terminal row is the goal
   dying under it, which is the case the direction ask exists for.
+- **INT-012** — A new initiative's `decision_ref` names a live decision at write — an
+  initiative must not point at a retired or deleted decision record; the FK constraint
+  enforces referential integrity, and the write guard refuses a reference whose target
+  row is archived or otherwise absent.
 
 ## Transitions and authority
 

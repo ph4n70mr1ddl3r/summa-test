@@ -43,15 +43,15 @@ public class BackupController {
         try {
              String rawBackupDir = body.getOrDefault("backupDir", System.getProperty("java.io.tmpdir"));
              Path validRoot = Paths.get(System.getProperty("java.io.tmpdir")).toRealPath();
-             Path backupDirPath;
-              try {
-                  backupDirPath = Paths.get(rawBackupDir).toRealPath();
-              } catch (java.io.IOException e) {
-                  return ControllerResponses.validation(auditService, "backupDir path is inaccessible: " + e.getMessage());
-              }
-              if (!backupDirPath.startsWith(validRoot)) {
-                  return ControllerResponses.validation(auditService, "backupDir must be under tmpdir");
-              }
+              Path backupDirPath;
+               try {
+                   backupDirPath = Paths.get(rawBackupDir).normalize().toRealPath();
+               } catch (java.io.IOException e) {
+                   return ControllerResponses.validation(auditService, "backupDir path is inaccessible: " + e.getMessage());
+               }
+               if (!backupDirPath.startsWith(validRoot)) {
+                   return ControllerResponses.validation(auditService, "backupDir must be under tmpdir");
+               }
             String path = backupService.createBackup(backupDirPath.toString());
             auditService.log(actor, "CREATE_BACKUP", "backup", path, null);
             return ResponseEntity.ok(Map.of("path", path));
@@ -76,12 +76,12 @@ public class BackupController {
                   return ControllerResponses.validation(auditService, "backupPath is required");
               }
               Path validRoot = Paths.get(System.getProperty("java.io.tmpdir")).toRealPath();
-              Path backupFilePath;
-              try {
-                  backupFilePath = Paths.get(rawPath).toRealPath();
-              } catch (java.io.IOException e) {
-                  return ControllerResponses.validation(auditService, "backupPath is inaccessible: " + e.getMessage());
-              }
+               Path backupFilePath;
+               try {
+                   backupFilePath = Paths.get(rawPath).normalize().toRealPath();
+               } catch (java.io.IOException e) {
+                   return ControllerResponses.validation(auditService, "backupPath is inaccessible: " + e.getMessage());
+               }
               if (!backupFilePath.startsWith(validRoot)) {
                   return ControllerResponses.validation(auditService, "backupPath must be under tmpdir");
               }

@@ -20,7 +20,7 @@ Both directions — every defined ID listed, every listed ID defined — are ver
 | §4.6 Knowledge vs. operational data | 04 | DRP-050…052 |
 | §5 Org model (members, RBAC, board, groups, invariant, deputies) | 08 | ORG-001…002, ORG-020…022, ORG-025, ORG-030…033, ORG-040…043, ORG-050…051, ORG-060…061 |
 | §5 Offboarding / demotion / last-admin guard | 09 | OFB-001…003, OFB-010…017, OFB-020…023, OFB-030…033 |
-| §5.1 Initiatives (spine, transitions, pause/close, goals, dependencies) | 10 | INT-001…002, INT-010…011, INT-020…023, INT-030…033, INT-040…042, INT-050…052, INT-060…063, INT-070…071, INT-080…081 |
+| §5.1 Initiatives (spine, transitions, pause/close, goals, dependencies) | 10 | INT-001…002, INT-010…012, INT-020…023, INT-030…033, INT-040…042, INT-050…052, INT-060…063, INT-070…071, INT-080…081 |
 | §6.1 Spawn request & customRole | 11 | SPW-001…002, SPW-010…011 |
 | §6.2 Policy engine (scopes, quotas, caps, gates, breaker, reaper) | 11 | SPW-020…023, SPW-030…036, SPW-040…049, SPW-060…064, SPW-070…071 |
 | §6.3 Lineage (authority, retire/suspend/resume, re-role, fencing) | 12 | CLC-001…003, CLC-010, CLC-015, CLC-020…027, CLC-030…034, CLC-040 |
@@ -44,7 +44,7 @@ Both directions — every defined ID listed, every listed ID defined — are ver
 | §12 Testing & quality | 21, 19 | DLV-060…061; NFR-010…011 (determinism); README verification conventions |
 | §13 Risks & mitigations | 19 | NFR-030…035; the table's remaining rows carry mitigations specified by their cited modules (SPW, DGV, ARC, SUB, CLC, DLV) |
 | §13.1 Residual risk / accepted boundaries | 19 | NFR-001, NFR-020…022 |
-| §14 Key open decisions 1–17 + named parameters | 20 | CFG-001…024, CFG-030, CFG-040, CFG-050, CFG-060, CFG-070, CFG-080, CFG-090, CFG-100, CFG-110, CFG-130, CFG-140, CFG-150, CFG-160, CFG-170 |
+| §14 Key open decisions 1–17 + named parameters | 20 | CFG-001…024, CFG-030, CFG-040, CFG-050, CFG-060, CFG-070, CFG-080, CFG-090, CFG-100, CFG-110, CFG-120, CFG-130, CFG-140, CFG-150, CFG-160, CFG-170 |
 
 ## Intentional cross-listings
 

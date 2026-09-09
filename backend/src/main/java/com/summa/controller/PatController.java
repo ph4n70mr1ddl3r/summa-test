@@ -67,7 +67,6 @@ public class PatController {
             return ResponseEntity.ok(Map.of(
                 "id", result.pat().getId(),
                 "name", result.pat().getName(),
-                "token", result.token(),
                 "scopes", result.pat().getScopes(),
                 "expiresAt", result.pat().getExpiresAt().toString()
             ));

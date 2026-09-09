@@ -12,6 +12,8 @@ services:
       - SUMMA_DB_PATH=/data/db/summa.db
       - SUMMA_DNA_REPO=/data/dna
       - SUMMA_JWT_SECRET=${SUMMA_JWT_SECRET:?SUMMA_JWT_SECRET must be set}
+      - SUMMA_CORS_ORIGINS=${SUMMA_CORS_ORIGINS:-}
+      - SUMMA_SPEND_CEILING=${SUMMA_SPEND_CEILING:-1000000}
       - SPRING_PROFILES_ACTIVE=prod
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:8080/api/health || exit 1"]

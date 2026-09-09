@@ -135,7 +135,8 @@ memory_items   (id, tier 'personal'|'project'|'proposal', member_id?, workspace_
   active admin, evaluated at render and respond time (ASK-055) — carried by every ask
   routed to 'an admin' at creation or on escalation, never a single admin's id.
 - **DAT-081** — `initiatives.sponsor` pinned human (INT-001); `goal_ref` live at write
-  (INT-011); `depends_on` acyclic with live edges (INT-070).
+  (INT-011); `decision_ref` live at write (INT-012); `depends_on` acyclic with live edges
+  (INT-070).
 - **DAT-090** — `workspaces.domain_ids` is the ordered binding — first entry primary
   (admin-editable), unbinding the primary promotes the next, empty = domainless with defined
   fallbacks; topology ops remap with ids stable; binding writes serialize behind the affected

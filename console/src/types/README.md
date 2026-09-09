@@ -1,3 +1,4 @@
 # Types
 
-TypeScript type definitions are placed here. Currently types are defined inline in `services/api.ts`.
+TypeScript type definitions are exported from `services/api.ts` and re-exported here
+for centralized imports. Use `import type { Foo } from '../types'` in components.

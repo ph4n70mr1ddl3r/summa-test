@@ -63,7 +63,11 @@ export function isAuthenticated(): boolean {
   try {
     const parts = authToken.split('.');
     if (parts.length !== 3) return false;
-    const payload = JSON.parse(atob(parts[1])) as { exp?: number };
+    // Reject alg=none and any non-HS256 algorithm (security: prevent token forgery)
+    const headerJson = atob(parts[0]).replace(/=/g, '').replace(/-/g, '+').replace(/\u005f/g, '/');
+    const header = JSON.parse(headerJson) as { alg?: string };
+    if (header.alg !== 'HS256') return false;
+    const payload = JSON.parse(atob(parts[1].replace(/=/g, '').replace(/-/g, '+').replace(/\u005f/g, '/'))) as { exp?: number };
     if (payload.exp === undefined) return false;
     return payload.exp * 1000 > Date.now();
   } catch {
@@ -461,7 +465,7 @@ export interface SpendSnapshot {
 }
 
 function buildQuery(params?: Record<string, string | number | undefined>): string {
-  const entries = Object.entries(params ?? {}).filter(([, v]) => v !== undefined);
+  const entries = Object.entries(params ?? {}).filter(([, v]) => v !== undefined && v !== '');
   if (entries.length === 0) return '';
   const qs = new URLSearchParams(entries.map(([k, v]) => [k, String(v)])).toString();
   return qs ? `?${qs}` : '';

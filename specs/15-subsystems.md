@@ -62,7 +62,9 @@ owns no SUB IDs (TRACEABILITY's §8.4 row).
   control-plane downtime coalesce into one catch-up run per trigger when the halt holding
   them lifts, carrying a missed-schedule summary (count, window) — per-trigger policy
   `replay|coalesce|skip`, default coalesce, with the runaway-protection rate limits
-  (SPW-070) bounding a large backlog.
+  (SPW-070) bounding a large backlog. `replay` runs every missed firing individually;
+  `coalesce` (default) runs a single catch-up run summarizing all misses; `skip` discards
+  the missed window entirely.
 - **SUB-052** — Firings are idempotent at the boundary: every firing carries a deterministic
   key (schedule: trigger + scheduled time; webhook/API: event id or caller-supplied
   `Idempotency-Key`; event: source event id); the `trigger_firings` table refuses duplicates

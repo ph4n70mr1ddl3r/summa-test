@@ -14,7 +14,7 @@ Source: PLAN.md §5.
   deputy, sponsor, lead, owner, group Leader, or originator — proposing or amending DNA,
   filing asks, creating board tasks or initiatives, and spawning are all refused at write;
   these are facets of one surface, not a checklist. Viewers receive the org-stall broadcast
-  read-only (ASK-058).
+  read-only (ASK-058). See SPEC-01's actor eligibility summary for the canonical enumeration.
 - **ORG-021** — Mid-life role changes maintain the invariants through the OFB-001…003 walks;
   write-time guards and the walks are one mechanism in two tenses.
 - **ORG-022** — Rehire is a new member, never a resurrection: deactivation is terminal for

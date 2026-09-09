@@ -389,8 +389,8 @@ public class DnaDomainService {
         if (ask.getWorkspaceId() != null && !ask.getWorkspaceId().isBlank()) {
             return true; // workspace-scoped asks follow the workspace's domain binding
         }
-        // Unscoped asks (admin broadcasts, org-wide) are re-keyed too
-        return true;
+        // Do not re-key org-wide admin broadcasts (no domain scope)
+        return false;
     }
 
     public List<DnaDomain> findByOwnerHumanId(String ownerId) {

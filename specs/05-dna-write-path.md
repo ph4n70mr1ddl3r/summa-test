@@ -18,12 +18,12 @@ Source: PLAN.md §4.3.
 
 ## Review queue and SLA
 
-- **DWP-020** — Proposals carry `review_by` derived from the domain's `review_sla_days`
+- **DWP-020** — Proposals carry `reviewed_by` derived from the domain's `review_sla_days`
   (default 7); a breach escalates to the admin and a stale queue surfaces in the owner's
   digest.
 - **DWP-021** — The queue belongs to the domain, not the owner's inbox: it renders to whoever
    holds `owner_human_id`, and owner re-pointing at any door (topology op, domain edit, the
-   OFB-001 walks) re-keys the rendering with `review_by` clocks untouched.
+   OFB-001 walks) re-keys the rendering with `reviewed_by` clocks untouched.
 - **DWP-022** — Org-scoped items (org-wide goals, org-wide glossary; `domain_id` null) route
   to the admin review queue; their `review_by` derives from the global default (CFG-024,
   7 days) — no domain row governs them.

@@ -4,6 +4,8 @@ import com.summa.constants.Defaults;
 import com.summa.repository.AskRepository;
 import com.summa.model.Ask;
 import com.summa.model.Human;
+import com.summa.repository.InitiativeRepository;
+import com.summa.model.Initiative;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -42,6 +44,7 @@ public class AskService {
     private final AuditService auditService;
     private final MemberService memberService;
     private final GovernanceService governanceService;
+    private final InitiativeRepository initiativeRepository;
     private final long stormCollapseWindowSeconds;
 
     private static final int MAX_EXPIRE_SUCCESSOR_DEPTH = 5;
@@ -53,13 +56,14 @@ public class AskService {
     private final ObjectMapper objectMapper;
 
     public AskService(AskRepository askRepository, AuditService auditService, MemberService memberService,
-                      GovernanceService governanceService,
+                      GovernanceService governanceService, InitiativeRepository initiativeRepository,
                       @Value("${summa.asks.storm-collapse-window-hours:1}") long stormCollapseWindowHours,
                       ObjectMapper objectMapper) {
         this.askRepository = askRepository;
         this.auditService = auditService;
         this.memberService = memberService;
         this.governanceService = governanceService;
+        this.initiativeRepository = initiativeRepository;
         this.stormCollapseWindowSeconds = stormCollapseWindowHours * 3600L;
         this.objectMapper = objectMapper;
     }
@@ -331,7 +335,8 @@ public class AskService {
      * initiative is answered, atomically update the initiative's goal_ref per the response.
      * The response payload carries the choice: extend, re-base, re-target, or close.
      */
-    private void handleDirectionAskResponse(Ask ask, String response) {
+    @Transactional
+    public void handleDirectionAskResponse(Ask ask, String response) {
         if (ask.getInitiativeId() == null || ask.getInitiativeId().isBlank()) return;
         if (!"question".equals(ask.getKind()) || !"bulk".equals(ask.getSlaTier())) return;
 
@@ -349,19 +354,28 @@ public class AskService {
                 auditService.logSystem("DIRECTION_CLOSE", "ask", ask.getId(),
                     String.format("{\"initiativeId\":\"%s\"}", initiativeId));
             } else if ("re-base".equals(action) || action.equals("rebase") || action.startsWith("re-base")) {
-                // Re-base: the response payload should carry a new goal_ref
+                // Re-base: re-issue the ended objective as a new goal row
                 if (payload.has("newGoalRef") && !payload.get("newGoalRef").isNull()) {
                     String newGoalRef = payload.get("newGoalRef").asText();
-                    // Atomic update via InitiativeService would need injection; log for now
-                    auditService.logSystem("DIRECTION_REBASE", "ask", ask.getId(),
-                        String.format("{\"initiativeId\":\"%s\",\"newGoalRef\":\"%s\"}", initiativeId, newGoalRef));
+                    Optional<Initiative> initOpt = initiativeRepository.findById(initiativeId);
+                    if (initOpt.isPresent()) {
+                        initOpt.get().setGoalRef(newGoalRef);
+                        initiativeRepository.save(initOpt.get());
+                        auditService.logSystem("DIRECTION_REBASE", "ask", ask.getId(),
+                            String.format("{\"initiativeId\":\"%s\",\"newGoalRef\":\"%s\"}", initiativeId, newGoalRef));
+                    }
                 }
             } else if ("re-target".equals(action) || action.equals("retarget") || action.startsWith("re-target")) {
                 // Re-target: swap to a different goal
                 if (payload.has("newGoalRef") && !payload.get("newGoalRef").isNull()) {
                     String newGoalRef = payload.get("newGoalRef").asText();
-                    auditService.logSystem("DIRECTION_RETARGET", "ask", ask.getId(),
-                        String.format("{\"initiativeId\":\"%s\",\"newGoalRef\":\"%s\"}", initiativeId, newGoalRef));
+                    Optional<Initiative> initOpt = initiativeRepository.findById(initiativeId);
+                    if (initOpt.isPresent()) {
+                        initOpt.get().setGoalRef(newGoalRef);
+                        initiativeRepository.save(initOpt.get());
+                        auditService.logSystem("DIRECTION_RETARGET", "ask", ask.getId(),
+                            String.format("{\"initiativeId\":\"%s\",\"newGoalRef\":\"%s\"}", initiativeId, newGoalRef));
+                    }
                 }
             }
         } catch (Exception e) {

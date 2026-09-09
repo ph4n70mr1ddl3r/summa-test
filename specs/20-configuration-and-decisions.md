@@ -88,6 +88,10 @@ trigger; the mechanism it tunes is already designed (NFR-022). Defaults live beh
 - **CFG-110** — Business budgets: display-only field on initiatives (default) vs.
   enforcement tied into tier-2 write gates — revisit with the first write-capable
   ERP/WMS connector.
+- **CFG-120** — Workspace kind assignment: `personal` for human-owned private slices,
+  `system` for org infrastructure owned by no human, `project` for everything else —
+  assigned by the creating actor's context at write (DAT-090's binding rules apply
+  regardless of kind).
 - **CFG-130** — Per-domain proposal strictness: every proposal reviewed (default) vs.
   opt-in auto-publish for low-blast-radius domains (audited, retro-reviewable) — revisit
   when proposal volume drowns owners.
