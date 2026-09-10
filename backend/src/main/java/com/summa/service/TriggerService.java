@@ -111,7 +111,6 @@ public class TriggerService {
             String expr = trigger.getExpression();
             boolean fireEveryMinute = "*".equals(expr)
                     || "*/1 * * * *".equals(expr)
-                    || "*:*".equals(expr)
                     || "0 * * * * *".equals(expr)
                     || "* * * * *".equals(expr);
             if (fireEveryMinute) {

@@ -29,18 +29,14 @@ export default function Memory() {
 
   const handleReview = async (id: string) => {
     setReviewResult(null)
-    let aborted = false
     try {
       await api.memory.review(id)
-      if (!aborted) {
-        setReviewResult('Item reviewed and taint cleared')
-        setReviewingId(null)
-        loadItems()
-      }
+      setReviewResult('Item reviewed and taint cleared')
+      setReviewingId(null)
+      loadItems()
     } catch (err) {
-      if (!aborted) setReviewResult(err instanceof Error ? err.message : String(err))
+      setReviewResult(err instanceof Error ? err.message : String(err))
     }
-    return () => { aborted = true }
   }
 
   if (loading) return <div className="text-gray-400">Loading...</div>

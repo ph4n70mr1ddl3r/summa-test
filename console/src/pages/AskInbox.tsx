@@ -54,30 +54,24 @@ export default function AskInbox() {
   const handleRespond = async (id: string) => {
     setSubmitError(null)
     setSubmitSuccess(null)
-    let aborted = false
     try {
       await api.asks.respond(id, responseText)
-      if (!aborted) {
-        setSubmitSuccess('Response recorded')
-        setRespondingId(null)
-        setResponseText('')
-        loadAsks()
-      }
+      setSubmitSuccess('Response recorded')
+      setRespondingId(null)
+      setResponseText('')
+      loadAsks()
     } catch (err) {
-      if (!aborted) setSubmitError(err instanceof Error ? err.message : String(err))
+      setSubmitError(err instanceof Error ? err.message : String(err))
     }
-    return () => { aborted = true }
   }
 
   const handleWithdraw = async (id: string) => {
-    let aborted = false
     try {
       await api.asks.withdraw(id)
-      if (!aborted) loadAsks()
+      loadAsks()
     } catch (err) {
-      if (!aborted) setSubmitError(err instanceof Error ? err.message : String(err))
+      setSubmitError(err instanceof Error ? err.message : String(err))
     }
-    return () => { aborted = true }
   }
 
   if (loading) {

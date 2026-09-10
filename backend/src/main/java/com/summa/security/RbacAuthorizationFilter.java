@@ -65,7 +65,7 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
             return;
         }
 
-        boolean writeAllowed = true;
+        boolean writeAllowed = false;
         if (WRITE_METHODS.containsKey(request.getMethod())) {
             Optional<Human> humanOpt = memberService.findHuman(actor);
             if (humanOpt.isPresent()) {

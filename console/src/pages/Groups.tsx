@@ -23,14 +23,12 @@ export default function Groups() {
   }, [])
 
   const handleArchive = async (id: string) => {
-    let aborted = false
     try {
       await api.groups.archive(id)
-      if (!aborted) loadGroups()
+      loadGroups()
     } catch (err) {
-      if (!aborted) setError(err instanceof Error ? err.message : String(err))
+      setError(err instanceof Error ? err.message : String(err))
     }
-    return () => { aborted = true }
   }
 
   if (loading) return <div className="text-gray-400">Loading...</div>

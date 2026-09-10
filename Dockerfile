@@ -31,5 +31,8 @@ ENV SUMMA_DB_PATH=/data/db/summa.db \
 
 EXPOSE 8080
 
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=20s \
+  CMD curl -sf http://localhost:8080/api/health || exit 1
+
 USER 1000
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

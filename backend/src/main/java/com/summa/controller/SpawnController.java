@@ -85,9 +85,6 @@ public class SpawnController {
             );
             return ResponseEntity.ok(request);
         } catch (IllegalArgumentException e) {
-            if (e.getMessage().contains("ttlHours") && e.getMessage().contains("must be positive")) {
-                return ControllerResponses.validation(auditService, e.getMessage());
-            }
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
@@ -145,8 +142,8 @@ public class SpawnController {
             int val = Integer.parseInt(s);
             if (val <= 0) throw new IllegalArgumentException("ttlHours must be positive");
             return val;
-        } catch (IllegalArgumentException e) {
-            throw e;
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid ttlHours: " + s);
         }
     }
 }

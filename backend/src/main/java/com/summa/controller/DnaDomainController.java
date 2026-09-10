@@ -87,7 +87,7 @@ public class DnaDomainController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            DnaDomain domain = domainService.rename(id, body.get("name"), actor);
+            DnaDomain domain = domainService.rename(id, body.get("name") != null && !body.get("name").isBlank() ? body.get("name") : null, actor);
             return ResponseEntity.ok(domain);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.notFound(auditService, e.getMessage());
@@ -100,7 +100,7 @@ public class DnaDomainController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            DnaDomain domain = domainService.updateOwner(id, body.get("ownerHumanId"), actor);
+            DnaDomain domain = domainService.updateOwner(id, body.get("ownerHumanId") != null && !body.get("ownerHumanId").isBlank() ? body.get("ownerHumanId") : null, actor);
             return ResponseEntity.ok(domain);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.notFound(auditService, e.getMessage());

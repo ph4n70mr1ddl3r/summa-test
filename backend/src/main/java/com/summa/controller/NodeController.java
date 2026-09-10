@@ -25,9 +25,21 @@ public class NodeController {
         this.writeGate = writeGate;
     }
 
-    private static int parseNumericValue(Object obj, String fieldName) {
+    private static int parseIntValue(Object obj, String fieldName) {
         if (obj instanceof Number n) return n.intValue();
         if (obj instanceof String s) return Integer.parseInt(s.trim());
+        throw new IllegalArgumentException(fieldName + " must be a number");
+    }
+
+    private static long parseLongValue(Object obj, String fieldName) {
+        if (obj instanceof Number n) return n.longValue();
+        if (obj instanceof String s) return Long.parseLong(s.trim());
+        throw new IllegalArgumentException(fieldName + " must be a number");
+    }
+
+    private static double parseDoubleValue(Object obj, String fieldName) {
+        if (obj instanceof Number n) return n.doubleValue();
+        if (obj instanceof String s) return Double.parseDouble(s.trim());
         throw new IllegalArgumentException(fieldName + " must be a number");
     }
 
@@ -89,7 +101,7 @@ public class NodeController {
                 throw new IllegalArgumentException("workspaceId is required");
             }
             Object epochObj = body.get("epoch");
-            int currentEpoch = epochObj != null ? parseNumericValue(epochObj, "epoch") : 0;
+            int currentEpoch = epochObj != null ? parseIntValue(epochObj, "epoch") : 0;
             Node node = nodeService.claimWorkspace(id, workspaceId, currentEpoch);
             return ResponseEntity.ok(node);
         } catch (IllegalArgumentException e) {
@@ -124,9 +136,9 @@ public class NodeController {
             @SuppressWarnings("unchecked")
             String artifacts = body.get("artifacts") != null ? body.get("artifacts").toString() : null;
             Object costTokensObj = body.get("costTokens");
-            long costTokens = costTokensObj != null ? parseNumericValue(costTokensObj, "costTokens") : 0L;
+            long costTokens = costTokensObj != null ? parseLongValue(costTokensObj, "costTokens") : 0L;
             Object costUsdObj = body.get("costUsd");
-            double costUsd = costUsdObj != null ? parseNumericValue(costUsdObj, "costUsd") : 0.0;
+            double costUsd = costUsdObj != null ? parseDoubleValue(costUsdObj, "costUsd") : 0.0;
             String memberId = (String) body.get("memberId");
             Run run = nodeService.reportRun(id, runId, result, artifacts, costTokens, costUsd, memberId);
             return ResponseEntity.ok(run);

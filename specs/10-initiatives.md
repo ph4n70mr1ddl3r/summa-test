@@ -10,8 +10,8 @@ Source: PLAN.md §5.1.
   (any member but an ephemeral worker; viewer and non-active members refused at write),
   optional deadline, optional business budget (display-only until CFG-110), status
   `proposed|active|paused|closed`, optional `depends_on`.
-- **INT-002** — DNA first: the directive lands as a decision record and (usually) a goal
-  through the normal write path; the initiative references them.
+- **INT-002** — DNA first: the directive lands as a decision record and, generally, as a
+  goal through the normal write path; the initiative references both.
 - **INT-010** — Ephemeral-origin initiatives are refused at write: a bounded worker's
   directive-deserving output folds back to its spawner; a human or persistent agent opens
   the initiative.

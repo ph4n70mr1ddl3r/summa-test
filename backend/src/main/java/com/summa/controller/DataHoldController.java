@@ -34,10 +34,22 @@ public class DataHoldController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
+            String kind = body.get("kind");
+            if (kind == null || kind.isBlank()) {
+                throw new IllegalArgumentException("kind is required");
+            }
+            String subjectId = body.get("subjectId");
+            if (subjectId == null || subjectId.isBlank()) {
+                throw new IllegalArgumentException("subjectId is required");
+            }
+            String reasonMd = body.get("reasonMd");
+            if (reasonMd == null || reasonMd.isBlank()) {
+                throw new IllegalArgumentException("reasonMd is required");
+            }
             DataHold hold = holdService.create(
-                body.get("kind"),
-                body.get("subjectId"),
-                body.get("reasonMd"),
+                kind,
+                subjectId,
+                reasonMd,
                 actor
             );
             return ResponseEntity.ok(hold);

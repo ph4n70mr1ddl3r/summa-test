@@ -56,7 +56,7 @@ public class AgentService {
         this.triggerRepository = triggerRepository;
         this.spawnRequestRepository = spawnRequestRepository;
         this.runRepository = runRepository;
-        this.depthCap = depthCap;
+        this.depthCap = Math.max(2, depthCap);
     }
 
     @Transactional

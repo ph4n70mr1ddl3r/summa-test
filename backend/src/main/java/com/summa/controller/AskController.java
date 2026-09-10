@@ -53,6 +53,14 @@ public class AskController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
+            String kind = body.get("kind");
+            if (kind == null || kind.isBlank()) {
+                throw new IllegalArgumentException("kind is required");
+            }
+            String to = body.get("to");
+            if (to == null || to.isBlank()) {
+                throw new IllegalArgumentException("to is required");
+            }
             String deadlineStr = body.get("deadlineSeconds");
             long deadlineSeconds = 86400L;
             if (deadlineStr != null && !deadlineStr.isBlank()) {

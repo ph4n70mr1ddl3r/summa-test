@@ -56,11 +56,19 @@ public class TriggerController {
             if (kind == null || kind.isBlank()) {
                 throw new IllegalArgumentException("kind is required");
             }
+            String expression = body.get("expression");
+            if (expression == null || expression.isBlank()) {
+                throw new IllegalArgumentException("expression is required");
+            }
+            String agentId = body.get("agentId");
+            if (agentId == null || agentId.isBlank()) {
+                throw new IllegalArgumentException("agentId is required");
+            }
             Trigger trigger = triggerService.create(
                 name,
                 kind,
-                body.get("expression"),
-                body.get("agentId"),
+                expression,
+                agentId,
                 body.get("workspaceId"),
                 body.get("criticality"),
                 body.get("config"),

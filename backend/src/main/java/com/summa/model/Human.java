@@ -25,7 +25,7 @@ public class Human {
     private String auth;
 
     @JsonIgnore
-    @Column(name = "password_hash", length = 64)
+    @Column(name = "password_hash", columnDefinition = "TEXT")
     private String passwordHash;
 
     @Column(name = "deputy_member_id", length = 36)
