@@ -92,8 +92,8 @@ public class GovernanceController {
                 return ControllerResponses.validation(auditService, "Unknown policy key: " + key);
             }
             Object value = body.get(key);
-            if (!(value instanceof Number || value instanceof String)) {
-                return ControllerResponses.validation(auditService, "Policy value for '" + key + "' must be a number or string");
+            if (!(value instanceof Number || value instanceof String || value instanceof Boolean)) {
+                return ControllerResponses.validation(auditService, "Policy value for '" + key + "' must be a number, string, or boolean");
             }
         }
         body.forEach((key, value) -> governanceService.setSetting(key, String.valueOf(value), actor));
@@ -110,8 +110,8 @@ public class GovernanceController {
                 return ControllerResponses.validation(auditService, "Unknown quota key: " + key);
             }
             Object value = body.get(key);
-            if (!(value instanceof Number || value instanceof String)) {
-                return ControllerResponses.validation(auditService, "Quota value for '" + key + "' must be a number or string");
+            if (!(value instanceof Number || value instanceof String || value instanceof Boolean)) {
+                return ControllerResponses.validation(auditService, "Quota value for '" + key + "' must be a number, string, or boolean");
             }
         }
         body.forEach((key, value) -> governanceService.setSetting(key, String.valueOf(value), actor));
@@ -132,7 +132,7 @@ public class GovernanceController {
         try {
             SpendLedger ledger = spendLedgerService.findById(id)
                     .orElseThrow(() -> new IllegalArgumentException("Spend ledger row not found: " + id));
-            if (Boolean.TRUE.equals(ledger.getAcknowledged())) {
+            if (!Boolean.TRUE.equals(ledger.getAcknowledged())) {
                 spendLedgerService.acknowledge(id, actor);
             }
             return ResponseEntity.ok(Map.of("status", "overrun_acknowledged", "rowId", id,

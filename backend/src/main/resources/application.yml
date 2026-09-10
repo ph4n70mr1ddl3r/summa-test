@@ -35,7 +35,7 @@ summa:
     wal-mode: true
   git:
     dna-repo-path: ${SUMMA_DNA_REPO:${user.home}/.summa/dna}
-    branch: main
+    branch: ${SUMMA_GIT_BRANCH:main}
     commit-author: summa <summa@local>
   auth:
     jwt-secret: ${SUMMA_JWT_SECRET}

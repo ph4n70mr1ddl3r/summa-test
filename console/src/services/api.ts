@@ -376,12 +376,12 @@ export interface Workspace {
   id: string;
   name: string;
   kind: WorkspaceKind;
-  initiativeIds: string[];
-  domainIds: string[];
+  initiativeIds: string | string[];
+  domainIds: string | string[];
   nodeId?: string;
   claimEpoch: number;
   leaseExpiresAt?: number;
-  participants: string[];
+  participants: string | string[];
   archivedAt?: number;
   createdAt?: number;
   updatedAt?: number;

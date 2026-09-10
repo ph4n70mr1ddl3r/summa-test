@@ -25,6 +25,12 @@ public class NodeController {
         this.writeGate = writeGate;
     }
 
+    private static int parseNumericValue(Object obj, String fieldName) {
+        if (obj instanceof Number n) return n.intValue();
+        if (obj instanceof String s) return Integer.parseInt(s.trim());
+        throw new IllegalArgumentException(fieldName + " must be a number");
+    }
+
     @GetMapping
     public ResponseEntity<List<Node>> listNodes() {
         return ResponseEntity.ok(nodeService.findAll());
@@ -41,6 +47,9 @@ public class NodeController {
 
     @PostMapping("/enroll")
     public ResponseEntity<?> enroll(@RequestBody Map<String, String> body) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         String name = body.get("name");
         String kind = body.get("kind");
         String pubkey = body.get("pubkey");
@@ -71,12 +80,16 @@ public class NodeController {
     @PostMapping("/{id}/claims")
     public ResponseEntity<?> claimWorkspace(@PathVariable String id, @RequestBody Map<String, Object> body) {
         // API-060: acquire or renew a workspace claim as epoch-fenced lease
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             String workspaceId = (String) body.get("workspaceId");
             if (workspaceId == null || workspaceId.isBlank()) {
                 throw new IllegalArgumentException("workspaceId is required");
             }
-            int currentEpoch = body.get("epoch") != null ? ((Number) body.get("epoch")).intValue() : 0;
+            Object epochObj = body.get("epoch");
+            int currentEpoch = epochObj != null ? parseNumericValue(epochObj, "epoch") : 0;
             Node node = nodeService.claimWorkspace(id, workspaceId, currentEpoch);
             return ResponseEntity.ok(node);
         } catch (IllegalArgumentException e) {
@@ -103,12 +116,17 @@ public class NodeController {
     public ResponseEntity<?> reportRun(@PathVariable String id, @PathVariable String runId,
                                         @RequestBody Map<String, Object> body) {
         // API-060: land results, artifacts, and spend ledger lines
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             String result = (String) body.get("result");
             @SuppressWarnings("unchecked")
             String artifacts = body.get("artifacts") != null ? body.get("artifacts").toString() : null;
-            long costTokens = body.get("costTokens") != null ? ((Number) body.get("costTokens")).longValue() : 0L;
-            double costUsd = body.get("costUsd") != null ? ((Number) body.get("costUsd")).doubleValue() : 0.0;
+            Object costTokensObj = body.get("costTokens");
+            long costTokens = costTokensObj != null ? parseNumericValue(costTokensObj, "costTokens") : 0L;
+            Object costUsdObj = body.get("costUsd");
+            double costUsd = costUsdObj != null ? parseNumericValue(costUsdObj, "costUsd") : 0.0;
             String memberId = (String) body.get("memberId");
             Run run = nodeService.reportRun(id, runId, result, artifacts, costTokens, costUsd, memberId);
             return ResponseEntity.ok(run);

@@ -74,4 +74,36 @@ describe('Groups page', () => {
       expect(screen.getByText(/GET.*api\/org\/groups/i)).toBeInTheDocument()
     })
   })
+
+  it('shows error when archive fails', async () => {
+    vi.mocked(apiModule.api.groups.list).mockResolvedValue([
+      { id: 'g1', name: 'Engineering', status: 'active', createdAt: 0 },
+    ])
+    vi.mocked(apiModule.api.groups.archive).mockRejectedValue(new Error('Permission denied'))
+    render(<Groups />)
+    await waitFor(() => {
+      expect(screen.getByText('Engineering')).toBeInTheDocument()
+    })
+    const archiveBtn = screen.getByText('Archive')
+    archiveBtn.click()
+    await waitFor(() => {
+      expect(screen.getByText('Permission denied')).toBeInTheDocument()
+    })
+  })
+
+  it('reloads groups after successful archive', async () => {
+    const group = { id: 'g1', name: 'Engineering', status: 'active', createdAt: 0 }
+    vi.mocked(apiModule.api.groups.list).mockResolvedValue([group])
+    vi.mocked(apiModule.api.groups.archive).mockResolvedValue({ ...group, status: 'archived' } as apiModule.Group)
+    render(<Groups />)
+    await waitFor(() => {
+      expect(screen.getByText('Engineering')).toBeInTheDocument()
+    })
+    const archiveBtn = screen.getByText('Archive')
+    archiveBtn.click()
+    await waitFor(() => {
+      expect(apiModule.api.groups.archive).toHaveBeenCalledWith('g1')
+      expect(apiModule.api.groups.list).toHaveBeenCalledTimes(2)
+    })
+  })
 })

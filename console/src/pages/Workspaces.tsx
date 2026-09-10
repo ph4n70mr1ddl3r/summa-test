@@ -4,12 +4,15 @@ import { escapeHtml } from '../utils/escapeHtml'
 
 function parseParticipantsCount(participants: string | string[]): number {
   if (Array.isArray(participants)) return participants.length
-  try {
-    const arr = JSON.parse(participants)
-    return Array.isArray(arr) ? arr.length : 0
-  } catch {
-    return 0
+  if (typeof participants === 'string') {
+    try {
+      const arr = JSON.parse(participants)
+      return Array.isArray(arr) ? arr.length : 0
+    } catch {
+      return 0
+    }
   }
+  return 0
 }
 
 export default function Workspaces() {

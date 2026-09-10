@@ -13,6 +13,7 @@ export default function Home() {
         <div className="flex justify-center space-x-4">
           <NavLink
             to="/dna"
+            end
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white"
           >
             Get Started

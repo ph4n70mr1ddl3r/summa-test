@@ -18,7 +18,7 @@ WORKDIR /app
 # Install curl for healthcheck
 RUN apk add --no-cache curl
 
-COPY --from=builder /build/backend/target/summa-backend-*.jar app.jar
+RUN cd /build/backend/target && ls summa-backend-*.jar | grep -v '\.original$' | xargs -I{} cp {} app.jar
 
 # Create data directories and non-root user
 RUN addgroup -g 1000 -S summa && adduser -u 1000 -S summa -G summa && \
@@ -27,7 +27,7 @@ RUN addgroup -g 1000 -S summa && adduser -u 1000 -S summa -G summa && \
 ENV SUMMA_DB_PATH=/data/db/summa.db \
     SUMMA_DNA_REPO=/data/dna \
     SPRING_PROFILES_ACTIVE=prod \
-    JAVA_OPTS="-Xmx512m -Xms256m"
+    JAVA_OPTS="-Xmx512m -Xms256m -XX:MaxMetaspaceSize=128m"
 
 EXPOSE 8080
 

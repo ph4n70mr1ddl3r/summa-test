@@ -66,7 +66,7 @@ cd console && npm run dev
 npm test            # backend (mvn) + spec self-tests + console (vitest)
 
 # Targeted runs
-npm run test:backend   # == cd backend && mvn test
+npm run test:backend   # == cd backend && mvn test -Dspring.profiles.active=test
 npm run test:console   # == cd console && npm test
 npm run test:specs     # == python3 tools/test_lint.py
 

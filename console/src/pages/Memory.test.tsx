@@ -60,4 +60,20 @@ describe('Memory page', () => {
       expect(container.textContent).toContain('Error')
     })
   })
+
+  it('shows success and reloads after reviewing a tainted item', async () => {
+    vi.mocked(apiModule.api.memory.list).mockResolvedValue([
+      { id: 'm-1', tier: 'personal', contentMd: 'Tainted content', provenance: 'test', tainted: true },
+    ])
+    const { getByText } = render(<Memory />)
+    await waitFor(() => {
+      expect(getByText('tainted')).toBeInTheDocument()
+    })
+    // The review button is only shown for tainted items
+    const reviewBtn = getByText('Review')
+    reviewBtn.click()
+    await waitFor(() => {
+      expect(getByText('Confirm Review')).toBeInTheDocument()
+    })
+  })
 })

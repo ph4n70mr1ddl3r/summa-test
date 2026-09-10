@@ -43,5 +43,6 @@ echo "Starting backend on port 8080..."
 exec java \
     -Xmx512m \
     -Xms256m \
+    -XX:MaxMetaspaceSize=128m \
     -Dspring.profiles.active=prod \
     -jar "$JAR_FILE"

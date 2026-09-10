@@ -175,13 +175,7 @@ CREATE INDEX IF NOT EXISTS idx_dna_proposals_domain ON dna_proposals(domain_id);
 CREATE INDEX IF NOT EXISTS idx_agents_status ON agents(status);
 CREATE INDEX IF NOT EXISTS idx_agents_owner ON agents(owner_human_id);
 CREATE INDEX IF NOT EXISTS idx_agents_template ON agents(template_id);
-CREATE INDEX IF NOT EXISTS idx_pats_member ON pats(member_id);
-CREATE INDEX IF NOT EXISTS idx_spawn_requests_approved ON spawn_requests(approved_by);
 CREATE INDEX IF NOT EXISTS idx_humans_deputy ON humans(deputy_member_id);
-CREATE INDEX IF NOT EXISTS idx_dna_goals_domain ON dna_goals(domain_id);
-CREATE INDEX IF NOT EXISTS idx_dna_goals_status ON dna_goals(status);
--- NOTE: indexes on initiatives/group_memberships/memory_items/spend_ledger live
--- directly after their CREATE TABLEs below (SQLite requires the table to exist).
 
 CREATE TABLE IF NOT EXISTS asks (
     id TEXT PRIMARY KEY,
@@ -412,6 +406,8 @@ CREATE TABLE IF NOT EXISTS pats (
     -- member_id is a keyed union per DAT-120: h:<humans.id> or a:<agents.id>
 );
 
+CREATE INDEX IF NOT EXISTS idx_pats_member ON pats(member_id);
+
 CREATE TABLE IF NOT EXISTS governance_settings (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL DEFAULT '{}',
@@ -498,6 +494,7 @@ CREATE TABLE IF NOT EXISTS spawn_requests (
 CREATE INDEX IF NOT EXISTS idx_spawn_requests_requester ON spawn_requests(requester_id);
 CREATE INDEX IF NOT EXISTS idx_spawn_requests_status ON spawn_requests(status);
 CREATE INDEX IF NOT EXISTS idx_spawn_requests_gate ON spawn_requests(gate_target);
+CREATE INDEX IF NOT EXISTS idx_spawn_requests_approved ON spawn_requests(approved_by);
 
 CREATE TABLE IF NOT EXISTS messages (
     id TEXT PRIMARY KEY,
@@ -570,7 +567,7 @@ END;
 
 CREATE TRIGGER IF NOT EXISTS dna_decisions_ai AFTER INSERT ON dna_decisions BEGIN
     INSERT INTO dna_search_index (id, context_md, outcome_md, domain_id, kind, status)
-    VALUES (new.id, new.context_md, new.outcome_md, new.domain_id, 'decision', 'active');
+    VALUES (new.id, new.context_md, new.outcome_md, new.domain_id, 'decision', new.status);
 END;
 
 CREATE TRIGGER IF NOT EXISTS dna_glossary_ai AFTER INSERT ON dna_glossary BEGIN
@@ -593,7 +590,7 @@ CREATE TRIGGER IF NOT EXISTS dna_decisions_au AFTER UPDATE ON dna_decisions BEGI
         outcome_md = new.outcome_md,
         domain_id = new.domain_id,
         kind = 'decision',
-        status = 'active'
+        status = new.status
     WHERE id = old.id;
 END;
 
