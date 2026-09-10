@@ -51,10 +51,10 @@ public class Run {
     @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
     private Instant completedAt;
 
-    @Column(name = "cost_tokens", nullable = false)
+    @Column(name = "cost_tokens")
     private Long costTokens;
 
-    @Column(name = "cost_usd", nullable = false)
+    @Column(name = "cost_usd")
     private Double costUsd;
 
     @Column(name = "created_at", nullable = false)
@@ -71,8 +71,6 @@ public class Run {
         if (updatedAt == null) updatedAt = Instant.now();
         if (status == null) status = "queued";
         if (artifacts == null) artifacts = "[]";
-        if (costTokens == null) costTokens = 0L;
-        if (costUsd == null) costUsd = 0.0;
         if (prompt == null) prompt = "";
     }
 

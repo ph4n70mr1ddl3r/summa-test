@@ -92,7 +92,7 @@ public class SpawnService {
 
         // SPW-010: Ephemeral requester refused a persistent-hire request at write
         if (AgentClass.PERSISTENT.getValue().equals(effectiveSpawnClass)) {
-            if (requesterOpt.isPresent() && AgentClass.EPHEMERAL.getValue().equals(requesterOpt.get().getAgentClass())) {
+            if (AgentClass.EPHEMERAL.getValue().equals(requesterOpt.get().getAgentClass())) {
                 throw new IllegalStateException("Ephemeral agents cannot request persistent hires");
             }
         }

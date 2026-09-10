@@ -32,6 +32,14 @@ export SUMMA_JWT_SECRET=$(openssl rand -hex 32)
 - Health: `GET /api/health` (no auth required)
 - Bootstrap first admin: `POST /api/org/bootstrap` (no auth required, first-run only — always creates an `admin`)
 
+### Docker Compose
+
+```bash
+cp .env.example .env
+# Edit .env and set SUMMA_JWT_SECRET
+docker compose up -d
+```
+
 ## Architecture
 
 ```

@@ -232,18 +232,10 @@ public class OffboardingWalkService {
         // OFB-003: Reassign asks TO the member up the chain; close asks FROM the member with audit note
         for (Ask ask : askRepository.findByStatus("pending")) {
             if (humanId.equals(ask.getTo())) {
-                // Reassign up the chain: try deputy first, then admin broadcast
-                Optional<Human> targetHuman = memberService.findHuman(humanId);
-                if (targetHuman.isPresent() && targetHuman.get().getDeputyMemberId() != null
-                        && memberService.findHuman(targetHuman.get().getDeputyMemberId()).isPresent()) {
-                    ask.setTo(targetHuman.get().getDeputyMemberId());
-                    askRepository.save(ask);
-                    asksReassigned++;
-                } else {
-                    ask.setTo(ADMIN_BROADCAST);
-                    askRepository.save(ask);
-                    asksReassigned++;
-                }
+                // Reassign up the chain to successor first, then deputy, then admin broadcast
+                ask.setTo(finalTargetOwner);
+                askRepository.save(ask);
+                asksReassigned++;
                 auditService.logSystem("OFFBOARD_REASSIGN_ASK_TO", "ask", ask.getId(),
                     toJson(Map.of("newTo", ask.getTo(), "reason", "member_departed"), objectMapper));
             } else if (humanId.equals(ask.getFrom())) {

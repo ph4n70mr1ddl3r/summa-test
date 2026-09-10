@@ -140,7 +140,7 @@ public class SpawnController {
     private Integer parseIntSafe(String s) {
         try {
             int val = Integer.parseInt(s);
-            if (val <= 0) throw new IllegalArgumentException("ttlHours must be positive");
+            if (val <= 0 || val > 8760) throw new IllegalArgumentException("ttlHours must be between 1 and 8760");
             return val;
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid ttlHours: " + s);

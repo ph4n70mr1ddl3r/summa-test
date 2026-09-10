@@ -46,7 +46,12 @@ export default function DNAGoals() {
                     </p>
                   )}
                 </div>
-                <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300" aria-label={`Status: ${goal.status}`}>{escapeHtml(goal.status)}</span>
+                <span className={`text-xs px-2 py-1 rounded ${
+                  goal.status === 'active' ? 'bg-green-900/50 text-green-400' :
+                  goal.status === 'met' ? 'bg-blue-900/50 text-blue-400' :
+                  goal.status === 'missed' ? 'bg-red-900/50 text-red-400' :
+                  'bg-gray-700 text-gray-300'
+                }`} aria-label={`Status: ${goal.status}`}>{escapeHtml(goal.status)}</span>
               </div>
             </div>
           ))}

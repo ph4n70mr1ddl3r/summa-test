@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/asks")
@@ -57,6 +58,10 @@ public class AskController {
             if (kind == null || kind.isBlank()) {
                 throw new IllegalArgumentException("kind is required");
             }
+            Set<String> validKinds = Set.of("approval", "question", "assignment", "spawn_request", "promotion");
+            if (!validKinds.contains(kind)) {
+                throw new IllegalArgumentException("Invalid kind: " + kind + ". Must be one of: " + String.join(", ", validKinds));
+            }
             String to = body.get("to");
             if (to == null || to.isBlank()) {
                 throw new IllegalArgumentException("to is required");
@@ -69,8 +74,18 @@ public class AskController {
                 } catch (NumberFormatException e) {
                     return ControllerResponses.validation(auditService, "Invalid deadlineSeconds value");
                 }
+                if (deadlineSeconds <= 0) {
+                    return ControllerResponses.validation(auditService, "deadlineSeconds must be positive");
+                }
             }
             Instant deadline = Instant.now().plusSeconds(deadlineSeconds);
+            String slaTier = body.get("slaTier");
+            if (slaTier != null && !slaTier.isBlank()) {
+                Set<String> validTiers = Set.of("critical", "standard", "bulk");
+                if (!validTiers.contains(slaTier)) {
+                    throw new IllegalArgumentException("Invalid slaTier: " + slaTier + ". Must be one of: " + String.join(", ", validTiers));
+                }
+            }
             Ask ask = askService.create(
                 body.get("kind"),
                 actor,

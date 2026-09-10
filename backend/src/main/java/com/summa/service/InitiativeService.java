@@ -3,13 +3,11 @@ package com.summa.service;
 import com.summa.repository.InitiativeRepository;
 import com.summa.repository.BoardTaskRepository;
 import com.summa.repository.AskRepository;
-import com.summa.repository.SpawnRequestRepository;
 import com.summa.repository.DnaGoalRepository;
 import com.summa.repository.DnaDecisionRepository;
 import com.summa.model.Initiative;
 import com.summa.model.BoardTask;
 import com.summa.model.Ask;
-import com.summa.model.SpawnRequest;
 import com.summa.model.Human;
 import com.summa.model.Agent;
 import com.summa.model.DnaGoal;
@@ -42,7 +40,6 @@ public class InitiativeService {
     private final AuditService auditService;
     private final AskService askService;
     private final AskRepository askRepository;
-    private final SpawnRequestRepository spawnRequestRepository;
     private final DnaGoalRepository dnaGoalRepository;
     private final DnaDecisionRepository dnaDecisionRepository;
     private final DnaGoalService dnaGoalService;
@@ -50,18 +47,16 @@ public class InitiativeService {
     private final ObjectMapper objectMapper;
 
     public InitiativeService(InitiativeRepository initiativeRepository, BoardTaskRepository boardTaskRepository,
-                              AuditService auditService, AskService askService,
-                              AskRepository askRepository,
-                              SpawnRequestRepository spawnRequestRepository,
-                              DnaGoalRepository dnaGoalRepository, DnaDecisionRepository dnaDecisionRepository,
-                              DnaGoalService dnaGoalService, MemberService memberService,
-                              ObjectMapper objectMapper) {
+                               AuditService auditService, AskService askService,
+                               AskRepository askRepository,
+                               DnaGoalRepository dnaGoalRepository, DnaDecisionRepository dnaDecisionRepository,
+                               DnaGoalService dnaGoalService, MemberService memberService,
+                               ObjectMapper objectMapper) {
         this.initiativeRepository = initiativeRepository;
         this.boardTaskRepository = boardTaskRepository;
         this.auditService = auditService;
         this.askService = askService;
         this.askRepository = askRepository;
-        this.spawnRequestRepository = spawnRequestRepository;
         this.dnaGoalRepository = dnaGoalRepository;
         this.dnaDecisionRepository = dnaDecisionRepository;
         this.dnaGoalService = dnaGoalService;
@@ -254,7 +249,7 @@ public class InitiativeService {
             throw new IllegalStateException("Cannot close initiative with status: " + initiative.getStatus());
         }
 
-        // INT-040: dependency check — resolve open work before closing
+        // INT-040: Dependency check — resolve open work before closing
         List<BoardTask> openTasks = boardTaskRepository.findByInitiativeId(id).stream()
                 .filter(t -> !"done".equals(t.getStatus()))
                 .toList();
@@ -273,27 +268,7 @@ public class InitiativeService {
                 String.format("{\"initiativeId\":\"%s\",\"reason\":\"initiative_closed\"}", id));
         }
 
-        List<SpawnRequest> pendingSpawns = spawnRequestRepository.findByStatus("requested").stream()
-                .filter(s -> {
-                    String bindings = s.getWorkspaceBindings();
-                    if (bindings == null || bindings.isBlank()) return false;
-                    try {
-                        JsonNode node = objectMapper.readTree(bindings);
-                        if (node.isArray()) {
-                            for (JsonNode el : node) {
-                                if (id.equals(el.asText())) return true;
-                            }
-                        }
-                    } catch (Exception ignored) {}
-                    return false;
-                })
-                .toList();
-        for (SpawnRequest spawn : pendingSpawns) {
-            spawn.setStatus("archived");
-            spawnRequestRepository.save(spawn);
-            auditService.logSystem("CLOSE_ARCHIVE_SPAWN", "spawn_request", spawn.getId(),
-                String.format("{\"initiativeId\":\"%s\",\"reason\":\"initiative_closed\"}", id));
-        }
+        // Spawns are workspace-scoped; no initiative-level spawn archiving needed here.
 
         // INT-042: File a retrospective ask (kind question, tier bulk, expiry escalate)
         // to the lead — the sponsor when the lead is non-active.

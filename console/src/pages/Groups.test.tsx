@@ -92,7 +92,7 @@ describe('Groups page', () => {
   })
 
   it('reloads groups after successful archive', async () => {
-    const group = { id: 'g1', name: 'Engineering', status: 'active', createdAt: 0 }
+    const group = { id: 'g1', name: 'Engineering', status: 'active' as const, createdAt: 0 }
     vi.mocked(apiModule.api.groups.list).mockResolvedValue([group])
     vi.mocked(apiModule.api.groups.archive).mockResolvedValue({ ...group, status: 'archived' } as apiModule.Group)
     render(<Groups />)

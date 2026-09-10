@@ -16,7 +16,7 @@ public class AuditService {
         "(?i)(password|passwd|pwd|secret|token_hash)\\s*[:=]\\s*\"[^\"]{3,}\"|" +
         "(?i)(password|passwd|pwd|secret|token_hash)\\s*[:=]\\s*([^\\s,;}{\"]{3,})"
     );
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("(?i)(email|mail)\\s*[:=]\\s*\"[^\"]+@[^\"]+\"");
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("(?i)(email|mail)\\s*[:=]\\s*[\"']([^\"']+@[^\"]+)[\"']");
 
     private final AuditEventRepository auditEventRepository;
     private final ObjectMapper objectMapper;

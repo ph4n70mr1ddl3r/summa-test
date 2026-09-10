@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 import com.summa.util.ScanUtils;
+import com.summa.util.JsonHelpers;
 
 @Service
 public class DnaCardService {
@@ -35,7 +36,7 @@ public class DnaCardService {
 
         DnaCard saved = cardRepository.save(card);
         auditService.log(actor, "CREATE_CARD", "dna_card", id,
-            String.format("{\"domainId\":\"%s\",\"title\":\"%s\"}", domainId, title));
+            String.format("{\"domainId\":%s,\"title\":%s}", JsonHelpers.jsonString(domainId), JsonHelpers.jsonString(title)));
         return saved;
     }
 
@@ -96,7 +97,7 @@ public class DnaCardService {
 
         DnaCard saved = cardRepository.save(card);
         auditService.log(actor, "CREATE_DRAFT", "dna_card", id,
-            String.format("{\"domainId\":\"%s\",\"title\":\"%s\"}", domainId, title));
+            String.format("{\"domainId\":%s,\"title\":%s}", JsonHelpers.jsonString(domainId), JsonHelpers.jsonString(title)));
         return saved;
     }
 }

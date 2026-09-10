@@ -14,6 +14,7 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.summa.util.JsonHelpers;
 
 @Service
 public class DnaProposalService {
@@ -111,7 +112,7 @@ public class DnaProposalService {
                     // SoD breach: route publish to admin broadcast
                     actualReviewer = OffboardingWalkService.ADMIN_BROADCAST;
                     auditService.logSystem("SOD_ROUTE_TO_ADMIN", "dna_proposal", id,
-                        "{\"reason\":\"separation_of_duties\",\"proposer\":\"" + proposal.getProposedBy() + "\"}");
+                        String.format("{\"reason\":\"separation_of_duties\",\"proposer\":%s}", JsonHelpers.jsonString(proposal.getProposedBy())));
                 }
             }
         }

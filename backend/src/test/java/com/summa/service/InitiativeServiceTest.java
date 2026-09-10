@@ -3,14 +3,12 @@ package com.summa.service;
 import com.summa.repository.InitiativeRepository;
 import com.summa.repository.BoardTaskRepository;
 import com.summa.repository.AskRepository;
-import com.summa.repository.SpawnRequestRepository;
 import com.summa.repository.DnaGoalRepository;
 import com.summa.repository.DnaDecisionRepository;
 import com.summa.model.Initiative;
 import com.summa.model.BoardTask;
 import com.summa.model.Ask;
 import com.summa.model.Trigger;
-import com.summa.model.SpawnRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -40,9 +38,6 @@ class InitiativeServiceTest {
 
     @Mock
     private AskRepository askRepository;
-
-    @Mock
-    private SpawnRequestRepository spawnRequestRepository;
 
     @Mock
     private DnaGoalRepository dnaGoalRepository;
@@ -167,7 +162,6 @@ class InitiativeServiceTest {
         when(initiativeRepository.save(any())).thenReturn(init);
         when(boardTaskRepository.findByInitiativeId("i1")).thenReturn(java.util.List.of());
         when(askRepository.findByInitiativeIdAndStatusPending("i1")).thenReturn(java.util.List.of());
-        when(spawnRequestRepository.findByStatus("requested")).thenReturn(java.util.List.of());
         when(memberService.findHuman("h1")).thenReturn(Optional.empty());
         when(memberService.findAgent("h1")).thenReturn(Optional.empty());
         when(askService.create(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(new com.summa.model.Ask());

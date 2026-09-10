@@ -30,8 +30,7 @@ public class DnaSearchController {
                 return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
                         .body(Map.of("code", "validation", "message", "Query parameter 'q' is required"));
             }
-            int safeLimit = Math.min(Math.max(limit, 1), 100);
-            List<Map<String, Object>> results = dnaReadService.search(q, domainId, safeLimit);
+            List<Map<String, Object>> results = dnaReadService.search(q, domainId, limit);
             return ResponseEntity.ok(Map.of("results", results, "count", results.size()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)

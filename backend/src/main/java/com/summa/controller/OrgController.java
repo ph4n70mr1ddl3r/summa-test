@@ -137,6 +137,9 @@ public class OrgController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, "Erasure requires admin role");
+        }
         // API-005: admin, audited, honors data_holds (STG-030..034)
         try {
             Human human = orgService.findHuman(id).orElseThrow(() -> new IllegalArgumentException("Human not found: " + id));
@@ -195,6 +198,10 @@ public class OrgController {
             lineage.add(holder[0]);
             final String nextId = holder[0];
             memberService.findAgent(nextId).ifPresent(a -> holder[0] = a.getSpawnedBy());
+            if (holder[0] == null) {
+                // If memberId is a human (not an agent), break — humans have no spawn-by parent
+                memberService.findHuman(nextId).ifPresent(h -> holder[0] = null);
+            }
         }
         return ResponseEntity.ok(Map.of("memberId", memberId, "lineage", lineage));
     }
