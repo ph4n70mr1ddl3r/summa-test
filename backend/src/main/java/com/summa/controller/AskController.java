@@ -62,12 +62,7 @@ public class AskController {
                     return ControllerResponses.validation(auditService, "Invalid deadlineSeconds value");
                 }
             }
-            Instant deadline;
-            try {
-                deadline = Instant.now().plusSeconds(deadlineSeconds);
-            } catch (Exception e) {
-                return ControllerResponses.validation(auditService, "Invalid deadlineSeconds value");
-            }
+            Instant deadline = Instant.now().plusSeconds(deadlineSeconds);
             Ask ask = askService.create(
                 body.get("kind"),
                 actor,

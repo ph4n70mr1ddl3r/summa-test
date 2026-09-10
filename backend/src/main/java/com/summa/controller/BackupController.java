@@ -41,17 +41,17 @@ public class BackupController {
             return ControllerResponses.gate(auditService, "Backup requires admin role");
         }
         try {
-             String rawBackupDir = body.getOrDefault("backupDir", System.getProperty("java.io.tmpdir"));
-             Path validRoot = Paths.get(System.getProperty("java.io.tmpdir")).toRealPath();
-              Path backupDirPath;
-               try {
-                   backupDirPath = Paths.get(rawBackupDir).normalize().toRealPath();
-               } catch (java.io.IOException e) {
-                   return ControllerResponses.validation(auditService, "backupDir path is inaccessible: " + e.getMessage());
-               }
-               if (!backupDirPath.startsWith(validRoot)) {
-                   return ControllerResponses.validation(auditService, "backupDir must be under tmpdir");
-               }
+            String rawBackupDir = body.getOrDefault("backupDir", System.getProperty("java.io.tmpdir"));
+            Path validRoot = Paths.get(System.getProperty("java.io.tmpdir")).toRealPath();
+            Path backupDirPath;
+            try {
+                backupDirPath = Paths.get(rawBackupDir).normalize().toRealPath();
+            } catch (java.io.IOException e) {
+                return ControllerResponses.validation(auditService, "backupDir path is inaccessible: " + e.getMessage());
+            }
+            if (!backupDirPath.startsWith(validRoot)) {
+                return ControllerResponses.validation(auditService, "backupDir must be under tmpdir");
+            }
             String path = backupService.createBackup(backupDirPath.toString());
             auditService.log(actor, "CREATE_BACKUP", "backup", path, null);
             return ResponseEntity.ok(Map.of("path", path));
@@ -71,20 +71,20 @@ public class BackupController {
             return ControllerResponses.gate(auditService, "Restore requires admin role");
         }
         try {
-             String rawPath = body.get("backupPath");
-              if (rawPath == null || rawPath.isBlank()) {
-                  return ControllerResponses.validation(auditService, "backupPath is required");
-              }
-              Path validRoot = Paths.get(System.getProperty("java.io.tmpdir")).toRealPath();
-               Path backupFilePath;
-               try {
-                   backupFilePath = Paths.get(rawPath).normalize().toRealPath();
-               } catch (java.io.IOException e) {
-                   return ControllerResponses.validation(auditService, "backupPath is inaccessible: " + e.getMessage());
-               }
-              if (!backupFilePath.startsWith(validRoot)) {
-                  return ControllerResponses.validation(auditService, "backupPath must be under tmpdir");
-              }
+            String rawPath = body.get("backupPath");
+            if (rawPath == null || rawPath.isBlank()) {
+                return ControllerResponses.validation(auditService, "backupPath is required");
+            }
+            Path validRoot = Paths.get(System.getProperty("java.io.tmpdir")).toRealPath();
+            Path backupFilePath;
+            try {
+                backupFilePath = Paths.get(rawPath).normalize().toRealPath();
+            } catch (java.io.IOException e) {
+                return ControllerResponses.validation(auditService, "backupPath is inaccessible: " + e.getMessage());
+            }
+            if (!backupFilePath.startsWith(validRoot)) {
+                return ControllerResponses.validation(auditService, "backupPath must be under tmpdir");
+            }
             backupService.restore(backupFilePath.toString());
             auditService.log(actor, "RESTORE_BACKUP", "backup", backupFilePath.toString(), null);
             return ResponseEntity.ok(Map.of("status", "restored"));

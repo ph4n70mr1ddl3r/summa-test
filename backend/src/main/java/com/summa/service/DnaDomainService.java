@@ -64,8 +64,8 @@ public class DnaDomainService {
     }
 
     @Transactional
-    public DnaDomain create(String id, String name, String ownerHumanId, String access, 
-                            String store, Integer reviewSlaDays, String residency) {
+    public DnaDomain create(String id, String name, String ownerHumanId, String access,
+                            String store, Integer reviewSlaDays, String residency, String actor) {
         DnaDomain domain = new DnaDomain();
         domain.setId(id);
         domain.setName(name);
@@ -74,9 +74,9 @@ public class DnaDomainService {
         domain.setStore(store != null ? store : "git");
         domain.setReviewSlaDays(reviewSlaDays != null ? reviewSlaDays : 7);
         domain.setResidency(residency);
-        
+
         DnaDomain saved = domainRepository.save(domain);
-        auditService.log("system", "CREATE", "dna_domain", id, 
+        auditService.log(actor != null ? actor : "system", "CREATE", "dna_domain", id,
             String.format("{\"name\":\"%s\",\"access\":\"%s\",\"store\":\"%s\"}", name, domain.getAccess(), domain.getStore()));
         return saved;
     }

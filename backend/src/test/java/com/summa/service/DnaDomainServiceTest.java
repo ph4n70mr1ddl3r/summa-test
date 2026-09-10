@@ -74,7 +74,7 @@ class DnaDomainServiceTest {
         domain.setReviewSlaDays(7);
         when(domainRepository.save(any())).thenReturn(domain);
 
-        DnaDomain result = domainService.create("domain-1", "Engineering", "human-1", null, null, null, null);
+        DnaDomain result = domainService.create("domain-1", "Engineering", "human-1", null, null, null, null, "admin-1");
 
         assertNotNull(result);
         assertEquals("Engineering", result.getName());

@@ -57,7 +57,8 @@ public class DnaDomainController {
                 body.get("access"),
                 body.get("store"),
                 body.containsKey("reviewSlaDays") ? parseIntSafe(body.get("reviewSlaDays")) : null,
-                body.get("residency")
+                body.get("residency"),
+                actor
             );
             return ResponseEntity.ok(domain);
         } catch (IllegalArgumentException e) {
