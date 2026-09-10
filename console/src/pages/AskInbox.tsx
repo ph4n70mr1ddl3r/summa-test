@@ -134,9 +134,9 @@ export default function AskInbox() {
                   <span className="text-xl">{kindIcon(ask.kind)}</span>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-gray-200">{ask.kind.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</span>
+                      <span className="font-medium text-gray-200">{escapeHtml(ask.kind.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))}</span>
                       <span className={`text-xs px-2 py-0.5 rounded border ${tierColor(ask.slaTier)}`}>
-                        {ask.slaTier}
+                        {escapeHtml(ask.slaTier)}
                       </span>
                       {ask.collapsedCount != null && ask.collapsedCount > 1 && (
                         <span className="text-xs text-gray-500">

@@ -39,8 +39,16 @@ public class PatController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            int expiryDays = body.containsKey("expiryDays") ? 
-                Integer.parseInt(body.get("expiryDays")) : 90;
+            int expiryDays;
+            if (body.containsKey("expiryDays")) {
+                try {
+                    expiryDays = Integer.parseInt(body.get("expiryDays"));
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("expiryDays must be a valid integer");
+                }
+            } else {
+                expiryDays = 90;
+            }
             
             List<String> scopes = List.of();
             if (body.containsKey("scopes")) {
@@ -57,6 +65,9 @@ public class PatController {
                 }
             }
             
+            if (body.get("name") == null || body.get("name").isBlank()) {
+                throw new IllegalArgumentException("name is required");
+            }
             PatService.PatWithToken result = patService.create(
                 actor,
                 body.get("name"),

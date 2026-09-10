@@ -69,7 +69,7 @@ public class BoardTaskController {
             Instant dueAt = JsonHelpers.parseOptionalInstant(body.get("dueAt"), "dueAt");
             
             BoardTask task = taskService.create(
-                body.get("title"),
+                body.get("title") != null && !body.get("title").isBlank() ? body.get("title") : null,
                 body.get("description"),
                 actor,
                 body.get("assigneeMemberId"),

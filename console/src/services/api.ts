@@ -69,7 +69,7 @@ export function isAuthenticated(): boolean {
     if (header.alg !== 'HS256') return false;
     const payload = JSON.parse(atob(parts[1].replace(/=/g, '').replace(/-/g, '+').replace(/\u005f/g, '/'))) as { exp?: number };
     if (payload.exp === undefined) return false;
-    return payload.exp * 1000 > Date.now();
+    return payload.exp > Math.floor(Date.now() / 1000);
   } catch {
     return false;
   }
@@ -373,12 +373,12 @@ export interface Workspace {
   id: string;
   name: string;
   kind: WorkspaceKind;
-  initiativeIds: string;
-  domainIds: string;
+  initiativeIds: string[];
+  domainIds: string[];
   nodeId?: string;
   claimEpoch: number;
   leaseExpiresAt?: number;
-  participants: string;
+  participants: string[];
   archivedAt?: number;
   createdAt?: number;
   updatedAt?: number;
@@ -729,7 +729,7 @@ export const api = {
     list: (params?: { status?: string; assigneeId?: string; initiativeId?: string }) =>
       request<BoardTask[]>(`/board-tasks${buildQuery(params)}`),
     create: (body: Record<string, string>) =>
-      request('/board-tasks', {
+      request<BoardTask>('/board-tasks', {
         method: 'POST',
         body: JSON.stringify(body),
       }),

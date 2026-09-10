@@ -54,10 +54,18 @@ public class DnaProposalController {
         if (gate != null) return gate;
         try {
             String generatedId = UUID.randomUUID().toString();
+            String kind = body.get("kind");
+            if (kind == null || kind.isBlank()) {
+                throw new IllegalArgumentException("kind is required");
+            }
+            String payload = body.get("payload");
+            if (payload == null || payload.isBlank()) {
+                throw new IllegalArgumentException("payload is required");
+            }
             DnaProposal proposal = proposalService.create(
                 generatedId,
-                body.get("kind"),
-                body.get("payload"),
+                kind,
+                payload,
                 actor,
                 body.get("provenance"),
                 body.get("domainId")

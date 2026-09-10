@@ -48,9 +48,17 @@ public class TriggerController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
+            String name = body.get("name");
+            if (name == null || name.isBlank()) {
+                throw new IllegalArgumentException("name is required");
+            }
+            String kind = body.get("kind");
+            if (kind == null || kind.isBlank()) {
+                throw new IllegalArgumentException("kind is required");
+            }
             Trigger trigger = triggerService.create(
-                body.get("name"),
-                body.get("kind"),
+                name,
+                kind,
                 body.get("expression"),
                 body.get("agentId"),
                 body.get("workspaceId"),

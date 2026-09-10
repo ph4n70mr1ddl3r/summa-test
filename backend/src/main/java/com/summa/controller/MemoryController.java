@@ -56,8 +56,12 @@ public class MemoryController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
+            String tier = body.get("tier");
+            if (tier == null || tier.isBlank()) {
+                throw new IllegalArgumentException("tier is required");
+            }
             MemoryItem item = memoryService.create(
-                body.get("tier"),
+                tier,
                 actor,
                 body.get("workspaceId"),
                 body.get("contentMd"),

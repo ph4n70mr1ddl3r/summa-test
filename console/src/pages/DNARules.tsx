@@ -16,7 +16,7 @@ export default function DNARules() {
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <div className="text-red-400">Error: {error}</div>
+  if (error) return <div className="text-red-400">Error: {escapeHtml(error)}</div>
 
   return (
     <div className="space-y-6">
@@ -41,7 +41,7 @@ export default function DNARules() {
                   rule.status === 'active' ? 'bg-green-900/50 text-green-400' :
                   rule.status === 'superseded' ? 'bg-gray-700 text-gray-300' :
                   'bg-yellow-900/50 text-yellow-400'
-                }`}>
+                }`} aria-label={`Status: ${rule.status}`}>
                   {rule.status}
                 </span>
               </div>

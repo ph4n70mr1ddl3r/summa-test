@@ -16,7 +16,7 @@ export default function DNACards() {
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <div className="text-red-400">Error: {error}</div>
+  if (error) return <div className="text-red-400">Error: {escapeHtml(error)}</div>
 
   return (
     <div className="space-y-6">
@@ -41,7 +41,7 @@ export default function DNACards() {
                   card.status === 'active' ? 'bg-green-900/50 text-green-400' :
                   card.status === 'draft' ? 'bg-yellow-900/50 text-yellow-400' :
                   'bg-gray-700 text-gray-300'
-                }`}>
+                }`} aria-label={`Status: ${card.status}`}>
                   {card.status}
                 </span>
               </div>

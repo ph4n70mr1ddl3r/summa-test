@@ -53,6 +53,10 @@ public class WorkspaceController {
             if (body.get("name") == null || body.get("name").isBlank()) {
                 throw new IllegalArgumentException("name is required");
             }
+            String kind = body.get("kind");
+            if (kind != null && !"project".equals(kind) && !"personal".equals(kind) && !"system".equals(kind)) {
+                throw new IllegalArgumentException("kind must be 'project', 'personal', or 'system'");
+            }
             // Security: reject client-supplied IDs — always generate server-side
             String generatedId = UUID.randomUUID().toString();
             Workspace ws = workspaceService.create(

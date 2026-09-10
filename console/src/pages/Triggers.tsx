@@ -16,7 +16,7 @@ export default function Triggers() {
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <div className="text-red-400">Error: {error}</div>
+  if (error) return <div className="text-red-400">Error: {escapeHtml(error)}</div>
 
   return (
     <div className="space-y-6">
@@ -36,8 +36,14 @@ export default function Triggers() {
                 <div>
                   <p className="font-medium text-gray-200">{escapeHtml(t.name)}</p>
                   <p className="text-sm text-gray-400 mt-1">Kind: {escapeHtml(t.kind)} | Agent: {escapeHtml(t.agentId)}</p>
+                  {t.expression && (
+                    <p className="text-xs text-gray-500 mt-1">Expression: {escapeHtml(t.expression)}</p>
+                  )}
+                  {t.config && (
+                    <p className="text-xs text-gray-500 mt-1">Config: {escapeHtml(t.config)}</p>
+                  )}
                 </div>
-                <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300">{t.status}</span>
+                <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300" aria-label={`Status: ${t.status}`}>{t.status}</span>
               </div>
             </div>
           ))}

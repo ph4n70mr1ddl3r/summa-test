@@ -44,6 +44,12 @@ public class RoleTemplateController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
+            if (body.get("name") == null || body.get("name").isBlank()) {
+                throw new IllegalArgumentException("name is required");
+            }
+            if (body.get("class") == null || body.get("class").isBlank()) {
+                throw new IllegalArgumentException("class is required");
+            }
             RoleTemplate template = templateService.create(
                 body.get("name"),
                 body.get("class"),

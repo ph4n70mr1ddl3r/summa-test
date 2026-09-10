@@ -16,7 +16,7 @@ export default function BoardTasks() {
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <div className="text-red-400">Error: {error}</div>
+  if (error) return <div className="text-red-400">Error: {escapeHtml(error)}</div>
 
   return (
     <div className="space-y-6">
@@ -35,9 +35,12 @@ export default function BoardTasks() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="font-medium text-gray-200">{escapeHtml(task.title)}</p>
+                  {task.description && (
+                    <p className="text-sm text-gray-400 mt-1">{escapeHtml(task.description)}</p>
+                  )}
                   <p className="text-sm text-gray-400 mt-1">Priority: {task.priority} | Assignee: {escapeHtml(task.assigneeMemberId ?? 'unassigned')}</p>
                 </div>
-                <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300">{task.status}</span>
+                <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300" aria-label={`Status: ${task.status}`}>{task.status}</span>
               </div>
             </div>
           ))}

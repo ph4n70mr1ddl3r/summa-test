@@ -19,7 +19,7 @@ export default function Runs() {
   }, [filter])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <div className="text-red-400">Error: {error}</div>
+  if (error) return <div className="text-red-400">Error: {escapeHtml(error)}</div>
 
   const statusCounts: Record<string, number> = {}
   runs.forEach(r => { statusCounts[r.status] = (statusCounts[r.status] || 0) + 1 })
@@ -75,7 +75,7 @@ export default function Runs() {
                   run.status === 'failed' ? 'bg-red-900/50 text-red-400' :
                   run.status === 'queued' ? 'bg-yellow-900/50 text-yellow-400' :
                   'bg-gray-700 text-gray-300'
-                }`}>
+                }`} aria-label={`Status: ${run.status}`}>
                   {run.status}
                 </span>
               </div>
@@ -85,6 +85,12 @@ export default function Runs() {
                 {run.startedAt && <span>Started: {new Date(run.startedAt * 1000).toLocaleString()}</span>}
                 {run.completedAt && <span>Completed: {new Date(run.completedAt * 1000).toLocaleString()}</span>}
               </div>
+              {run.errorMessage && (
+                <p className="text-xs text-red-400 mt-1">Error: {escapeHtml(run.errorMessage)}</p>
+              )}
+              {run.result && (
+                <p className="text-xs text-gray-500 mt-1 line-clamp-2">{escapeHtml(run.result)}</p>
+              )}
             </div>
           ))}
         </div>

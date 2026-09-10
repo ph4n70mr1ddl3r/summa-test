@@ -16,7 +16,7 @@ export default function RoleTemplates() {
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <div className="text-red-400">Error: {error}</div>
+  if (error) return <div className="text-red-400">Error: {escapeHtml(error)}</div>
 
   return (
     <div className="space-y-6">
@@ -37,7 +37,7 @@ export default function RoleTemplates() {
                   <p className="font-medium text-gray-200">{escapeHtml(t.name)}</p>
                   <p className="text-sm text-gray-400 mt-1">Class: {escapeHtml(t.class)} | Version: {t.version}</p>
                 </div>
-                <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300">{t.status}</span>
+                <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300" aria-label={`Status: ${t.status}`}>{t.status}</span>
               </div>
             </div>
           ))}

@@ -41,7 +41,7 @@ export default function Memory() {
   }
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <div className="text-red-400">Error: {error}</div>
+  if (error) return <div className="text-red-400">Error: {escapeHtml(error)}</div>
 
   const taintedCount = items.filter(i => i.tainted).length
 
@@ -89,7 +89,7 @@ export default function Memory() {
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-gray-200">Tier: {item.tier}</span>
+                    <span className="font-medium text-gray-200">Tier: {escapeHtml(item.tier)}</span>
                     <span className={`text-xs px-2 py-0.5 rounded ${
                       item.tainted ? 'bg-red-900/50 text-red-400' : 'bg-gray-700 text-gray-300'
                     }`}>

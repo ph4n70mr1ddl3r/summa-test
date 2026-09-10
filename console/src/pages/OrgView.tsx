@@ -15,7 +15,7 @@ export default function OrgView() {
       api.groups.list(),
     ]).then(([m, g]) => {
       if (aborted) return
-      setMembers(m.members.map((m) => ({ ...m, kind: (m.kind ?? 'human') as 'human' | 'agent' })) as Member[])
+      setMembers(m.members.map((m) => ({ ...m, kind: (m.kind ?? 'human') as 'human' | 'agent' })))
       setGroups(g)
       setLoading(false)
     }).catch((e) => {
@@ -27,7 +27,7 @@ export default function OrgView() {
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <div className="text-red-400">Error: {error}</div>
+  if (error) return <div className="text-red-400">Error: {escapeHtml(error)}</div>
 
   const humans = members.filter(m => m.kind === 'human')
   const agents = members.filter(m => m.kind === 'agent')
@@ -54,8 +54,8 @@ export default function OrgView() {
                     h.rbac === 'owner' ? 'bg-yellow-900/50 text-yellow-400' :
                     h.rbac === 'viewer' ? 'bg-gray-600 text-gray-400' :
                     'bg-blue-900/50 text-blue-400'
-                  }`}>
-                    {h.rbac}
+                  }`} aria-label={`RBAC role: ${h.rbac}`}>
+                    {escapeHtml(h.rbac)}
                   </span>
                 </div>
               ))}
@@ -73,15 +73,15 @@ export default function OrgView() {
                 <div key={a.id} className="flex items-center justify-between bg-gray-700 rounded px-3 py-2">
                   <span className="text-gray-200 text-sm">{escapeHtml(a.name)}</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500">{a.class}</span>
+                    <span className="text-xs text-gray-500">{escapeHtml(a.class)}</span>
                     <span className={`text-xs px-2 py-0.5 rounded ${
                       a.status === 'active' ? 'bg-green-900/50 text-green-400' :
                       a.status === 'requested' ? 'bg-blue-900/50 text-blue-400' :
                       a.status === 'suspended' ? 'bg-yellow-900/50 text-yellow-400' :
                       a.status === 'retiring' ? 'bg-orange-900/50 text-orange-400' :
                       'bg-gray-600 text-gray-400'
-                    }`}>
-                      {a.status}
+                    }`} aria-label={`Status: ${a.status}`}>
+                      {escapeHtml(a.status)}
                     </span>
                   </div>
                 </div>
@@ -102,8 +102,8 @@ export default function OrgView() {
                 <span className="text-gray-200 text-sm">{escapeHtml(g.name)}</span>
                 <span className={`text-xs px-2 py-0.5 rounded ${
                   g.status === 'active' ? 'bg-green-900/50 text-green-400' : 'bg-gray-600 text-gray-400'
-                }`}>
-                  {g.status}
+                }`} aria-label={`Status: ${g.status}`}>
+                  {escapeHtml(g.status)}
                 </span>
               </div>
             ))}

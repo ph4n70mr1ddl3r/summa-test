@@ -120,7 +120,7 @@ public class InitiativeService {
 
         Initiative saved = initiativeRepository.save(initiative);
         auditService.log(sponsor, "CREATE", "initiative", id,
-            String.format("{\"title\":%s,\"lead\":%s}", jsonString(title), jsonString(lead)));
+            String.format("{\"title\":%s,\"lead\":%s}", JsonHelpers.jsonString(title), JsonHelpers.jsonString(lead)));
         return saved;
     }
 
@@ -386,7 +386,7 @@ public class InitiativeService {
                                 Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
                         } catch (Exception e) {
                             auditService.logSystem("STALL_ASK_FAIL", "initiative", init.getId(),
-                                toJson(Map.of("error", e.getMessage()), objectMapper));
+                                JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
                         }
                     }
                 }
@@ -416,7 +416,7 @@ public class InitiativeService {
                     }
                 } catch (Exception e) {
                     auditService.logSystem("DIRECTION_ASK_FAIL", "initiative", init.getId(),
-                        toJson(Map.of("error", e.getMessage()), objectMapper));
+                        JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
                 }
             }
         }
@@ -440,14 +440,6 @@ public class InitiativeService {
             }
         } catch (Exception ignored) {}
         return false;
-    }
-
-    private static String toJson(Map<String, Object> map, ObjectMapper mapper) {
-        return JsonHelpers.toJson(map, mapper);
-    }
-
-    private static String jsonString(String value) {
-        return JsonHelpers.jsonString(value);
     }
 
     private void validateKeyedUnion(String value, String fieldName) {

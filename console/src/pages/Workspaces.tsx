@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { api, type Workspace } from '../services/api'
 import { escapeHtml } from '../utils/escapeHtml'
 
-function parseParticipantsCount(participants: string): number {
+function parseParticipantsCount(participants: string | string[]): number {
+  if (Array.isArray(participants)) return participants.length
   try {
     const arr = JSON.parse(participants)
     return Array.isArray(arr) ? arr.length : 0
@@ -25,7 +26,7 @@ export default function Workspaces() {
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <div className="text-red-400">Error: {error}</div>
+  if (error) return <div className="text-red-400">Error: {escapeHtml(error)}</div>
 
   return (
     <div className="space-y-6">

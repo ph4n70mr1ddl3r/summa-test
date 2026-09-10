@@ -147,7 +147,7 @@ public class WorkspaceService {
         }
 
         List<Playbook> boundPlaybooks = playbookRepository.findAll().stream()
-                .filter(p -> p.getBody() != null && p.getBody().contains(id))
+                .filter(p -> p.getBody() != null && p.getBody().contains("\"" + id + "\""))
                 .toList();
         for (Playbook pb : boundPlaybooks) {
             auditService.logSystem("ARCHIVE_NOTE_PLAYBOOK", "playbook", pb.getId(),

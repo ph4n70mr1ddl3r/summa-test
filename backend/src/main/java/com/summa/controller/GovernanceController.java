@@ -91,8 +91,12 @@ public class GovernanceController {
             if (!POLICY_KEYS.contains(key)) {
                 return ControllerResponses.validation(auditService, "Unknown policy key: " + key);
             }
+            Object value = body.get(key);
+            if (!(value instanceof Number || value instanceof String)) {
+                return ControllerResponses.validation(auditService, "Policy value for '" + key + "' must be a number or string");
+            }
         }
-        body.forEach((key, value) -> governanceService.setSetting(key, value, actor));
+        body.forEach((key, value) -> governanceService.setSetting(key, String.valueOf(value), actor));
         return ResponseEntity.ok(governanceService.getAllSettings());
     }
 
@@ -105,8 +109,12 @@ public class GovernanceController {
             if (!QUOTA_KEYS.contains(key)) {
                 return ControllerResponses.validation(auditService, "Unknown quota key: " + key);
             }
+            Object value = body.get(key);
+            if (!(value instanceof Number || value instanceof String)) {
+                return ControllerResponses.validation(auditService, "Quota value for '" + key + "' must be a number or string");
+            }
         }
-        body.forEach((key, value) -> governanceService.setSetting(key, value, actor));
+        body.forEach((key, value) -> governanceService.setSetting(key, String.valueOf(value), actor));
         return ResponseEntity.ok(governanceService.getAllSettings());
     }
 

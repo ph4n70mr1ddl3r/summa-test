@@ -53,7 +53,7 @@ See `DEVELOPMENT.md#adding-a-new-endpoint` for the full procedure.
 
 ```bash
 # Backend tests
-cd backend && mvn test
+cd backend && mvn test -Dspring.profiles.active=test
 
 # Console tests
 cd console && npm test

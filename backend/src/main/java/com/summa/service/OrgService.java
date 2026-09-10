@@ -78,14 +78,6 @@ public class OrgService {
         return saved;
     }
 
-    /**
-     * Minimal JSON string escaper for audit payloads (avoids pulling
-     * ObjectMapper into this service and prevents log/JSON injection).
-     */
-    static String jsonString(String value) {
-        return JsonHelpers.jsonString(value);
-    }
-
     @Transactional
     public Human createHuman(String name, String email, String rbac, String auth, String password) {
         if (password == null || password.length() < 8) {
@@ -111,7 +103,7 @@ public class OrgService {
 
         Human saved = humanRepository.save(human);
         auditService.log("system", "CREATE_HUMAN", "human", saved.getId(),
-            String.format("{\"name\":%s,\"rbac\":%s}", jsonString(name), jsonString(rbac)));
+            String.format("{\"name\":%s,\"rbac\":%s}", JsonHelpers.jsonString(name), JsonHelpers.jsonString(rbac)));
         return saved;
     }
 

@@ -30,7 +30,7 @@ export default function Governance() {
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <div className="text-red-400">Error: {error}</div>
+  if (error) return <div className="text-red-400">Error: {escapeHtml(error)}</div>
 
   const policyEntries = Object.entries(policies)
   const quotaEntries = Object.entries(quotas)

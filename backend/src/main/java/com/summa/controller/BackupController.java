@@ -42,14 +42,9 @@ public class BackupController {
         }
         try {
             String rawBackupDir = body.getOrDefault("backupDir", System.getProperty("java.io.tmpdir"));
-            Path validRoot = Paths.get(System.getProperty("java.io.tmpdir")).toRealPath();
-            Path backupDirPath;
-            try {
-                backupDirPath = Paths.get(rawBackupDir).normalize().toRealPath();
-            } catch (java.io.IOException e) {
-                return ControllerResponses.validation(auditService, "backupDir path is inaccessible: " + e.getMessage());
-            }
-            if (!backupDirPath.startsWith(validRoot)) {
+            Path tmpdir = Paths.get(System.getProperty("java.io.tmpdir")).normalize();
+            Path backupDirPath = Paths.get(rawBackupDir).normalize();
+            if (!backupDirPath.startsWith(tmpdir)) {
                 return ControllerResponses.validation(auditService, "backupDir must be under tmpdir");
             }
             String path = backupService.createBackup(backupDirPath.toString());
@@ -75,14 +70,9 @@ public class BackupController {
             if (rawPath == null || rawPath.isBlank()) {
                 return ControllerResponses.validation(auditService, "backupPath is required");
             }
-            Path validRoot = Paths.get(System.getProperty("java.io.tmpdir")).toRealPath();
-            Path backupFilePath;
-            try {
-                backupFilePath = Paths.get(rawPath).normalize().toRealPath();
-            } catch (java.io.IOException e) {
-                return ControllerResponses.validation(auditService, "backupPath is inaccessible: " + e.getMessage());
-            }
-            if (!backupFilePath.startsWith(validRoot)) {
+            Path tmpdir = Paths.get(System.getProperty("java.io.tmpdir")).normalize();
+            Path backupFilePath = Paths.get(rawPath).normalize();
+            if (!backupFilePath.startsWith(tmpdir)) {
                 return ControllerResponses.validation(auditService, "backupPath must be under tmpdir");
             }
             backupService.restore(backupFilePath.toString());

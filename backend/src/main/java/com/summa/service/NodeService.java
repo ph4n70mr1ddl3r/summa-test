@@ -267,15 +267,11 @@ public class NodeService {
             ledger.setKind("settle");
             ledger.setCost(costUsd);
             ledger.setTokensOut((double) costTokens);
-            ledgerRepositorySave(ledger);
+            spendLedgerRepository.save(ledger);
         }
 
         auditService.logWithNode("system", "REPORT_RUN", "run", runId, nodeId,
             String.format("{\"costUsd\":%.4f,\"costTokens\":%d}", costUsd, costTokens));
         return saved;
-    }
-
-    private void ledgerRepositorySave(SpendLedger ledger) {
-        spendLedgerRepository.save(ledger);
     }
 }

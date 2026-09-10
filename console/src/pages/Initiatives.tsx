@@ -16,7 +16,7 @@ export default function Initiatives() {
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <div className="text-red-400">Error: {error}</div>
+  if (error) return <div className="text-red-400">Error: {escapeHtml(error)}</div>
 
   const statusColor = (status: string) => {
     switch (status) {
@@ -55,7 +55,7 @@ export default function Initiatives() {
                     )}
                   </p>
                 </div>
-                <span className={`text-xs px-2 py-0.5 rounded ${statusColor(ini.status)}`}>
+                <span className={`text-xs px-2 py-0.5 rounded ${statusColor(ini.status)}`} aria-label={`Status: ${ini.status}`}>
                   {ini.status}
                 </span>
               </div>

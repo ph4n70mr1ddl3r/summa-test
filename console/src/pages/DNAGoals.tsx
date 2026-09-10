@@ -16,7 +16,7 @@ export default function DNAGoals() {
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <div className="text-red-400">Error: {error}</div>
+  if (error) return <div className="text-red-400">Error: {escapeHtml(error)}</div>
 
   return (
     <div className="space-y-6">
@@ -46,7 +46,7 @@ export default function DNAGoals() {
                     </p>
                   )}
                 </div>
-                <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300">{escapeHtml(goal.status)}</span>
+                <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300" aria-label={`Status: ${goal.status}`}>{escapeHtml(goal.status)}</span>
               </div>
             </div>
           ))}

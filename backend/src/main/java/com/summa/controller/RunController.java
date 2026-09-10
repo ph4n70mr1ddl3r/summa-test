@@ -30,6 +30,7 @@ public class RunController {
             @RequestParam(required = false) String workspaceId,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "50") int limit) {
+        int cappedLimit = Math.min(Math.max(limit, 1), 200);
         List<Run> all;
         if (agentId != null) {
             all = runService.findByAgent(agentId);
@@ -38,9 +39,9 @@ public class RunController {
         } else if (status != null) {
             all = runService.findByStatus(status);
         } else {
-            all = runService.findRecent(limit);
+            return ResponseEntity.ok(runService.findRecent(cappedLimit));
         }
-        return ResponseEntity.ok(all.stream().limit(limit).toList());
+        return ResponseEntity.ok(all.stream().limit(cappedLimit).toList());
     }
 
     @GetMapping("/{id}")
