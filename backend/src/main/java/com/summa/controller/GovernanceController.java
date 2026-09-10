@@ -58,7 +58,7 @@ public class GovernanceController {
 
     @GetMapping("/spend")
     public ResponseEntity<Map<String, Object>> getSpend() {
-        // Delegate defaults to GovernanceService to avoid divergence (CFG-070)
+        // Delegate defaults to GovernanceService to avoid divergence
         return ResponseEntity.ok(governanceService.getSpendView());
     }
 
@@ -132,7 +132,7 @@ public class GovernanceController {
         try {
             SpendLedger ledger = spendLedgerService.findById(id)
                     .orElseThrow(() -> new IllegalArgumentException("Spend ledger row not found: " + id));
-            if (!ledger.getAcknowledged()) {
+            if (Boolean.TRUE.equals(ledger.getAcknowledged())) {
                 spendLedgerService.acknowledge(id, actor);
             }
             return ResponseEntity.ok(Map.of("status", "overrun_acknowledged", "rowId", id,

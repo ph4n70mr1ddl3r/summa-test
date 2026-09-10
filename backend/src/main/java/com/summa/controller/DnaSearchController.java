@@ -1,7 +1,6 @@
 package com.summa.controller;
 
 import com.summa.service.DnaReadService;
-import com.summa.service.AuditService;
 import com.summa.security.RbacAuthorizationFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,11 +15,9 @@ import java.util.Map;
 public class DnaSearchController {
     private static final Logger log = LoggerFactory.getLogger(DnaSearchController.class);
     private final DnaReadService dnaReadService;
-    private final AuditService auditService;
 
-    public DnaSearchController(DnaReadService dnaReadService, AuditService auditService) {
+    public DnaSearchController(DnaReadService dnaReadService) {
         this.dnaReadService = dnaReadService;
-        this.auditService = auditService;
     }
 
     @GetMapping

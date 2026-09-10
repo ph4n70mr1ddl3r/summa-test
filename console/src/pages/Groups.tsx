@@ -25,8 +25,7 @@ export default function Groups() {
   const handleArchive = async (id: string) => {
     try {
       await api.groups.archive(id)
-      const cleanup = loadGroups()
-      if (cleanup) cleanup()
+      loadGroups()
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     }

@@ -36,12 +36,12 @@ public class DnaReadService {
      * Prevents injection of FTS5 operators (*, OR, NOT, phrase syntax) via user input.
      */
     private static String sanitizeFtsQuery(String query) {
-        // Reject or neutralize FTS5 boolean operators and wildcards
+        // Reject or neutralize FTS5 boolean operators and wildcards (case-insensitive)
         String sanitized = query
             .replace("*", "")
-            .replace("OR", "")
-            .replace("AND", "")
-            .replace("NOT", "")
+            .replaceAll("(?i)\\bOR\\b", "")
+            .replaceAll("(?i)\\bAND\\b", "")
+            .replaceAll("(?i)\\bNOT\\b", "")
             .replace("|", "")
             .replace("(", "")
             .replace(")", "")

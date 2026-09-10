@@ -64,10 +64,13 @@ export function isAuthenticated(): boolean {
     const parts = authToken.split('.');
     if (parts.length !== 3) return false;
     // Reject alg=none and any non-HS256 algorithm (security: prevent token forgery)
-    const headerJson = atob(parts[0]).replace(/=/g, '').replace(/-/g, '+').replace(/\u005f/g, '/');
-    const header = JSON.parse(headerJson) as { alg?: string };
+    const headerB64 = parts[0].replace(/-/g, '+').replace(/_/g, '/');
+    const headerJson = headerB64 + '='.repeat((4 - headerB64.length % 4) % 4);
+    const header = JSON.parse(atob(headerJson)) as { alg?: string };
     if (header.alg !== 'HS256') return false;
-    const payload = JSON.parse(atob(parts[1].replace(/=/g, '').replace(/-/g, '+').replace(/\u005f/g, '/'))) as { exp?: number };
+    const payloadB64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const payloadJson = payloadB64 + '='.repeat((4 - payloadB64.length % 4) % 4);
+    const payload = JSON.parse(atob(payloadJson)) as { exp?: number };
     if (payload.exp === undefined) return false;
     return payload.exp > Math.floor(Date.now() / 1000);
   } catch {
@@ -82,8 +85,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     headers.set('Authorization', `Bearer ${authToken}`);
   }
   const res = await fetch(`${API_BASE}${path}`, {
-    headers,
     ...init,
+    headers,
   });
   if (!res.ok) {
     let message: string;
@@ -98,7 +101,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw err;
   }
   if (res.status === 204) {
-    return undefined as T;
+    return null as unknown as T;
   }
   return res.json() as Promise<T>;
 }

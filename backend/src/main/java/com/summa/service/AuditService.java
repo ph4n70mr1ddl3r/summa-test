@@ -85,8 +85,8 @@ public class AuditService {
         } catch (Exception ignored) {
             // Not valid JSON — fall through to regex-based redaction
         }
-        String sanitized = PASSWORD_PATTERN.matcher(detail).replaceAll("\"$1\":\"[REDACTED]\"");
-        sanitized = EMAIL_PATTERN.matcher(sanitized).replaceAll("\"$1\":\"[REDACTED]\"");
+        String sanitized = PASSWORD_PATTERN.matcher(detail).replaceAll(m -> "\"" + m.group(1) + "\":\"[REDACTED]\"");
+        sanitized = EMAIL_PATTERN.matcher(sanitized).replaceAll(m -> "\"" + m.group(1) + "\":\"[REDACTED]\"");
         return sanitized;
     }
 }

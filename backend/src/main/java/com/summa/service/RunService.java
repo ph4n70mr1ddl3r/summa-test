@@ -86,6 +86,9 @@ public class RunService {
     public Run start(String id) {
         Run run = runRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Run not found: " + id));
+        if (!"queued".equals(run.getStatus())) {
+            throw new IllegalStateException("Cannot start run with status: " + run.getStatus());
+        }
         run.setStatus("running");
         run.setStartedAt(Instant.now());
         Run saved = runRepository.save(run);
@@ -97,6 +100,9 @@ public class RunService {
     public Run complete(String id, String result, Long costTokens, Double costUsd) {
         Run run = runRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Run not found: " + id));
+        if (!"running".equals(run.getStatus())) {
+            throw new IllegalStateException("Cannot complete run with status: " + run.getStatus());
+        }
         run.setStatus("completed");
         run.setResult(result);
         run.setCompletedAt(Instant.now());
@@ -111,11 +117,14 @@ public class RunService {
     public Run fail(String id, String errorMessage) {
         Run run = runRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Run not found: " + id));
+        if (!"running".equals(run.getStatus())) {
+            throw new IllegalStateException("Cannot fail run with status: " + run.getStatus());
+        }
         run.setStatus("failed");
         run.setErrorMessage(errorMessage);
         run.setCompletedAt(Instant.now());
         Run saved = runRepository.save(run);
-        auditService.logSystem("FAIL_RUN", "run", id, 
+        auditService.logSystem("FAIL_RUN", "run", id,
             String.format("{\"error\":\"%s\"}", errorMessage != null ? errorMessage.substring(0, Math.min(200, errorMessage.length())) : ""));
         return saved;
     }
@@ -124,6 +133,9 @@ public class RunService {
     public Run cancel(String id) {
         Run run = runRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Run not found: " + id));
+        if (!"queued".equals(run.getStatus()) && !"running".equals(run.getStatus())) {
+            throw new IllegalStateException("Cannot cancel run with status: " + run.getStatus());
+        }
         run.setStatus("cancelled");
         run.setCompletedAt(Instant.now());
         Run saved = runRepository.save(run);
@@ -135,6 +147,9 @@ public class RunService {
     public Run suspend(String id) {
         Run run = runRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Run not found: " + id));
+        if (!"running".equals(run.getStatus())) {
+            throw new IllegalStateException("Cannot suspend run with status: " + run.getStatus());
+        }
         run.setStatus("suspended");
         Run saved = runRepository.save(run);
         auditService.logSystem("SUSPEND_RUN", "run", id, null);

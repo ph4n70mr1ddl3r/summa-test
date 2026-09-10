@@ -100,7 +100,7 @@ public class DnaRuleController {
         }
     }
 
-    @PostMapping("/{id}/supersede")
+    @PostMapping("/{id}/supersede/{supersedesId}")
     public ResponseEntity<?> supersede(@PathVariable String id, @PathVariable String supersedesId) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);

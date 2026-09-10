@@ -66,6 +66,11 @@ public class DnaGoalService {
             throw new IllegalStateException("Cannot update terminal goal: " + goal.getStatus());
         }
 
+        // Allowlist: only recognized status transitions are permitted
+        if (!"active".equals(status) && !"met".equals(status) && !"missed".equals(status) && !"retired".equals(status)) {
+            throw new IllegalArgumentException("Invalid goal status: " + status);
+        }
+
         String oldStatus = goal.getStatus();
         goal.setStatus(status);
         DnaGoal saved = goalRepository.save(goal);

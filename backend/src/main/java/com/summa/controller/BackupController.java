@@ -42,8 +42,13 @@ public class BackupController {
         }
         try {
             String rawBackupDir = body.getOrDefault("backupDir", System.getProperty("java.io.tmpdir"));
-            Path tmpdir = Paths.get(System.getProperty("java.io.tmpdir")).normalize();
-            Path backupDirPath = Paths.get(rawBackupDir).normalize();
+            Path tmpdir = Paths.get(System.getProperty("java.io.tmpdir")).normalize().toRealPath();
+            Path backupDirPath;
+            try {
+                backupDirPath = Paths.get(rawBackupDir).normalize().toRealPath();
+            } catch (java.nio.file.NoSuchFileException e) {
+                backupDirPath = Paths.get(rawBackupDir).normalize();
+            }
             if (!backupDirPath.startsWith(tmpdir)) {
                 return ControllerResponses.validation(auditService, "backupDir must be under tmpdir");
             }
@@ -70,8 +75,13 @@ public class BackupController {
             if (rawPath == null || rawPath.isBlank()) {
                 return ControllerResponses.validation(auditService, "backupPath is required");
             }
-            Path tmpdir = Paths.get(System.getProperty("java.io.tmpdir")).normalize();
-            Path backupFilePath = Paths.get(rawPath).normalize();
+            Path tmpdir = Paths.get(System.getProperty("java.io.tmpdir")).normalize().toRealPath();
+            Path backupFilePath;
+            try {
+                backupFilePath = Paths.get(rawPath).normalize().toRealPath();
+            } catch (java.nio.file.NoSuchFileException e) {
+                backupFilePath = Paths.get(rawPath).normalize();
+            }
             if (!backupFilePath.startsWith(tmpdir)) {
                 return ControllerResponses.validation(auditService, "backupPath must be under tmpdir");
             }
