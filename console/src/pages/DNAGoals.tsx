@@ -39,10 +39,10 @@ export default function DNAGoals() {
                     Owner: {escapeHtml(goal.owner)} | Inject: {escapeHtml(goal.inject)}
                     {goal.quarter && <span> | Q{escapeHtml(String(goal.quarter))}</span>}
                   </p>
-                  {goal.effectiveFrom && (
+                  {goal.effectiveFrom != null && (
                     <p className="text-xs text-gray-500 mt-1">
                       Effective: {new Date(goal.effectiveFrom * 1000).toLocaleDateString()}
-                      {goal.effectiveTo && ` — ${new Date(goal.effectiveTo * 1000).toLocaleDateString()}`}
+                      {goal.effectiveTo != null && ` — ${new Date(goal.effectiveTo * 1000).toLocaleDateString()}`}
                     </p>
                   )}
                 </div>

@@ -85,7 +85,7 @@ public class NodeController {
             Node node = nodeService.heartbeat(id, body.get("capabilities"));
             return ResponseEntity.ok(node);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         }
     }
 
@@ -120,7 +120,7 @@ public class NodeController {
             List<Run> runs = nodeService.pullWork(id);
             return ResponseEntity.ok(runs);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         }
@@ -146,7 +146,7 @@ public class NodeController {
         } catch (NumberFormatException e) {
             return ControllerResponses.validation(auditService, "Invalid numeric field: " + e.getMessage());
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         }
@@ -161,7 +161,7 @@ public class NodeController {
             Node node = nodeService.revoke(id, actor);
             return ResponseEntity.ok(node);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         }
     }
 
@@ -179,7 +179,7 @@ public class NodeController {
             );
             return ResponseEntity.ok(node);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         }
     }
 }

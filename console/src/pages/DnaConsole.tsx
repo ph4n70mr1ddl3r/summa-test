@@ -90,7 +90,7 @@ export default function DNAConsole() {
         </div>
         <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
           <p className="text-2xl font-bold text-green-400">{goals.length}</p>
-          <p className="text-sm text-gray-400">Active Goals</p>
+          <p className="text-sm text-gray-400">Goals</p>
         </div>
         <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
           <p className="text-2xl font-bold text-yellow-400">{domains.length}</p>

@@ -86,7 +86,7 @@ public class WorkspaceController {
             Workspace ws = workspaceService.rebind(id, body.get("targetNodeId"), actor);
             return ResponseEntity.ok(ws);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         }
     }
 
@@ -102,7 +102,7 @@ public class WorkspaceController {
             Workspace ws = workspaceService.archive(id, actor);
             return ResponseEntity.ok(ws);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         }
     }
 }

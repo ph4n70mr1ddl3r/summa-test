@@ -100,7 +100,7 @@ public class DnaGoalController {
             DnaGoal goal = goalService.updateStatus(id, body.get("status"), actor);
             return ResponseEntity.ok(goal);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         }
@@ -123,7 +123,7 @@ public class DnaGoalController {
             DnaGoal goal = goalService.updateWindow(id, effectiveFrom, effectiveTo, actor);
             return ResponseEntity.ok(goal);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         }
     }
 }

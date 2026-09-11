@@ -104,6 +104,8 @@ public class NodeService {
         }
         
         Node saved = nodeRepository.save(node);
+        auditService.log(Defaults.SYSTEM_ACTOR, "HEARTBEAT", "node", id,
+            String.format("{\"capabilities\":\"%s\"}", capabilities != null ? capabilities : "{}"));
         return saved;
     }
 

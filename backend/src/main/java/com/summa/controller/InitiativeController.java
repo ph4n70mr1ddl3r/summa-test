@@ -89,7 +89,7 @@ public class InitiativeController {
             Initiative initiative = initiativeService.activate(id, actor);
             return ResponseEntity.ok(initiative);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         }
@@ -104,7 +104,7 @@ public class InitiativeController {
             Initiative initiative = initiativeService.pause(id, actor);
             return ResponseEntity.ok(initiative);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         }
@@ -119,7 +119,7 @@ public class InitiativeController {
             Initiative initiative = initiativeService.resume(id, actor);
             return ResponseEntity.ok(initiative);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         }
@@ -134,7 +134,7 @@ public class InitiativeController {
             Initiative initiative = initiativeService.close(id, actor);
             return ResponseEntity.ok(initiative);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         }

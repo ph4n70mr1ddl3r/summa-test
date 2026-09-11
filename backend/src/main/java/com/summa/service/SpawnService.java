@@ -128,7 +128,7 @@ public class SpawnService {
         } catch (IllegalStateException e) {
             throw e;
         } catch (Exception e) {
-            auditService.logSystem("SPAWN_PARSE_BINDINGS_FAIL", "spawn_request", UUID.randomUUID().toString(),
+            auditService.logSystem("SPAWN_PARSE_BINDINGS_FAIL", "spawn_request", "unknown",
                 String.format("{\"error\":\"%s\"}", e.getMessage()));
             throw new IllegalStateException("Invalid workspace bindings JSON: " + e.getMessage());
         }

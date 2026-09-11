@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.Base64;
 import java.util.Objects;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.nio.charset.StandardCharsets;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -134,7 +135,7 @@ public class AskService {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest((kind + "|" + to + "|" + (payload != null ? payload : "")).getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(hash);
-        } catch (Exception e) {
+        } catch (NoSuchAlgorithmException e) {
             return kind + "|" + to + "|" + Objects.hash(payload);
         }
     }
@@ -296,7 +297,7 @@ public class AskService {
 
         existingResponses.add(responder);
         ask.setResponses(toJsonResponseList(existingResponses, response));
-        boolean quorumReached = existingResponses.size() >= ask.getQuorumRequired();
+        boolean quorumReached = existingResponses.size() >= quorum;
         if (quorumReached) {
             ask.setStatus("answered");
             ask.setRespondedAt(Instant.now());
@@ -345,15 +346,15 @@ public class AskService {
             String initiativeId = ask.getInitiativeId();
             String action = response != null ? response.trim() : "";
 
-            if ("extend".equals(action) || action.startsWith("extend")) {
+            if ("extend".equals(action)) {
                 // Extend re-windows the same goal row — no goal_ref change needed
                 auditService.logSystem("DIRECTION_EXTEND", "ask", ask.getId(),
                     String.format("{\"initiativeId\":\"%s\"}", initiativeId));
-            } else if ("close".equals(action) || action.startsWith("close")) {
+            } else if ("close".equals(action)) {
                 // Close the initiative — handled by the caller's close endpoint
                 auditService.logSystem("DIRECTION_CLOSE", "ask", ask.getId(),
                     String.format("{\"initiativeId\":\"%s\"}", initiativeId));
-            } else if ("re-base".equals(action) || action.equals("rebase") || action.startsWith("re-base")) {
+            } else if ("re-base".equals(action) || action.equals("rebase")) {
                 // Re-base: re-issue the ended objective as a new goal row
                 if (payload.has("newGoalRef") && !payload.get("newGoalRef").isNull()) {
                     String newGoalRef = payload.get("newGoalRef").asText();
@@ -365,7 +366,7 @@ public class AskService {
                             String.format("{\"initiativeId\":\"%s\",\"newGoalRef\":\"%s\"}", initiativeId, newGoalRef));
                     }
                 }
-            } else if ("re-target".equals(action) || action.equals("retarget") || action.startsWith("re-target")) {
+            } else if ("re-target".equals(action) || action.equals("retarget")) {
                 // Re-target: swap to a different goal
                 if (payload.has("newGoalRef") && !payload.get("newGoalRef").isNull()) {
                     String newGoalRef = payload.get("newGoalRef").asText();

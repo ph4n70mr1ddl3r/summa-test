@@ -19,21 +19,10 @@ function loadToken(): string | null {
   }
 }
 
-function loadUser() {
-  try {
-    const raw = localStorage.getItem(USER_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
 let authToken: string | null = loadToken();
-let currentUser: { userId: string; rbac: string; name: string } | null = loadUser();
 
 export function setAuthToken(token: string | null, user?: { userId: string; rbac: string; name: string } | null) {
   authToken = token;
-  currentUser = user ?? null;
   try {
     if (token) {
       localStorage.setItem(TOKEN_KEY, token);
@@ -52,10 +41,6 @@ export function setAuthToken(token: string | null, user?: { userId: string; rbac
 
 export function getAuthToken(): string | null {
   return authToken;
-}
-
-export function getCurrentUser(): { userId: string; rbac: string; name: string } | null {
-  return currentUser;
 }
 
 export function isAuthenticated(): boolean {
@@ -112,7 +97,7 @@ export interface Human {
   email: string;
   rbac: string;
   active: boolean;
-  kind?: 'human';
+  kind: 'human';
   createdAt?: number;
   auth?: string;
   timezone?: string;
@@ -127,7 +112,7 @@ export interface Agent {
   ownerHumanId: string;
   class: string;
   status: AgentStatus;
-  kind?: 'agent';
+  kind: 'agent';
   templateId?: string;
   lineageDepth?: number;
   createdAt?: number;
@@ -636,7 +621,7 @@ export const api = {
       request(`/org/humans/${id}/erasure`, {
         method: 'POST',
       }),
-    members: () => request<{ members: (Human | Agent)[]; total: number }>('/org/members'),
+    members: () => request<{ members: Member[]; total: number }>('/org/members'),
     lineage: async (memberId: string) => {
       const res = await request<{ memberId: string; lineage: string[] }>(`/org/lineage${buildQuery({ memberId })}`);
       return res.lineage;
@@ -874,8 +859,6 @@ export const api = {
       request(`/memory/${id}/review`, {
         method: 'POST',
       }),
-    findTainted: () =>
-      request<MemoryItem[]>('/memory?tainted=true'),
   },
   authPats: {
     list: (memberId: string) =>

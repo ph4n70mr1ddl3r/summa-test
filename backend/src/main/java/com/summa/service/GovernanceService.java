@@ -188,7 +188,7 @@ public class GovernanceService {
     }
 
     private String serializeValue(Object value) {
-        if (value == null) return "{}";
+        if (value == null) return null;
         if (value instanceof String) return (String) value;
         try {
             return objectMapper.writeValueAsString(value);

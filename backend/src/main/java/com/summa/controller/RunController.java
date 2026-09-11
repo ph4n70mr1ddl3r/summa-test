@@ -84,7 +84,7 @@ public class RunController {
             Run run = runService.start(id);
             return ResponseEntity.ok(run);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         }
@@ -111,7 +111,7 @@ public class RunController {
             Run run = runService.complete(id, result, costTokens, costUsd);
             return ResponseEntity.ok(run);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         }
@@ -126,7 +126,7 @@ public class RunController {
             Run run = runService.fail(id, body.get("errorMessage"));
             return ResponseEntity.ok(run);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         }
@@ -141,7 +141,7 @@ public class RunController {
             Run run = runService.cancel(id);
             return ResponseEntity.ok(run);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         }

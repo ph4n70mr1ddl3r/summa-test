@@ -72,8 +72,8 @@ export default function Groups() {
                 <div className="flex items-center gap-2">
                   <span className={`text-xs px-2 py-1 rounded ${
                     g.status === 'active' ? 'bg-green-900/50 text-green-400' : 'bg-gray-700 text-gray-300'
-                  }`}>
-                    {g.status}
+                  }`} aria-label={`Status: ${g.status}`}>
+                    {escapeHtml(g.status)}
                   </span>
                   {g.status === 'active' && (
                     <button

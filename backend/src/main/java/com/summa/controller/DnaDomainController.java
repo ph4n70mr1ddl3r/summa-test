@@ -75,7 +75,7 @@ public class DnaDomainController {
             DnaDomain domain = domainService.archive(id, actor);
             return ResponseEntity.ok(domain);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         }
@@ -90,7 +90,7 @@ public class DnaDomainController {
             DnaDomain domain = domainService.rename(id, body.get("name") != null && !body.get("name").isBlank() ? body.get("name") : null, actor);
             return ResponseEntity.ok(domain);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         }
     }
 
@@ -103,7 +103,7 @@ public class DnaDomainController {
             DnaDomain domain = domainService.updateOwner(id, body.get("ownerHumanId") != null && !body.get("ownerHumanId").isBlank() ? body.get("ownerHumanId") : null, actor);
             return ResponseEntity.ok(domain);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         }
     }
 
@@ -116,7 +116,7 @@ public class DnaDomainController {
             DnaDomain domain = domainService.updateAccess(id, body.get("access"), actor);
             return ResponseEntity.ok(domain);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         }
     }
 

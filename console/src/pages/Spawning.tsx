@@ -63,8 +63,8 @@ export default function Spawning() {
                   req.status === 'approved' ? 'bg-green-900/50 text-green-400' :
                   req.status === 'denied' ? 'bg-red-900/50 text-red-400' :
                   'bg-gray-700 text-gray-300'
-                }`}>
-                  {req.status}
+                }`} aria-label={`Status: ${req.status}`}>
+                  {escapeHtml(req.status)}
                 </span>
               </div>
               {req.budgetCap && (

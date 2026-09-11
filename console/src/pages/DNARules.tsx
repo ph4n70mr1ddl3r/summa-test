@@ -42,7 +42,7 @@ export default function DNARules() {
                   rule.status === 'superseded' ? 'bg-gray-700 text-gray-300' :
                   'bg-yellow-900/50 text-yellow-400'
                 }`} aria-label={`Status: ${rule.status}`}>
-                  {rule.status}
+                  {escapeHtml(rule.status)}
                 </span>
               </div>
               <pre className="mt-2 text-xs text-gray-400 bg-gray-900 rounded p-3 overflow-x-auto whitespace-pre-wrap">
@@ -52,8 +52,8 @@ export default function DNARules() {
                 })()}
               </pre>
               <p className="text-xs text-gray-500 mt-2">
-                From: {rule.effectiveFrom ? new Date(rule.effectiveFrom * 1000).toLocaleDateString() : '∞'}
-                {rule.effectiveTo ? ` — To: ${new Date(rule.effectiveTo * 1000).toLocaleDateString()}` : ''}
+                From: {rule.effectiveFrom != null ? new Date(rule.effectiveFrom * 1000).toLocaleDateString() : '∞'}
+                {rule.effectiveTo != null ? ` — To: ${new Date(rule.effectiveTo * 1000).toLocaleDateString()}` : ''}
               </p>
             </div>
           ))}
