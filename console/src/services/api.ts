@@ -376,12 +376,12 @@ export interface Workspace {
   id: string;
   name: string;
   kind: WorkspaceKind;
-  initiativeIds: string | string[];
-  domainIds: string | string[];
+  initiativeIds: string[];
+  domainIds: string[];
   nodeId?: string;
   claimEpoch: number;
   leaseExpiresAt?: number;
-  participants: string | string[];
+  participants: string[];
   archivedAt?: number;
   createdAt?: number;
   updatedAt?: number;
@@ -467,7 +467,7 @@ export interface SpendSnapshot {
   halted: boolean;
 }
 
-function buildQuery(params?: Record<string, string | number | undefined>): string {
+export function buildQuery(params?: Record<string, string | number | undefined>): string {
   const entries = Object.entries(params ?? {}).filter(([, v]) => v !== undefined && v !== '');
   if (entries.length === 0) return '';
   const qs = new URLSearchParams(entries.map(([k, v]) => [k, String(v)])).toString();

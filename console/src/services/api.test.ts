@@ -1,12 +1,5 @@
 import { describe, it, expect } from 'vitest'
-
-// Test buildQuery logic inline since it's not exported
-function buildQuery(params?: Record<string, string | number | undefined>): string {
-  const entries = Object.entries(params ?? {}).filter(([, v]) => v !== undefined && v !== '');
-  if (entries.length === 0) return '';
-  const qs = new URLSearchParams(entries.map(([k, v]) => [k, String(v)])).toString();
-  return qs ? `?${qs}` : '';
-}
+import { buildQuery } from './api'
 
 describe('buildQuery', () => {
   it('returns empty string for undefined input', () => {

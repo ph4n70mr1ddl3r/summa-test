@@ -2,19 +2,6 @@ import { useEffect, useState } from 'react'
 import { api, type Workspace } from '../services/api'
 import { escapeHtml } from '../utils/escapeHtml'
 
-function parseParticipantsCount(participants: string | string[]): number {
-  if (Array.isArray(participants)) return participants.length
-  if (typeof participants === 'string') {
-    try {
-      const arr = JSON.parse(participants)
-      return Array.isArray(arr) ? arr.length : 0
-    } catch {
-      return 0
-    }
-  }
-  return 0
-}
-
 export default function Workspaces() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([])
   const [loading, setLoading] = useState(true)
@@ -51,7 +38,7 @@ export default function Workspaces() {
                   <p className="text-sm text-gray-400 mt-1">Kind: {escapeHtml(ws.kind)} | Epoch: {ws.claimEpoch ? new Date(ws.claimEpoch * 1000).toLocaleDateString() : '?'}</p>
                 </div>
                 <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300">
-                  {parseParticipantsCount(ws.participants)} participants
+                  {ws.participants.length} participants
                 </span>
               </div>
             </div>

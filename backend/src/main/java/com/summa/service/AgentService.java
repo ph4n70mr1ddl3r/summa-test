@@ -293,21 +293,21 @@ public class AgentService {
     @Transactional
     public void reapExpiredAgents() {
         Instant now = Instant.now();
-        List<Agent> expired = agentRepository.findByStatus("active").stream()
+        List<Agent> activeExpired = agentRepository.findByStatus("active").stream()
             .filter(a -> a.getTtlAt() != null && a.getTtlAt().isBefore(now))
             .toList();
-        for (Agent agent : expired) {
-            // CLC-030: Suspended worker halts then reaps
-            if ("suspended".equals(agent.getStatus())) {
-                // Already halted; just archive
-                agent.setStatus("archived");
-                agent.setArchivedAt(now);
-                agentRepository.save(agent);
-                auditService.logSystem("TTL_REAP_SUSPENDED", "agent", agent.getId(),
-                    "{\"reason\":\"ttl_expired\"}");
-            } else {
-                retire(agent.getId(), "system");
-            }
+        List<Agent> suspendedExpired = agentRepository.findByStatus("suspended").stream()
+            .filter(a -> a.getTtlAt() != null && a.getTtlAt().isBefore(now))
+            .toList();
+        for (Agent agent : activeExpired) {
+            retire(agent.getId(), "system");
+        }
+        for (Agent agent : suspendedExpired) {
+            agent.setStatus("archived");
+            agent.setArchivedAt(now);
+            agentRepository.save(agent);
+            auditService.logSystem("TTL_REAP_SUSPENDED", "agent", agent.getId(),
+                "{\"reason\":\"ttl_expired\"}");
         }
     }
 }

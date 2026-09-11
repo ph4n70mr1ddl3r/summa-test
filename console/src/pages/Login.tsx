@@ -22,7 +22,11 @@ export default function Login() {
       setAuthToken(result.token, { userId: result.userId, rbac: result.rbac, name: result.name })
       navigate(from, { replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      if (err instanceof Error && 'status' in err && (err as { status?: number }).status === 429) {
+        setError('Too many login attempts. Please try again shortly.')
+      } else {
+        setError(err instanceof Error ? err.message : String(err))
+      }
     } finally {
       setLoading(false)
     }
