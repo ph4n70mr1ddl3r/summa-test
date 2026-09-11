@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom'
-import { setAuthToken, isAuthenticated } from './services/api'
+import { setAuthToken, isAuthenticated, getUser } from './services/api'
 import ErrorBoundary from './components/ErrorBoundary'
 
 interface NavItem {
@@ -106,7 +106,9 @@ export default function App() {
             <div className="flex items-center space-x-4">
               <ModeLabel />
               {authed && (
-                <span className="text-gray-500 text-xs">authenticated</span>
+                <span className="text-gray-500 text-xs">
+                  {getUser()?.name ?? getUser()?.userId ?? 'authenticated'}
+                </span>
               )}
               {authed && <LogoutButton />}
             </div>

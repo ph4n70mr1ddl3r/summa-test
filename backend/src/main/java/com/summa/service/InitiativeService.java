@@ -5,12 +5,16 @@ import com.summa.repository.BoardTaskRepository;
 import com.summa.repository.AskRepository;
 import com.summa.repository.DnaGoalRepository;
 import com.summa.repository.DnaDecisionRepository;
+import com.summa.repository.WorkspaceRepository;
+import com.summa.repository.SpawnRequestRepository;
 import com.summa.model.Initiative;
 import com.summa.model.BoardTask;
 import com.summa.model.Ask;
 import com.summa.model.Human;
 import com.summa.model.Agent;
 import com.summa.model.DnaGoal;
+import com.summa.model.Workspace;
+import com.summa.model.SpawnRequest;
 import com.summa.util.JsonHelpers;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -44,6 +48,8 @@ public class InitiativeService {
     private final DnaDecisionRepository dnaDecisionRepository;
     private final DnaGoalService dnaGoalService;
     private final MemberService memberService;
+    private final WorkspaceRepository workspaceRepository;
+    private final SpawnRequestRepository spawnRequestRepository;
     private final ObjectMapper objectMapper;
 
     public InitiativeService(InitiativeRepository initiativeRepository, BoardTaskRepository boardTaskRepository,
@@ -51,6 +57,8 @@ public class InitiativeService {
                                AskRepository askRepository,
                                DnaGoalRepository dnaGoalRepository, DnaDecisionRepository dnaDecisionRepository,
                                DnaGoalService dnaGoalService, MemberService memberService,
+                               WorkspaceRepository workspaceRepository,
+                               SpawnRequestRepository spawnRequestRepository,
                                ObjectMapper objectMapper) {
         this.initiativeRepository = initiativeRepository;
         this.boardTaskRepository = boardTaskRepository;
@@ -61,6 +69,8 @@ public class InitiativeService {
         this.dnaDecisionRepository = dnaDecisionRepository;
         this.dnaGoalService = dnaGoalService;
         this.memberService = memberService;
+        this.workspaceRepository = workspaceRepository;
+        this.spawnRequestRepository = spawnRequestRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -178,7 +188,7 @@ public class InitiativeService {
             // INT-021: Re-validate goal liveness at respond time
             if (initiative.getGoalRef() != null && !initiative.getGoalRef().isBlank()) {
                 Optional<DnaGoal> goalOpt = dnaGoalRepository.findById(initiative.getGoalRef());
-                if (goalOpt.isEmpty() || !"active".equals(goalOpt.get().getStatus())) {
+                if (goalOpt.isEmpty() || goalOpt.get().getStatus() == null || !"active".equals(goalOpt.get().getStatus())) {
                     // Goal died mid-wait: audit-only activation, file successor ask
                     auditService.logSystem("ACTIVATE_GOAL_DIED", "initiative", id,
                         String.format("{\"actor\":\"%s\",\"goalRef\":\"%s\"}", actor, initiative.getGoalRef()));
@@ -268,7 +278,92 @@ public class InitiativeService {
                 String.format("{\"initiativeId\":\"%s\",\"reason\":\"initiative_closed\"}", id));
         }
 
-        // Spawns are workspace-scoped; no initiative-level spawn archiving needed here.
+        // INT-022 / INT-040: Unbind workspaces and archive pending spawn requests
+        try {
+            List<com.summa.model.Workspace> boundWorkspaces = workspaceRepository.findAll().stream()
+                .filter(ws -> ws.getInitiativeIds() != null && !ws.getInitiativeIds().isBlank()
+                    && !ws.getInitiativeIds().equals("[]"))
+                .toList();
+            for (com.summa.model.Workspace ws : boundWorkspaces) {
+                try {
+                    JsonNode initIds = objectMapper.readTree(ws.getInitiativeIds());
+                    if (initIds.isArray()) {
+                        boolean hasInitiative = false;
+                        for (JsonNode initIdNode : initIds) {
+                            if (initIdNode.asText().equals(id)) {
+                                hasInitiative = true;
+                                break;
+                            }
+                        }
+                        if (hasInitiative) {
+                            // Remove this initiative from workspace bindings
+                            com.fasterxml.jackson.databind.node.ArrayNode newIds = objectMapper.createArrayNode();
+                            for (JsonNode initIdNode : initIds) {
+                                if (!initIdNode.asText().equals(id)) {
+                                    newIds.add(initIdNode);
+                                }
+                            }
+                            ws.setInitiativeIds(objectMapper.writeValueAsString(newIds));
+                            workspaceRepository.save(ws);
+                            auditService.logSystem("CLOSE_UNBIND_WORKSPACE", "workspace", ws.getId(),
+                                String.format("{\"initiativeId\":\"%s\",\"reason\":\"initiative_closed\"}", id));
+                        }
+                    }
+                } catch (Exception e) {
+                    auditService.logSystem("CLOSE_UNBIND_WORKSPACE_FAIL", "workspace", ws.getId(),
+                        String.format("{\"initiativeId\":\"%s\",\"error\":\"%s\"}", id, e.getMessage()));
+                }
+            }
+        } catch (Exception e) {
+            auditService.logSystem("CLOSE_UNBIND_WORKSPACE_FAIL", "initiative", id,
+                String.format("{\"error\":\"%s\"}", e.getMessage()));
+        }
+
+        // INT-040: Archive pending spawn requests with template pins drained
+        try {
+            List<com.summa.model.SpawnRequest> pendingSpawns = spawnRequestRepository.findByStatus("requested").stream()
+                .filter(sr -> sr.getWorkspaceBindings() != null && !sr.getWorkspaceBindings().isBlank()
+                    && !sr.getWorkspaceBindings().equals("[]"))
+                .toList();
+            for (com.summa.model.SpawnRequest sr : pendingSpawns) {
+                try {
+                    JsonNode bindings = objectMapper.readTree(sr.getWorkspaceBindings());
+                    if (bindings.isArray()) {
+                        boolean bindsToInitiative = false;
+                        for (JsonNode binding : bindings) {
+                            String wsId = binding.asText();
+                            var wsOpt = workspaceRepository.findById(wsId);
+                            if (wsOpt.isPresent() && wsOpt.get().getInitiativeIds() != null
+                                && !wsOpt.get().getInitiativeIds().isBlank()
+                                && !wsOpt.get().getInitiativeIds().equals("[]")) {
+                                JsonNode wsInitIds = objectMapper.readTree(wsOpt.get().getInitiativeIds());
+                                if (wsInitIds.isArray()) {
+                                    for (JsonNode wid : wsInitIds) {
+                                        if (wid.asText().equals(id)) {
+                                            bindsToInitiative = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            if (bindsToInitiative) break;
+                        }
+                        if (bindsToInitiative) {
+                            sr.setStatus("archived");
+                            spawnRequestRepository.save(sr);
+                            auditService.logSystem("CLOSE_ARCHIVE_SPAWN", "spawn_request", sr.getId(),
+                                String.format("{\"initiativeId\":\"%s\",\"reason\":\"initiative_closed\"}", id));
+                        }
+                    }
+                } catch (Exception e) {
+                    auditService.logSystem("CLOSE_ARCHIVE_SPAWN_FAIL", "spawn_request", sr.getId(),
+                        String.format("{\"initiativeId\":\"%s\",\"error\":\"%s\"}", id, e.getMessage()));
+                }
+            }
+        } catch (Exception e) {
+            auditService.logSystem("CLOSE_ARCHIVE_SPAWN_FAIL", "initiative", id,
+                String.format("{\"error\":\"%s\"}", e.getMessage()));
+        }
 
         // INT-042: File a retrospective ask (kind question, tier bulk, expiry escalate)
         // to the lead — the sponsor when the lead is non-active.

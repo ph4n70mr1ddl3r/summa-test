@@ -98,7 +98,7 @@ public class GovernanceController {
                 return ControllerResponses.validation(auditService, "Policy value for '" + key + "' must be a number, string, or boolean");
             }
         }
-        body.forEach((key, value) -> governanceService.setSetting(key, String.valueOf(value), actor));
+        body.forEach((key, value) -> governanceService.setSetting(key, value, actor));
         return ResponseEntity.ok(governanceService.getAllSettings());
     }
 
@@ -116,7 +116,7 @@ public class GovernanceController {
                 return ControllerResponses.validation(auditService, "Quota value for '" + key + "' must be a number, string, or boolean");
             }
         }
-        body.forEach((key, value) -> governanceService.setSetting(key, String.valueOf(value), actor));
+        body.forEach((key, value) -> governanceService.setSetting(key, value, actor));
         return ResponseEntity.ok(governanceService.getAllSettings());
     }
 

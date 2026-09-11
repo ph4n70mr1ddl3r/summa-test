@@ -56,7 +56,7 @@ export default function Initiatives() {
                   </p>
                 </div>
                 <span className={`text-xs px-2 py-0.5 rounded ${statusColor(ini.status)}`} aria-label={`Status: ${ini.status}`}>
-                  {ini.status}
+                  {escapeHtml(ini.status)}
                 </span>
               </div>
             </div>

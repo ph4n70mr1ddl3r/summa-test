@@ -42,7 +42,7 @@ export default function DNACards() {
                   card.status === 'draft' ? 'bg-yellow-900/50 text-yellow-400' :
                   'bg-gray-700 text-gray-300'
                 }`} aria-label={`Status: ${card.status}`}>
-                  {card.status}
+                  {escapeHtml(card.status)}
                 </span>
               </div>
               <pre className="mt-2 text-xs text-gray-400 bg-gray-900 rounded p-3 overflow-x-auto whitespace-pre-wrap">

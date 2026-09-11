@@ -74,12 +74,13 @@ public class PatController {
                 scopes,
                 expiryDays
             );
-            
+
             return ResponseEntity.ok(Map.of(
                 "id", result.pat().getId(),
                 "name", result.pat().getName(),
                 "scopes", result.pat().getScopes(),
-                "expiresAt", result.pat().getExpiresAt().toString()
+                "expiresAt", result.pat().getExpiresAt().toString(),
+                "token", result.token()
             ));
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());

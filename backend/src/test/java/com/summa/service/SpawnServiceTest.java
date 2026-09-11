@@ -127,7 +127,7 @@ class SpawnServiceTest {
 
         SpawnRequest result = spawnService.deny("spawn-1", "admin");
 
-        assertEquals("denied", result.getStatus());
+        assertEquals("archived", result.getStatus());
     }
 
     @Test

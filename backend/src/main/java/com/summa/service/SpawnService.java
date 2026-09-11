@@ -325,7 +325,7 @@ public class SpawnService {
         SpawnRequest request = spawnRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Spawn request not found: " + id));
 
-        request.setStatus("denied");
+        request.setStatus("archived");
         SpawnRequest saved = spawnRepository.save(request);
         auditService.log(actor, "DENY_SPAWN", "spawn_request", id, null);
         return saved;

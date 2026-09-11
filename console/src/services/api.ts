@@ -43,6 +43,15 @@ export function getAuthToken(): string | null {
   return authToken;
 }
 
+export function getUser(): { userId: string; rbac: string; name: string } | null {
+  try {
+    const raw = localStorage.getItem(USER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function isAuthenticated(): boolean {
   if (!authToken) return false;
   try {
@@ -83,10 +92,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       message = text || `HTTP ${res.status}`;
     }
     const err = new ApiError(message, res.status);
+    if (res.status === 401 || res.status === 403) {
+      setAuthToken(null);
+      window.location.href = '/login';
+    }
     throw err;
   }
   if (res.status === 204) {
-    return null as unknown as T;
+    return undefined as unknown as T;
   }
   return res.json() as Promise<T>;
 }
@@ -452,10 +465,10 @@ export interface SpendSnapshot {
   halted: boolean;
 }
 
-export function buildQuery(params?: Record<string, string | number | undefined>): string {
+export function buildQuery(params?: Record<string, string | number | boolean | undefined>): string {
   const entries = Object.entries(params ?? {}).filter(([, v]) => v !== undefined && v !== '');
   if (entries.length === 0) return '';
-  const qs = new URLSearchParams(entries.map(([k, v]) => [k, String(v)])).toString();
+  const qs = new URLSearchParams(entries.map(([k, v]) => [k, typeof v === 'boolean' ? String(v) : String(v)]).filter(([, v]) => v !== '')).toString();
   return qs ? `?${qs}` : '';
 }
 
@@ -530,6 +543,11 @@ export const api = {
       request<DnaDomain>(`/dna/domains/${id}/access`, {
         method: 'PATCH',
         body: JSON.stringify({ access }),
+      }),
+    mergeDomain: (id: string, sourceId: string, access?: string, namedReaders?: string) =>
+      request<DnaDomain>(`/dna/domains/${id}/merge`, {
+        method: 'POST',
+        body: JSON.stringify({ sourceId, ...(access ? { access } : {}), ...(namedReaders ? { namedReaders } : {}) }),
       }),
     goals: (params?: { domainId?: string; inject?: string }) =>
       request<DnaGoal[]>(`/dna/goals${buildQuery(params)}`),

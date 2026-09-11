@@ -76,7 +76,7 @@ export default function Runs() {
                   run.status === 'queued' ? 'bg-yellow-900/50 text-yellow-400' :
                   'bg-gray-700 text-gray-300'
                 }`} aria-label={`Status: ${run.status}`}>
-                  {run.status}
+                  {escapeHtml(run.status)}
                 </span>
               </div>
               <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">

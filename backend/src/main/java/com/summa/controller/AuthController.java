@@ -19,6 +19,9 @@ public class AuthController {
     private final PasswordUtil passwordUtil;
     private final RateLimiter rateLimiter;
 
+    @Value("${summa.auth.local-auth-enabled:true}")
+    private boolean localAuthEnabled;
+
     @Value("${summa.auth.jwt-secret}")
     private String jwtSecret;
 
@@ -34,6 +37,15 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> body) {
+        if (!localAuthEnabled) {
+            var audit = auditService.logSystem("REFUSAL", "auth_login", "local-auth-disabled", "Local auth is disabled");
+            return ResponseEntity.status(503).body(Map.of(
+                "code", "service_unavailable",
+                "message", "Local authentication is not enabled. Use OIDC/gateway auth instead.",
+                "audit_event_id", audit.getId()
+            ));
+        }
+
         String email = body.get("email");
         String password = body.get("password");
 

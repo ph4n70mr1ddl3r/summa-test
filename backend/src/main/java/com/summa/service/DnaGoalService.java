@@ -8,9 +8,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Service
 public class DnaGoalService {
+    private static final Pattern KEYED_UNION_PATTERN = Pattern.compile("^[ha]?:.+$");
+
     private final DnaGoalRepository goalRepository;
     private final AuditService auditService;
 
@@ -28,6 +31,7 @@ public class DnaGoalService {
         goal.setDomainId(domainId);
         goal.setQuarter(quarter);
         goal.setStatementMd(statementMd != null ? statementMd : "");
+        validateKeyedUnion(owner, "owner");
         goal.setOwner(owner);
         goal.setInject(inject != null ? inject : "linked");
         goal.setEffectiveFrom(effectiveFrom);
@@ -94,5 +98,14 @@ public class DnaGoalService {
         DnaGoal saved = goalRepository.save(goal);
         auditService.log(actor, "UPDATE_GOAL_WINDOW", "dna_goal", id, null);
         return saved;
+    }
+
+    private void validateKeyedUnion(String value, String fieldName) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(fieldName + " is required");
+        }
+        if (!KEYED_UNION_PATTERN.matcher(value).matches()) {
+            throw new IllegalArgumentException(fieldName + " must be a valid keyed union (h:<human-id> or a:<agent-id>)");
+        }
     }
 }

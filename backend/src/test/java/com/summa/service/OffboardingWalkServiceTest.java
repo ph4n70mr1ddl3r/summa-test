@@ -11,6 +11,8 @@ import com.summa.repository.DnaProposalRepository;
 import com.summa.repository.AskRepository;
 import com.summa.repository.GroupRepository;
 import com.summa.repository.RoleTemplateRepository;
+import com.summa.repository.WorkspaceRepository;
+import com.summa.repository.DnaDomainRepository;
 import com.summa.model.Human;
 import com.summa.model.Agent;
 import com.summa.model.Initiative;
@@ -54,6 +56,8 @@ class OffboardingWalkServiceTest {
     @Mock private PatRepository patRepository;
     @Mock private GroupRepository groupRepository;
     @Mock private RoleTemplateRepository roleTemplateRepository;
+    @Mock private WorkspaceRepository workspaceRepository;
+    @Mock private DnaDomainRepository domainRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @InjectMocks
@@ -340,6 +344,7 @@ class OffboardingWalkServiceTest {
         when(boardTaskRepository.findByAssigneeMemberId("h1")).thenReturn(java.util.List.of());
         when(patRepository.findByMemberId("h1")).thenReturn(java.util.List.of());
         when(groupRepository.findAll()).thenReturn(java.util.List.of());
+        when(workspaceRepository.findAll()).thenReturn(java.util.List.of());
         Human admin = new Human();
         admin.setId("admin1");
         when(memberService.findAdmins()).thenReturn(java.util.List.of(admin));
@@ -372,6 +377,7 @@ class OffboardingWalkServiceTest {
         when(boardTaskRepository.findByAssigneeMemberId("h1")).thenReturn(java.util.List.of());
         when(patRepository.findByMemberId("h1")).thenReturn(java.util.List.of());
         when(groupRepository.findAll()).thenReturn(java.util.List.of());
+        when(workspaceRepository.findAll()).thenReturn(java.util.List.of());
         Human admin = new Human();
         admin.setId("admin1");
         when(memberService.findAdmins()).thenReturn(java.util.List.of(admin));

@@ -43,7 +43,7 @@ export default function Triggers() {
                     <p className="text-xs text-gray-500 mt-1">Config: {escapeHtml(t.config)}</p>
                   )}
                 </div>
-                <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300" aria-label={`Status: ${t.status}`}>{t.status}</span>
+                <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300" aria-label={`Status: ${t.status}`}>{escapeHtml(t.status)}</span>
               </div>
             </div>
           ))}

@@ -11,6 +11,8 @@ import com.summa.repository.AgentRepository;
 import com.summa.repository.PatRepository;
 import com.summa.repository.GroupRepository;
 import com.summa.repository.RoleTemplateRepository;
+import com.summa.repository.WorkspaceRepository;
+import com.summa.repository.DnaDomainRepository;
 import com.summa.model.Agent;
 import com.summa.model.Ask;
 import com.summa.model.BoardTask;
@@ -23,6 +25,7 @@ import com.summa.model.Human;
 import com.summa.model.Initiative;
 import com.summa.model.Pat;
 import com.summa.model.RoleTemplate;
+import com.summa.model.Workspace;
 import com.summa.util.JsonHelpers;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,24 +63,28 @@ public class OffboardingWalkService {
     private final PatRepository patRepository;
     private final GroupRepository groupRepository;
     private final RoleTemplateRepository roleTemplateRepository;
+    private final WorkspaceRepository workspaceRepository;
+    private final DnaDomainRepository domainRepository;
     private final ObjectMapper objectMapper;
 
     public OffboardingWalkService(MemberService memberService, AgentService agentService,
-                                     InitiativeService initiativeService, BoardTaskService boardTaskService,
-                                     DnaProposalService proposalService, AuditService auditService,
-                                     AskService askService, SpawnService spawnService,
-                                     DnaDomainService domainService, DnaGoalService goalService,
-                                     GroupMembershipRepository groupMembershipRepository,
-                                     AgentRepository agentRepository,
-                                     InitiativeRepository initiativeRepository,
-                                     DnaGoalRepository goalRepository,
-                                     DnaProposalRepository proposalRepository,
-                                     AskRepository askRepository,
-                                     BoardTaskRepository boardTaskRepository,
-                                     PatRepository patRepository,
-                                     GroupRepository groupRepository,
-                                     RoleTemplateRepository roleTemplateRepository,
-                                     ObjectMapper objectMapper) {
+                                      InitiativeService initiativeService, BoardTaskService boardTaskService,
+                                      DnaProposalService proposalService, AuditService auditService,
+                                      AskService askService, SpawnService spawnService,
+                                      DnaDomainService domainService, DnaGoalService goalService,
+                                      GroupMembershipRepository groupMembershipRepository,
+                                      AgentRepository agentRepository,
+                                      InitiativeRepository initiativeRepository,
+                                      DnaGoalRepository goalRepository,
+                                      DnaProposalRepository proposalRepository,
+                                      AskRepository askRepository,
+                                      BoardTaskRepository boardTaskRepository,
+                                      PatRepository patRepository,
+                                      GroupRepository groupRepository,
+                                      RoleTemplateRepository roleTemplateRepository,
+                                      WorkspaceRepository workspaceRepository,
+                                      DnaDomainRepository domainRepository,
+                                      ObjectMapper objectMapper) {
         this.memberService = memberService;
         this.agentService = agentService;
         this.initiativeService = initiativeService;
@@ -98,6 +105,8 @@ public class OffboardingWalkService {
         this.patRepository = patRepository;
         this.groupRepository = groupRepository;
         this.roleTemplateRepository = roleTemplateRepository;
+        this.workspaceRepository = workspaceRepository;
+        this.domainRepository = domainRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -448,7 +457,69 @@ public class OffboardingWalkService {
             }
         }
 
-        // OFB-015: Revoke PATs — credential-death on any role reduction
+        // OFB-014/OFB-031: Clear workspace participant entries and named domain access
+        for (Workspace ws : workspaceRepository.findAll()) {
+            boolean changed = false;
+            if (ws.getParticipants() != null && !ws.getParticipants().isBlank()
+                    && !ws.getParticipants().equals("[]")) {
+                try {
+                    com.fasterxml.jackson.databind.JsonNode participants =
+                        objectMapper.readTree(ws.getParticipants());
+                    int before = participants.size();
+                    com.fasterxml.jackson.databind.node.ArrayNode filtered = objectMapper.createArrayNode();
+                    for (int i = 0; i < participants.size(); i++) {
+                        if (!humanId.equals(participants.get(i).asText())) {
+                            filtered.add(participants.get(i));
+                        }
+                    }
+                    if (filtered.size() < before) {
+                        ws.setParticipants(objectMapper.writeValueAsString(filtered));
+                        changed = true;
+                    }
+                } catch (Exception e) {
+                    auditService.logSystem("DEMOTE_CLEAN_WORKSPACE_FAIL", "workspace", ws.getId(),
+                        toJson(Map.of("error", e.getMessage()), objectMapper));
+                }
+            }
+            // Clear named readers that reference this human
+            if (ws.getDomainIds() != null && !ws.getDomainIds().isBlank()
+                    && !ws.getDomainIds().equals("[]")) {
+                try {
+                    com.fasterxml.jackson.databind.JsonNode domainIds =
+                        objectMapper.readTree(ws.getDomainIds());
+                    for (com.fasterxml.jackson.databind.JsonNode domIdNode : domainIds) {
+                        String domId = domIdNode.asText();
+                        Optional<DnaDomain> domOpt = domainService.findById(domId);
+                        if (domOpt.isPresent() && "named".equals(domOpt.get().getAccess())) {
+                            String namedReaders = domOpt.get().getNamedReaders();
+                            if (namedReaders != null && !namedReaders.isBlank()
+                                    && !namedReaders.equals("[]")
+                                    && namedReaders.contains(humanId)) {
+                                com.fasterxml.jackson.databind.JsonNode readers =
+                                    objectMapper.readTree(namedReaders);
+                                com.fasterxml.jackson.databind.node.ArrayNode filtered = objectMapper.createArrayNode();
+                                for (int i = 0; i < readers.size(); i++) {
+                                    if (!humanId.equals(readers.get(i).asText())) {
+                                        filtered.add(readers.get(i));
+                                    }
+                                }
+                                domOpt.get().setNamedReaders(objectMapper.writeValueAsString(filtered));
+                                domainRepository.save(domOpt.get());
+                                changed = true;
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    auditService.logSystem("DEMOTE_CLEAN_DOMAIN_READERS_FAIL", "dna_domain", "",
+                        toJson(Map.of("error", e.getMessage()), objectMapper));
+                }
+            }
+            if (changed) {
+                workspaceRepository.save(ws);
+            }
+        }
+
+        // OFB-014: Revoke PATs — credential-death on any role reduction
         for (Pat pat : patRepository.findByMemberId(humanId)) {
             if (pat.getRevokedAt() == null) {
                 pat.setRevokedAt(Instant.now());

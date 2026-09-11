@@ -54,6 +54,10 @@ export default function AskInbox() {
   const handleRespond = async (id: string) => {
     setSubmitError(null)
     setSubmitSuccess(null)
+    if (!responseText.trim()) {
+      setSubmitError('Response cannot be empty')
+      return
+    }
     try {
       await api.asks.respond(id, responseText)
       setSubmitSuccess('Response recorded')
@@ -196,7 +200,8 @@ export default function AskInbox() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleRespond(ask.id)}
-                      className="px-3 py-1 bg-green-700 hover:bg-green-600 rounded text-sm text-green-100"
+                      disabled={!responseText.trim()}
+                      className="px-3 py-1 bg-green-700 hover:bg-green-600 disabled:bg-gray-700 disabled:text-gray-500 rounded text-sm text-green-100"
                     >
                       Submit
                     </button>

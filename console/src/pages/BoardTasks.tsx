@@ -40,7 +40,7 @@ export default function BoardTasks() {
                   )}
                   <p className="text-sm text-gray-400 mt-1">Priority: {task.priority} | Assignee: {escapeHtml(task.assigneeMemberId ?? 'unassigned')}</p>
                 </div>
-                <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300" aria-label={`Status: ${task.status}`}>{task.status}</span>
+                <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300" aria-label={`Status: ${task.status}`}>{escapeHtml(task.status)}</span>
               </div>
             </div>
           ))}

@@ -52,6 +52,7 @@ VERSION_PINS = (
     ("PLAN.md", r"(?m)^\*Version v(\d+\.\d+)"),
     ("specs/README.md", r"derived from\s*`PLAN\.md`\s*\(v(\d+\.\d+)\)"),
     ("specs/TRACEABILITY.md", r"`PLAN\.md` \(v(\d+\.\d+)\)"),
+    ("README.md", r"Derived from.*PLAN\.md.*\(v(\d+\.\d+)\)"),
 )
 
 
@@ -150,7 +151,10 @@ def cross_listed_ids(trace: str, errors: list[str]) -> set[str]:
 def check_version_pins(root: Path, errors: list[str]) -> None:
     pins: dict[str, str] = {}
     for rel, pattern in VERSION_PINS:
-        m = re.search(pattern, (root / rel).read_text(encoding="utf-8"))
+        path = root / rel
+        if not path.exists():
+            continue
+        m = re.search(pattern, path.read_text(encoding="utf-8"))
         if m:
             pins[rel] = m.group(1)
         else:
