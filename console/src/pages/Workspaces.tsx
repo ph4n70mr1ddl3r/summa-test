@@ -37,9 +37,11 @@ export default function Workspaces() {
                   <p className="font-medium text-gray-200">{escapeHtml(ws.name)}</p>
                   <p className="text-sm text-gray-400 mt-1">Kind: {escapeHtml(ws.kind)} | Epoch: {ws.claimEpoch != null ? new Date(ws.claimEpoch * 1000).toLocaleDateString() : '?'}</p>
                 </div>
-                <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300">
-                  {ws.participants.length} participants
-                </span>
+                  <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300">
+                    {(() => {
+                      try { return JSON.parse(ws.participants ?? '[]').length } catch { return 0 }
+                    })()} participants
+                  </span>
               </div>
             </div>
           ))}

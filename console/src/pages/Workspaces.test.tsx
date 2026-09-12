@@ -34,7 +34,7 @@ describe('Workspaces page', () => {
 
   it('renders workspace cards with data', async () => {
     vi.mocked(apiModule.api.workspaces.list).mockResolvedValue([
-      { id: 'ws-1', name: 'Project Alpha', kind: 'project', initiativeIds: [], domainIds: [], claimEpoch: 1, participants: ['u1', 'u2'] },
+      { id: 'ws-1', name: 'Project Alpha', kind: 'project', initiativeIds: '[]', domainIds: '[]', claimEpoch: 1, participants: '["u1","u2"]' },
     ])
     const { container } = render(<Workspaces />)
     await waitFor(() => {

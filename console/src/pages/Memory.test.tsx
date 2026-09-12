@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, waitFor } from '@testing-library/react'
+import { render, waitFor, act } from '@testing-library/react'
 import Memory from './Memory'
 import * as apiModule from '../services/api'
 
@@ -71,7 +71,9 @@ describe('Memory page', () => {
     })
     // The review button is only shown for tainted items
     const reviewBtn = getByText('Review')
-    reviewBtn.click()
+    await act(async () => {
+      reviewBtn.click()
+    })
     await waitFor(() => {
       expect(getByText('Confirm Review')).toBeInTheDocument()
     })

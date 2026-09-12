@@ -203,7 +203,7 @@ export interface Initiative {
   decisionRef?: string;
   businessBudget?: string;
   closedAt?: number;
-  dependsOn?: string[];
+  dependsOn?: string;
   updatedAt?: number;
 }
 
@@ -374,12 +374,12 @@ export interface Workspace {
   id: string;
   name: string;
   kind: WorkspaceKind;
-  initiativeIds: string[];
-  domainIds: string[];
+  initiativeIds: string;
+  domainIds: string;
   nodeId?: string;
   claimEpoch: number;
   leaseExpiresAt?: number;
-  participants: string[];
+  participants: string;
   archivedAt?: number;
   createdAt?: number;
   updatedAt?: number;
