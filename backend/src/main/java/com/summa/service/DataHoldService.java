@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import com.summa.exception.EntityNotFoundException;
 
 @Service
 public class DataHoldService {
@@ -53,7 +54,7 @@ public class DataHoldService {
     @Transactional
     public DataHold release(String id, String actor) {
         DataHold hold = holdRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Hold not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Hold not found: " + id));
 
         hold.setReleasedAt(Instant.now());
         DataHold saved = holdRepository.save(hold);

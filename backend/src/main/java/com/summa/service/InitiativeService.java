@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
+import com.summa.exception.EntityNotFoundException;
 
 @Service
 public class InitiativeService {
@@ -81,11 +82,11 @@ public class InitiativeService {
         // Validate referenced entities exist
         if (goalRef != null && !goalRef.isBlank()) {
             dnaGoalRepository.findById(goalRef).orElseThrow(
-                () -> new IllegalArgumentException("Goal not found: " + goalRef));
+                () -> new EntityNotFoundException("Goal not found: " + goalRef));
         }
         if (decisionRef != null && !decisionRef.isBlank()) {
             dnaDecisionRepository.findById(decisionRef).orElseThrow(
-                () -> new IllegalArgumentException("Decision not found: " + decisionRef));
+                () -> new EntityNotFoundException("Decision not found: " + decisionRef));
         }
         validateKeyedUnion(sponsor, "sponsor");
         validateKeyedUnion(lead, "lead");
@@ -97,7 +98,7 @@ public class InitiativeService {
                     new TypeReference<List<String>>() {});
                 for (String depId : depIds) {
                     Initiative dep = findById(depId).orElseThrow(
-                        () -> new IllegalArgumentException("Dependency initiative not found: " + depId));
+                        () -> new EntityNotFoundException("Dependency initiative not found: " + depId));
                     if ("closed".equals(dep.getStatus())) {
                         throw new IllegalArgumentException(
                             "Cannot depend on closed initiative: " + depId);
@@ -176,7 +177,7 @@ public class InitiativeService {
     @Transactional
     public Initiative activate(String id, String actor) {
         Initiative initiative = initiativeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Initiative not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Initiative not found: " + id));
 
         if (!"proposed".equals(initiative.getStatus())) {
             throw new IllegalStateException("Cannot activate initiative with status: " + initiative.getStatus());
@@ -232,7 +233,7 @@ public class InitiativeService {
     @Transactional
     public Initiative pause(String id, String actor) {
         Initiative initiative = initiativeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Initiative not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Initiative not found: " + id));
 
         if (!"active".equals(initiative.getStatus())) {
             throw new IllegalStateException("Cannot pause initiative with status: " + initiative.getStatus());
@@ -247,7 +248,7 @@ public class InitiativeService {
     @Transactional
     public Initiative resume(String id, String actor) {
         Initiative initiative = initiativeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Initiative not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Initiative not found: " + id));
 
         if (!"paused".equals(initiative.getStatus())) {
             throw new IllegalStateException("Cannot resume initiative with status: " + initiative.getStatus());
@@ -262,7 +263,7 @@ public class InitiativeService {
     @Transactional
     public Initiative close(String id, String actor) {
         Initiative initiative = initiativeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Initiative not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Initiative not found: " + id));
 
         if (!"active".equals(initiative.getStatus()) && !"paused".equals(initiative.getStatus())) {
             throw new IllegalStateException("Cannot close initiative with status: " + initiative.getStatus());

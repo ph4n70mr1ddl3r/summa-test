@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import com.summa.exception.EntityNotFoundException;
 
 @Service
 public class DnaGoalService {
@@ -63,7 +64,7 @@ public class DnaGoalService {
     @Transactional
     public DnaGoal updateStatus(String id, String status, String actor) {
         DnaGoal goal = goalRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Goal not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Goal not found: " + id));
 
         // Terminal statuses are immutable
         if ("met".equals(goal.getStatus()) || "missed".equals(goal.getStatus()) || "retired".equals(goal.getStatus())) {
@@ -86,7 +87,7 @@ public class DnaGoalService {
     @Transactional
     public DnaGoal updateWindow(String id, Instant effectiveFrom, Instant effectiveTo, String actor) {
         DnaGoal goal = goalRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Goal not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Goal not found: " + id));
 
         // Schema requires effective_from NOT NULL; rejecting a clear-of-both would violate the constraint.
         if (effectiveFrom == null && effectiveTo == null) {

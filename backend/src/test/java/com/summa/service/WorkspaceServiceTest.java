@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import com.summa.exception.EntityNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 class WorkspaceServiceTest {
@@ -99,7 +100,7 @@ class WorkspaceServiceTest {
     void rebind_throwsWhenNotFound() {
         when(workspaceRepository.findById("missing")).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(EntityNotFoundException.class, () -> {
             workspaceService.rebind("missing", "node-1", "admin");
         });
     }

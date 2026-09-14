@@ -25,6 +25,7 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.summa.util.JsonHelpers;
+import com.summa.exception.EntityNotFoundException;
 
 @Service
 public class SpawnService {
@@ -75,7 +76,7 @@ public class SpawnService {
         // SPW-001: Validate requester is an existing active agent
         Optional<Agent> requesterOpt = agentRepository.findById(requesterId);
         if (requesterOpt.isEmpty()) {
-            throw new IllegalArgumentException("Requester agent not found: " + requesterId);
+            throw new EntityNotFoundException("Requester agent not found: " + requesterId);
         }
         if (!"active".equals(requesterOpt.get().getStatus())) {
             throw new IllegalStateException("Requester agent is not active: " + requesterId);
@@ -142,7 +143,7 @@ public class SpawnService {
         if (templateId != null && !templateId.isBlank()) {
             Optional<RoleTemplate> templateOpt = templateRepository.findById(templateId);
             if (templateOpt.isEmpty()) {
-                throw new IllegalArgumentException("Template not found: " + templateId);
+                throw new EntityNotFoundException("Template not found: " + templateId);
             }
             RoleTemplate template = templateOpt.get();
             if (!template.isActive()) {
@@ -229,7 +230,7 @@ public class SpawnService {
     @Transactional
     public SpawnRequest approve(String id, String approvedBy, String actor) {
         SpawnRequest request = spawnRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Spawn request not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Spawn request not found: " + id));
 
         if (!"requested".equals(request.getStatus())) {
             throw new IllegalStateException("Cannot approve non-requested spawn: " + request.getStatus());
@@ -329,7 +330,7 @@ public class SpawnService {
     @Transactional
     public SpawnRequest deny(String id, String actor) {
         SpawnRequest request = spawnRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Spawn request not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Spawn request not found: " + id));
 
         request.setStatus("archived");
         SpawnRequest saved = spawnRepository.save(request);
@@ -340,7 +341,7 @@ public class SpawnService {
     @Transactional
     public SpawnRequest archive(String id, String actor) {
         SpawnRequest request = spawnRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Spawn request not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Spawn request not found: " + id));
 
         request.setStatus("archived");
         SpawnRequest saved = spawnRepository.save(request);

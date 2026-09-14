@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import com.summa.exception.EntityNotFoundException;
 
 @Service
 public class RunService {
@@ -31,7 +32,7 @@ public class RunService {
         if (initiativeId != null && !initiativeId.isBlank()) {
             Optional<Initiative> initOpt = initiativeRepository.findById(initiativeId);
             if (initOpt.isEmpty()) {
-                throw new IllegalArgumentException("Initiative not found: " + initiativeId);
+                throw new EntityNotFoundException("Initiative not found: " + initiativeId);
             }
             Initiative init = initOpt.get();
             if (!"active".equals(init.getStatus())) {
@@ -85,7 +86,7 @@ public class RunService {
     @Transactional
     public Run start(String id) {
         Run run = runRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Run not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Run not found: " + id));
         if (!"queued".equals(run.getStatus())) {
             throw new IllegalStateException("Cannot start run with status: " + run.getStatus());
         }
@@ -99,7 +100,7 @@ public class RunService {
     @Transactional
     public Run complete(String id, String result, Long costTokens, Double costUsd) {
         Run run = runRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Run not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Run not found: " + id));
         if (!"running".equals(run.getStatus())) {
             throw new IllegalStateException("Cannot complete run with status: " + run.getStatus());
         }
@@ -116,7 +117,7 @@ public class RunService {
     @Transactional
     public Run fail(String id, String errorMessage) {
         Run run = runRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Run not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Run not found: " + id));
         if (!"running".equals(run.getStatus())) {
             throw new IllegalStateException("Cannot fail run with status: " + run.getStatus());
         }
@@ -132,7 +133,7 @@ public class RunService {
     @Transactional
     public Run cancel(String id) {
         Run run = runRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Run not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Run not found: " + id));
         if (!"queued".equals(run.getStatus()) && !"running".equals(run.getStatus())) {
             throw new IllegalStateException("Cannot cancel run with status: " + run.getStatus());
         }
@@ -146,7 +147,7 @@ public class RunService {
     @Transactional
     public Run suspend(String id) {
         Run run = runRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Run not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Run not found: " + id));
         if (!"running".equals(run.getStatus())) {
             throw new IllegalStateException("Cannot suspend run with status: " + run.getStatus());
         }

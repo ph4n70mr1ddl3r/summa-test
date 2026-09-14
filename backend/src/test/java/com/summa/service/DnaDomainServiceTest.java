@@ -22,6 +22,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import com.summa.exception.EntityNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 class DnaDomainServiceTest {
@@ -100,7 +101,7 @@ class DnaDomainServiceTest {
     void archive_throwsWhenNotFound() {
         when(domainRepository.findById("nonexistent")).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(EntityNotFoundException.class, () -> {
             domainService.archive("nonexistent", "admin");
         });
     }

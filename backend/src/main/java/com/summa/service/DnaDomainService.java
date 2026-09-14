@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.Collections;
+import com.summa.exception.EntityNotFoundException;
 
 @Service
 public class DnaDomainService {
@@ -100,7 +101,7 @@ public class DnaDomainService {
     @Transactional
     public DnaDomain archive(String id, String actor) {
         DnaDomain domain = domainRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Domain not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + id));
 
         // DGV-040: Archive refuses a domain still holding live-set state
         long liveCards = cardRepository.countByDomainIdAndStatusNot(id, "retired");
@@ -121,7 +122,7 @@ public class DnaDomainService {
     @Transactional
     public DnaDomain rename(String id, String newName, String actor) {
         DnaDomain domain = domainRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Domain not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + id));
 
         domain.setName(newName);
         DnaDomain saved = domainRepository.save(domain);
@@ -133,7 +134,7 @@ public class DnaDomainService {
     @Transactional
     public DnaDomain updateOwner(String id, String newOwnerId, String actor) {
         DnaDomain domain = domainRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Domain not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + id));
         domain.setOwnerHumanId(newOwnerId);
         DnaDomain saved = domainRepository.save(domain);
         auditService.log(actor, "UPDATE_OWNER", "dna_domain", id, 
@@ -144,7 +145,7 @@ public class DnaDomainService {
     @Transactional
     public DnaDomain updateAccess(String id, String access, String actor) {
         DnaDomain domain = domainRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Domain not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + id));
         domain.setAccess(access);
         DnaDomain saved = domainRepository.save(domain);
         auditService.log(actor, "UPDATE_ACCESS", "dna_domain", id, null);
@@ -163,7 +164,7 @@ public class DnaDomainService {
                                   List<String> itemIds, List<String> workspaceIds,
                                   List<String> proposalIds) {
         DnaDomain parent = domainRepository.findById(parentId)
-                .orElseThrow(() -> new IllegalArgumentException("Domain not found: " + parentId));
+                .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + parentId));
 
         // DGV-017: refuse while under a kind-domain hold
         if (dataHoldRepository.existsByKindAndSubjectIdAndReleasedAtIsNull("domain", parentId)) {
@@ -245,9 +246,9 @@ public class DnaDomainService {
     public DnaDomain merge(String sourceId, String survivorId, String actor,
                             String declaredAccess, String declaredNamedReaders) {
         DnaDomain source = domainRepository.findById(sourceId)
-                .orElseThrow(() -> new IllegalArgumentException("Source domain not found: " + sourceId));
+                .orElseThrow(() -> new EntityNotFoundException("Source domain not found: " + sourceId));
         DnaDomain survivor = domainRepository.findById(survivorId)
-                .orElseThrow(() -> new IllegalArgumentException("Survivor domain not found: " + survivorId));
+                .orElseThrow(() -> new EntityNotFoundException("Survivor domain not found: " + survivorId));
 
         // DGV-017: refuse while either side is under a kind-domain hold
         if (dataHoldRepository.existsByKindAndSubjectIdAndReleasedAtIsNull("domain", sourceId)) {

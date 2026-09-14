@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import com.summa.util.ScanUtils;
+import com.summa.exception.EntityNotFoundException;
 
 @Service
 public class DnaRuleService {
@@ -92,7 +93,7 @@ public class DnaRuleService {
     public DnaRule update(String id, String statementMd, String machineHint,
                           Instant effectiveTo, String actor) {
         DnaRule rule = ruleRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Rule not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Rule not found: " + id));
 
         if (!"active".equals(rule.getStatus())) {
             throw new IllegalStateException("Cannot update non-active rule: " + rule.getStatus());
@@ -115,10 +116,10 @@ public class DnaRuleService {
     @Transactional
     public DnaRule supersede(String id, String supersedesId, String actor) {
         DnaRule rule = ruleRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Rule not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Rule not found: " + id));
 
         DnaRule predecessor = ruleRepository.findById(supersedesId)
-                .orElseThrow(() -> new IllegalArgumentException("Predecessor rule not found: " + supersedesId));
+                .orElseThrow(() -> new EntityNotFoundException("Predecessor rule not found: " + supersedesId));
 
         if (!predecessor.getDomainId().equals(rule.getDomainId())) {
             throw new IllegalArgumentException("Cross-domain supersession not allowed");

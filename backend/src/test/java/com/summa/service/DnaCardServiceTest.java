@@ -11,6 +11,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import com.summa.exception.EntityNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 class DnaCardServiceTest {
@@ -58,7 +59,7 @@ class DnaCardServiceTest {
     void retire_throwsWhenNotFound() {
         when(cardRepository.findById("nonexistent")).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(EntityNotFoundException.class, () -> {
             cardService.retire("nonexistent", "actor");
         });
     }

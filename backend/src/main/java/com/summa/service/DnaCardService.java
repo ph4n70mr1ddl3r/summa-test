@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import com.summa.util.ScanUtils;
 import com.summa.util.JsonHelpers;
+import com.summa.exception.EntityNotFoundException;
 
 @Service
 public class DnaCardService {
@@ -57,7 +58,7 @@ public class DnaCardService {
     @Transactional
     public DnaCard update(String id, String title, String definitionMd, String provenance, String actor) {
         DnaCard card = cardRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Card not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Card not found: " + id));
 
         if (!"active".equals(card.getStatus()) && !"draft".equals(card.getStatus())) {
             throw new IllegalStateException("Cannot update retired card: " + card.getStatus());
@@ -75,7 +76,7 @@ public class DnaCardService {
     @Transactional
     public DnaCard retire(String id, String actor) {
         DnaCard card = cardRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Card not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Card not found: " + id));
 
         card.setStatus("retired");
         DnaCard saved = cardRepository.save(card);

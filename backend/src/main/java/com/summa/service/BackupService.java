@@ -6,6 +6,7 @@ import java.nio.file.*;
 import java.time.Instant;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import com.summa.exception.EntityNotFoundException;
 
 @Service
 public class BackupService {
@@ -60,7 +61,7 @@ public class BackupService {
     public void restore(String backupPath) throws IOException {
         Path backupFile = Paths.get(backupPath);
         if (!Files.exists(backupFile)) {
-            throw new IllegalArgumentException("Backup file not found: " + backupPath);
+            throw new EntityNotFoundException("Backup file not found: " + backupPath);
         }
 
         // Prevent path traversal: resolve symlinks fully and verify it's within allowed dirs
@@ -72,7 +73,7 @@ public class BackupService {
             // but we still require the file to exist for safety
             resolved = backupFile.toAbsolutePath().normalize();
             if (!Files.exists(backupFile)) {
-                throw new IllegalArgumentException("Backup file not found: " + backupPath);
+                throw new EntityNotFoundException("Backup file not found: " + backupPath);
             }
         }
         Path tmpDir = Paths.get(System.getProperty("java.io.tmpdir")).toRealPath();

@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.summa.exception.EntityNotFoundException;
 
 /**
  * Bounded map entry with expiry support for storm collapse tracking.
@@ -249,7 +250,7 @@ public class AskService {
     @Transactional
     public Ask respond(String id, String responder, String response) {
         Ask ask = askRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Ask not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Ask not found: " + id));
 
         if (!"pending".equals(ask.getStatus())) {
             throw new IllegalStateException("Ask is not pending: " + ask.getStatus());
@@ -447,7 +448,7 @@ public class AskService {
     @Transactional
     public Ask withdraw(String id, String originator) {
         Ask ask = askRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Ask not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Ask not found: " + id));
 
         if (!ask.getFrom().equals(originator)) {
             throw new IllegalArgumentException("Only the originator can withdraw");
@@ -462,7 +463,7 @@ public class AskService {
     @Transactional
     public Ask expire(String id) {
         Ask ask = askRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Ask not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Ask not found: " + id));
 
         ask.setStatus("expired");
         Ask saved = askRepository.save(ask);

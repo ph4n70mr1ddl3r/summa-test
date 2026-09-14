@@ -12,6 +12,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import com.summa.exception.EntityNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 class RunServiceTest {
@@ -74,7 +75,7 @@ class RunServiceTest {
     void start_throwsWhenNotFound() {
         when(runRepository.findById("missing")).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(EntityNotFoundException.class, () -> {
             runService.start("missing");
         });
     }

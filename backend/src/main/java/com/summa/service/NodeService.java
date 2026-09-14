@@ -23,6 +23,7 @@ import java.util.Base64;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.beans.factory.annotation.Value;
+import com.summa.exception.EntityNotFoundException;
 
 @Service
 public class NodeService {
@@ -96,7 +97,7 @@ public class NodeService {
     @Transactional
     public Node heartbeat(String id, String capabilities) {
         Node node = nodeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Node not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Node not found: " + id));
         
         node.setLastHeartbeat(Instant.now());
         if (capabilities != null) {
@@ -112,7 +113,7 @@ public class NodeService {
     @Transactional
     public Node revoke(String id, String actor) {
         Node node = nodeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Node not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Node not found: " + id));
 
         node.setRevokedAt(Instant.now());
         node.setStatus("revoked");
@@ -143,7 +144,7 @@ public class NodeService {
     @Transactional
     public Node updateMetadata(String id, String name, String region, String actor) {
         Node node = nodeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Node not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Node not found: " + id));
         
         if (name != null) {
             node.setName(name);
@@ -168,13 +169,13 @@ public class NodeService {
     @Transactional
     public Node claimWorkspace(String nodeId, String workspaceId, int currentEpoch) {
         Node node = nodeRepository.findById(nodeId)
-                .orElseThrow(() -> new IllegalArgumentException("Node not found: " + nodeId));
+                .orElseThrow(() -> new EntityNotFoundException("Node not found: " + nodeId));
         if (node.isRevoked()) {
             throw new IllegalStateException("Node is revoked");
         }
 
         Workspace ws = workspaceService.findById(workspaceId)
-                .orElseThrow(() -> new IllegalArgumentException("Workspace not found: " + workspaceId));
+                .orElseThrow(() -> new EntityNotFoundException("Workspace not found: " + workspaceId));
         if (ws.isArchived()) {
             throw new IllegalStateException("Workspace is archived");
         }
@@ -211,7 +212,7 @@ public class NodeService {
     @Transactional(readOnly = true)
     public List<Run> pullWork(String nodeId) {
         Node node = nodeRepository.findById(nodeId)
-                .orElseThrow(() -> new IllegalArgumentException("Node not found: " + nodeId));
+                .orElseThrow(() -> new EntityNotFoundException("Node not found: " + nodeId));
         if (node.isRevoked()) {
             throw new IllegalStateException("Node is revoked");
         }
@@ -244,13 +245,13 @@ public class NodeService {
     public Run reportRun(String nodeId, String runId, String result, String artifacts,
                           long costTokens, double costUsd, String memberId) {
         Node node = nodeRepository.findById(nodeId)
-                .orElseThrow(() -> new IllegalArgumentException("Node not found: " + nodeId));
+                .orElseThrow(() -> new EntityNotFoundException("Node not found: " + nodeId));
         if (node.isRevoked()) {
             throw new IllegalStateException("Node is revoked");
         }
 
         Run run = runRepository.findById(runId)
-                .orElseThrow(() -> new IllegalArgumentException("Run not found: " + runId));
+                .orElseThrow(() -> new EntityNotFoundException("Run not found: " + runId));
 
         run.setResult(result);
         run.setArtifacts(artifacts != null ? artifacts : "[]");

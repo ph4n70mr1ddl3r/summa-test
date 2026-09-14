@@ -12,6 +12,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import com.summa.exception.EntityNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 class MemoryServiceTest {
@@ -75,7 +76,7 @@ class MemoryServiceTest {
     void review_throwsWhenNotFound() {
         when(memoryItemRepository.findById("missing")).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(EntityNotFoundException.class, () -> {
             memoryService.review("missing", "reviewer-1");
         });
     }

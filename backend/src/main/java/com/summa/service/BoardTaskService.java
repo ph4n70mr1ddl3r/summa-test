@@ -12,6 +12,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import com.summa.exception.EntityNotFoundException;
 
 @Service
 public class BoardTaskService {
@@ -88,7 +89,7 @@ public class BoardTaskService {
     @Transactional
     public BoardTask assign(String id, String assigneeMemberId, String actor) {
         BoardTask task = taskRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Task not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Task not found: " + id));
 
         if (!"open".equals(task.getStatus())) {
             throw new IllegalStateException("Task is not open: " + task.getStatus());
@@ -111,7 +112,7 @@ public class BoardTaskService {
                     throw new IllegalStateException("Suspended/retired agents cannot be assigned board tasks");
                 }
             } else {
-                throw new IllegalArgumentException("Assignee not found: " + assigneeMemberId);
+                throw new EntityNotFoundException("Assignee not found: " + assigneeMemberId);
             }
         }
 
@@ -126,7 +127,7 @@ public class BoardTaskService {
     @Transactional
     public BoardTask complete(String id, String actor) {
         BoardTask task = taskRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Task not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Task not found: " + id));
         
         task.setStatus("done");
         task.setCompletedAt(Instant.now());
@@ -138,7 +139,7 @@ public class BoardTaskService {
     @Transactional
     public BoardTask unassign(String id, String actor) {
         BoardTask task = taskRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Task not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Task not found: " + id));
         
         task.setAssigneeMemberId(null);
         task.setStatus("open");

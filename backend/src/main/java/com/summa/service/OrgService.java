@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.Map;
+import com.summa.exception.EntityNotFoundException;
 
 @Service
 public class OrgService {
@@ -129,7 +130,7 @@ public class OrgService {
         // concurrent offboard of another admin from slipping between our
         // admin-count check and our deactivate, which would leave zero live admins.
         Human human = humanRepository.findByIdForUpdate(id)
-                .orElseThrow(() -> new IllegalArgumentException("Human not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Human not found: " + id));
 
         // Check last admin guard while holding the row lock
         long activeAdminCount = humanRepository.countByDeactivatedAtIsNullAndRbac("admin");
@@ -148,7 +149,7 @@ public class OrgService {
     @Transactional
     public Human updateRbac(String id, String newRbac, String actor) {
         Human human = humanRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Human not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Human not found: " + id));
 
         human.setRbac(newRbac);
         Human saved = humanRepository.save(human);
@@ -160,12 +161,12 @@ public class OrgService {
     @Transactional
     public Human setDeputy(String id, String deputyId, String actor) {
         Human human = humanRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Human not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Human not found: " + id));
 
         // Validate deputy exists and is not a viewer
         Optional<Human> deputyOpt = humanRepository.findById(deputyId);
         if (deputyOpt.isEmpty()) {
-            throw new IllegalArgumentException("Deputy not found: " + deputyId);
+            throw new EntityNotFoundException("Deputy not found: " + deputyId);
         }
         Human deputy = deputyOpt.get();
         if ("viewer".equals(deputy.getRbac())) {
@@ -208,7 +209,7 @@ public class OrgService {
     @Transactional
     public Human demote(String id, String newRbac, String actor) {
         Human human = humanRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Human not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Human not found: " + id));
 
         // OFB-021: Last-admin guard — demotion joining deactivation under the same transactional check
         long activeAdminCount = humanRepository.countByDeactivatedAtIsNullAndRbac("admin");
@@ -242,7 +243,7 @@ public class OrgService {
     @Transactional
     public void erasure(String id, String actor) {
         Human human = humanRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Human not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Human not found: " + id));
 
         // Anonymize identity fields per STG-030..034
         human.setName("[ERASED]");

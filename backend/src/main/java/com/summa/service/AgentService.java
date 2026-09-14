@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 import com.summa.model.Human;
 import com.summa.util.JsonHelpers;
+import com.summa.exception.EntityNotFoundException;
 
 @Service
 public class AgentService {
@@ -96,7 +97,7 @@ public class AgentService {
     @Transactional
     public Agent suspend(String id, String actor) {
         Agent agent = agentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Agent not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Agent not found: " + id));
 
         if (!"active".equals(agent.getStatus())) {
             throw new IllegalStateException("Agent is not active: " + agent.getStatus());
@@ -125,7 +126,7 @@ public class AgentService {
     @Transactional
     public Agent resume(String id, String actor) {
         Agent agent = agentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Agent not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Agent not found: " + id));
 
         if (!"suspended".equals(agent.getStatus())) {
             throw new IllegalStateException("Agent is not suspended: " + agent.getStatus());
@@ -141,7 +142,7 @@ public class AgentService {
     @Transactional
     public Agent retire(String id, String actor) {
         Agent agent = agentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Agent not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Agent not found: " + id));
 
         if (!"active".equals(agent.getStatus())) {
             throw new IllegalStateException("Can only retire active agents, current status: " + agent.getStatus());
@@ -221,7 +222,7 @@ public class AgentService {
     @Transactional
     public Agent archive(String id, String actor) {
         Agent agent = agentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Agent not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Agent not found: " + id));
 
         agent.setStatus("archived");
         agent.setArchivedAt(Instant.now());
@@ -237,7 +238,7 @@ public class AgentService {
     @Transactional
     public Agent deny(String id, String actor) {
         Agent agent = agentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Agent not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Agent not found: " + id));
 
         if (!"requested".equals(agent.getStatus())) {
             throw new IllegalStateException("Can only deny requested agents, current status: " + agent.getStatus());

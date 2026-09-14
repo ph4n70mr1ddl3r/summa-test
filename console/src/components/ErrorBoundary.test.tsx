@@ -3,6 +3,15 @@ import { render, screen } from '@testing-library/react'
 import ErrorBoundary from './ErrorBoundary'
 
 describe('ErrorBoundary', () => {
+  let consoleSpy: ReturnType<typeof vi.spyOn>
+
+  beforeEach(() => {
+    consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    consoleSpy.mockRestore()
+  })
   it('renders children when no error occurs', () => {
     render(
       <ErrorBoundary>
@@ -28,7 +37,6 @@ describe('ErrorBoundary', () => {
   })
 
   it('calls componentDidCatch with error and info', () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     const ThrowError = () => {
       throw new Error('Test error')
     }
@@ -38,6 +46,5 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     )
     expect(consoleSpy).toHaveBeenCalled()
-    consoleSpy.mockRestore()
   })
 })

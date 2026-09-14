@@ -17,6 +17,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import com.summa.exception.EntityNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 class InitiativeServiceTest {
@@ -85,7 +86,7 @@ class InitiativeServiceTest {
     void activate_throwsWhenNotFound() {
         when(initiativeRepository.findById("missing")).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(EntityNotFoundException.class, () -> {
             initiativeService.activate("missing", "admin");
         });
     }

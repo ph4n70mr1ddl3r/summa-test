@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.Optional;
+import com.summa.exception.EntityNotFoundException;
 
 @Service
 public class SpendLedgerService {
@@ -24,7 +25,7 @@ public class SpendLedgerService {
     @Transactional
     public SpendLedger acknowledge(String id, String actor) {
         SpendLedger ledger = repository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Spend ledger row not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Spend ledger row not found: " + id));
         ledger.setAcknowledged(true);
         SpendLedger saved = repository.save(ledger);
         auditService.log(actor, "ACKNOWLEDGE_OVERRUN", "spend_ledger", id, null);

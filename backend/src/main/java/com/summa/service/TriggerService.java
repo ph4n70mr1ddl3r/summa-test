@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.Map;
+import com.summa.exception.EntityNotFoundException;
 
 @Service
 public class TriggerService {
@@ -66,7 +67,7 @@ public class TriggerService {
     @Transactional
     public Trigger pause(String id, String actor) {
         Trigger trigger = triggerRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Trigger not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Trigger not found: " + id));
         trigger.setStatus("paused");
         Trigger saved = triggerRepository.save(trigger);
         auditService.log(actor, "PAUSE_TRIGGER", "trigger", id, null);
@@ -76,7 +77,7 @@ public class TriggerService {
     @Transactional
     public Trigger resume(String id, String actor) {
         Trigger trigger = triggerRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Trigger not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Trigger not found: " + id));
         trigger.setStatus("active");
         Trigger saved = triggerRepository.save(trigger);
         auditService.log(actor, "RESUME_TRIGGER", "trigger", id, null);
@@ -86,7 +87,7 @@ public class TriggerService {
     @Transactional
     public Trigger archive(String id, String actor) {
         Trigger trigger = triggerRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Trigger not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Trigger not found: " + id));
         trigger.setStatus("archived");
         Trigger saved = triggerRepository.save(trigger);
         auditService.log(actor, "ARCHIVE_TRIGGER", "trigger", id, null);

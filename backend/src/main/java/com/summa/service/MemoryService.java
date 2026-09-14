@@ -12,6 +12,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import com.summa.exception.EntityNotFoundException;
 
 @Service
 public class MemoryService {
@@ -74,7 +75,7 @@ public class MemoryService {
     @Transactional
     public MemoryItem review(String id, String reviewerId) {
         MemoryItem item = memoryItemRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Memory item not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Memory item not found: " + id));
 
         // SUB-041: taint clearance — authority depends on tier
         if ("personal".equals(item.getTier())) {

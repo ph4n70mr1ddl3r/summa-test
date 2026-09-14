@@ -19,6 +19,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import com.summa.exception.EntityNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 class NodeServiceTest {
@@ -102,7 +103,7 @@ class NodeServiceTest {
     void heartbeat_throwsWhenNotFound() {
         when(nodeRepository.findById("missing")).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(EntityNotFoundException.class, () -> {
             nodeService.heartbeat("missing", "{}");
         });
     }

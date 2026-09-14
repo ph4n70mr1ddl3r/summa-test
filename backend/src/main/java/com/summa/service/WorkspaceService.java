@@ -21,6 +21,7 @@ import java.util.Optional;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.summa.constants.Defaults;
+import com.summa.exception.EntityNotFoundException;
 
 @Service
 public class WorkspaceService {
@@ -58,7 +59,7 @@ public class WorkspaceService {
                 List<String> domainIdList = objectMapper.readValue(domainIds, new TypeReference<List<String>>() {});
                 for (String domId : domainIdList) {
                     domainRepository.findById(domId).orElseThrow(
-                        () -> new IllegalArgumentException("Domain not found: " + domId));
+                        () -> new EntityNotFoundException("Domain not found: " + domId));
                 }
             } catch (Exception e) {
                 throw new IllegalArgumentException("Invalid domainIds format: " + e.getMessage());
@@ -95,7 +96,7 @@ public class WorkspaceService {
     @Transactional
     public Workspace rebind(String id, String targetNodeId, String actor) {
         Workspace ws = workspaceRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Workspace not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Workspace not found: " + id));
 
         ws.setNodeId(targetNodeId);
         Workspace saved = workspaceRepository.save(ws);
@@ -123,7 +124,7 @@ public class WorkspaceService {
     @Transactional
     public Workspace archive(String id, String actor) {
         Workspace ws = workspaceRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Workspace not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Workspace not found: " + id));
 
         if (ws.isArchived()) {
             throw new IllegalStateException("Workspace is already archived");

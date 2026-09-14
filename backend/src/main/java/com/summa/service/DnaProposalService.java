@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.summa.util.JsonHelpers;
+import com.summa.exception.EntityNotFoundException;
 
 @Service
 public class DnaProposalService {
@@ -89,7 +90,7 @@ public class DnaProposalService {
     @Transactional
     public DnaProposal publish(String id, String reviewedBy, String actor) {
         DnaProposal proposal = proposalRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Proposal not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Proposal not found: " + id));
         
         if (!"open".equals(proposal.getStatus())) {
             throw new IllegalStateException("Proposal is not open: " + proposal.getStatus());
@@ -212,7 +213,7 @@ public class DnaProposalService {
     @Transactional
     public DnaProposal reject(String id, String reviewedBy, String actor) {
         DnaProposal proposal = proposalRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Proposal not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Proposal not found: " + id));
         
         proposal.setStatus("rejected");
         proposal.setReviewedBy(reviewedBy);
@@ -226,7 +227,7 @@ public class DnaProposalService {
     @Transactional
     public DnaProposal withdraw(String id, String actor) {
         DnaProposal proposal = proposalRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Proposal not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Proposal not found: " + id));
         
         if (!proposedByMatches(proposal, actor)) {
             throw new IllegalArgumentException("Only the proposer can withdraw");
@@ -241,7 +242,7 @@ public class DnaProposalService {
     @Transactional
     public DnaProposal amend(String id, String payload, String actor) {
         DnaProposal proposal = proposalRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Proposal not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Proposal not found: " + id));
         
         if (!proposal.isOpen()) {
             throw new IllegalStateException("Only open proposals can be amended");
