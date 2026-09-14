@@ -409,13 +409,9 @@ public class OffboardingWalkService {
             }
         }
 
-        // OFB-031: Clear deputy references in both directions
+        // OFB-031: Clear deputy references — clear references TO the departing member from others
         for (Human h : memberService.findAllActiveHumans()) {
             if (humanId.equals(h.getDeputyMemberId())) {
-                h.setDeputyMemberId(null);
-                memberService.saveHuman(h);
-            }
-            if (humanId.equals(h.getId()) && h.getDeputyMemberId() != null) {
                 h.setDeputyMemberId(null);
                 memberService.saveHuman(h);
             }

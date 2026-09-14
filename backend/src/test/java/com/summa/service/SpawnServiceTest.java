@@ -98,6 +98,10 @@ class SpawnServiceTest {
         when(agentRepository.save(any())).thenReturn(agent);
         when(spawnRepository.save(any())).thenReturn(request);
 
+        Human human = new Human();
+        human.setId("human-1");
+        when(memberService.findHuman("admin")).thenReturn(Optional.of(human));
+
         SpawnRequest result = spawnService.approve("spawn-1", "admin", "actor");
 
         assertEquals("approved", result.getStatus());
@@ -208,5 +212,23 @@ class SpawnServiceTest {
 
         assertNotNull(result);
         assertEquals("ephemeral", result.getSpawnClass());
+    }
+
+    @Test
+    void approve_throwsWhenApprovedByIsAgentNotHuman() {
+        SpawnRequest request = new SpawnRequest();
+        request.setId("spawn-1");
+        request.setStatus("requested");
+        request.setRequesterId("agent-1");
+        request.setRequestedByHumanId(null);
+        request.setApprovedBy("agent-99");
+        when(spawnRepository.findById("spawn-1")).thenReturn(Optional.of(request));
+
+        // approvedBy is "agent-99" which is not a human
+        when(memberService.findHuman("agent-99")).thenReturn(Optional.empty());
+
+        assertThrows(IllegalStateException.class, () -> {
+            spawnService.approve("spawn-1", "agent-99", "actor");
+        });
     }
 }

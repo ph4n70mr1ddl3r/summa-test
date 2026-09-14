@@ -27,8 +27,25 @@ export default function DNAConsole() {
       setLoading(false)
     }).catch((e) => {
       if (aborted) return
-      setError('Failed to load DNA data: ' + (e?.message || String(e)))
-      setLoading(false)
+      // If we get here, at least one call failed. Try to recover partial data.
+      Promise.allSettled([
+        api.dna.domains().catch(() => null),
+        api.dna.cards().catch(() => null),
+        api.dna.goals().catch(() => null),
+        api.dna.reviewQueue().catch(() => null),
+      ]).then(([d, c, g, p]) => {
+        if (aborted) return
+        const domains = (d as PromiseFulfilledResult<DnaDomain[]>).value ?? []
+        const cards = (c as PromiseFulfilledResult<DnaCard[]>).value ?? []
+        const goals = (g as PromiseFulfilledResult<DnaGoal[]>).value ?? []
+        const proposals = (p as PromiseFulfilledResult<DnaProposal[]>).value ?? []
+        setDomains(domains)
+        setCards(cards)
+        setGoals(goals)
+        setProposals(proposals)
+        setError('Some data could not be loaded: ' + (e?.message || String(e)))
+        setLoading(false)
+      })
     })
     return () => { aborted = true }
   }, [])

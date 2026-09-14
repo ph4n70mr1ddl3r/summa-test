@@ -14,6 +14,8 @@ import com.summa.model.SpawnRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -146,9 +148,12 @@ public class WorkspaceService {
             }
         }
 
-        List<Playbook> boundPlaybooks = playbookRepository.findAll().stream()
-                .filter(p -> p.getBody() != null && p.getBody().contains("\"" + id + "\""))
-                .toList();
+        List<Playbook> boundPlaybooks = new ArrayList<>();
+        for (Playbook pb : playbookRepository.findAll()) {
+            if (pb.getBody() != null && isWorkspaceReferencedInJson(pb.getBody(), id)) {
+                boundPlaybooks.add(pb);
+            }
+        }
         for (Playbook pb : boundPlaybooks) {
             auditService.logSystem("ARCHIVE_NOTE_PLAYBOOK", "playbook", pb.getId(),
                 String.format("{\"workspaceId\":\"%s\",\"reason\":\"workspace_archived\"}", id));
@@ -167,6 +172,50 @@ public class WorkspaceService {
         Workspace saved = workspaceRepository.save(ws);
         auditService.log(actor, "ARCHIVE_WORKSPACE", "workspace", id, null);
         return saved;
+    }
+
+    private boolean isWorkspaceReferencedInJson(String body, String workspaceId) {
+        try {
+            com.fasterxml.jackson.databind.JsonNode root = objectMapper.readTree(body);
+            return root.isArray()
+                ? isWorkspaceInArray(root, workspaceId)
+                : isWorkspaceInObject(root, workspaceId);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean isWorkspaceInArray(com.fasterxml.jackson.databind.JsonNode array, String workspaceId) {
+        for (com.fasterxml.jackson.databind.JsonNode element : array) {
+            if (element.isTextual() && workspaceId.equals(element.asText())) {
+                return true;
+            }
+            if (element.isObject() && isWorkspaceInObject(element, workspaceId)) {
+                return true;
+            }
+            if (element.isArray() && isWorkspaceInArray(element, workspaceId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isWorkspaceInObject(com.fasterxml.jackson.databind.JsonNode obj, String workspaceId) {
+        if (obj.isObject()) {
+            for (Iterator<java.util.Map.Entry<String, com.fasterxml.jackson.databind.JsonNode>> it = obj.fields(); it.hasNext(); ) {
+                com.fasterxml.jackson.databind.JsonNode value = it.next().getValue();
+                if (value.isTextual() && workspaceId.equals(value.asText())) {
+                    return true;
+                }
+                if (value.isObject() && isWorkspaceInObject(value, workspaceId)) {
+                    return true;
+                }
+                if (value.isArray() && isWorkspaceInArray(value, workspaceId)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
 

@@ -197,10 +197,17 @@ public class OrgController {
         while (holder[0] != null && lineage.size() < depthCap) {
             lineage.add(holder[0]);
             final String nextId = holder[0];
-            memberService.findAgent(nextId).ifPresent(a -> holder[0] = a.getSpawnedBy());
-            if (holder[0] == null) {
-                // If memberId is a human (not an agent), break — humans have no spawn-by parent
+            boolean found = false;
+            Optional<Agent> agentOpt = memberService.findAgent(nextId);
+            if (agentOpt.isPresent()) {
+                holder[0] = agentOpt.get().getSpawnedBy();
+                found = true;
+            } else {
+                holder[0] = null;
                 memberService.findHuman(nextId).ifPresent(h -> holder[0] = null);
+            }
+            if (!found && holder[0] == null) {
+                break;
             }
         }
         return ResponseEntity.ok(Map.of("memberId", memberId, "lineage", lineage));

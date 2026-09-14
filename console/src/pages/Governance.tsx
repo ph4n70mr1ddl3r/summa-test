@@ -23,8 +23,22 @@ export default function Governance() {
       setLoading(false)
     }).catch((e) => {
       if (aborted) return
-      setError('Failed to load governance data: ' + (e?.message || String(e)))
-      setLoading(false)
+      // Recover partial data from individual calls
+      Promise.allSettled([
+        api.governance.policies().catch(() => null),
+        api.governance.quotas().catch(() => null),
+        api.governance.spend().catch(() => null),
+      ]).then(([pRes, qRes, sRes]) => {
+        if (aborted) return
+        const policies = (pRes as PromiseFulfilledResult<Record<string, unknown>>).value ?? {}
+        const quotas = (qRes as PromiseFulfilledResult<Record<string, unknown>>).value ?? {}
+        const spend = (sRes as PromiseFulfilledResult<SpendSnapshot | null>).value ?? null
+        setPolicies(policies)
+        setQuotas(quotas)
+        setSpend(spend)
+        setError('Some data could not be loaded: ' + (e?.message || String(e)))
+        setLoading(false)
+      })
     })
     return () => { aborted = true }
   }, [])

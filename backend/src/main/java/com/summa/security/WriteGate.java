@@ -20,7 +20,7 @@ public class WriteGate {
             AuditEvent audit = auditService.logSystem("REFUSAL", "write_gate",
                     "Viewer does not have write permission", actor);
             return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "eligibility", "message", "Viewer does not have write permission",
+                    .body(Map.of("code", "gate", "message", "Viewer does not have write permission",
                             "audit_event_id", audit.getId()));
         }
         return null;

@@ -307,6 +307,13 @@ export interface DnaGoal {
 export type DnaGoalStatus = 'active' | 'met' | 'missed' | 'retired';
 export type InjectMode = 'always' | 'linked';
 
+export interface HealthStatus {
+  status: 'UP' | 'DEGRADED';
+  service: string;
+  mode: string;
+  checks: { database: string; git_store: string };
+}
+
 export interface DnaGlossary {
   id: string;
   domainId?: string;
@@ -611,7 +618,7 @@ export const api = {
       }),
   },
   org: {
-    health: () => request<{ status: string; service: string }>('/health'),
+    health: () => request<HealthStatus>('/health'),
     bootstrap: (body?: Record<string, string>) =>
       request('/org/bootstrap', { method: 'POST', body: body ? JSON.stringify(body) : undefined }),
     humans: (active?: boolean) =>
@@ -730,7 +737,7 @@ export const api = {
         body: JSON.stringify({ currentPassword, newPassword }),
       }),
   },
-  health: () => request<{ status: string }>('/health'),
+  health: () => request<HealthStatus>('/health'),
   boardTasks: {
     list: (params?: { status?: string; assigneeId?: string; initiativeId?: string }) =>
       request<BoardTask[]>(`/board-tasks${buildQuery(params)}`),

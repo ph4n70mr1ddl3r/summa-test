@@ -20,8 +20,19 @@ export default function OrgView() {
       setLoading(false)
     }).catch((e) => {
       if (aborted) return
-      setError('Failed to load org data: ' + (e?.message || String(e)))
-      setLoading(false)
+      // Recover partial data from individual calls
+      Promise.allSettled([
+        api.org.members().catch(() => null),
+        api.groups.list().catch(() => null),
+      ]).then(([mRes, gRes]) => {
+        if (aborted) return
+        const members = (mRes as PromiseFulfilledResult<{ members: Member[]; total: number }>).value
+        const groups = (gRes as PromiseFulfilledResult<Group[]>).value ?? []
+        setMembers(members?.members ?? [])
+        setGroups(groups)
+        setError('Some data could not be loaded: ' + (e?.message || String(e)))
+        setLoading(false)
+      })
     })
     return () => { aborted = true }
   }, [])

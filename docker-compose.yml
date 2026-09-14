@@ -14,6 +14,7 @@ services:
       - SUMMA_JWT_SECRET=${SUMMA_JWT_SECRET:?JWT secret must be set}
       - SUMMA_CORS_ORIGINS=${SUMMA_CORS_ORIGINS:-}
       - SUMMA_SPEND_CEILING=${SUMMA_SPEND_CEILING:-1000000}
+      - SUMMA_GIT_BRANCH=${SUMMA_GIT_BRANCH:-main}
       - SPRING_PROFILES_ACTIVE=prod
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:8080/api/health || exit 1"]

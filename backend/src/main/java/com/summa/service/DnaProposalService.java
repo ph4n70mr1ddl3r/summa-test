@@ -108,7 +108,7 @@ public class DnaProposalService {
         if (proposal.getDomainId() != null && !proposal.getDomainId().isBlank()) {
             Optional<DnaDomain> domainOpt = domainService.findById(proposal.getDomainId());
             if (domainOpt.isPresent() && "reviewer-distinct".equals(domainOpt.get().getSod())) {
-                if (proposal.getProposedBy().equals(reviewedBy)) {
+                if (proposal.getProposedBy() != null && proposal.getProposedBy().equals(reviewedBy)) {
                     // SoD breach: route publish to admin broadcast
                     actualReviewer = OffboardingWalkService.ADMIN_BROADCAST;
                     auditService.logSystem("SOD_ROUTE_TO_ADMIN", "dna_proposal", id,
@@ -140,7 +140,7 @@ public class DnaProposalService {
             JsonNode payload = objectMapper.readTree(proposal.getPayload());
             String kind = proposal.getKind();
 
-            if ("rule".equals(kind) && payload.has("supersedes_id")) {
+            if ("rule".equals(kind) && payload.has("supersedes_id") && !payload.get("supersedes_id").isNull()) {
                 String supersedesId = payload.get("supersedes_id").asText();
                 // DGV-025: Check supersedence chain integrity
                 List<DnaRule> successors = ruleRepository.findBySupersedesId(supersedesId);

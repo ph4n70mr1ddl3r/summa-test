@@ -185,7 +185,10 @@ public class AgentController {
                         hasPromoForAgent = true;
                         break;
                     }
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    auditService.logSystem("PROMOTE_PARSE_FAIL", "agent", id,
+                        String.format("{\"error\":\"%s\"}", e.getMessage()));
+                }
             }
             if (hasPromoForAgent) {
                 throw new IllegalStateException("A promotion ask already exists for this hire");

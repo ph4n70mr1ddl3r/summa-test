@@ -137,4 +137,45 @@ class WorkspaceServiceTest {
 
         assertEquals(1, result.size());
     }
+
+    @Test
+    void archive_noFalsePositivePlaybookMatch() throws Exception {
+        Workspace ws = new Workspace();
+        ws.setId("ws-1");
+        when(workspaceRepository.findById("ws-1")).thenReturn(Optional.of(ws));
+        when(workspaceRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        // Playbook body contains "ws-1" as a substring of another value but not as a JSON string value
+        String playbookBody = "{\"description\":\"workspace ws-1-example\",\"ids\":[\"ws-99\"]}";
+        com.summa.model.Playbook pb = new com.summa.model.Playbook();
+        pb.setId("pb-1");
+        pb.setBody(playbookBody);
+        when(playbookRepository.findAll()).thenReturn(List.of(pb));
+
+        Workspace result = workspaceService.archive("ws-1", "admin");
+
+        assertNotNull(result.getArchivedAt());
+        // The playbook should NOT be matched because "ws-1" only appears as substring of "ws-1-example"
+        // and not as a standalone JSON string value equal to "ws-1"
+        verify(playbookRepository, never()).save(any());
+    }
+
+    @Test
+    void archive_truePlaybookMatch() throws Exception {
+        Workspace ws = new Workspace();
+        ws.setId("ws-1");
+        when(workspaceRepository.findById("ws-1")).thenReturn(Optional.of(ws));
+        when(workspaceRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        // Playbook body contains "ws-1" as an actual JSON string value
+        String playbookBody = "{\"description\":\"main workspace\",\"ids\":[\"ws-1\",\"ws-99\"]}";
+        com.summa.model.Playbook pb = new com.summa.model.Playbook();
+        pb.setId("pb-1");
+        pb.setBody(playbookBody);
+        when(playbookRepository.findAll()).thenReturn(List.of(pb));
+
+        Workspace result = workspaceService.archive("ws-1", "admin");
+
+        assertNotNull(result.getArchivedAt());
+    }
 }

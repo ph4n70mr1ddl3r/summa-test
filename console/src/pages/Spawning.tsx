@@ -21,8 +21,19 @@ export default function Spawning() {
       setLoading(false)
     }).catch((e) => {
       if (aborted) return
-      setError('Failed to load spawn data: ' + (e?.message || String(e)))
-      setLoading(false)
+      // Recover partial data from individual calls
+      Promise.allSettled([
+        api.spawn.list().catch(() => null),
+        api.spawn.stats().catch(() => null),
+      ]).then(([rRes, sRes]) => {
+        if (aborted) return
+        const requests = (rRes as PromiseFulfilledResult<SpawnRequest[]>).value ?? []
+        const stats = (sRes as PromiseFulfilledResult<SpawnStats | null>).value ?? null
+        setRequests(requests)
+        setStats(stats)
+        setError('Some data could not be loaded: ' + (e?.message || String(e)))
+        setLoading(false)
+      })
     })
     return () => { aborted = true }
   }, [])

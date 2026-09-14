@@ -191,4 +191,20 @@ class DnaProposalServiceTest {
 
         verify(askService, never()).create(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyInt(), any(), anyString(), anyString());
     }
+
+    @Test
+    void publish_withNullProposedByDoesNotNpe() {
+        DnaProposal proposal = new DnaProposal();
+        proposal.setId("prop-1");
+        proposal.setStatus("open");
+        proposal.setKind("rule");
+        proposal.setPayload("{\"statement\":\"test\"}");
+        proposal.setProposedBy(null);
+        proposal.setDomainId(null);
+        when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
+        when(proposalRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        // Should not throw NPE — proposedBy is null so SoD check is skipped
+        assertDoesNotThrow(() -> proposalService.publish("prop-1", "reviewer-1", "actor"));
+    }
 }

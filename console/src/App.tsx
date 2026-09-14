@@ -1,6 +1,5 @@
 import { Outlet, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom'
 import { setAuthToken, isAuthenticated, getUser } from './services/api'
-import ErrorBoundary from './components/ErrorBoundary'
 
 interface NavItem {
   to: string
@@ -107,7 +106,7 @@ export default function App() {
               <ModeLabel />
               {authed && (
                 <span className="text-gray-500 text-xs">
-                  {getUser()?.name ?? getUser()?.userId ?? 'authenticated'}
+                  {(() => { const user = getUser(); return user?.name ?? user?.userId ?? 'authenticated' })()}
                 </span>
               )}
               {authed && <LogoutButton />}
@@ -118,9 +117,7 @@ export default function App() {
 
       <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <AuthGuard>
-          <ErrorBoundary>
-            <Outlet />
-          </ErrorBoundary>
+          <Outlet />
         </AuthGuard>
       </main>
     </div>

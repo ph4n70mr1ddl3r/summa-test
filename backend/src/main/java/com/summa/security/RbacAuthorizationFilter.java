@@ -30,7 +30,8 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
     }
 
     public static String getCurrentActorOrDefault() {
-        return ACTOR_CONTEXT.get() != null ? ACTOR_CONTEXT.get() : com.summa.constants.Defaults.SYSTEM_ACTOR;
+        String actor = ACTOR_CONTEXT.get();
+        return actor != null ? actor : com.summa.constants.Defaults.SYSTEM_ACTOR;
     }
 
     public static boolean isWriteAllowed() {
