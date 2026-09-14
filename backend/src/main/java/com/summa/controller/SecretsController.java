@@ -4,7 +4,6 @@ import com.summa.security.RbacAuthorizationFilter;
 import com.summa.security.WriteGate;
 import com.summa.service.AuditService;
 import com.summa.service.SecretsScanner;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
@@ -31,14 +30,10 @@ public class SecretsController {
         if (gate != null) return gate;
         String content = body.get("content");
         if (content == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("code", "validation", "message", "content required",
-                            "audit_event_id", auditService.logSystem("REFUSAL", "validation", "content required", null).getId()));
+            return ControllerResponses.validation(auditService, "content required");
         }
         if (content.length() > MAX_SCAN_CONTENT_LENGTH) {
-            var audit = auditService.logSystem("REFUSAL", "secrets_scan", actor, "Content exceeds maximum scan length");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("code", "validation", "message", "content exceeds maximum scan length", "audit_event_id", audit.getId()));
+            return ControllerResponses.validation(auditService, "content exceeds maximum scan length");
         }
         var findings = scanner.scan(content);
         return ResponseEntity.ok(Map.of(

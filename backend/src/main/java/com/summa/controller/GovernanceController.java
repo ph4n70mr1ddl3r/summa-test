@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.Set;
-import java.util.HashSet;
 
 @RestController
 @RequestMapping("/governance")
@@ -64,7 +63,7 @@ public class GovernanceController {
         return ResponseEntity.ok(governanceService.getSpendView());
     }
 
-    private static final Set<String> POLICY_KEYS = new HashSet<>(Set.of(
+    private static final Set<String> POLICY_KEYS = Set.of(
             "asks-tier-critical-deadline-hours",
             "asks-tier-standard-deadline-hours",
             "asks-tier-bulk-deadline-hours",
@@ -74,15 +73,15 @@ public class GovernanceController {
             "spend-org-ceiling",
             "spend-critical-floor-percent",
             "spend-evaluation-window-days"
-    ));
+    );
 
-    private static final Set<String> QUOTA_KEYS = new HashSet<>(Set.of(
+    private static final Set<String> QUOTA_KEYS = Set.of(
             "spawn-ephemeral-default-ttl-hours",
             "spawn-ephemeral-max-concurrent-per-spawner",
             "spawn-org-wide-max-active-agents",
             "spawn-depth-cap",
             "spawn-budget-window-days"
-    ));
+    );
 
     @PutMapping("/policies")
     public ResponseEntity<?> updatePolicy(@RequestBody Map<String, Object> body) {

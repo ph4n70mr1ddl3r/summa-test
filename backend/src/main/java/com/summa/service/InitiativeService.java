@@ -280,11 +280,11 @@ public class InitiativeService {
 
         // INT-022 / INT-040: Unbind workspaces and archive pending spawn requests
         try {
-            List<com.summa.model.Workspace> boundWorkspaces = workspaceRepository.findAll().stream()
+            List<Workspace> boundWorkspaces = workspaceRepository.findAll().stream()
                 .filter(ws -> ws.getInitiativeIds() != null && !ws.getInitiativeIds().isBlank()
                     && !ws.getInitiativeIds().equals("[]"))
                 .toList();
-            for (com.summa.model.Workspace ws : boundWorkspaces) {
+            for (Workspace ws : boundWorkspaces) {
                 try {
                     JsonNode initIds = objectMapper.readTree(ws.getInitiativeIds());
                     if (initIds.isArray()) {
@@ -321,11 +321,11 @@ public class InitiativeService {
 
         // INT-040: Archive pending spawn requests with template pins drained
         try {
-            List<com.summa.model.SpawnRequest> pendingSpawns = spawnRequestRepository.findByStatus("requested").stream()
+            List<SpawnRequest> pendingSpawns = spawnRequestRepository.findByStatus("requested").stream()
                 .filter(sr -> sr.getWorkspaceBindings() != null && !sr.getWorkspaceBindings().isBlank()
                     && !sr.getWorkspaceBindings().equals("[]"))
                 .toList();
-            for (com.summa.model.SpawnRequest sr : pendingSpawns) {
+            for (SpawnRequest sr : pendingSpawns) {
                 try {
                     JsonNode bindings = objectMapper.readTree(sr.getWorkspaceBindings());
                     if (bindings.isArray()) {

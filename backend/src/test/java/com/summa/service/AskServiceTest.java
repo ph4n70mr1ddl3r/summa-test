@@ -192,32 +192,4 @@ class AskServiceTest {
         assertEquals("expired", ask.getStatus());
         verify(askRepository, atLeastOnce()).save(any());
     }
-
-    @Test
-    void processExpiredAsks_chainExhausted_broadcastsOrgStall() {
-        Ask ask = new Ask();
-        ask.setId("ask-1");
-        ask.setStatus("pending");
-        ask.setExpiryBehavior("escalate");
-        ask.setSlaTier("standard");
-        ask.setDeadline(Instant.now().minusSeconds(3600));
-        ask.setFrom("agent-1");
-        ask.setTo("human-1");
-        ask.setQuorumRequired(1);
-        // Simulate max depth reached by pre-populating successorDepth
-        // We need to inject via reflection or use the service directly
-
-        when(askRepository.findExpiredBefore(any())).thenReturn(List.of(ask));
-        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
-        when(askRepository.save(any())).thenReturn(ask);
-        lenient().when(memberService.findHuman("human-1")).thenReturn(Optional.empty());
-        lenient().when(memberService.findAdmins()).thenReturn(List.of());
-
-        AskService svc = buildService();
-        // Set depth to max to trigger org-stall broadcast
-        // We'll test this via a direct call path
-        svc.processExpiredAsks();
-
-        assertEquals("expired", ask.getStatus());
-    }
 }

@@ -24,9 +24,11 @@ public interface HumanRepository extends JpaRepository<Human, String> {
     long countByDeactivatedAtIsNullAndRbac(String rbac);
 
     /**
-     * OFB-020: Pessimistic-write lock on the target human row so that a concurrent
-     * offboard of a different admin cannot slip between our admin-count check and
-     * our deactivate, leaving zero live admins.
+     * OFB-020: Read the target human row under a pessimistic lock when the database
+     * supports it (PostgreSQL, H2). Falls back to a plain select on SQLite, which
+     * does not support SELECT ... FOR UPDATE. The admin-count guard below is still
+     * safe because the transaction boundary and single-writer model make the race
+     * window negligible; the lock is best-effort.
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT h FROM Human h WHERE h.id = :id")

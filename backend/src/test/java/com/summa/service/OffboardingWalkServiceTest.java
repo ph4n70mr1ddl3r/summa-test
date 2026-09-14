@@ -19,7 +19,6 @@ import com.summa.model.Initiative;
 import com.summa.model.DnaGoal;
 import com.summa.model.DnaProposal;
 import com.summa.model.DnaDomain;
-import com.summa.model.BoardTask;
 import com.summa.model.Pat;
 import com.summa.model.Group;
 import org.junit.jupiter.api.Test;

@@ -63,13 +63,8 @@ public class DnaGoalController {
             }
             // Security: reject client-supplied IDs — always generate server-side
             String generatedId = UUID.randomUUID().toString();
-            Instant effectiveFrom;
-            try {
-                effectiveFrom = JsonHelpers.parseOptionalInstant(body.get("effectiveFrom"), "effectiveFrom");
-                if (effectiveFrom == null) effectiveFrom = Instant.now();
-            } catch (IllegalArgumentException e) {
-                throw e;
-            }
+            Instant effectiveFrom = JsonHelpers.parseOptionalInstant(body.get("effectiveFrom"), "effectiveFrom");
+            if (effectiveFrom == null) effectiveFrom = Instant.now();
             Instant effectiveTo = JsonHelpers.parseOptionalInstant(body.get("effectiveTo"), "effectiveTo");
 
             DnaGoal goal = goalService.create(

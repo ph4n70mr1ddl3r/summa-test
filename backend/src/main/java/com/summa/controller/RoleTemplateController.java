@@ -73,7 +73,7 @@ public class RoleTemplateController {
             RoleTemplate template = templateService.publish(id, actor);
             return ResponseEntity.ok(template);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         }
     }
 

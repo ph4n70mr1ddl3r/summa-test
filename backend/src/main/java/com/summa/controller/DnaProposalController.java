@@ -117,7 +117,7 @@ public class DnaProposalController {
             DnaProposal proposal = proposalService.withdraw(id, actor);
             return ResponseEntity.ok(proposal);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         }
     }
 
@@ -130,7 +130,7 @@ public class DnaProposalController {
             DnaProposal proposal = proposalService.amend(id, body.get("payload"), actor);
             return ResponseEntity.ok(proposal);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         }

@@ -94,7 +94,7 @@ public class BoardTaskController {
             BoardTask task = taskService.assign(id, body.get("assigneeMemberId"), actor);
             return ResponseEntity.ok(task);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         }
     }
 
@@ -107,7 +107,7 @@ public class BoardTaskController {
             BoardTask task = taskService.complete(id, actor);
             return ResponseEntity.ok(task);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         }
     }
 
@@ -120,7 +120,7 @@ public class BoardTaskController {
             BoardTask task = taskService.unassign(id, actor);
             return ResponseEntity.ok(task);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         }
     }
 }

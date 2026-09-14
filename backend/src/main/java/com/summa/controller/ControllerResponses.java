@@ -37,4 +37,10 @@ public final class ControllerResponses {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(Map.of("code", "conflict", "message", message, "audit_event_id", event.getId()));
     }
+
+    public static ResponseEntity<Map<String, Object>> internalError(AuditService audit, String message) {
+        AuditEvent event = audit.logSystem("ERROR", "internal", null, message);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("code", "internal", "message", message, "audit_event_id", event.getId()));
+    }
 }

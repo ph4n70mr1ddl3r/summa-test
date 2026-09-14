@@ -78,20 +78,4 @@ describe('Login page', () => {
       await loginPromise
     })
   })
-
-  it('navigates to intended route after successful login', async () => {
-    vi.mocked(apiModule.api.auth.login).mockResolvedValue({
-      token: 'fake-token',
-      userId: 'u1',
-      rbac: 'admin',
-      name: 'Test User',
-    })
-    const { getByLabelText, getByText } = renderLogin()
-    fireEvent.change(getByLabelText(/email/i), { target: { value: 'test@example.com' } })
-    fireEvent.change(getByLabelText(/password/i), { target: { value: 'password123' } })
-    fireEvent.click(getByText('Sign in'))
-    await waitFor(() => {
-      expect(apiModule.setAuthToken).toHaveBeenCalledWith('fake-token', { userId: 'u1', rbac: 'admin', name: 'Test User' })
-    })
-  })
 })

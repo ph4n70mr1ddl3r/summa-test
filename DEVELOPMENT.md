@@ -29,7 +29,6 @@ summa/
 │   └── vite/vitest/eslint configs
 ├── specs/             # Normative requirements (see specs/README.md, specs/TRACEABILITY.md)
 ├── tools/             # Lint tooling + fixtures (tools/fixtures/)
-├── .github/workflows/ # CI (backend tests, console build+lint, spec lint)
 ├── Dockerfile         # Multi-stage backend image (builds JAR from source)
 ├── Dockerfile.console # Console build (repo-root context) + nginx
 ├── docker-compose.yml

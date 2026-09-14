@@ -91,7 +91,7 @@ public class TriggerController {
             Trigger trigger = triggerService.pause(id, actor);
             return ResponseEntity.ok(trigger);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         }
     }
 
@@ -104,7 +104,7 @@ public class TriggerController {
             Trigger trigger = triggerService.resume(id, actor);
             return ResponseEntity.ok(trigger);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         }
     }
 
@@ -117,7 +117,7 @@ public class TriggerController {
             Trigger trigger = triggerService.archive(id, actor);
             return ResponseEntity.ok(trigger);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         }
     }
 

@@ -740,16 +740,16 @@ export const api = {
         body: JSON.stringify(body),
       }),
     assign: (id: string, memberId: string) =>
-      request(`/board-tasks/${id}/assign`, {
+      request<BoardTask>(`/board-tasks/${id}/assign`, {
         method: 'POST',
         body: JSON.stringify({ assigneeMemberId: memberId }),
       }),
     complete: (id: string) =>
-      request(`/board-tasks/${id}/complete`, {
+      request<BoardTask>(`/board-tasks/${id}/complete`, {
         method: 'POST',
       }),
     unassign: (id: string) =>
-      request(`/board-tasks/${id}/unassign`, {
+      request<BoardTask>(`/board-tasks/${id}/unassign`, {
         method: 'POST',
       }),
   },
@@ -773,7 +773,7 @@ export const api = {
       request(`/triggers/${id}/archive`, {
         method: 'POST',
       }),
-    stats: () => request('/triggers/stats'),
+    stats: () => request<Record<string, number>>('/triggers/stats'),
   },
   workspaces: {
     list: () => request<Workspace[]>('/workspaces'),
@@ -783,7 +783,7 @@ export const api = {
         body: JSON.stringify(body),
       }),
     rebind: (id: string, targetNodeId: string) =>
-      request(`/workspaces/${id}/rebind`, {
+      request<Workspace>(`/workspaces/${id}/rebind`, {
         method: 'POST',
         body: JSON.stringify({ targetNodeId }),
       }),
@@ -874,7 +874,7 @@ export const api = {
         body: JSON.stringify(body),
       }),
     review: (id: string) =>
-      request(`/memory/${id}/review`, {
+      request<MemoryItem>(`/memory/${id}/review`, {
         method: 'POST',
       }),
   },
@@ -899,7 +899,7 @@ export const api = {
         body: JSON.stringify(body),
       }),
     archive: (id: string) =>
-      request(`/org/groups/${id}/archive`, {
+      request<Group>(`/org/groups/${id}/archive`, {
         method: 'POST',
       }),
     setLeader: (id: string, memberId: string) =>

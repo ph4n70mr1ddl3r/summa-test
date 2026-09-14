@@ -35,9 +35,9 @@ export default function RoleTemplates() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="font-medium text-gray-200">{escapeHtml(t.name)}</p>
-                  <p className="text-sm text-gray-400 mt-1">Class: {escapeHtml(t.class)} | Version: {t.version}</p>
+                  <p className="text-sm text-gray-400 mt-1">Class: {escapeHtml(t.class)} | Version: {escapeHtml(String(t.version))}</p>
                 </div>
-                <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300" aria-label={`Status: ${t.status}`}>{t.status}</span>
+                <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300" aria-label={`Status: ${escapeHtml(t.status)}`}>{escapeHtml(t.status)}</span>
               </div>
             </div>
           ))}

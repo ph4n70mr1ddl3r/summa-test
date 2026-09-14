@@ -25,24 +25,6 @@ public class NodeController {
         this.writeGate = writeGate;
     }
 
-    private static int parseIntValue(Object obj, String fieldName) {
-        if (obj instanceof Number n) return n.intValue();
-        if (obj instanceof String s) return Integer.parseInt(s.trim());
-        throw new IllegalArgumentException(fieldName + " must be a number");
-    }
-
-    private static long parseLongValue(Object obj, String fieldName) {
-        if (obj instanceof Number n) return n.longValue();
-        if (obj instanceof String s) return Long.parseLong(s.trim());
-        throw new IllegalArgumentException(fieldName + " must be a number");
-    }
-
-    private static double parseDoubleValue(Object obj, String fieldName) {
-        if (obj instanceof Number n) return n.doubleValue();
-        if (obj instanceof String s) return Double.parseDouble(s.trim());
-        throw new IllegalArgumentException(fieldName + " must be a number");
-    }
-
     @GetMapping
     public ResponseEntity<List<Node>> listNodes() {
         return ResponseEntity.ok(nodeService.findAll());
@@ -81,6 +63,9 @@ public class NodeController {
 
     @PostMapping("/{id}/heartbeat")
     public ResponseEntity<?> heartbeat(@PathVariable String id, @RequestBody Map<String, String> body) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             Node node = nodeService.heartbeat(id, body.get("capabilities"));
             return ResponseEntity.ok(node);
@@ -116,6 +101,9 @@ public class NodeController {
     @PostMapping("/{id}/work/pull")
     public ResponseEntity<?> pullWork(@PathVariable String id) {
         // API-060: fetch queued runs for workspaces the node holds a live claim on
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         try {
             List<Run> runs = nodeService.pullWork(id);
             return ResponseEntity.ok(runs);

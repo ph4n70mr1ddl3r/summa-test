@@ -213,6 +213,7 @@ public class DnaDomainService {
         // Remap workspace bindings
         for (String wsId : workspaceIds) {
             workspaceRepository.findById(wsId).ifPresent(ws -> {
+                if (ws.getDomainIds() == null || ws.getDomainIds().isBlank()) return;
                 try {
                     List<String> domains = objectMapper.readValue(ws.getDomainIds(), new TypeReference<List<String>>() {});
                     domains.remove(parentId);

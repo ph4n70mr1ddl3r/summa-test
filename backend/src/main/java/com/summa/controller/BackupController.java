@@ -7,7 +7,6 @@ import com.summa.model.Human;
 import com.summa.service.AuditService;
 import com.summa.service.BackupService;
 import com.summa.service.OrgService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.nio.file.Path;
@@ -56,8 +55,7 @@ public class BackupController {
             auditService.log(actor, "CREATE_BACKUP", "backup", path, null);
             return ResponseEntity.ok(Map.of("path", path));
         } catch (Exception e) {
-            var audit = auditService.logSystem("ERROR", "backup_create", actor, e.getMessage());
-            return ResponseEntity.internalServerError().body(Map.of("code", "internal", "message", "Backup failed", "audit_event_id", audit.getId()));
+            return ControllerResponses.internalError(auditService, "Backup failed: " + e.getMessage());
         }
     }
 
@@ -89,8 +87,7 @@ public class BackupController {
             auditService.log(actor, "RESTORE_BACKUP", "backup", backupFilePath.toString(), null);
             return ResponseEntity.ok(Map.of("status", "restored"));
         } catch (Exception e) {
-            var audit = auditService.logSystem("ERROR", "backup_restore", actor, e.getMessage());
-            return ResponseEntity.internalServerError().body(Map.of("code", "internal", "message", "Restore failed", "audit_event_id", audit.getId()));
+            return ControllerResponses.internalError(auditService, "Restore failed: " + e.getMessage());
         }
     }
 }

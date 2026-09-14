@@ -146,7 +146,7 @@ public class OrgController {
 
             List<DataHold> holds = dataHoldService.findBySubject("human", id);
             if (!holds.isEmpty()) {
-                AuditEvent audit = auditService.logSystem("REFUSAL", "data_hold", "Active data holds prevent erasure", id);
+                AuditEvent audit = auditService.logSystem("REFUSAL", "data_hold", actor, "Active data holds prevent erasure");
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                         .body(Map.of("code", "data_hold", "message", "Active data holds prevent erasure",
                                 "audit_event_id", audit.getId(), "holds",

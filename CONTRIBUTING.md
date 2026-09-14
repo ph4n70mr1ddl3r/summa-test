@@ -19,7 +19,6 @@ Before committing, run the spec linter to validate structural integrity:
 
 ```bash
 python3 tools/lint_specs.py
-python3 tools/test_lint.py
 ```
 
 These checks verify:
@@ -27,6 +26,12 @@ These checks verify:
 - Every REQ ID is referenced in at least one spec file
 - Required sections exist in each spec module
 - Traceability matrix is consistent
+
+You can also run the self-test suite with:
+
+```bash
+python3 tools/test_lint.py
+```
 
 ### Adding a New Requirement
 

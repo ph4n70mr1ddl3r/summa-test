@@ -69,7 +69,7 @@ public class DataHoldController {
             DataHold hold = holdService.release(id, actor);
             return ResponseEntity.ok(hold);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         }
     }
 }

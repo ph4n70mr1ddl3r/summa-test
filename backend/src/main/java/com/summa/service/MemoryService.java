@@ -92,19 +92,23 @@ public class MemoryService {
             Optional<Workspace> wsOpt = workspaceService.findById(item.getWorkspaceId());
             if (wsOpt.isPresent()) {
                 Workspace ws = wsOpt.get();
-                try {
-                    List<String> domainIds = objectMapper.readValue(
-                        ws.getDomainIds(),
-                        new TypeReference<List<String>>() {});
-                    for (String domId : domainIds) {
-                        Optional<DnaDomain> domainOpt = domainService.findById(domId);
-                        if (domainOpt.isPresent() && domainOpt.get().getOwnerHumanId().equals(reviewerId)) {
-                            isDomainOwner = true;
-                            break;
+                if (ws.getDomainIds() == null || ws.getDomainIds().isBlank()) {
+                    // No domains means no domain ownership check can pass
+                } else {
+                    try {
+                        List<String> domainIds = objectMapper.readValue(
+                            ws.getDomainIds(),
+                            new TypeReference<List<String>>() {});
+                        for (String domId : domainIds) {
+                            Optional<DnaDomain> domainOpt = domainService.findById(domId);
+                            if (domainOpt.isPresent() && domainOpt.get().getOwnerHumanId().equals(reviewerId)) {
+                                isDomainOwner = true;
+                                break;
+                            }
                         }
+                    } catch (Exception e) {
+                        // If domainIds parsing fails, fall through to admin check
                     }
-                } catch (Exception e) {
-                    // If domainIds parsing fails, fall through to admin check
                 }
             }
             // Also check if reviewer is admin (admins can review any tier)
