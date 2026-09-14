@@ -43,4 +43,10 @@ public final class ControllerResponses {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("code", "internal", "message", message, "audit_event_id", event.getId()));
     }
+
+    public static ResponseEntity<Map<String, Object>> serviceUnavailable(AuditService audit, String message) {
+        AuditEvent event = audit.logSystem("REFUSAL", "service_unavailable", null, message);
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(Map.of("code", "service_unavailable", "message", message, "audit_event_id", event.getId()));
+    }
 }

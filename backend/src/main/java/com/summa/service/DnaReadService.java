@@ -73,7 +73,10 @@ public class DnaReadService {
         if (safeQuery.isBlank()) {
             throw new IllegalArgumentException("Search query contains only FTS5 operators");
         }
-        String match = "\"" + safeQuery + "\"*";
+        // Escape backslashes and double-quotes so the wrapped FTS5 term cannot
+        // escape the quoted phrase boundary or inject sub-expressions.
+        String escaped = safeQuery.replace("\\", "\\\\").replace("\"", "\\\"");
+        String match = "\"" + escaped + "\"*";
         String sql = "SELECT id, title, definition_md, statement_md, context_md, outcome_md, " +
                      "term, definition, content_md, domain_id, kind, status " +
                      "FROM dna_search_index " +

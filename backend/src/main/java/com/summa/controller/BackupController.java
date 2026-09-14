@@ -41,14 +41,36 @@ public class BackupController {
         }
         try {
             String rawBackupDir = body.getOrDefault("backupDir", System.getProperty("java.io.tmpdir"));
-            Path tmpdir = Paths.get(System.getProperty("java.io.tmpdir")).normalize().toRealPath();
-            Path backupDirPath;
+            Path tmpdir = Paths.get(System.getProperty("java.io.tmpdir")).normalize();
+            // toRealPath resolves symlinks; throws if target does not yet exist.
+            // Create intermediate dirs so toRealPath always succeeds on the anchor.
+            java.nio.file.Files.createDirectories(tmpdir);
+            Path tmpdirResolved = tmpdir.toRealPath();
+            Path backupDirPath = Paths.get(rawBackupDir).normalize();
+            // For non-existent paths, resolve what we can and verify prefix on the real root.
             try {
-                backupDirPath = Paths.get(rawBackupDir).normalize().toRealPath();
+                backupDirPath = backupDirPath.toRealPath();
             } catch (java.nio.file.NoSuchFileException e) {
-                backupDirPath = Paths.get(rawBackupDir).normalize();
+                // Path does not exist yet — walk up to the nearest existing ancestor
+                // and verify it is within tmpdir before allowing creation.
+                Path ancestor = backupDirPath;
+                while (ancestor != null && !java.nio.file.Files.exists(ancestor)) {
+                    ancestor = ancestor.getParent();
+                }
+                if (ancestor != null) {
+                    try {
+                        if (!ancestor.toRealPath().startsWith(tmpdirResolved)) {
+                            return ControllerResponses.validation(auditService, "backupDir must be under tmpdir");
+                        }
+                    } catch (java.nio.file.NoSuchFileException ignored) {
+                        // root reached without existing ancestor — reject to be safe
+                        return ControllerResponses.validation(auditService, "backupDir must be under tmpdir");
+                    }
+                } else {
+                    return ControllerResponses.validation(auditService, "backupDir must be under tmpdir");
+                }
             }
-            if (!backupDirPath.startsWith(tmpdir)) {
+            if (!backupDirPath.startsWith(tmpdirResolved)) {
                 return ControllerResponses.validation(auditService, "backupDir must be under tmpdir");
             }
             String path = backupService.createBackup(backupDirPath.toString());
@@ -73,14 +95,29 @@ public class BackupController {
             if (rawPath == null || rawPath.isBlank()) {
                 return ControllerResponses.validation(auditService, "backupPath is required");
             }
-            Path tmpdir = Paths.get(System.getProperty("java.io.tmpdir")).normalize().toRealPath();
-            Path backupFilePath;
+            Path restoreTmpdir = Paths.get(System.getProperty("java.io.tmpdir")).normalize();
+            java.nio.file.Files.createDirectories(restoreTmpdir);
+            Path tmpdirResolved = restoreTmpdir.toRealPath();
+            Path backupFilePath = Paths.get(rawPath).normalize();
             try {
-                backupFilePath = Paths.get(rawPath).normalize().toRealPath();
+                backupFilePath = backupFilePath.toRealPath();
             } catch (java.nio.file.NoSuchFileException e) {
-                backupFilePath = Paths.get(rawPath).normalize();
+                Path ancestor = backupFilePath;
+                while (ancestor != null && !java.nio.file.Files.exists(ancestor)) {
+                    ancestor = ancestor.getParent();
+                }
+                if (ancestor == null) {
+                    return ControllerResponses.validation(auditService, "backupPath must be under tmpdir");
+                }
+                try {
+                    if (!ancestor.toRealPath().startsWith(tmpdirResolved)) {
+                        return ControllerResponses.validation(auditService, "backupPath must be under tmpdir");
+                    }
+                } catch (java.nio.file.NoSuchFileException ignored) {
+                    return ControllerResponses.validation(auditService, "backupPath must be under tmpdir");
+                }
             }
-            if (!backupFilePath.startsWith(tmpdir)) {
+            if (!backupFilePath.startsWith(tmpdirResolved)) {
                 return ControllerResponses.validation(auditService, "backupPath must be under tmpdir");
             }
             backupService.restore(backupFilePath.toString());

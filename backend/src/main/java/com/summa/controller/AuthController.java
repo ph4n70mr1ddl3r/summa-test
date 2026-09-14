@@ -39,11 +39,7 @@ public class AuthController {
     public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> body) {
         if (!localAuthEnabled) {
             var audit = auditService.logSystem("REFUSAL", "auth_login", "local-auth-disabled", "Local auth is disabled");
-            return ResponseEntity.status(503).body(Map.of(
-                "code", "service_unavailable",
-                "message", "Local authentication is not enabled. Use OIDC/gateway auth instead.",
-                "audit_event_id", audit.getId()
-            ));
+            return ControllerResponses.serviceUnavailable(auditService, "Local authentication is not enabled. Use OIDC/gateway auth instead.");
         }
 
         String email = body.get("email");

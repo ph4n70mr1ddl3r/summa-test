@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, type Ask } from '../services/api'
 import { escapeHtml } from '../utils/escapeHtml'
+import { tierColor, formatDate } from '../utils/formatting'
 
 export default function AskInbox() {
   const [asks, setAsks] = useState<Ask[]>([])
@@ -26,13 +27,8 @@ export default function AskInbox() {
     return cleanup
   }, [])
 
-  const tierColor = (tier: string) => {
-    switch (tier) {
-      case 'critical': return 'text-red-400 bg-red-900/30 border-red-700'
-      case 'standard': return 'text-yellow-400 bg-yellow-900/30 border-yellow-700'
-      case 'bulk': return 'text-gray-400 bg-gray-800 border-gray-600'
-      default: return 'text-gray-400 bg-gray-800 border-gray-600'
-    }
+  const formatDeadline = (deadline: number) => {
+    return formatDate(deadline)
   }
 
   const kindIcon = (kind: string) => {
@@ -44,11 +40,6 @@ export default function AskInbox() {
       case 'promotion': return '\u2191'
       default: return '\u2022'
     }
-  }
-
-  const formatDeadline = (deadline: number) => {
-    const d = new Date(deadline * 1000)
-    return d.toLocaleString()
   }
 
   const handleRespond = async (id: string) => {

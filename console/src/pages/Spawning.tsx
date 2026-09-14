@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, type SpawnRequest, type SpawnStats } from '../services/api'
 import { escapeHtml } from '../utils/escapeHtml'
+import { spawnStatusColor } from '../utils/formatting'
 
 export default function Spawning() {
   const [requests, setRequests] = useState<SpawnRequest[]>([])
@@ -58,12 +59,7 @@ export default function Spawning() {
                     {req.templateId ? ` · Template: ${escapeHtml(req.templateId)}` : ''}
                   </p>
                 </div>
-                <span className={`text-xs px-2 py-1 rounded ${
-                  req.status === 'requested' ? 'bg-yellow-900/50 text-yellow-400' :
-                  req.status === 'approved' ? 'bg-green-900/50 text-green-400' :
-                  req.status === 'denied' ? 'bg-red-900/50 text-red-400' :
-                  'bg-gray-700 text-gray-300'
-                }`} aria-label={`Status: ${req.status}`}>
+                <span className={`text-xs px-2 py-1 rounded ${spawnStatusColor(req.status)}`} aria-label={`Status: ${req.status}`}>
                   {escapeHtml(req.status)}
                 </span>
               </div>

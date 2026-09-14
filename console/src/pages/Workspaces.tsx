@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, type Workspace } from '../services/api'
 import { escapeHtml } from '../utils/escapeHtml'
+import { formatDate } from '../utils/formatting'
 
 export default function Workspaces() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([])
@@ -35,7 +36,7 @@ export default function Workspaces() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="font-medium text-gray-200">{escapeHtml(ws.name)}</p>
-                  <p className="text-sm text-gray-400 mt-1">Kind: {escapeHtml(ws.kind)} | Epoch: {ws.claimEpoch != null ? new Date(ws.claimEpoch * 1000).toLocaleDateString() : '?'}</p>
+                  <p className="text-sm text-gray-400 mt-1">Kind: {escapeHtml(ws.kind)} | Epoch: {ws.claimEpoch != null ? formatDate(ws.claimEpoch, { dateOnly: true }) : '?'}</p>
                 </div>
                   <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300">
                     {(() => {

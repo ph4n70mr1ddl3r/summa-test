@@ -4,6 +4,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
@@ -15,6 +17,8 @@ import java.util.Map;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     @Value("${summa.auth.jwt-secret}")
     private String jwtSecret;
@@ -59,6 +63,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 filterChain.doFilter(request, response);
                 return;
             }
+            log.warn("[SUMMA] invalid/expired JWT from {} path={}", request.getRemoteAddr(), path);
         }
 
         // Reject requests without valid JWT
