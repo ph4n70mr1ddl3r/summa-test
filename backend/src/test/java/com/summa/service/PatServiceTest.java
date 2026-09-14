@@ -10,6 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.Optional;
 
+import com.summa.exception.EntityNotFoundException;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -67,7 +68,7 @@ class PatServiceTest {
     void revoke_throwsWhenNotFound() {
         when(patRepository.findByIdAndRevokedAtIsNull("missing")).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(EntityNotFoundException.class, () -> {
             patService.revoke("missing", "human-1");
         });
     }

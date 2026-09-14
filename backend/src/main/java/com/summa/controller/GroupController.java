@@ -64,8 +64,8 @@ public class GroupController {
         try {
             Group group = groupService.archive(id, actor);
             return ResponseEntity.ok(group);
-        } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+        } catch (IllegalStateException e) {
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
@@ -77,8 +77,8 @@ public class GroupController {
         try {
             Group group = groupService.setLeader(id, body.get("leaderMemberId"), actor);
             return ResponseEntity.ok(group);
-        } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+        } catch (IllegalStateException e) {
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 }

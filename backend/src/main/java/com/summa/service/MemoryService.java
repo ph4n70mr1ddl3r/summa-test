@@ -107,7 +107,8 @@ public class MemoryService {
                             }
                         }
                     } catch (Exception e) {
-                        // If domainIds parsing fails, fall through to admin check
+                        // If domainIds parsing fails, reject — do not fall through to admin check
+                        throw new IllegalStateException("Invalid workspace domainIds format: " + ws.getDomainIds());
                     }
                 }
             }

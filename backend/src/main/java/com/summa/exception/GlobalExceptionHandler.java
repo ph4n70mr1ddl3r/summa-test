@@ -45,11 +45,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalState(IllegalStateException e) {
         String actor = currentActor();
-        AuditEvent audit = auditService.log(actor, "REFUSAL", "http_request", "gate", e.getMessage());
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+        String message = e.getMessage();
+        // Distinguish between gate refusals (403) and conflict/invalid-state errors (409)
+        boolean isConflict = message != null && (
+            message.contains("not found") || message.contains("already") ||
+            message.contains("cannot") || message.contains("invalid") ||
+            message.contains("not pending") || message.contains("not active") ||
+            message.contains("not permitted")
+        );
+        HttpStatus status = isConflict ? HttpStatus.CONFLICT : HttpStatus.FORBIDDEN;
+        String code = isConflict ? "conflict" : "gate";
+        AuditEvent audit = auditService.log(actor, "REFUSAL", "http_request", code, message);
+        return ResponseEntity.status(status)
                 .body(Map.of(
-                    "code", "gate",
-                    "message", e.getMessage(),
+                    "code", code,
+                    "message", message,
                     "audit_event_id", audit.getId()
                 ));
     }

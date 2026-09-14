@@ -38,7 +38,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     public static final List<String> PUBLIC_PATHS = List.of(
         "/api/auth/login", "/api/health", "/api/info",
-        "/api/nodes/enroll", "/api/org/bootstrap"
+        "/api/nodes/enroll", "/api/org/bootstrap",
+        "/api/nodes/*/heartbeat", "/api/nodes/*/claims",
+        "/api/nodes/*/work/pull", "/api/nodes/*/runs/*/report"
     );
 
     @Override
@@ -76,7 +78,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (PUBLIC_PATHS.contains(path)) return true;
         // Tolerate a trailing slash (e.g. /api/health/) without opening prefixes.
         if (path.endsWith("/") && path.length() > 1) {
-            return PUBLIC_PATHS.contains(path.substring(0, path.length() - 1));
+            if (PUBLIC_PATHS.contains(path.substring(0, path.length() - 1))) return true;
+        }
+        // Match node API wildcard paths (e.g. /api/nodes/<uuid>/heartbeat)
+        for (String pattern : PUBLIC_PATHS) {
+            if (pattern.contains("*")) {
+                String prefix = pattern.substring(0, pattern.indexOf('*'));
+                if (path.startsWith(prefix)) return true;
+            }
         }
         return false;
     }

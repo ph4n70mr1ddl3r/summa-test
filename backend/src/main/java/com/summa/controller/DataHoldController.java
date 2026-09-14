@@ -7,6 +7,7 @@ import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
+import com.summa.service.MemberService;
 import java.util.List;
 import java.util.Map;
 
@@ -16,11 +17,13 @@ public class DataHoldController {
     private final DataHoldService holdService;
     private final AuditService auditService;
     private final WriteGate writeGate;
+    private final MemberService memberService;
 
-    public DataHoldController(DataHoldService holdService, AuditService auditService, WriteGate writeGate) {
+    public DataHoldController(DataHoldService holdService, AuditService auditService, WriteGate writeGate, MemberService memberService) {
         this.holdService = holdService;
         this.auditService = auditService;
         this.writeGate = writeGate;
+        this.memberService = memberService;
     }
 
     @GetMapping
@@ -33,6 +36,9 @@ public class DataHoldController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, "Data hold creation requires admin role");
+        }
         try {
             String kind = body.get("kind");
             if (kind == null || kind.isBlank()) {

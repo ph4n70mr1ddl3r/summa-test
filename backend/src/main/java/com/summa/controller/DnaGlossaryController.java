@@ -88,8 +88,6 @@ public class DnaGlossaryController {
                 actor
             );
             return ResponseEntity.ok(entry);
-        } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         }
@@ -103,8 +101,8 @@ public class DnaGlossaryController {
         try {
             DnaGlossary entry = glossaryService.retire(id, actor);
             return ResponseEntity.ok(entry);
-        } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+        } catch (IllegalStateException e) {
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 }

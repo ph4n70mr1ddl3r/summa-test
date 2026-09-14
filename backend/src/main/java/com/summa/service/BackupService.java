@@ -75,9 +75,10 @@ public class BackupService {
                 throw new IllegalArgumentException("Backup file not found: " + backupPath);
             }
         }
-        Path tmpDir = Paths.get(System.getProperty("java.io.tmpdir")).toAbsolutePath().normalize();
-        Path dataDir = Paths.get(expandPath(dbPath)).getParent().toAbsolutePath().normalize();
-        if (!resolved.startsWith(tmpDir) && !resolved.startsWith(dataDir)) {
+        Path tmpDir = Paths.get(System.getProperty("java.io.tmpdir")).toRealPath();
+        Path dataDir = Paths.get(expandPath(dbPath)).getParent().toRealPath();
+        Path normalizedResolved = resolved.toAbsolutePath().normalize();
+        if (!normalizedResolved.startsWith(tmpDir) && !normalizedResolved.startsWith(dataDir)) {
             throw new IllegalArgumentException("Backup path must be under tmpdir or data directory");
         }
 

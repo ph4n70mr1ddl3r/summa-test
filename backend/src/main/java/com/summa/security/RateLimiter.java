@@ -59,6 +59,14 @@ public class RateLimiter {
         return Math.max(0, remaining);
     }
 
+    public long getResetSeconds(String identifier) {
+        Instant window = windowStarts.get(identifier);
+        if (window == null) return 0;
+        long resetAt = window.getEpochSecond() + WINDOW_SECONDS;
+        long now = Instant.now().getEpochSecond();
+        return Math.max(0, resetAt - now);
+    }
+
     public void reset(String identifier) {
         attemptCounts.remove(identifier);
         windowStarts.remove(identifier);

@@ -2,6 +2,7 @@ package com.summa.service;
 
 import com.summa.repository.DnaGlossaryRepository;
 import com.summa.model.DnaGlossary;
+import com.summa.exception.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -61,7 +62,7 @@ public class DnaGlossaryService {
     @Transactional
     public DnaGlossary retire(String id, String actor) {
         DnaGlossary entry = glossaryRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Glossary entry not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Glossary entry not found: " + id));
 
         entry.setStatus("retired");
         DnaGlossary saved = glossaryRepository.save(entry);
@@ -72,7 +73,7 @@ public class DnaGlossaryService {
     @Transactional
     public DnaGlossary update(String id, String definition, String aliases, String actor) {
         DnaGlossary entry = glossaryRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Glossary entry not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Glossary entry not found: " + id));
 
         if (!"active".equals(entry.getStatus()) && !"draft".equals(entry.getStatus())) {
             throw new IllegalStateException("Cannot update retired entry");

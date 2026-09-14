@@ -6,6 +6,7 @@ import com.summa.model.Human;
 import com.summa.model.Agent;
 import com.summa.service.MemberService;
 import com.summa.constants.Defaults;
+import com.summa.exception.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -55,7 +56,7 @@ public class GroupService {
     @Transactional
     public Group archive(String id, String actor) {
         Group group = groupRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Group not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Group not found: " + id));
         
         group.setStatus("archived");
         Group saved = groupRepository.save(group);
@@ -66,7 +67,7 @@ public class GroupService {
     @Transactional
     public Group setLeader(String id, String leaderMemberId, String actor) {
         Group group = groupRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Group not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Group not found: " + id));
 
         // ORG-042: Validate leader eligibility — active human, not viewer, not ephemeral
         Optional<Human> leaderOpt = memberService.findHuman(leaderMemberId);

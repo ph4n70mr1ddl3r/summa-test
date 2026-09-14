@@ -85,11 +85,15 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!res.ok) {
     let message: string;
     try {
-      const err = await res.json() as { code?: string; message?: string };
-      message = err.message || `HTTP ${res.status}`;
-    } catch {
       const text = await res.text();
-      message = text || `HTTP ${res.status}`;
+      try {
+        const err = JSON.parse(text) as { code?: string; message?: string };
+        message = err.message || `HTTP ${res.status}`;
+      } catch {
+        message = text || `HTTP ${res.status}`;
+      }
+    } catch {
+      message = `Network error: HTTP ${res.status}`;
     }
     const err = new ApiError(message, res.status);
     if (res.status === 401 || res.status === 403) {
@@ -475,7 +479,7 @@ export interface SpendSnapshot {
 export function buildQuery(params?: Record<string, string | number | boolean | undefined>): string {
   const entries = Object.entries(params ?? {}).filter(([, v]) => v !== undefined && v !== '');
   if (entries.length === 0) return '';
-  const qs = new URLSearchParams(entries.map(([k, v]) => [k, typeof v === 'boolean' ? String(v) : String(v)]).filter(([, v]) => v !== '')).toString();
+  const qs = new URLSearchParams(entries.map(([k, v]) => [k, String(v)]).filter(([, v]) => v !== '')).toString();
   return qs ? `?${qs}` : '';
 }
 
@@ -564,9 +568,9 @@ export const api = {
         body: JSON.stringify({ status }),
       }),
     updateGoalWindow: (id: string, effectiveFrom?: number, effectiveTo?: number) => {
-      const body: Record<string, string> = {};
-      if (effectiveFrom !== undefined) body.effectiveFrom = new Date(effectiveFrom * 1000).toISOString();
-      if (effectiveTo !== undefined) body.effectiveTo = new Date(effectiveTo * 1000).toISOString();
+      const body: Record<string, number> = {};
+      if (effectiveFrom !== undefined) body.effectiveFrom = effectiveFrom;
+      if (effectiveTo !== undefined) body.effectiveTo = effectiveTo;
       return request<DnaGoal>(`/dna/goals/${id}/window`, {
         method: 'PATCH',
         body: Object.keys(body).length ? JSON.stringify(body) : undefined,
@@ -764,7 +768,7 @@ export const api = {
     list: (agentId?: string) =>
       request<Trigger[]>(`/triggers${buildQuery(agentId ? { agentId } : undefined)}`),
     create: (body: Record<string, string>) =>
-      request('/triggers', {
+      request<Trigger>('/triggers', {
         method: 'POST',
         body: JSON.stringify(body),
       }),
@@ -785,7 +789,7 @@ export const api = {
   workspaces: {
     list: () => request<Workspace[]>('/workspaces'),
     create: (body: Record<string, string>) =>
-      request('/workspaces', {
+      request<Workspace>('/workspaces', {
         method: 'POST',
         body: JSON.stringify(body),
       }),
@@ -841,7 +845,7 @@ export const api = {
   },
   admin: {
     backup: (backupDir?: string) =>
-      request('/admin/backup', {
+      request<{ path: string }>('/admin/backup', {
         method: 'POST',
         body: JSON.stringify({ backupDir }),
       }),
@@ -876,7 +880,7 @@ export const api = {
     list: (params?: { memberId?: string; workspaceId?: string; tainted?: string }) =>
       request<MemoryItem[]>(`/memory${buildQuery(params)}`),
     create: (body: Record<string, string>) =>
-      request('/memory', {
+      request<MemoryItem>('/memory', {
         method: 'POST',
         body: JSON.stringify(body),
       }),
@@ -889,7 +893,7 @@ export const api = {
     list: (memberId: string) =>
       request<Pat[]>(`/auth/pats${buildQuery({ memberId })}`),
     create: (body: Record<string, string>) =>
-      request('/auth/pats', {
+      request<Pat>('/auth/pats', {
         method: 'POST',
         body: JSON.stringify(body),
       }),
@@ -901,7 +905,7 @@ export const api = {
   groups: {
     list: () => request<Group[]>('/org/groups'),
     create: (body: Record<string, string>) =>
-      request('/org/groups', {
+      request<Group>('/org/groups', {
         method: 'POST',
         body: JSON.stringify(body),
       }),

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { api, type Group } from '../services/api'
 import { escapeHtml } from '../utils/escapeHtml'
 
@@ -6,20 +6,20 @@ export default function Groups() {
   const [groups, setGroups] = useState<Group[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const abortedRef = useRef(false)
 
   const loadGroups = () => {
     setLoading(true)
     setError(null)
-    let aborted = false
+    abortedRef.current = false
     api.groups.list()
-      .then((data) => { if (!aborted) { setGroups(data); setLoading(false) } })
-      .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
-    return () => { aborted = true }
+      .then((data) => { if (!abortedRef.current) { setGroups(data); setLoading(false) } })
+      .catch((err) => { if (!abortedRef.current) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
   }
 
   useEffect(() => {
-    const cleanup = loadGroups()
-    return cleanup
+    loadGroups()
+    return () => { abortedRef.current = true }
   }, [])
 
   const handleArchive = async (id: string) => {

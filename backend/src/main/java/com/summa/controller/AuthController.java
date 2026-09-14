@@ -125,12 +125,14 @@ public class AuthController {
         if (!rateLimiter.allow(actor + ":change-password")) {
             long remaining = rateLimiter.getRemainingAttempts(actor + ":change-password");
             var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Rate limited password change for: " + actor, null);
-            return ResponseEntity.status(429).body(Map.of(
-                "code", "rate_limited",
-                "message", "Too many password change attempts. Try again later.",
-                "audit_event_id", audit.getId(),
-                "remainingAttempts", remaining
-            ));
+            return ResponseEntity.status(429)
+                    .header("Retry-After", String.valueOf(rateLimiter.getResetSeconds(actor + ":change-password")))
+                    .body(Map.of(
+                        "code", "rate_limited",
+                        "message", "Too many password change attempts. Try again later.",
+                        "audit_event_id", audit.getId(),
+                        "remainingAttempts", remaining
+                    ));
         }
 
         String currentPassword = body.get("currentPassword");

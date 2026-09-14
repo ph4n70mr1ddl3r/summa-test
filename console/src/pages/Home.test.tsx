@@ -17,7 +17,7 @@ function renderWithRouter(ui: React.ReactNode) {
 describe('Home page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(apiModule.api.health).mockResolvedValue({ status: 'ok' })
+    vi.mocked(apiModule.api.health).mockResolvedValue({ status: 'UP', service: 'summa', mode: 'single-process', checks: { database: 'up', git_store: 'up' } })
   })
 
   it('renders the Summa title', async () => {

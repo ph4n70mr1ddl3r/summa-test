@@ -11,7 +11,15 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const from = ((location.state as { from?: { pathname: string } } | null)?.from?.pathname) || '/'
+  const state = location.state as { from?: { pathname: string } } | null
+  let from = '/'
+  if (state?.from?.pathname) {
+    const candidate = state.from.pathname
+    // Only allow relative paths to prevent open-redirect abuse
+    if (!candidate.startsWith('//') && !candidate.startsWith('http://') && !candidate.startsWith('https://')) {
+      from = candidate
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

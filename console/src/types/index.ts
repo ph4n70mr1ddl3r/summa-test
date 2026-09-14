@@ -47,5 +47,9 @@ export type {
   Workspace,
   WorkspaceKind,
   Member,
-  ApiError,
+  DnaRule,
+  DnaRuleStatus,
+  HealthStatus,
+  DomainAccess,
 } from '../services/api'
+export { ApiError } from '../services/api'

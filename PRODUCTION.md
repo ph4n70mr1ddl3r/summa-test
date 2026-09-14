@@ -51,6 +51,8 @@ Kubernetes (prod): decomposed services
 | `SUMMA_JWT_SECRET` | *(required)* | JWT signing secret (256+ bits; generate with `openssl rand -hex 32`) |
 | `SUMMA_SPEND_CEILING` | `1000000` | Org spend ceiling |
 | `SUMMA_CORS_ORIGINS` | *(empty = localhost + 127.0.0.1 only)* | Extra CORS origins, comma-separated (e.g. `https://app.example.com`) |
+| `SUMMA_LOCAL_AUTH_ENABLED` | `true` | Enable local email/password auth (set `false` when using OIDC/gateway auth) |
+| `SUMMA_GIT_BRANCH` | `main` | DNA repo branch to track |
 | `SPRING_PROFILES_ACTIVE` | `prod` (Dockerfile, docker-compose, start.sh) · `dev` (dev.sh, hot-reload) | Spring profile |
 | `VITE_API_URL` | `/api` | API base URL baked into the console bundle at build time |
 | `VITE_SUMMA_MODE` | `single-process` | Console mode badge: `single-process` or `multi-node` |
@@ -81,7 +83,8 @@ Abridged — the full surface with REQ IDs lives in `specs/17-api-surface.md`
 - `GET /api/dna/decisions` — List decisions
 - `GET /api/dna/glossary` — List glossary entries
 - `GET /api/dna/goals` — List goals
-- `GET /api/dna/proposals` — Review queue
+- `GET /api/dna/proposals` — List proposals (filterable by status)
+- `GET /api/dna/review-queue` — Review queue (open proposals)
 - `GET /api/dna/search?q=...&domainId=<id>&limit=<n>` — FTS5 search (limit defaults to 20, max 100)
 - `GET /api/dna/search/org-snapshot` — Full org DNA snapshot for injection layers
 - `GET /api/dna/search/domains` — Domain list with metadata
@@ -242,12 +245,19 @@ curl -X POST http://localhost:8080/api/admin/backup/restore \
 
 ## Security Checklist
 
-- [ ] Set `SUMMA_JWT_SECRET` to a 256-bit random value (`openssl rand -hex 32`)
+- [ ] Set `SUMMA_JWT_SECRET` to a 256-bit random value (`openssl rand -hex 32`) — required at startup, rejected if <32 chars
 - [ ] Enable TLS behind reverse proxy
 - [ ] Set protected branches on DNA repo
 - [ ] Configure firewall for ports 8080 (API, always) and 3000 (console, dev.sh / compose only)
-- [ ] Rotate JWT secret annually
-- [ ] Back up database and DNA repo daily
+- [ ] Rotate JWT secret annually; update `SUMMA_JWT_SECRET` and redeploy
+- [ ] Back up database and DNA repo daily; backups must reside under `java.io.tmpdir`
+- [ ] Set `SUMMA_LOCAL_AUTH_ENABLED=false` in production when using OIDC/gateway auth
+- [ ] Set `SUMMA_SPEND_CEILING` to a realistic org limit
+- [ ] Review `GET /api/org/audit` periodically for anomalous activity
+- [ ] Rotate node keypairs when a node is compromised (`POST /api/nodes/{id}/revoke` then re-enroll)
+- [ ] Data holds (`POST /api/governance/holds`) freeze erasure — verify holds are released promptly after legal review
+- [ ] Rate limits: login is limited to 5 attempts per 60s per email; password change is 5 per 60s per actor
+- [ ] Password policy: 8+ chars, at least one uppercase, one lowercase, one digit (enforced on bootstrap and `PUT /api/auth/change-password`)
 
 ## Monitoring
 

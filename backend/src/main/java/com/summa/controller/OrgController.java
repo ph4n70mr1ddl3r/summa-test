@@ -4,6 +4,7 @@ import com.summa.model.Agent;
 import com.summa.model.AuditEvent;
 import com.summa.model.DataHold;
 import com.summa.model.Human;
+import com.summa.enums.RbacRole;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.security.WriteGate;
 import com.summa.service.AgentService;
@@ -122,6 +123,10 @@ public class OrgController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        Optional<Human> actorOpt = orgService.findHuman(actor);
+        if (actorOpt.isEmpty() || !RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac())) {
+            return ControllerResponses.gate(auditService, "Offboarding requires admin role");
+        }
         try {
             Human human = orgService.offboard(id, actor);
             return ResponseEntity.ok(human);

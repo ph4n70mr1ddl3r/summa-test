@@ -185,6 +185,15 @@ public class InitiativeService {
         // INT-020: If actor is not the sponsor, route an activation ask to the sponsor
         // with expiry=deny. The sponsor's own opens go active outright.
         if (!initiative.getSponsor().equals(actor)) {
+            // Validate sponsor is still active before routing ask to them
+            Optional<Human> sponsorHuman = memberService.findHuman(initiative.getSponsor());
+            if (sponsorHuman.isPresent() && !sponsorHuman.get().isActive()) {
+                throw new IllegalStateException("Cannot activate: sponsor is deactivated");
+            }
+            Optional<Agent> sponsorAgent = memberService.findAgent(initiative.getSponsor());
+            if (sponsorAgent.isPresent() && (!sponsorAgent.get().isActive() || sponsorAgent.get().isEphemeral())) {
+                throw new IllegalStateException("Cannot activate: sponsor is inactive or ephemeral");
+            }
             // INT-021: Re-validate goal liveness at respond time
             if (initiative.getGoalRef() != null && !initiative.getGoalRef().isBlank()) {
                 Optional<DnaGoal> goalOpt = dnaGoalRepository.findById(initiative.getGoalRef());

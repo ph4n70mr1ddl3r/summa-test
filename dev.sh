@@ -44,7 +44,9 @@ mkdir -p ~/.summa
 # Start backend in background
 echo "[1/2] Starting backend..."
 cd backend
-nohup mvn spring-boot:run -Dspring-boot.run.profiles=dev > /tmp/summa-backend.log 2>&1 &
+nohup mvn spring-boot:run -Dspring-boot.run.profiles=dev \
+    -Dsumma.auth.local-auth-enabled=${SUMMA_LOCAL_AUTH_ENABLED:-true} \
+    > /tmp/summa-backend.log 2>&1 &
 BACKEND_PID=$!
 echo "      Backend PID: $BACKEND_PID"
 cd ..

@@ -2,6 +2,7 @@ package com.summa.service;
 
 import com.summa.repository.PatRepository;
 import com.summa.model.Pat;
+import com.summa.exception.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.security.MessageDigest;
@@ -56,7 +57,7 @@ public class PatService {
     @Transactional
     public Pat revoke(String id, String actor) {
         Pat pat = patRepository.findByIdAndRevokedAtIsNull(id)
-                .orElseThrow(() -> new IllegalArgumentException("PAT not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("PAT not found: " + id));
 
         pat.setRevokedAt(Instant.now());
         Pat saved = patRepository.save(pat);

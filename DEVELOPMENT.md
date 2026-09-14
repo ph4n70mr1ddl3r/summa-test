@@ -58,6 +58,31 @@ cd console && npm run dev
 4. **Audit-first**: Every write is audited. Refusals write audit events and raise asks.
 5. **PRN-009 Universal Fallback**: No silent failures — refuse, audit, ask.
 
+## Security
+
+Summa follows a defense-in-depth model. Key patterns:
+
+- **Auth**: JWT (HS256 only; `alg:none` rejected). Nodes use keypair auth (`/api/nodes/*` paths are public to the JWT filter). Human auth is email/password locally, with OIDC reserved for future Keycloak integration.
+- **Authz**: `RbacAuthorizationFilter` enforces RBAC roles. `WriteGate` blocks writes during governance spend halts.
+- **Input validation**: All FTS5 queries are sanitized (operators stripped, quotes/backslashes escaped). File paths are canonicalized via `toRealPath()` before traversal checks.
+- **Audit**: Every write and refusal is logged via `AuditService`. Actor is extracted from JWT subject or defaults to `"system"`.
+- **Error handling**: `GlobalExceptionHandler` maps exceptions to consistent codes:
+  - `IllegalArgumentException` → 422 `validation`
+  - `IllegalStateException` → 403 `gate` or 409 `conflict` (depends on message content)
+  - `EntityNotFoundException` → 404 `not_found`
+  - `DataIntegrityViolationException` → 409 `conflict`
+
+### Security Spec Coverage
+
+| Spec | Area |
+|------|------|
+| SEC-001 | OIDC authn (deferred) |
+| SEC-003 | Agent scope re-validation |
+| SEC-012 | Node keypair auth |
+| SEC-030..040 | Audit, backups, data holds, secrets scanning |
+
+See `specs/18-security.md` for the full security requirement suite.
+
 ## Testing
 
 ```bash

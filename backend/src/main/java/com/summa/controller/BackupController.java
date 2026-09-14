@@ -70,7 +70,7 @@ public class BackupController {
                     return ControllerResponses.validation(auditService, "backupDir must be under tmpdir");
                 }
             }
-            if (!backupDirPath.startsWith(tmpdirResolved)) {
+            if (!backupDirPath.toAbsolutePath().normalize().startsWith(tmpdirResolved)) {
                 return ControllerResponses.validation(auditService, "backupDir must be under tmpdir");
             }
             String path = backupService.createBackup(backupDirPath.toString());
@@ -117,7 +117,7 @@ public class BackupController {
                     return ControllerResponses.validation(auditService, "backupPath must be under tmpdir");
                 }
             }
-            if (!backupFilePath.startsWith(tmpdirResolved)) {
+            if (!backupFilePath.toAbsolutePath().normalize().startsWith(tmpdirResolved)) {
                 return ControllerResponses.validation(auditService, "backupPath must be under tmpdir");
             }
             backupService.restore(backupFilePath.toString());

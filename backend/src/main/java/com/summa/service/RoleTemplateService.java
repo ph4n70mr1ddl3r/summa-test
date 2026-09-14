@@ -6,6 +6,7 @@ import com.summa.repository.AgentRepository;
 import com.summa.model.Agent;
 import com.summa.repository.SpawnRequestRepository;
 import com.summa.constants.Defaults;
+import com.summa.exception.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -63,7 +64,7 @@ public class RoleTemplateService {
     @Transactional
     public RoleTemplate publish(String id, String actor) {
         RoleTemplate template = templateRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Template not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Template not found: " + id));
 
         // TPL-003: Class is immutable across a name's versions — check against any existing row
         List<RoleTemplate> sameName = templateRepository.findAll().stream()
@@ -115,7 +116,7 @@ public class RoleTemplateService {
     @Transactional
     public RoleTemplate retire(String id, String actor) {
         RoleTemplate template = templateRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Template not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Template not found: " + id));
 
         // Check for live pins: active agents pinned to this template
         long activeAgentPins = agentRepository.findAll().stream()

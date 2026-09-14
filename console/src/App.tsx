@@ -38,13 +38,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 }
 
 function useIsAuthenticated(): boolean {
-  let authed = false
-  try {
-    authed = isAuthenticated()
-  } catch {
-    // Corrupted token — treat as unauthenticated
-  }
-  return authed
+  return isAuthenticated()
 }
 
 function LogoutButton() {
@@ -106,7 +100,7 @@ export default function App() {
               <ModeLabel />
               {authed && (
                 <span className="text-gray-500 text-xs">
-                  {(() => { const user = getUser(); return user?.name ?? user?.userId ?? 'authenticated' })()}
+                  {getUser()?.name ?? 'authenticated'}
                 </span>
               )}
               {authed && <LogoutButton />}
