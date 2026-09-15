@@ -24,3 +24,24 @@ export function spawnStatusColor(status: string): string {
     default: return 'bg-gray-700 text-gray-300'
   }
 }
+
+export function initiativeStatusColor(status: string): string {
+  switch (status) {
+    case 'proposed': return 'bg-blue-900/50 text-blue-400'
+    case 'active': return 'bg-green-900/50 text-green-400'
+    case 'paused': return 'bg-yellow-900/50 text-yellow-400'
+    case 'closed': return 'bg-gray-600 text-gray-400'
+    default: return 'bg-gray-700 text-gray-300'
+  }
+}
+
+export function runStatusColor(status: string): string {
+  switch (status) {
+    case 'completed': return 'bg-green-900/50 text-green-400'
+    case 'running': return 'bg-blue-900/50 text-blue-400'
+    case 'failed': return 'bg-red-900/50 text-red-400'
+    case 'queued': return 'bg-yellow-900/50 text-yellow-400'
+    default: return 'bg-gray-700 text-gray-300'
+  }
+}
+

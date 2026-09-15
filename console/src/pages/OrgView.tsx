@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { Group, Member } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
+import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function OrgView() {
   const [members, setMembers] = useState<Member[]>([])
@@ -39,7 +40,7 @@ export default function OrgView() {
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <div className="text-red-400">Error: {escapeHtml(error)}</div>
+  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={() => window.location.reload()} />
 
   const humans = members.filter(m => m.kind === 'human')
   const agents = members.filter(m => m.kind === 'agent')

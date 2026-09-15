@@ -38,7 +38,6 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> body) {
         if (!localAuthEnabled) {
-            var audit = auditService.logSystem("REFUSAL", "auth_login", "local-auth-disabled", "Local auth is disabled");
             return ControllerResponses.serviceUnavailable(auditService, "Local authentication is not enabled. Use OIDC/gateway auth instead.");
         }
 

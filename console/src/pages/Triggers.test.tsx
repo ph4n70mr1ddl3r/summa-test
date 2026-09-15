@@ -48,7 +48,7 @@ describe('Triggers page', () => {
     vi.mocked(apiModule.api.triggers.list).mockRejectedValue(new Error('failed'))
     const { container } = render(<Triggers />)
     await waitFor(() => {
-      expect(container.textContent).toContain('Error')
+      expect(container.textContent).toContain('Failed to load')
     })
   })
 })

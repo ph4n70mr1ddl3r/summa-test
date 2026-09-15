@@ -48,7 +48,7 @@ describe('BoardTasks page', () => {
     vi.mocked(apiModule.api.boardTasks.list).mockRejectedValue(new Error('failed'))
     const { container } = render(<BoardTasks />)
     await waitFor(() => {
-      expect(container.textContent).toContain('Error')
+      expect(container.textContent).toContain('Failed to load')
     })
   })
 })

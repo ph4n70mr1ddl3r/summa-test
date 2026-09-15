@@ -57,7 +57,7 @@ describe('Memory page', () => {
     vi.mocked(apiModule.api.memory.list).mockRejectedValue(new Error('failed'))
     const { container } = render(<Memory />)
     await waitFor(() => {
-      expect(container.textContent).toContain('Error')
+      expect(container.textContent).toContain('Failed to load')
     })
   })
 

@@ -134,14 +134,31 @@ public class DnaDomainController {
             @SuppressWarnings("unchecked")
             List<String> proposalIds = body.get("proposalIds") != null ? (List<String>) body.get("proposalIds") : List.of();
 
+            if (!itemIds.isEmpty() && itemIds.stream().anyMatch(itemId -> !(itemId instanceof String))) {
+                throw new IllegalArgumentException("itemIds must contain only strings");
+            }
+            if (!workspaceIds.isEmpty() && workspaceIds.stream().anyMatch(workspaceId -> !(workspaceId instanceof String))) {
+                throw new IllegalArgumentException("workspaceIds must contain only strings");
+            }
+            if (!proposalIds.isEmpty() && proposalIds.stream().anyMatch(proposalId -> !(proposalId instanceof String))) {
+                throw new IllegalArgumentException("proposalIds must contain only strings");
+            }
+
+            String ownerHumanId = body.get("ownerHumanId") instanceof String ? (String) body.get("ownerHumanId") : null;
+            String access = body.get("access") instanceof String ? (String) body.get("access") : null;
+            String store = body.get("store") instanceof String ? (String) body.get("store") : null;
+            String sod = body.get("sod") instanceof String ? (String) body.get("sod") : null;
+            String residency = body.get("residency") instanceof String ? (String) body.get("residency") : null;
+            String namedReaders = body.get("namedReaders") instanceof String ? (String) body.get("namedReaders") : null;
+
             List<DnaDomain> children = domainService.split(
                 id, actor,
-                (String) body.get("ownerHumanId"),
-                (String) body.get("access"),
-                (String) body.get("store"),
-                (String) body.get("sod"),
-                (String) body.get("residency"),
-                (String) body.get("namedReaders"),
+                ownerHumanId,
+                access,
+                store,
+                sod,
+                residency,
+                namedReaders,
                 itemIds, workspaceIds, proposalIds
             );
             return ResponseEntity.ok(children);
@@ -158,14 +175,16 @@ public class DnaDomainController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            String sourceId = (String) body.get("sourceId");
+            String sourceId = body.get("sourceId") instanceof String ? (String) body.get("sourceId") : null;
             if (sourceId == null || sourceId.isBlank()) {
                 throw new IllegalArgumentException("sourceId is required");
             }
+            String access = body.get("access") instanceof String ? (String) body.get("access") : null;
+            String namedReaders = body.get("namedReaders") instanceof String ? (String) body.get("namedReaders") : null;
             DnaDomain survivor = domainService.merge(
                 sourceId, id, actor,
-                (String) body.get("access"),
-                (String) body.get("namedReaders")
+                access,
+                namedReaders
             );
             return ResponseEntity.ok(survivor);
         } catch (IllegalArgumentException e) {

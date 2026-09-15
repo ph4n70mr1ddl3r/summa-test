@@ -49,7 +49,7 @@ describe('RoleTemplates page', () => {
     vi.mocked(apiModule.api.roleTemplates.list).mockRejectedValue(new Error('failed'))
     const { container } = render(<RoleTemplates />)
     await waitFor(() => {
-      expect(container.textContent).toContain('Error')
+      expect(container.textContent).toContain('Failed to load')
     })
   })
 })

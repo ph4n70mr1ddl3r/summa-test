@@ -479,7 +479,7 @@ export interface SpendSnapshot {
 export function buildQuery(params?: Record<string, string | number | boolean | undefined>): string {
   const entries = Object.entries(params ?? {}).filter(([, v]) => v !== undefined && v !== '');
   if (entries.length === 0) return '';
-  const qs = new URLSearchParams(entries.map(([k, v]) => [k, String(v)]).filter(([, v]) => v !== '')).toString();
+  const qs = new URLSearchParams(entries.map(([k, v]) => [k, String(v)])).toString();
   return qs ? `?${qs}` : '';
 }
 

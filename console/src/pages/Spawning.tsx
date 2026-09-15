@@ -3,6 +3,7 @@ import { api } from '../services/api'
 import type { SpawnRequest, SpawnStats } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
 import { spawnStatusColor } from '../utils/formatting'
+import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Spawning() {
   const [requests, setRequests] = useState<SpawnRequest[]>([])
@@ -29,7 +30,7 @@ export default function Spawning() {
       ]).then(([rRes, sRes]) => {
         if (aborted) return
         const requests = (rRes as PromiseFulfilledResult<SpawnRequest[]>).value ?? []
-        const stats = (sRes as PromiseFulfilledResult<SpawnStats | null>).value ?? null
+        const stats = (sRes as PromiseFulfilledResult<SpawnStats>).value ?? null
         setRequests(requests)
         setStats(stats)
         setError('Some data could not be loaded: ' + (e?.message || String(e)))
@@ -40,7 +41,7 @@ export default function Spawning() {
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <div className="text-red-400">Error: {escapeHtml(error)}</div>
+  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={() => window.location.reload()} />
 
   return (
     <div className="space-y-6">

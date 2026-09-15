@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { Run } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
+import { runStatusColor } from '../utils/formatting'
+import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Runs() {
   const [runs, setRuns] = useState<Run[]>([])
@@ -20,7 +22,7 @@ export default function Runs() {
   }, [filter])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <div className="text-red-400">Error: {escapeHtml(error)}</div>
+  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={() => { setFilter('all'); setLoading(true); setError(null) }} />
 
   const statusCounts: Record<string, number> = {}
   runs.forEach(r => { statusCounts[r.status] = (statusCounts[r.status] || 0) + 1 })
@@ -70,13 +72,7 @@ export default function Runs() {
                     <p className="text-xs text-gray-500 mt-1 line-clamp-2">{escapeHtml(run.prompt)}</p>
                   )}
                 </div>
-                <span className={`text-xs px-2 py-1 rounded ${
-                  run.status === 'completed' ? 'bg-green-900/50 text-green-400' :
-                  run.status === 'running' ? 'bg-blue-900/50 text-blue-400' :
-                  run.status === 'failed' ? 'bg-red-900/50 text-red-400' :
-                  run.status === 'queued' ? 'bg-yellow-900/50 text-yellow-400' :
-                  'bg-gray-700 text-gray-300'
-                }`} aria-label={`Status: ${run.status}`}>
+                <span className={`text-xs px-2 py-1 rounded ${runStatusColor(run.status)}`} aria-label={`Status: ${run.status}`}>
                   {escapeHtml(run.status)}
                 </span>
               </div>

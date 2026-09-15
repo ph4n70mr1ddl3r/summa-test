@@ -48,7 +48,7 @@ describe('Workspaces page', () => {
     vi.mocked(apiModule.api.workspaces.list).mockRejectedValue(new Error('failed'))
     const { container } = render(<Workspaces />)
     await waitFor(() => {
-      expect(container.textContent).toContain('Error')
+      expect(container.textContent).toContain('Failed to load')
     })
   })
 })

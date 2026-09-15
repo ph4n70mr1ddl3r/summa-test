@@ -74,6 +74,8 @@ public class RoleTemplateController {
             return ResponseEntity.ok(template);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
+        } catch (IllegalStateException e) {
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
@@ -85,6 +87,8 @@ public class RoleTemplateController {
         try {
             RoleTemplate template = templateService.retire(id, actor);
             return ResponseEntity.ok(template);
+        } catch (IllegalArgumentException e) {
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         }

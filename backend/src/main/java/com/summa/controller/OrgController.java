@@ -151,11 +151,7 @@ public class OrgController {
 
             List<DataHold> holds = dataHoldService.findBySubject("human", id);
             if (!holds.isEmpty()) {
-                AuditEvent audit = auditService.logSystem("REFUSAL", "data_hold", actor, "Active data holds prevent erasure");
-                return ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body(Map.of("code", "data_hold", "message", "Active data holds prevent erasure",
-                                "audit_event_id", audit.getId(), "holds",
-                                holds.stream().map(h -> Map.of("id", h.getId(), "kind", h.getKind(), "reason", h.getReasonMd() != null ? h.getReasonMd() : "")).toList()));
+                return ControllerResponses.conflict(auditService, "Active data holds prevent erasure");
             }
 
             orgService.erasure(id, actor);
@@ -208,8 +204,7 @@ public class OrgController {
                 holder[0] = agentOpt.get().getSpawnedBy();
                 found = true;
             } else {
-                holder[0] = null;
-                memberService.findHuman(nextId).ifPresent(h -> holder[0] = null);
+                memberService.findHuman(nextId).ifPresent(h -> holder[0] = h.getDeputyMemberId());
             }
             if (!found && holder[0] == null) {
                 break;

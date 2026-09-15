@@ -96,7 +96,7 @@ describe('OrgView page', () => {
     vi.mocked(apiModule.api.groups.list).mockRejectedValue(new Error('Network error'))
     const { container } = render(<OrgView />)
     await waitFor(() => {
-      expect(container.textContent).toContain('Error')
+      expect(container.textContent).toContain('Failed to load')
     })
   })
 })

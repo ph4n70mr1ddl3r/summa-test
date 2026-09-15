@@ -3,6 +3,7 @@ import { api } from '../services/api'
 import type { Workspace } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
 import { formatDate } from '../utils/formatting'
+import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Workspaces() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([])
@@ -18,7 +19,7 @@ export default function Workspaces() {
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <div className="text-red-400">Error: {escapeHtml(error)}</div>
+  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={() => window.location.reload()} />
 
   return (
     <div className="space-y-6">

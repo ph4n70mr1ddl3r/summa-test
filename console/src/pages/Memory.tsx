@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { api } from '../services/api'
 import type { MemoryItem } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
+import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Memory() {
   const [items, setItems] = useState<MemoryItem[]>([])
@@ -41,7 +42,7 @@ export default function Memory() {
   }
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <div className="text-red-400">Error: {escapeHtml(error)}</div>
+  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadItems} />
 
   const taintedCount = items.filter(i => i.tainted).length
 

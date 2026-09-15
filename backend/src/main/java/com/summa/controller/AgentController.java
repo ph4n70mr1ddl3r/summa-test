@@ -181,7 +181,8 @@ public class AgentController {
             for (Ask a : pendingPromoAsks) {
                 try {
                     JsonNode node = objectMapper.readTree(a.getPayload());
-                    if (id.equals(node.get("agentId").asText())) {
+                    JsonNode agentIdNode = node.get("agentId");
+                    if (agentIdNode != null && id.equals(agentIdNode.asText())) {
                         hasPromoForAgent = true;
                         break;
                     }

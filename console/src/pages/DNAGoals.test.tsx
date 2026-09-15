@@ -63,7 +63,7 @@ describe('DNAGoals page', () => {
     vi.mocked(apiModule.api.dna.goals).mockRejectedValue(new Error('Network error'))
     const { container } = render(<DNAGoals />)
     await waitFor(() => {
-      expect(container.textContent).toContain('Error')
+      expect(container.textContent).toContain('Failed to load')
     })
   })
 })

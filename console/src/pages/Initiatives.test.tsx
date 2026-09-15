@@ -60,7 +60,7 @@ describe('Initiatives page', () => {
     vi.mocked(apiModule.api.initiatives.list).mockRejectedValue(new Error('Network error'))
     const { container } = render(<Initiatives />)
     await waitFor(() => {
-      expect(container.textContent).toContain('Error')
+      expect(container.textContent).toContain('Failed to load')
     })
   })
 })

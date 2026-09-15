@@ -85,7 +85,9 @@ public class MemoryController {
             MemoryItem item = memoryService.review(id, actor);
             return ResponseEntity.ok(item);
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
+        } catch (IllegalStateException e) {
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 }

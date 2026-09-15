@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { SpendSnapshot } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
+import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Governance() {
   const [policies, setPolicies] = useState<Record<string, unknown>>({})
@@ -45,7 +46,7 @@ export default function Governance() {
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <div className="text-red-400">Error: {escapeHtml(error)}</div>
+  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={() => window.location.reload()} />
 
   const policyEntries = Object.entries(policies)
   const quotaEntries = Object.entries(quotas)

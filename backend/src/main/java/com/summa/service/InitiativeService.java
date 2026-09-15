@@ -185,7 +185,7 @@ public class InitiativeService {
 
         // INT-020: If actor is not the sponsor, route an activation ask to the sponsor
         // with expiry=deny. The sponsor's own opens go active outright.
-        if (!initiative.getSponsor().equals(actor)) {
+        if (actor != null && !actor.equals(initiative.getSponsor())) {
             // Validate sponsor is still active before routing ask to them
             Optional<Human> sponsorHuman = memberService.findHuman(initiative.getSponsor());
             if (sponsorHuman.isPresent() && !sponsorHuman.get().isActive()) {

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { Initiative } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
+import { initiativeStatusColor } from '../utils/formatting'
+import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Initiatives() {
   const [initiatives, setInitiatives] = useState<Initiative[]>([])
@@ -17,17 +19,7 @@ export default function Initiatives() {
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <div className="text-red-400">Error: {escapeHtml(error)}</div>
-
-  const statusColor = (status: string) => {
-    switch (status) {
-      case 'proposed': return 'bg-blue-900/50 text-blue-400'
-      case 'active': return 'bg-green-900/50 text-green-400'
-      case 'paused': return 'bg-yellow-900/50 text-yellow-400'
-      case 'closed': return 'bg-gray-600 text-gray-400'
-      default: return 'bg-gray-700 text-gray-300'
-    }
-  }
+  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={() => window.location.reload()} />
 
   return (
     <div className="space-y-6">
@@ -56,7 +48,7 @@ export default function Initiatives() {
                     )}
                   </p>
                 </div>
-                <span className={`text-xs px-2 py-0.5 rounded ${statusColor(ini.status)}`} aria-label={`Status: ${ini.status}`}>
+                <span className={`text-xs px-2 py-0.5 rounded ${initiativeStatusColor(ini.status)}`} aria-label={`Status: ${ini.status}`}>
                   {escapeHtml(ini.status)}
                 </span>
               </div>

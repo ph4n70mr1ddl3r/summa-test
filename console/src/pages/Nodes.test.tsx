@@ -58,7 +58,7 @@ describe('Nodes page', () => {
     vi.mocked(apiModule.api.nodes.list).mockRejectedValue(new Error('failed'))
     const { container } = render(<Nodes />)
     await waitFor(() => {
-      expect(container.textContent).toContain('Error')
+      expect(container.textContent).toContain('Failed to load')
     })
   })
 })

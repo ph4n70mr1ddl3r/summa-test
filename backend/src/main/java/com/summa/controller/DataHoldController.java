@@ -76,6 +76,8 @@ public class DataHoldController {
             return ResponseEntity.ok(hold);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
+        } catch (IllegalStateException e) {
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 }
