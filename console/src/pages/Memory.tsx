@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
-import { api, type MemoryItem } from '../services/api'
+import { api } from '../services/api'
+import type { MemoryItem } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
 
 export default function Memory() {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { api, type DnaDomain, type DnaCard, type DnaGoal, type DnaProposal } from '../services/api'
+import { api } from '../services/api'
+import type { DnaDomain, DnaCard, DnaGoal, DnaProposal } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
 
 export default function DNAConsole() {

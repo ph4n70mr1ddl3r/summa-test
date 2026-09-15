@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { api, type Group, type Member } from '../services/api'
+import { api } from '../services/api'
+import type { Group, Member } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
 
 export default function OrgView() {

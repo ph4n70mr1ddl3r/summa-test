@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { api, type SpawnRequest, type SpawnStats } from '../services/api'
+import { api } from '../services/api'
+import type { SpawnRequest, SpawnStats } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
 import { spawnStatusColor } from '../utils/formatting'
 

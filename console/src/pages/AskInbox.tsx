@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
-import { api, type Ask } from '../services/api'
+import { api } from '../services/api'
+import type { Ask } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
 import { tierColor, formatDate } from '../utils/formatting'
 

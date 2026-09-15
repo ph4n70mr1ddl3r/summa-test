@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { api, type DnaCard } from '../services/api'
+import { api } from '../services/api'
+import type { DnaCard } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
 
 export default function DNACards() {

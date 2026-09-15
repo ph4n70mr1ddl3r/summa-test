@@ -1,5 +1,5 @@
 export function formatDate(epochSeconds: number | undefined | null, options?: { dateOnly?: boolean }): string {
-  if (epochSeconds == null) return '?'
+  if (epochSeconds === null || epochSeconds === undefined) return '?'
   const d = new Date(epochSeconds * 1000)
   if (options?.dateOnly) {
     return d.toLocaleDateString()

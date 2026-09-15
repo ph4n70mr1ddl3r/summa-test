@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
-import { api, type Group } from '../services/api'
+import { api } from '../services/api'
+import type { Group } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
 
 export default function Groups() {

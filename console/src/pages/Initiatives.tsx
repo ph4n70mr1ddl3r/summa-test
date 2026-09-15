@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { api, type Initiative } from '../services/api'
+import { api } from '../services/api'
+import type { Initiative } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
 
 export default function Initiatives() {
