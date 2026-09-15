@@ -1,6 +1,7 @@
 package com.summa.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.Instant;
 
@@ -92,4 +93,6 @@ public class Human {
     @JsonIgnore
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
     public boolean isActive() { return deactivatedAt == null; }
+    @JsonProperty("active")
+    public boolean isJsonPropertyActive() { return isActive(); }
 }

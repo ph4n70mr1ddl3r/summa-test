@@ -20,15 +20,18 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
-                                             JwtAuthenticationFilter jwtFilter,
-                                             RbacAuthorizationFilter rbacFilter) throws Exception {
+                                              NodeAuthFilter nodeAuthFilter,
+                                              JwtAuthenticationFilter jwtFilter,
+                                              RbacAuthorizationFilter rbacFilter) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .addFilterBefore(nodeAuthFilter, JwtAuthenticationFilter.class)
             .addFilterBefore(jwtFilter, RbacAuthorizationFilter.class)
             .addFilterBefore(rbacFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(JwtAuthenticationFilter.PUBLIC_PATHS.toArray(String[]::new)).permitAll()
+                .requestMatchers("/api/nodes/**").permitAll()
                 .anyRequest().authenticated()
             );
 

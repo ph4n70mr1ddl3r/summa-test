@@ -61,22 +61,27 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
         String actor = (String) request.getAttribute("actor");
         if (actor == null) {
             // Do not trust X-Actor header from unauthenticated clients.
-            // Only JWT-authenticated requests carry a valid actor via request attribute.
+            // Only JWT-authenticated or node-authenticated requests carry a valid actor via request attribute.
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "No actor identity provided");
             return;
         }
 
         boolean writeAllowed = false;
         if (WRITE_METHODS.containsKey(request.getMethod())) {
-            Optional<Human> humanOpt = memberService.findHuman(actor);
-            if (humanOpt.isPresent()) {
-                writeAllowed = memberService.hasWriteSurface(humanOpt.get());
+            // Node-authenticated requests: allow writes from trusted nodes
+            if (Boolean.TRUE.equals(request.getAttribute("nodeAuth"))) {
+                writeAllowed = true;
             } else {
-                var agentOpt = memberService.findAgent(actor);
-                if (agentOpt.isPresent()) {
-                    writeAllowed = memberService.hasWriteSurfaceAgent(agentOpt.get());
+                Optional<Human> humanOpt = memberService.findHuman(actor);
+                if (humanOpt.isPresent()) {
+                    writeAllowed = memberService.hasWriteSurface(humanOpt.get());
                 } else {
-                    writeAllowed = false;
+                    var agentOpt = memberService.findAgent(actor);
+                    if (agentOpt.isPresent()) {
+                        writeAllowed = memberService.hasWriteSurfaceAgent(agentOpt.get());
+                    } else {
+                        writeAllowed = false;
+                    }
                 }
             }
         }

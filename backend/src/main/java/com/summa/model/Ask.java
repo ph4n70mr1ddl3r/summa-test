@@ -13,10 +13,10 @@ public class Ask {
     @Column(name = "kind", nullable = false, length = 20)
     private String kind;
 
-    @Column(name = "from", nullable = false, length = 36)
+    @Column(name = "from", nullable = false, length = 45)
     private String from;
 
-    @Column(name = "to", nullable = false, length = 36)
+    @Column(name = "to", nullable = false, length = 45)
     private String to;
 
     @Column(name = "payload", nullable = false, columnDefinition = "TEXT")

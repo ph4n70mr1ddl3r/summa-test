@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.LinkedHashMap;
 import java.util.Optional;
 
@@ -33,7 +33,7 @@ public class GovernanceService {
     }
 
     public Map<String, Object> getAllSettings() {
-        Map<String, Object> settings = new HashMap<>();
+        Map<String, Object> settings = new ConcurrentHashMap<>();
         for (GovernanceSetting s : settingRepository.findAll()) {
             settings.put(s.getKey(), parseValue(s.getValue()));
         }

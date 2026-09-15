@@ -13,7 +13,7 @@ import com.summa.exception.EntityNotFoundException;
 
 @Service
 public class DnaGoalService {
-    private static final Pattern KEYED_UNION_PATTERN = Pattern.compile("^[ha]?:.+$");
+    private static final Pattern KEYED_UNION_PATTERN = Pattern.compile("^[ha]?:.+$|^[a-zA-Z0-9_-]+$");
 
     private final DnaGoalRepository goalRepository;
     private final AuditService auditService;

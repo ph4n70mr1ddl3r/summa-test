@@ -56,7 +56,7 @@ class DnaGoalServiceTest {
     @Test
     void create_throwsWhenInvalidKeyedUnion() {
         assertThrows(IllegalArgumentException.class, () ->
-            goalService.create("g1", "d1", "Q1", "stmt", "bad-format", null, Instant.now(), null, "actor"));
+            goalService.create("g1", "d1", "Q1", "stmt", "bad format", null, Instant.now(), null, "actor"));
     }
 
     @Test

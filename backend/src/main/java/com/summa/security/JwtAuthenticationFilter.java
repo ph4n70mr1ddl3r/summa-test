@@ -38,9 +38,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     public static final List<String> PUBLIC_PATHS = List.of(
         "/api/auth/login", "/api/health", "/api/info",
-        "/api/nodes/enroll", "/api/org/bootstrap",
-        "/api/nodes/*/heartbeat", "/api/nodes/*/claims",
-        "/api/nodes/*/work/pull", "/api/nodes/*/runs/*/report"
+        "/api/nodes/enroll", "/api/org/bootstrap"
     );
 
     @Override
@@ -50,6 +48,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
 
         if (isPublicPath(path)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // If node auth already authenticated this request, skip JWT check
+        if (Boolean.TRUE.equals(request.getAttribute("nodeAuth"))) {
             filterChain.doFilter(request, response);
             return;
         }

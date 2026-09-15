@@ -53,9 +53,6 @@ public class DnaGlossaryController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            if (body.get("domainId") == null || body.get("domainId").isBlank()) {
-                throw new IllegalArgumentException("domainId is required");
-            }
             if (body.get("term") == null || body.get("term").isBlank()) {
                 throw new IllegalArgumentException("term is required");
             }
@@ -72,6 +69,8 @@ public class DnaGlossaryController {
             return ResponseEntity.ok(entry);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
+        } catch (IllegalStateException e) {
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
@@ -88,6 +87,8 @@ public class DnaGlossaryController {
                 actor
             );
             return ResponseEntity.ok(entry);
+        } catch (IllegalArgumentException e) {
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         }
@@ -101,6 +102,8 @@ public class DnaGlossaryController {
         try {
             DnaGlossary entry = glossaryService.retire(id, actor);
             return ResponseEntity.ok(entry);
+        } catch (IllegalArgumentException e) {
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         }

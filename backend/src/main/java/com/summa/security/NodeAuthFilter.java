@@ -1,0 +1,150 @@
+package com.summa.security;
+
+import com.summa.model.Node;
+import com.summa.repository.NodeRepository;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.List;
+import java.util.Optional;
+
+@Component
+public class NodeAuthFilter extends OncePerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(NodeAuthFilter.class);
+
+    private static final List<String> NODE_AUTH_PATHS = List.of(
+        "/api/nodes/",
+        "/api/nodes"
+    );
+
+    private final NodeRepository nodeRepository;
+
+    public NodeAuthFilter(NodeRepository nodeRepository) {
+        this.nodeRepository = nodeRepository;
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+                                     FilterChain filterChain) throws ServletException, IOException {
+        String path = request.getRequestURI();
+        if (!matchesNodePath(path)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        String signature = request.getHeader("X-Node-Signature");
+        if (signature == null || signature.isBlank()) {
+            log.warn("[SUMMA] node request without signature: {} from {}", path, request.getRemoteAddr());
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Node signature required");
+            return;
+        }
+
+        // Extract node ID from path: /api/nodes/<id>/...
+        String nodeId = extractNodeId(path);
+        if (nodeId == null) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid node path");
+            return;
+        }
+
+        Optional<Node> nodeOpt = nodeRepository.findById(nodeId);
+        if (nodeOpt.isEmpty()) {
+            log.warn("[SUMMA] unknown node ID: {} path={}", nodeId, path);
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unknown node");
+            return;
+        }
+
+        Node node = nodeOpt.get();
+        if (node.isRevoked()) {
+            log.warn("[SUMMA] revoked node attempted request: {} path={}", nodeId, path);
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Node revoked");
+            return;
+        }
+
+        // Verify HMAC-SHA256 signature using node pubkey as key
+        String body = readRequestBody(request);
+        String expectedSig = computeSignature(request.getMethod(), path, body, node.getPubkey());
+        if (!constantTimeEquals(expectedSig, signature)) {
+            log.warn("[SUMMA] node signature mismatch: node={} path={}", nodeId, path);
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid node signature");
+            return;
+        }
+
+        // Authenticated as node — set actor to node ID
+        request.setAttribute("actor", nodeId);
+        request.setAttribute("nodeAuth", true);
+        filterChain.doFilter(request, response);
+    }
+
+    private boolean matchesNodePath(String path) {
+        if (path == null) return false;
+        for (String prefix : NODE_AUTH_PATHS) {
+            if (path.startsWith(prefix)) return true;
+        }
+        return false;
+    }
+
+    private String extractNodeId(String path) {
+        // Path format: /api/nodes/<uuid>/... or /api/nodes
+        String[] parts = path.split("/");
+        // /api/nodes/<id>/... => parts[3] is the id
+        if (parts.length >= 4 && parts[0].isEmpty() && "api".equals(parts[1]) && "nodes".equals(parts[2])) {
+            String candidate = parts[3];
+            // Validate UUID format
+            if (candidate.matches("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    private String computeSignature(String method, String path, String body, String pubkey) {
+        try {
+            String payload = method + ":" + path + ":" + body;
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(pubkey.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            byte[] hash = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
+            return bytesToHex(hash);
+        } catch (Exception e) {
+            log.error("[SUMMA] signature computation failed: {}", e.getMessage());
+            return "";
+        }
+    }
+
+    private String readRequestBody(HttpServletRequest request) {
+        try {
+            byte[] bytes = request.getInputStream().readAllBytes();
+            return new String(bytes, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            return "";
+        }
+    }
+
+    private static String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder(bytes.length * 2);
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
+    }
+
+    private static boolean constantTimeEquals(String a, String b) {
+        if (a.length() != b.length()) return false;
+        int result = 0;
+        for (int i = 0; i < a.length(); i++) {
+            result |= a.charAt(i) ^ b.charAt(i);
+        }
+        return result == 0;
+    }
+}

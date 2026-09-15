@@ -289,9 +289,9 @@ public class AgentService {
     /**
      * SPW-071: TTL reaper — grace window before killing mid-write; suspended workers halt-then-reap.
      * Runs every 5 minutes; reaps agents whose ttl_at has passed.
+     * Each agent is processed in its own transaction to isolate failures.
      */
     @Scheduled(fixedRate = TTL_REAP_INTERVAL_MS)
-    @Transactional
     public void reapExpiredAgents() {
         Instant now = Instant.now();
         List<Agent> activeExpired = agentRepository.findByStatus("active").stream()

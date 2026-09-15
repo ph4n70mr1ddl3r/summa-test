@@ -169,14 +169,13 @@ public class AskService {
 
     /**
      * ASK-011: Periodically expire asks whose deadline has passed.
-     * Processes each expired ask according to its expiry_behavior:
+     * Processes each expired ask in its own transaction to isolate failures.
      * - deny: closes as expired
      * - escalate: closes as expired, files successor to escalation target
      * - reassign: closes as expired, files successor to deputy/admin
      * ASK-057: Chain exhaustion — if no active recipient found, broadcasts org-stall alert.
      */
     @Scheduled(fixedRate = 60000)
-    @Transactional
     public void processExpiredAsks() {
         List<Ask> expired = askRepository.findExpiredBefore(Instant.now());
         for (Ask ask : expired) {

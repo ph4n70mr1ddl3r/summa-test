@@ -140,14 +140,16 @@ public class DnaReadService {
             "name", h.getName(),
             "rbac", h.getRbac()
         )).toList());
-        snapshot.put("agents", activeAgents.stream().map(a -> Map.of(
-            "id", a.getId(),
-            "name", a.getName(),
-            "class", a.getAgentClass(),
-            "status", a.getStatus(),
-            "suspendedAt", a.getSuspendedAt() != null ? a.getSuspendedAt().toString() : null,
-            "retiredAt", a.getRetiredAt() != null ? a.getRetiredAt().toString() : null
-        )).toList());
+        snapshot.put("agents", activeAgents.stream().map(a -> {
+            Map<String, Object> agentMap = new LinkedHashMap<>();
+            agentMap.put("id", a.getId());
+            agentMap.put("name", a.getName());
+            agentMap.put("class", a.getAgentClass());
+            agentMap.put("status", a.getStatus());
+            agentMap.put("suspendedAt", a.getSuspendedAt() != null ? a.getSuspendedAt().toString() : null);
+            agentMap.put("retiredAt", a.getRetiredAt() != null ? a.getRetiredAt().toString() : null);
+            return agentMap;
+        }).toList());
         snapshot.put("domains", domains.stream().map(d -> Map.of(
             "id", d.getId(),
             "name", d.getName(),

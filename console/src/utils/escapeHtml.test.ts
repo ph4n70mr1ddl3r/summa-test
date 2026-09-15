@@ -26,6 +26,10 @@ describe('escapeHtml', () => {
     expect(escapeHtml('hello world')).toBe('hello world')
   })
 
+  it('leaves newlines as-is (handled by React JSX)', () => {
+    expect(escapeHtml('line1\nline2')).toBe('line1\nline2')
+  })
+
   it('escapes all special characters together', () => {
     expect(escapeHtml('<a href="x" onclick="alert(1)">click</a>')).toBe(
       '&lt;a href=&quot;x&quot; onclick=&quot;alert(1)&quot;&gt;click&lt;/a&gt;'

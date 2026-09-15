@@ -97,9 +97,6 @@ public class SpawnController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        if (!memberService.isAdmin(actor)) {
-            return ControllerResponses.gate(auditService, "Spawn approve requires admin role");
-        }
         try {
             SpawnRequest request = spawnService.approve(id, actor, actor);
             return ResponseEntity.ok(request);
@@ -115,9 +112,6 @@ public class SpawnController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        if (!memberService.isAdmin(actor)) {
-            return ControllerResponses.gate(auditService, "Spawn deny requires admin role");
-        }
         try {
             SpawnRequest request = spawnService.deny(id, actor);
             return ResponseEntity.ok(request);

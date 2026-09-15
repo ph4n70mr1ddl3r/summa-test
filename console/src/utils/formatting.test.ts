@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatDate, tierColor, spawnStatusColor, triggerStatusColor, boardTaskStatusColor, roleTemplateStatusColor, dnaCardStatusColor, dnaGoalStatusColor, dnaRuleStatusColor, nodeStatusColor, groupStatusColor, rbacRoleColor, initiativeStatusColor, runStatusColor } from './formatting'
+import { formatDate, tierColor, spawnStatusColor, triggerStatusColor, boardTaskStatusColor, roleTemplateStatusColor, dnaCardStatusColor, dnaGoalStatusColor, dnaRuleStatusColor, nodeStatusColor, groupStatusColor, rbacRoleColor, initiativeStatusColor, runStatusColor, agentStatusColor, askStatusColor } from './formatting'
 
 describe('formatDate', () => {
   it('returns ? for null', () => {
@@ -261,5 +261,53 @@ describe('runStatusColor', () => {
 
   it('defaults to gray', () => {
     expect(runStatusColor('unknown')).toContain('gray')
+  })
+})
+
+describe('agentStatusColor', () => {
+  it('returns green for active', () => {
+    expect(agentStatusColor('active')).toContain('green')
+  })
+
+  it('returns blue for requested', () => {
+    expect(agentStatusColor('requested')).toContain('blue')
+  })
+
+  it('returns yellow for suspended', () => {
+    expect(agentStatusColor('suspended')).toContain('yellow')
+  })
+
+  it('returns orange for retiring', () => {
+    expect(agentStatusColor('retiring')).toContain('orange')
+  })
+
+  it('returns gray for archived', () => {
+    expect(agentStatusColor('archived')).toContain('gray')
+  })
+
+  it('defaults to gray', () => {
+    expect(agentStatusColor('unknown')).toContain('gray')
+  })
+})
+
+describe('askStatusColor', () => {
+  it('returns yellow for pending', () => {
+    expect(askStatusColor('pending')).toContain('yellow')
+  })
+
+  it('returns green for answered', () => {
+    expect(askStatusColor('answered')).toContain('green')
+  })
+
+  it('returns red for expired', () => {
+    expect(askStatusColor('expired')).toContain('red')
+  })
+
+  it('returns gray for withdrawn', () => {
+    expect(askStatusColor('withdrawn')).toContain('gray')
+  })
+
+  it('defaults to gray', () => {
+    expect(askStatusColor('unknown')).toContain('gray')
   })
 })
