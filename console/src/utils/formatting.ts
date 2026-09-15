@@ -45,3 +45,31 @@ export function runStatusColor(status: string): string {
   }
 }
 
+export function triggerStatusColor(status: string): string {
+  switch (status) {
+    case 'active': return 'bg-green-900/50 text-green-400'
+    case 'paused': return 'bg-yellow-900/50 text-yellow-400'
+    case 'archived': return 'bg-gray-600 text-gray-400'
+    default: return 'bg-gray-700 text-gray-300'
+  }
+}
+
+export function boardTaskStatusColor(status: string): string {
+  switch (status) {
+    case 'done': return 'bg-green-900/50 text-green-400'
+    case 'in_progress': return 'bg-blue-900/50 text-blue-400'
+    case 'cancelled': return 'bg-red-900/50 text-red-400'
+    case 'open': return 'bg-yellow-900/50 text-yellow-400'
+    default: return 'bg-gray-700 text-gray-300'
+  }
+}
+
+export function roleTemplateStatusColor(status: string): string {
+  switch (status) {
+    case 'active': return 'bg-green-900/50 text-green-400'
+    case 'draft': return 'bg-yellow-900/50 text-yellow-400'
+    case 'retired': return 'bg-gray-600 text-gray-400'
+    default: return 'bg-gray-700 text-gray-300'
+  }
+}
+

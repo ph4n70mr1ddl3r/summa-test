@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatDate, tierColor, spawnStatusColor } from './formatting'
+import { formatDate, tierColor, spawnStatusColor, triggerStatusColor, boardTaskStatusColor, roleTemplateStatusColor } from './formatting'
 
 describe('formatDate', () => {
   it('returns ? for null', () => {
@@ -55,5 +55,63 @@ describe('spawnStatusColor', () => {
 
   it('defaults to gray', () => {
     expect(spawnStatusColor('unknown')).toContain('gray')
+  })
+})
+
+describe('triggerStatusColor', () => {
+  it('returns green for active', () => {
+    expect(triggerStatusColor('active')).toContain('green')
+  })
+
+  it('returns yellow for paused', () => {
+    expect(triggerStatusColor('paused')).toContain('yellow')
+  })
+
+  it('returns gray for archived', () => {
+    expect(triggerStatusColor('archived')).toContain('gray')
+  })
+
+  it('defaults to gray', () => {
+    expect(triggerStatusColor('unknown')).toContain('gray')
+  })
+})
+
+describe('boardTaskStatusColor', () => {
+  it('returns green for done', () => {
+    expect(boardTaskStatusColor('done')).toContain('green')
+  })
+
+  it('returns blue for in_progress', () => {
+    expect(boardTaskStatusColor('in_progress')).toContain('blue')
+  })
+
+  it('returns red for cancelled', () => {
+    expect(boardTaskStatusColor('cancelled')).toContain('red')
+  })
+
+  it('returns yellow for open', () => {
+    expect(boardTaskStatusColor('open')).toContain('yellow')
+  })
+
+  it('defaults to gray', () => {
+    expect(boardTaskStatusColor('unknown')).toContain('gray')
+  })
+})
+
+describe('roleTemplateStatusColor', () => {
+  it('returns green for active', () => {
+    expect(roleTemplateStatusColor('active')).toContain('green')
+  })
+
+  it('returns yellow for draft', () => {
+    expect(roleTemplateStatusColor('draft')).toContain('yellow')
+  })
+
+  it('returns gray for retired', () => {
+    expect(roleTemplateStatusColor('retired')).toContain('gray')
+  })
+
+  it('defaults to gray', () => {
+    expect(roleTemplateStatusColor('unknown')).toContain('gray')
   })
 })

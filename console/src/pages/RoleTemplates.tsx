@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { RoleTemplate } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
+import { roleTemplateStatusColor } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function RoleTemplates() {
@@ -39,7 +40,7 @@ export default function RoleTemplates() {
                   <p className="font-medium text-gray-200">{escapeHtml(t.name)}</p>
                   <p className="text-sm text-gray-400 mt-1">Class: {escapeHtml(t.class)} | Version: {escapeHtml(String(t.version))}</p>
                 </div>
-                <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300" aria-label={`Status: ${escapeHtml(t.status)}`}>{escapeHtml(t.status)}</span>
+                <span className={`text-xs px-2 py-1 rounded ${roleTemplateStatusColor(t.status)}`} aria-label={`Status: ${escapeHtml(t.status)}`}>{escapeHtml(t.status)}</span>
               </div>
             </div>
           ))}

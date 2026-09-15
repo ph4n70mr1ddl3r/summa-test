@@ -87,7 +87,7 @@ describe('Groups page', () => {
     const archiveBtn = screen.getByText('Archive')
     archiveBtn.click()
     await waitFor(() => {
-      expect(screen.getByText('Permission denied')).toBeInTheDocument()
+      expect(screen.getByText(/Failed to load.*Permission denied/i)).toBeInTheDocument()
     })
   })
 

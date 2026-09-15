@@ -3,6 +3,7 @@ import { api } from '../services/api'
 import type { Ask } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
 import { tierColor, formatDate } from '../utils/formatting'
+import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function AskInbox() {
   const [asks, setAsks] = useState<Ask[]>([])
@@ -83,15 +84,7 @@ export default function AskInbox() {
     return (
       <div className="space-y-6">
         <h2 className="text-2xl font-bold">Ask Inbox</h2>
-        <div className="bg-red-900/30 border border-red-700 rounded-lg p-4 text-red-400">
-          Failed to load asks: {escapeHtml(error)}
-          <button
-            onClick={loadAsks}
-            className="ml-4 px-3 py-1 bg-red-700 hover:bg-red-600 rounded text-sm text-red-100"
-          >
-            Retry
-          </button>
-        </div>
+        <ErrorBanner message={escapeHtml(error)} onRetry={loadAsks} />
       </div>
     )
   }

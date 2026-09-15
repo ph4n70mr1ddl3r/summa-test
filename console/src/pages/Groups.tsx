@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { api } from '../services/api'
 import type { Group } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
+import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Groups() {
   const [groups, setGroups] = useState<Group[]>([])
@@ -33,17 +34,7 @@ export default function Groups() {
   }
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Groups</h2>
-      <div className="bg-red-900/30 border border-red-700 rounded-lg p-4 text-red-400">
-        {escapeHtml(error)}
-        <button onClick={loadGroups} className="ml-4 px-3 py-1 bg-red-700 hover:bg-red-600 rounded text-sm text-red-100">
-          Retry
-        </button>
-      </div>
-    </div>
-  )
+  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadGroups} />
 
   return (
     <div className="space-y-6">
