@@ -88,6 +88,10 @@ public class GovernanceController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        Optional<Human> actorOpt = memberService.findHuman(actor);
+        if (actorOpt.isEmpty() || !RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac())) {
+            return ControllerResponses.gate(auditService, "Admin access required to update governance policies");
+        }
         for (String key : body.keySet()) {
             if (!POLICY_KEYS.contains(key)) {
                 return ControllerResponses.validation(auditService, "Unknown policy key: " + key);
@@ -106,6 +110,10 @@ public class GovernanceController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        Optional<Human> actorOpt = memberService.findHuman(actor);
+        if (actorOpt.isEmpty() || !RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac())) {
+            return ControllerResponses.gate(auditService, "Admin access required to update governance quotas");
+        }
         for (String key : body.keySet()) {
             if (!QUOTA_KEYS.contains(key)) {
                 return ControllerResponses.validation(auditService, "Unknown quota key: " + key);

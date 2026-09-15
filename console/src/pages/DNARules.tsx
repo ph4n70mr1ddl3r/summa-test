@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { DnaRule } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
+import { formatDate, dnaRuleStatusColor } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function DNARules() {
@@ -39,11 +40,7 @@ export default function DNARules() {
                   <p className="font-medium text-gray-200">Rule {escapeHtml(rule.id.slice(0, 8))}</p>
                   <p className="text-sm text-gray-400 mt-1">Domain: {escapeHtml(rule.domainId)}</p>
                 </div>
-                <span className={`text-xs px-2 py-1 rounded ${
-                  rule.status === 'active' ? 'bg-green-900/50 text-green-400' :
-                  rule.status === 'superseded' ? 'bg-gray-700 text-gray-300' :
-                  'bg-yellow-900/50 text-yellow-400'
-                }`} aria-label={`Status: ${rule.status}`}>
+                <span className={`text-xs px-2 py-1 rounded ${dnaRuleStatusColor(rule.status)}`} aria-label={`Status: ${rule.status}`}>
                   {escapeHtml(rule.status)}
                 </span>
               </div>
@@ -54,8 +51,8 @@ export default function DNARules() {
                 })()}
               </pre>
               <p className="text-xs text-gray-500 mt-2">
-                From: {rule.effectiveFrom != null ? new Date(rule.effectiveFrom * 1000).toLocaleDateString() : '∞'}
-                {rule.effectiveTo != null ? ` — To: ${new Date(rule.effectiveTo * 1000).toLocaleDateString()}` : ''}
+                From: {rule.effectiveFrom != null ? formatDate(rule.effectiveFrom, { dateOnly: true }) : '∞'}
+                {rule.effectiveTo != null ? ` — To: ${formatDate(rule.effectiveTo, { dateOnly: true })}` : ''}
               </p>
             </div>
           ))}

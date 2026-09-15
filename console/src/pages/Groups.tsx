@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { api } from '../services/api'
 import type { Group } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
+import { groupStatusColor } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Groups() {
@@ -62,9 +63,7 @@ export default function Groups() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`text-xs px-2 py-1 rounded ${
-                    g.status === 'active' ? 'bg-green-900/50 text-green-400' : 'bg-gray-700 text-gray-300'
-                  }`} aria-label={`Status: ${g.status}`}>
+                  <span className={`text-xs px-2 py-1 rounded ${groupStatusColor(g.status)}`} aria-label={`Status: ${g.status}`}>
                     {escapeHtml(g.status)}
                   </span>
                   {g.status === 'active' && (

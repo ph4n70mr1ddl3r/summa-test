@@ -6,6 +6,7 @@ import * as apiModule from './services/api'
 
 vi.mock('./services/api', () => ({
   setAuthToken: vi.fn(),
+  setNavigate: vi.fn(),
   isAuthenticated: vi.fn().mockReturnValue(true),
   getUser: vi.fn().mockReturnValue({ userId: 'u1', rbac: 'admin', name: 'Test User' }),
   api: {},

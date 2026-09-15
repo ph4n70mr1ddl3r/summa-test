@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { Node } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
+import { formatDate, nodeStatusColor } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Nodes() {
@@ -41,12 +42,10 @@ export default function Nodes() {
                     Kind: {escapeHtml(n.kind)} | Region: {escapeHtml(n.region ?? 'default')}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    Pubkey: {n.pubkey ? escapeHtml(n.pubkey.slice(0, 16)) : '?'}… | Enrolled: {n.enrolledAt != null ? new Date(n.enrolledAt * 1000).toLocaleString() : '—'}
+                    Pubkey: {n.pubkey ? escapeHtml(n.pubkey.slice(0, 16)) : '?'}… | Enrolled: {n.enrolledAt != null ? formatDate(n.enrolledAt) : '—'}
                   </p>
                 </div>
-                <span className={`text-xs px-2 py-1 rounded ${
-                  n.status === 'trusted' ? 'bg-green-900/50 text-green-400' : 'bg-red-900/50 text-red-400'
-                }`} aria-label={`Status: ${n.status}`}>
+                <span className={`text-xs px-2 py-1 rounded ${nodeStatusColor(n.status)}`} aria-label={`Status: ${n.status}`}>
                   {escapeHtml(n.status)}
                 </span>
               </div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { Group, Member } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
+import { groupStatusColor, rbacRoleColor } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function OrgView() {
@@ -62,12 +63,7 @@ export default function OrgView() {
               {humans.map((h) => (
                 <div key={h.id} className="flex items-center justify-between bg-gray-700 rounded px-3 py-2">
                   <span className="text-gray-200 text-sm">{escapeHtml(h.name)}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded ${
-                    h.rbac === 'admin' ? 'bg-red-900/50 text-red-400' :
-                    h.rbac === 'owner' ? 'bg-yellow-900/50 text-yellow-400' :
-                    h.rbac === 'viewer' ? 'bg-gray-600 text-gray-400' :
-                    'bg-blue-900/50 text-blue-400'
-                  }`} aria-label={`RBAC role: ${h.rbac}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded ${rbacRoleColor(h.rbac)}`} aria-label={`RBAC role: ${h.rbac}`}>
                     {escapeHtml(h.rbac)}
                   </span>
                 </div>
@@ -113,9 +109,7 @@ export default function OrgView() {
             {groups.map((g) => (
               <div key={g.id} className="flex items-center justify-between bg-gray-700 rounded px-3 py-2">
                 <span className="text-gray-200 text-sm">{escapeHtml(g.name)}</span>
-                <span className={`text-xs px-2 py-0.5 rounded ${
-                  g.status === 'active' ? 'bg-green-900/50 text-green-400' : 'bg-gray-600 text-gray-400'
-                }`} aria-label={`Status: ${g.status}`}>
+                <span className={`text-xs px-2 py-0.5 rounded ${groupStatusColor(g.status)}`} aria-label={`Status: ${g.status}`}>
                   {escapeHtml(g.status)}
                 </span>
               </div>

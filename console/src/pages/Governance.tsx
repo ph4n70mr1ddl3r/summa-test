@@ -65,7 +65,7 @@ export default function Governance() {
               {policyEntries.slice(0, 10).map(([k, v], i) => (
                 <div key={k + '-' + i} className="flex justify-between text-sm">
                   <span className="text-gray-400">{k}</span>
-                  <span className="text-gray-200 font-mono">{escapeHtml(typeof v === 'object' && v !== null ? JSON.stringify(v) : String(v))}</span>
+                  <span className="text-gray-200 font-mono">{escapeHtml(typeof v === 'object' && v !== null ? JSON.stringify(v, null, 2) : String(v))}</span>
                 </div>
               ))}
             </div>
@@ -81,7 +81,7 @@ export default function Governance() {
               {quotaEntries.slice(0, 10).map(([k, v], i) => (
                 <div key={k + '-' + i} className="flex justify-between text-sm">
                   <span className="text-gray-400">{k}</span>
-                  <span className="text-gray-200 font-mono">{escapeHtml(typeof v === 'object' && v !== null ? JSON.stringify(v) : String(v))}</span>
+                  <span className="text-gray-200 font-mono">{escapeHtml(typeof v === 'object' && v !== null ? JSON.stringify(v, null, 2) : String(v))}</span>
                 </div>
               ))}
             </div>

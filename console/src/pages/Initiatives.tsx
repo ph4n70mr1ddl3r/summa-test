@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { Initiative } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
-import { initiativeStatusColor } from '../utils/formatting'
+import { formatDate, initiativeStatusColor } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Initiatives() {
@@ -43,7 +43,7 @@ export default function Initiatives() {
                     {ini.goalRef && <span className="ml-2">Goal: {escapeHtml(ini.goalRef)}</span>}
                     {ini.deadline && (
                       <span className="ml-2 text-xs text-gray-500">
-                        Deadline: {new Date(ini.deadline * 1000).toLocaleDateString()}
+                        Deadline: {formatDate(ini.deadline, { dateOnly: true })}
                       </span>
                     )}
                   </p>

@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom'
-import { setAuthToken, isAuthenticated, getUser } from './services/api'
+import { setAuthToken, isAuthenticated, getUser, setNavigate } from './services/api'
 
 interface NavItem {
   to: string
@@ -67,6 +67,8 @@ function ModeLabel() {
 
 export default function App() {
   const authed = useIsAuthenticated()
+  const navigate = useNavigate()
+  setNavigate(navigate)
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-blue-600 focus:text-white focus:p-2">

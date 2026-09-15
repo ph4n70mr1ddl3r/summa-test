@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { DnaCard } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
+import { formatDate, dnaCardStatusColor } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function DNACards() {
@@ -39,11 +40,7 @@ export default function DNACards() {
                   <p className="font-medium text-gray-200">{escapeHtml(card.title)}</p>
                   <p className="text-sm text-gray-400 mt-1">Domain: {escapeHtml(card.domainId)}</p>
                 </div>
-                <span className={`text-xs px-2 py-1 rounded ${
-                  card.status === 'active' ? 'bg-green-900/50 text-green-400' :
-                  card.status === 'draft' ? 'bg-yellow-900/50 text-yellow-400' :
-                  'bg-gray-700 text-gray-300'
-                }`} aria-label={`Status: ${card.status}`}>
+                <span className={`text-xs px-2 py-1 rounded ${dnaCardStatusColor(card.status)}`} aria-label={`Status: ${card.status}`}>
                   {escapeHtml(card.status)}
                 </span>
               </div>
@@ -53,7 +50,7 @@ export default function DNACards() {
                   return <>{snippet.slice(0, 200)}{snippet.length > 200 ? '...' : ''}</>
                 })()}
               </pre>
-              <p className="text-xs text-gray-500 mt-2">v{card.version} · Created {card.createdAt ? new Date(card.createdAt * 1000).toLocaleDateString() : '?'}</p>
+              <p className="text-xs text-gray-500 mt-2">v{card.version} · Created {card.createdAt ? formatDate(card.createdAt, { dateOnly: true }) : '?'}</p>
             </div>
           ))}
         </div>

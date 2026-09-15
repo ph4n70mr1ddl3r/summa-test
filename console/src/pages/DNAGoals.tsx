@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { DnaGoal } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
+import { formatDate, dnaGoalStatusColor } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function DNAGoals() {
@@ -43,17 +44,12 @@ export default function DNAGoals() {
                   </p>
                   {goal.effectiveFrom != null && (
                     <p className="text-xs text-gray-500 mt-1">
-                      Effective: {new Date(goal.effectiveFrom * 1000).toLocaleDateString()}
-                      {goal.effectiveTo != null && ` — ${new Date(goal.effectiveTo * 1000).toLocaleDateString()}`}
+                      Effective: {formatDate(goal.effectiveFrom, { dateOnly: true })}
+                      {goal.effectiveTo != null && ` — ${formatDate(goal.effectiveTo, { dateOnly: true })}`}
                     </p>
                   )}
                 </div>
-                <span className={`text-xs px-2 py-1 rounded ${
-                  goal.status === 'active' ? 'bg-green-900/50 text-green-400' :
-                  goal.status === 'met' ? 'bg-blue-900/50 text-blue-400' :
-                  goal.status === 'missed' ? 'bg-red-900/50 text-red-400' :
-                  'bg-gray-700 text-gray-300'
-                }`} aria-label={`Status: ${goal.status}`}>{escapeHtml(goal.status)}</span>
+                <span className={`text-xs px-2 py-1 rounded ${dnaGoalStatusColor(goal.status)}`} aria-label={`Status: ${goal.status}`}>{escapeHtml(goal.status)}</span>
               </div>
             </div>
           ))}

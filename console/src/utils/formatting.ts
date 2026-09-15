@@ -73,3 +73,56 @@ export function roleTemplateStatusColor(status: string): string {
   }
 }
 
+export function dnaCardStatusColor(status: string): string {
+  switch (status) {
+    case 'active': return 'bg-green-900/50 text-green-400'
+    case 'draft': return 'bg-yellow-900/50 text-yellow-400'
+    case 'retired': return 'bg-gray-700 text-gray-300'
+    default: return 'bg-gray-700 text-gray-300'
+  }
+}
+
+export function dnaGoalStatusColor(status: string): string {
+  switch (status) {
+    case 'active': return 'bg-green-900/50 text-green-400'
+    case 'met': return 'bg-blue-900/50 text-blue-400'
+    case 'missed': return 'bg-red-900/50 text-red-400'
+    case 'retired': return 'bg-gray-700 text-gray-300'
+    default: return 'bg-gray-700 text-gray-300'
+  }
+}
+
+export function dnaRuleStatusColor(status: string): string {
+  switch (status) {
+    case 'active': return 'bg-green-900/50 text-green-400'
+    case 'superseded': return 'bg-gray-700 text-gray-300'
+    case 'lapsed': return 'bg-yellow-900/50 text-yellow-400'
+    default: return 'bg-gray-700 text-gray-300'
+  }
+}
+
+export function nodeStatusColor(status: string): string {
+  switch (status) {
+    case 'trusted': return 'bg-green-900/50 text-green-400'
+    case 'revoked': return 'bg-red-900/50 text-red-400'
+    default: return 'bg-gray-700 text-gray-300'
+  }
+}
+
+export function groupStatusColor(status: string): string {
+  switch (status) {
+    case 'active': return 'bg-green-900/50 text-green-400'
+    case 'archived': return 'bg-gray-600 text-gray-400'
+    default: return 'bg-gray-700 text-gray-300'
+  }
+}
+
+export function rbacRoleColor(role: string): string {
+  switch (role) {
+    case 'admin': return 'bg-red-900/50 text-red-400'
+    case 'owner': return 'bg-yellow-900/50 text-yellow-400'
+    case 'viewer': return 'bg-gray-600 text-gray-400'
+    default: return 'bg-blue-900/50 text-blue-400'
+  }
+}
+

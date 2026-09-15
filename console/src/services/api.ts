@@ -20,6 +20,11 @@ function loadToken(): string | null {
 }
 
 let authToken: string | null = loadToken();
+let navigateRef: ((path: string, options?: { replace?: boolean }) => void) | null = null;
+
+export function setNavigate(fn: (path: string, options?: { replace?: boolean }) => void) {
+  navigateRef = fn;
+}
 
 export function setAuthToken(token: string | null, user?: { userId: string; rbac: string; name: string } | null) {
   authToken = token;
@@ -98,7 +103,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const err = new ApiError(message, res.status);
     if (res.status === 401 || res.status === 403) {
       setAuthToken(null);
-      window.location.href = '/login';
+      if (navigateRef) {
+        navigateRef('/login', { replace: true });
+      } else {
+        window.location.href = '/login';
+      }
     }
     throw err;
   }
@@ -550,7 +559,7 @@ export const api = {
         method: 'PATCH',
         body: JSON.stringify({ ownerHumanId }),
       }),
-    updateDomainAccess: (id: string, access: string) =>
+    updateDomainAccess: (id: string, access: DomainAccess) =>
       request<DnaDomain>(`/dna/domains/${id}/access`, {
         method: 'PATCH',
         body: JSON.stringify({ access }),
@@ -562,7 +571,7 @@ export const api = {
       }),
     goals: (params?: { domainId?: string; inject?: string }) =>
       request<DnaGoal[]>(`/dna/goals${buildQuery(params)}`),
-    updateGoalStatus: (id: string, status: string) =>
+    updateGoalStatus: (id: string, status: DnaGoalStatus) =>
       request<DnaGoal>(`/dna/goals/${id}/status`, {
         method: 'PATCH',
         body: JSON.stringify({ status }),
@@ -585,7 +594,7 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ action: 'publish' }),
       }),
-    reviewProposal: (id: string, action: string) =>
+    reviewProposal: (id: string, action: 'publish' | 'reject') =>
       request<DnaProposal>(`/dna/proposals/${id}/review`, {
         method: 'POST',
         body: JSON.stringify({ action }),
@@ -605,7 +614,7 @@ export const api = {
   asks: {
     list: () =>
       request<Ask[]>('/asks'),
-    listByStatus: (status: string) =>
+    listByStatus: (status: AskStatus) =>
       request<Ask[]>(`/asks${buildQuery({ status })}`),
     respond: (id: string, response: string) =>
       request<Ask>(`/asks/${id}/respond`, {
@@ -624,7 +633,7 @@ export const api = {
   org: {
     health: () => request<HealthStatus>('/health'),
     bootstrap: (body?: Record<string, string>) =>
-      request('/org/bootstrap', { method: 'POST', body: body ? JSON.stringify(body) : undefined }),
+      request<Record<string, unknown>>('/org/bootstrap', { method: 'POST', body: body ? JSON.stringify(body) : undefined }),
     humans: (active?: boolean) =>
       request<Human[]>(`/org/humans${buildQuery(active !== undefined ? { active: String(active) } : undefined)}`),
     updateRbac: (id: string, rbac: string) =>
@@ -647,7 +656,7 @@ export const api = {
         method: 'POST',
       }),
     erasure: (id: string) =>
-      request(`/org/humans/${id}/erasure`, {
+      request<Record<string, unknown>>(`/org/humans/${id}/erasure`, {
         method: 'POST',
       }),
     members: () => request<{ members: Member[]; total: number }>('/org/members'),
@@ -773,15 +782,15 @@ export const api = {
         body: JSON.stringify(body),
       }),
     pause: (id: string) =>
-      request(`/triggers/${id}/pause`, {
+      request<Record<string, unknown>>(`/triggers/${id}/pause`, {
         method: 'POST',
       }),
     resume: (id: string) =>
-      request(`/triggers/${id}/resume`, {
+      request<Record<string, unknown>>(`/triggers/${id}/resume`, {
         method: 'POST',
       }),
     archive: (id: string) =>
-      request(`/triggers/${id}/archive`, {
+      request<Record<string, unknown>>(`/triggers/${id}/archive`, {
         method: 'POST',
       }),
     stats: () => request<Record<string, number>>('/triggers/stats'),
@@ -799,19 +808,19 @@ export const api = {
         body: JSON.stringify({ targetNodeId }),
       }),
     archive: (id: string) =>
-      request(`/workspaces/${id}/archive`, {
+      request<Record<string, unknown>>(`/workspaces/${id}/archive`, {
         method: 'POST',
       }),
   },
   nodes: {
     list: () => request<Node[]>('/nodes'),
     enroll: (body: Record<string, string>) =>
-      request('/nodes/enroll', {
+      request<Record<string, unknown>>('/nodes/enroll', {
         method: 'POST',
         body: JSON.stringify(body),
       }),
     revoke: (id: string) =>
-      request(`/nodes/${id}/revoke`, {
+      request<Record<string, unknown>>(`/nodes/${id}/revoke`, {
         method: 'POST',
       }),
   },
@@ -820,26 +829,26 @@ export const api = {
     quotas: () => request<Record<string, unknown>>('/governance/quotas'),
     spend: () => request<SpendSnapshot>('/governance/spend'),
     updatePolicies: (body: Record<string, unknown>) =>
-      request('/governance/policies', {
+      request<Record<string, unknown>>('/governance/policies', {
         method: 'PUT',
         body: JSON.stringify(body),
       }),
     updateQuotas: (body: Record<string, unknown>) =>
-      request('/governance/quotas', {
+      request<Record<string, unknown>>('/governance/quotas', {
         method: 'PUT',
         body: JSON.stringify(body),
       }),
     createHold: (body: Record<string, string>) =>
-      request('/governance/holds', {
+      request<Record<string, unknown>>('/governance/holds', {
         method: 'POST',
         body: JSON.stringify(body),
       }),
     releaseHold: (id: string) =>
-      request(`/governance/holds/${id}/release`, {
+      request<Record<string, unknown>>(`/governance/holds/${id}/release`, {
         method: 'POST',
       }),
     ackSpendOverrun: (id: string) =>
-      request(`/governance/spend/overruns/${id}/ack`, {
+      request<Record<string, unknown>>(`/governance/spend/overruns/${id}/ack`, {
         method: 'POST',
       }),
   },
@@ -850,12 +859,12 @@ export const api = {
         body: JSON.stringify({ backupDir }),
       }),
     restore: (backupPath: string) =>
-      request('/admin/backup/restore', {
+      request<Record<string, unknown>>('/admin/backup/restore', {
         method: 'POST',
         body: JSON.stringify({ backupPath }),
       }),
     scanSecrets: (content: string) =>
-      request('/admin/secrets/scan', {
+      request<Record<string, unknown>>('/admin/secrets/scan', {
         method: 'POST',
         body: JSON.stringify({ content }),
       }),
@@ -868,11 +877,11 @@ export const api = {
         body: JSON.stringify(body),
       }),
     publish: (id: string) =>
-      request(`/role-templates/${id}/publish`, {
+      request<Record<string, unknown>>(`/role-templates/${id}/publish`, {
         method: 'POST',
       }),
     retire: (id: string) =>
-      request(`/role-templates/${id}/retire`, {
+      request<Record<string, unknown>>(`/role-templates/${id}/retire`, {
         method: 'POST',
       }),
   },
@@ -898,7 +907,7 @@ export const api = {
         body: JSON.stringify(body),
       }),
     revoke: (id: string) =>
-      request(`/auth/pats/${id}/revoke`, {
+      request<Record<string, unknown>>(`/auth/pats/${id}/revoke`, {
         method: 'POST',
       }),
   },
@@ -914,7 +923,7 @@ export const api = {
         method: 'POST',
       }),
     setLeader: (id: string, memberId: string) =>
-      request(`/org/groups/${id}/leader`, {
+      request<Record<string, unknown>>(`/org/groups/${id}/leader`, {
         method: 'PUT',
         body: JSON.stringify({ leaderMemberId: memberId }),
       }),

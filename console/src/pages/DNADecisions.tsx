@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { DnaDecision } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
+import { formatDate } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function DNADecisions() {
@@ -50,7 +51,7 @@ export default function DNADecisions() {
                 {outcomePreview.slice(0, 150)}{outcomePreview.length > 150 ? '...' : ''}
               </pre>
               <p className="text-xs text-gray-500 mt-2">
-                Decided: {new Date(d.decidedAt * 1000).toLocaleString()}
+                Decided: {formatDate(d.decidedAt)}
               </p>
             </div>
             )
