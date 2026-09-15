@@ -9,6 +9,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { to: '/', label: 'Home' },
   { to: '/dna', label: 'DNA' },
+  { to: '/dna/proposals', label: 'Proposals' },
   { to: '/dna/goals', label: 'Goals' },
   { to: '/org', label: 'Org' },
   { to: '/groups', label: 'Groups' },

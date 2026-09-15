@@ -53,12 +53,7 @@ public class AuthController {
         if (!rateLimiter.allow(email)) {
             long remaining = rateLimiter.getRemainingAttempts(email);
             var audit = auditService.logSystem("REFUSAL", "auth_login", email, "Rate limited login attempt for: " + email);
-            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of(
-                "code", "rate_limited",
-                "message", "Too many login attempts. Try again later.",
-                "audit_event_id", audit.getId(),
-                "remainingAttempts", remaining
-            ));
+            return ControllerResponses.tooManyRequests(auditService, "Too many login attempts. Try again later.", remaining);
         }
 
         var humanOpt = orgService.findHumanByEmail(email);
@@ -125,14 +120,7 @@ public class AuthController {
         if (!rateLimiter.allow(actor + ":change-password")) {
             long remaining = rateLimiter.getRemainingAttempts(actor + ":change-password");
             var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Rate limited password change for: " + actor, null);
-            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                    .header("Retry-After", String.valueOf(rateLimiter.getResetSeconds(actor + ":change-password")))
-                    .body(Map.of(
-                        "code", "rate_limited",
-                        "message", "Too many password change attempts. Try again later.",
-                        "audit_event_id", audit.getId(),
-                        "remainingAttempts", remaining
-                    ));
+            return ControllerResponses.tooManyRequests(auditService, "Too many password change attempts. Try again later.", remaining);
         }
 
         String currentPassword = body.get("currentPassword");

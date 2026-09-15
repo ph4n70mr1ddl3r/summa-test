@@ -4,6 +4,7 @@ import { api } from '../services/api'
 import type { DnaDomain, DnaCard, DnaGoal, DnaProposal } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
 import { ErrorBanner } from '../components/ErrorBanner'
+import { unwrapSettled } from '../services/api'
 
 export default function DNAConsole() {
   const [domains, setDomains] = useState<DnaDomain[]>([])
@@ -37,10 +38,10 @@ export default function DNAConsole() {
         api.dna.reviewQueue().catch(() => null),
       ]).then(([d, c, g, p]) => {
         if (aborted) return
-        const domains = (d as PromiseFulfilledResult<DnaDomain[]>).value ?? []
-        const cards = (c as PromiseFulfilledResult<DnaCard[]>).value ?? []
-        const goals = (g as PromiseFulfilledResult<DnaGoal[]>).value ?? []
-        const proposals = (p as PromiseFulfilledResult<DnaProposal[]>).value ?? []
+        const domains = unwrapSettled(d) ?? []
+        const cards = unwrapSettled(c) ?? []
+        const goals = unwrapSettled(g) ?? []
+        const proposals = unwrapSettled(p) ?? []
         setDomains(domains)
         setCards(cards)
         setGoals(goals)

@@ -11,6 +11,10 @@ vi.mock('../services/api', () => ({
       spend: vi.fn(),
     },
   },
+  unwrapSettled: (result: PromiseSettledResult<unknown>): unknown => {
+    if (result.status === 'fulfilled') return result.value ?? null;
+    return null;
+  },
 }))
 
 describe('Governance page', () => {

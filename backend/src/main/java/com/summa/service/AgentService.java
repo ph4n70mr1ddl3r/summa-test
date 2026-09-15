@@ -301,14 +301,24 @@ public class AgentService {
             .filter(a -> a.getTtlAt() != null && a.getTtlAt().isBefore(now))
             .toList();
         for (Agent agent : activeExpired) {
-            retire(agent.getId(), "system");
+            try {
+                retire(agent.getId(), "system");
+            } catch (Exception e) {
+                auditService.logSystem("TTL_REAP_FAIL", "agent", agent.getId(),
+                    String.format("{\"error\":\"%s\"}", e.getMessage()));
+            }
         }
         for (Agent agent : suspendedExpired) {
-            agent.setStatus("archived");
-            agent.setArchivedAt(now);
-            agentRepository.save(agent);
-            auditService.logSystem("TTL_REAP_SUSPENDED", "agent", agent.getId(),
-                "{\"reason\":\"ttl_expired\"}");
+            try {
+                agent.setStatus("archived");
+                agent.setArchivedAt(now);
+                agentRepository.save(agent);
+                auditService.logSystem("TTL_REAP_SUSPENDED", "agent", agent.getId(),
+                    "{\"reason\":\"ttl_expired\"}");
+            } catch (Exception e) {
+                auditService.logSystem("TTL_REAP_SUSPENDED_FAIL", "agent", agent.getId(),
+                    String.format("{\"error\":\"%s\"}", e.getMessage()));
+            }
         }
     }
 }

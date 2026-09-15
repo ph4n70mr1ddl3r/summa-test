@@ -49,4 +49,10 @@ public final class ControllerResponses {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(Map.of("code", "service_unavailable", "message", message, "audit_event_id", event.getId()));
     }
+
+    public static ResponseEntity<Map<String, Object>> tooManyRequests(AuditService audit, String message, long remainingAttempts) {
+        AuditEvent event = audit.logSystem("REFUSAL", "rate_limited", null, message);
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(Map.of("code", "rate_limited", "message", message, "audit_event_id", event.getId(), "remainingAttempts", remainingAttempts));
+    }
 }

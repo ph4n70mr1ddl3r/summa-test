@@ -3,6 +3,7 @@ import { api } from '../services/api'
 import type { SpendSnapshot } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
 import { ErrorBanner } from '../components/ErrorBanner'
+import { unwrapSettled } from '../services/api'
 
 export default function Governance() {
   const [policies, setPolicies] = useState<Record<string, unknown>>({})
@@ -32,9 +33,9 @@ export default function Governance() {
         api.governance.spend().catch(() => null),
       ]).then(([pRes, qRes, sRes]) => {
         if (aborted) return
-        const policies = (pRes as PromiseFulfilledResult<Record<string, unknown>>).value ?? {}
-        const quotas = (qRes as PromiseFulfilledResult<Record<string, unknown>>).value ?? {}
-        const spend = (sRes as PromiseFulfilledResult<SpendSnapshot | null>).value ?? null
+        const policies = unwrapSettled(pRes) ?? {}
+        const quotas = unwrapSettled(qRes) ?? {}
+        const spend = unwrapSettled(sRes)
         setPolicies(policies)
         setQuotas(quotas)
         setSpend(spend)

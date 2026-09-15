@@ -61,12 +61,16 @@ public class RunService {
         return runRepository.findById(id);
     }
 
-    public List<Run> findByAgent(String agentId) {
-        return runRepository.findByAgentId(agentId);
+    public List<Run> findByAgent(String agentId, int limit) {
+        return runRepository.findByAgentIdOrderByCreatedAtDesc(agentId).stream().limit(limit).toList();
     }
 
-    public List<Run> findByWorkspace(String workspaceId) {
-        return runRepository.findByWorkspaceId(workspaceId);
+    public List<Run> findByWorkspace(String workspaceId, int limit) {
+        return runRepository.findByWorkspaceIdOrderByCreatedAtDesc(workspaceId).stream().limit(limit).toList();
+    }
+
+    public List<Run> findByStatus(String status, int limit) {
+        return runRepository.findByStatusOrderByCreatedAtDesc(status).stream().limit(limit).toList();
     }
 
     public List<Run> findRunning() {

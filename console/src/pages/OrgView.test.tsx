@@ -12,6 +12,10 @@ vi.mock('../services/api', () => ({
       list: vi.fn(),
     },
   },
+  unwrapSettled: (result: PromiseSettledResult<unknown>): unknown => {
+    if (result.status === 'fulfilled') return result.value ?? null;
+    return null;
+  },
 }))
 
 describe('OrgView page', () => {

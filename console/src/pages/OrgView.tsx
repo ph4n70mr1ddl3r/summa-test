@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { Group, Member } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
-import { groupStatusColor, rbacRoleColor } from '../utils/formatting'
+import { groupStatusColor, rbacRoleColor, agentStatusColor } from '../utils/formatting'
+import { unwrapSettled } from '../services/api'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function OrgView() {
@@ -29,8 +30,8 @@ export default function OrgView() {
         api.groups.list().catch(() => null),
       ]).then(([mRes, gRes]) => {
         if (aborted) return
-        const members = (mRes as PromiseFulfilledResult<{ members: Member[]; total: number }>).value
-        const groups = (gRes as PromiseFulfilledResult<Group[]>).value ?? []
+        const members = unwrapSettled(mRes)
+        const groups = unwrapSettled(gRes) ?? []
         setMembers(members?.members ?? [])
         setGroups(groups)
         setError('Some data could not be loaded: ' + (e?.message || String(e)))
@@ -83,13 +84,7 @@ export default function OrgView() {
                   <span className="text-gray-200 text-sm">{escapeHtml(a.name)}</span>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-500">{escapeHtml(a.class)}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded ${
-                      a.status === 'active' ? 'bg-green-900/50 text-green-400' :
-                      a.status === 'requested' ? 'bg-blue-900/50 text-blue-400' :
-                      a.status === 'suspended' ? 'bg-yellow-900/50 text-yellow-400' :
-                      a.status === 'retiring' ? 'bg-orange-900/50 text-orange-400' :
-                      'bg-gray-600 text-gray-400'
-                    }`} aria-label={`Status: ${a.status}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded ${agentStatusColor(a.status)}`} aria-label={`Status: ${a.status}`}>
                       {escapeHtml(a.status)}
                     </span>
                   </div>

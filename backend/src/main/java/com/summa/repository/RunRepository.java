@@ -13,6 +13,9 @@ public interface RunRepository extends JpaRepository<Run, String> {
     List<Run> findByAgentIdAndStatus(String agentId, String status);
     List<Run> findByWorkspaceId(String workspaceId);
     List<Run> findByStatus(String status);
+    List<Run> findByAgentIdOrderByCreatedAtDesc(String agentId);
+    List<Run> findByWorkspaceIdOrderByCreatedAtDesc(String workspaceId);
+    List<Run> findByStatusOrderByCreatedAtDesc(String status);
     
     @Query("SELECT r FROM Run r WHERE r.status = 'running' AND r.startedAt < :before")
     List<Run> findRunningBefore(Instant before);

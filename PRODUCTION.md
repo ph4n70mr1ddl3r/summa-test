@@ -216,7 +216,7 @@ cp .env.example .env
 
 docker compose up -d --build
 ```
-> `docker-compose.yml` uses `${SUMMA_JWT_SECRET:?...}` which fails fast if the variable is unset. Compose auto-loads `.env` from the current directory.
+> `docker-compose.yml` uses `${SUMMA_JWT_SECRET:?JWT secret must be set}` which fails fast if the variable is unset. Compose auto-loads `.env` from the current directory.
 
 ### OCI Images (Podman)
 ```bash

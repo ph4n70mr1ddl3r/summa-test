@@ -5,4 +5,6 @@ export function escapeHtml(str: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#x27;')
+    .replace(/\n/g, '<br/>')
+    .replace(/\r/g, '')
 }

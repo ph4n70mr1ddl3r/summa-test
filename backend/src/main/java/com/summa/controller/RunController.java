@@ -33,15 +33,15 @@ public class RunController {
         int cappedLimit = Math.min(Math.max(limit, 1), 200);
         List<Run> all;
         if (agentId != null) {
-            all = runService.findByAgent(agentId);
+            all = runService.findByAgent(agentId, cappedLimit);
         } else if (workspaceId != null) {
-            all = runService.findByWorkspace(workspaceId);
+            all = runService.findByWorkspace(workspaceId, cappedLimit);
         } else if (status != null) {
-            all = runService.findByStatus(status);
+            all = runService.findByStatus(status, cappedLimit);
         } else {
             return ResponseEntity.ok(runService.findRecent(cappedLimit));
         }
-        return ResponseEntity.ok(all.stream().limit(cappedLimit).toList());
+        return ResponseEntity.ok(all);
     }
 
     @GetMapping("/{id}")

@@ -445,59 +445,64 @@ public class InitiativeService {
         all.addAll(proposed);
 
         for (Initiative init : all) {
-            // INT-060/063: Stall and close-out detection — deadline passed
-            // INT-062: Runs for both active and proposed states
-            if (init.getDeadline() != null && init.getDeadline().isBefore(now)) {
-                boolean isActive = "active".equals(init.getStatus());
-                boolean isProposed = "proposed".equals(init.getStatus());
-                if (isActive || isProposed) {
-                    auditService.logSystem("STALL_CHECK", "initiative", init.getId(),
-                        String.format("{\"deadlinePassed\":true,\"sponsor\":\"%s\",\"status\":\"%s\"}", init.getStatus(), init.getSponsor()));
-                    // INT-060: File stall ask when open work exists; INT-063: close-out ask when none
-                    boolean hasOpenWork = boardTaskRepository.findByInitiativeId(init.getId()).stream()
-                            .anyMatch(t -> !"done".equals(t.getStatus()));
-                    String stallReason = hasOpenWork ? "stall" : "closeout";
-                    // Dedup: skip if a stall/close-out ask was filed recently for this initiative
-                    if (!hasRecentStallAsk(init.getId(), stallReason, dedupCutoff)) {
-                        try {
-                            askService.create("question", "system", init.getSponsor(),
-                                String.format("{\"initiativeId\":\"%s\",\"reason\":\"%s\"}", init.getId(), stallReason),
-                                "bulk", "escalate", 1,
-                                Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
-                        } catch (Exception e) {
-                            auditService.logSystem("STALL_ASK_FAIL", "initiative", init.getId(),
-                                JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
+            try {
+                // INT-060/063: Stall and close-out detection — deadline passed
+                // INT-062: Runs for both active and proposed states
+                if (init.getDeadline() != null && init.getDeadline().isBefore(now)) {
+                    boolean isActive = "active".equals(init.getStatus());
+                    boolean isProposed = "proposed".equals(init.getStatus());
+                    if (isActive || isProposed) {
+                        auditService.logSystem("STALL_CHECK", "initiative", init.getId(),
+                            String.format("{\"deadlinePassed\":true,\"sponsor\":\"%s\",\"status\":\"%s\"}", init.getStatus(), init.getSponsor()));
+                        // INT-060: File stall ask when open work exists; INT-063: close-out ask when none
+                        boolean hasOpenWork = boardTaskRepository.findByInitiativeId(init.getId()).stream()
+                                .anyMatch(t -> !"done".equals(t.getStatus()));
+                        String stallReason = hasOpenWork ? "stall" : "closeout";
+                        // Dedup: skip if a stall/close-out ask was filed recently for this initiative
+                        if (!hasRecentStallAsk(init.getId(), stallReason, dedupCutoff)) {
+                            try {
+                                askService.create("question", "system", init.getSponsor(),
+                                    String.format("{\"initiativeId\":\"%s\",\"reason\":\"%s\"}", init.getId(), stallReason),
+                                    "bulk", "escalate", 1,
+                                    Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
+                            } catch (Exception ex) {
+                                auditService.logSystem("STALL_ASK_FAIL", "initiative", init.getId(),
+                                    JsonHelpers.toJson(Map.of("error", ex.getMessage()), objectMapper));
+                            }
                         }
                     }
                 }
-            }
 
-            // INT-050: Direction ask — goal window ended
-            if (init.getGoalRef() != null && !init.getGoalRef().isBlank()) {
-                try {
-                    Optional<DnaGoal> goalOpt = dnaGoalService.findById(init.getGoalRef());
-                    boolean windowEnded = goalOpt.filter(g ->
-                            g.getEffectiveTo() != null && g.getEffectiveTo().isBefore(now))
-                            .isPresent();
-                    boolean goalTerminal = goalOpt.filter(g ->
-                            !"active".equals(g.getStatus())).isPresent();
-                    if (windowEnded || goalTerminal) {
-                        String reason = windowEnded ? "window_ended" : "goal_terminal";
-                        // Dedup: skip if a direction ask was filed recently for this initiative
-                        if (!hasRecentStallAsk(init.getId(), "direction_" + reason, dedupCutoff)) {
-                            String goalStatus = goalOpt.map(DnaGoal::getStatus).orElse("unknown");
-                             askService.create("question", "system", init.getSponsor(),
-                                 objectMapper.writeValueAsString(Map.of("initiativeId", init.getId(), "goalRef", init.getGoalRef(), "reason", reason, "goalStatus", goalStatus)),
-                                 "bulk", "escalate", 1,
-                                 Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
-                             auditService.logSystem("DIRECTION_ASK_CREATED", "initiative", init.getId(),
-                                 objectMapper.writeValueAsString(Map.of("goalRef", init.getGoalRef(), "sponsor", init.getSponsor(), "reason", reason)));
+                // INT-050: Direction ask — goal window ended
+                if (init.getGoalRef() != null && !init.getGoalRef().isBlank()) {
+                    try {
+                        Optional<DnaGoal> goalOpt = dnaGoalService.findById(init.getGoalRef());
+                        boolean windowEnded = goalOpt.filter(g ->
+                                g.getEffectiveTo() != null && g.getEffectiveTo().isBefore(now))
+                                .isPresent();
+                        boolean goalTerminal = goalOpt.filter(g ->
+                                !"active".equals(g.getStatus())).isPresent();
+                        if (windowEnded || goalTerminal) {
+                            String reason = windowEnded ? "window_ended" : "goal_terminal";
+                            // Dedup: skip if a direction ask was filed recently for this initiative
+                            if (!hasRecentStallAsk(init.getId(), "direction_" + reason, dedupCutoff)) {
+                                String goalStatus = goalOpt.map(DnaGoal::getStatus).orElse("unknown");
+                                 askService.create("question", "system", init.getSponsor(),
+                                     objectMapper.writeValueAsString(Map.of("initiativeId", init.getId(), "goalRef", init.getGoalRef(), "reason", reason, "goalStatus", goalStatus)),
+                                     "bulk", "escalate", 1,
+                                     Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
+                                 auditService.logSystem("DIRECTION_ASK_CREATED", "initiative", init.getId(),
+                                     objectMapper.writeValueAsString(Map.of("goalRef", init.getGoalRef(), "sponsor", init.getSponsor(), "reason", reason)));
+                            }
                         }
+                    } catch (Exception e) {
+                        auditService.logSystem("DIRECTION_ASK_FAIL", "initiative", init.getId(),
+                            JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
                     }
-                } catch (Exception e) {
-                    auditService.logSystem("DIRECTION_ASK_FAIL", "initiative", init.getId(),
-                        JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
                 }
+            } catch (Exception e) {
+                auditService.logSystem("STALL_CHECK_FAIL", "initiative", init.getId(),
+                    String.format("{\"error\":\"%s\"}", e.getMessage()));
             }
         }
     }

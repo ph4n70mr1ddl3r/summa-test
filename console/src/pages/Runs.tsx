@@ -22,7 +22,7 @@ export default function Runs() {
   }, [filter])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={() => { setFilter('all'); setLoading(true); setError(null) }} />
+  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={() => { setLoading(true); setError(null) }} />
 
   const statusCounts: Record<string, number> = {}
   runs.forEach(r => { statusCounts[r.status] = (statusCounts[r.status] || 0) + 1 })

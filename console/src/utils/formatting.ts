@@ -2,9 +2,30 @@ export function formatDate(epochSeconds: number | undefined | null, options?: { 
   if (epochSeconds === null || epochSeconds === undefined) return '?'
   const d = new Date(epochSeconds * 1000)
   if (options?.dateOnly) {
-    return d.toLocaleDateString()
+    return d.toLocaleDateString(undefined, { timeZone: 'UTC' })
   }
-  return d.toLocaleString()
+  return d.toLocaleString(undefined, { timeZone: 'UTC' })
+}
+
+export function agentStatusColor(status: string): string {
+  switch (status) {
+    case 'active': return 'bg-green-900/50 text-green-400'
+    case 'requested': return 'bg-blue-900/50 text-blue-400'
+    case 'suspended': return 'bg-yellow-900/50 text-yellow-400'
+    case 'retiring': return 'bg-orange-900/50 text-orange-400'
+    case 'archived': return 'bg-gray-600 text-gray-400'
+    default: return 'bg-gray-700 text-gray-300'
+  }
+}
+
+export function askStatusColor(status: string): string {
+  switch (status) {
+    case 'pending': return 'bg-yellow-900/50 text-yellow-400'
+    case 'answered': return 'bg-green-900/50 text-green-400'
+    case 'expired': return 'bg-red-900/50 text-red-400'
+    case 'withdrawn': return 'bg-gray-600 text-gray-400'
+    default: return 'bg-gray-700 text-gray-300'
+  }
 }
 
 export function tierColor(tier: string): string {

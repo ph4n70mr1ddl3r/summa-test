@@ -4,6 +4,7 @@ import type { SpawnRequest, SpawnStats } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
 import { spawnStatusColor } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
+import { unwrapSettled } from '../services/api'
 
 export default function Spawning() {
   const [requests, setRequests] = useState<SpawnRequest[]>([])
@@ -29,8 +30,8 @@ export default function Spawning() {
         api.spawn.stats().catch(() => null),
       ]).then(([rRes, sRes]) => {
         if (aborted) return
-        const requests = (rRes as PromiseFulfilledResult<SpawnRequest[]>).value ?? []
-        const stats = (sRes as PromiseFulfilledResult<SpawnStats>).value ?? null
+        const requests = unwrapSettled(rRes) ?? []
+        const stats = unwrapSettled(sRes)
         setRequests(requests)
         setStats(stats)
         setError('Some data could not be loaded: ' + (e?.message || String(e)))

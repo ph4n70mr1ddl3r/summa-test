@@ -73,7 +73,7 @@ python3 tools/test_lint.py
 
 ## Phases
 
-Status as of 2026-09-04; normative scope lives in `PLAN.md` and `specs/`
+Status as of 2026-09-10; normative scope lives in `PLAN.md` and `specs/`
 (see `specs/21-delivery-and-acceptance.md` for the full 0–8b phase table with entry/exit criteria).
 
 | Phase | Deliverable | Status |

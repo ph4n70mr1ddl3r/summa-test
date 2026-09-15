@@ -7,6 +7,7 @@ import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
+import com.summa.enums.MemoryTier;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -59,6 +60,11 @@ public class MemoryController {
             String tier = body.get("tier");
             if (tier == null || tier.isBlank()) {
                 throw new IllegalArgumentException("tier is required");
+            }
+            try {
+                MemoryTier.valueOf(tier.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid tier: " + tier + ". Must be one of: personal, project, proposal");
             }
             MemoryItem item = memoryService.create(
                 tier,
