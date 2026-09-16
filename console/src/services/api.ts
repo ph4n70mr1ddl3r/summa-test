@@ -115,7 +115,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw err;
   }
   if (res.status === 204) {
-    return undefined as unknown as T;
+    return null as unknown as T;
   }
   return res.json() as Promise<T>;
 }
@@ -880,7 +880,7 @@ export const api = {
   roleTemplates: {
     list: () => request<RoleTemplate[]>('/role-templates'),
     create: (body: Record<string, string>) =>
-      request('/role-templates', {
+      request<RoleTemplate>('/role-templates', {
         method: 'POST',
         body: JSON.stringify(body),
       }),

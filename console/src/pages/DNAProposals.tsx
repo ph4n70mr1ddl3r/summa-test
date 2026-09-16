@@ -27,7 +27,9 @@ export default function DNAProposals() {
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<string>('all')
 
-  useEffect(() => {
+  const loadProposals = () => {
+    setLoading(true)
+    setError(null)
     let aborted = false
     const params: Record<string, string> = {}
     if (filter !== 'all') params.status = filter
@@ -35,10 +37,15 @@ export default function DNAProposals() {
       .then((data) => { if (!aborted) { setProposals(data); setLoading(false) } })
       .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
     return () => { aborted = true }
+  }
+
+  useEffect(() => {
+    const cancel = loadProposals()
+    return cancel
   }, [filter])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={() => window.location.reload()} />
+  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadProposals} />
 
   const statusCounts: Record<string, number> = {}
   proposals.forEach(p => { statusCounts[p.status] = (statusCounts[p.status] || 0) + 1 })

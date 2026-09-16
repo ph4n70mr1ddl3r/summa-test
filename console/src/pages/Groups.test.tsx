@@ -66,15 +66,6 @@ describe('Groups page', () => {
     })
   })
 
-  it('shows API reference section', async () => {
-    vi.mocked(apiModule.api.groups.list).mockResolvedValue([])
-    render(<Groups />)
-    await waitFor(() => {
-      expect(screen.getByText('API Reference')).toBeInTheDocument()
-      expect(screen.getByText(/GET.*api\/org\/groups/i)).toBeInTheDocument()
-    })
-  })
-
   it('shows error when archive fails', async () => {
     vi.mocked(apiModule.api.groups.list).mockResolvedValue([
       { id: 'g1', name: 'Engineering', status: 'active', createdAt: 0 },
@@ -87,7 +78,7 @@ describe('Groups page', () => {
     const archiveBtn = screen.getByText('Archive')
     archiveBtn.click()
     await waitFor(() => {
-      expect(screen.getByText(/Failed to load.*Permission denied/i)).toBeInTheDocument()
+      expect(screen.getByText('Permission denied')).toBeInTheDocument()
     })
   })
 

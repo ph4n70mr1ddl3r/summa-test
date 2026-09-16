@@ -59,15 +59,6 @@ describe('OrgView page', () => {
     })
   })
 
-  it('shows role templates section', async () => {
-    vi.mocked(apiModule.api.org.members).mockResolvedValue({ members: [], total: 0 })
-    vi.mocked(apiModule.api.groups.list).mockResolvedValue([])
-    const { container } = render(<OrgView />)
-    await waitFor(() => {
-      expect(container.textContent).toContain('Role Templates')
-    })
-  })
-
   it('shows agents with class and status', async () => {
     vi.mocked(apiModule.api.org.members).mockResolvedValue({
       members: [

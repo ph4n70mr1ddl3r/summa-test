@@ -151,7 +151,10 @@ public class InitiativeService {
                         depOpt.get().getDependsOn(),
                         new TypeReference<List<String>>() {});
                     if (hasPathTo(target, grandchildDeps, visited)) return true;
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    auditService.logSystem("CYCLE_DETECT_FAIL", "initiative", target,
+                        String.format("{\"error\":\"%s\"}", e.getMessage()));
+                }
             }
             // Do not backtrack — visited set must persist for correct cycle detection
         }
@@ -521,9 +524,15 @@ public class InitiativeService {
                     if (node.has("reason") && node.get("reason").asText().equals(reason)) {
                         return true;
                     }
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    auditService.logSystem("STALL_DEDUP_FAIL", "initiative", initiativeId,
+                        String.format("{\"error\":\"%s\"}", e.getMessage()));
+                }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            auditService.logSystem("STALL_DEDUP_FAIL", "initiative", initiativeId,
+                String.format("{\"error\":\"%s\"}", e.getMessage()));
+        }
         return false;
     }
 
@@ -562,7 +571,10 @@ public class InitiativeService {
                     auditService.logSystem("DEPENDENT_CLOSE_ASK", "initiative", dep.getId(),
                         String.format("{\"upstreamClosed\":\"%s\",\"sponsor\":\"%s\"}", closedId, askTo));
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                auditService.logSystem("DEPENDENT_CLOSE_ASK_FAIL", "initiative", dep.getId(),
+                    String.format("{\"error\":\"%s\"}", e.getMessage()));
+            }
         }
     }
 }

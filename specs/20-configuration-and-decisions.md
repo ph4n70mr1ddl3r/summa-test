@@ -107,3 +107,5 @@ trigger; the mechanism it tunes is already designed (NFR-022). Defaults live beh
 - **CFG-170** — OKF interchange profile: the Open Knowledge Format (v0.2) is the DNA
   store's exchange profile — export target and ingest source (STG-050…052) — never the
   canonical schema — decided (v2.57); revisit only on an OKF major-version break.
+- **CFG-180** — Deployment perimeter: one deployment per company (default) — M&A-style
+  consolidation of two deployments is a migration project, not a runtime feature.

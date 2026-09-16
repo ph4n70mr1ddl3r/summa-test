@@ -12,7 +12,9 @@ export default function Governance() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
+  const loadData = () => {
+    setLoading(true)
+    setError(null)
     let aborted = false
     Promise.all([
       api.governance.policies(),
@@ -44,10 +46,15 @@ export default function Governance() {
       })
     })
     return () => { aborted = true }
+  }
+
+  useEffect(() => {
+    const cancel = loadData()
+    return cancel
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={() => window.location.reload()} />
+  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadData} />
 
   const policyEntries = Object.entries(policies)
   const quotaEntries = Object.entries(quotas)
@@ -118,14 +125,6 @@ export default function Governance() {
         </div>
       )}
 
-      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-        <h3 className="text-lg font-semibold text-purple-300 mb-4">API Reference</h3>
-        <div className="text-xs text-gray-500 space-y-1">
-          <p>GET/PUT /api/governance/policies · GET/PUT /api/governance/quotas</p>
-          <p>GET /api/governance/spend · POST /api/governance/holds</p>
-          <p>POST /api/governance/holds/:id/release</p>
-        </div>
-      </div>
     </div>
   )
 }

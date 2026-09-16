@@ -10,16 +10,23 @@ export default function Nodes() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
+  const loadNodes = () => {
+    setLoading(true)
+    setError(null)
     let aborted = false
     api.nodes.list()
       .then((data) => { if (!aborted) { setNodes(data); setLoading(false) } })
       .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
     return () => { aborted = true }
+  }
+
+  useEffect(() => {
+    const cancel = loadNodes()
+    return cancel
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={() => window.location.reload()} />
+  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadNodes} />
 
   return (
     <div className="space-y-6">

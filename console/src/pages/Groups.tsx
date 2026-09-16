@@ -9,6 +9,7 @@ export default function Groups() {
   const [groups, setGroups] = useState<Group[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
   const abortedRef = useRef(false)
 
   const loadGroups = () => {
@@ -30,7 +31,7 @@ export default function Groups() {
       await api.groups.archive(id)
       loadGroups()
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setActionError(err instanceof Error ? err.message : String(err))
     }
   }
 
@@ -43,6 +44,13 @@ export default function Groups() {
         <h2 className="text-2xl font-bold">Groups</h2>
         <span className="text-sm text-gray-400">{groups.length} groups</span>
       </div>
+
+      {actionError && (
+        <div className="rounded-lg p-3 text-sm bg-red-900/30 border border-red-700 text-red-400" role="alert">
+          {escapeHtml(actionError)}
+          <button onClick={() => setActionError(null)} className="ml-2 text-red-300 hover:text-white">×</button>
+        </div>
+      )}
 
       {groups.length === 0 ? (
         <div className="bg-gray-800 rounded-lg p-8 border border-gray-700 text-center">
@@ -81,14 +89,6 @@ export default function Groups() {
         </div>
       )}
 
-      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-        <h3 className="text-lg font-semibold text-purple-300 mb-4">API Reference</h3>
-        <div className="text-xs text-gray-500 space-y-1">
-          <p>GET /api/org/groups · POST /api/org/groups</p>
-          <p>POST /api/org/groups/:id/archive</p>
-          <p>PUT /api/org/groups/:id/leader</p>
-        </div>
-      </div>
     </div>
   )
 }

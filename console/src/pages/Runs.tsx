@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { Run } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
-import { runStatusColor } from '../utils/formatting'
+import { runStatusColor, formatDate } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Runs() {
@@ -79,8 +79,8 @@ export default function Runs() {
               <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
                 {run.costTokens != null && <span>Tokens: {run.costTokens}</span>}
                 {run.costUsd != null && <span>Cost: ${run.costUsd}</span>}
-                {run.startedAt && <span>Started: {new Date(run.startedAt * 1000).toLocaleString()}</span>}
-                {run.completedAt && <span>Completed: {new Date(run.completedAt * 1000).toLocaleString()}</span>}
+                {run.startedAt && <span>Started: {formatDate(run.startedAt)}</span>}
+                {run.completedAt && <span>Completed: {formatDate(run.completedAt)}</span>}
               </div>
               {run.errorMessage && (
                 <p className="text-xs text-red-400 mt-1">Error: {escapeHtml(run.errorMessage)}</p>

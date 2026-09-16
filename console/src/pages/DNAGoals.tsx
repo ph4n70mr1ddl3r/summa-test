@@ -10,16 +10,23 @@ export default function DNAGoals() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
+  const loadGoals = () => {
+    setLoading(true)
+    setError(null)
     let aborted = false
     api.dna.goals()
       .then((data) => { if (!aborted) { setGoals(data); setLoading(false) } })
       .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
     return () => { aborted = true }
+  }
+
+  useEffect(() => {
+    const cancel = loadGoals()
+    return cancel
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={() => window.location.reload()} />
+  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadGoals} />
 
   return (
     <div className="space-y-6">
@@ -55,14 +62,6 @@ export default function DNAGoals() {
           ))}
         </div>
       )}
-      <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-        <h3 className="text-sm font-semibold text-gray-300 mb-2">API</h3>
-        <code className="text-xs text-gray-400">
-          GET /api/dna/goals{'\n'}
-          PATCH /api/dna/goals/:id/status{'\n'}
-          PATCH /api/dna/goals/:id/window
-        </code>
-      </div>
     </div>
   )
 }

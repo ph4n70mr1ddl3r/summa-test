@@ -151,9 +151,6 @@ export default function Memory() {
           <li>• project — workspace-scoped, domain owner or admin can review</li>
           <li>• proposal — org-scoped, any writer with write access can review</li>
         </ul>
-        <div className="mt-4 text-xs text-gray-500">
-          <p>Endpoints: GET /api/memory · POST /api/memory · POST /api/memory/:id/review</p>
-        </div>
       </div>
     </div>
   )

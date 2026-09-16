@@ -12,7 +12,9 @@ export default function OrgView() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
+  const loadData = () => {
+    setLoading(true)
+    setError(null)
     let aborted = false
     Promise.all([
       api.org.members(),
@@ -39,10 +41,15 @@ export default function OrgView() {
       })
     })
     return () => { aborted = true }
+  }
+
+  useEffect(() => {
+    const cancel = loadData()
+    return cancel
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={() => window.location.reload()} />
+  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadData} />
 
   const humans = members.filter(m => m.kind === 'human')
   const agents = members.filter(m => m.kind === 'agent')
@@ -111,29 +118,6 @@ export default function OrgView() {
             ))}
           </div>
         )}
-        <div className="mt-4 text-xs text-gray-500">
-          <p>Endpoints: GET/POST /api/org/groups · PUT /api/org/groups/:id/leader</p>
-        </div>
-      </div>
-
-      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-        <h3 className="text-lg font-semibold text-yellow-300 mb-4">Nodes</h3>
-        <p className="text-sm text-gray-400 mb-2">
-          Enroll execution nodes via one-time token exchange; authenticate with keypair identity.
-        </p>
-        <div className="text-xs text-gray-500">
-          <p>Endpoints: POST /api/nodes/enroll, POST /api/nodes/:id/heartbeat</p>
-        </div>
-      </div>
-
-      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-        <h3 className="text-lg font-semibold text-orange-300 mb-4">Role Templates</h3>
-        <p className="text-sm text-gray-400 mb-2">
-          Versioned catalog for agent roles; create/publish/retire are admin writes.
-        </p>
-        <div className="text-xs text-gray-500">
-          <p>Endpoints: GET/POST /api/role-templates · POST /api/role-templates/:id/publish</p>
-        </div>
       </div>
     </div>
   )

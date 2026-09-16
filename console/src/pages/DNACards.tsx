@@ -10,16 +10,23 @@ export default function DNACards() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
+  const loadCards = () => {
+    setLoading(true)
+    setError(null)
     let aborted = false
     api.dna.cards()
       .then((data) => { if (!aborted) { setCards(data); setLoading(false) } })
       .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
     return () => { aborted = true }
+  }
+
+  useEffect(() => {
+    const cancel = loadCards()
+    return cancel
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={() => window.location.reload()} />
+  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadCards} />
 
   return (
     <div className="space-y-6">

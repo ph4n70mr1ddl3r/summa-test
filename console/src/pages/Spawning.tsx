@@ -12,7 +12,9 @@ export default function Spawning() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
+  const loadData = () => {
+    setLoading(true)
+    setError(null)
     let aborted = false
     Promise.all([
       api.spawn.list(),
@@ -39,10 +41,15 @@ export default function Spawning() {
       })
     })
     return () => { aborted = true }
+  }
+
+  useEffect(() => {
+    const cancel = loadData()
+    return cancel
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={() => window.location.reload()} />
+  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadData} />
 
   return (
     <div className="space-y-6">

@@ -10,16 +10,23 @@ export default function Initiatives() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
+  const loadInitiatives = () => {
+    setLoading(true)
+    setError(null)
     let aborted = false
     api.initiatives.list()
       .then((data) => { if (!aborted) { setInitiatives(data); setLoading(false) } })
       .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
     return () => { aborted = true }
+  }
+
+  useEffect(() => {
+    const cancel = loadInitiatives()
+    return cancel
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={() => window.location.reload()} />
+  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadInitiatives} />
 
   return (
     <div className="space-y-6">

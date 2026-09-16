@@ -51,14 +51,6 @@ describe('DNAGoals page', () => {
     })
   })
 
-  it('shows API reference', async () => {
-    vi.mocked(apiModule.api.dna.goals).mockResolvedValue([])
-    const { container } = render(<DNAGoals />)
-    await waitFor(() => {
-      expect(container.textContent).toContain('PATCH /api/dna/goals/:id/status')
-    })
-  })
-
   it('shows error state on API failure', async () => {
     vi.mocked(apiModule.api.dna.goals).mockRejectedValue(new Error('Network error'))
     const { container } = render(<DNAGoals />)

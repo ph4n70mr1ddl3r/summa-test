@@ -86,6 +86,9 @@ public class AskService {
                       String expiryBehavior, Integer quorumRequired, Instant deadline,
                       String initiativeId, String workspaceId) {
         // ASK-012: explicit deadline earlier than creation is refused
+        if (deadline == null) {
+            throw new IllegalArgumentException("Deadline is required");
+        }
         if (deadline.isBefore(Instant.now())) {
             throw new IllegalArgumentException("Deadline must be in the future");
         }

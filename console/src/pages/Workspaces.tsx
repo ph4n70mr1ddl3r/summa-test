@@ -10,16 +10,23 @@ export default function Workspaces() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
+  const loadWorkspaces = () => {
+    setLoading(true)
+    setError(null)
     let aborted = false
     api.workspaces.list()
       .then((data) => { if (!aborted) { setWorkspaces(data); setLoading(false) } })
       .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
     return () => { aborted = true }
+  }
+
+  useEffect(() => {
+    const cancel = loadWorkspaces()
+    return cancel
   }, [])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={() => window.location.reload()} />
+  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadWorkspaces} />
 
   return (
     <div className="space-y-6">
