@@ -20,6 +20,11 @@ public final class ControllerResponses {
                 .body(Map.of("code", "validation", "message", message, "audit_event_id", event.getId()));
     }
 
+    public static ResponseEntity<Map<String, Object>> validation(AuditEvent existingAudit, String message) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(Map.of("code", "validation", "message", message, "audit_event_id", existingAudit.getId()));
+    }
+
     public static ResponseEntity<Map<String, Object>> validation(AuditService audit, String actor, String message) {
         AuditEvent event = audit.log(actor, "REFUSAL", "validation", null, message);
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
@@ -30,6 +35,11 @@ public final class ControllerResponses {
         AuditEvent event = audit.logSystem("REFUSAL", "gate", null, message);
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(Map.of("code", "gate", "message", message, "audit_event_id", event.getId()));
+    }
+
+    public static ResponseEntity<Map<String, Object>> gate(AuditEvent existingAudit, String message) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("code", "gate", "message", message, "audit_event_id", existingAudit.getId()));
     }
 
     public static ResponseEntity<Map<String, Object>> gate(AuditService audit, String actor, String message) {
@@ -44,6 +54,11 @@ public final class ControllerResponses {
                 .body(Map.of("code", "not_found", "message", message, "audit_event_id", event.getId()));
     }
 
+    public static ResponseEntity<Map<String, Object>> notFound(AuditEvent existingAudit, String message) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("code", "not_found", "message", message, "audit_event_id", existingAudit.getId()));
+    }
+
     public static ResponseEntity<Map<String, Object>> notFound(AuditService audit, String actor, String message) {
         AuditEvent event = audit.log(actor, "REFUSAL", "not_found", null, message);
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -54,6 +69,11 @@ public final class ControllerResponses {
         AuditEvent event = audit.logSystem("REFUSAL", "conflict", null, message);
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(Map.of("code", "conflict", "message", message, "audit_event_id", event.getId()));
+    }
+
+    public static ResponseEntity<Map<String, Object>> conflict(AuditEvent existingAudit, String message) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("code", "conflict", "message", message, "audit_event_id", existingAudit.getId()));
     }
 
     public static ResponseEntity<Map<String, Object>> conflict(AuditService audit, String actor, String message) {
@@ -84,6 +104,11 @@ public final class ControllerResponses {
         AuditEvent event = audit.logSystem("REFUSAL", "rate_limited", null, message);
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                 .body(Map.of("code", "rate_limited", "message", message, "audit_event_id", event.getId(), "remainingAttempts", remainingAttempts));
+    }
+
+    public static ResponseEntity<Map<String, Object>> tooManyRequests(AuditEvent existingAudit, String message, long remainingAttempts) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(Map.of("code", "rate_limited", "message", message, "audit_event_id", existingAudit.getId(), "remainingAttempts", remainingAttempts));
     }
 
     public static ResponseEntity<Map<String, Object>> tooManyRequests(AuditService audit, String actor, String message, long remainingAttempts) {

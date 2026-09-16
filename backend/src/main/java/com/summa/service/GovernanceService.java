@@ -12,6 +12,7 @@ import jakarta.persistence.PersistenceException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.LinkedHashMap;
@@ -39,7 +40,7 @@ public class GovernanceService {
         }
         // Apply defaults for any missing keys
         applyDefaults(settings);
-        return settings;
+        return Collections.unmodifiableMap(new LinkedHashMap<>(settings));
     }
 
     @SuppressWarnings("unchecked")

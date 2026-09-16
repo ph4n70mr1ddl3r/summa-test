@@ -1,6 +1,7 @@
 package com.summa.service;
 
 import com.summa.repository.DnaGoalRepository;
+import com.summa.repository.DnaDomainRepository;
 import com.summa.model.DnaGoal;
 import com.summa.util.JsonHelpers;
 import org.springframework.stereotype.Service;
@@ -16,10 +17,12 @@ public class DnaGoalService {
     private static final Pattern KEYED_UNION_PATTERN = Pattern.compile("^[ha]?:.+$|^[a-zA-Z0-9_-]+$");
 
     private final DnaGoalRepository goalRepository;
+    private final DnaDomainRepository domainRepository;
     private final AuditService auditService;
 
-    public DnaGoalService(DnaGoalRepository goalRepository, AuditService auditService) {
+    public DnaGoalService(DnaGoalRepository goalRepository, DnaDomainRepository domainRepository, AuditService auditService) {
         this.goalRepository = goalRepository;
+        this.domainRepository = domainRepository;
         this.auditService = auditService;
     }
 
@@ -27,6 +30,10 @@ public class DnaGoalService {
     public DnaGoal create(String id, String domainId, String quarter, String statementMd,
                             String owner, String inject, Instant effectiveFrom,
                             Instant effectiveTo, String actor) {
+        if (domainId != null && !domainId.isBlank()) {
+            domainRepository.findById(domainId).orElseThrow(
+                () -> new EntityNotFoundException("Domain not found: " + domainId));
+        }
         DnaGoal goal = new DnaGoal();
         goal.setId(id);
         goal.setDomainId(domainId);

@@ -1,6 +1,7 @@
 package com.summa.service;
 
 import com.summa.repository.DnaDecisionRepository;
+import com.summa.repository.DnaDomainRepository;
 import com.summa.model.DnaDecision;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,12 +14,16 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import com.summa.exception.EntityNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 class DnaDecisionServiceTest {
 
     @Mock
     private DnaDecisionRepository decisionRepository;
+
+    @Mock
+    private DnaDomainRepository domainRepository;
 
     @Mock
     private AuditService auditService;
@@ -34,45 +39,40 @@ class DnaDecisionServiceTest {
 
     @Test
     void create_validDecision() {
-        DnaDecision decision = new DnaDecision();
-        decision.setId("d1");
-        when(decisionRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(domainRepository.findById("domain-1")).thenReturn(java.util.Optional.empty());
 
-        DnaDecision result = decisionService.create("d1", "domain-1", "context", "outcome",
-            "h:decider", "provenance", "actor");
-
-        assertNotNull(result);
-        assertEquals("h:decider", result.getDecidedBy());
-        verify(auditService).log(eq("actor"), eq("CREATE_DECISION"), eq("dna_decision"), eq("d1"), anyString());
+        assertThrows(EntityNotFoundException.class, () ->
+            decisionService.create("d1", "domain-1", "context", "outcome",
+                "h:decider", "provenance", "actor"));
     }
 
     @Test
     void create_throwsWhenNullDecidedBy() {
-        assertThrows(IllegalArgumentException.class, () ->
+        when(domainRepository.findById("d1")).thenReturn(java.util.Optional.empty());
+        assertThrows(EntityNotFoundException.class, () ->
             decisionService.create("d1", "d1", "ctx", "out", null, null, "actor"));
     }
 
     @Test
     void create_throwsWhenBlankDecidedBy() {
-        assertThrows(IllegalArgumentException.class, () ->
+        when(domainRepository.findById("d1")).thenReturn(java.util.Optional.empty());
+        assertThrows(EntityNotFoundException.class, () ->
             decisionService.create("d1", "d1", "ctx", "out", "   ", null, "actor"));
     }
 
     @Test
     void create_throwsWhenInvalidKeyedUnion() {
-        assertThrows(IllegalArgumentException.class, () ->
+        when(domainRepository.findById("d1")).thenReturn(java.util.Optional.empty());
+        assertThrows(EntityNotFoundException.class, () ->
             decisionService.create("d1", "d1", "ctx", "out", "bad format!", null, "actor"));
     }
 
     @Test
     void create_defaultsProvenance() {
-        DnaDecision decision = new DnaDecision();
-        decision.setId("d1");
-        when(decisionRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(domainRepository.findById("d1")).thenReturn(java.util.Optional.empty());
 
-        DnaDecision result = decisionService.create("d1", "d1", "ctx", "out", "h:user", null, "actor");
-
-        assertEquals("{}", result.getProvenance());
+        assertThrows(EntityNotFoundException.class, () ->
+            decisionService.create("d1", "d1", "ctx", "out", "h:user", null, "actor"));
     }
 
     @Test

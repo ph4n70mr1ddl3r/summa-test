@@ -7,6 +7,7 @@ import com.summa.repository.DnaGoalRepository;
 import com.summa.repository.DnaDecisionRepository;
 import com.summa.repository.WorkspaceRepository;
 import com.summa.repository.SpawnRequestRepository;
+import com.summa.repository.RunRepository;
 import com.summa.model.Initiative;
 import com.summa.model.BoardTask;
 import com.summa.model.Ask;
@@ -51,6 +52,7 @@ public class InitiativeService {
     private final MemberService memberService;
     private final WorkspaceRepository workspaceRepository;
     private final SpawnRequestRepository spawnRequestRepository;
+    private final RunRepository runRepository;
     private final ObjectMapper objectMapper;
 
     public InitiativeService(InitiativeRepository initiativeRepository, BoardTaskRepository boardTaskRepository,
@@ -60,6 +62,7 @@ public class InitiativeService {
                                DnaGoalService dnaGoalService, MemberService memberService,
                                WorkspaceRepository workspaceRepository,
                                SpawnRequestRepository spawnRequestRepository,
+                               RunRepository runRepository,
                                ObjectMapper objectMapper) {
         this.initiativeRepository = initiativeRepository;
         this.boardTaskRepository = boardTaskRepository;
@@ -72,6 +75,7 @@ public class InitiativeService {
         this.memberService = memberService;
         this.workspaceRepository = workspaceRepository;
         this.spawnRequestRepository = spawnRequestRepository;
+        this.runRepository = runRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -90,6 +94,22 @@ public class InitiativeService {
         }
         validateKeyedUnion(sponsor, "sponsor");
         validateKeyedUnion(lead, "lead");
+
+        // INT-001: Refuse viewer or non-active members as sponsor or lead
+        Optional<Human> sponsorHuman = memberService.findHuman(sponsor.replaceFirst("^[ha]?:", ""));
+        if (sponsorHuman.isPresent() && "viewer".equals(sponsorHuman.get().getRbac())) {
+            throw new IllegalStateException("Sponsor cannot be a viewer: " + sponsor);
+        }
+        if (sponsorHuman.isPresent() && !sponsorHuman.get().isActive()) {
+            throw new IllegalStateException("Sponsor must be an active member: " + sponsor);
+        }
+        Optional<Human> leadHuman = memberService.findHuman(lead.replaceFirst("^[ha]?:", ""));
+        if (leadHuman.isPresent() && "viewer".equals(leadHuman.get().getRbac())) {
+            throw new IllegalStateException("Lead cannot be a viewer: " + lead);
+        }
+        if (leadHuman.isPresent() && !leadHuman.get().isActive()) {
+            throw new IllegalStateException("Lead must be an active member: " + lead);
+        }
 
         // INT-070: Cycle detection in depends_on — edges name non-closed rows only
         if (dependsOn != null && !dependsOn.isBlank() && !dependsOn.equals("[]")) {
@@ -400,6 +420,23 @@ public class InitiativeService {
             raiseDependentCloseAsks(id, actor);
         } catch (Exception e) {
             auditService.logSystem("CLOSE_DEPENDENT_ASKS_FAIL", "initiative", id,
+                String.format("{\"error\":\"%s\"}", e.getMessage()));
+        }
+
+        // INT-040/CLC-040: Cancel queued runs tied to this initiative before closing
+        try {
+            List<com.summa.model.Run> queuedRuns = runRepository.findByStatus("queued").stream()
+                .filter(r -> id.equals(r.getInitiativeId()))
+                .toList();
+            for (com.summa.model.Run run : queuedRuns) {
+                run.setStatus("cancelled");
+                run.setCompletedAt(Instant.now());
+                runRepository.save(run);
+                auditService.logSystem("CLOSE_CANCEL_RUN", "run", run.getId(),
+                    String.format("{\"initiativeId\":\"%s\",\"reason\":\"initiative_closed\"}", id));
+            }
+        } catch (Exception e) {
+            auditService.logSystem("CLOSE_CANCEL_RUNS_FAIL", "initiative", id,
                 String.format("{\"error\":\"%s\"}", e.getMessage()));
         }
 

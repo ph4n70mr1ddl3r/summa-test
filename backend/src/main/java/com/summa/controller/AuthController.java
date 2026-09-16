@@ -52,18 +52,18 @@ public class AuthController {
         if (!rateLimiter.allow(email)) {
             long remaining = rateLimiter.getRemainingAttempts(email);
             var audit = auditService.logSystem("REFUSAL", "auth_login", email, "Rate limited login attempt for: " + email);
-            return ControllerResponses.tooManyRequests(auditService, "Too many login attempts. Try again later.", remaining);
+            return ControllerResponses.tooManyRequests(audit, "Too many login attempts. Try again later.", remaining);
         }
 
         var humanOpt = orgService.findHumanByEmail(email);
 
         if (humanOpt.isEmpty()) {
             var audit = auditService.logSystem("REFUSAL", "auth_login", email, "Login attempt for unknown account");
-            return ControllerResponses.gate(auditService, audit.getId());
+            return ControllerResponses.gate(audit, "Unknown account: " + email);
         }
         if (!humanOpt.get().isActive()) {
             var audit = auditService.logSystem("REFUSAL", "auth_login", email, "Login attempt on deactivated account");
-            return ControllerResponses.gate(auditService, audit.getId());
+            return ControllerResponses.gate(audit, "Account is deactivated: " + email);
         }
 
         var human = humanOpt.get();
@@ -71,7 +71,7 @@ public class AuthController {
         if (password == null || password.isBlank() || human.getPasswordHash() == null
                 || !passwordUtil.verify(password, human.getPasswordHash())) {
             var audit = auditService.logSystem("REFUSAL", "auth_login", email, "Login attempt with bad password");
-            return ControllerResponses.gate(auditService, audit.getId());
+            return ControllerResponses.gate(audit, "Invalid credentials: " + email);
         }
 
         String token = JwtUtil.generateToken(human.getId(), jwtSecret, jwtExpiration);
@@ -94,12 +94,12 @@ public class AuthController {
         String token = extractToken(authHeader);
         if (token == null) {
             var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Missing token", null);
-            return ControllerResponses.gate(auditService, audit.getId());
+            return ControllerResponses.gate(audit, "Missing or malformed Authorization header");
         }
         var payload = JwtUtil.parseToken(token, jwtSecret);
         if (payload == null) {
             var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Invalid token", null);
-            return ControllerResponses.gate(auditService, audit.getId());
+            return ControllerResponses.gate(audit, "Invalid or expired token");
         }
         String actor = (String) payload.get("sub");
 
@@ -107,7 +107,7 @@ public class AuthController {
         if (!rateLimiter.allow(actor + ":change-password")) {
             long remaining = rateLimiter.getRemainingAttempts(actor + ":change-password");
             var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Rate limited password change for: " + actor, null);
-            return ControllerResponses.tooManyRequests(auditService, "Too many password change attempts. Try again later.", remaining);
+            return ControllerResponses.tooManyRequests(audit, "Too many password change attempts. Try again later.", remaining);
         }
 
         String currentPassword = body.get("currentPassword");
@@ -135,13 +135,13 @@ public class AuthController {
         var humanOpt = orgService.findHuman(actor);
         if (humanOpt.isEmpty()) {
             var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Invalid credentials for: " + actor, null);
-            return ControllerResponses.gate(auditService, audit.getId());
+            return ControllerResponses.gate(audit, "Invalid credentials for: " + actor);
         }
         var human = humanOpt.get();
 
         if (human.getPasswordHash() == null || !passwordUtil.verify(currentPassword, human.getPasswordHash())) {
             var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Password mismatch for: " + actor, null);
-            return ControllerResponses.gate(auditService, audit.getId());
+            return ControllerResponses.gate(audit, "Current password is incorrect");
         }
 
         human.setPasswordHash(passwordUtil.hash(newPassword));

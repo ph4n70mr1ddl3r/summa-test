@@ -1,6 +1,7 @@
 package com.summa.service;
 
 import com.summa.repository.DnaDecisionRepository;
+import com.summa.repository.DnaDomainRepository;
 import com.summa.model.DnaDecision;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -8,19 +9,22 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import com.summa.util.ScanUtils;
+import com.summa.exception.EntityNotFoundException;
 
 @Service
 public class DnaDecisionService {
     private static final Pattern KEYED_UNION_PATTERN = Pattern.compile("^[ha]?:.+$|^[a-zA-Z0-9_-]+$");
 
     private final DnaDecisionRepository decisionRepository;
+    private final DnaDomainRepository domainRepository;
     private final AuditService auditService;
     private final MemberService memberService;
     private final SecretsScanner secretsScanner;
 
-    public DnaDecisionService(DnaDecisionRepository decisionRepository, AuditService auditService,
+    public DnaDecisionService(DnaDecisionRepository decisionRepository, DnaDomainRepository domainRepository, AuditService auditService,
                                MemberService memberService, SecretsScanner secretsScanner) {
         this.decisionRepository = decisionRepository;
+        this.domainRepository = domainRepository;
         this.auditService = auditService;
         this.memberService = memberService;
         this.secretsScanner = secretsScanner;
@@ -29,6 +33,10 @@ public class DnaDecisionService {
     @Transactional
     public DnaDecision create(String id, String domainId, String contextMd, String outcomeMd,
                                String decidedBy, String provenance, String actor) {
+        if (domainId != null && !domainId.isBlank()) {
+            domainRepository.findById(domainId).orElseThrow(
+                () -> new EntityNotFoundException("Domain not found: " + domainId));
+        }
         validateKeyedUnion(decidedBy, "decidedBy");
         ScanUtils.scanForSecrets(contextMd, actor, "dna_decision", id, secretsScanner, auditService);
         ScanUtils.scanForSecrets(outcomeMd, actor, "dna_decision", id, secretsScanner, auditService);

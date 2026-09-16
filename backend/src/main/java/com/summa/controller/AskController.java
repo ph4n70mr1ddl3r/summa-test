@@ -5,6 +5,7 @@ import com.summa.model.Ask;
 import com.summa.service.AuditService;
 import com.summa.security.WriteGate;
 import com.summa.security.RbacAuthorizationFilter;
+import com.summa.util.JsonHelpers;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
@@ -93,7 +94,7 @@ public class AskController {
                 body.get("payload"),
                 body.get("slaTier"),
                 body.get("expiryBehavior"),
-                body.containsKey("quorumRequired") && body.get("quorumRequired") != null && !body.get("quorumRequired").isBlank() ? parseIntSafe(body.get("quorumRequired")) : null,
+                body.containsKey("quorumRequired") && body.get("quorumRequired") != null && !body.get("quorumRequired").isBlank() ? JsonHelpers.parseIntSafe(body.get("quorumRequired")) : null,
                 deadline,
                 body.get("initiativeId"),
                 body.get("workspaceId")
@@ -151,8 +152,4 @@ public class AskController {
         }
     }
 
-    private Integer parseIntSafe(String s) {
-        try { return Integer.parseInt(s); }
-        catch (NumberFormatException e) { throw new IllegalArgumentException("Invalid quorumRequired: " + s); }
-    }
 }

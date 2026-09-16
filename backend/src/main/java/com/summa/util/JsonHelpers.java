@@ -55,4 +55,22 @@ public final class JsonHelpers {
             }
         }
     }
+
+    public static Integer parseIntSafe(String s) {
+        if (s == null || s.isBlank()) return null;
+        try {
+            return Integer.parseInt(s.trim());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid integer value: " + s);
+        }
+    }
+
+    public static Double parseDoubleSafe(String s) {
+        if (s == null || s.isBlank()) return null;
+        try {
+            return Double.parseDouble(s.trim());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid numeric value: " + s);
+        }
+    }
 }

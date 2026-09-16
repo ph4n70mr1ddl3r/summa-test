@@ -2,6 +2,7 @@ import { Component, ErrorInfo, ReactNode } from 'react'
 
 interface Props {
   children: ReactNode
+  onRetry?: () => void
 }
 
 interface State {
@@ -30,7 +31,10 @@ export default class ErrorBoundary extends Component<Props, State> {
               {this.state.error?.message || 'An unexpected error occurred'}
             </p>
             <button
-              onClick={() => { this.setState({ hasError: false, error: null }) }}
+              onClick={() => {
+                this.setState({ hasError: false, error: null })
+                this.props.onRetry?.()
+              }}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm"
             >
               Try again

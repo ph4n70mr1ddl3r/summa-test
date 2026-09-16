@@ -85,40 +85,50 @@ public class BackupService {
 
         Path restoreDir = Files.createTempDirectory("summa-restore-");
 
-        try (java.util.zip.ZipInputStream zis = new java.util.zip.ZipInputStream(Files.newInputStream(backupFile))) {
-            java.util.zip.ZipEntry entry;
-            while ((entry = zis.getNextEntry()) != null) {
-                Path outputPath = restoreDir.resolve(entry.getName()).normalize();
-                if (!outputPath.startsWith(restoreDir)) {
+        try {
+            try (java.util.zip.ZipInputStream zis = new java.util.zip.ZipInputStream(Files.newInputStream(backupFile))) {
+                java.util.zip.ZipEntry entry;
+                while ((entry = zis.getNextEntry()) != null) {
+                    Path outputPath = restoreDir.resolve(entry.getName()).normalize();
+                    if (!outputPath.startsWith(restoreDir)) {
+                        zis.closeEntry();
+                        throw new IllegalArgumentException("Zip entry escapes restore directory: " + entry.getName());
+                    }
+                    if (entry.isDirectory()) {
+                        Files.createDirectories(outputPath);
+                    } else {
+                        Files.copy(zis, outputPath, StandardCopyOption.REPLACE_EXISTING);
+                    }
                     zis.closeEntry();
-                    throw new IllegalArgumentException("Zip entry escapes restore directory: " + entry.getName());
                 }
-                if (entry.isDirectory()) {
-                    Files.createDirectories(outputPath);
-                } else {
-                    Files.copy(zis, outputPath, StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            // Restore database
+            Path dbSrc = restoreDir.resolve("summa-backup").resolve("summa.db");
+            if (Files.exists(dbSrc)) {
+                Path dbDest = Paths.get(expandPath(this.dbPath));
+                Files.createDirectories(dbDest.getParent());
+                Files.copy(dbSrc, dbDest, StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            // Restore DNA repo
+            Path dnaSrc = restoreDir.resolve("summa-backup").resolve("dna");
+            if (Files.exists(dnaSrc)) {
+                Path dnaDest = Paths.get(expandPath(this.dnaRepoPath));
+                if (Files.exists(dnaDest)) {
+                    Files.walk(dnaDest).sorted((a, b) -> b.compareTo(a))
+                        .forEach(p -> deletePathQuietly(p));
                 }
-                zis.closeEntry();
+                copyDirectory(dnaSrc, dnaDest);
             }
-        }
-
-        // Restore database
-        Path dbSrc = restoreDir.resolve("summa-backup").resolve("summa.db");
-        if (Files.exists(dbSrc)) {
-            Path dbDest = Paths.get(expandPath(this.dbPath));
-            Files.createDirectories(dbDest.getParent());
-            Files.copy(dbSrc, dbDest, StandardCopyOption.REPLACE_EXISTING);
-        }
-
-        // Restore DNA repo
-        Path dnaSrc = restoreDir.resolve("summa-backup").resolve("dna");
-        if (Files.exists(dnaSrc)) {
-            Path dnaDest = Paths.get(expandPath(this.dnaRepoPath));
-            if (Files.exists(dnaDest)) {
-                Files.walk(dnaDest).sorted((a, b) -> b.compareTo(a))
-                    .forEach(p -> deletePathQuietly(p));
-            }
-            copyDirectory(dnaSrc, dnaDest);
+        } finally {
+            try {
+                Files.walk(restoreDir)
+                    .sorted((a, b) -> b.compareTo(a))
+                    .forEach(p -> {
+                        try { Files.delete(p); } catch (IOException ignored) {}
+                    });
+            } catch (IOException ignored) {}
         }
     }
 

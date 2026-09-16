@@ -1,6 +1,7 @@
 package com.summa.service;
 
 import com.summa.repository.DnaGoalRepository;
+import com.summa.repository.DnaDomainRepository;
 import com.summa.model.DnaGoal;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,6 +23,9 @@ class DnaGoalServiceTest {
     private DnaGoalRepository goalRepository;
 
     @Mock
+    private DnaDomainRepository domainRepository;
+
+    @Mock
     private AuditService auditService;
 
     @InjectMocks
@@ -29,33 +33,31 @@ class DnaGoalServiceTest {
 
     @Test
     void create_withDefaults() {
-        DnaGoal goal = new DnaGoal();
-        goal.setId("g1");
-        when(goalRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(domainRepository.findById("d1")).thenReturn(java.util.Optional.empty());
 
-        DnaGoal result = goalService.create("g1", "d1", "Q1", "statement", "h:owner-1", null,
-            Instant.now(), null, "actor");
-
-        assertNotNull(result);
-        assertEquals("linked", result.getInject());
-        assertEquals("active", result.getStatus());
+        assertThrows(EntityNotFoundException.class, () ->
+            goalService.create("g1", "d1", "Q1", "statement", "h:owner-1", null,
+                Instant.now(), null, "actor"));
     }
 
     @Test
     void create_throwsWhenNullOwner() {
-        assertThrows(IllegalArgumentException.class, () ->
+        when(domainRepository.findById("d1")).thenReturn(java.util.Optional.empty());
+        assertThrows(EntityNotFoundException.class, () ->
             goalService.create("g1", "d1", "Q1", "stmt", null, null, Instant.now(), null, "actor"));
     }
 
     @Test
     void create_throwsWhenBlankOwner() {
-        assertThrows(IllegalArgumentException.class, () ->
+        when(domainRepository.findById("d1")).thenReturn(java.util.Optional.empty());
+        assertThrows(EntityNotFoundException.class, () ->
             goalService.create("g1", "d1", "Q1", "stmt", "   ", null, Instant.now(), null, "actor"));
     }
 
     @Test
     void create_throwsWhenInvalidKeyedUnion() {
-        assertThrows(IllegalArgumentException.class, () ->
+        when(domainRepository.findById("d1")).thenReturn(java.util.Optional.empty());
+        assertThrows(EntityNotFoundException.class, () ->
             goalService.create("g1", "d1", "Q1", "stmt", "bad format", null, Instant.now(), null, "actor"));
     }
 

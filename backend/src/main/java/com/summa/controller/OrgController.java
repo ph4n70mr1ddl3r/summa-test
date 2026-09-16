@@ -76,7 +76,18 @@ public class OrgController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            Human human = orgService.updateRbac(id, body.get("rbac"), actor);
+            String rbacValue = body.get("rbac");
+            if (rbacValue == null || rbacValue.isBlank()) {
+                throw new IllegalArgumentException("rbac is required");
+            }
+            boolean validRole = false;
+            for (RbacRole role : RbacRole.values()) {
+                if (role.getValue().equals(rbacValue)) { validRole = true; break; }
+            }
+            if (!validRole) {
+                throw new IllegalArgumentException("Invalid rbac: " + rbacValue + ". Must be one of: admin, owner, member, viewer");
+            }
+            Human human = orgService.updateRbac(id, rbacValue, actor);
             return ResponseEntity.ok(human);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());

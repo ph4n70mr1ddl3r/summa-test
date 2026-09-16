@@ -29,7 +29,7 @@ const navItems: NavItem[] = [
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const location = useLocation()
-  const authed = useIsAuthenticated()
+  const authed = isAuthenticated()
 
   if (!authed) {
     setAuthToken(null)
@@ -37,10 +37,6 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   }
 
   return <>{children}</>
-}
-
-function useIsAuthenticated(): boolean {
-  return isAuthenticated()
 }
 
 function LogoutButton() {
@@ -68,7 +64,7 @@ function ModeLabel() {
 }
 
 export default function App() {
-  const authed = useIsAuthenticated()
+  const authed = isAuthenticated()
   const navigate = useNavigate()
   useEffect(() => {
     setNavigate(navigate)

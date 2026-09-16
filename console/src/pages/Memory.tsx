@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { MemoryItem } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
@@ -11,22 +11,22 @@ export default function Memory() {
   const [filter, setFilter] = useState<'all' | 'tainted'>('all')
   const [reviewingId, setReviewingId] = useState<string | null>(null)
   const [reviewResult, setReviewResult] = useState<string | null>(null)
-  const abortedRef = useRef(false)
 
   const loadItems = () => {
     setLoading(true)
     setError(null)
-    abortedRef.current = false
+    let aborted = false
     const params: Record<string, string> = {}
     if (filter === 'tainted') params.tainted = 'true'
     api.memory.list(params)
-      .then((data) => { if (!abortedRef.current) { setItems(data); setLoading(false) } })
-      .catch((err) => { if (!abortedRef.current) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
+      .then((data) => { if (!aborted) { setItems(data); setLoading(false) } })
+      .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
+    return () => { aborted = true }
   }
 
   useEffect(() => {
-    loadItems()
-    return () => { abortedRef.current = true }
+    const cancel = loadItems()
+    return cancel
   }, [filter])
 
   const handleReview = async (id: string) => {

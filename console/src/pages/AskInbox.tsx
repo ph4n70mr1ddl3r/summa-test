@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { Ask } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
@@ -13,24 +13,24 @@ export default function AskInbox() {
   const [responseText, setResponseText] = useState('')
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null)
-  const abortedRef = useRef(false)
 
   const loadAsks = () => {
     setLoading(true)
     setError(null)
-    abortedRef.current = false
+    let aborted = false
     api.asks.listByStatus('pending')
-      .then((data) => { if (!abortedRef.current) { setAsks(data); setLoading(false) } })
-      .catch((err) => { if (!abortedRef.current) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
+      .then((data) => { if (!aborted) { setAsks(data); setLoading(false) } })
+      .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
+    return () => { aborted = true }
   }
 
   useEffect(() => {
-    loadAsks()
-    return () => { abortedRef.current = true }
+    const cancel = loadAsks()
+    return cancel
   }, [])
 
   const formatDeadline = (deadline: number) => {
-    return formatDate(deadline)
+    return formatDate(deadline, { dateOnly: false })
   }
 
   const kindIcon = (kind: string) => {

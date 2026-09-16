@@ -7,6 +7,7 @@ import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
+import com.summa.util.JsonHelpers;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -56,7 +57,7 @@ public class DnaDomainController {
                 body.get("ownerHumanId"),
                 body.get("access"),
                 body.get("store"),
-                body.containsKey("reviewSlaDays") ? parseIntSafe(body.get("reviewSlaDays")) : null,
+                body.containsKey("reviewSlaDays") ? JsonHelpers.parseIntSafe(body.get("reviewSlaDays")) : null,
                 body.get("residency"),
                 actor
             );
@@ -194,8 +195,4 @@ public class DnaDomainController {
         }
     }
 
-    private Integer parseIntSafe(String s) {
-        try { return Integer.parseInt(s); }
-        catch (NumberFormatException e) { throw new IllegalArgumentException("Invalid reviewSlaDays: " + s); }
-    }
 }

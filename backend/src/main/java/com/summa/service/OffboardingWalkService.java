@@ -220,7 +220,15 @@ public class OffboardingWalkService {
             }
         }
         for (DnaProposal prop : proposalService.findAllOpen()) {
-            if (!humanId.equals(prop.getProposedBy())) continue;
+            String proposerId = prop.getProposedBy();
+            boolean isDirectProposer = humanId.equals(proposerId);
+            boolean isAgentOfDeparted = false;
+            if (!isDirectProposer && proposerId != null && proposerId.startsWith("a:")) {
+                String agentId = proposerId.substring(2);
+                Optional<Agent> agentOpt = agentRepository.findById(agentId);
+                isAgentOfDeparted = agentOpt.isPresent() && humanId.equals(agentOpt.get().getOwnerHumanId());
+            }
+            if (!isDirectProposer && !isAgentOfDeparted) continue;
             boolean ownsDomain = prop.getDomainId() != null && ownedDomainIds.contains(prop.getDomainId());
             if (ownsDomain) {
                 prop.setProposedBy(finalTargetOwner);

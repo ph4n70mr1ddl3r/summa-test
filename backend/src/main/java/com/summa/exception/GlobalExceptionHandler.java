@@ -42,48 +42,29 @@ public class GlobalExceptionHandler {
                 ));
     }
 
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<Map<String, Object>> handleIllegalState(IllegalStateException e) {
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<Map<String, Object>> handleConflict(ConflictException e) {
         String actor = currentActor();
-        String message = e.getMessage();
-        // Distinguish gate refusals (403) from conflict/invalid-state errors (409).
-        // Prefer explicit exception type matching over substring heuristics.
-        boolean isConflict = isConflictMessage(message);
-        HttpStatus status = isConflict ? HttpStatus.CONFLICT : HttpStatus.FORBIDDEN;
-        String code = isConflict ? "conflict" : "gate";
-        AuditEvent audit = auditService.log(actor, "REFUSAL", "http_request", code, message);
-        return ResponseEntity.status(status)
+        AuditEvent audit = auditService.log(actor, "REFUSAL", "http_request", "conflict", e.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(Map.of(
-                    "code", code,
-                    "message", message,
+                    "code", "conflict",
+                    "message", e.getMessage(),
                     "audit_event_id", audit.getId()
                 ));
     }
 
-    /**
-     * Determines whether an IllegalStateException message represents a conflict
-     * (resource already exists or is in an incompatible state) vs. a gate
-     * refusal (permission or workflow denial).
-     */
-    private boolean isConflictMessage(String message) {
-        if (message == null) return false;
-        String lower = message.toLowerCase();
-        // Conflict indicators — resource-level state collisions
-        if (lower.contains("already") || lower.contains("not found") ||
-            lower.contains("not pending") || lower.contains("not active")) {
-            return true;
-        }
-        // Gate indicators — permission/workflow denials
-        if (lower.contains("not permitted") || lower.contains("forbidden") ||
-            lower.contains("unauthorized") || lower.contains("insufficient")) {
-            return false;
-        }
-        // Ambiguous "cannot" — default to gate unless context suggests conflict
-        if (lower.contains("cannot")) {
-            return lower.contains("already") || lower.contains("duplicate");
-        }
-        // Default: treat as gate (forbidden) to fail-closed
-        return false;
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalState(IllegalStateException e) {
+        String actor = currentActor();
+        String message = e.getMessage();
+        AuditEvent audit = auditService.log(actor, "REFUSAL", "http_request", "gate", message);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of(
+                    "code", "gate",
+                    "message", message,
+                    "audit_event_id", audit.getId()
+                ));
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
