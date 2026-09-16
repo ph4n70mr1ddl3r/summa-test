@@ -5,7 +5,8 @@ export function formatDate(epochSeconds: number | undefined | null, options?: { 
     year: 'numeric', month: '2-digit', day: '2-digit',
     ...(options?.dateOnly ? {} : { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
   })
-  return fmt.format(new Date(epochSeconds * 1000))
+  const base = fmt.format(new Date(epochSeconds * 1000))
+  return options?.dateOnly ? base : `${base} UTC`
 }
 
 export function agentStatusColor(status: string): string {

@@ -311,10 +311,15 @@ public class AgentService {
         }
         for (Agent agent : suspendedExpired) {
             try {
-                agent.setStatus("archived");
-                agent.setArchivedAt(now);
-                agentRepository.save(agent);
-                auditService.logSystem("TTL_REAP_SUSPENDED", "agent", agent.getId(),
+                // Re-fetch to avoid lost-update from concurrent modifications
+                Optional<Agent> fresh = agentRepository.findById(agent.getId());
+                if (fresh.isEmpty()) continue;
+                Agent current = fresh.get();
+                if (!"suspended".equals(current.getStatus())) continue;
+                current.setStatus("archived");
+                current.setArchivedAt(now);
+                agentRepository.save(current);
+                auditService.logSystem("TTL_REAP_SUSPENDED", "agent", current.getId(),
                     "{\"reason\":\"ttl_expired\"}");
             } catch (Exception e) {
                 auditService.logSystem("TTL_REAP_SUSPENDED_FAIL", "agent", agent.getId(),

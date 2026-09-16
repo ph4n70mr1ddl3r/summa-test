@@ -1,5 +1,7 @@
 package com.summa.service;
 
+import com.summa.repository.NodeRepository;
+import com.summa.model.Node;
 import com.summa.repository.WorkspaceRepository;
 import com.summa.repository.DnaDomainRepository;
 import com.summa.model.Workspace;
@@ -33,13 +35,15 @@ public class WorkspaceService {
     private final TriggerRepository triggerRepository;
     private final PlaybookRepository playbookRepository;
     private final SpawnRequestRepository spawnRequestRepository;
+    private final NodeRepository nodeRepository;
 
     public WorkspaceService(WorkspaceRepository workspaceRepository, DnaDomainRepository domainRepository,
                             AuditService auditService, ObjectMapper objectMapper,
                             InitiativeRepository initiativeRepository,
                             TriggerRepository triggerRepository,
                             PlaybookRepository playbookRepository,
-                            SpawnRequestRepository spawnRequestRepository) {
+                            SpawnRequestRepository spawnRequestRepository,
+                            NodeRepository nodeRepository) {
         this.workspaceRepository = workspaceRepository;
         this.domainRepository = domainRepository;
         this.auditService = auditService;
@@ -48,6 +52,7 @@ public class WorkspaceService {
         this.triggerRepository = triggerRepository;
         this.playbookRepository = playbookRepository;
         this.spawnRequestRepository = spawnRequestRepository;
+        this.nodeRepository = nodeRepository;
     }
 
     @Transactional
@@ -76,7 +81,7 @@ public class WorkspaceService {
         ws.setParticipants(participants != null ? participants : "[]");
 
         Workspace saved = workspaceRepository.save(ws);
-        auditService.log("system", "CREATE_WORKSPACE", "workspace", id,
+        auditService.logSystem("CREATE_WORKSPACE", "workspace", id,
             String.format("{\"name\":\"%s\",\"kind\":\"%s\"}", name, kind));
         return saved;
     }
@@ -133,10 +138,19 @@ public class WorkspaceService {
         // Drop initiative bindings — goal slice re-derives at once
         ws.setInitiativeIds("[]");
 
-        // Kill the node claim — the lease's terminal case
+        // Kill the node claim — clear the workspace-side ref and the node-side claim
+        String previousNodeId = ws.getNodeId();
         ws.setNodeId(null);
         ws.setClaimEpoch(0);
         ws.setLeaseExpiresAt(null);
+        if (previousNodeId != null) {
+            nodeRepository.findById(previousNodeId).ifPresent(node -> {
+                node.setClaim(null);
+                nodeRepository.save(node);
+                auditService.logSystem("ARCHIVE_CLEAR_NODE_CLAIM", "node", previousNodeId,
+                    String.format("{\"workspaceId\":\"%s\",\"reason\":\"workspace_archived\"}", id));
+            });
+        }
 
         // Disable bound triggers and playbooks
         List<Trigger> boundTriggers = triggerRepository.findByWorkspaceId(id);
@@ -171,7 +185,7 @@ public class WorkspaceService {
 
         ws.setArchivedAt(Instant.now());
         Workspace saved = workspaceRepository.save(ws);
-        auditService.log(actor, "ARCHIVE_WORKSPACE", "workspace", id, null);
+        auditService.logSystem("ARCHIVE_WORKSPACE", "workspace", id, null);
         return saved;
     }
 

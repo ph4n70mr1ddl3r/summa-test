@@ -423,12 +423,12 @@ public class InitiativeService {
                 String.format("{\"error\":\"%s\"}", e.getMessage()));
         }
 
-        // INT-040/CLC-040: Cancel queued runs tied to this initiative before closing
+        // INT-040/CLC-040: Cancel queued, running, and suspended runs tied to this initiative
         try {
-            List<com.summa.model.Run> queuedRuns = runRepository.findByStatus("queued").stream()
-                .filter(r -> id.equals(r.getInitiativeId()))
-                .toList();
-            for (com.summa.model.Run run : queuedRuns) {
+            List<com.summa.model.Run> nonTerminalRuns = runRepository.findByInitiativeIdAndStatus(id, "queued");
+            nonTerminalRuns.addAll(runRepository.findByInitiativeIdAndStatus(id, "running"));
+            nonTerminalRuns.addAll(runRepository.findByInitiativeIdAndStatus(id, "suspended"));
+            for (com.summa.model.Run run : nonTerminalRuns) {
                 run.setStatus("cancelled");
                 run.setCompletedAt(Instant.now());
                 runRepository.save(run);

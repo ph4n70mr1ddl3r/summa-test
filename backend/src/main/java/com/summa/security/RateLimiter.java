@@ -24,13 +24,14 @@ public class RateLimiter {
         Instant now = Instant.now();
         long windowStart = now.getEpochSecond() / WINDOW_SECONDS * WINDOW_SECONDS;
 
-        // Atomic check-and-increment within a single window — decision returned from compute
-        // eliminates the TOCTOU race between update and re-fetch of windowStarts
+        // Both the window check and the count update are performed inside a single
+        // atomic compute call, eliminating the TOCTOU race on windowStarts.
         final boolean[] allowed = new boolean[1];
         attemptCounts.compute(identifier, (key, count) -> {
+            long currentWindowStart = windowStart;
             Instant window = windowStarts.get(key);
-            if (window == null || window.getEpochSecond() != windowStart) {
-                windowStarts.put(key, Instant.ofEpochSecond(windowStart));
+            if (window == null || window.getEpochSecond() != currentWindowStart) {
+                windowStarts.put(key, Instant.ofEpochSecond(currentWindowStart));
                 allowed[0] = true;
                 return 1L;
             }

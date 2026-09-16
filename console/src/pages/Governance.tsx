@@ -67,8 +67,8 @@ export default function Governance() {
             <p className="text-gray-500 text-sm">No policies configured.</p>
           ) : (
             <div className="space-y-1">
-              {policyEntries.slice(0, 10).map(([k, v], i) => (
-                <div key={`${k}-${i}`} className="flex justify-between text-sm">
+              {policyEntries.slice(0, 10).map(([k, v]) => (
+                <div key={k} className="flex justify-between text-sm">
                   <span className="text-gray-400">{k}</span>
                   <span className="text-gray-200 font-mono">{escapeHtml(typeof v === 'object' && v !== null ? JSON.stringify(v, null, 2) : String(v))}</span>
                 </div>
@@ -83,8 +83,8 @@ export default function Governance() {
             <p className="text-gray-500 text-sm">No quotas configured.</p>
           ) : (
             <div className="space-y-1">
-              {quotaEntries.slice(0, 10).map(([k, v], i) => (
-                <div key={`${k}-${i}`} className="flex justify-between text-sm">
+              {quotaEntries.slice(0, 10).map(([k, v]) => (
+                <div key={k} className="flex justify-between text-sm">
                   <span className="text-gray-400">{k}</span>
                   <span className="text-gray-200 font-mono">{escapeHtml(typeof v === 'object' && v !== null ? JSON.stringify(v, null, 2) : String(v))}</span>
                 </div>

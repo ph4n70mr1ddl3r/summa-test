@@ -13,6 +13,7 @@ export default function AskInbox() {
   const [responseText, setResponseText] = useState('')
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null)
+  const [respondingForId, setRespondingForId] = useState<string | null>(null)
 
   const loadAsks = () => {
     setLoading(true)
@@ -47,8 +48,10 @@ export default function AskInbox() {
   const handleRespond = async (id: string) => {
     setSubmitError(null)
     setSubmitSuccess(null)
+    setRespondingForId(id)
     if (!responseText.trim()) {
       setSubmitError('Response cannot be empty')
+      setRespondingForId(null)
       return
     }
     try {
@@ -59,6 +62,9 @@ export default function AskInbox() {
       loadAsks()
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err))
+      loadAsks()
+    } finally {
+      setRespondingForId(null)
     }
   }
 
@@ -68,6 +74,7 @@ export default function AskInbox() {
       loadAsks()
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err))
+      loadAsks()
     }
   }
 
@@ -175,10 +182,10 @@ export default function AskInbox() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleRespond(ask.id)}
-                      disabled={!responseText.trim()}
+                      disabled={!responseText.trim() || respondingForId === ask.id}
                       className="px-3 py-1 bg-green-700 hover:bg-green-600 disabled:bg-gray-700 disabled:text-gray-500 rounded text-sm text-green-100"
                     >
-                      Submit
+                      {respondingForId === ask.id ? 'Submitting...' : 'Submit'}
                     </button>
                     <button
                       onClick={() => { setRespondingId(null); setResponseText('') }}

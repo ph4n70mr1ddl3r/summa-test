@@ -16,7 +16,7 @@ export default function Login() {
   if (state?.from?.pathname) {
     const candidate = state.from.pathname
     // Only allow relative paths to prevent open-redirect abuse
-    if (!candidate.startsWith('//') && !candidate.startsWith('http://') && !candidate.startsWith('https://')) {
+    if (!candidate.startsWith('//') && !candidate.startsWith('http://') && !candidate.startsWith('https://') && !candidate.startsWith('javascript:')) {
       from = candidate
     }
   }

@@ -6,6 +6,7 @@ import com.summa.repository.InitiativeRepository;
 import com.summa.repository.TriggerRepository;
 import com.summa.repository.PlaybookRepository;
 import com.summa.repository.SpawnRequestRepository;
+import com.summa.repository.NodeRepository;
 import com.summa.model.Workspace;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,6 +45,9 @@ class WorkspaceServiceTest {
     @Mock
     private SpawnRequestRepository spawnRequestRepository;
 
+    @Mock
+    private NodeRepository nodeRepository;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private WorkspaceService workspaceService;
@@ -52,7 +56,7 @@ class WorkspaceServiceTest {
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
         workspaceService = new WorkspaceService(workspaceRepository, domainRepository, auditService, objectMapper,
-            initiativeRepository, triggerRepository, playbookRepository, spawnRequestRepository);
+            initiativeRepository, triggerRepository, playbookRepository, spawnRequestRepository, nodeRepository);
     }
 
     @Test

@@ -10,6 +10,7 @@ export default function Groups() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [archivingId, setArchivingId] = useState<string | null>(null)
 
   const loadGroups = () => {
     setLoading(true)
@@ -27,11 +28,16 @@ export default function Groups() {
   }, [])
 
   const handleArchive = async (id: string) => {
+    setActionError(null)
+    setArchivingId(id)
     try {
       await api.groups.archive(id)
       loadGroups()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err))
+      loadGroups()
+    } finally {
+      setArchivingId(null)
     }
   }
 
@@ -77,9 +83,10 @@ export default function Groups() {
                   {g.status === 'active' && (
                     <button
                       onClick={() => handleArchive(g.id)}
-                      className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-400"
+                      disabled={archivingId !== null}
+                      className="px-2 py-1 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 rounded text-xs text-gray-400"
                     >
-                      Archive
+                      {archivingId === g.id ? 'Archiving...' : 'Archive'}
                     </button>
                   )}
                 </div>

@@ -11,6 +11,7 @@ export default function Memory() {
   const [filter, setFilter] = useState<'all' | 'tainted'>('all')
   const [reviewingId, setReviewingId] = useState<string | null>(null)
   const [reviewResult, setReviewResult] = useState<string | null>(null)
+  const [reviewingForId, setReviewingForId] = useState<string | null>(null)
 
   const loadItems = () => {
     setLoading(true)
@@ -31,6 +32,7 @@ export default function Memory() {
 
   const handleReview = async (id: string) => {
     setReviewResult(null)
+    setReviewingForId(id)
     try {
       await api.memory.review(id)
       setReviewResult('Item reviewed and taint cleared')
@@ -38,6 +40,9 @@ export default function Memory() {
       loadItems()
     } catch (err) {
       setReviewResult(err instanceof Error ? err.message : String(err))
+      loadItems()
+    } finally {
+      setReviewingForId(null)
     }
   }
 
@@ -104,12 +109,13 @@ export default function Memory() {
                   </p>
                 </div>
                 {item.tainted && (
-                  <button
-                    onClick={() => setReviewingId(item.id)}
-                    className="px-3 py-1 bg-yellow-700 hover:bg-yellow-600 rounded text-sm text-yellow-100"
-                  >
-                    Review
-                  </button>
+                    <button
+                      onClick={() => setReviewingId(item.id)}
+                      disabled={reviewingForId !== null}
+                      className="px-3 py-1 bg-yellow-700 hover:bg-yellow-600 disabled:bg-gray-700 disabled:text-gray-500 rounded text-sm text-yellow-100"
+                    >
+                      Review
+                    </button>
                 )}
               </div>
               {(() => {
@@ -126,9 +132,10 @@ export default function Memory() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleReview(item.id)}
-                      className="px-3 py-1 bg-green-700 hover:bg-green-600 rounded text-sm text-green-100"
+                      disabled={reviewingForId === item.id}
+                      className="px-3 py-1 bg-green-700 hover:bg-green-600 disabled:bg-gray-700 disabled:text-gray-500 rounded text-sm text-green-100"
                     >
-                      Confirm Review
+                      {reviewingForId === item.id ? 'Reviewing...' : 'Confirm Review'}
                     </button>
                     <button
                       onClick={() => setReviewingId(null)}
