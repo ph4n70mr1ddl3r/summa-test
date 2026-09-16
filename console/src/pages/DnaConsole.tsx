@@ -23,35 +23,32 @@ export default function DNAConsole() {
       api.dna.cards(),
       api.dna.goals(),
       api.dna.reviewQueue(),
-    ]).then(([d, c, g, p]) => {
-      if (aborted) return
-      setDomains(d)
-      setCards(c)
-      setGoals(g)
-      setProposals(p)
-      setLoading(false)
-    }).catch((e) => {
-      if (aborted) return
-      // If we get here, at least one call failed. Try to recover partial data.
-      Promise.allSettled([
-        api.dna.domains().catch(() => null),
-        api.dna.cards().catch(() => null),
-        api.dna.goals().catch(() => null),
-        api.dna.reviewQueue().catch(() => null),
       ]).then(([d, c, g, p]) => {
         if (aborted) return
-        const domains = unwrapSettled(d) ?? []
-        const cards = unwrapSettled(c) ?? []
-        const goals = unwrapSettled(g) ?? []
-        const proposals = unwrapSettled(p) ?? []
-        setDomains(domains)
-        setCards(cards)
-        setGoals(goals)
-        setProposals(proposals)
-        setError('Some data could not be loaded: ' + (e?.message || String(e)))
+        setDomains(d)
+        setCards(c)
+        setGoals(g)
+        setProposals(p)
         setLoading(false)
+      }).catch((e) => {
+        if (aborted) return
+        // If we get here, at least one call failed. Try to recover partial data
+        // without overwriting fields that already loaded successfully.
+        Promise.allSettled([
+          api.dna.domains().catch(() => null),
+          api.dna.cards().catch(() => null),
+          api.dna.goals().catch(() => null),
+          api.dna.reviewQueue().catch(() => null),
+        ]).then(([d, c, g, p]) => {
+          if (aborted) return
+          setDomains(prev => unwrapSettled(d) ?? prev)
+          setCards(prev => unwrapSettled(c) ?? prev)
+          setGoals(prev => unwrapSettled(g) ?? prev)
+          setProposals(prev => unwrapSettled(p) ?? prev)
+          setError('Some data could not be loaded: ' + (e?.message || String(e)))
+          setLoading(false)
+        })
       })
-    })
     return () => { aborted = true }
   }
 

@@ -125,9 +125,17 @@ public class NodeController {
             String result = body.get("result");
             String artifacts = body.get("artifacts");
             String costTokensStr = body.get("costTokens");
-            long costTokens = costTokensStr != null ? Long.parseLong(costTokensStr.trim()) : 0L;
+            long costTokens = 0L;
+            if (costTokensStr != null && !costTokensStr.isBlank()) {
+                costTokens = Long.parseLong(costTokensStr.trim());
+                if (costTokens < 0) throw new IllegalArgumentException("costTokens must be non-negative");
+            }
             String costUsdStr = body.get("costUsd");
-            double costUsd = costUsdStr != null ? Double.parseDouble(costUsdStr.trim()) : 0.0;
+            double costUsd = 0.0;
+            if (costUsdStr != null && !costUsdStr.isBlank()) {
+                costUsd = Double.parseDouble(costUsdStr.trim());
+                if (costUsd < 0) throw new IllegalArgumentException("costUsd must be non-negative");
+            }
             String memberId = body.get("memberId");
             Run run = nodeService.reportRun(id, runId, result, artifacts, costTokens, costUsd, memberId);
             return ResponseEntity.ok(run);

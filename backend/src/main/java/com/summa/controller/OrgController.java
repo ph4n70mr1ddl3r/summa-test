@@ -12,7 +12,6 @@ import com.summa.service.AuditService;
 import com.summa.service.DataHoldService;
 import com.summa.service.MemberService;
 import com.summa.service.OrgService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
@@ -204,7 +203,13 @@ public class OrgController {
                 holder[0] = agentOpt.get().getSpawnedBy();
                 found = true;
             } else {
-                memberService.findHuman(nextId).ifPresent(h -> holder[0] = h.getDeputyMemberId());
+                // Apply same depth cap to human deputy chain to prevent infinite loops
+                memberService.findHuman(nextId).ifPresent(h -> {
+                    if (lineage.size() < depthCap) {
+                        holder[0] = h.getDeputyMemberId();
+                    }
+                });
+                found = true; // human always "found" for chaining purposes
             }
             if (!found && holder[0] == null) {
                 break;

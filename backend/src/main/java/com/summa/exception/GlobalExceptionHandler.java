@@ -46,13 +46,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleIllegalState(IllegalStateException e) {
         String actor = currentActor();
         String message = e.getMessage();
-        // Distinguish between gate refusals (403) and conflict/invalid-state errors (409)
-        boolean isConflict = message != null && (
-            message.contains("not found") || message.contains("already") ||
-            message.contains("cannot") || message.contains("invalid") ||
-            message.contains("not pending") || message.contains("not active") ||
-            message.contains("not permitted")
-        );
+        // Distinguish gate refusals (403) from conflict/invalid-state errors (409).
+        // Prefer explicit exception type matching over substring heuristics.
+        boolean isConflict = isConflictMessage(message);
         HttpStatus status = isConflict ? HttpStatus.CONFLICT : HttpStatus.FORBIDDEN;
         String code = isConflict ? "conflict" : "gate";
         AuditEvent audit = auditService.log(actor, "REFUSAL", "http_request", code, message);
@@ -62,6 +58,32 @@ public class GlobalExceptionHandler {
                     "message", message,
                     "audit_event_id", audit.getId()
                 ));
+    }
+
+    /**
+     * Determines whether an IllegalStateException message represents a conflict
+     * (resource already exists or is in an incompatible state) vs. a gate
+     * refusal (permission or workflow denial).
+     */
+    private boolean isConflictMessage(String message) {
+        if (message == null) return false;
+        String lower = message.toLowerCase();
+        // Conflict indicators — resource-level state collisions
+        if (lower.contains("already") || lower.contains("not found") ||
+            lower.contains("not pending") || lower.contains("not active")) {
+            return true;
+        }
+        // Gate indicators — permission/workflow denials
+        if (lower.contains("not permitted") || lower.contains("forbidden") ||
+            lower.contains("unauthorized") || lower.contains("insufficient")) {
+            return false;
+        }
+        // Ambiguous "cannot" — default to gate unless context suggests conflict
+        if (lower.contains("cannot")) {
+            return lower.contains("already") || lower.contains("duplicate");
+        }
+        // Default: treat as gate (forbidden) to fail-closed
+        return false;
     }
 
     @ExceptionHandler(EntityNotFoundException.class)

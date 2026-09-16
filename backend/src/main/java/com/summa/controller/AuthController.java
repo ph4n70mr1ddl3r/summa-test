@@ -6,7 +6,6 @@ import com.summa.security.JwtUtil;
 import com.summa.security.PasswordUtil;
 import com.summa.security.RateLimiter;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
@@ -60,19 +59,11 @@ public class AuthController {
 
         if (humanOpt.isEmpty()) {
             var audit = auditService.logSystem("REFUSAL", "auth_login", email, "Login attempt for unknown account");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
-                "code", "eligibility",
-                "message", "Invalid credentials",
-                "audit_event_id", audit.getId()
-            ));
+            return ControllerResponses.gate(auditService, audit.getId());
         }
         if (!humanOpt.get().isActive()) {
             var audit = auditService.logSystem("REFUSAL", "auth_login", email, "Login attempt on deactivated account");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
-                "code", "eligibility",
-                "message", "Invalid credentials",
-                "audit_event_id", audit.getId()
-            ));
+            return ControllerResponses.gate(auditService, audit.getId());
         }
 
         var human = humanOpt.get();
@@ -80,11 +71,7 @@ public class AuthController {
         if (password == null || password.isBlank() || human.getPasswordHash() == null
                 || !passwordUtil.verify(password, human.getPasswordHash())) {
             var audit = auditService.logSystem("REFUSAL", "auth_login", email, "Login attempt with bad password");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
-                "code", "eligibility",
-                "message", "Invalid credentials",
-                "audit_event_id", audit.getId()
-            ));
+            return ControllerResponses.gate(auditService, audit.getId());
         }
 
         String token = JwtUtil.generateToken(human.getId(), jwtSecret, jwtExpiration);
@@ -107,12 +94,12 @@ public class AuthController {
         String token = extractToken(authHeader);
         if (token == null) {
             var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Missing token", null);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("code", "eligibility", "message", "Missing token", "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, audit.getId());
         }
         var payload = JwtUtil.parseToken(token, jwtSecret);
         if (payload == null) {
             var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Invalid token", null);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("code", "eligibility", "message", "Invalid token", "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, audit.getId());
         }
         String actor = (String) payload.get("sub");
 
@@ -148,13 +135,13 @@ public class AuthController {
         var humanOpt = orgService.findHuman(actor);
         if (humanOpt.isEmpty()) {
             var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Invalid credentials for: " + actor, null);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("code", "eligibility", "message", "Invalid credentials", "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, audit.getId());
         }
         var human = humanOpt.get();
 
         if (human.getPasswordHash() == null || !passwordUtil.verify(currentPassword, human.getPasswordHash())) {
             var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Password mismatch for: " + actor, null);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("code", "eligibility", "message", "Invalid credentials", "audit_event_id", audit.getId()));
+            return ControllerResponses.gate(auditService, audit.getId());
         }
 
         human.setPasswordHash(passwordUtil.hash(newPassword));

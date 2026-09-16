@@ -73,4 +73,4 @@ logging:
   level:
     com.summa: INFO
     org.springframework.security: INFO
-    org.hibernate: WARN
+    org.eclipse.persistence: WARN

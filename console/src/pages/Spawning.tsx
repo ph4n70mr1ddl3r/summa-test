@@ -19,27 +19,25 @@ export default function Spawning() {
     Promise.all([
       api.spawn.list(),
       api.spawn.stats(),
-    ]).then(([r, s]) => {
-      if (aborted) return
-      setRequests(r)
-      setStats(s)
-      setLoading(false)
-    }).catch((e) => {
-      if (aborted) return
-      // Recover partial data from individual calls
-      Promise.allSettled([
-        api.spawn.list().catch(() => null),
-        api.spawn.stats().catch(() => null),
-      ]).then(([rRes, sRes]) => {
+      ]).then(([r, s]) => {
         if (aborted) return
-        const requests = unwrapSettled(rRes) ?? []
-        const stats = unwrapSettled(sRes)
-        setRequests(requests)
-        setStats(stats)
-        setError('Some data could not be loaded: ' + (e?.message || String(e)))
+        setRequests(r)
+        setStats(s)
         setLoading(false)
+      }).catch((e) => {
+        if (aborted) return
+        // Recover partial data from individual calls without overwriting already-loaded state
+        Promise.allSettled([
+          api.spawn.list().catch(() => null),
+          api.spawn.stats().catch(() => null),
+        ]).then(([rRes, sRes]) => {
+          if (aborted) return
+          setRequests(prev => unwrapSettled(rRes) ?? prev)
+          setStats(prev => unwrapSettled(sRes) ?? prev)
+          setError('Some data could not be loaded: ' + (e?.message || String(e)))
+          setLoading(false)
+        })
       })
-    })
     return () => { aborted = true }
   }
 

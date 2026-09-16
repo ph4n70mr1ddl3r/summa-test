@@ -6,7 +6,6 @@ import com.summa.service.AuditService;
 import com.summa.service.MemberService;
 import com.summa.service.WorkspaceService;
 import com.summa.model.Workspace;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;

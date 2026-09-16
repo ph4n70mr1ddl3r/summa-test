@@ -20,31 +20,28 @@ export default function Governance() {
       api.governance.policies(),
       api.governance.quotas(),
       api.governance.spend(),
-    ]).then(([p, q, s]) => {
-      if (aborted) return
-      setPolicies(p)
-      setQuotas(q)
-      setSpend(s)
-      setLoading(false)
-    }).catch((e) => {
-      if (aborted) return
-      // Recover partial data from individual calls
-      Promise.allSettled([
-        api.governance.policies().catch(() => null),
-        api.governance.quotas().catch(() => null),
-        api.governance.spend().catch(() => null),
-      ]).then(([pRes, qRes, sRes]) => {
+      ]).then(([p, q, s]) => {
         if (aborted) return
-        const policies = unwrapSettled(pRes) ?? {}
-        const quotas = unwrapSettled(qRes) ?? {}
-        const spend = unwrapSettled(sRes)
-        setPolicies(policies)
-        setQuotas(quotas)
-        setSpend(spend)
-        setError('Some data could not be loaded: ' + (e?.message || String(e)))
+        setPolicies(p)
+        setQuotas(q)
+        setSpend(s)
         setLoading(false)
+      }).catch((e) => {
+        if (aborted) return
+        // Recover partial data from individual calls without overwriting already-loaded state
+        Promise.allSettled([
+          api.governance.policies().catch(() => null),
+          api.governance.quotas().catch(() => null),
+          api.governance.spend().catch(() => null),
+        ]).then(([pRes, qRes, sRes]) => {
+          if (aborted) return
+          setPolicies(prev => unwrapSettled(pRes) ?? prev)
+          setQuotas(prev => unwrapSettled(qRes) ?? prev)
+          setSpend(prev => unwrapSettled(sRes) ?? prev)
+          setError('Some data could not be loaded: ' + (e?.message || String(e)))
+          setLoading(false)
+        })
       })
-    })
     return () => { aborted = true }
   }
 

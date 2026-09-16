@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.util.ContentCachingRequestWrapper;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -37,16 +38,19 @@ public class NodeAuthFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-                                     FilterChain filterChain) throws ServletException, IOException {
-        String path = request.getRequestURI();
+                                      FilterChain filterChain) throws ServletException, IOException {
+        // Wrap request to buffer body so downstream readers (JSON deserializers) can also read it
+        HttpServletRequest wrappedRequest = new ContentCachingRequestWrapper(request);
+
+        String path = wrappedRequest.getRequestURI();
         if (!matchesNodePath(path)) {
-            filterChain.doFilter(request, response);
+            filterChain.doFilter(wrappedRequest, response);
             return;
         }
 
-        String signature = request.getHeader("X-Node-Signature");
+        String signature = wrappedRequest.getHeader("X-Node-Signature");
         if (signature == null || signature.isBlank()) {
-            log.warn("[SUMMA] node request without signature: {} from {}", path, request.getRemoteAddr());
+            log.warn("[SUMMA] node request without signature: {} from {}", path, wrappedRequest.getRemoteAddr());
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Node signature required");
             return;
         }
@@ -73,8 +77,8 @@ public class NodeAuthFilter extends OncePerRequestFilter {
         }
 
         // Verify HMAC-SHA256 signature using node pubkey as key
-        String body = readRequestBody(request);
-        String expectedSig = computeSignature(request.getMethod(), path, body, node.getPubkey());
+        String body = readRequestBody(wrappedRequest);
+        String expectedSig = computeSignature(wrappedRequest.getMethod(), path, body, node.getPubkey());
         if (!constantTimeEquals(expectedSig, signature)) {
             log.warn("[SUMMA] node signature mismatch: node={} path={}", nodeId, path);
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid node signature");
@@ -82,9 +86,9 @@ public class NodeAuthFilter extends OncePerRequestFilter {
         }
 
         // Authenticated as node — set actor to node ID
-        request.setAttribute("actor", nodeId);
-        request.setAttribute("nodeAuth", true);
-        filterChain.doFilter(request, response);
+        wrappedRequest.setAttribute("actor", nodeId);
+        wrappedRequest.setAttribute("nodeAuth", true);
+        filterChain.doFilter(wrappedRequest, response);
     }
 
     private boolean matchesNodePath(String path) {
@@ -124,9 +128,9 @@ public class NodeAuthFilter extends OncePerRequestFilter {
 
     private String readRequestBody(HttpServletRequest request) {
         try {
-            byte[] bytes = request.getInputStream().readAllBytes();
+            byte[] bytes = ((ContentCachingRequestWrapper) request).getContentAsByteArray();
             return new String(bytes, StandardCharsets.UTF_8);
-        } catch (IOException e) {
+        } catch (Exception e) {
             return "";
         }
     }

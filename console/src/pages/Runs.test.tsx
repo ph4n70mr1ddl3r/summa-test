@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import Runs from './Runs'
 import * as apiModule from '../services/api'
 
@@ -55,6 +55,19 @@ describe('Runs page', () => {
     render(<Runs />)
     await waitFor(() => {
       expect(screen.getByText(/error/i)).toBeInTheDocument()
+    })
+  })
+
+  it('retry button calls loadRuns on click', async () => {
+    vi.mocked(apiModule.api.runs.list).mockRejectedValue(new Error('Network error'))
+    const { getByRole } = render(<Runs />)
+    await waitFor(() => {
+      expect(getByRole('button', { name: /retry/i })).toBeInTheDocument()
+    })
+    vi.mocked(apiModule.api.runs.list).mockResolvedValue([])
+    fireEvent.click(getByRole('button', { name: /retry/i }))
+    await waitFor(() => {
+      expect(apiModule.api.runs.list).toHaveBeenCalledTimes(2)
     })
   })
 })

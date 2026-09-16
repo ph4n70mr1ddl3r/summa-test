@@ -19,27 +19,28 @@ export default function OrgView() {
     Promise.all([
       api.org.members(),
       api.groups.list(),
-    ]).then(([m, g]) => {
-      if (aborted) return
-      setMembers(m.members)
-      setGroups(g)
-      setLoading(false)
-    }).catch((e) => {
-      if (aborted) return
-      // Recover partial data from individual calls
-      Promise.allSettled([
-        api.org.members().catch(() => null),
-        api.groups.list().catch(() => null),
-      ]).then(([mRes, gRes]) => {
+      ]).then(([m, g]) => {
         if (aborted) return
-        const members = unwrapSettled(mRes)
-        const groups = unwrapSettled(gRes) ?? []
-        setMembers(members?.members ?? [])
-        setGroups(groups)
-        setError('Some data could not be loaded: ' + (e?.message || String(e)))
+        setMembers(m.members)
+        setGroups(g)
         setLoading(false)
+      }).catch((e) => {
+        if (aborted) return
+        // Recover partial data from individual calls without overwriting already-loaded state
+        Promise.allSettled([
+          api.org.members().catch(() => null),
+          api.groups.list().catch(() => null),
+        ]).then(([mRes, gRes]) => {
+          if (aborted) return
+          setMembers(prev => {
+            const data = unwrapSettled(mRes)
+            return data?.members ?? prev
+          })
+          setGroups(prev => unwrapSettled(gRes) ?? prev)
+          setError('Some data could not be loaded: ' + (e?.message || String(e)))
+          setLoading(false)
+        })
       })
-    })
     return () => { aborted = true }
   }
 

@@ -5,7 +5,7 @@ interface ErrorBannerProps {
 
 export function ErrorBanner({ message, onRetry }: ErrorBannerProps) {
   return (
-    <div className="bg-red-900/30 border border-red-700 rounded-lg p-4 text-red-400">
+    <div className="bg-red-900/30 border border-red-700 rounded-lg p-4 text-red-400" role="alert">
       Failed to load: {message}
       {onRetry && (
         <button

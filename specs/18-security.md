@@ -4,9 +4,10 @@ Source: PLAN.md §10.
 
 ## Authentication & credentials
 
-- **SEC-001** — Human authn rides the deployment's own Keycloak over OIDC (CFG-020, decided
-  v2.58) + RBAC — Summa stores no human credentials: realm accounts and any SSO brokering
-  are Keycloak's; agent authn via status-fenced PATs and sessions.
+- **SEC-001** — Human authn [DEFERRED]: rides the deployment's own Keycloak over OIDC (CFG-020,
+  deferred — current: local email+password with JWT) + RBAC — Summa stores no human
+  credentials in the OIDC model; realm accounts and any SSO brokering are Keycloak's;
+  agent authn via status-fenced PATs and sessions.
 - **SEC-002** — Admin lockout is recoverable by design: human credentials live in Keycloak
   (SEC-001), and recovery rides Keycloak's realm-admin access on the host —
   physical/filesystem access is the recovery root of trust for self-hosted — with the

@@ -24,24 +24,23 @@ public class RateLimiter {
         Instant now = Instant.now();
         long windowStart = now.getEpochSecond() / WINDOW_SECONDS * WINDOW_SECONDS;
 
-        // Atomic check-and-increment within a single window
-        final long[] result = new long[1];
+        // Atomic check-and-increment within a single window — decision returned from compute
+        // eliminates the TOCTOU race between update and re-fetch of windowStarts
+        final boolean[] allowed = new boolean[1];
         attemptCounts.compute(identifier, (key, count) -> {
             Instant window = windowStarts.get(key);
             if (window == null || window.getEpochSecond() != windowStart) {
                 windowStarts.put(key, Instant.ofEpochSecond(windowStart));
-                result[0] = 1L;
+                allowed[0] = true;
                 return 1L;
             }
-            long next = (count == null ? 0L : count) + 1;
+            long next = (count == null ? 0L : count) + 1L;
             long capped = Math.min(next, MAX_ATTEMPTS + 1L);
-            result[0] = capped;
+            allowed[0] = capped < MAX_ATTEMPTS;
             return capped;
         });
 
-        Instant window = windowStarts.get(identifier);
-        if (window == null || window.getEpochSecond() != windowStart) return true;
-        return result[0] < MAX_ATTEMPTS;
+        return allowed[0];
     }
 
     public long getRemainingAttempts(String identifier) {

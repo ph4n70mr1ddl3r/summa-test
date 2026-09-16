@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { ErrorBanner } from './ErrorBanner'
 
@@ -30,5 +30,10 @@ describe('ErrorBanner', () => {
   it('renders special characters in message safely', () => {
     render(<ErrorBanner message="<script>alert(1)</script>" />)
     expect(screen.getByText(/<script>alert\(1\)<\/script>/)).toBeInTheDocument()
+  })
+
+  it('has role=alert for accessibility', () => {
+    render(<ErrorBanner message="Something went wrong" />)
+    expect(screen.getByRole('alert')).toBeInTheDocument()
   })
 })

@@ -11,7 +11,9 @@ export default function Runs() {
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<string>('all')
 
-  useEffect(() => {
+  const loadRuns = () => {
+    setLoading(true)
+    setError(null)
     let aborted = false
     const params: Record<string, string | number> = {}
     if (filter !== 'all') params.status = filter
@@ -19,10 +21,15 @@ export default function Runs() {
       .then((data) => { if (!aborted) { setRuns(data); setLoading(false) } })
       .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
     return () => { aborted = true }
+  }
+
+  useEffect(() => {
+    const cancel = loadRuns()
+    return cancel
   }, [filter])
 
   if (loading) return <div className="text-gray-400">Loading...</div>
-  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={() => { setLoading(true); setError(null) }} />
+  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadRuns} />
 
   const statusCounts: Record<string, number> = {}
   runs.forEach(r => { statusCounts[r.status] = (statusCounts[r.status] || 0) + 1 })

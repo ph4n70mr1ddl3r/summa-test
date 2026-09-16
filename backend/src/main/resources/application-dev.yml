@@ -9,4 +9,4 @@ logging:
   level:
     com.summa: DEBUG
     org.springframework.security: DEBUG
-    org.hibernate: INFO
+    org.eclipse.persistence: DEBUG

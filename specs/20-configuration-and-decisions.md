@@ -9,9 +9,10 @@ trigger; the mechanism it tunes is already designed (NFR-022). Defaults live beh
   human legibility is load-bearing (PRN-006), and git concurrency is what the DLV-042
   spike gates before the ladder commits. DB-with-export remains the per-domain carve-out,
   not the default.
-- **CFG-002** — Human auth v1: the deployment's own Keycloak over OIDC — Summa stores no
+- **CFG-002** — Human auth v1: [DEFERRED] the deployment's own Keycloak over OIDC — Summa stores no
   human credentials (SEC-001); `humans.auth` carries the Keycloak subject link, never
   credential material — "local accounts" are Keycloak realm accounts (SEC-002).
+  Current implementation: local email+password auth with JWT session tokens.
 - **CFG-003** — SQLite as single-process default: WAL mode with FTS5, chosen for the
   MVP path where a single owner holds both control plane and node (ARC-001); remote-node
   deployments layer on a replicated store (CFG-030).
@@ -19,8 +20,7 @@ trigger; the mechanism it tunes is already designed (NFR-022). Defaults live beh
   to cold storage is admin-configured (STG-030).
 - **CFG-005** — Plan file encoding: UTF-8 markdown with ASCII requirement IDs; no binary
   assets in the DNA store (STG-001).
-- **CFG-006** — Console dev server: Vite on port 3000, proxying /api to :8080; production
-  serves the built SPA from the same Spring Boot process under /api (no separate CORS).
+- **CFG-006** — Console dev server: Vite on port 3000, proxying /api to :8080; production deploys a separate nginx console service (Dockerfile.console) that proxies /api to the Spring Boot backend — CORS is handled by the nginx reverse proxy, not Spring Boot.
 - **CFG-007** — Node heartbeat cadence: 30 s interval, 90 s timeout — the fence lease
   interval (ARC-020) is a function of these, see CFG-160 for tunability.
 - **CFG-008** — FTS5 ngram tokenizer: default for DNA search (DRP-030); configured at
@@ -48,12 +48,13 @@ trigger; the mechanism it tunes is already designed (NFR-022). Defaults live beh
 - **CFG-019** — Injection layer token budgets: org snapshot ~1k, glossary ~2k, rules ~4k,
   goal slice ~1k (defaults) — soft budgets; overflow demotes per the DRP-007 order rather
   than truncating (DRP-004).
-- **CFG-020** — Human auth v1: the deployment's own Keycloak over OIDC — decided (v2.58):
+- **CFG-020** — Human auth v1: [DEFERRED] the deployment's own Keycloak over OIDC — decided (v2.58):
   Summa stores no human credentials (SEC-001) — `humans.auth` carries the Keycloak subject
   link, never credential material — "local accounts" are Keycloak realm accounts, and company
   SSO is Keycloak brokering the company's IdP: the same OIDC surface to Summa either way,
   which is why the original local-vs-SSO either/or collapsed. RBAC, PATs, and sessions stay
   Summa's own (SEC-004/005); lockout recovery rides Keycloak's realm-admin paths (SEC-002).
+  Current implementation: local email+password auth with JWT session tokens.
 - **CFG-021** — PAT default lifetime: default 90 days — the expiry SEC-004 names when a
   create sets none; per-token expiry, rotation, and revocation stay row-level (DAT-124).
 - **CFG-022** — External-write grace window & reconciliation cadence: both default 5 minutes

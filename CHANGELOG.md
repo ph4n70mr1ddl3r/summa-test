@@ -46,7 +46,7 @@ here alone (PLAN.md carries only the current version stamp).
 
 **Documentation review pass 75 — consistency, correctness, completeness fixes (v2.45)**: fix duplicate stall asks in initiative service; fix agent retire asks-to-closing logic; fix promote TPL-046 existing-promotion-check bug; fix backup path traversal vulnerability; implement governance fail-closed spend ack; fix last-admin TOCTOU in offboarding; add successor depth tracking in lineage; fix domain rekey scope validation; complete lineage depth cap enforcement; add missing frontend API methods; add ask validation status display. Lint green, all tests pass.
 
-**Documentation review pass 48 — consistency, correctness, completeness fixes (v2.48)**: full-suite
+**Documentation review pass 48 — consistency, correctness, completeness fixes (v2.48b)**: full-suite
 schema audit — `specs/16-data-model.md` and PLAN.md §7 gained all columns present in
 `schema.sql` but missing from the spec definition: `humans.password_hash?` (reconciled
 with SEC-001's OIDC-only default; local-account auth is a deployment choice),

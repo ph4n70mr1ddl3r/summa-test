@@ -36,7 +36,7 @@ fi
 echo "Using JAR: $JAR_FILE"
 
 # Create data directories
-mkdir -p ~/.summa
+mkdir -p ~/.summa/dna ~/.summa/db
 
 # Start the backend
 echo "Starting backend on port 8080..."
