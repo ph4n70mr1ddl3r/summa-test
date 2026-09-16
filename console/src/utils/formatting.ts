@@ -137,7 +137,7 @@ export function nodeStatusColor(status: string): string {
 export function groupStatusColor(status: string): string {
   switch (status) {
     case 'active': return 'bg-green-900/50 text-green-400'
-    case 'archived': return 'bg-gray-600 text-gray-400'
+    case 'archived': return 'bg-gray-700 text-gray-300'
     default: return 'bg-gray-700 text-gray-300'
   }
 }

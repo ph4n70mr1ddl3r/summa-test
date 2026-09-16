@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, act } from '@testing-library/react'
 import Groups from './Groups'
 import * as apiModule from '../services/api'
 
@@ -54,15 +54,17 @@ describe('Groups page', () => {
     vi.mocked(apiModule.api.groups.list).mockResolvedValue([
       { id: 'g1', name: 'Engineering', status: 'active', createdAt: 0 },
     ])
-    vi.mocked(apiModule.api.groups.archive).mockResolvedValue({ id: 'g1', name: 'Engineering', status: 'archived' } as apiModule.Group)
+    vi.mocked(apiModule.api.groups.archive).mockResolvedValue({ id: 'g1', name: 'Engineering', status: 'archived' as const } as apiModule.Group)
     render(<Groups />)
     await waitFor(() => {
       expect(screen.getByText('Engineering')).toBeInTheDocument()
     })
     const archiveBtn = screen.getByText('Archive')
-    archiveBtn.click()
-    await waitFor(() => {
-      expect(apiModule.api.groups.archive).toHaveBeenCalledWith('g1')
+    await act(async () => {
+      archiveBtn.click()
+      await waitFor(() => {
+        expect(apiModule.api.groups.archive).toHaveBeenCalledWith('g1')
+      })
     })
   })
 
@@ -76,7 +78,9 @@ describe('Groups page', () => {
       expect(screen.getByText('Engineering')).toBeInTheDocument()
     })
     const archiveBtn = screen.getByText('Archive')
-    archiveBtn.click()
+    await act(async () => {
+      archiveBtn.click()
+    })
     await waitFor(() => {
       expect(screen.getByText('Permission denied')).toBeInTheDocument()
     })
@@ -85,13 +89,15 @@ describe('Groups page', () => {
   it('reloads groups after successful archive', async () => {
     const group = { id: 'g1', name: 'Engineering', status: 'active' as const, createdAt: 0 }
     vi.mocked(apiModule.api.groups.list).mockResolvedValue([group])
-    vi.mocked(apiModule.api.groups.archive).mockResolvedValue({ ...group, status: 'archived' } as apiModule.Group)
+    vi.mocked(apiModule.api.groups.archive).mockResolvedValue({ ...group, status: 'archived' as const } as apiModule.Group)
     render(<Groups />)
     await waitFor(() => {
       expect(screen.getByText('Engineering')).toBeInTheDocument()
     })
     const archiveBtn = screen.getByText('Archive')
-    archiveBtn.click()
+    await act(async () => {
+      archiveBtn.click()
+    })
     await waitFor(() => {
       expect(apiModule.api.groups.archive).toHaveBeenCalledWith('g1')
       expect(apiModule.api.groups.list).toHaveBeenCalledTimes(2)
