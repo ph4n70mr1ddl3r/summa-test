@@ -116,6 +116,14 @@ public class OrgService {
         return humanRepository.findByEmail(email);
     }
 
+    /**
+     * OFB-020: Read the target human row under a pessimistic lock to prevent
+     * concurrent mutations from interleaving (e.g. double password change).
+     */
+    public Optional<Human> findHumanForUpdate(String id) {
+        return humanRepository.findByIdForUpdate(id);
+    }
+
     public List<Human> findAllHumans() {
         return humanRepository.findAll();
     }

@@ -137,7 +137,14 @@ public class AuthController {
             var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Invalid credentials for: " + actor, null);
             return ControllerResponses.gate(audit, "Invalid credentials for: " + actor);
         }
-        var human = humanOpt.get();
+        // Re-fetch under pessimistic lock to prevent concurrent password changes
+        // from both passing the old-password check and overwriting each other.
+        var lockedOpt = orgService.findHumanForUpdate(actor);
+        if (lockedOpt.isEmpty()) {
+            var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Invalid credentials for: " + actor, null);
+            return ControllerResponses.gate(audit, "Invalid credentials for: " + actor);
+        }
+        var human = lockedOpt.get();
 
         if (human.getPasswordHash() == null || !passwordUtil.verify(currentPassword, human.getPasswordHash())) {
             var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Password mismatch for: " + actor, null);

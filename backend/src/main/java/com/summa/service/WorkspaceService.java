@@ -147,7 +147,7 @@ public class WorkspaceService {
             nodeRepository.findById(previousNodeId).ifPresent(node -> {
                 node.setClaim(null);
                 nodeRepository.save(node);
-                auditService.logSystem("ARCHIVE_CLEAR_NODE_CLAIM", "node", previousNodeId,
+                auditService.log(actor, "ARCHIVE_CLEAR_NODE_CLAIM", "node", previousNodeId,
                     String.format("{\"workspaceId\":\"%s\",\"reason\":\"workspace_archived\"}", id));
             });
         }
@@ -158,7 +158,7 @@ public class WorkspaceService {
             if ("active".equals(t.getStatus())) {
                 t.setStatus("paused");
                 triggerRepository.save(t);
-                auditService.logSystem("ARCHIVE_PAUSE_TRIGGER", "trigger", t.getId(),
+                auditService.log(actor, "ARCHIVE_PAUSE_TRIGGER", "trigger", t.getId(),
                     String.format("{\"workspaceId\":\"%s\",\"reason\":\"workspace_archived\"}", id));
             }
         }
@@ -170,7 +170,7 @@ public class WorkspaceService {
             }
         }
         for (Playbook pb : boundPlaybooks) {
-            auditService.logSystem("ARCHIVE_NOTE_PLAYBOOK", "playbook", pb.getId(),
+            auditService.log(actor, "ARCHIVE_NOTE_PLAYBOOK", "playbook", pb.getId(),
                 String.format("{\"workspaceId\":\"%s\",\"reason\":\"workspace_archived\"}", id));
         }
 
@@ -179,13 +179,13 @@ public class WorkspaceService {
         for (SpawnRequest sr : pendingSpawns) {
             sr.setStatus("archived");
             spawnRequestRepository.save(sr);
-            auditService.logSystem("ARCHIVE_PENDING_SPAWN", "spawn_request", sr.getId(),
+            auditService.log(actor, "ARCHIVE_PENDING_SPAWN", "spawn_request", sr.getId(),
                 String.format("{\"workspaceId\":\"%s\",\"reason\":\"workspace_archived\"}", id));
         }
 
         ws.setArchivedAt(Instant.now());
         Workspace saved = workspaceRepository.save(ws);
-        auditService.logSystem("ARCHIVE_WORKSPACE", "workspace", id, null);
+        auditService.log(actor, "ARCHIVE_WORKSPACE", "workspace", id, null);
         return saved;
     }
 

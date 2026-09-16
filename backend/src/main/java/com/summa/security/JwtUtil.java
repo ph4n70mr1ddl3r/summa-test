@@ -87,12 +87,13 @@ public class JwtUtil {
             if (expNum == null) return null;
             long exp = expNum.longValue();
             if (exp <= 0 || exp > 4102444800L) return null; // reject nonsensical/expired timestamps
-            if (exp * SECONDS_TO_MILLIS < System.currentTimeMillis()) {
+            if (Long.compareUnsigned(exp * SECONDS_TO_MILLIS, System.currentTimeMillis()) < 0) {
                 return null;
             }
             Number nbfNum = (Number) payload.get("nbf");
             Long nbf = nbfNum != null ? nbfNum.longValue() : null;
-            if (nbf != null && nbf > 0 && Long.compare(nbf * SECONDS_TO_MILLIS, System.currentTimeMillis()) > 0) {
+            if (nbf != null && nbf > 0 && nbf <= 4102444800L
+                    && Long.compareUnsigned(nbf * SECONDS_TO_MILLIS, System.currentTimeMillis()) > 0) {
                 return null;
             }
             return payload;

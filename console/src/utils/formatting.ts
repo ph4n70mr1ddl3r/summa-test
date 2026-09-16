@@ -151,3 +151,16 @@ export function rbacRoleColor(role: string): string {
   }
 }
 
+export function countParticipants(participantsJson: string | null | undefined): number {
+  try {
+    const p = JSON.parse(participantsJson ?? '[]')
+    return Array.isArray(p) ? p.length : 0
+  } catch {
+    return 0
+  }
+}
+
+export function truncateSnippet(text: string, maxLen: number): string {
+  return text.length > maxLen ? text.slice(0, maxLen) + '...' : text
+}
+

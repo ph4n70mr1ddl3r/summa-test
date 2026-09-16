@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { Workspace } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
-import { formatDate } from '../utils/formatting'
+import { formatDate, countParticipants } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Workspaces() {
@@ -48,9 +48,7 @@ export default function Workspaces() {
                   <p className="text-sm text-gray-400 mt-1">Kind: {escapeHtml(ws.kind)} | Epoch: {ws.claimEpoch != null ? formatDate(ws.claimEpoch, { dateOnly: true }) : '?'}</p>
                 </div>
                   <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300">
-                    {(() => {
-                      try { const p = JSON.parse(ws.participants); return Array.isArray(p) ? p.length : 0 } catch { return 0 }
-                    })()} participants
+                    {countParticipants(ws.participants)} participants
                   </span>
               </div>
             </div>

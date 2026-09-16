@@ -48,15 +48,19 @@ public class RateLimiter {
         Instant now = Instant.now();
         long windowStart = now.getEpochSecond() / WINDOW_SECONDS * WINDOW_SECONDS;
 
-        Long count = attemptCounts.get(identifier);
-        Instant window = windowStarts.get(identifier);
+        final long[] remaining = new long[1];
+        attemptCounts.compute(identifier, (key, count) -> {
+            Instant window = windowStarts.get(key);
+            if (window == null || window.getEpochSecond() != windowStart) {
+                remaining[0] = MAX_ATTEMPTS;
+                return count;
+            }
+            long used = count != null ? count : 0L;
+            remaining[0] = Math.max(0, MAX_ATTEMPTS - used);
+            return count;
+        });
 
-        if (window == null || window.getEpochSecond() != windowStart) {
-            return MAX_ATTEMPTS;
-        }
-
-        long remaining = MAX_ATTEMPTS - (count != null ? count : 0L);
-        return Math.max(0, remaining);
+        return remaining[0];
     }
 
     public long getResetSeconds(String identifier) {
@@ -76,16 +80,13 @@ public class RateLimiter {
         if (attemptCounts.size() <= MAX_KEYS) {
             return;
         }
-        Instant now = Instant.now();
+        // Remove all entries whose window has expired to avoid unbounded growth.
         var keys = new ArrayList<String>(windowStarts.keySet());
-        int removed = 0;
         for (String key : keys) {
-            if (removed >= attemptCounts.size() - MAX_KEYS) break;
             Instant window = windowStarts.get(key);
-            if (window != null && window.plusSeconds(WINDOW_SECONDS).isBefore(now)) {
+            if (window != null && window.plusSeconds(WINDOW_SECONDS).isBefore(Instant.now())) {
                 attemptCounts.remove(key);
                 windowStarts.remove(key);
-                removed++;
             }
         }
     }
