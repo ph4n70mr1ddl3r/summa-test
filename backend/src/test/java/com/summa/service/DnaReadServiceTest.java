@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Optional;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -54,17 +55,12 @@ class DnaReadServiceTest {
 
     @Test
     void search_limitClamped() {
-        // limit=0 should clamp to 1 — verify IllegalArgumentException is not thrown
-        // and the result is not null when jdbcTemplate is available
-        service.search("test", null, 0);
-        // If we get here without exception, the clamping works
+        assertDoesNotThrow(() -> service.search("test", null, 0));
     }
 
     @Test
     void search_limitCappedAt100() {
-        // limit=9999 should clamp to 100 — verify IllegalArgumentException is not thrown
-        service.search("test", null, 9999);
-        // If we get here without exception, the capping works
+        assertDoesNotThrow(() -> service.search("test", null, 9999));
     }
 
     @Test

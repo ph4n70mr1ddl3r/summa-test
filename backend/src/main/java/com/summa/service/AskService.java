@@ -183,6 +183,7 @@ public class AskService {
      * ASK-057: Chain exhaustion — if no active recipient found, broadcasts org-stall alert.
      */
     @Scheduled(fixedRate = 60000)
+    @Transactional
     public void processExpiredAsks() {
         List<Ask> expired = askRepository.findExpiredBefore(Instant.now());
         for (Ask ask : expired) {

@@ -3,6 +3,7 @@ package com.summa.service;
 import com.summa.repository.DnaGoalRepository;
 import com.summa.repository.DnaDomainRepository;
 import com.summa.model.DnaGoal;
+import com.summa.model.DnaDomain;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,7 +33,7 @@ class DnaGoalServiceTest {
     private DnaGoalService goalService;
 
     @Test
-    void create_withDefaults() {
+    void create_throwsWhenDomainNotFound() {
         when(domainRepository.findById("d1")).thenReturn(java.util.Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () ->
@@ -41,24 +42,17 @@ class DnaGoalServiceTest {
     }
 
     @Test
-    void create_throwsWhenNullOwner() {
-        when(domainRepository.findById("d1")).thenReturn(java.util.Optional.empty());
-        assertThrows(EntityNotFoundException.class, () ->
-            goalService.create("g1", "d1", "Q1", "stmt", null, null, Instant.now(), null, "actor"));
-    }
+    void create_validGoal_returnsGoal() {
+        DnaDomain domain = new DnaDomain();
+        domain.setId("d1");
+        when(domainRepository.findById("d1")).thenReturn(java.util.Optional.of(domain));
+        when(goalRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-    @Test
-    void create_throwsWhenBlankOwner() {
-        when(domainRepository.findById("d1")).thenReturn(java.util.Optional.empty());
-        assertThrows(EntityNotFoundException.class, () ->
-            goalService.create("g1", "d1", "Q1", "stmt", "   ", null, Instant.now(), null, "actor"));
-    }
+        DnaGoal result = goalService.create("g1", "d1", "Q1", "statement", "h:owner-1", null,
+            Instant.now(), null, "actor");
 
-    @Test
-    void create_throwsWhenInvalidKeyedUnion() {
-        when(domainRepository.findById("d1")).thenReturn(java.util.Optional.empty());
-        assertThrows(EntityNotFoundException.class, () ->
-            goalService.create("g1", "d1", "Q1", "stmt", "bad format", null, Instant.now(), null, "actor"));
+        assertNotNull(result);
+        assertEquals("g1", result.getId());
     }
 
     @Test

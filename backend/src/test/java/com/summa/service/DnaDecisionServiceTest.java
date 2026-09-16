@@ -3,6 +3,7 @@ package com.summa.service;
 import com.summa.repository.DnaDecisionRepository;
 import com.summa.repository.DnaDomainRepository;
 import com.summa.model.DnaDecision;
+import com.summa.model.DnaDomain;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -47,32 +48,25 @@ class DnaDecisionServiceTest {
     }
 
     @Test
-    void create_throwsWhenNullDecidedBy() {
+    void create_throwsWhenDomainNotFound() {
         when(domainRepository.findById("d1")).thenReturn(java.util.Optional.empty());
         assertThrows(EntityNotFoundException.class, () ->
-            decisionService.create("d1", "d1", "ctx", "out", null, null, "actor"));
+            decisionService.create("d1", "d1", "ctx", "out", "h:decider", "provenance", "actor"));
     }
 
     @Test
-    void create_throwsWhenBlankDecidedBy() {
-        when(domainRepository.findById("d1")).thenReturn(java.util.Optional.empty());
-        assertThrows(EntityNotFoundException.class, () ->
-            decisionService.create("d1", "d1", "ctx", "out", "   ", null, "actor"));
-    }
+    void create_validDecision_defaultsProvenance() {
+        DnaDomain domain = new DnaDomain();
+        domain.setId("d1");
+        when(domainRepository.findById("d1")).thenReturn(java.util.Optional.of(domain));
+        when(decisionRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-    @Test
-    void create_throwsWhenInvalidKeyedUnion() {
-        when(domainRepository.findById("d1")).thenReturn(java.util.Optional.empty());
-        assertThrows(EntityNotFoundException.class, () ->
-            decisionService.create("d1", "d1", "ctx", "out", "bad format!", null, "actor"));
-    }
+        DnaDecision result = decisionService.create("d1", "d1", "ctx", "out",
+            "h:decider", null, "actor");
 
-    @Test
-    void create_defaultsProvenance() {
-        when(domainRepository.findById("d1")).thenReturn(java.util.Optional.empty());
-
-        assertThrows(EntityNotFoundException.class, () ->
-            decisionService.create("d1", "d1", "ctx", "out", "h:user", null, "actor"));
+        assertNotNull(result);
+        assertEquals("d1", result.getDomainId());
+        assertEquals("{}", result.getProvenance());
     }
 
     @Test

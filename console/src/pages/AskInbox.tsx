@@ -72,21 +72,11 @@ export default function AskInbox() {
   }
 
   if (loading) {
-    return (
-      <div className="space-y-6">
-        <h2 className="text-2xl font-bold">Ask Inbox</h2>
-        <div className="text-gray-400">Loading...</div>
-      </div>
-    )
+    return <div className="text-gray-400">Loading...</div>
   }
 
   if (error) {
-    return (
-      <div className="space-y-6">
-        <h2 className="text-2xl font-bold">Ask Inbox</h2>
-        <ErrorBanner message={escapeHtml(error)} onRetry={loadAsks} />
-      </div>
-    )
+    return <ErrorBanner message={escapeHtml(error)} onRetry={loadAsks} />
   }
 
   return (

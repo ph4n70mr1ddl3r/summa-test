@@ -127,7 +127,7 @@ class DnaProposalServiceTest {
     }
 
     @Test
-    void publish_rejectsContradictoryRule() {
+    void publish_succeedsWhenNoContradictoryRule() {
         DnaProposal proposal = new DnaProposal();
         proposal.setId("prop-1");
         proposal.setStatus("open");

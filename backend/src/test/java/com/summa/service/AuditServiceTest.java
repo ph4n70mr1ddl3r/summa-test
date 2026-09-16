@@ -76,6 +76,7 @@ class AuditServiceTest {
             "{\"password\":\"secret123\",\"name\":\"alice\"}");
 
         assertNotNull(result.getDetail());
+        assertNotEquals("{\"password\":\"secret123\",\"name\":\"alice\"}", result.getDetail());
     }
 
     @Test
@@ -86,6 +87,7 @@ class AuditServiceTest {
             "{\"api_key\":\"sk-abc123\",\"token\":\"bearer_xyz\"}");
 
         assertNotNull(result.getDetail());
+        assertNotEquals("{\"api_key\":\"sk-abc123\",\"token\":\"bearer_xyz\"}", result.getDetail());
     }
 
     @Test

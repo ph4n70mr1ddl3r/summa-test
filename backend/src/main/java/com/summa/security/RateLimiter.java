@@ -36,7 +36,7 @@ public class RateLimiter {
             }
             long next = (count == null ? 0L : count) + 1L;
             long capped = Math.min(next, MAX_ATTEMPTS + 1L);
-            allowed[0] = capped < MAX_ATTEMPTS;
+            allowed[0] = capped <= MAX_ATTEMPTS;
             return capped;
         });
 

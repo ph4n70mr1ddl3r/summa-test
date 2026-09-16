@@ -1,10 +1,11 @@
 export function formatDate(epochSeconds: number | undefined | null, options?: { dateOnly?: boolean }): string {
   if (epochSeconds === null || epochSeconds === undefined) return '?'
-  const d = new Date(epochSeconds * 1000)
-  if (options?.dateOnly) {
-    return d.toLocaleDateString(undefined, { timeZone: 'UTC' })
-  }
-  return d.toLocaleString(undefined, { timeZone: 'UTC' })
+  const fmt = new Intl.DateTimeFormat(undefined, {
+    timeZone: 'UTC',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    ...(options?.dateOnly ? {} : { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+  })
+  return fmt.format(new Date(epochSeconds * 1000))
 }
 
 export function agentStatusColor(status: string): string {
@@ -62,6 +63,8 @@ export function runStatusColor(status: string): string {
     case 'running': return 'bg-blue-900/50 text-blue-400'
     case 'failed': return 'bg-red-900/50 text-red-400'
     case 'queued': return 'bg-yellow-900/50 text-yellow-400'
+    case 'cancelled': return 'bg-gray-600 text-gray-400'
+    case 'suspended': return 'bg-orange-900/50 text-orange-400'
     default: return 'bg-gray-700 text-gray-300'
   }
 }

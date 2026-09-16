@@ -11,7 +11,6 @@ vi.mock('../services/api', () => ({
     },
   },
   setAuthToken: vi.fn(),
-  getAuthToken: vi.fn().mockReturnValue(null),
 }))
 
 function renderLogin() {
