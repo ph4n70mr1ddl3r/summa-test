@@ -5,6 +5,7 @@ import com.summa.repository.AuditEventRepository;
 import com.summa.model.Human;
 import com.summa.model.AuditEvent;
 import com.summa.security.PasswordUtil;
+import com.summa.security.PasswordValidator;
 import com.summa.util.JsonHelpers;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,18 +53,7 @@ public class OrgService {
         // First user owns the org: force admin regardless of client-supplied rbac.
         // Accepting an arbitrary rbac here could brick the org with a viewer-only user.
         String effectiveRbac = "admin";
-        if (password == null || password.length() < 8) {
-            throw new IllegalArgumentException("Password must be at least 8 characters");
-        }
-        if (!password.matches(".*[A-Z].*")) {
-            throw new IllegalArgumentException("Password must contain at least one uppercase letter");
-        }
-        if (!password.matches(".*[a-z].*")) {
-            throw new IllegalArgumentException("Password must contain at least one lowercase letter");
-        }
-        if (!password.matches(".*\\d.*")) {
-            throw new IllegalArgumentException("Password must contain at least one digit");
-        }
+        PasswordValidator.validate(password);
 
         Human human = new Human();
         human.setId(UUID.randomUUID().toString());
@@ -81,18 +71,7 @@ public class OrgService {
 
     @Transactional
     public Human createHuman(String name, String email, String rbac, String auth, String password) {
-        if (password == null || password.length() < 8) {
-            throw new IllegalArgumentException("Password must be at least 8 characters");
-        }
-        if (!password.matches(".*[A-Z].*")) {
-            throw new IllegalArgumentException("Password must contain at least one uppercase letter");
-        }
-        if (!password.matches(".*[a-z].*")) {
-            throw new IllegalArgumentException("Password must contain at least one lowercase letter");
-        }
-        if (!password.matches(".*\\d.*")) {
-            throw new IllegalArgumentException("Password must contain at least one digit");
-        }
+        PasswordValidator.validate(password);
 
         Human human = new Human();
         human.setId(UUID.randomUUID().toString());

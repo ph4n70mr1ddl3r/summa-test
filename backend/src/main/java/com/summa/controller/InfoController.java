@@ -1,6 +1,7 @@
 package com.summa.controller;
 
 import org.springframework.boot.SpringBootVersion;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
@@ -9,12 +10,15 @@ import java.util.Map;
 @RequestMapping("/info")
 public class InfoController {
 
+    @Value("${project.version:unknown}")
+    private String projectVersion;
+
     @GetMapping
     public ResponseEntity<Map<String, Object>> info() {
         return ResponseEntity.ok(Map.of(
             "name", "Summa",
             "description", "The operating system for a hybrid human + AI company",
-            "version", "0.1.0",
+            "version", projectVersion,
             "buildTime", System.currentTimeMillis(),
             "javaVersion", System.getProperty("java.version"),
             "springBootVersion", SpringBootVersion.getVersion()

@@ -7,6 +7,7 @@ import com.summa.service.AuditService;
 import com.summa.service.MemberService;
 import com.summa.service.SpawnService;
 import com.summa.model.SpawnRequest;
+import com.summa.util.JsonHelpers;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -127,17 +128,15 @@ public class SpawnController {
     }
 
     private Double parseDoubleSafe(String s) {
-        try { return Double.parseDouble(s); }
-        catch (NumberFormatException e) { throw new IllegalArgumentException("Invalid budgetCap: " + s); }
+        try { return JsonHelpers.parseDoubleSafe(s); }
+        catch (IllegalArgumentException e) { throw new IllegalArgumentException("Invalid budgetCap: " + s); }
     }
 
     private Integer parseIntSafe(String s) {
-        try {
-            int val = Integer.parseInt(s);
-            if (val <= 0 || val > 8760) throw new IllegalArgumentException("ttlHours must be between 1 and 8760");
-            return val;
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid ttlHours: " + s);
+        Integer val = JsonHelpers.parseIntSafe(s);
+        if (val != null && (val <= 0 || val > 8760)) {
+            throw new IllegalArgumentException("ttlHours must be between 1 and 8760");
         }
+        return val;
     }
 }

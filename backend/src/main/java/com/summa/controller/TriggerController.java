@@ -92,6 +92,8 @@ public class TriggerController {
             return ResponseEntity.ok(trigger);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
+        } catch (IllegalStateException e) {
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
@@ -105,6 +107,8 @@ public class TriggerController {
             return ResponseEntity.ok(trigger);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
+        } catch (IllegalStateException e) {
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
@@ -118,6 +122,8 @@ public class TriggerController {
             return ResponseEntity.ok(trigger);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
+        } catch (IllegalStateException e) {
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 

@@ -82,30 +82,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (PUBLIC_PATHS.contains(path)) return true;
         // Tolerate a trailing slash (e.g. /api/health/) without opening prefixes.
         if (path.endsWith("/") && path.length() > 1) {
-            if (PUBLIC_PATHS.contains(path.substring(0, path.length() - 1))) return true;
-        }
-        // Match node API wildcard paths (e.g. /api/nodes/<uuid>/heartbeat)
-        for (String pattern : PUBLIC_PATHS) {
-            if (pattern.contains("*")) {
-                String prefix = pattern.substring(0, pattern.indexOf('*'));
-                if (!path.startsWith(prefix)) continue;
-                String suffix = pattern.substring(pattern.indexOf('*') + 1);
-                String remainder = path.substring(prefix.length());
-                if (suffix.isEmpty()) return true;
-                if (!remainder.startsWith("/")) continue;
-                String[] parts = remainder.split("/");
-                if (suffix.startsWith("/")) {
-                    String suffixWithoutLeadingSlash = suffix.substring(1);
-                    String[] suffixParts = suffixWithoutLeadingSlash.isEmpty() ? new String[0] : suffixWithoutLeadingSlash.split("/");
-                    if (parts.length < suffixParts.length) continue;
-                    for (int i = 0; i < suffixParts.length; i++) {
-                        if (!suffixParts[i].equals("*") && !parts[parts.length - suffixParts.length + i].equals(suffixParts[i])) {
-                            continue;
-                        }
-                    }
-                    return true;
-                }
-            }
+            return PUBLIC_PATHS.contains(path.substring(0, path.length() - 1));
         }
         return false;
     }

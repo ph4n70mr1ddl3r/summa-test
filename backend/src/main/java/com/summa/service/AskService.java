@@ -114,23 +114,19 @@ public class AskService {
         long nowSeconds = now.getEpochSecond();
         // Use computeIfAbsent for atomic check-and-insert to prevent race between
         // reading the window and inserting a new entry.
-        ExpiringEntry<Instant> slotValue = collapseWindowTimestamps.get(collapseKey);
-        if (slotValue != null) {
-            Instant lastCreated = slotValue.value;
-            if (nowSeconds - lastCreated.getEpochSecond() < stormCollapseWindowSeconds) {
-                // Collapse: increment collapsed_count on nearest pending canonical
-                List<Ask> candidates = findPendingByKindAndTo(kind, to);
-                if (!candidates.isEmpty()) {
-                    Ask canonical = candidates.get(0);
-                    canonical.setCollapsedCount(canonical.getCollapsedCount() + 1);
-                    Ask saved = askRepository.save(canonical);
-                    auditService.log(from, "COLLAPSED_ASK", "ask", saved.getId(),
-                        String.format("{\"newAskId\":\"%s\",\"collapsedCount\":%d}", ask.getId(), saved.getCollapsedCount()));
-                    return saved;
-                }
+        ExpiringEntry<Instant> slotValue = collapseWindowTimestamps.computeIfAbsent(collapseKey, k -> new ExpiringEntry<>(now, nowSeconds + stormCollapseWindowSeconds));
+        if (nowSeconds - slotValue.value.getEpochSecond() < stormCollapseWindowSeconds) {
+            // Collapse: increment collapsed_count on nearest pending canonical
+            List<Ask> candidates = findPendingByKindAndTo(kind, to);
+            if (!candidates.isEmpty()) {
+                Ask canonical = candidates.get(0);
+                canonical.setCollapsedCount(canonical.getCollapsedCount() + 1);
+                Ask saved = askRepository.save(canonical);
+                auditService.log(from, "COLLAPSED_ASK", "ask", saved.getId(),
+                    String.format("{\"newAskId\":\"%s\",\"collapsedCount\":%d}", ask.getId(), saved.getCollapsedCount()));
+                return saved;
             }
         }
-        collapseWindowTimestamps.putIfAbsent(collapseKey, new ExpiringEntry<>(now, nowSeconds + stormCollapseWindowSeconds));
 
         Ask saved = askRepository.save(ask);
         auditService.log(from, "CREATE", "ask", ask.getId(),

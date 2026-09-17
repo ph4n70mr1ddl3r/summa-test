@@ -97,6 +97,8 @@ public class PatController {
         try {
             Pat pat = patService.revoke(id, actor);
             return ResponseEntity.ok(pat);
+        } catch (IllegalArgumentException e) {
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         }

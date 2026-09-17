@@ -119,17 +119,10 @@ public class AuthController {
         if (newPassword == null || newPassword.isBlank()) {
             return ControllerResponses.validation(auditService, "newPassword is required");
         }
-        if (newPassword.length() < 8) {
-            return ControllerResponses.validation(auditService, "newPassword must be at least 8 characters");
-        }
-        if (!newPassword.matches(".*[A-Z].*")) {
-            return ControllerResponses.validation(auditService, "newPassword must contain at least one uppercase letter");
-        }
-        if (!newPassword.matches(".*[a-z].*")) {
-            return ControllerResponses.validation(auditService, "newPassword must contain at least one lowercase letter");
-        }
-        if (!newPassword.matches(".*\\d.*")) {
-            return ControllerResponses.validation(auditService, "newPassword must contain at least one digit");
+        try {
+            com.summa.security.PasswordValidator.validate(newPassword);
+        } catch (IllegalArgumentException e) {
+            return ControllerResponses.validation(auditService, e.getMessage());
         }
 
         var humanOpt = orgService.findHuman(actor);
