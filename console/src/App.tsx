@@ -1,18 +1,22 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom'
 import { setAuthToken, isAuthenticated, getUser, setNavigate } from './services/api'
 
 interface NavItem {
   to: string
   label: string
+  end?: boolean
 }
 
 const navItems: NavItem[] = [
-  { to: '/', label: 'Home' },
-  { to: '/dna', label: 'DNA' },
+  { to: '/', label: 'Home', end: true },
+  { to: '/dna', label: 'DNA', end: true },
   { to: '/dna/proposals', label: 'Proposals' },
+  { to: '/dna/cards', label: 'Cards' },
+  { to: '/dna/rules', label: 'Rules' },
+  { to: '/dna/decisions', label: 'Decisions' },
   { to: '/dna/goals', label: 'Goals' },
-  { to: '/org', label: 'Org' },
+  { to: '/org', label: 'Org', end: true },
   { to: '/groups', label: 'Groups' },
   { to: '/asks', label: 'Asks' },
   { to: '/board-tasks', label: 'Board' },
@@ -27,9 +31,19 @@ const navItems: NavItem[] = [
   { to: '/initiatives', label: 'Initiatives' },
 ]
 
+function useAuthState(): boolean {
+  const [authed, setAuthed] = useState(isAuthenticated())
+  useEffect(() => {
+    const onChange = () => setAuthed(isAuthenticated())
+    window.addEventListener('summa-auth-change', onChange)
+    return () => window.removeEventListener('summa-auth-change', onChange)
+  }, [])
+  return authed
+}
+
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const location = useLocation()
-  const authed = isAuthenticated()
+  const authed = useAuthState()
 
   if (!authed) {
     setAuthToken(null)
@@ -64,7 +78,7 @@ function ModeLabel() {
 }
 
 export default function App() {
-  const authed = isAuthenticated()
+  const authed = useAuthState()
   const navigate = useNavigate()
   useEffect(() => {
     setNavigate(navigate)
@@ -80,11 +94,11 @@ export default function App() {
             <div className="flex items-center space-x-8">
               <h1 className="text-xl font-bold text-blue-400">Summa</h1>
               <nav className="flex space-x-4">
-                {navItems.map(({ to, label }) => (
+                {navItems.map(({ to, label, end }) => (
                   <NavLink
                     key={to}
                     to={to}
-                    end={to === '/' || to === '/dna' || to === '/org' || to === '/dna/goals'}
+                    end={end}
                     className={({ isActive }) =>
                       isActive
                         ? 'text-white border-b-2 border-blue-400 px-1 py-2'

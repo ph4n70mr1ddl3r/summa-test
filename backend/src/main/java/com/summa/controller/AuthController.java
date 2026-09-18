@@ -59,11 +59,11 @@ public class AuthController {
 
         if (humanOpt.isEmpty()) {
             var audit = auditService.logSystem("REFUSAL", "auth_login", email, "Login attempt for unknown account");
-            return ControllerResponses.gate(audit, "Unknown account: " + email);
+            return ControllerResponses.gate(audit, "Invalid credentials");
         }
         if (!humanOpt.get().isActive()) {
             var audit = auditService.logSystem("REFUSAL", "auth_login", email, "Login attempt on deactivated account");
-            return ControllerResponses.gate(audit, "Account is deactivated: " + email);
+            return ControllerResponses.gate(audit, "Invalid credentials");
         }
 
         var human = humanOpt.get();
@@ -71,7 +71,7 @@ public class AuthController {
         if (password == null || password.isBlank() || human.getPasswordHash() == null
                 || !passwordUtil.verify(password, human.getPasswordHash())) {
             var audit = auditService.logSystem("REFUSAL", "auth_login", email, "Login attempt with bad password");
-            return ControllerResponses.gate(audit, "Invalid credentials: " + email);
+            return ControllerResponses.gate(audit, "Invalid credentials");
         }
 
         String token = JwtUtil.generateToken(human.getId(), jwtSecret, jwtExpiration);
@@ -128,14 +128,14 @@ public class AuthController {
         var humanOpt = orgService.findHuman(actor);
         if (humanOpt.isEmpty()) {
             var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Invalid credentials for: " + actor, null);
-            return ControllerResponses.gate(audit, "Invalid credentials for: " + actor);
+            return ControllerResponses.gate(audit, "Invalid credentials");
         }
         // Re-fetch under pessimistic lock to prevent concurrent password changes
         // from both passing the old-password check and overwriting each other.
         var lockedOpt = orgService.findHumanForUpdate(actor);
         if (lockedOpt.isEmpty()) {
             var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Invalid credentials for: " + actor, null);
-            return ControllerResponses.gate(audit, "Invalid credentials for: " + actor);
+            return ControllerResponses.gate(audit, "Invalid credentials");
         }
         var human = lockedOpt.get();
 

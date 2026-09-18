@@ -32,11 +32,14 @@ export default function Groups() {
     setArchivingId(id)
     try {
       await api.groups.archive(id)
-      loadGroups()
+      let aborted = false
+      api.groups.list()
+        .then((data) => { if (!aborted) { setGroups(data) } })
+        .catch(() => {})
+        .finally(() => { if (!aborted) setArchivingId(null) })
+      return () => { aborted = true }
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err))
-      loadGroups()
-    } finally {
       setArchivingId(null)
     }
   }

@@ -42,6 +42,7 @@ export default function Runs() {
           <button
             onClick={() => setFilter('all')}
             className={`px-3 py-1 rounded ${filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400 hover:text-white'}`}
+            aria-pressed={filter === 'all'}
           >
             All ({runs.length})
           </button>
@@ -51,6 +52,7 @@ export default function Runs() {
                 key={s}
                 onClick={() => setFilter(s)}
                 className={`px-3 py-1 rounded ${filter === s ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400 hover:text-white'}`}
+                aria-pressed={filter === s}
               >
                 {s} ({statusCounts[s]})
               </button>

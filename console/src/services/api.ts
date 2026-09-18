@@ -42,6 +42,7 @@ export function setAuthToken(token: string | null, user?: { userId: string; rbac
   } catch {
     // storage unavailable — values still work in memory for this session
   }
+  window.dispatchEvent(new Event('summa-auth-change'));
 }
 
 export function getAuthToken(): string | null {

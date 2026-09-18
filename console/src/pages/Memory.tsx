@@ -37,11 +37,16 @@ export default function Memory() {
       await api.memory.review(id)
       setReviewResult('Item reviewed and taint cleared')
       setReviewingId(null)
-      loadItems()
+      let aborted = false
+      const params: Record<string, string> = {}
+      if (filter === 'tainted') params.tainted = 'true'
+      api.memory.list(params)
+        .then((data) => { if (!aborted) setItems(data) })
+        .catch(() => {})
+        .finally(() => { if (!aborted) setReviewingForId(null) })
+      return () => { aborted = true }
     } catch (err) {
       setReviewResult(err instanceof Error ? err.message : String(err))
-      loadItems()
-    } finally {
       setReviewingForId(null)
     }
   }
@@ -60,12 +65,14 @@ export default function Memory() {
             <button
               onClick={() => setFilter('all')}
               className={`px-3 py-1 text-sm ${filter === 'all' ? 'bg-blue-700 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'}`}
+              aria-pressed={filter === 'all'}
             >
               All
             </button>
             <button
               onClick={() => setFilter('tainted')}
               className={`px-3 py-1 text-sm ${filter === 'tainted' ? 'bg-red-700 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'}`}
+              aria-pressed={filter === 'tainted'}
             >
               Tainted ({taintedCount})
             </button>
