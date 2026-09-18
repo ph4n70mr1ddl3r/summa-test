@@ -7,14 +7,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.Pattern;
 import com.summa.util.ScanUtils;
+import com.summa.util.KeyedUnionValidator;
 import com.summa.exception.EntityNotFoundException;
 
 @Service
 public class DnaDecisionService {
-    private static final Pattern KEYED_UNION_PATTERN = Pattern.compile("^[ha]?:.+$|^[a-zA-Z0-9_-]+$");
-
     private final DnaDecisionRepository decisionRepository;
     private final DnaDomainRepository domainRepository;
     private final AuditService auditService;
@@ -37,7 +35,7 @@ public class DnaDecisionService {
             domainRepository.findById(domainId).orElseThrow(
                 () -> new EntityNotFoundException("Domain not found: " + domainId));
         }
-        validateKeyedUnion(decidedBy, "decidedBy");
+        KeyedUnionValidator.validate(decidedBy, "decidedBy");
         ScanUtils.scanForSecrets(contextMd, actor, "dna_decision", id, secretsScanner, auditService);
         ScanUtils.scanForSecrets(outcomeMd, actor, "dna_decision", id, secretsScanner, auditService);
 
@@ -65,14 +63,5 @@ public class DnaDecisionService {
 
     public List<DnaDecision> findAll() {
         return decisionRepository.findAll();
-    }
-
-    private void validateKeyedUnion(String value, String fieldName) {
-        if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException(fieldName + " is required");
-        }
-        if (!KEYED_UNION_PATTERN.matcher(value).matches()) {
-            throw new IllegalArgumentException(fieldName + " must be a valid keyed union (h:<human-id> or a:<agent-id>)");
-        }
     }
 }

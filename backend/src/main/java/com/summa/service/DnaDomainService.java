@@ -385,13 +385,11 @@ public class DnaDomainService {
 
     private boolean isAskScopedToDomain(Ask ask, String domainId) {
         if (ask.getInitiativeId() != null && !ask.getInitiativeId().isBlank()) {
-            // Check if the initiative references this domain via its goal or decision
-            return true; // owner-derived asks follow the owner; scope is implicit
+            return true;
         }
         if (ask.getWorkspaceId() != null && !ask.getWorkspaceId().isBlank()) {
-            return true; // workspace-scoped asks follow the workspace's domain binding
+            return true;
         }
-        // Do not re-key org-wide admin broadcasts (no domain scope)
         return false;
     }
 

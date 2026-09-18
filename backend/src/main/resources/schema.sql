@@ -202,6 +202,7 @@ CREATE TABLE IF NOT EXISTS asks (
 
 CREATE INDEX IF NOT EXISTS idx_asks_deadline ON asks(deadline);
 CREATE INDEX IF NOT EXISTS idx_asks_status ON asks(status);
+CREATE INDEX IF NOT EXISTS idx_asks_to_status ON asks(to, status);
 
 CREATE TABLE IF NOT EXISTS initiatives (
     id TEXT PRIMARY KEY,
@@ -450,7 +451,7 @@ CREATE TABLE IF NOT EXISTS runs (
     error_message TEXT,
     started_at INTEGER,
     completed_at INTEGER,
-    cost_tokens INTEGER NOT NULL DEFAULT 0,
+    cost_tokens BIGINT NOT NULL DEFAULT 0,
     cost_usd REAL NOT NULL DEFAULT 0,
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
@@ -466,6 +467,7 @@ CREATE INDEX IF NOT EXISTS idx_runs_agent ON runs(agent_id);
 CREATE INDEX IF NOT EXISTS idx_runs_workspace ON runs(workspace_id);
 CREATE INDEX IF NOT EXISTS idx_runs_status ON runs(status);
 CREATE INDEX IF NOT EXISTS idx_runs_created ON runs(created_at);
+CREATE INDEX IF NOT EXISTS idx_runs_agent_status ON runs(agent_id, status);
 
 CREATE TABLE IF NOT EXISTS spawn_requests (
     id TEXT PRIMARY KEY,
@@ -492,9 +494,11 @@ CREATE TABLE IF NOT EXISTS spawn_requests (
 );
 
 CREATE INDEX IF NOT EXISTS idx_spawn_requests_requester ON spawn_requests(requester_id);
+CREATE INDEX IF NOT EXISTS idx_workspaces_node ON workspaces(node_id);
 CREATE INDEX IF NOT EXISTS idx_spawn_requests_status ON spawn_requests(status);
 CREATE INDEX IF NOT EXISTS idx_spawn_requests_gate ON spawn_requests(gate_target);
 CREATE INDEX IF NOT EXISTS idx_spawn_requests_approved ON spawn_requests(approved_by);
+CREATE INDEX IF NOT EXISTS idx_board_tasks_initiative ON board_tasks(initiative_id);
 
 CREATE TABLE IF NOT EXISTS messages (
     id TEXT PRIMARY KEY,

@@ -28,6 +28,7 @@ import com.summa.exception.EntityNotFoundException;
 @Service
 public class NodeService {
     private static final long ENROLLMENT_TOKEN_TTL_SECONDS = 3600L; // 1 hour
+    private static final long REBIND_ASK_DEADLINE_SECONDS = 7L * 86400; // 7 days
 
     @Value("${summa.node.lease-interval-seconds:30}")
     private long leaseIntervalSeconds;
@@ -129,7 +130,7 @@ public class NodeService {
             rebindAsk.setSlaTier("bulk");
             rebindAsk.setExpiryBehavior("escalate");
             rebindAsk.setQuorumRequired(1);
-            rebindAsk.setDeadline(Instant.now().plusSeconds(7L * 86400));
+            rebindAsk.setDeadline(Instant.now().plusSeconds(REBIND_ASK_DEADLINE_SECONDS));
             rebindAsk.setWorkspaceId(ws.getId());
             askRepository.save(rebindAsk);
             auditService.logSystem("REBIND_ASK", "workspace", ws.getId(),

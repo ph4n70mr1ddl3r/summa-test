@@ -17,6 +17,7 @@ import com.summa.model.DnaGoal;
 import com.summa.model.Workspace;
 import com.summa.model.SpawnRequest;
 import com.summa.util.JsonHelpers;
+import com.summa.util.KeyedUnionValidator;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Pattern;
 import com.summa.exception.EntityNotFoundException;
 
 @Service
@@ -39,7 +39,6 @@ public class InitiativeService {
     private static final long STALL_CHECK_INTERVAL_MS = 300000; // 5 minutes
     private static final long STALL_ASK_DEADLINE_SECONDS = 7 * 86400L; // 7 days
     private static final long STALL_ASK_DEDUP_WINDOW_SECONDS = 3600L; // 1 hour
-    private static final Pattern KEYED_UNION_PATTERN = Pattern.compile("^[ha]?:.+$|^[a-zA-Z0-9_-]+$");
 
     private final InitiativeRepository initiativeRepository;
     private final BoardTaskRepository boardTaskRepository;
@@ -92,8 +91,8 @@ public class InitiativeService {
             dnaDecisionRepository.findById(decisionRef).orElseThrow(
                 () -> new EntityNotFoundException("Decision not found: " + decisionRef));
         }
-        validateKeyedUnion(sponsor, "sponsor");
-        validateKeyedUnion(lead, "lead");
+        KeyedUnionValidator.validate(sponsor, "sponsor");
+        KeyedUnionValidator.validate(lead, "lead");
 
         // INT-001: Refuse viewer or non-active members as sponsor or lead
         Optional<Human> sponsorHuman = memberService.findHuman(sponsor.replaceFirst("^[ha]?:", ""));
@@ -571,15 +570,6 @@ public class InitiativeService {
                 String.format("{\"error\":\"%s\"}", e.getMessage()));
         }
         return false;
-    }
-
-    private void validateKeyedUnion(String value, String fieldName) {
-        if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException(fieldName + " is required");
-        }
-        if (!KEYED_UNION_PATTERN.matcher(value).matches()) {
-            throw new IllegalArgumentException(fieldName + " must be a valid keyed union (h:<human-id> or a:<agent-id>)");
-        }
     }
 
     /**

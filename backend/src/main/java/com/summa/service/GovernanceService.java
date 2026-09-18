@@ -33,6 +33,7 @@ public class GovernanceService {
         this.objectMapper = objectMapper;
     }
 
+    @Transactional(readOnly = true)
     public Map<String, Object> getAllSettings() {
         Map<String, Object> settings = new ConcurrentHashMap<>();
         for (GovernanceSetting s : settingRepository.findAll()) {
@@ -43,6 +44,7 @@ public class GovernanceService {
         return Collections.unmodifiableMap(new LinkedHashMap<>(settings));
     }
 
+    @Transactional(readOnly = true)
     @SuppressWarnings("unchecked")
     public <T> T getSetting(String key, Class<T> type) {
         Map<String, Object> settings = getAllSettings();
@@ -77,6 +79,7 @@ public class GovernanceService {
         throw new IllegalArgumentException("Cannot cast value to " + type.getName() + " for key: " + key);
     }
 
+    @Transactional(readOnly = true)
     public Object getSetting(String key) {
         Map<String, Object> settings = getAllSettings();
         return settings.get(key);
@@ -106,6 +109,7 @@ public class GovernanceService {
      * The evaluation window is configurable via governance setting
      * "spend-evaluation-window-days" (default 30).
      */
+    @Transactional(readOnly = true)
     public boolean isSpendHaltTripped() {
         try {
             Double ceiling = getSetting("spend-org-ceiling", Double.class);

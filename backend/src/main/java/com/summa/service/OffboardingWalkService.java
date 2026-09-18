@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -161,11 +162,11 @@ public class OffboardingWalkService {
         // OFB-012: Reassign initiatives (sponsor/lead) — only active ones
         for (Initiative init : initiativeService.findAllActive()) {
             boolean changed = false;
-            if (humanId.equals(init.getSponsor())) {
+            if (Objects.equals(humanId, init.getSponsor())) {
                 init.setSponsor(finalTargetOwner);
                 changed = true;
             }
-            if (humanId.equals(init.getLead())) {
+            if (Objects.equals(humanId, init.getLead())) {
                 init.setLead(finalTargetOwner);
                 changed = true;
             }
@@ -388,11 +389,11 @@ public class OffboardingWalkService {
         // OFB-031: Reassign or retire sponsored/led initiatives
         for (Initiative init : initiativeService.findAllActive()) {
             boolean changed = false;
-            if (humanId.equals(init.getSponsor())) {
+            if (Objects.equals(humanId, init.getSponsor())) {
                 init.setSponsor(targetOwner);
                 changed = true;
             }
-            if (humanId.equals(init.getLead())) {
+            if (Objects.equals(humanId, init.getLead())) {
                 init.setLead(targetOwner);
                 changed = true;
             }

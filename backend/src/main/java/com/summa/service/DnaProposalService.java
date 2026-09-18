@@ -5,16 +5,17 @@ import com.summa.repository.DnaRuleRepository;
 import com.summa.model.DnaProposal;
 import com.summa.model.DnaDomain;
 import com.summa.model.DnaRule;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.Pattern;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.summa.util.JsonHelpers;
+import com.summa.util.KeyedUnionValidator;
 import com.summa.exception.EntityNotFoundException;
 
 @Service
@@ -26,8 +27,6 @@ public class DnaProposalService {
     private final MemberService memberService;
     private final AskService askService;
     private final ObjectMapper objectMapper;
-
-    private static final Pattern KEYED_UNION_PATTERN = Pattern.compile("^[ha]?:.+$|^[a-zA-Z0-9_-]+$");
 
     public DnaProposalService(DnaProposalRepository proposalRepository,
                                  DnaRuleRepository ruleRepository,
@@ -48,7 +47,7 @@ public class DnaProposalService {
     @Transactional
     public DnaProposal create(String id, String kind, String payload, String proposedBy,
                                  String provenance, String domainId) {
-        validateKeyedUnion(proposedBy, "proposedBy");
+        KeyedUnionValidator.validate(proposedBy, "proposedBy");
         DnaProposal proposal = new DnaProposal();
         proposal.setId(id);
         proposal.setKind(kind);
@@ -166,6 +165,7 @@ public class DnaProposalService {
     /**
      * DWP-020: Check for proposals whose review SLA has been breached and escalate to admin.
      */
+    @Scheduled(fixedRate = 300000)
     @Transactional
     public void checkAndEscalateBreachedProposals() {
         Instant now = Instant.now();
@@ -260,15 +260,6 @@ public class DnaProposalService {
     private boolean proposedByMatches(DnaProposal proposal, String actor) {
         String proposedBy = proposal.getProposedBy();
         return proposedBy != null && proposedBy.equals(actor);
-    }
-
-    private void validateKeyedUnion(String value, String fieldName) {
-        if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException(fieldName + " is required");
-        }
-        if (!KEYED_UNION_PATTERN.matcher(value).matches()) {
-            throw new IllegalArgumentException(fieldName + " must be a valid keyed union (h:<human-id> or a:<agent-id>)");
-        }
     }
 }
 

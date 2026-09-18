@@ -100,38 +100,43 @@ public class SpawnService {
 
         // INT-080: Only active initiatives launch spawns — verify workspace bindings reference active initiatives
         if (workspaceBindings != null && !workspaceBindings.isBlank() && !workspaceBindings.equals("[]")) {
+            JsonNode bindings = null;
             try {
-                JsonNode bindings = objectMapper.readTree(workspaceBindings);
-                if (bindings.isArray()) {
-                    for (JsonNode binding : bindings) {
-                        String wsId = binding.asText();
-                        Optional<Workspace> wsOpt = workspaceRepository.findById(wsId);
-                        if (wsOpt.isPresent()) {
-                            Workspace ws = wsOpt.get();
-                            if (ws.getInitiativeIds() != null && !ws.getInitiativeIds().isBlank()
-                                    && !ws.getInitiativeIds().equals("[]")) {
-                                JsonNode initIds = objectMapper.readTree(ws.getInitiativeIds());
-                                if (initIds.isArray()) {
-                                    for (JsonNode initIdNode : initIds) {
-                                        String initId = initIdNode.asText();
-                                        Optional<Initiative> initOpt = initiativeRepository.findById(initId);
-                                        if (initOpt.isPresent() && !"active".equals(initOpt.get().getStatus())) {
-                                            throw new IllegalStateException(
-                                                "Workspace binds to non-active initiative: " + initId
-                                                    + " (status: " + initOpt.get().getStatus() + ")");
-                                        }
+                bindings = objectMapper.readTree(workspaceBindings);
+            } catch (Exception e) {
+                auditService.logSystem("SPAWN_PARSE_BINDINGS_FAIL", "spawn_request", "unknown",
+                    String.format("{\"error\":\"%s\"}", e.getMessage()));
+                throw new IllegalStateException("Invalid workspace bindings JSON: " + e.getMessage());
+            }
+            if (bindings.isArray()) {
+                for (JsonNode binding : bindings) {
+                    String wsId = binding.asText();
+                    Optional<Workspace> wsOpt = workspaceRepository.findById(wsId);
+                    if (wsOpt.isPresent()) {
+                        Workspace ws = wsOpt.get();
+                        if (ws.getInitiativeIds() != null && !ws.getInitiativeIds().isBlank()
+                                && !ws.getInitiativeIds().equals("[]")) {
+                            JsonNode initIds = null;
+                            try {
+                                initIds = objectMapper.readTree(ws.getInitiativeIds());
+                            } catch (Exception e) {
+                                auditService.logSystem("SPAWN_PARSE_BINDINGS_FAIL", "spawn_request", "unknown",
+                                    String.format("{\"error\":\"%s\"}", e.getMessage()));
+                            }
+                            if (initIds != null && initIds.isArray()) {
+                                for (JsonNode initIdNode : initIds) {
+                                    String initId = initIdNode.asText();
+                                    Optional<Initiative> initOpt = initiativeRepository.findById(initId);
+                                    if (initOpt.isPresent() && !"active".equals(initOpt.get().getStatus())) {
+                                        throw new IllegalStateException(
+                                            "Workspace binds to non-active initiative: " + initId
+                                                + " (status: " + initOpt.get().getStatus() + ")");
                                     }
                                 }
                             }
                         }
                     }
                 }
-            } catch (IllegalStateException e) {
-                throw e;
-            } catch (Exception e) {
-                auditService.logSystem("SPAWN_PARSE_BINDINGS_FAIL", "spawn_request", "unknown",
-                    String.format("{\"error\":\"%s\"}", e.getMessage()));
-                throw new IllegalStateException("Invalid workspace bindings JSON: " + e.getMessage());
             }
         }
 
@@ -161,31 +166,38 @@ public class SpawnService {
         // Gate routes to the owner of the primary domain of the hire's primary workspace
         String gateTarget = null;
         if (AgentClass.PERSISTENT.getValue().equals(effectiveSpawnClass) && workspaceBindings != null && !workspaceBindings.isBlank()) {
+            JsonNode bindings = null;
             try {
-                JsonNode bindings = objectMapper.readTree(workspaceBindings);
-                if (bindings.isArray() && bindings.size() > 0) {
-                    // Primary workspace is the first-bound entry
-                    String primaryWorkspaceId = bindings.get(0).asText();
-                    Optional<Workspace> wsOpt = workspaceRepository.findById(primaryWorkspaceId);
-                    if (wsOpt.isPresent()) {
-                        Workspace ws = wsOpt.get();
-                        String domainIdsStr = ws.getDomainIds();
-                        if (domainIdsStr != null && !domainIdsStr.isBlank() && !domainIdsStr.equals("[]")) {
-                            JsonNode domIds = objectMapper.readTree(domainIdsStr);
-                            if (domIds.isArray() && domIds.size() > 0) {
-                                // DAT-090: first entry is primary domain
-                                String primaryDomainId = domIds.get(0).asText();
-                                Optional<DnaDomain> domOpt = domainRepository.findById(primaryDomainId);
-                                if (domOpt.isPresent()) {
-                                    gateTarget = domOpt.get().getOwnerHumanId();
-                                }
+                bindings = objectMapper.readTree(workspaceBindings);
+            } catch (Exception e) {
+                auditService.logSystem("SPAWN_PARSE_BINDINGS_FAIL", "spawn_request", UUID.randomUUID().toString(),
+                    String.format("{\"error\":\"%s\"}", e.getMessage()));
+            }
+            if (bindings != null && bindings.isArray() && bindings.size() > 0) {
+                // Primary workspace is the first-bound entry
+                String primaryWorkspaceId = bindings.get(0).asText();
+                Optional<Workspace> wsOpt = workspaceRepository.findById(primaryWorkspaceId);
+                if (wsOpt.isPresent()) {
+                    Workspace ws = wsOpt.get();
+                    String domainIdsStr = ws.getDomainIds();
+                    if (domainIdsStr != null && !domainIdsStr.isBlank() && !domainIdsStr.equals("[]")) {
+                        JsonNode domIds = null;
+                        try {
+                            domIds = objectMapper.readTree(domainIdsStr);
+                        } catch (Exception e) {
+                            auditService.logSystem("SPAWN_PARSE_DOMAINS_FAIL", "spawn_request", UUID.randomUUID().toString(),
+                                String.format("{\"error\":\"%s\"}", e.getMessage()));
+                        }
+                        if (domIds != null && domIds.isArray() && domIds.size() > 0) {
+                            // DAT-090: first entry is primary domain
+                            String primaryDomainId = domIds.get(0).asText();
+                            Optional<DnaDomain> domOpt = domainRepository.findById(primaryDomainId);
+                            if (domOpt.isPresent()) {
+                                gateTarget = domOpt.get().getOwnerHumanId();
                             }
                         }
                     }
                 }
-            } catch (Exception e) {
-                auditService.logSystem("SPAWN_PARSE_BINDINGS_FAIL", "spawn_request", UUID.randomUUID().toString(),
-                    String.format("{\"error\":\"%s\"}", e.getMessage()));
             }
         }
 

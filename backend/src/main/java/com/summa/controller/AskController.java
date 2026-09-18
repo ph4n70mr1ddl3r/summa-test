@@ -78,6 +78,9 @@ public class AskController {
                 if (deadlineSeconds <= 0) {
                     return ControllerResponses.validation(auditService, "deadlineSeconds must be positive");
                 }
+                if (deadlineSeconds > 365L * 86400) {
+                    return ControllerResponses.validation(auditService, "deadlineSeconds must not exceed 365 days");
+                }
             }
             Instant deadline = Instant.now().plusSeconds(deadlineSeconds);
             String slaTier = body.get("slaTier");

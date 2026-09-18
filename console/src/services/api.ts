@@ -161,7 +161,7 @@ export interface Agent {
   updatedAt?: number;
 }
 
-export type Member = Human & { kind: 'human' } | Agent & { kind: 'agent' };
+export type Member = Human | Agent;
 
 export type AgentStatus = 'active' | 'suspended' | 'retiring' | 'archived' | 'requested';
 
@@ -586,13 +586,16 @@ export const api = {
         body: JSON.stringify({ status }),
       }),
     updateGoalWindow: (id: string, effectiveFrom?: number, effectiveTo?: number) => {
-      const body: Record<string, number> = {};
-      if (effectiveFrom !== undefined) body.effectiveFrom = effectiveFrom;
-      if (effectiveTo !== undefined) body.effectiveTo = effectiveTo;
-      return request<DnaGoal>(`/dna/goals/${id}/window`, {
-        method: 'PATCH',
-        body: Object.keys(body).length ? JSON.stringify(body) : undefined,
-      });
+        if (effectiveFrom == null && effectiveTo == null) {
+            throw new ApiError('At least one of effectiveFrom or effectiveTo must be provided', 400);
+        }
+        const body: Record<string, number> = {};
+        if (effectiveFrom !== undefined) body.effectiveFrom = effectiveFrom;
+        if (effectiveTo !== undefined) body.effectiveTo = effectiveTo;
+        return request<DnaGoal>(`/dna/goals/${id}/window`, {
+          method: 'PATCH',
+          body: Object.keys(body).length ? JSON.stringify(body) : undefined,
+        });
     },
     glossary: (params?: { domainId?: string; scope?: string }) =>
       request<DnaGlossary[]>(`/dna/glossary${buildQuery(params)}`),
