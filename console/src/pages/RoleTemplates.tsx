@@ -25,7 +25,7 @@ export default function RoleTemplates() {
     return cancel
   }, [])
 
-  if (loading) return <div className="text-gray-400">Loading...</div>
+  if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
   if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadTemplates} />
 
   return (

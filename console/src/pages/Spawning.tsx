@@ -34,7 +34,7 @@ export default function Spawning() {
           if (aborted) return
           setRequests(prev => unwrapSettled(rRes) ?? prev)
           setStats(prev => unwrapSettled(sRes) ?? prev)
-          setError('Some data could not be loaded: ' + (e?.message || String(e)))
+          setError('Some data could not be loaded: ' + (e instanceof Error ? e.message : (typeof e === 'string' ? e : '')))
           setLoading(false)
         })
       })
@@ -46,7 +46,7 @@ export default function Spawning() {
     return cancel
   }, [])
 
-  if (loading) return <div className="text-gray-400">Loading...</div>
+  if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
   if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadData} />
 
   return (

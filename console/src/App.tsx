@@ -94,7 +94,7 @@ export default function App() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-8">
               <h1 className="text-xl font-bold text-blue-400">Summa</h1>
-              <nav className="flex space-x-4">
+              <nav className="flex space-x-4" aria-label="Main navigation">
                 {navItems.map(({ to, label, end }) => (
                   <NavLink
                     key={to}

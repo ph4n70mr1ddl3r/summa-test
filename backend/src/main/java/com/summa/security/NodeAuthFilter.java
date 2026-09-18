@@ -112,7 +112,7 @@ public class NodeAuthFilter extends OncePerRequestFilter {
         if (parts.length >= 4 && parts[0].isEmpty() && "api".equals(parts[1]) && "nodes".equals(parts[2])) {
             String candidate = parts[3];
             // Validate UUID format
-            if (candidate.matches("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
+            if (candidate.matches("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")) {
                 return candidate;
             }
         }
@@ -150,11 +150,6 @@ public class NodeAuthFilter extends OncePerRequestFilter {
     }
 
     private static boolean constantTimeEquals(String a, String b) {
-        if (a.length() != b.length()) return false;
-        int result = 0;
-        for (int i = 0; i < a.length(); i++) {
-            result |= a.charAt(i) ^ b.charAt(i);
-        }
-        return result == 0;
+        return com.summa.util.JsonHelpers.constantTimeEquals(a, b);
     }
 }

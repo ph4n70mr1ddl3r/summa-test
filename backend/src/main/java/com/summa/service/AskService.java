@@ -93,6 +93,22 @@ public class AskService {
             throw new IllegalArgumentException("Deadline must be in the future");
         }
 
+        // Service-level validation for defense-in-depth
+        boolean validKind = false;
+        for (com.summa.enums.AskKind k : com.summa.enums.AskKind.values()) {
+            if (k.getValue().equals(kind)) { validKind = true; break; }
+        }
+        if (!validKind) {
+            throw new IllegalArgumentException("Invalid ask kind: " + kind);
+        }
+        boolean validTier = false;
+        for (com.summa.enums.AskTier t : com.summa.enums.AskTier.values()) {
+            if (t.getValue().equals(slaTier)) { validTier = true; break; }
+        }
+        if (!validTier) {
+            throw new IllegalArgumentException("Invalid SLA tier: " + slaTier);
+        }
+
         Ask ask = new Ask();
         ask.setId(UUID.randomUUID().toString());
         ask.setKind(kind);

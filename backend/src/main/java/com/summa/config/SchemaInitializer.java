@@ -57,10 +57,8 @@ public class SchemaInitializer {
      *   <li>strips {@code --} line comments (outside string literals), so a
      *       comment preceding a statement no longer discards that statement;</li>
      *   <li>respects single-quoted string literals (incl. {@code ''} escapes);</li>
-     *   <li>does not split inside {@code CREATE TRIGGER ... BEGIN ... END}
-     *       bodies, whose inner {@code ;} previously shattered every trigger
-     *       into an "incomplete input" fragment plus a stray {@code END}
-     *       (both were swallowed as warnings, leaving zero triggers).</li>
+     *   <li>tracks CREATE TRIGGER … BEGIN … END state to avoid splitting on
+     *       semicolons inside trigger bodies.</li>
      * </ul>
      */
     private List<String> parseSqlStatements(String sql) {
@@ -68,6 +66,7 @@ public class SchemaInitializer {
         List<String> statements = new ArrayList<>();
         StringBuilder current = new StringBuilder();
         boolean inSingleQuote = false;
+        int triggerDepth = 0;
 
         for (int i = 0; i < withoutComments.length(); i++) {
             char c = withoutComments.charAt(i);
@@ -76,14 +75,23 @@ public class SchemaInitializer {
                 inSingleQuote = true;
                 current.append(c);
             } else if (c == '\'' && inSingleQuote) {
-                // Check for escaped quote ''
                 if (i + 1 < withoutComments.length() && withoutComments.charAt(i + 1) == '\'') {
                     current.append(c).append(withoutComments.charAt(++i));
                 } else {
                     inSingleQuote = false;
                     current.append(c);
                 }
-            } else if (c == ';' && !inSingleQuote && !isInsideTriggerBody(current)) {
+            } else if (!inSingleQuote && isWordBoundaryMatch(withoutComments, i, "BEGIN")) {
+                current.append(c);
+                triggerDepth++;
+                i += 3; // skip "EGIN"
+            } else if (!inSingleQuote && isWordBoundaryMatch(withoutComments, i, "END")) {
+                if (triggerDepth > 0) {
+                    triggerDepth--;
+                }
+                current.append(c);
+                i += 2; // skip "ND"
+            } else if (c == ';' && triggerDepth == 0) {
                 String stmt = current.toString().trim();
                 if (!stmt.isEmpty()) {
                     statements.add(stmt);
@@ -100,6 +108,17 @@ public class SchemaInitializer {
         }
 
         return statements;
+    }
+
+    private boolean isWordBoundaryMatch(String text, int offset, String word) {
+        if (offset + word.length() > text.length()) return false;
+        for (int j = 0; j < word.length(); j++) {
+            if (text.charAt(offset + j) != word.charAt(j)) return false;
+        }
+        boolean leftOk = offset == 0 || !isWordChar(text.charAt(offset - 1));
+        int after = offset + word.length();
+        boolean rightOk = after >= text.length() || !isWordChar(text.charAt(after));
+        return leftOk && rightOk;
     }
 
     /**
@@ -134,36 +153,6 @@ public class SchemaInitializer {
             }
         }
         return out.toString();
-    }
-
-    /**
-     * True while the accumulated buffer is inside a trigger body, i.e. it
-     * opened a {@code BEGIN} that has not yet been closed by {@code END}.
-     * Whole-word match so column names like {@code weekend} don't count.
-     */
-    private boolean isInsideTriggerBody(StringBuilder buffer) {
-        String upper = buffer.toString().toUpperCase();
-        int begins = countWord(upper, "BEGIN");
-        if (begins == 0) {
-            return false;
-        }
-        int ends = countWord(upper, "END");
-        return begins > ends;
-    }
-
-    private int countWord(String text, String word) {
-        int count = 0;
-        int idx = 0;
-        while ((idx = text.indexOf(word, idx)) >= 0) {
-            boolean leftOk = idx == 0 || !isWordChar(text.charAt(idx - 1));
-            int after = idx + word.length();
-            boolean rightOk = after >= text.length() || !isWordChar(text.charAt(after));
-            if (leftOk && rightOk) {
-                count++;
-            }
-            idx = after;
-        }
-        return count;
     }
 
     private boolean isWordChar(char c) {

@@ -2,6 +2,7 @@ package com.summa.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.nio.file.*;
@@ -15,12 +16,15 @@ public class BackupService {
     private static final Logger log = LoggerFactory.getLogger(BackupService.class);
     private final String dbPath;
     private final String dnaRepoPath;
+    private final JdbcTemplate jdbcTemplate;
 
     public BackupService(
             @org.springframework.beans.factory.annotation.Value("${summa.database.path:~/.summa/summa.db}") String dbPath,
-            @org.springframework.beans.factory.annotation.Value("${summa.git.dna-repo-path:~/.summa/dna}") String dnaRepoPath) {
+            @org.springframework.beans.factory.annotation.Value("${summa.git.dna-repo-path:~/.summa/dna}") String dnaRepoPath,
+            JdbcTemplate jdbcTemplate) {
         this.dbPath = dbPath;
         this.dnaRepoPath = dnaRepoPath;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     public String createBackup(String backupDir) throws IOException {
@@ -35,9 +39,15 @@ public class BackupService {
         // Copy database
         Path dbSrc = Paths.get(expandPath(dbPath));
         if (Files.exists(dbSrc)) {
+            // Checkpoint WAL to ensure a consistent backup state
+            try {
+                jdbcTemplate.execute("PRAGMA wal_checkpoint(PASSIVE)");
+            } catch (Exception e) {
+                log.warn("WAL checkpoint failed, proceeding with best-effort backup: {}", e.getMessage());
+            }
             Path dbDest = backupPath.resolve("summa.db");
             Files.copy(dbSrc, dbDest, StandardCopyOption.REPLACE_EXISTING);
-            
+
             // Also copy WAL if exists
             Path walSrc = Paths.get(dbSrc.toString() + "-wal");
             if (Files.exists(walSrc)) {

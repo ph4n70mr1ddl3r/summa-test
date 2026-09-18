@@ -15,8 +15,10 @@ export default function Login() {
   let from = '/'
   if (state?.from?.pathname) {
     const candidate = state.from.pathname
-    // Only allow relative paths to prevent open-redirect abuse
-    if (!candidate.startsWith('//') && !candidate.startsWith('http://') && !candidate.startsWith('https://') && !candidate.startsWith('javascript:')) {
+    // Decode percent-encoding first, then check for open-redirect patterns
+    let decoded = candidate
+    try { decoded = decodeURIComponent(candidate) } catch { /* already have raw candidate */ }
+    if (!decoded.startsWith('//') && !decoded.startsWith('http://') && !decoded.startsWith('https://') && !decoded.startsWith('javascript:')) {
       from = candidate
     }
   }

@@ -73,4 +73,17 @@ public final class JsonHelpers {
             throw new IllegalArgumentException("Invalid numeric value: " + s);
         }
     }
+
+    /**
+     * Constant-time string comparison to prevent timing attacks.
+     */
+    public static boolean constantTimeEquals(String a, String b) {
+        if (a == null || b == null) return a == b;
+        if (a.length() != b.length()) return false;
+        int result = 0;
+        for (int i = 0; i < a.length(); i++) {
+            result |= a.charAt(i) ^ b.charAt(i);
+        }
+        return result == 0;
+    }
 }

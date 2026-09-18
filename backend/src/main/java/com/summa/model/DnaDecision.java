@@ -32,12 +32,22 @@ public class DnaDecision {
     @Column(name = "provenance", columnDefinition = "TEXT")
     private String provenance;
 
+    @Column(name = "updated_at")
+    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    private Instant updatedAt;
+
     @PrePersist
     public void prePersist() {
         if (decidedAt == null) decidedAt = Instant.now();
+        if (updatedAt == null) updatedAt = Instant.now();
         if (refs == null) refs = "[]";
         if (provenance == null) provenance = "{}";
         if (contextMd == null) contextMd = "";
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = Instant.now();
     }
 
     public String getId() { return id; }
@@ -56,4 +66,6 @@ public class DnaDecision {
     public void setRefs(String refs) { this.refs = refs; }
     public String getProvenance() { return provenance; }
     public void setProvenance(String provenance) { this.provenance = provenance; }
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
 }

@@ -79,7 +79,7 @@ export default function AskInbox() {
   }
 
   if (loading) {
-    return <div className="text-gray-400">Loading...</div>
+    return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
   }
 
   if (error) {

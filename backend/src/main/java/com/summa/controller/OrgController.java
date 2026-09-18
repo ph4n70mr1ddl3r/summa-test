@@ -111,7 +111,7 @@ public class OrgController {
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         }
     }
 
@@ -143,7 +143,7 @@ public class OrgController {
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         }
     }
 

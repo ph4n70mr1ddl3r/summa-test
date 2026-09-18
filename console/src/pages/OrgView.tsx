@@ -37,7 +37,7 @@ export default function OrgView() {
             return data?.members ?? prev
           })
           setGroups(prev => unwrapSettled(gRes) ?? prev)
-          setError('Some data could not be loaded: ' + (e?.message || String(e)))
+          setError('Some data could not be loaded: ' + (e instanceof Error ? e.message : (typeof e === 'string' ? e : '')))
           setLoading(false)
         })
       })
@@ -49,7 +49,7 @@ export default function OrgView() {
     return cancel
   }, [])
 
-  if (loading) return <div className="text-gray-400">Loading...</div>
+  if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
   if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadData} />
 
   const humans = members.filter(m => m.kind === 'human')
@@ -72,7 +72,7 @@ export default function OrgView() {
               {humans.map((h) => (
                 <div key={h.id} className="flex items-center justify-between bg-gray-700 rounded px-3 py-2">
                   <span className="text-gray-200 text-sm">{escapeHtml(h.name)}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded ${rbacRoleColor(h.rbac)}`} aria-label={`RBAC role: ${h.rbac}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded ${rbacRoleColor(h.rbac as 'admin' | 'owner' | 'member' | 'viewer')}`} aria-label={`RBAC role: ${h.rbac}`}>
                     {escapeHtml(h.rbac)}
                   </span>
                 </div>

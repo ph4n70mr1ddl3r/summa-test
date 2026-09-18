@@ -123,13 +123,6 @@ public class JwtUtil {
     }
 
     private static boolean constantTimeEquals(String a, String b) {
-        if (a.length() != b.length()) return false;
-        byte[] ab = a.getBytes(StandardCharsets.UTF_8);
-        byte[] bb = b.getBytes(StandardCharsets.UTF_8);
-        int result = 0;
-        for (int i = 0; i < ab.length; i++) {
-            result |= ab[i] ^ bb[i];
-        }
-        return result == 0;
+        return com.summa.util.JsonHelpers.constantTimeEquals(a, b);
     }
 }

@@ -4,6 +4,10 @@ import com.summa.exception.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,10 +15,14 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@ExtendWith(MockitoExtension.class)
 class BackupServiceTest {
 
     @TempDir
     Path tempDir;
+
+    @Mock
+    JdbcTemplate jdbcTemplate;
 
     private BackupService backupService;
     private Path dbPath;
@@ -33,7 +41,8 @@ class BackupServiceTest {
 
         backupService = new BackupService(
             dbPath.toString(),
-            dnaPath.toString()
+            dnaPath.toString(),
+            jdbcTemplate
         );
     }
 
@@ -52,7 +61,8 @@ class BackupServiceTest {
         Files.createDirectories(emptyBackupDir);
         BackupService service = new BackupService(
             tempDir.resolve("nonexistent.db").toString(),
-            dnaPath.toString()
+            dnaPath.toString(),
+            jdbcTemplate
         );
 
         String zipPath = service.createBackup(emptyBackupDir.toString());
@@ -127,7 +137,8 @@ class BackupServiceTest {
         Path newDnaPath = tempDir.resolve("new-dna-dir");
         BackupService service = new BackupService(
             newDbPath.toString(),
-            newDnaPath.toString()
+            newDnaPath.toString(),
+            jdbcTemplate
         );
 
         // Create a backup first using the original service

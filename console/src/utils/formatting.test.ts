@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { formatDate, tierColor, spawnStatusColor, triggerStatusColor, boardTaskStatusColor, roleTemplateStatusColor, dnaCardStatusColor, dnaGoalStatusColor, dnaRuleStatusColor, nodeStatusColor, groupStatusColor, rbacRoleColor, initiativeStatusColor, runStatusColor, agentStatusColor, askStatusColor } from './formatting'
+import type { AskTier, SpawnStatus, TriggerStatus, BoardTaskStatus, RoleTemplateStatus, DnaCardStatus, DnaGoalStatus, DnaRuleStatus, NodeStatus, GroupStatus, InitiativeStatus, RunStatus, AgentStatus, AskStatus } from '../services/api'
+import type { RbacRole } from './formatting'
 
 describe('formatDate', () => {
   it('returns ? for null', () => {
@@ -24,290 +26,230 @@ describe('formatDate', () => {
 
 describe('tierColor', () => {
   it('returns red for critical', () => {
-    expect(tierColor('critical')).toContain('red')
+    expect(tierColor('critical' as AskTier)).toContain('red')
   })
 
   it('returns yellow for standard', () => {
-    expect(tierColor('standard')).toContain('yellow')
+    expect(tierColor('standard' as AskTier)).toContain('yellow')
   })
 
   it('returns gray for bulk', () => {
-    expect(tierColor('bulk')).toContain('gray')
-  })
-
-  it('defaults to gray', () => {
-    expect(tierColor('unknown')).toContain('gray')
+    expect(tierColor('bulk' as AskTier)).toContain('gray')
   })
 })
 
 describe('spawnStatusColor', () => {
   it('returns yellow for requested', () => {
-    expect(spawnStatusColor('requested')).toContain('yellow')
+    expect(spawnStatusColor('requested' as SpawnStatus)).toContain('yellow')
   })
 
   it('returns green for approved', () => {
-    expect(spawnStatusColor('approved')).toContain('green')
+    expect(spawnStatusColor('approved' as SpawnStatus)).toContain('green')
   })
 
   it('returns red for denied', () => {
-    expect(spawnStatusColor('denied')).toContain('red')
-  })
-
-  it('defaults to gray', () => {
-    expect(spawnStatusColor('unknown')).toContain('gray')
+    expect(spawnStatusColor('denied' as SpawnStatus)).toContain('red')
   })
 })
 
 describe('triggerStatusColor', () => {
   it('returns green for active', () => {
-    expect(triggerStatusColor('active')).toContain('green')
+    expect(triggerStatusColor('active' as TriggerStatus)).toContain('green')
   })
 
   it('returns yellow for paused', () => {
-    expect(triggerStatusColor('paused')).toContain('yellow')
+    expect(triggerStatusColor('paused' as TriggerStatus)).toContain('yellow')
   })
 
   it('returns gray for archived', () => {
-    expect(triggerStatusColor('archived')).toContain('gray')
-  })
-
-  it('defaults to gray', () => {
-    expect(triggerStatusColor('unknown')).toContain('gray')
+    expect(triggerStatusColor('archived' as TriggerStatus)).toContain('gray')
   })
 })
 
 describe('boardTaskStatusColor', () => {
   it('returns green for done', () => {
-    expect(boardTaskStatusColor('done')).toContain('green')
+    expect(boardTaskStatusColor('done' as BoardTaskStatus)).toContain('green')
   })
 
   it('returns blue for in_progress', () => {
-    expect(boardTaskStatusColor('in_progress')).toContain('blue')
+    expect(boardTaskStatusColor('in_progress' as BoardTaskStatus)).toContain('blue')
   })
 
   it('returns red for cancelled', () => {
-    expect(boardTaskStatusColor('cancelled')).toContain('red')
+    expect(boardTaskStatusColor('cancelled' as BoardTaskStatus)).toContain('red')
   })
 
   it('returns yellow for open', () => {
-    expect(boardTaskStatusColor('open')).toContain('yellow')
-  })
-
-  it('defaults to gray', () => {
-    expect(boardTaskStatusColor('unknown')).toContain('gray')
+    expect(boardTaskStatusColor('open' as BoardTaskStatus)).toContain('yellow')
   })
 })
 
 describe('roleTemplateStatusColor', () => {
   it('returns green for active', () => {
-    expect(roleTemplateStatusColor('active')).toContain('green')
+    expect(roleTemplateStatusColor('active' as RoleTemplateStatus)).toContain('green')
   })
 
   it('returns yellow for draft', () => {
-    expect(roleTemplateStatusColor('draft')).toContain('yellow')
+    expect(roleTemplateStatusColor('draft' as RoleTemplateStatus)).toContain('yellow')
   })
 
   it('returns gray for retired', () => {
-    expect(roleTemplateStatusColor('retired')).toContain('gray')
-  })
-
-  it('defaults to gray', () => {
-    expect(roleTemplateStatusColor('unknown')).toContain('gray')
+    expect(roleTemplateStatusColor('retired' as RoleTemplateStatus)).toContain('gray')
   })
 })
 
 describe('dnaCardStatusColor', () => {
   it('returns green for active', () => {
-    expect(dnaCardStatusColor('active')).toContain('green')
+    expect(dnaCardStatusColor('active' as DnaCardStatus)).toContain('green')
   })
 
   it('returns yellow for draft', () => {
-    expect(dnaCardStatusColor('draft')).toContain('yellow')
+    expect(dnaCardStatusColor('draft' as DnaCardStatus)).toContain('yellow')
   })
 
   it('returns gray for retired', () => {
-    expect(dnaCardStatusColor('retired')).toContain('gray')
-  })
-
-  it('defaults to gray', () => {
-    expect(dnaCardStatusColor('unknown')).toContain('gray')
+    expect(dnaCardStatusColor('retired' as DnaCardStatus)).toContain('gray')
   })
 })
 
 describe('dnaGoalStatusColor', () => {
   it('returns green for active', () => {
-    expect(dnaGoalStatusColor('active')).toContain('green')
+    expect(dnaGoalStatusColor('active' as DnaGoalStatus)).toContain('green')
   })
 
   it('returns blue for met', () => {
-    expect(dnaGoalStatusColor('met')).toContain('blue')
+    expect(dnaGoalStatusColor('met' as DnaGoalStatus)).toContain('blue')
   })
 
   it('returns red for missed', () => {
-    expect(dnaGoalStatusColor('missed')).toContain('red')
+    expect(dnaGoalStatusColor('missed' as DnaGoalStatus)).toContain('red')
   })
 
   it('returns gray for retired', () => {
-    expect(dnaGoalStatusColor('retired')).toContain('gray')
-  })
-
-  it('defaults to gray', () => {
-    expect(dnaGoalStatusColor('unknown')).toContain('gray')
+    expect(dnaGoalStatusColor('retired' as DnaGoalStatus)).toContain('gray')
   })
 })
 
 describe('dnaRuleStatusColor', () => {
   it('returns green for active', () => {
-    expect(dnaRuleStatusColor('active')).toContain('green')
+    expect(dnaRuleStatusColor('active' as DnaRuleStatus)).toContain('green')
   })
 
   it('returns gray for superseded', () => {
-    expect(dnaRuleStatusColor('superseded')).toContain('gray')
+    expect(dnaRuleStatusColor('superseded' as DnaRuleStatus)).toContain('gray')
   })
 
   it('returns yellow for lapsed', () => {
-    expect(dnaRuleStatusColor('lapsed')).toContain('yellow')
-  })
-
-  it('defaults to gray', () => {
-    expect(dnaRuleStatusColor('unknown')).toContain('gray')
+    expect(dnaRuleStatusColor('lapsed' as DnaRuleStatus)).toContain('yellow')
   })
 })
 
 describe('nodeStatusColor', () => {
   it('returns green for trusted', () => {
-    expect(nodeStatusColor('trusted')).toContain('green')
+    expect(nodeStatusColor('trusted' as NodeStatus)).toContain('green')
   })
 
   it('returns red for revoked', () => {
-    expect(nodeStatusColor('revoked')).toContain('red')
-  })
-
-  it('defaults to gray', () => {
-    expect(nodeStatusColor('unknown')).toContain('gray')
+    expect(nodeStatusColor('revoked' as NodeStatus)).toContain('red')
   })
 })
 
 describe('groupStatusColor', () => {
   it('returns green for active', () => {
-    expect(groupStatusColor('active')).toContain('green')
+    expect(groupStatusColor('active' as GroupStatus)).toContain('green')
   })
 
   it('returns gray for archived', () => {
-    expect(groupStatusColor('archived')).toContain('gray')
-  })
-
-  it('defaults to gray', () => {
-    expect(groupStatusColor('unknown')).toContain('gray')
+    expect(groupStatusColor('archived' as GroupStatus)).toContain('gray')
   })
 })
 
 describe('rbacRoleColor', () => {
   it('returns red for admin', () => {
-    expect(rbacRoleColor('admin')).toContain('red')
+    expect(rbacRoleColor('admin' as RbacRole)).toContain('red')
   })
 
   it('returns yellow for owner', () => {
-    expect(rbacRoleColor('owner')).toContain('yellow')
+    expect(rbacRoleColor('owner' as RbacRole)).toContain('yellow')
   })
 
   it('returns gray for viewer', () => {
-    expect(rbacRoleColor('viewer')).toContain('gray')
-  })
-
-  it('returns gray for unknown', () => {
-    expect(rbacRoleColor('unknown')).toContain('gray')
+    expect(rbacRoleColor('viewer' as RbacRole)).toContain('gray')
   })
 })
 
 describe('initiativeStatusColor', () => {
   it('returns blue for proposed', () => {
-    expect(initiativeStatusColor('proposed')).toContain('blue')
+    expect(initiativeStatusColor('proposed' as InitiativeStatus)).toContain('blue')
   })
 
   it('returns green for active', () => {
-    expect(initiativeStatusColor('active')).toContain('green')
+    expect(initiativeStatusColor('active' as InitiativeStatus)).toContain('green')
   })
 
   it('returns yellow for paused', () => {
-    expect(initiativeStatusColor('paused')).toContain('yellow')
+    expect(initiativeStatusColor('paused' as InitiativeStatus)).toContain('yellow')
   })
 
   it('returns gray for closed', () => {
-    expect(initiativeStatusColor('closed')).toContain('gray')
-  })
-
-  it('defaults to gray', () => {
-    expect(initiativeStatusColor('unknown')).toContain('gray')
+    expect(initiativeStatusColor('closed' as InitiativeStatus)).toContain('gray')
   })
 })
 
 describe('runStatusColor', () => {
   it('returns green for completed', () => {
-    expect(runStatusColor('completed')).toContain('green')
+    expect(runStatusColor('completed' as RunStatus)).toContain('green')
   })
 
   it('returns blue for running', () => {
-    expect(runStatusColor('running')).toContain('blue')
+    expect(runStatusColor('running' as RunStatus)).toContain('blue')
   })
 
   it('returns red for failed', () => {
-    expect(runStatusColor('failed')).toContain('red')
+    expect(runStatusColor('failed' as RunStatus)).toContain('red')
   })
 
   it('returns yellow for queued', () => {
-    expect(runStatusColor('queued')).toContain('yellow')
-  })
-
-  it('defaults to gray', () => {
-    expect(runStatusColor('unknown')).toContain('gray')
+    expect(runStatusColor('queued' as RunStatus)).toContain('yellow')
   })
 })
 
 describe('agentStatusColor', () => {
   it('returns green for active', () => {
-    expect(agentStatusColor('active')).toContain('green')
+    expect(agentStatusColor('active' as AgentStatus)).toContain('green')
   })
 
   it('returns blue for requested', () => {
-    expect(agentStatusColor('requested')).toContain('blue')
+    expect(agentStatusColor('requested' as AgentStatus)).toContain('blue')
   })
 
   it('returns yellow for suspended', () => {
-    expect(agentStatusColor('suspended')).toContain('yellow')
+    expect(agentStatusColor('suspended' as AgentStatus)).toContain('yellow')
   })
 
   it('returns orange for retiring', () => {
-    expect(agentStatusColor('retiring')).toContain('orange')
+    expect(agentStatusColor('retiring' as AgentStatus)).toContain('orange')
   })
 
   it('returns gray for archived', () => {
-    expect(agentStatusColor('archived')).toContain('gray')
-  })
-
-  it('defaults to gray', () => {
-    expect(agentStatusColor('unknown')).toContain('gray')
+    expect(agentStatusColor('archived' as AgentStatus)).toContain('gray')
   })
 })
 
 describe('askStatusColor', () => {
   it('returns yellow for pending', () => {
-    expect(askStatusColor('pending')).toContain('yellow')
+    expect(askStatusColor('pending' as AskStatus)).toContain('yellow')
   })
 
   it('returns green for answered', () => {
-    expect(askStatusColor('answered')).toContain('green')
+    expect(askStatusColor('answered' as AskStatus)).toContain('green')
   })
 
   it('returns red for expired', () => {
-    expect(askStatusColor('expired')).toContain('red')
+    expect(askStatusColor('expired' as AskStatus)).toContain('red')
   })
 
   it('returns gray for withdrawn', () => {
-    expect(askStatusColor('withdrawn')).toContain('gray')
-  })
-
-  it('defaults to gray', () => {
-    expect(askStatusColor('unknown')).toContain('gray')
+    expect(askStatusColor('withdrawn' as AskStatus)).toContain('gray')
   })
 })

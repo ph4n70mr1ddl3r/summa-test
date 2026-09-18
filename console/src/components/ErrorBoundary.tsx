@@ -24,7 +24,7 @@ export default class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4">
+        <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4" role="alert" aria-live="assertive">
           <div className="max-w-md w-full bg-gray-800 rounded-lg p-6 border border-red-700">
             <h2 className="text-xl font-bold text-red-400 mb-2">Something went wrong</h2>
             <p className="text-gray-400 text-sm mb-4">
@@ -36,6 +36,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                 this.props.onRetry?.()
               }}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm"
+              aria-label="Reload page"
             >
               Try again
             </button>

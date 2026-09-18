@@ -37,12 +37,13 @@ export default function Memory() {
       await api.memory.review(id)
       setReviewResult('Item reviewed and taint cleared')
       setReviewingId(null)
+      // eslint-disable-next-line prefer-const
       let aborted = false
       const params: Record<string, string> = {}
       if (filter === 'tainted') params.tainted = 'true'
       api.memory.list(params)
         .then((data) => { if (!aborted) setItems(data) })
-        .catch(() => {})
+        .catch((err) => { if (!aborted) setReviewResult(err instanceof Error ? err.message : String(err)) })
         .finally(() => { if (!aborted) setReviewingForId(null) })
     } catch (err) {
       setReviewResult(err instanceof Error ? err.message : String(err))
@@ -50,7 +51,7 @@ export default function Memory() {
     }
   }
 
-  if (loading) return <div className="text-gray-400">Loading...</div>
+  if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
   if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadItems} />
 
   const taintedCount = items.filter(i => i.tainted).length

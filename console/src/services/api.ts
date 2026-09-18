@@ -42,7 +42,7 @@ export function setAuthToken(token: string | null, user?: { userId: string; rbac
   } catch {
     // storage unavailable — values still work in memory for this session
   }
-  window.dispatchEvent(new Event('summa-auth-change'));
+  window.dispatchEvent(new CustomEvent('summa-auth-change', { detail: user }));
 }
 
 export function getAuthToken(): string | null {
@@ -116,7 +116,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     }
   }
   if (res.status === 204) {
-    return null as unknown as T;
+    return undefined as unknown as T;
   }
   return res.json() as Promise<T>;
 }

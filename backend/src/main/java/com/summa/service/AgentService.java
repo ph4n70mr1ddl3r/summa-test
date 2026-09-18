@@ -292,7 +292,6 @@ public class AgentService {
      * Each agent is processed in its own transaction to isolate failures.
      */
     @Scheduled(fixedRate = TTL_REAP_INTERVAL_MS)
-    @Transactional
     public void reapExpiredAgents() {
         Instant now = Instant.now();
         List<Agent> activeExpired = agentRepository.findByStatus("active").stream()

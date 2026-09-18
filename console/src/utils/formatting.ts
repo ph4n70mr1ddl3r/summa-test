@@ -1,3 +1,20 @@
+import type {
+  AgentStatus,
+  AskStatus,
+  AskTier,
+  SpawnStatus,
+  InitiativeStatus,
+  RunStatus,
+  TriggerStatus,
+  BoardTaskStatus,
+  RoleTemplateStatus,
+  DnaCardStatus,
+  DnaGoalStatus,
+  DnaRuleStatus,
+  NodeStatus,
+  GroupStatus,
+} from '../services/api'
+
 export function formatDate(epochSeconds: number | undefined | null, options?: { dateOnly?: boolean }): string {
   if (epochSeconds === null || epochSeconds === undefined) return '?'
   const fmt = new Intl.DateTimeFormat(undefined, {
@@ -9,7 +26,7 @@ export function formatDate(epochSeconds: number | undefined | null, options?: { 
   return options?.dateOnly ? base : `${base} UTC`
 }
 
-export function agentStatusColor(status: string): string {
+export function agentStatusColor(status: AgentStatus): string {
   switch (status) {
     case 'active': return 'bg-green-900/50 text-green-400'
     case 'requested': return 'bg-blue-900/50 text-blue-400'
@@ -20,7 +37,7 @@ export function agentStatusColor(status: string): string {
   }
 }
 
-export function askStatusColor(status: string): string {
+export function askStatusColor(status: AskStatus): string {
   switch (status) {
     case 'pending': return 'bg-yellow-900/50 text-yellow-400'
     case 'answered': return 'bg-green-900/50 text-green-400'
@@ -30,7 +47,7 @@ export function askStatusColor(status: string): string {
   }
 }
 
-export function tierColor(tier: string): string {
+export function tierColor(tier: AskTier): string {
   switch (tier) {
     case 'critical': return 'text-red-400 bg-red-900/30 border-red-700'
     case 'standard': return 'text-yellow-400 bg-yellow-900/30 border-yellow-700'
@@ -39,7 +56,7 @@ export function tierColor(tier: string): string {
   }
 }
 
-export function spawnStatusColor(status: string): string {
+export function spawnStatusColor(status: SpawnStatus): string {
   switch (status) {
     case 'requested': return 'bg-yellow-900/50 text-yellow-400'
     case 'approved': return 'bg-green-900/50 text-green-400'
@@ -48,7 +65,7 @@ export function spawnStatusColor(status: string): string {
   }
 }
 
-export function initiativeStatusColor(status: string): string {
+export function initiativeStatusColor(status: InitiativeStatus): string {
   switch (status) {
     case 'proposed': return 'bg-blue-900/50 text-blue-400'
     case 'active': return 'bg-green-900/50 text-green-400'
@@ -58,7 +75,7 @@ export function initiativeStatusColor(status: string): string {
   }
 }
 
-export function runStatusColor(status: string): string {
+export function runStatusColor(status: RunStatus): string {
   switch (status) {
     case 'completed': return 'bg-green-900/50 text-green-400'
     case 'running': return 'bg-blue-900/50 text-blue-400'
@@ -70,7 +87,7 @@ export function runStatusColor(status: string): string {
   }
 }
 
-export function triggerStatusColor(status: string): string {
+export function triggerStatusColor(status: TriggerStatus): string {
   switch (status) {
     case 'active': return 'bg-green-900/50 text-green-400'
     case 'paused': return 'bg-yellow-900/50 text-yellow-400'
@@ -79,7 +96,7 @@ export function triggerStatusColor(status: string): string {
   }
 }
 
-export function boardTaskStatusColor(status: string): string {
+export function boardTaskStatusColor(status: BoardTaskStatus): string {
   switch (status) {
     case 'done': return 'bg-green-900/50 text-green-400'
     case 'in_progress': return 'bg-blue-900/50 text-blue-400'
@@ -89,7 +106,7 @@ export function boardTaskStatusColor(status: string): string {
   }
 }
 
-export function roleTemplateStatusColor(status: string): string {
+export function roleTemplateStatusColor(status: RoleTemplateStatus): string {
   switch (status) {
     case 'active': return 'bg-green-900/50 text-green-400'
     case 'draft': return 'bg-yellow-900/50 text-yellow-400'
@@ -98,7 +115,7 @@ export function roleTemplateStatusColor(status: string): string {
   }
 }
 
-export function dnaCardStatusColor(status: string): string {
+export function dnaCardStatusColor(status: DnaCardStatus): string {
   switch (status) {
     case 'active': return 'bg-green-900/50 text-green-400'
     case 'draft': return 'bg-yellow-900/50 text-yellow-400'
@@ -107,7 +124,7 @@ export function dnaCardStatusColor(status: string): string {
   }
 }
 
-export function dnaGoalStatusColor(status: string): string {
+export function dnaGoalStatusColor(status: DnaGoalStatus): string {
   switch (status) {
     case 'active': return 'bg-green-900/50 text-green-400'
     case 'met': return 'bg-blue-900/50 text-blue-400'
@@ -117,7 +134,7 @@ export function dnaGoalStatusColor(status: string): string {
   }
 }
 
-export function dnaRuleStatusColor(status: string): string {
+export function dnaRuleStatusColor(status: DnaRuleStatus): string {
   switch (status) {
     case 'active': return 'bg-green-900/50 text-green-400'
     case 'superseded': return 'bg-gray-700 text-gray-300'
@@ -126,7 +143,7 @@ export function dnaRuleStatusColor(status: string): string {
   }
 }
 
-export function nodeStatusColor(status: string): string {
+export function nodeStatusColor(status: NodeStatus): string {
   switch (status) {
     case 'trusted': return 'bg-green-900/50 text-green-400'
     case 'revoked': return 'bg-red-900/50 text-red-400'
@@ -134,7 +151,7 @@ export function nodeStatusColor(status: string): string {
   }
 }
 
-export function groupStatusColor(status: string): string {
+export function groupStatusColor(status: GroupStatus): string {
   switch (status) {
     case 'active': return 'bg-green-900/50 text-green-400'
     case 'archived': return 'bg-gray-700 text-gray-300'
@@ -142,7 +159,8 @@ export function groupStatusColor(status: string): string {
   }
 }
 
-export function rbacRoleColor(role: string): string {
+export type RbacRole = 'admin' | 'owner' | 'member' | 'viewer'
+export function rbacRoleColor(role: RbacRole): string {
   switch (role) {
     case 'admin': return 'bg-red-900/50 text-red-400'
     case 'owner': return 'bg-yellow-900/50 text-yellow-400'
@@ -161,6 +179,7 @@ export function countParticipants(participantsJson: string | null | undefined): 
 }
 
 export function truncateSnippet(text: string, maxLen: number): string {
+  if (maxLen <= 0) return ''
   return text.length > maxLen ? text.slice(0, maxLen) + '...' : text
 }
 

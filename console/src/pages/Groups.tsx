@@ -32,10 +32,11 @@ export default function Groups() {
     setArchivingId(id)
     try {
       await api.groups.archive(id)
+      // eslint-disable-next-line prefer-const
       let aborted = false
       api.groups.list()
         .then((data) => { if (!aborted) { setGroups(data) } })
-        .catch(() => {})
+        .catch((err) => { if (!aborted) setActionError(err instanceof Error ? err.message : String(err)) })
         .finally(() => { if (!aborted) setArchivingId(null) })
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err))
@@ -43,7 +44,7 @@ export default function Groups() {
     }
   }
 
-  if (loading) return <div className="text-gray-400">Loading...</div>
+  if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
   if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadGroups} />
 
   return (

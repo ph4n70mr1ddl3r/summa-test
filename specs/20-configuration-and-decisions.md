@@ -9,7 +9,7 @@ trigger; the mechanism it tunes is already designed (NFR-022). Defaults live beh
   human legibility is load-bearing (PRN-006), and git concurrency is what the DLV-042
   spike gates before the ladder commits. DB-with-export remains the per-domain carve-out,
   not the default.
-- **CFG-002** — Human auth v1: [DEFERRED] the deployment's own Keycloak over OIDC — Summa stores no
+- **CFG-002** — [SUPERSEDED by CFG-020] Human auth v1: the deployment's own Keycloak over OIDC — Summa stores no
   human credentials (SEC-001); `humans.auth` carries the Keycloak subject link, never
   credential material — "local accounts" are Keycloak realm accounts (SEC-002).
   Current implementation: local email+password auth with JWT session tokens.

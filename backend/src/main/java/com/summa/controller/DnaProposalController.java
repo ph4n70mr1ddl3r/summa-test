@@ -85,9 +85,10 @@ public class DnaProposalController {
         if (gate != null) return gate;
         // API-022: single review endpoint with action in body
         String action = body.get("action");
+        String reviewedBy = body.get("reviewedBy");
         if ("publish".equals(action)) {
             try {
-                DnaProposal proposal = proposalService.publish(id, actor, actor);
+                DnaProposal proposal = proposalService.publish(id, actor, reviewedBy != null && !reviewedBy.isBlank() ? reviewedBy : actor);
                 return ResponseEntity.ok(proposal);
             } catch (IllegalArgumentException e) {
                 return ControllerResponses.validation(auditService, e.getMessage());
@@ -96,7 +97,7 @@ public class DnaProposalController {
             }
         } else if ("reject".equals(action)) {
             try {
-                DnaProposal proposal = proposalService.reject(id, actor, actor);
+                DnaProposal proposal = proposalService.reject(id, actor, reviewedBy != null && !reviewedBy.isBlank() ? reviewedBy : actor);
                 return ResponseEntity.ok(proposal);
             } catch (IllegalArgumentException e) {
                 return ControllerResponses.validation(auditService, e.getMessage());

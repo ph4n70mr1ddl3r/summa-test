@@ -50,6 +50,9 @@ public class NodeController {
         if (name == null || name.isBlank() || kind == null || kind.isBlank() || pubkey == null || pubkey.isBlank()) {
             return ControllerResponses.validation(auditService, "name, kind, and pubkey are required");
         }
+        if (!pubkey.matches("[A-Za-z0-9+/=]{16,}")) {
+            return ControllerResponses.validation(auditService, "pubkey must be a non-empty base64-like string (at least 16 chars)");
+        }
         try {
             Node node = nodeService.enroll(name, kind, pubkey);
             return ResponseEntity.ok(Map.of(

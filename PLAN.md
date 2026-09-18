@@ -1374,7 +1374,7 @@ humans         (id, name, email, rbac 'admin'|'owner'|'member'|'viewer', auth js
                  -- viewers are read-only and never valid ask targets (§5)
                  -- timezone/working_hours: per-human calendar — digests and queue_until_morning
                  -- compute against it (§8.10, §3)
-agents         + owner_human_id, class 'persistent'|'ephemeral', spawned_by member?, ttl_at,
+agents         + owner_human_id, class 'persistent'|'ephemeral'|'ephemeral-subagent', spawned_by member?, ttl_at,
                   budget_cap, lineage_depth, template_id?, template_version?,
                   status 'requested'|'active'|'suspended'|'retiring'|'archived',
                   created_at, updated_at?, suspended_at?, retired_at?, archived_at?

@@ -4,11 +4,12 @@ Source: PLAN.md §6.1, §6.2.
 
 ## Classes and request shape
 
-- **SPW-001** — Two spawn classes: **persistent hire** (long-lived org member; full identity
-  files; memory accrual; proposes via review; bounds: budget policy, `owner_human_id`) and
+- **SPW-001** — Three spawn classes: **persistent hire** (long-lived org member; full identity
+  files; memory accrual; proposes via review; bounds: budget policy, `owner_human_id`),
   **ephemeral worker** (bounded subtask delegation; minimal identity; read-only DNA; folds
   results back then dies; bounds: TTL default 24h (CFG-040), spend cap, task-scoped
-  workspaces).
+  workspaces), and **ephemeral subagent** (nested worker spawned by an ephemeral worker or
+  persistent agent under a template; depth-capped per SPW-070; inherits spawner scopes).
 - **SPW-002** — Spawn request shape: `spawn({ from: templateId | customRole, class,
   purpose, workspaceBindings, scopeCeiling, budgetCap, ttl? })` — a guarded tool and console
   action.

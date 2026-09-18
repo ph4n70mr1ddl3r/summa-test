@@ -32,6 +32,12 @@ if [ "$NODE_VERSION" -lt 22 ]; then
     exit 1
 fi
 
+# Check for Maven
+if ! command -v mvn &> /dev/null; then
+    echo "ERROR: Maven 3.9+ is required"
+    exit 1
+fi
+
 # Check for JWT secret
 if [ -z "$SUMMA_JWT_SECRET" ]; then
     echo "ERROR: SUMMA_JWT_SECRET environment variable is required"
@@ -43,14 +49,13 @@ mkdir -p ~/.summa/dna ~/.summa/db
 
 # Start backend in background
 echo "[1/2] Starting backend..."
-cd backend
-nohup mvn spring-boot:run -Dspring-boot.run.profiles=dev \
+(pushd backend > /dev/null && nohup mvn spring-boot:run -Dspring-boot.run.profiles=dev \
     -Dspring-boot.run.jvmArguments="${JAVA_OPTS:--Xmx512m -Xms256m -XX:MaxMetaspaceSize=128m}" \
     -Dsumma.auth.local-auth-enabled=${SUMMA_LOCAL_AUTH_ENABLED:-true} \
     > /tmp/summa-backend.log 2>&1 &
 BACKEND_PID=$!
 echo "      Backend PID: $BACKEND_PID"
-cd ..
+popd > /dev/null)
 
 # Wait for backend to start
 echo "      Waiting for backend on :8080..."
