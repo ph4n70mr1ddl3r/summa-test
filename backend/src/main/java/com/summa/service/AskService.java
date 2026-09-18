@@ -364,33 +364,26 @@ public class AskService {
                 auditService.logSystem("DIRECTION_CLOSE", "ask", ask.getId(),
                     String.format("{\"initiativeId\":\"%s\"}", initiativeId));
             } else if ("re-base".equals(action) || action.equals("rebase")) {
-                // Re-base: re-issue the ended objective as a new goal row
-                if (payload.has("newGoalRef") && !payload.get("newGoalRef").isNull()) {
-                    String newGoalRef = payload.get("newGoalRef").asText();
-                    Optional<Initiative> initOpt = initiativeRepository.findById(initiativeId);
-                    if (initOpt.isPresent()) {
-                        initOpt.get().setGoalRef(newGoalRef);
-                        initiativeRepository.save(initOpt.get());
-                        auditService.logSystem("DIRECTION_REBASE", "ask", ask.getId(),
-                            String.format("{\"initiativeId\":\"%s\",\"newGoalRef\":\"%s\"}", initiativeId, newGoalRef));
-                    }
-                }
+                updateGoalRef(initiativeId, payload, "DIRECTION_REBASE");
             } else if ("re-target".equals(action) || action.equals("retarget")) {
-                // Re-target: swap to a different goal
-                if (payload.has("newGoalRef") && !payload.get("newGoalRef").isNull()) {
-                    String newGoalRef = payload.get("newGoalRef").asText();
-                    Optional<Initiative> initOpt = initiativeRepository.findById(initiativeId);
-                    if (initOpt.isPresent()) {
-                        initOpt.get().setGoalRef(newGoalRef);
-                        initiativeRepository.save(initOpt.get());
-                        auditService.logSystem("DIRECTION_RETARGET", "ask", ask.getId(),
-                            String.format("{\"initiativeId\":\"%s\",\"newGoalRef\":\"%s\"}", initiativeId, newGoalRef));
-                    }
-                }
+                updateGoalRef(initiativeId, payload, "DIRECTION_RETARGET");
             }
         } catch (Exception e) {
             auditService.logSystem("DIRECTION_RESPOND_FAIL", "ask", ask.getId(),
                 String.format("{\"error\":\"%s\"}", e.getMessage()));
+        }
+    }
+
+    private void updateGoalRef(String initiativeId, JsonNode payload, String auditAction) {
+        if (payload.has("newGoalRef") && !payload.get("newGoalRef").isNull()) {
+            String newGoalRef = payload.get("newGoalRef").asText();
+            Optional<Initiative> initOpt = initiativeRepository.findById(initiativeId);
+            if (initOpt.isPresent()) {
+                initOpt.get().setGoalRef(newGoalRef);
+                initiativeRepository.save(initOpt.get());
+                auditService.logSystem(auditAction, "ask", initiativeId,
+                    String.format("{\"initiativeId\":\"%s\",\"newGoalRef\":\"%s\"}", initiativeId, newGoalRef));
+            }
         }
     }
 

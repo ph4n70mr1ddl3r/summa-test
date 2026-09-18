@@ -62,9 +62,9 @@ describe('Groups page', () => {
     const archiveBtn = screen.getByText('Archive')
     await act(async () => {
       archiveBtn.click()
-      await waitFor(() => {
-        expect(apiModule.api.groups.archive).toHaveBeenCalledWith('g1')
-      })
+    })
+    await waitFor(() => {
+      expect(apiModule.api.groups.archive).toHaveBeenCalledWith('g1')
     })
   })
 

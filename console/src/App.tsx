@@ -57,6 +57,7 @@ function LogoutButton() {
   const navigate = useNavigate()
   function handleLogout() {
     setAuthToken(null)
+    setNavigate(null)
     navigate('/login', { replace: true })
   }
   return (

@@ -1,5 +1,7 @@
 package com.summa.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.nio.file.*;
@@ -10,6 +12,7 @@ import com.summa.exception.EntityNotFoundException;
 
 @Service
 public class BackupService {
+    private static final Logger log = LoggerFactory.getLogger(BackupService.class);
     private final String dbPath;
     private final String dnaRepoPath;
 
@@ -155,7 +158,7 @@ public class BackupService {
             Path destination = dest.resolve(root.relativize(source));
             Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            log.warn("Failed to copy path: {}", e.getMessage());
         }
     }
 
@@ -170,7 +173,7 @@ public class BackupService {
             }
             zos.closeEntry();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            log.warn("Failed to add zip entry: {}", e.getMessage());
         }
     }
 
@@ -178,7 +181,7 @@ public class BackupService {
         try {
             Files.delete(p);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            log.warn("Failed to delete path: {}", e.getMessage());
         }
     }
 
