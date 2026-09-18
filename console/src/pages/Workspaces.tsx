@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { Workspace } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
-import { formatDate, countParticipants } from '../utils/formatting'
+import { countParticipants } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Workspaces() {

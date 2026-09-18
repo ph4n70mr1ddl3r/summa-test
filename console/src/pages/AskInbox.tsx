@@ -176,6 +176,7 @@ export default function AskInbox() {
                     value={responseText}
                     onChange={(e) => setResponseText(e.target.value)}
                     placeholder="Type your response..."
+                    aria-label="Response to ask"
                     className="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-gray-100 text-sm focus:border-blue-500 focus:outline-none"
                     rows={3}
                   />

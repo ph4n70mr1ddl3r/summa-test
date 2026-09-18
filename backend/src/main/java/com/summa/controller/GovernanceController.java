@@ -88,9 +88,12 @@ public class GovernanceController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        Optional<Human> actorOpt = memberService.findHuman(actor);
-        if (actorOpt.isEmpty() || !RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac())) {
-            return ControllerResponses.gate(auditService, "Admin access required to update governance policies");
+        boolean isNodeAuth = Boolean.TRUE.equals(RbacAuthorizationFilter.getNodeAuth());
+        if (!isNodeAuth) {
+            Optional<Human> actorOpt = memberService.findHuman(actor);
+            if (actorOpt.isEmpty() || !RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac())) {
+                return ControllerResponses.gate(auditService, "Admin access required to update governance policies");
+            }
         }
         for (String key : body.keySet()) {
             if (!POLICY_KEYS.contains(key)) {
@@ -110,9 +113,12 @@ public class GovernanceController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        Optional<Human> actorOpt = memberService.findHuman(actor);
-        if (actorOpt.isEmpty() || !RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac())) {
-            return ControllerResponses.gate(auditService, "Admin access required to update governance quotas");
+        boolean isNodeAuth = Boolean.TRUE.equals(RbacAuthorizationFilter.getNodeAuth());
+        if (!isNodeAuth) {
+            Optional<Human> actorOpt = memberService.findHuman(actor);
+            if (actorOpt.isEmpty() || !RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac())) {
+                return ControllerResponses.gate(auditService, "Admin access required to update governance quotas");
+            }
         }
         for (String key : body.keySet()) {
             if (!QUOTA_KEYS.contains(key)) {
@@ -133,10 +139,13 @@ public class GovernanceController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        // Admin-only check per API-051
-        Optional<Human> actorOpt = memberService.findHuman(actor);
-        if (actorOpt.isEmpty() || !RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac())) {
-            return ControllerResponses.gate(auditService, "Admin access required to acknowledge spend overruns");
+        // Node-authenticated requests bypass the human admin check
+        boolean isNodeAuth = Boolean.TRUE.equals(RbacAuthorizationFilter.getNodeAuth());
+        if (!isNodeAuth) {
+            Optional<Human> actorOpt = memberService.findHuman(actor);
+            if (actorOpt.isEmpty() || !RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac())) {
+                return ControllerResponses.gate(auditService, "Admin access required to acknowledge spend overruns");
+            }
         }
         try {
             SpendLedger ledger = spendLedgerService.findById(id)

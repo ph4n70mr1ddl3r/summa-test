@@ -44,7 +44,6 @@ export default function Memory() {
         .then((data) => { if (!aborted) setItems(data) })
         .catch(() => {})
         .finally(() => { if (!aborted) setReviewingForId(null) })
-      return () => { aborted = true }
     } catch (err) {
       setReviewResult(err instanceof Error ? err.message : String(err))
       setReviewingForId(null)

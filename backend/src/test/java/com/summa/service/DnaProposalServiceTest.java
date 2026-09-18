@@ -54,7 +54,7 @@ class DnaProposalServiceTest {
             return p;
         });
 
-        DnaProposal result = proposalService.create("prop-1", "card", "{}", "agent-1", "{}", "domain-1");
+        DnaProposal result = proposalService.create("prop-1", "card", "{}", "a:agent-1", "{}", "domain-1");
 
         assertNotNull(result);
         assertEquals("open", result.getStatus());
@@ -69,7 +69,7 @@ class DnaProposalServiceTest {
         when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
         when(proposalRepository.save(any())).thenReturn(proposal);
 
-        DnaProposal result = proposalService.publish("prop-1", "human-1", "human-1");
+        DnaProposal result = proposalService.publish("prop-1", "h:human-1", "h:human-1");
 
         assertEquals("published", result.getStatus());
         assertNotNull(result.getReviewedAt());
@@ -83,7 +83,7 @@ class DnaProposalServiceTest {
         when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
 
         assertThrows(IllegalStateException.class, () -> {
-            proposalService.publish("prop-1", "human-1", "human-1");
+            proposalService.publish("prop-1", "h:human-1", "h:human-1");
         });
     }
 
@@ -92,7 +92,7 @@ class DnaProposalServiceTest {
         DnaProposal proposal = new DnaProposal();
         proposal.setId("prop-1");
         proposal.setStatus("open");
-        proposal.setProposedBy("agent-1");
+        proposal.setProposedBy("a:agent-1");
         when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
 
         assertThrows(IllegalArgumentException.class, () -> {
@@ -109,7 +109,7 @@ class DnaProposalServiceTest {
         when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
         when(proposalRepository.save(any())).thenReturn(proposal);
 
-        DnaProposal result = proposalService.amend("prop-1", "{\"new\":\"payload\"}", "agent-1");
+        DnaProposal result = proposalService.amend("prop-1", "{\"new\":\"payload\"}", "a:agent-1");
 
         assertEquals(2, result.getRevision());
     }
@@ -122,7 +122,7 @@ class DnaProposalServiceTest {
         when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
 
         assertThrows(IllegalStateException.class, () -> {
-            proposalService.amend("prop-1", "{}", "agent-1");
+            proposalService.amend("prop-1", "{}", "a:agent-1");
         });
     }
 
@@ -144,7 +144,7 @@ class DnaProposalServiceTest {
         when(ruleRepository.findBySupersedesId("rule-old")).thenReturn(List.of());
         when(proposalRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        DnaProposal result = proposalService.publish("prop-1", "human-1", "human-1");
+        DnaProposal result = proposalService.publish("prop-1", "h:human-1", "h:human-1");
         assertNotNull(result);
         assertEquals("published", result.getStatus());
     }

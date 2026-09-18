@@ -59,7 +59,7 @@ public class AskController {
             if (kind == null || kind.isBlank()) {
                 throw new IllegalArgumentException("kind is required");
             }
-            Set<String> validKinds = Set.of("approval", "question", "assignment", "spawn_request", "promotion");
+            Set<String> validKinds = Set.of("approval", "question", "assignment", "spawn_request", "promotion", "upgrade");
             if (!validKinds.contains(kind)) {
                 throw new IllegalArgumentException("Invalid kind: " + kind + ". Must be one of: " + String.join(", ", validKinds));
             }

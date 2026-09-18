@@ -22,7 +22,7 @@ function loadToken(): string | null {
 let authToken: string | null = loadToken();
 let navigateRef: ((path: string, options?: { replace?: boolean }) => void) | null = null;
 
-export function setNavigate(fn: (path: string, options?: { replace?: boolean }) => void) {
+export function setNavigate(fn: ((path: string, options?: { replace?: boolean }) => void) | null) {
   navigateRef = fn;
 }
 

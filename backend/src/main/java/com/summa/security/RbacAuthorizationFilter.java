@@ -24,6 +24,7 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
 
     private static final ThreadLocal<String> ACTOR_CONTEXT = new ThreadLocal<>();
     private static final ThreadLocal<Boolean> WRITES_ALLOWED = new ThreadLocal<>();
+    private static final ThreadLocal<Boolean> NODE_AUTH = new ThreadLocal<>();
 
     public static String getCurrentActor() {
         return ACTOR_CONTEXT.get();
@@ -37,6 +38,10 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
     public static boolean isWriteAllowed() {
         Boolean val = WRITES_ALLOWED.get();
         return val != null && val;
+    }
+
+    public static Boolean getNodeAuth() {
+        return NODE_AUTH.get();
     }
 
     private final MemberService memberService;
@@ -89,10 +94,12 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
         try {
             ACTOR_CONTEXT.set(actor);
             WRITES_ALLOWED.set(writeAllowed);
+            NODE_AUTH.set(Boolean.TRUE.equals(request.getAttribute("nodeAuth")));
             filterChain.doFilter(request, response);
         } finally {
             ACTOR_CONTEXT.remove();
             WRITES_ALLOWED.remove();
+            NODE_AUTH.remove();
         }
     }
 }

@@ -500,6 +500,17 @@ CREATE INDEX IF NOT EXISTS idx_spawn_requests_gate ON spawn_requests(gate_target
 CREATE INDEX IF NOT EXISTS idx_spawn_requests_approved ON spawn_requests(approved_by);
 CREATE INDEX IF NOT EXISTS idx_board_tasks_initiative ON board_tasks(initiative_id);
 
+CREATE INDEX IF NOT EXISTS idx_runs_workspace_status ON runs(workspace_id, status);
+CREATE INDEX IF NOT EXISTS idx_runs_agent_status ON runs(agent_id, status);
+CREATE INDEX IF NOT EXISTS idx_triggers_status ON triggers(status);
+CREATE INDEX IF NOT EXISTS idx_triggers_agent ON triggers(agent_id);
+CREATE INDEX IF NOT EXISTS idx_triggers_workspace ON triggers(workspace_id);
+CREATE INDEX IF NOT EXISTS idx_initiatives_status ON initiatives(status);
+CREATE INDEX IF NOT EXISTS idx_initiatives_sponsor ON initiatives(sponsor);
+CREATE INDEX IF NOT EXISTS idx_initiatives_lead ON initiatives(lead);
+CREATE INDEX IF NOT EXISTS idx_asks_to_status_deadline ON asks(to, status, deadline);
+CREATE INDEX IF NOT EXISTS idx_asks_status_deadline ON asks(status, deadline);
+
 CREATE TABLE IF NOT EXISTS messages (
     id TEXT PRIMARY KEY,
     run_id TEXT NOT NULL,

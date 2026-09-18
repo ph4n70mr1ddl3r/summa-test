@@ -147,7 +147,7 @@ export function rbacRoleColor(role: string): string {
     case 'admin': return 'bg-red-900/50 text-red-400'
     case 'owner': return 'bg-yellow-900/50 text-yellow-400'
     case 'viewer': return 'bg-gray-600 text-gray-400'
-    default: return 'bg-blue-900/50 text-blue-400'
+    default: return 'bg-gray-700 text-gray-300'
   }
 }
 

@@ -55,7 +55,7 @@ public class JwtUtil {
         if (token == null || token.isBlank()) {
             return null;
         }
-        String[] parts = token.split("\\.");
+        String[] parts = token.split("\\.", 3);
         if (parts.length != 3) {
             return null;
         }

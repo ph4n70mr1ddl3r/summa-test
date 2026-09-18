@@ -140,7 +140,8 @@ public class OffboardingWalkService {
         int groupsLeadershipTransferred = 0;
 
         // OFB-002: Transfer owned DNA domains (include archived — ownership references persist)
-        for (DnaDomain domain : domainService.findAllIncludingArchived()) {
+        List<DnaDomain> allDomains = domainService.findAllIncludingArchived();
+        for (DnaDomain domain : allDomains) {
             if (humanId.equals(domain.getOwnerHumanId())) {
                 domainService.updateOwner(domain.getId(), finalTargetOwner, actor);
                 domainsTransferred++;
@@ -213,9 +214,9 @@ public class OffboardingWalkService {
         // member-scoped proposals are auto-withdrawn with audit note.
         // We need to distinguish: proposals for domains the departing human owned go to successor;
         // all other open proposals by the departed member are withdrawn.
-        // Batch-fetch owned domains to avoid N+1 per-proposal lookups.
+        // Reuse the already-fetched domain list to build ownedDomainIds.
         Set<String> ownedDomainIds = new HashSet<>();
-        for (DnaDomain domain : domainService.findAllIncludingArchived()) {
+        for (DnaDomain domain : allDomains) {
             if (humanId.equals(domain.getOwnerHumanId())) {
                 ownedDomainIds.add(domain.getId());
             }
@@ -350,7 +351,8 @@ public class OffboardingWalkService {
         int groupLeadershipsTransferred = 0;
 
         // OFB-030/033: Transfer owned DNA domains to admin custody
-        for (DnaDomain domain : domainService.findAllIncludingArchived()) {
+        List<DnaDomain> allDomainsDemote = domainService.findAllIncludingArchived();
+        for (DnaDomain domain : allDomainsDemote) {
             if (humanId.equals(domain.getOwnerHumanId())) {
                 domainService.updateOwner(domain.getId(), targetOwner, actor);
                 domainsTransferred++;

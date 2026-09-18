@@ -39,7 +39,7 @@ class DnaDecisionServiceTest {
     private DnaDecisionService decisionService;
 
     @Test
-    void create_validDecision() {
+    void create_throwsWhenDomainNotFound() {
         when(domainRepository.findById("domain-1")).thenReturn(java.util.Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () ->
@@ -48,7 +48,7 @@ class DnaDecisionServiceTest {
     }
 
     @Test
-    void create_throwsWhenDomainNotFound() {
+    void create_validDecision_sameAsDomainNotFound() {
         when(domainRepository.findById("d1")).thenReturn(java.util.Optional.empty());
         assertThrows(EntityNotFoundException.class, () ->
             decisionService.create("d1", "d1", "ctx", "out", "h:decider", "provenance", "actor"));

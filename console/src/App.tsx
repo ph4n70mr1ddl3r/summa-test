@@ -83,7 +83,7 @@ export default function App() {
   const navigate = useNavigate()
   useEffect(() => {
     setNavigate(navigate)
-  }, [navigate])
+  }, [])
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-blue-600 focus:text-white focus:p-2">

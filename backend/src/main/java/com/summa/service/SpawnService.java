@@ -99,8 +99,8 @@ public class SpawnService {
         }
 
         // INT-080: Only active initiatives launch spawns — verify workspace bindings reference active initiatives
+        JsonNode bindings = null;
         if (workspaceBindings != null && !workspaceBindings.isBlank() && !workspaceBindings.equals("[]")) {
-            JsonNode bindings = null;
             try {
                 bindings = objectMapper.readTree(workspaceBindings);
             } catch (Exception e) {
@@ -165,36 +165,27 @@ public class SpawnService {
         // SPW-040: Determine the approval gate for persistent hires
         // Gate routes to the owner of the primary domain of the hire's primary workspace
         String gateTarget = null;
-        if (AgentClass.PERSISTENT.getValue().equals(effectiveSpawnClass) && workspaceBindings != null && !workspaceBindings.isBlank()) {
-            JsonNode bindings = null;
-            try {
-                bindings = objectMapper.readTree(workspaceBindings);
-            } catch (Exception e) {
-                auditService.logSystem("SPAWN_PARSE_BINDINGS_FAIL", "spawn_request", UUID.randomUUID().toString(),
-                    String.format("{\"error\":\"%s\"}", e.getMessage()));
-            }
-            if (bindings != null && bindings.isArray() && bindings.size() > 0) {
-                // Primary workspace is the first-bound entry
-                String primaryWorkspaceId = bindings.get(0).asText();
-                Optional<Workspace> wsOpt = workspaceRepository.findById(primaryWorkspaceId);
-                if (wsOpt.isPresent()) {
-                    Workspace ws = wsOpt.get();
-                    String domainIdsStr = ws.getDomainIds();
-                    if (domainIdsStr != null && !domainIdsStr.isBlank() && !domainIdsStr.equals("[]")) {
-                        JsonNode domIds = null;
-                        try {
-                            domIds = objectMapper.readTree(domainIdsStr);
-                        } catch (Exception e) {
-                            auditService.logSystem("SPAWN_PARSE_DOMAINS_FAIL", "spawn_request", UUID.randomUUID().toString(),
-                                String.format("{\"error\":\"%s\"}", e.getMessage()));
-                        }
-                        if (domIds != null && domIds.isArray() && domIds.size() > 0) {
-                            // DAT-090: first entry is primary domain
-                            String primaryDomainId = domIds.get(0).asText();
-                            Optional<DnaDomain> domOpt = domainRepository.findById(primaryDomainId);
-                            if (domOpt.isPresent()) {
-                                gateTarget = domOpt.get().getOwnerHumanId();
-                            }
+        if (AgentClass.PERSISTENT.getValue().equals(effectiveSpawnClass) && bindings != null && bindings.isArray() && bindings.size() > 0) {
+            // Primary workspace is the first-bound entry
+            String primaryWorkspaceId = bindings.get(0).asText();
+            Optional<Workspace> wsOpt = workspaceRepository.findById(primaryWorkspaceId);
+            if (wsOpt.isPresent()) {
+                Workspace ws = wsOpt.get();
+                String domainIdsStr = ws.getDomainIds();
+                if (domainIdsStr != null && !domainIdsStr.isBlank() && !domainIdsStr.equals("[]")) {
+                    JsonNode domIds = null;
+                    try {
+                        domIds = objectMapper.readTree(domainIdsStr);
+                    } catch (Exception e) {
+                        auditService.logSystem("SPAWN_PARSE_DOMAINS_FAIL", "spawn_request", UUID.randomUUID().toString(),
+                            String.format("{\"error\":\"%s\"}", e.getMessage()));
+                    }
+                    if (domIds != null && domIds.isArray() && domIds.size() > 0) {
+                        // DAT-090: first entry is primary domain
+                        String primaryDomainId = domIds.get(0).asText();
+                        Optional<DnaDomain> domOpt = domainRepository.findById(primaryDomainId);
+                        if (domOpt.isPresent()) {
+                            gateTarget = domOpt.get().getOwnerHumanId();
                         }
                     }
                 }

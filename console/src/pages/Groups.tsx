@@ -37,7 +37,6 @@ export default function Groups() {
         .then((data) => { if (!aborted) { setGroups(data) } })
         .catch(() => {})
         .finally(() => { if (!aborted) setArchivingId(null) })
-      return () => { aborted = true }
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err))
       setArchivingId(null)

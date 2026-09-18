@@ -77,11 +77,12 @@ public class WorkspaceController {
 
     @PostMapping("/{id}/rebind")
     public ResponseEntity<?> rebind(@PathVariable String id,
-                                      @RequestBody Map<String, String> body) {
+                                       @RequestBody Map<String, String> body) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        if (!memberService.isAdmin(actor)) {
+        boolean isNodeAuth = Boolean.TRUE.equals(RbacAuthorizationFilter.getNodeAuth());
+        if (!isNodeAuth && !memberService.isAdmin(actor)) {
             return ControllerResponses.gate(auditService, "Workspace rebind requires admin role");
         }
         try {
@@ -97,7 +98,8 @@ public class WorkspaceController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        if (!memberService.isAdmin(actor)) {
+        boolean isNodeAuth = Boolean.TRUE.equals(RbacAuthorizationFilter.getNodeAuth());
+        if (!isNodeAuth && !memberService.isAdmin(actor)) {
             return ControllerResponses.gate(auditService, "Workspace archive requires admin role");
         }
         try {

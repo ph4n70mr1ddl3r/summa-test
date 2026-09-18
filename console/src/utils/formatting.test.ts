@@ -215,8 +215,8 @@ describe('rbacRoleColor', () => {
     expect(rbacRoleColor('viewer')).toContain('gray')
   })
 
-  it('returns blue for unknown', () => {
-    expect(rbacRoleColor('unknown')).toContain('blue')
+  it('returns gray for unknown', () => {
+    expect(rbacRoleColor('unknown')).toContain('gray')
   })
 })
 

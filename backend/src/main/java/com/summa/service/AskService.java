@@ -191,7 +191,8 @@ public class AskService {
                 } else if ("escalate".equals(behavior) || "reassign".equals(behavior)) {
                     expire(ask.getId());
                     try {
-                          int depth = (successorDepth.get(ask.getId()) != null ? successorDepth.get(ask.getId()).value : 0) + 1;
+                          ExpiringEntry<Integer> depthEntry = successorDepth.get(ask.getId());
+                          int depth = (depthEntry != null ? depthEntry.value : 0) + 1;
                           long expireNowSeconds = Instant.now().getEpochSecond();
                           if (depth > MAX_EXPIRE_SUCCESSOR_DEPTH) {
                              // ASK-057: Chain exhausted — broadcast org-stall alert

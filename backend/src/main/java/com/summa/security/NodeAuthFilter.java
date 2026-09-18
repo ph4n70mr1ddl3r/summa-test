@@ -48,6 +48,12 @@ public class NodeAuthFilter extends OncePerRequestFilter {
             return;
         }
 
+        // Enroll is a public operation — skip signature verification
+        if (path.equals("/api/nodes/enroll") || path.startsWith("/api/nodes/enroll?")) {
+            filterChain.doFilter(wrappedRequest, response);
+            return;
+        }
+
         String signature = wrappedRequest.getHeader("X-Node-Signature");
         if (signature == null || signature.isBlank()) {
             log.warn("[SUMMA] node request without signature: {} from {}", path, wrappedRequest.getRemoteAddr());
