@@ -9,6 +9,7 @@ import com.summa.service.BackupService;
 import com.summa.service.OrgService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -46,6 +47,10 @@ public class BackupController {
             String path = backupService.createBackup(backupDirPath.toString());
             auditService.log(actor, "CREATE_BACKUP", "backup", path, null);
             return ResponseEntity.ok(Map.of("path", path));
+        } catch (IllegalArgumentException e) {
+            return ControllerResponses.validation(auditService, "Backup failed: " + e.getMessage());
+        } catch (IOException e) {
+            return ControllerResponses.internalError(auditService, "Backup failed: " + e.getMessage());
         } catch (Exception e) {
             return ControllerResponses.internalError(auditService, "Backup failed: " + e.getMessage());
         }
@@ -70,6 +75,10 @@ public class BackupController {
             backupService.restore(backupFilePath.toString());
             auditService.log(actor, "RESTORE_BACKUP", "backup", backupFilePath.toString(), null);
             return ResponseEntity.ok(Map.of("status", "restored"));
+        } catch (IllegalArgumentException e) {
+            return ControllerResponses.validation(auditService, "Restore failed: " + e.getMessage());
+        } catch (IOException e) {
+            return ControllerResponses.internalError(auditService, "Restore failed: " + e.getMessage());
         } catch (Exception e) {
             return ControllerResponses.internalError(auditService, "Restore failed: " + e.getMessage());
         }

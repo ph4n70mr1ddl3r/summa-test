@@ -141,11 +141,13 @@ export interface Human {
   deactivatedAt?: number;
 }
 
+export type AgentClass = 'persistent' | 'ephemeral' | 'ephemeral-subagent';
+
 export interface Agent {
   id: string;
   name: string;
   ownerHumanId: string;
-  class: string;
+  class: AgentClass;
   status: AgentStatus;
   kind: 'agent';
   templateId?: string;
@@ -193,7 +195,7 @@ export interface SpawnRequest {
   requesterId: string;
   templateId?: string;
   customRole?: string;
-  class: string;
+  class: AgentClass;
   purpose: string;
   status: SpawnStatus;
   requestedByHumanId?: string;
@@ -832,7 +834,19 @@ export const api = {
         method: 'POST',
       }),
   },
-  admin: {},
+  admin: {
+    scan: () => request<Record<string, unknown>>('/admin/secrets/scan'),
+    createBackup: (body?: Record<string, string>) =>
+      request<Record<string, unknown>>('/admin/backup', {
+        method: 'POST',
+        body: body ? JSON.stringify(body) : undefined,
+      }),
+    restoreBackup: (body: Record<string, string>) =>
+      request<Record<string, unknown>>('/admin/backup/restore', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+  },
   roleTemplates: {
     list: () => request<RoleTemplate[]>('/role-templates'),
     create: (body: Record<string, string>) =>

@@ -41,9 +41,6 @@ public class NodeController {
 
     @PostMapping("/enroll")
     public ResponseEntity<?> enroll(@RequestBody Map<String, String> body) {
-        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
-        if (gate != null) return gate;
         String name = body.get("name");
         String kind = body.get("kind");
         String pubkey = body.get("pubkey");

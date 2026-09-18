@@ -29,7 +29,7 @@ describe('ErrorBanner', () => {
 
   it('renders special characters in message safely', () => {
     render(<ErrorBanner message="<script>alert(1)</script>" />)
-    expect(screen.getByText(/<script>alert\(1\)<\/script>/)).toBeInTheDocument()
+    expect(screen.getByText(/&lt;script&gt;alert\(1\)&lt;\/script&gt;/)).toBeInTheDocument()
   })
 
   it('has role=alert for accessibility', () => {

@@ -18,7 +18,7 @@ export default function Login() {
     // Decode percent-encoding first, then check for open-redirect patterns
     let decoded = candidate
     try { decoded = decodeURIComponent(candidate) } catch { /* already have raw candidate */ }
-    if (!decoded.startsWith('//') && !decoded.startsWith('http://') && !decoded.startsWith('https://') && !decoded.startsWith('javascript:')) {
+    if (!decoded.startsWith('//') && !decoded.startsWith('http://') && !decoded.startsWith('https://') && !decoded.startsWith('javascript:') && !decoded.includes('://')) {
       from = candidate
     }
   }

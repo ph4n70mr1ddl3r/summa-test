@@ -31,7 +31,6 @@ public class SecurityConfig {
             .addFilterBefore(rbacFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(JwtAuthenticationFilter.PUBLIC_PATHS.toArray(String[]::new)).permitAll()
-                .requestMatchers("/api/nodes/**").permitAll()
                 .anyRequest().authenticated()
             );
 

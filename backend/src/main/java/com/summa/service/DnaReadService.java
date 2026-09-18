@@ -129,7 +129,7 @@ public class DnaReadService {
      * Get org snapshot for prompt injection (DRP-001, DRP-002).
      * Returns live members with their states.
      */
-    public Map<String, Object> getOrgSnapshot(String actorId) {
+    public Map<String, Object> getOrgSnapshot() {
         List<Human> activeHumans = memberService.findAllActiveHumans();
         List<Agent> activeAgents = memberService.findAllActiveAgents();
         List<DnaDomain> domains = domainRepository.findAllActive();

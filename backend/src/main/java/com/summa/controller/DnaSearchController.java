@@ -44,7 +44,7 @@ public class DnaSearchController {
     @GetMapping("/org-snapshot")
     public ResponseEntity<?> orgSnapshot() {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        return ResponseEntity.ok(dnaReadService.getOrgSnapshot(actor));
+        return ResponseEntity.ok(dnaReadService.getOrgSnapshot());
     }
 
     @GetMapping("/domains")

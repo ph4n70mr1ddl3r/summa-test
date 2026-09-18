@@ -2,6 +2,7 @@ node_modules
 # Backend is built inside the Docker multi-stage build from src+pom;
 # local build output must not pollute the context.
 backend/target
+console/node_modules
 .git
 .gitignore
 *.log

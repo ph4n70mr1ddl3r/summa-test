@@ -92,6 +92,22 @@ CONSOLE_PID=$!
 echo "      Console PID: $CONSOLE_PID"
 cd ..
 
+# Wait for console to start
+echo "      Waiting for console on :3000..."
+CONSOLE_READY=false
+for i in $(seq 1 20); do
+    if curl -sf http://localhost:3000 > /dev/null 2>&1; then
+        echo "      Console ready!"
+        CONSOLE_READY=true
+        break
+    fi
+    sleep 1
+done
+
+if [ "$CONSOLE_READY" = false ]; then
+    echo "WARNING: Console did not start within 20 seconds. Check /tmp/summa-console.log"
+fi
+
 echo ""
 echo "Summa is running:"
 echo "  Console: http://localhost:3000"

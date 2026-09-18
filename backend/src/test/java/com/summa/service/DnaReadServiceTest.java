@@ -124,7 +124,7 @@ class DnaReadServiceTest {
         when(memberService.findAllActiveAgents()).thenReturn(List.of(agent));
         when(domainRepository.findAllActive()).thenReturn(List.of(domain));
 
-        Map<String, Object> snapshot = service.getOrgSnapshot("h1");
+        Map<String, Object> snapshot = service.getOrgSnapshot();
 
         assertNotNull(snapshot);
         assertTrue(snapshot.containsKey("humans"));
