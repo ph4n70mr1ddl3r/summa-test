@@ -86,71 +86,35 @@ public class AgentController {
 
     @PostMapping("/{id}/deny")
     public ResponseEntity<?> deny(@PathVariable String id) {
-        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
-        if (gate != null) return gate;
-        try {
-            Agent agent = agentService.deny(id, actor);
-            return ResponseEntity.ok(agent);
-        } catch (IllegalArgumentException e) {
-            return ControllerResponses.validation(auditService, e.getMessage());
-        } catch (IllegalStateException e) {
-            return ControllerResponses.gate(auditService, e.getMessage());
-        }
+        return lifecycleAction(id, actor -> agentService.deny(id, actor));
     }
 
     @PostMapping("/{id}/suspend")
     public ResponseEntity<?> suspend(@PathVariable String id) {
-        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
-        if (gate != null) return gate;
-        try {
-            Agent agent = agentService.suspend(id, actor);
-            return ResponseEntity.ok(agent);
-        } catch (IllegalArgumentException e) {
-            return ControllerResponses.validation(auditService, e.getMessage());
-        } catch (IllegalStateException e) {
-            return ControllerResponses.gate(auditService, e.getMessage());
-        }
+        return lifecycleAction(id, actor -> agentService.suspend(id, actor));
     }
 
     @PostMapping("/{id}/resume")
     public ResponseEntity<?> resume(@PathVariable String id) {
-        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
-        if (gate != null) return gate;
-        try {
-            Agent agent = agentService.resume(id, actor);
-            return ResponseEntity.ok(agent);
-        } catch (IllegalArgumentException e) {
-            return ControllerResponses.validation(auditService, e.getMessage());
-        } catch (IllegalStateException e) {
-            return ControllerResponses.gate(auditService, e.getMessage());
-        }
+        return lifecycleAction(id, actor -> agentService.resume(id, actor));
     }
 
     @PostMapping("/{id}/retire")
     public ResponseEntity<?> retire(@PathVariable String id) {
-        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
-        if (gate != null) return gate;
-        try {
-            Agent agent = agentService.retire(id, actor);
-            return ResponseEntity.ok(agent);
-        } catch (IllegalArgumentException e) {
-            return ControllerResponses.validation(auditService, e.getMessage());
-        } catch (IllegalStateException e) {
-            return ControllerResponses.gate(auditService, e.getMessage());
-        }
+        return lifecycleAction(id, actor -> agentService.retire(id, actor));
     }
 
     @PostMapping("/{id}/archive")
     public ResponseEntity<?> archive(@PathVariable String id) {
+        return lifecycleAction(id, actor -> agentService.archive(id, actor));
+    }
+
+    private ResponseEntity<?> lifecycleAction(String id, java.util.function.Function<String, Agent> action) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            Agent agent = agentService.archive(id, actor);
+            Agent agent = action.apply(actor);
             return ResponseEntity.ok(agent);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());

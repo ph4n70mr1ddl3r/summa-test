@@ -38,6 +38,16 @@ if ! command -v mvn &> /dev/null; then
     exit 1
 fi
 
+MAVEN_VERSION=$(mvn -v 2>&1 | head -n 1 | grep -oP '\d+\.\d+' | head -1)
+if [ -n "$MAVEN_VERSION" ]; then
+    MAVEN_MAJOR=$(echo "$MAVEN_VERSION" | cut -d'.' -f1)
+    MAVEN_MINOR=$(echo "$MAVEN_VERSION" | cut -d'.' -f2)
+    if [ "$MAVEN_MAJOR" -lt 3 ] || { [ "$MAVEN_MAJOR" -eq 3 ] && [ "$MAVEN_MINOR" -lt 9 ]; }; then
+        echo "ERROR: Maven 3.9+ is required, found $MAVEN_VERSION"
+        exit 1
+    fi
+fi
+
 # Check for JWT secret
 if [ -z "$SUMMA_JWT_SECRET" ]; then
     echo "ERROR: SUMMA_JWT_SECRET environment variable is required"

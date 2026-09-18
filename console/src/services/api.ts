@@ -507,30 +507,10 @@ export const api = {
       request<Agent[]>(`/agents${buildQuery(params)}`),
     get: (id: string) => request<Agent>(`/agents/${id}`),
     lineage: (id: string) => request<string[]>(`/agents/${id}/lineage`),
-    suspend: (id: string) =>
-      request<Agent>(`/agents/${id}/suspend`, {
-        method: 'POST',
-      }),
-    resume: (id: string) =>
-      request<Agent>(`/agents/${id}/resume`, {
-        method: 'POST',
-      }),
-    retire: (id: string) =>
-      request<Agent>(`/agents/${id}/retire`, {
-        method: 'POST',
-      }),
-    archive: (id: string) =>
-      request<Agent>(`/agents/${id}/archive`, {
-        method: 'POST',
-      }),
     promote: (id: string, placement: string) =>
       request<Record<string, unknown>>(`/agents/${id}/promote`, {
         method: 'POST',
         body: JSON.stringify({ placement }),
-      }),
-    deny: (id: string) =>
-      request<Agent>(`/agents/${id}/deny`, {
-        method: 'POST',
       }),
   },
   dna: {
@@ -793,18 +773,6 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(body),
       }),
-    pause: (id: string) =>
-      request<Record<string, unknown>>(`/triggers/${id}/pause`, {
-        method: 'POST',
-      }),
-    resume: (id: string) =>
-      request<Record<string, unknown>>(`/triggers/${id}/resume`, {
-        method: 'POST',
-      }),
-    archive: (id: string) =>
-      request<Record<string, unknown>>(`/triggers/${id}/archive`, {
-        method: 'POST',
-      }),
     stats: () => request<Record<string, number>>('/triggers/stats'),
   },
   workspaces: {
@@ -864,23 +832,7 @@ export const api = {
         method: 'POST',
       }),
   },
-  admin: {
-    backup: (backupDir?: string) =>
-      request<{ path: string }>('/admin/backup', {
-        method: 'POST',
-        body: JSON.stringify({ backupDir }),
-      }),
-    restore: (backupPath: string) =>
-      request<Record<string, unknown>>('/admin/backup/restore', {
-        method: 'POST',
-        body: JSON.stringify({ backupPath }),
-      }),
-    scanSecrets: (content: string) =>
-      request<Record<string, unknown>>('/admin/secrets/scan', {
-        method: 'POST',
-        body: JSON.stringify({ content }),
-      }),
-  },
+  admin: {},
   roleTemplates: {
     list: () => request<RoleTemplate[]>('/role-templates'),
     create: (body: Record<string, string>) =>

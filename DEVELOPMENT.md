@@ -16,8 +16,8 @@ summa/
 │   │   ├── exception/     # Exception handlers
 │   │   └── util/          # Shared utilities
 │   ├── src/main/resources/  # application*.yml, schema.sql
-│   │                           # schema.sql is the ground-truth DDL; SchemaInitializer applies it at startup
-│   │                           # when spring.sql.init.mode is set (test profile only); never in prod
+│   │                           # schema.sql is the ground-truth DDL; SchemaInitializer
+│   │                           # applies it via @PostConstruct in all profiles
 │   └── src/test/java/     # Unit tests
 ├── console/           # React 19 + TypeScript + Vite
 │   ├── src/
