@@ -1,5 +1,6 @@
 package com.summa.model;
 
+import com.summa.config.InstantToUnixEpochConverter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.Instant;
@@ -31,11 +32,11 @@ public class RoleTemplate {
     private String status;
 
     @Column(name = "created_at", nullable = false)
-    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant createdAt;
 
     @Column(name = "updated_at", nullable = false)
-    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant updatedAt;
 
     @PrePersist

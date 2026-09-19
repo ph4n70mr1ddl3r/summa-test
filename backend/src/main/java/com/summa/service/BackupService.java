@@ -2,6 +2,7 @@ package com.summa.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import java.io.IOException;
@@ -19,8 +20,8 @@ public class BackupService {
     private final JdbcTemplate jdbcTemplate;
 
     public BackupService(
-            @org.springframework.beans.factory.annotation.Value("${summa.database.path:~/.summa/summa.db}") String dbPath,
-            @org.springframework.beans.factory.annotation.Value("${summa.git.dna-repo-path:~/.summa/dna}") String dnaRepoPath,
+            @Value("${summa.database.path:~/.summa/summa.db}") String dbPath,
+            @Value("${summa.git.dna-repo-path:~/.summa/dna}") String dnaRepoPath,
             JdbcTemplate jdbcTemplate) {
         this.dbPath = dbPath;
         this.dnaRepoPath = dnaRepoPath;

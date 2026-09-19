@@ -1,5 +1,6 @@
 package com.summa.model;
 
+import com.summa.config.InstantToUnixEpochConverter;
 import jakarta.persistence.*;
 import java.time.Instant;
 
@@ -23,23 +24,23 @@ public class Pat {
     private String scopes;
 
     @Column(name = "created_at", nullable = false)
-    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant createdAt;
 
     @Column(name = "expires_at", nullable = false)
-    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant expiresAt;
 
     @Column(name = "revoked_at")
-    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant revokedAt;
 
     @Column(name = "last_used_at")
-    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant lastUsedAt;
 
     @Column(name = "updated_at", nullable = false)
-    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant updatedAt;
 
     @PrePersist

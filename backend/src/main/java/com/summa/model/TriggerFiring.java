@@ -1,5 +1,6 @@
 package com.summa.model;
 
+import com.summa.config.InstantToUnixEpochConverter;
 import jakarta.persistence.*;
 import java.time.Instant;
 
@@ -17,7 +18,7 @@ public class TriggerFiring {
     private String idempotencyKey;
 
     @Column(name = "fired_at", nullable = false)
-    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant firedAt;
 
     @Column(name = "run_id", length = 36)

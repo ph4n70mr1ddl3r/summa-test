@@ -1,5 +1,6 @@
 package com.summa.model;
 
+import com.summa.config.InstantToUnixEpochConverter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.Instant;
@@ -25,7 +26,7 @@ public class Agent {
     private String spawnedBy;
 
     @Column(name = "ttl_at")
-    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant ttlAt;
 
     @Column(name = "budget_cap")
@@ -44,23 +45,23 @@ public class Agent {
     private String status;
 
     @Column(name = "created_at", nullable = false)
-    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant createdAt;
 
     @Column(name = "suspended_at")
-    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant suspendedAt;
 
     @Column(name = "retired_at")
-    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant retiredAt;
 
     @Column(name = "archived_at")
-    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant archivedAt;
 
     @Column(name = "updated_at", nullable = false)
-    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant updatedAt;
 
     @PrePersist

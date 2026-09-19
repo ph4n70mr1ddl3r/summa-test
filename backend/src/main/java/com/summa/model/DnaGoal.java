@@ -1,5 +1,6 @@
 package com.summa.model;
 
+import com.summa.config.InstantToUnixEpochConverter;
 import jakarta.persistence.*;
 import java.time.Instant;
 
@@ -29,19 +30,19 @@ public class DnaGoal {
     private String inject;
 
     @Column(name = "effective_from", nullable = false)
-    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant effectiveFrom;
 
     @Column(name = "effective_to")
-    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant effectiveTo;
 
     @Column(name = "created_at", nullable = false)
-    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant createdAt;
 
     @Column(name = "updated_at", nullable = false)
-    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant updatedAt;
 
     @PrePersist

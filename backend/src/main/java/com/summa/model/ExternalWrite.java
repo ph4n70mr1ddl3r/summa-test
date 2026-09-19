@@ -1,5 +1,6 @@
 package com.summa.model;
 
+import com.summa.config.InstantToUnixEpochConverter;
 import jakarta.persistence.*;
 import java.time.Instant;
 
@@ -26,15 +27,15 @@ public class ExternalWrite {
     private String status;
 
     @Column(name = "prepared_at", nullable = false)
-    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant preparedAt;
 
     @Column(name = "resolved_at")
-    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant resolvedAt;
 
     @Column(name = "created_at", nullable = false)
-    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant createdAt;
 
     @PrePersist

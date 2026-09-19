@@ -1,5 +1,6 @@
 package com.summa.model;
 
+import com.summa.config.InstantToUnixEpochConverter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.Instant;
@@ -49,7 +50,7 @@ public class SpawnRequest {
     private String approvedBy;
 
     @Column(name = "approved_at")
-    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant approvedAt;
 
     @Column(name = "agent_id", length = 36)
@@ -59,7 +60,7 @@ public class SpawnRequest {
     private String gateTarget;
 
     @Column(name = "created_at", nullable = false)
-    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant createdAt;
 
     @PrePersist

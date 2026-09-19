@@ -1,5 +1,6 @@
 package com.summa.model;
 
+import com.summa.config.InstantToUnixEpochConverter;
 import jakarta.persistence.*;
 import java.time.Instant;
 
@@ -23,7 +24,7 @@ public class DnaDecision {
     private String decidedBy;
 
     @Column(name = "decided_at", nullable = false)
-    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant decidedAt;
 
     @Column(name = "refs", columnDefinition = "TEXT")
@@ -33,7 +34,7 @@ public class DnaDecision {
     private String provenance;
 
     @Column(name = "updated_at")
-    @Convert(converter = com.summa.config.InstantToUnixEpochConverter.class)
+    @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant updatedAt;
 
     @PrePersist

@@ -24,7 +24,7 @@ public class DnaReadService {
     public DnaReadService(DnaDomainRepository domainRepository,
                           DnaProposalRepository proposalRepository,
                           MemberService memberService,
-                          org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
+                          JdbcTemplate jdbcTemplate) {
         this.domainRepository = domainRepository;
         this.proposalRepository = proposalRepository;
         this.memberService = memberService;
