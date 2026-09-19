@@ -57,7 +57,7 @@ export default function Groups() {
       {actionError && (
         <div className="rounded-lg p-3 text-sm bg-red-900/30 border border-red-700 text-red-400" role="alert">
           {escapeHtml(actionError)}
-          <button onClick={() => setActionError(null)} className="ml-2 text-red-300 hover:text-white">×</button>
+          <button onClick={() => setActionError(null)} className="ml-2 text-red-300 hover:text-white" aria-label="Dismiss error">×</button>
         </div>
       )}
 

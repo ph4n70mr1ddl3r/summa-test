@@ -1,5 +1,6 @@
 package com.summa.security;
 
+import com.summa.constants.Defaults;
 import com.summa.service.MemberService;
 import com.summa.model.Human;
 import jakarta.servlet.FilterChain;
@@ -32,7 +33,7 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
 
     public static String getCurrentActorOrDefault() {
         String actor = ACTOR_CONTEXT.get();
-        return actor != null ? actor : com.summa.constants.Defaults.SYSTEM_ACTOR;
+        return actor != null ? actor : Defaults.SYSTEM_ACTOR;
     }
 
     public static boolean isWriteAllowed() {

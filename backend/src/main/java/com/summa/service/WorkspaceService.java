@@ -20,8 +20,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.Map;
 import com.summa.constants.Defaults;
 import com.summa.exception.EntityNotFoundException;
 
@@ -191,7 +193,7 @@ public class WorkspaceService {
 
     private boolean isWorkspaceReferencedInJson(String body, String workspaceId) {
         try {
-            com.fasterxml.jackson.databind.JsonNode root = objectMapper.readTree(body);
+            JsonNode root = objectMapper.readTree(body);
             return root.isArray()
                 ? isWorkspaceInArray(root, workspaceId)
                 : isWorkspaceInObject(root, workspaceId);
@@ -200,7 +202,7 @@ public class WorkspaceService {
         }
     }
 
-    private boolean isWorkspaceInArray(com.fasterxml.jackson.databind.JsonNode array, String workspaceId) {
+    private boolean isWorkspaceInArray(JsonNode array, String workspaceId) {
         for (com.fasterxml.jackson.databind.JsonNode element : array) {
             if (element.isTextual() && workspaceId.equals(element.asText())) {
                 return true;
@@ -215,10 +217,10 @@ public class WorkspaceService {
         return false;
     }
 
-    private boolean isWorkspaceInObject(com.fasterxml.jackson.databind.JsonNode obj, String workspaceId) {
+    private boolean isWorkspaceInObject(JsonNode obj, String workspaceId) {
         if (obj.isObject()) {
-            for (Iterator<java.util.Map.Entry<String, com.fasterxml.jackson.databind.JsonNode>> it = obj.fields(); it.hasNext(); ) {
-                com.fasterxml.jackson.databind.JsonNode value = it.next().getValue();
+            for (Iterator<Map.Entry<String, JsonNode>> it = obj.fields(); it.hasNext(); ) {
+                JsonNode value = it.next().getValue();
                 if (value.isTextual() && workspaceId.equals(value.asText())) {
                     return true;
                 }

@@ -10,8 +10,10 @@ import com.summa.service.OrgService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.Files;
 import java.util.Map;
 import java.util.Optional;
 
@@ -48,11 +50,11 @@ public class BackupController {
             auditService.log(actor, "CREATE_BACKUP", "backup", path, null);
             return ResponseEntity.ok(Map.of("path", path));
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.validation(auditService, "Backup failed: " + e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IOException e) {
-            return ControllerResponses.internalError(auditService, "Backup failed: " + e.getMessage());
+            return ControllerResponses.internalError(auditService, e.getMessage());
         } catch (Exception e) {
-            return ControllerResponses.internalError(auditService, "Backup failed: " + e.getMessage());
+            return ControllerResponses.internalError(auditService, e.getMessage());
         }
     }
 
@@ -76,11 +78,11 @@ public class BackupController {
             auditService.log(actor, "RESTORE_BACKUP", "backup", backupFilePath.toString(), null);
             return ResponseEntity.ok(Map.of("status", "restored"));
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.validation(auditService, "Restore failed: " + e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IOException e) {
-            return ControllerResponses.internalError(auditService, "Restore failed: " + e.getMessage());
+            return ControllerResponses.internalError(auditService, e.getMessage());
         } catch (Exception e) {
-            return ControllerResponses.internalError(auditService, "Restore failed: " + e.getMessage());
+            return ControllerResponses.internalError(auditService, e.getMessage());
         }
     }
 
@@ -93,9 +95,9 @@ public class BackupController {
         Path resolved;
         try {
             resolved = p.toRealPath();
-        } catch (java.nio.file.NoSuchFileException e) {
+        } catch (NoSuchFileException e) {
             Path ancestor = p;
-            while (ancestor != null && !java.nio.file.Files.exists(ancestor)) {
+            while (ancestor != null && !Files.exists(ancestor)) {
                 ancestor = ancestor.getParent();
             }
             if (ancestor == null) {

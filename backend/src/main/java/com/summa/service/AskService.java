@@ -23,6 +23,8 @@ import java.util.Objects;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.nio.charset.StandardCharsets;
+import com.summa.enums.AskKind;
+import com.summa.enums.AskTier;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -95,14 +97,14 @@ public class AskService {
 
         // Service-level validation for defense-in-depth
         boolean validKind = false;
-        for (com.summa.enums.AskKind k : com.summa.enums.AskKind.values()) {
+        for (AskKind k : AskKind.values()) {
             if (k.getValue().equals(kind)) { validKind = true; break; }
         }
         if (!validKind) {
             throw new IllegalArgumentException("Invalid ask kind: " + kind);
         }
         boolean validTier = false;
-        for (com.summa.enums.AskTier t : com.summa.enums.AskTier.values()) {
+        for (AskTier t : AskTier.values()) {
             if (t.getValue().equals(slaTier)) { validTier = true; break; }
         }
         if (!validTier) {

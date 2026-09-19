@@ -112,7 +112,7 @@ public class DnaGoalController {
             effectiveFrom = JsonHelpers.parseOptionalInstant(body.get("effectiveFrom"), "effectiveFrom");
             effectiveTo = JsonHelpers.parseOptionalInstant(body.get("effectiveTo"), "effectiveTo");
         } catch (IllegalArgumentException e) {
-            return ControllerResponses.validation(auditService, "Invalid date format: " + e.getMessage());
+            return ControllerResponses.validation(auditService, e.getMessage());
         }
         try {
             DnaGoal goal = goalService.updateWindow(id, effectiveFrom, effectiveTo, actor);

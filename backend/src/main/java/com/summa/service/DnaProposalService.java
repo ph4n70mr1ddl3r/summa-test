@@ -187,7 +187,8 @@ public class DnaProposalService {
                 if (domainOpt.isPresent()) {
                     DnaDomain domain = domainOpt.get();
                     long slaSeconds = domain.getReviewSlaDays() * 86400L;
-                    if (now.isAfter(proposal.getCreatedAt().plusSeconds(slaSeconds))) {
+                if (proposal.getCreatedAt() == null) continue;
+                if (now.isAfter(proposal.getCreatedAt().plusSeconds(slaSeconds))) {
                         escalateToAdmin(proposal);
                     }
                 }

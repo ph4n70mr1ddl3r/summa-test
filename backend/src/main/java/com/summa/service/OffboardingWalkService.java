@@ -1,6 +1,8 @@
 package com.summa.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.summa.repository.AskRepository;
 import com.summa.repository.BoardTaskRepository;
 import com.summa.repository.DnaGoalRepository;
@@ -331,7 +333,7 @@ public class OffboardingWalkService {
         String currentRbac = human.getRbac();
 
         // No-op if role is not changing
-        if (currentRbac.equals(newRbac)) {
+        if (Objects.equals(currentRbac, newRbac)) {
             return Map.of("humanId", humanId, "newRbac", newRbac, "changed", false);
         }
 
@@ -470,7 +472,7 @@ public class OffboardingWalkService {
             if (ws.getParticipants() != null && !ws.getParticipants().isBlank()
                     && !ws.getParticipants().equals("[]")) {
                 try {
-                    com.fasterxml.jackson.databind.JsonNode participants =
+                    JsonNode participants =
                         objectMapper.readTree(ws.getParticipants());
                     int before = participants.size();
                     com.fasterxml.jackson.databind.node.ArrayNode filtered = objectMapper.createArrayNode();
@@ -492,9 +494,9 @@ public class OffboardingWalkService {
             if (ws.getDomainIds() != null && !ws.getDomainIds().isBlank()
                     && !ws.getDomainIds().equals("[]")) {
                 try {
-                    com.fasterxml.jackson.databind.JsonNode domainIds =
+                    JsonNode domainIds =
                         objectMapper.readTree(ws.getDomainIds());
-                    for (com.fasterxml.jackson.databind.JsonNode domIdNode : domainIds) {
+                    for (JsonNode domIdNode : domainIds) {
                         String domId = domIdNode.asText();
                         Optional<DnaDomain> domOpt = domainService.findById(domId);
                         if (domOpt.isPresent() && "named".equals(domOpt.get().getAccess())) {
@@ -502,15 +504,15 @@ public class OffboardingWalkService {
                             if (namedReaders != null && !namedReaders.isBlank()
                                     && !namedReaders.equals("[]")
                                     && namedReaders.contains(humanId)) {
-                                com.fasterxml.jackson.databind.JsonNode readers =
+                                JsonNode readers =
                                     objectMapper.readTree(namedReaders);
-                                com.fasterxml.jackson.databind.node.ArrayNode filtered = objectMapper.createArrayNode();
+                                ArrayNode filteredReaders = objectMapper.createArrayNode();
                                 for (int i = 0; i < readers.size(); i++) {
                                     if (!humanId.equals(readers.get(i).asText())) {
-                                        filtered.add(readers.get(i));
+                                        filteredReaders.add(readers.get(i));
                                     }
                                 }
-                                domOpt.get().setNamedReaders(objectMapper.writeValueAsString(filtered));
+                                domOpt.get().setNamedReaders(objectMapper.writeValueAsString(filteredReaders));
                                 domainRepository.save(domOpt.get());
                                 changed = true;
                             }

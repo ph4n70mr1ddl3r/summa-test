@@ -60,7 +60,7 @@ describe('Governance page', () => {
     vi.mocked(apiModule.api.governance.spend).mockRejectedValue(new Error('Network error'))
     render(<Governance />)
     await waitFor(() => {
-      expect(screen.getByText(/some data could not be loaded/i)).toBeInTheDocument()
+      expect(screen.getByText(/network error/i)).toBeInTheDocument()
     })
   })
 })

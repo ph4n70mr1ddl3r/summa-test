@@ -45,7 +45,7 @@ export default function Workspaces() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="font-medium text-gray-200">{escapeHtml(ws.name)}</p>
-                   <p className="text-sm text-gray-400 mt-1">Kind: {escapeHtml(ws.kind)} | Epoch: {ws.claimEpoch != null ? ws.claimEpoch : '?'}</p>
+                    <p className="text-sm text-gray-400 mt-1">Kind: {escapeHtml(ws.kind)} | Epoch: {ws.claimEpoch}</p>
                 </div>
                   <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300">
                     {countParticipants(ws.participants)} participants

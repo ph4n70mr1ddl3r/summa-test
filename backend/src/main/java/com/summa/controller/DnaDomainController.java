@@ -11,6 +11,7 @@ import com.summa.util.JsonHelpers;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/dna/domains")
@@ -52,7 +53,7 @@ public class DnaDomainController {
                 throw new IllegalArgumentException("ownerHumanId is required");
             }
             DnaDomain domain = domainService.create(
-                java.util.UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(),
                 body.get("name"),
                 body.get("ownerHumanId"),
                 body.get("access"),
@@ -130,12 +131,9 @@ public class DnaDomainController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            @SuppressWarnings("unchecked")
-            List<String> itemIds = body.get("itemIds") != null ? (List<String>) body.get("itemIds") : List.of();
-            @SuppressWarnings("unchecked")
-            List<String> workspaceIds = body.get("workspaceIds") != null ? (List<String>) body.get("workspaceIds") : List.of();
-            @SuppressWarnings("unchecked")
-            List<String> proposalIds = body.get("proposalIds") != null ? (List<String>) body.get("proposalIds") : List.of();
+            List<String> itemIds = body.get("itemIds") instanceof List ? (List<String>) body.get("itemIds") : List.of();
+            List<String> workspaceIds = body.get("workspaceIds") instanceof List ? (List<String>) body.get("workspaceIds") : List.of();
+            List<String> proposalIds = body.get("proposalIds") instanceof List ? (List<String>) body.get("proposalIds") : List.of();
 
             if (!itemIds.isEmpty() && itemIds.stream().anyMatch(itemId -> !(itemId instanceof String))) {
                 throw new IllegalArgumentException("itemIds must contain only strings");

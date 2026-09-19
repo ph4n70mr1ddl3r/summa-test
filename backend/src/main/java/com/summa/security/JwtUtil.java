@@ -2,6 +2,7 @@ package com.summa.security;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.summa.util.JsonHelpers;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.Logger;
@@ -126,6 +127,6 @@ public class JwtUtil {
     }
 
     private static boolean constantTimeEquals(String a, String b) {
-        return com.summa.util.JsonHelpers.constantTimeEquals(a, b);
+        return JsonHelpers.constantTimeEquals(a, b);
     }
 }

@@ -66,7 +66,6 @@ summa:
       rules-token-budget: 4000
       goal-slice-token-budget: 1000
   spend:
-    org-ceiling: ${SUMMA_SPEND_CEILING:1000000}
     critical-floor-percent: 5
 
 logging:

@@ -364,6 +364,7 @@ export interface DnaDomain {
 }
 
 export type DomainAccess = 'public' | 'domain' | 'named';
+export type RbacRole = 'admin' | 'owner' | 'member' | 'viewer';
 export type DnaDomainStatus = 'active' | 'archived';
 
 export interface BoardTask {

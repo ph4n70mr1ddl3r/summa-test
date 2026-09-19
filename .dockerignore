@@ -9,7 +9,6 @@ console/node_modules
 .summa
 .idea
 .vscode
-dist
 console/dist
 .env
 .env.*

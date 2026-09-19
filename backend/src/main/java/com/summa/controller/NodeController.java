@@ -90,7 +90,7 @@ public class NodeController {
             Node node = nodeService.claimWorkspace(id, workspaceId, currentEpoch);
             return ResponseEntity.ok(node);
         } catch (NumberFormatException e) {
-            return ControllerResponses.validation(auditService, "epoch must be a number");
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {

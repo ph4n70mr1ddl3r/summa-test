@@ -18,8 +18,7 @@ WORKDIR /app
 # Install curl for healthcheck
 RUN apk add --no-cache curl
 
-RUN cp /build/backend/target/summa-backend-*.jar app.jar 2>/dev/null || \
-    find /build/backend/target -name 'summa-backend-*.jar' ! -name '*plain*' | head -1 | xargs cp --target-dir=/app/ app.jar
+RUN find /build/backend/target -name 'summa-backend-*.jar' ! -name '*plain*' | head -1 | xargs cp --target-dir=/app/ app.jar
 
 # Create data directories and non-root user
 RUN addgroup -g 1000 -S summa && adduser -u 1000 -S summa -G summa && \

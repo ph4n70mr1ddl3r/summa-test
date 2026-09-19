@@ -26,7 +26,7 @@ export default function Governance() {
         setQuotas(q)
         setSpend(s)
         setLoading(false)
-      }).catch((_) => {
+      }).catch((err) => {
         if (aborted) return
         // Recover partial data from individual calls without overwriting already-loaded state
         Promise.allSettled([
@@ -38,7 +38,7 @@ export default function Governance() {
           setPolicies(prev => unwrapSettled(pRes) ?? prev)
           setQuotas(prev => unwrapSettled(qRes) ?? prev)
           setSpend(prev => unwrapSettled(sRes) ?? prev)
-          setError('Some data could not be loaded')
+          setError(err instanceof Error ? err.message : String(err))
           setLoading(false)
         })
       })

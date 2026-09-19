@@ -3,7 +3,10 @@ package com.summa.service;
 import com.summa.repository.AuditEventRepository;
 import com.summa.model.AuditEvent;
 import org.springframework.stereotype.Service;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.Iterator;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import static com.summa.constants.Defaults.SYSTEM_ACTOR;
@@ -70,10 +73,10 @@ public class AuditService {
         // otherwise apply regex redaction to the raw string.
         try {
             // Try to parse as JSON object, redact sensitive keys, then re-serialize
-            com.fasterxml.jackson.databind.JsonNode node = objectMapper.readTree(detail);
+            JsonNode node = objectMapper.readTree(detail);
             if (node.isObject()) {
-                com.fasterxml.jackson.databind.node.ObjectNode obj = (com.fasterxml.jackson.databind.node.ObjectNode) node;
-                java.util.Iterator<String> fields = obj.fieldNames();
+                ObjectNode obj = (ObjectNode) node;
+                Iterator<String> fields = obj.fieldNames();
                 while (fields.hasNext()) {
                     String key = fields.next();
                     if (key.toLowerCase().matches(".*(password|passwd|pwd|secret|token_hash|api_key|apikey|access_key|auth_token|bearer_token|session_token).*")) {

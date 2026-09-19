@@ -12,6 +12,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 
+import com.summa.util.JsonHelpers;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
@@ -159,6 +161,6 @@ public class NodeAuthFilter extends OncePerRequestFilter {
     }
 
     private static boolean constantTimeEquals(String a, String b) {
-        return com.summa.util.JsonHelpers.constantTimeEquals(a, b);
+        return JsonHelpers.constantTimeEquals(a, b);
     }
 }

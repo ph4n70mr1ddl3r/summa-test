@@ -32,6 +32,7 @@ export type {
   NodeKind,
   NodeStatus,
   Pat,
+  RbacRole,
   RoleTemplate,
   RoleTemplateStatus,
   Run,

@@ -39,14 +39,13 @@ public class SummaApplication {
             log.error("FATAL: summa.auth.jwt-secret is not configured. Set SUMMA_JWT_SECRET environment variable.");
             throw new IllegalStateException("SUMMA_JWT_SECRET environment variable is required");
         }
-        byte[] secretBytes = jwtSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8);
-        if (secretBytes.length < MIN_JWT_SECRET_BYTES) {
-            log.error("FATAL: summa.auth.jwt-secret must be at least {} bytes ({} bits). Found {} bytes.",
-                    MIN_JWT_SECRET_BYTES, MIN_JWT_SECRET_BYTES * 8, secretBytes.length);
+        if (jwtSecret.length() < MIN_JWT_SECRET_BYTES) {
+            log.error("FATAL: summa.auth.jwt-secret must be at least {} characters ({} bits recommended). Found {} characters.",
+                    MIN_JWT_SECRET_BYTES, MIN_JWT_SECRET_BYTES * 8, jwtSecret.length());
             throw new IllegalStateException(
-                "SUMMA_JWT_SECRET must be at least " + (MIN_JWT_SECRET_BYTES * 8) + " bits ("
-                + MIN_JWT_SECRET_BYTES + " bytes). Generate with: openssl rand -hex " + MIN_JWT_SECRET_BYTES);
+                "SUMMA_JWT_SECRET must be at least " + MIN_JWT_SECRET_BYTES + " characters ("
+                + MIN_JWT_SECRET_BYTES * 8 + " bits). Generate with: openssl rand -hex " + MIN_JWT_SECRET_BYTES);
         }
-        log.info("JWT secret validated: {} bits", secretBytes.length * 8);
+        log.info("JWT secret validated: {} characters", jwtSecret.length());
     }
 }
