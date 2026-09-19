@@ -90,7 +90,12 @@ public class BackupService {
                 throw new EntityNotFoundException("Backup file not found: " + backupPath);
             }
         }
-        Path tmpDir = Paths.get(System.getProperty("java.io.tmpdir")).toRealPath();
+        Path tmpDir;
+        try {
+            tmpDir = Paths.get(System.getProperty("java.io.tmpdir")).toRealPath();
+        } catch (java.io.IOException e) {
+            tmpDir = Paths.get(System.getProperty("java.io.tmpdir")).toAbsolutePath().normalize();
+        }
         String dataDirStr;
         try {
             dataDirStr = Paths.get(expandPath(dbPath)).getParent().toRealPath().toString();

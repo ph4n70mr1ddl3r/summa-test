@@ -26,7 +26,7 @@ public class DnaGoal {
     @Column(name = "status", nullable = false, length = 20)
     private String status;
 
-    @Column(name = "inject", nullable = false, length = 10)
+    @Column(name = "inject", nullable = false, length = 20)
     private String inject;
 
     @Column(name = "effective_from", nullable = false)

@@ -8,7 +8,13 @@ interface NavItem {
   end?: boolean
 }
 
-const navItems: NavItem[] = [
+const adminNavItems: NavItem[] = [
+  { to: '/governance', label: 'Governance', end: true },
+  { to: '/nodes', label: 'Nodes', end: true },
+  { to: '/role-templates', label: 'Roles', end: true },
+]
+
+const publicNavItems: NavItem[] = [
   { to: '/', label: 'Home', end: true },
   { to: '/dna', label: 'DNA', end: true },
   { to: '/dna/proposals', label: 'Proposals' },
@@ -24,12 +30,16 @@ const navItems: NavItem[] = [
   { to: '/workspaces', label: 'Workspaces' },
   { to: '/spawn', label: 'Spawn' },
   { to: '/runs', label: 'Runs' },
-  { to: '/governance', label: 'Governance' },
-  { to: '/nodes', label: 'Nodes' },
-  { to: '/role-templates', label: 'Roles' },
   { to: '/memory', label: 'Memory' },
   { to: '/initiatives', label: 'Initiatives' },
 ]
+
+function getFilteredNavItems(user: { rbac: string } | null): NavItem[] {
+  if (user && (user.rbac === 'admin' || user.rbac === 'owner')) {
+    return [...publicNavItems, ...adminNavItems]
+  }
+  return publicNavItems
+}
 
 function useAuthState(): boolean {
   const [authed, setAuthed] = useState(isAuthenticated())
@@ -81,9 +91,11 @@ function ModeLabel() {
 export default function App() {
   const authed = useAuthState()
   const navigate = useNavigate()
+  const user = getUser()
   useEffect(() => {
     setNavigate(navigate)
   }, [])
+  const navItems = getFilteredNavItems(user)
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-blue-600 focus:text-white focus:p-2">

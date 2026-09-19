@@ -208,11 +208,9 @@ public class OrgController {
         while (holder[0] != null && lineage.size() < depthCap) {
             lineage.add(holder[0]);
             final String nextId = holder[0];
-            boolean found = false;
             Optional<Agent> agentOpt = memberService.findAgent(nextId);
             if (agentOpt.isPresent()) {
                 holder[0] = agentOpt.get().getSpawnedBy();
-                found = true;
             } else {
                 // Apply same depth cap to human deputy chain to prevent infinite loops
                 memberService.findHuman(nextId).ifPresent(h -> {
@@ -220,10 +218,10 @@ public class OrgController {
                         holder[0] = h.getDeputyMemberId();
                     }
                 });
-                found = true; // human always "found" for chaining purposes
-            }
-            if (!found && holder[0] == null) {
-                break;
+                // If neither agent nor human found, stop the chain
+                if (holder[0] == null) {
+                    break;
+                }
             }
         }
         return ResponseEntity.ok(Map.of("memberId", memberId, "lineage", lineage));

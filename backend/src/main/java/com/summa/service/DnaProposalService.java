@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.summa.util.JsonHelpers;
 import com.summa.util.KeyedUnionValidator;
 import com.summa.exception.EntityNotFoundException;
+import com.summa.service.GovernanceService;
 
 @Service
 public class DnaProposalService {
@@ -27,20 +28,23 @@ public class DnaProposalService {
     private final MemberService memberService;
     private final AskService askService;
     private final ObjectMapper objectMapper;
+    private final GovernanceService governanceService;
 
     public DnaProposalService(DnaProposalRepository proposalRepository,
-                                 DnaRuleRepository ruleRepository,
-                                 AuditService auditService,
-                                 DnaDomainService domainService,
-                                 MemberService memberService,
-                                 AskService askService,
-                                 ObjectMapper objectMapper) {
+                                  DnaRuleRepository ruleRepository,
+                                  AuditService auditService,
+                                  DnaDomainService domainService,
+                                  MemberService memberService,
+                                  AskService askService,
+                                  GovernanceService governanceService,
+                                  ObjectMapper objectMapper) {
         this.proposalRepository = proposalRepository;
         this.ruleRepository = ruleRepository;
         this.auditService = auditService;
         this.domainService = domainService;
         this.memberService = memberService;
         this.askService = askService;
+        this.governanceService = governanceService;
         this.objectMapper = objectMapper;
     }
 
@@ -172,8 +176,10 @@ public class DnaProposalService {
         List<DnaProposal> openProposals = proposalRepository.findAllOpen();
         for (DnaProposal proposal : openProposals) {
             if (proposal.getDomainId() == null || proposal.getDomainId().isBlank()) {
-                // Org-scoped: check against global default SLA (CFG-024, 7 days)
-                if (now.isAfter(proposal.getCreatedAt().plusSeconds(7L * 86400L))) {
+                // Org-scoped: check against global default SLA from governance settings
+                Integer defaultSlaDays = governanceService.getSetting("summa.dna.default-review-sla-days", Integer.class);
+                long slaSeconds = (defaultSlaDays != null ? defaultSlaDays : 7) * 86400L;
+                if (now.isAfter(proposal.getCreatedAt().plusSeconds(slaSeconds))) {
                     escalateToAdmin(proposal);
                 }
             } else {

@@ -499,7 +499,7 @@ export interface SpendSnapshot {
 export function buildQuery(params?: Record<string, string | number | boolean | undefined>): string {
   const entries = Object.entries(params ?? {}).filter(([, v]) => v !== undefined && v !== '');
   if (entries.length === 0) return '';
-  const qs = new URLSearchParams(entries.map(([k, v]) => [k, String(v)])).toString();
+  const qs = new URLSearchParams(entries.map(([k, v]) => [k, typeof v === 'boolean' ? String(v) : String(v)])).toString();
   return qs ? `?${qs}` : '';
 }
 
@@ -835,7 +835,10 @@ export const api = {
       }),
   },
   admin: {
-    scan: () => request<Record<string, unknown>>('/admin/secrets/scan'),
+    scan: (content: string) => request<Record<string, unknown>>('/admin/secrets/scan', {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    }),
     createBackup: (body?: Record<string, string>) =>
       request<Record<string, unknown>>('/admin/backup', {
         method: 'POST',

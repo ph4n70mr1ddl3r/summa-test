@@ -135,6 +135,14 @@ public class OrgService {
 
     @Transactional
     public Human updateRbac(String id, String newRbac, String actor) {
+        // OFB-021: Last-admin guard — same check as demote to prevent bricking the org
+        long activeAdminCount = humanRepository.countByDeactivatedAtIsNullAndRbac("admin");
+        boolean isCurrentAdmin = humanRepository.findById(id).map(h -> "admin".equals(h.getRbac())).orElse(false);
+        boolean becomesNonAdmin = isCurrentAdmin && !"admin".equals(newRbac);
+        if (becomesNonAdmin && activeAdminCount <= 1) {
+            throw new IllegalStateException("Cannot update rbac: would leave the org with zero admins");
+        }
+
         Human human = humanRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Human not found: " + id));
 

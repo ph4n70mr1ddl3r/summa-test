@@ -21,6 +21,9 @@ public class JwtUtil {
     private JwtUtil() {}
 
     public static String generateToken(String subject, String secret, long expirationMillis) {
+        if (subject == null || subject.isBlank()) {
+            throw new IllegalArgumentException("JWT subject must not be blank");
+        }
         if (secret == null || secret.isBlank()) {
             throw new IllegalArgumentException("JWT secret must not be blank");
         }

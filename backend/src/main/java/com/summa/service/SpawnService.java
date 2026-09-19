@@ -155,7 +155,7 @@ public class SpawnService {
                 throw new IllegalStateException("Template is not active: " + templateId
                     + " (status: " + template.getStatus() + ")");
             }
-            String requiredClass = AgentClass.EPHEMERAL.getValue().equals(effectiveSpawnClass) ? "ephemeral-subagent" : "persistent";
+            String requiredClass = AgentClass.EPHEMERAL.getValue().equals(effectiveSpawnClass) ? AgentClass.EPHEMERAL_SUBAGENT.getValue() : AgentClass.PERSISTENT.getValue();
             if (!requiredClass.equals(template.getAgentClass())) {
                 throw new IllegalStateException("Template class mismatch: request class="
                     + effectiveSpawnClass + " but template class=" + template.getAgentClass());

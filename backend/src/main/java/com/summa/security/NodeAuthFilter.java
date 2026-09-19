@@ -17,6 +17,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
@@ -121,9 +122,17 @@ public class NodeAuthFilter extends OncePerRequestFilter {
 
     private String computeSignature(String method, String path, String body, String pubkey) {
         try {
+            String keyBytes;
+            // If pubkey looks like base64 (contains + or / or ends with =), decode it;
+            // otherwise use raw UTF-8 bytes as the HMAC key.
+            if (pubkey.contains("+") || pubkey.contains("/") || pubkey.endsWith("=")) {
+                keyBytes = new String(Base64.getDecoder().decode(pubkey), StandardCharsets.UTF_8);
+            } else {
+                keyBytes = pubkey;
+            }
             String payload = method + ":" + path + ":" + body;
             Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(new SecretKeySpec(pubkey.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            mac.init(new SecretKeySpec(keyBytes.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
             byte[] hash = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
             return bytesToHex(hash);
         } catch (Exception e) {

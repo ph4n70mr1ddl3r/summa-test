@@ -19,6 +19,8 @@ import com.summa.repository.AskRepository;
 import com.summa.model.DnaDecision;
 import com.summa.model.Workspace;
 import com.summa.model.Ask;
+import com.summa.repository.InitiativeRepository;
+import com.summa.model.Initiative;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.stereotype.Service;
@@ -41,6 +43,7 @@ public class DnaDomainService {
     private final DnaDecisionRepository decisionRepository;
     private final DataHoldRepository dataHoldRepository;
     private final AskRepository askRepository;
+    private final InitiativeRepository initiativeRepository;
     private final AuditService auditService;
     private final ObjectMapper objectMapper;
 
@@ -49,7 +52,8 @@ public class DnaDomainService {
                             DnaRuleRepository ruleRepository, DnaGlossaryRepository glossaryRepository,
                             DnaGoalRepository goalRepository, DnaDecisionRepository decisionRepository,
                             DataHoldRepository dataHoldRepository,
-                            AskRepository askRepository, AuditService auditService, ObjectMapper objectMapper) {
+                            AskRepository askRepository, InitiativeRepository initiativeRepository,
+                            AuditService auditService, ObjectMapper objectMapper) {
         this.domainRepository = domainRepository;
         this.cardRepository = cardRepository;
         this.proposalRepository = proposalRepository;
@@ -60,6 +64,7 @@ public class DnaDomainService {
         this.decisionRepository = decisionRepository;
         this.dataHoldRepository = dataHoldRepository;
         this.askRepository = askRepository;
+        this.initiativeRepository = initiativeRepository;
         this.auditService = auditService;
         this.objectMapper = objectMapper;
     }
@@ -384,11 +389,32 @@ public class DnaDomainService {
     }
 
     private boolean isAskScopedToDomain(Ask ask, String domainId) {
+        // Validate that the initiative or workspace actually belongs to this domain
         if (ask.getInitiativeId() != null && !ask.getInitiativeId().isBlank()) {
-            return true;
+            try {
+                Optional<Initiative> initOpt = initiativeRepository.findById(ask.getInitiativeId());
+                if (initOpt.isPresent() && initOpt.get().getGoalRef() != null) {
+                    Optional<DnaGoal> goalOpt = goalRepository.findById(initOpt.get().getGoalRef());
+                    if (goalOpt.isPresent() && domainId.equals(goalOpt.get().getDomainId())) {
+                        return true;
+                    }
+                }
+            } catch (Exception e) {
+                // Fall through to workspace check
+            }
         }
         if (ask.getWorkspaceId() != null && !ask.getWorkspaceId().isBlank()) {
-            return true;
+            try {
+                Optional<Workspace> wsOpt = workspaceRepository.findById(ask.getWorkspaceId());
+                if (wsOpt.isPresent() && wsOpt.get().getDomainIds() != null
+                        && !wsOpt.get().getDomainIds().isBlank()
+                        && !wsOpt.get().getDomainIds().equals("[]")) {
+                    List<String> wsDomains = objectMapper.readValue(wsOpt.get().getDomainIds(), new TypeReference<List<String>>() {});
+                    return wsDomains.contains(domainId);
+                }
+            } catch (Exception e) {
+                // Fall through
+            }
         }
         return false;
     }

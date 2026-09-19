@@ -492,7 +492,7 @@ public class InitiativeService {
                     boolean isProposed = "proposed".equals(init.getStatus());
                     if (isActive || isProposed) {
                         auditService.logSystem("STALL_CHECK", "initiative", init.getId(),
-                            String.format("{\"deadlinePassed\":true,\"sponsor\":\"%s\",\"status\":\"%s\"}", init.getStatus(), init.getSponsor()));
+                            String.format("{\"deadlinePassed\":true,\"sponsor\":\"%s\",\"status\":\"%s\"}", init.getSponsor(), init.getStatus()));
                         // INT-060: File stall ask when open work exists; INT-063: close-out ask when none
                         boolean hasOpenWork = boardTaskRepository.findByInitiativeId(init.getId()).stream()
                                 .anyMatch(t -> !"done".equals(t.getStatus()));
