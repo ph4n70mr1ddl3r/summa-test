@@ -30,7 +30,7 @@ export default function Groups() {
   const handleArchive = async (id: string) => {
     setActionError(null)
     setArchivingId(id)
-    let reloadAborted = false
+    const reloadAborted = false
     try {
       await api.groups.archive(id)
       api.groups.list()

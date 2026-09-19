@@ -361,6 +361,7 @@ export interface DnaDomain {
   reviewSlaDays?: number;
   residency?: string;
   namedReaders?: string;
+  sod?: string;
 }
 
 export type DomainAccess = 'public' | 'domain' | 'named';

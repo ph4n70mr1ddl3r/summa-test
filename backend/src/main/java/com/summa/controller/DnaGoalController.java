@@ -106,14 +106,8 @@ public class DnaGoalController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        final Instant effectiveFrom;
-        final Instant effectiveTo;
-        try {
-            effectiveFrom = JsonHelpers.parseOptionalInstant(body.get("effectiveFrom"), "effectiveFrom");
-            effectiveTo = JsonHelpers.parseOptionalInstant(body.get("effectiveTo"), "effectiveTo");
-        } catch (IllegalArgumentException e) {
-            return ControllerResponses.validation(auditService, e.getMessage());
-        }
+        Instant effectiveFrom = JsonHelpers.parseOptionalInstant(body.get("effectiveFrom"), "effectiveFrom");
+        Instant effectiveTo = JsonHelpers.parseOptionalInstant(body.get("effectiveTo"), "effectiveTo");
         try {
             DnaGoal goal = goalService.updateWindow(id, effectiveFrom, effectiveTo, actor);
             return ResponseEntity.ok(goal);

@@ -34,7 +34,7 @@ export default function Memory() {
   const handleReview = async (id: string) => {
     setReviewResult(null)
     setReviewingForId(id)
-    let reloadAborted = false
+    const reloadAborted = false
     try {
       await api.memory.review(id)
       setReviewResult('Item reviewed and taint cleared')
