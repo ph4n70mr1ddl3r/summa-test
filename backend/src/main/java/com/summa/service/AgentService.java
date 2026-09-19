@@ -263,10 +263,6 @@ public class AgentService {
         return agentRepository.findByStatus(status);
     }
 
-    public List<Agent> findChildren(String parentId) {
-        return agentRepository.findBySpawnedBy(parentId);
-    }
-
     public int getDepthCap() {
         return depthCap;
     }

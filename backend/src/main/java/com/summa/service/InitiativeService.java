@@ -158,7 +158,7 @@ public class InitiativeService {
         return hasPathTo(newId, deps, visited);
     }
 
-    private boolean hasPathTo(String target, List<String> currentDeps, java.util.Set<String> visited) {
+    private boolean hasPathTo(String target, List<String> currentDeps, Set<String> visited) {
         for (String depId : currentDeps) {
             if (depId.equals(target)) return true;
             if (visited.contains(depId)) continue;

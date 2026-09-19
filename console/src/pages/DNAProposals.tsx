@@ -1,25 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { api } from '../services/api'
 import type { DnaProposal } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
-import { formatDate } from '../utils/formatting'
+import { formatDate, proposalKindColor, proposalStatusColor } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
-
-const proposalKindColor: Record<string, string> = {
-  card: 'bg-blue-900/50 text-blue-400',
-  rule: 'bg-yellow-900/50 text-yellow-400',
-  decision: 'bg-green-900/50 text-green-400',
-  goal: 'bg-purple-900/50 text-purple-400',
-  glossary: 'bg-pink-900/50 text-pink-400',
-  edit: 'bg-gray-700 text-gray-300',
-}
-
-const proposalStatusColor: Record<string, string> = {
-  open: 'bg-blue-900/50 text-blue-400',
-  published: 'bg-green-900/50 text-green-400',
-  rejected: 'bg-red-900/50 text-red-400',
-  withdrawn: 'bg-gray-600 text-gray-400',
-}
 
 export default function DNAProposals() {
   const [proposals, setProposals] = useState<DnaProposal[]>([])
@@ -44,11 +28,14 @@ export default function DNAProposals() {
     return cancel
   }, [filter])
 
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    proposals.forEach(p => { counts[p.status] = (counts[p.status] || 0) + 1 })
+    return counts
+  }, [proposals])
+
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
   if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadProposals} />
-
-  const statusCounts: Record<string, number> = {}
-  proposals.forEach(p => { statusCounts[p.status] = (statusCounts[p.status] || 0) + 1 })
 
   return (
     <div className="space-y-6">
@@ -88,7 +75,7 @@ export default function DNAProposals() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="font-medium text-gray-200">
-                    <span className={`text-xs px-2 py-0.5 rounded mr-2 ${proposalKindColor[p.kind] || 'bg-gray-700 text-gray-300'}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded mr-2 ${proposalKindColor(p.kind) || 'bg-gray-700 text-gray-300'}`}>
                       {escapeHtml(p.kind)}
                     </span>
                     {escapeHtml(p.proposedBy)}
@@ -97,7 +84,7 @@ export default function DNAProposals() {
                     {p.domainId ? `Domain: ${escapeHtml(p.domainId)}` : 'Organization-wide'}
                   </p>
                 </div>
-                <span className={`text-xs px-2 py-1 rounded ${proposalStatusColor[p.status] || 'bg-gray-700 text-gray-300'}`} aria-label={`Status: ${p.status}`}>
+                <span className={`text-xs px-2 py-1 rounded ${proposalStatusColor(p.status) || 'bg-gray-700 text-gray-300'}`} aria-label={`Status: ${p.status}`}>
                   {escapeHtml(p.status)}
                 </span>
               </div>

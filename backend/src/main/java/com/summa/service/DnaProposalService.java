@@ -8,6 +8,7 @@ import com.summa.model.DnaRule;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -204,13 +205,13 @@ public class DnaProposalService {
             String payload = String.format(
                 "{\"proposalId\":\"%s\",\"proposalKind\":\"%s\",\"domainId\":\"%s\",\"breachDays\":%d}",
                 proposal.getId(), proposal.getKind(), proposal.getDomainId(),
-                java.time.Duration.between(proposal.getCreatedAt(), Instant.now()).toDays());
+                Duration.between(proposal.getCreatedAt(), Instant.now()).toDays());
             askService.create("question", "system", OffboardingWalkService.ADMIN_BROADCAST,
                 payload, "critical", "escalate", 1,
                 Instant.now().plusSeconds(24L * 3600L), null, null);
             auditService.logSystem("PROPOSAL_SLA_BREACH_ESCALATED", "dna_proposal", proposal.getId(),
                 String.format("{\"domainId\":\"%s\",\"breachDays\":%d}", proposal.getDomainId(),
-                    java.time.Duration.between(proposal.getCreatedAt(), Instant.now()).toDays()));
+                    Duration.between(proposal.getCreatedAt(), Instant.now()).toDays()));
         } catch (Exception e) {
             auditService.logSystem("PROPOSAL_SLA_BREACH_ESCALATE_FAIL", "dna_proposal", proposal.getId(),
                 String.format("{\"error\":\"%s\"}", e.getMessage()));

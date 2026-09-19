@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { formatDate, tierColor, spawnStatusColor, triggerStatusColor, boardTaskStatusColor, roleTemplateStatusColor, dnaCardStatusColor, dnaGoalStatusColor, dnaRuleStatusColor, nodeStatusColor, groupStatusColor, rbacRoleColor, initiativeStatusColor, runStatusColor, agentStatusColor, askStatusColor } from './formatting'
 import type { AskTier, SpawnStatus, TriggerStatus, BoardTaskStatus, RoleTemplateStatus, DnaCardStatus, DnaGoalStatus, DnaRuleStatus, NodeStatus, GroupStatus, InitiativeStatus, RunStatus, AgentStatus, AskStatus } from '../services/api'
-import type { RbacRole } from './formatting'
+import type { RbacRole } from '../services/api'
 
 describe('formatDate', () => {
   it('returns ? for null', () => {

@@ -57,6 +57,11 @@ public class SpendLedger {
         if (acknowledged == null) acknowledged = false;
     }
 
+    @PreUpdate
+    public void preUpdate() {
+        createdAt = Instant.now();
+    }
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getMemberId() { return memberId; }

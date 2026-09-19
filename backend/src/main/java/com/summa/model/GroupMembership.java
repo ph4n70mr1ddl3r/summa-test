@@ -3,6 +3,7 @@ package com.summa.model;
 import com.summa.config.InstantToUnixEpochConverter;
 import jakarta.persistence.*;
 import java.time.Instant;
+import java.util.Objects;
 
 @Entity
 @Table(name = "group_memberships")
@@ -59,13 +60,13 @@ public class GroupMembership {
             if (this == o) return true;
             if (!(o instanceof GroupMembershipId)) return false;
             GroupMembershipId that = (GroupMembershipId) o;
-            return java.util.Objects.equals(groupId, that.groupId) &&
-                   java.util.Objects.equals(memberId, that.memberId);
+            return Objects.equals(groupId, that.groupId) &&
+                   Objects.equals(memberId, that.memberId);
         }
 
         @Override
         public int hashCode() {
-            return java.util.Objects.hash(groupId, memberId);
+            return Objects.hash(groupId, memberId);
         }
     }
 }

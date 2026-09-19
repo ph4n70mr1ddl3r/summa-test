@@ -6,6 +6,7 @@ import com.summa.repository.SpendLedgerRepository;
 import com.summa.model.GovernanceSetting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.PersistenceException;
@@ -24,13 +25,21 @@ public class GovernanceService {
     private final GovernanceSettingRepository settingRepository;
     private final SpendLedgerRepository spendLedgerRepository;
     private final ObjectMapper objectMapper;
+    private final double spendCeilingOverride;
 
     public GovernanceService(GovernanceSettingRepository settingRepository,
                               SpendLedgerRepository spendLedgerRepository,
-                              ObjectMapper objectMapper) {
+                              ObjectMapper objectMapper,
+                              @Value("${summa.spend.ceiling:}") String spendCeilingStr) {
         this.settingRepository = settingRepository;
         this.spendLedgerRepository = spendLedgerRepository;
         this.objectMapper = objectMapper;
+        double override = 0.0;
+        if (spendCeilingStr != null && !spendCeilingStr.isBlank()) {
+            try { override = Double.parseDouble(spendCeilingStr.trim()); }
+            catch (NumberFormatException ignored) {}
+        }
+        this.spendCeilingOverride = override > 0 ? override : -1.0;
     }
 
     @Transactional(readOnly = true)
@@ -113,7 +122,7 @@ public class GovernanceService {
     public boolean isSpendHaltTripped() {
         try {
             Double ceiling = getSetting("spend-org-ceiling", Double.class);
-            if (ceiling == null) ceiling = Defaults.DEFAULT_SPEND_CEILING;
+            if (ceiling == null || ceiling <= 0) ceiling = spendCeilingOverride > 0 ? spendCeilingOverride : Defaults.DEFAULT_SPEND_CEILING;
             Object windowDaysObj = getSetting("spend-evaluation-window-days");
             long windowDays = Defaults.DEFAULT_EVALUATION_WINDOW_DAYS;
             if (windowDaysObj instanceof Number) {
@@ -139,7 +148,7 @@ public class GovernanceService {
 
     public Map<String, Object> getSpendView() {
         Double ceiling = getSetting("spend-org-ceiling", Double.class);
-        if (ceiling == null) ceiling = Defaults.DEFAULT_SPEND_CEILING;
+        if (ceiling == null || ceiling <= 0) ceiling = spendCeilingOverride > 0 ? spendCeilingOverride : Defaults.DEFAULT_SPEND_CEILING;
         Object windowDaysObj = getSetting("spend-evaluation-window-days");
         long windowDays = Defaults.DEFAULT_EVALUATION_WINDOW_DAYS;
         if (windowDaysObj instanceof Number) {
@@ -172,7 +181,7 @@ public class GovernanceService {
         settings.putIfAbsent("asks-storm-collapse-window-hours", 1);
         settings.putIfAbsent("asks-rate-limit-per-source-per-hour", 60);
         settings.putIfAbsent("dna-default-review-sla-days", 7);
-        settings.putIfAbsent("spend-org-ceiling", Defaults.DEFAULT_SPEND_CEILING);
+        settings.putIfAbsent("spend-org-ceiling", spendCeilingOverride > 0 ? spendCeilingOverride : Defaults.DEFAULT_SPEND_CEILING);
         settings.putIfAbsent("spend-critical-floor-percent", 5.0);
         settings.putIfAbsent("spend-evaluation-window-days", Defaults.DEFAULT_EVALUATION_WINDOW_DAYS);
     }

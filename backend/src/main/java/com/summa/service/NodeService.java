@@ -72,10 +72,6 @@ public class NodeService {
         return saved;
     }
 
-    public long getEnrollmentTokenTtlSeconds() {
-        return ENROLLMENT_TOKEN_TTL_SECONDS;
-    }
-
     public Optional<Node> findById(String id) {
         return nodeRepository.findById(id);
     }

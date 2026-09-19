@@ -48,6 +48,11 @@ if [ -n "$MAVEN_VERSION" ]; then
     fi
 fi
 
+# Check for Python (required for spec lint tooling)
+if ! command -v python3 &> /dev/null; then
+    echo "WARNING: python3 not found. Spec linting will be unavailable."
+fi
+
 # Check for JWT secret
 if [ -z "$SUMMA_JWT_SECRET" ]; then
     echo "ERROR: SUMMA_JWT_SECRET environment variable is required"

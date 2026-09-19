@@ -57,8 +57,8 @@ public class RoleTemplateService {
     }
 
     /**
-     * TPL-010/011: Publish a new active version and file upgrade asks to each pinned agent's owner.
-     * Publication supersedes but never retires — a denied or expired upgrade leaves the pin
+     * TPL-010/011: Publish a new active version and file approval asks to each pinned agent's owner.
+     * Publication supersedes but never retires — a denied or expired approval leaves the pin
      * on its still-legitimate active row, and the next bump re-asks.
      */
     @Transactional
@@ -83,7 +83,7 @@ public class RoleTemplateService {
         template.setStatus("active");
         RoleTemplate saved = templateRepository.save(template);
 
-        // TPL-011: File upgrade ask to each pinned agent's owner
+        // TPL-011: File approval ask to each pinned agent's owner
         List<Agent> pinnedAgents = agentRepository.findAll().stream()
                 .filter(a -> id.equals(a.getTemplateId()) && a.isActive())
                 .toList();

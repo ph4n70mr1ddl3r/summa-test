@@ -4,7 +4,6 @@ import com.summa.service.AgentService;
 import com.summa.model.Agent;
 import com.summa.service.AuditService;
 import com.summa.service.AskService;
-import com.summa.repository.AskRepository;
 import com.summa.model.Ask;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
@@ -18,10 +17,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import com.summa.service.OffboardingWalkService;
-import com.summa.repository.RoleTemplateRepository;
 import com.summa.model.RoleTemplate;
+import com.summa.repository.RoleTemplateRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.summa.exception.EntityNotFoundException;
 
 @RestController
 @RequestMapping("/agents")
@@ -30,18 +30,15 @@ public class AgentController {
     private final AuditService auditService;
     private final WriteGate writeGate;
     private final AskService askService;
-    private final AskRepository askRepository;
     private final RoleTemplateRepository roleTemplateRepository;
     private final ObjectMapper objectMapper;
 
     public AgentController(AgentService agentService, AuditService auditService, WriteGate writeGate,
-                           AskService askService, AskRepository askRepository,
-                           RoleTemplateRepository roleTemplateRepository, ObjectMapper objectMapper) {
+                           AskService askService, RoleTemplateRepository roleTemplateRepository, ObjectMapper objectMapper) {
         this.agentService = agentService;
         this.auditService = auditService;
         this.writeGate = writeGate;
         this.askService = askService;
-        this.askRepository = askRepository;
         this.roleTemplateRepository = roleTemplateRepository;
         this.objectMapper = objectMapper;
     }
@@ -132,14 +129,14 @@ public class AgentController {
         if (gate != null) return gate;
         try {
             Agent agent = agentService.findById(id)
-                    .orElseThrow(() -> new IllegalArgumentException("Agent not found: " + id));
+                    .orElseThrow(() -> new EntityNotFoundException("Agent not found: " + id));
             // TPL-040: Only customRole hires (template_id null) are eligible for promotion
             if (agent.getTemplateId() != null) {
                 throw new IllegalStateException("Only customRole hires (no template) can be promoted");
             }
             // TPL-046: One live promotion ask per hire — refuse if already pending
             // Check asks TO the agent being promoted, not asks TO the actor
-            List<Ask> pendingPromoAsks = askRepository.findByToAndStatusPending(id).stream()
+            List<Ask> pendingPromoAsks = askService.findByToAndStatusPending(id).stream()
                     .filter(a -> "promotion".equals(a.getKind()))
                     .toList();
             boolean hasPromoForAgent = false;

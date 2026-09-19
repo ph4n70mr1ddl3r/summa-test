@@ -73,14 +73,6 @@ public class RunService {
         return runRepository.findByStatusOrderByCreatedAtDesc(status).stream().limit(limit).toList();
     }
 
-    public List<Run> findRunning() {
-        return runRepository.findByStatus("running");
-    }
-
-    public List<Run> findQueued() {
-        return runRepository.findByStatus("queued");
-    }
-
     public List<Run> findRecent(int limit) {
         return runRepository.findByOrderByCreatedAtDesc().stream()
                 .limit(limit)

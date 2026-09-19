@@ -10,6 +10,7 @@ export default function NotFound() {
         <button
           onClick={() => navigate('/')}
           className="mt-6 inline-block text-blue-400 hover:text-blue-300"
+          aria-label="Return home"
         >
           Return home
         </button>

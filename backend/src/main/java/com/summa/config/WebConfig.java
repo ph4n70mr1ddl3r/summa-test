@@ -13,6 +13,7 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.io.IOException;
+import java.time.DateTimeException;
 import java.time.Instant;
 
 @Configuration
@@ -79,7 +80,7 @@ public class WebConfig implements WebMvcConfigurer {
                     String t = text.trim();
                     try {
                         return Instant.parse(t);
-                    } catch (java.time.DateTimeException e) {
+                    } catch (DateTimeException e) {
                         try {
                             return Instant.ofEpochSecond(Long.parseLong(t));
                         } catch (NumberFormatException nfe) {

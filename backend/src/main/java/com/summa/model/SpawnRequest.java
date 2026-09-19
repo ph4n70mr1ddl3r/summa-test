@@ -72,6 +72,11 @@ public class SpawnRequest {
         if (scopeCeiling == null) scopeCeiling = "{}";
     }
 
+    @PreUpdate
+    public void preUpdate() {
+        createdAt = Instant.now();
+    }
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getRequesterId() { return requesterId; }

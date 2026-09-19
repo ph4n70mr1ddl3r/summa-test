@@ -176,6 +176,10 @@ public class AskService {
         return askRepository.findByToAndStatusPending(to);
     }
 
+    public List<Ask> findByToAndStatusPending(String to) {
+        return askRepository.findByToAndStatusPending(to);
+    }
+
     public List<Ask> findByStatus(String status) {
         return askRepository.findByStatus(status);
     }

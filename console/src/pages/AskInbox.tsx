@@ -174,12 +174,14 @@ export default function AskInbox() {
                 <button
                   onClick={() => { setRespondingId(ask.id); setResponseText('') }}
                   className="px-3 py-1 bg-blue-700 hover:bg-blue-600 rounded text-sm text-blue-100"
+                  aria-label={`Respond to ask from ${escapeHtml(ask.from)}`}
                 >
                   Respond
                 </button>
                 <button
                   onClick={() => handleWithdraw(ask.id)}
                   className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm text-gray-300"
+                  aria-label={`Withdraw ask from ${escapeHtml(ask.from)}`}
                 >
                   Withdraw
                 </button>

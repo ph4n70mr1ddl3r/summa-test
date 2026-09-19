@@ -81,9 +81,12 @@ function ApiStatusCheck() {
 
   return (
     <div className="flex items-center space-x-2 text-sm">
-      <span className={`w-2 h-2 rounded-full ${
-        status === 'ok' ? 'bg-green-400' : status === 'error' ? 'bg-red-400' : 'bg-yellow-400'
-      }`}></span>
+      <span
+        className={`w-2 h-2 rounded-full ${
+          status === 'ok' ? 'bg-green-400' : status === 'error' ? 'bg-red-400' : 'bg-yellow-400'
+        }`}
+        aria-label={status === 'ok' ? 'Backend running' : status === 'error' ? 'Backend unreachable' : 'Backend checking'}
+      ></span>
       <span className="text-gray-400">
         {status === 'ok' ? 'Backend: Running' : status === 'error' ? 'Backend: Unreachable' : 'Backend: Checking...'}
       </span>

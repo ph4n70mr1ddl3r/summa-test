@@ -19,6 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.summa.exception.EntityNotFoundException;
 
 @RestController
 @RequestMapping("/org")
@@ -157,7 +158,7 @@ public class OrgController {
         }
         // API-005: admin, audited, honors data_holds (STG-030..034)
         try {
-            Human human = orgService.findHuman(id).orElseThrow(() -> new IllegalArgumentException("Human not found: " + id));
+            Human human = orgService.findHuman(id).orElseThrow(() -> new EntityNotFoundException("Human not found: " + id));
 
             List<DataHold> holds = dataHoldService.findBySubject("human", id);
             if (!holds.isEmpty()) {
@@ -201,6 +202,9 @@ public class OrgController {
 
     @GetMapping("/lineage")
     public ResponseEntity<?> lineage(@RequestParam String memberId) {
+        if (memberId == null || memberId.isBlank()) {
+            return ControllerResponses.validation(auditService, "memberId is required");
+        }
         // API-004: full lineage graph from any member
         int depthCap = agentService.getDepthCap();
         List<String> lineage = new ArrayList<>();

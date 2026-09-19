@@ -49,7 +49,7 @@ export function getAuthToken(): string | null {
   return authToken;
 }
 
-export function getUser(): { userId: string; rbac: string; name: string } | null {
+export function getUser(): { userId: string; rbac: RbacRole; name: string } | null {
   try {
     const raw = localStorage.getItem(USER_KEY);
     return raw ? JSON.parse(raw) : null;
@@ -116,7 +116,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     }
   }
   if (res.status === 204) {
-    return undefined as unknown as T;
+    return null as unknown as T;
   }
   return res.json() as Promise<T>;
 }
@@ -130,7 +130,7 @@ export interface Human {
   id: string;
   name: string;
   email: string;
-  rbac: string;
+  rbac: RbacRole;
   active: boolean;
   kind: 'human';
   createdAt?: number;
@@ -500,7 +500,7 @@ export interface SpendSnapshot {
 export function buildQuery(params?: Record<string, string | number | boolean | undefined>): string {
   const entries = Object.entries(params ?? {}).filter(([, v]) => v !== undefined && v !== '');
   if (entries.length === 0) return '';
-  const qs = new URLSearchParams(entries.map(([k, v]) => [k, typeof v === 'boolean' ? String(v) : String(v)])).toString();
+  const qs = new URLSearchParams(entries.map(([k, v]) => [k, String(v)])).toString();
   return qs ? `?${qs}` : '';
 }
 
@@ -660,11 +660,7 @@ export const api = {
       return res.lineage;
     },
     audit: (limit?: number, objectType?: string, objectId?: string) =>
-      request<unknown[]>(`/org/audit${buildQuery({
-        ...(limit !== undefined ? { limit: String(limit) } : {}),
-        ...(objectType ? { objectType } : {}),
-        ...(objectId ? { objectId } : {}),
-      })}`),
+      request<unknown[]>(`/org/audit${buildQuery({ limit, objectType, objectId })}`),
   },
   spawn: {
     list: (status?: string, requesterId?: string) =>

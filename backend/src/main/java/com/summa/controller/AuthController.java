@@ -4,6 +4,7 @@ import com.summa.service.OrgService;
 import com.summa.service.AuditService;
 import com.summa.security.JwtUtil;
 import com.summa.security.PasswordUtil;
+import com.summa.security.PasswordValidator;
 import com.summa.security.RateLimiter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -120,7 +121,7 @@ public class AuthController {
             return ControllerResponses.validation(auditService, "newPassword is required");
         }
         try {
-            com.summa.security.PasswordValidator.validate(newPassword);
+            PasswordValidator.validate(newPassword);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         }

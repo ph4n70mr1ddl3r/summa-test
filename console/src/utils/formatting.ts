@@ -13,6 +13,9 @@ import type {
   DnaRuleStatus,
   NodeStatus,
   GroupStatus,
+  RbacRole,
+  DnaProposalKind,
+  DnaProposalStatus,
 } from '../services/api'
 
 export function formatDate(epochSeconds: number | undefined | null, options?: { dateOnly?: boolean }): string {
@@ -159,12 +162,33 @@ export function groupStatusColor(status: GroupStatus): string {
   }
 }
 
-export type RbacRole = 'admin' | 'owner' | 'member' | 'viewer'
 export function rbacRoleColor(role: RbacRole): string {
   switch (role) {
     case 'admin': return 'bg-red-900/50 text-red-400'
     case 'owner': return 'bg-yellow-900/50 text-yellow-400'
     case 'viewer': return 'bg-gray-600 text-gray-400'
+    default: return 'bg-gray-700 text-gray-300'
+  }
+}
+
+export function proposalKindColor(kind: DnaProposalKind): string {
+  switch (kind) {
+    case 'card': return 'bg-blue-900/50 text-blue-400'
+    case 'rule': return 'bg-yellow-900/50 text-yellow-400'
+    case 'decision': return 'bg-green-900/50 text-green-400'
+    case 'goal': return 'bg-purple-900/50 text-purple-400'
+    case 'glossary': return 'bg-pink-900/50 text-pink-400'
+    case 'edit': return 'bg-gray-700 text-gray-300'
+    default: return 'bg-gray-700 text-gray-300'
+  }
+}
+
+export function proposalStatusColor(status: DnaProposalStatus): string {
+  switch (status) {
+    case 'open': return 'bg-blue-900/50 text-blue-400'
+    case 'published': return 'bg-green-900/50 text-green-400'
+    case 'rejected': return 'bg-red-900/50 text-red-400'
+    case 'withdrawn': return 'bg-gray-600 text-gray-400'
     default: return 'bg-gray-700 text-gray-300'
   }
 }
@@ -182,4 +206,3 @@ export function truncateSnippet(text: string, maxLen: number): string {
   if (maxLen <= 0) return ''
   return text.length > maxLen ? text.slice(0, maxLen) + '...' : text
 }
-

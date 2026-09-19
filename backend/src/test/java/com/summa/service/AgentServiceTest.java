@@ -193,17 +193,6 @@ class AgentServiceTest {
     }
 
     @Test
-    void findChildren() {
-        Agent child = new Agent();
-        child.setId("child-1");
-        when(agentRepository.findBySpawnedBy("parent-1")).thenReturn(List.of(child));
-
-        List<Agent> result = agentService.findChildren("parent-1");
-
-        assertEquals(1, result.size());
-    }
-
-    @Test
     void suspend_haltsRunningRuns() {
         Agent agent = new Agent();
         agent.setId("agent-1");

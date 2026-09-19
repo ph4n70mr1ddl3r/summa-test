@@ -56,10 +56,6 @@ public class TriggerService {
         return triggerRepository.findAll();
     }
 
-    public List<Trigger> findActive() {
-        return triggerRepository.findByStatus("active");
-    }
-
     public List<Trigger> findByAgent(String agentId) {
         return triggerRepository.findByAgentId(agentId);
     }
