@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import com.summa.service.OffboardingWalkService;
 import com.summa.repository.RoleTemplateRepository;
 import com.summa.model.RoleTemplate;
@@ -109,7 +110,7 @@ public class AgentController {
         return lifecycleAction(id, actor -> agentService.archive(id, actor));
     }
 
-    private ResponseEntity<?> lifecycleAction(String id, java.util.function.Function<String, Agent> action) {
+    private ResponseEntity<?> lifecycleAction(String id, Function<String, Agent> action) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
