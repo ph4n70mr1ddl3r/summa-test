@@ -15,7 +15,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.LinkedHashMap;
 import java.util.Optional;
 
@@ -44,7 +43,7 @@ public class GovernanceService {
 
     @Transactional(readOnly = true)
     public Map<String, Object> getAllSettings() {
-        Map<String, Object> settings = new ConcurrentHashMap<>();
+        Map<String, Object> settings = new LinkedHashMap<>();
         for (GovernanceSetting s : settingRepository.findAll()) {
             settings.put(s.getKey(), parseValue(s.getValue()));
         }
@@ -60,7 +59,7 @@ public class GovernanceService {
         Object value = settings.get(key);
         if (value == null) return null;
         if (type.isInstance(value)) return type.cast(value);
-        if (type == Integer.class || type == int.class) {
+        if (type.equals(Integer.class) || type.equals(int.class)) {
             if (value instanceof Number) return type.cast(((Number) value).intValue());
             try { return type.cast((int) Math.round(Double.parseDouble(value.toString()))); }
             catch (NumberFormatException ignored) {
@@ -69,7 +68,7 @@ public class GovernanceService {
             }
             return null;
         }
-        if (type == Long.class || type == long.class) {
+        if (type.equals(Long.class) || type.equals(long.class)) {
             if (value instanceof Number) return type.cast(((Number) value).longValue());
             try { return type.cast((long) Math.round(Double.parseDouble(value.toString()))); }
             catch (NumberFormatException ignored) {
@@ -78,11 +77,11 @@ public class GovernanceService {
             }
             return null;
         }
-        if (type == Double.class || type == double.class) {
+        if (type.equals(Double.class) || type.equals(double.class)) {
             if (value instanceof Number) return type.cast(((Number) value).doubleValue());
             return type.cast(Double.parseDouble(value.toString()));
         }
-        if (type == Boolean.class || type == boolean.class) {
+        if (type.equals(Boolean.class) || type.equals(boolean.class)) {
             return type.cast(Boolean.parseBoolean(value.toString()));
         }
         throw new IllegalArgumentException("Cannot cast value to " + type.getName() + " for key: " + key);

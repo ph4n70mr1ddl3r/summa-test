@@ -351,12 +351,12 @@ public class AskService {
      */
     private boolean isPoolPrincipal(Ask ask, String responder) {
         // Direct target match
-        if (ask.getTo().equals(responder)) {
+        if (ask.getTo() != null && ask.getTo().equals(responder)) {
             Optional<Human> target = memberService.findHuman(ask.getTo());
             return target.isPresent() && !"viewer".equals(target.get().getRbac());
         }
         // Admin broadcast: any active admin is a pool principal
-        if (OffboardingWalkService.ADMIN_BROADCAST.equals(ask.getTo())) {
+        if (ask.getTo() != null && OffboardingWalkService.ADMIN_BROADCAST.equals(ask.getTo())) {
             return memberService.findAdmins().stream()
                     .anyMatch(h -> h.getId().equals(responder));
         }
@@ -505,7 +505,7 @@ public class AskService {
         }
 
         // Direct match
-        if (ask.getTo().equals(responder)) {
+        if (ask.getTo() != null && ask.getTo().equals(responder)) {
             return true;
         }
 

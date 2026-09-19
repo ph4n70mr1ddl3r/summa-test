@@ -45,8 +45,8 @@ public class DataHoldController {
                 throw new IllegalArgumentException("kind is required");
             }
             // Validate kind against known values
-            if (!"human".equals(kind) && !"domain".equals(kind) && !"workspace".equals(kind)) {
-                throw new IllegalArgumentException("kind must be one of: human, domain, workspace");
+            if (!"member".equals(kind) && !"domain".equals(kind)) {
+                throw new IllegalArgumentException("kind must be one of: member, domain");
             }
             String subjectId = body.get("subjectId");
             if (subjectId == null || subjectId.isBlank()) {

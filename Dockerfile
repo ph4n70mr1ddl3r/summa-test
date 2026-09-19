@@ -18,7 +18,8 @@ WORKDIR /app
 # Install curl for healthcheck
 RUN apk add --no-cache curl
 
-RUN find /build/backend/target -name 'summa-backend-*.jar' ! -name '*plain*' | head -1 | xargs cp --target-dir=/app/ app.jar
+RUN JAR=$(find /build/backend/target -name 'summa-backend-*.jar' ! -name '*plain*' | head -1) && \
+    [ -n "$JAR" ] && cp "$JAR" /app/app.jar
 
 # Create data directories and non-root user
 RUN addgroup -g 1000 -S summa && adduser -u 1000 -S summa -G summa && \
@@ -32,4 +33,6 @@ ENV SUMMA_DB_PATH=/data/db/summa.db \
 EXPOSE 8080
 
 USER 1000
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=20s \
+  CMD curl -sf http://localhost:8080/api/health || exit 1
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

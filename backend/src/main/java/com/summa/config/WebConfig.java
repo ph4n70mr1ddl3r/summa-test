@@ -6,7 +6,9 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -24,7 +26,7 @@ public class WebConfig implements WebMvcConfigurer {
      * production deployments fronting an external API host set e.g.
      * {@code SUMMA_CORS_ORIGINS=https://app.example.com}.
      */
-    @org.springframework.beans.factory.annotation.Value("${summa.cors.origins:}")
+    @Value("${summa.cors.origins:}")
     private String extraCorsOrigins = "";
 
     @Override
@@ -57,7 +59,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     static class InstantEpochSecondSerializer extends JsonSerializer<Instant> {
         @Override
-        public void serialize(Instant value, JsonGenerator gen, com.fasterxml.jackson.databind.SerializerProvider provider) throws IOException {
+        public void serialize(Instant value, JsonGenerator gen, SerializerProvider provider) throws IOException {
             if (value == null) {
                 gen.writeNull();
             } else {

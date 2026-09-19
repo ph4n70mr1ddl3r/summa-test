@@ -88,7 +88,7 @@ public class DnaProposalController {
         String reviewedBy = body.get("reviewedBy");
         if ("publish".equals(action)) {
             try {
-                DnaProposal proposal = proposalService.publish(id, actor, reviewedBy != null && !reviewedBy.isBlank() ? reviewedBy : actor);
+                DnaProposal proposal = proposalService.publish(id, reviewedBy != null && !reviewedBy.isBlank() ? reviewedBy : actor, actor);
                 return ResponseEntity.ok(proposal);
             } catch (IllegalArgumentException e) {
                 return ControllerResponses.validation(auditService, e.getMessage());
@@ -97,7 +97,7 @@ public class DnaProposalController {
             }
         } else if ("reject".equals(action)) {
             try {
-                DnaProposal proposal = proposalService.reject(id, actor, reviewedBy != null && !reviewedBy.isBlank() ? reviewedBy : actor);
+                DnaProposal proposal = proposalService.reject(id, reviewedBy != null && !reviewedBy.isBlank() ? reviewedBy : actor, actor);
                 return ResponseEntity.ok(proposal);
             } catch (IllegalArgumentException e) {
                 return ControllerResponses.validation(auditService, e.getMessage());

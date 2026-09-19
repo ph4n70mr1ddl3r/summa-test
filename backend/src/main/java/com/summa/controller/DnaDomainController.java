@@ -95,6 +95,8 @@ public class DnaDomainController {
             return ResponseEntity.ok(domain);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
+        } catch (IllegalStateException e) {
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
@@ -108,6 +110,8 @@ public class DnaDomainController {
             return ResponseEntity.ok(domain);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
+        } catch (IllegalStateException e) {
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
@@ -121,6 +125,8 @@ public class DnaDomainController {
             return ResponseEntity.ok(domain);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
+        } catch (IllegalStateException e) {
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 

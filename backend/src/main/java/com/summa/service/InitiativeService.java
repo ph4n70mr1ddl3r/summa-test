@@ -25,6 +25,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.summa.model.Run;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -329,7 +331,7 @@ public class InitiativeService {
                         }
                         if (hasInitiative) {
                             // Remove this initiative from workspace bindings
-                            com.fasterxml.jackson.databind.node.ArrayNode newIds = objectMapper.createArrayNode();
+                            ArrayNode newIds = objectMapper.createArrayNode();
                             for (JsonNode initIdNode : initIds) {
                                 if (!initIdNode.asText().equals(id)) {
                                     newIds.add(initIdNode);
@@ -424,10 +426,10 @@ public class InitiativeService {
 
         // INT-040/CLC-040: Cancel queued, running, and suspended runs tied to this initiative
         try {
-            List<com.summa.model.Run> nonTerminalRuns = runRepository.findByInitiativeIdAndStatus(id, "queued");
+            List<Run> nonTerminalRuns = runRepository.findByInitiativeIdAndStatus(id, "queued");
             nonTerminalRuns.addAll(runRepository.findByInitiativeIdAndStatus(id, "running"));
             nonTerminalRuns.addAll(runRepository.findByInitiativeIdAndStatus(id, "suspended"));
-            for (com.summa.model.Run run : nonTerminalRuns) {
+            for (Run run : nonTerminalRuns) {
                 run.setStatus("cancelled");
                 run.setCompletedAt(Instant.now());
                 runRepository.save(run);
