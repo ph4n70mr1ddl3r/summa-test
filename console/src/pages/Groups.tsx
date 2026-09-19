@@ -30,14 +30,13 @@ export default function Groups() {
   const handleArchive = async (id: string) => {
     setActionError(null)
     setArchivingId(id)
+    let reloadAborted = false
     try {
       await api.groups.archive(id)
-      // eslint-disable-next-line prefer-const
-      let aborted = false
       api.groups.list()
-        .then((data) => { if (!aborted) { setGroups(data) } })
-        .catch((err) => { if (!aborted) setActionError(err instanceof Error ? err.message : String(err)) })
-        .finally(() => { if (!aborted) setArchivingId(null) })
+        .then((data) => { if (!reloadAborted) { setGroups(data) } })
+        .catch((err) => { if (!reloadAborted) setActionError(err instanceof Error ? err.message : String(err)) })
+        .finally(() => { if (!reloadAborted) setArchivingId(null) })
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err))
       setArchivingId(null)

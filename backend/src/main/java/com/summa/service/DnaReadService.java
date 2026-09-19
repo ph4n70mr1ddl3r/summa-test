@@ -101,7 +101,8 @@ public class DnaReadService {
                 row.put("kind", rs.getString("kind"));
                 row.put("domain_id", rs.getString("domain_id"));
                 row.put("title", rs.getString("title"));
-                row.put("definition", rs.getString("definition_md") != null ? rs.getString("definition_md") : rs.getString("definition"));
+                String definitionMd = rs.getString("definition_md");
+                row.put("definition", definitionMd != null ? definitionMd : rs.getString("definition"));
                 results.add(row);
             }
             return results;

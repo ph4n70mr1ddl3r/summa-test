@@ -4,6 +4,7 @@ import com.summa.repository.NodeRepository;
 import com.summa.repository.AskRepository;
 import com.summa.repository.RunRepository;
 import com.summa.repository.SpendLedgerRepository;
+import com.summa.repository.WorkspaceRepository;
 import com.summa.model.Node;
 import com.summa.model.Ask;
 import com.summa.model.Workspace;
@@ -39,12 +40,14 @@ public class NodeService {
     private final AskRepository askRepository;
     private final RunRepository runRepository;
     private final SpendLedgerRepository spendLedgerRepository;
+    private final WorkspaceRepository workspaceRepository;
     private final ObjectMapper objectMapper;
 
     public NodeService(NodeRepository nodeRepository, AuditService auditService,
                         WorkspaceService workspaceService, AskRepository askRepository,
                         RunRepository runRepository,
                         SpendLedgerRepository spendLedgerRepository,
+                        WorkspaceRepository workspaceRepository,
                         ObjectMapper objectMapper) {
         this.nodeRepository = nodeRepository;
         this.auditService = auditService;
@@ -52,6 +55,7 @@ public class NodeService {
         this.askRepository = askRepository;
         this.runRepository = runRepository;
         this.spendLedgerRepository = spendLedgerRepository;
+        this.workspaceRepository = workspaceRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -187,7 +191,7 @@ public class NodeService {
         int newEpoch = ws.getClaimEpoch() != null ? ws.getClaimEpoch() + 1 : 1;
         ws.setClaimEpoch(newEpoch);
         ws.setLeaseExpiresAt(Instant.now().plusSeconds(leaseIntervalSeconds));
-        workspaceService.updateWorkspace(ws);
+        workspaceRepository.save(ws);
 
         // Store claim on node
         try {

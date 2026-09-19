@@ -23,7 +23,7 @@ export default function DNAConsole() {
       api.dna.cards(),
       api.dna.goals(),
       api.dna.reviewQueue(),
-      ]).then(([d, c, g, p]) => {
+    ]).then(([d, c, g, p]) => {
         if (aborted) return
         setDomains(d)
         setCards(c)

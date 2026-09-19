@@ -203,7 +203,7 @@ public class WorkspaceService {
     }
 
     private boolean isWorkspaceInArray(JsonNode array, String workspaceId) {
-        for (com.fasterxml.jackson.databind.JsonNode element : array) {
+        for (JsonNode element : array) {
             if (element.isTextual() && workspaceId.equals(element.asText())) {
                 return true;
             }

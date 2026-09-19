@@ -4,6 +4,7 @@ import com.summa.repository.NodeRepository;
 import com.summa.repository.AskRepository;
 import com.summa.repository.RunRepository;
 import com.summa.repository.SpendLedgerRepository;
+import com.summa.repository.WorkspaceRepository;
 import com.summa.model.Node;
 import com.summa.model.Workspace;
 import com.summa.model.Run;
@@ -42,12 +43,15 @@ class NodeServiceTest {
     @Mock
     private SpendLedgerRepository spendLedgerRepository;
 
+    @Mock
+    private WorkspaceRepository workspaceRepository;
+
     private NodeService nodeService;
 
     @BeforeEach
     void setUp() {
         nodeService = new NodeService(nodeRepository, auditService, workspaceService, askRepository,
-            runRepository, spendLedgerRepository, new ObjectMapper());
+            runRepository, spendLedgerRepository, workspaceRepository, new ObjectMapper());
     }
 
     @Test
@@ -179,7 +183,7 @@ class NodeServiceTest {
         when(nodeRepository.findById("node-1")).thenReturn(Optional.of(node));
         when(workspaceService.findById("ws-1")).thenReturn(Optional.of(ws));
         when(nodeRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-        doReturn(ws).when(workspaceService).updateWorkspace(any());
+        when(workspaceRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         Node result = nodeService.claimWorkspace("node-1", "ws-1", 0);
 

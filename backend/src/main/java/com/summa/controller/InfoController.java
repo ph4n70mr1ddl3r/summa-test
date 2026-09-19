@@ -1,6 +1,5 @@
 package com.summa.controller;
 
-import org.springframework.boot.SpringBootVersion;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,9 +18,7 @@ public class InfoController {
             "name", "Summa",
             "description", "The operating system for a hybrid human + AI company",
             "version", projectVersion,
-            "buildTime", System.currentTimeMillis(),
-            "javaVersion", System.getProperty("java.version"),
-            "springBootVersion", SpringBootVersion.getVersion()
+            "buildTime", System.currentTimeMillis()
         ));
     }
 }

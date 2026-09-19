@@ -75,7 +75,7 @@ export default function DNAProposals() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="font-medium text-gray-200">
-                    <span className={`text-xs px-2 py-0.5 rounded mr-2 ${proposalKindColor(p.kind) || 'bg-gray-700 text-gray-300'}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded mr-2 ${proposalKindColor(p.kind)}`}>
                       {escapeHtml(p.kind)}
                     </span>
                     {escapeHtml(p.proposedBy)}
@@ -84,7 +84,7 @@ export default function DNAProposals() {
                     {p.domainId ? `Domain: ${escapeHtml(p.domainId)}` : 'Organization-wide'}
                   </p>
                 </div>
-                <span className={`text-xs px-2 py-1 rounded ${proposalStatusColor(p.status) || 'bg-gray-700 text-gray-300'}`} aria-label={`Status: ${p.status}`}>
+                <span className={`text-xs px-2 py-1 rounded ${proposalStatusColor(p.status)}`} aria-label={`Status: ${p.status}`}>
                   {escapeHtml(p.status)}
                 </span>
               </div>

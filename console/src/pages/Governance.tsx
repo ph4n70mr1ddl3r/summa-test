@@ -20,7 +20,7 @@ export default function Governance() {
       api.governance.policies(),
       api.governance.quotas(),
       api.governance.spend(),
-      ]).then(([p, q, s]) => {
+    ]).then(([p, q, s]) => {
         if (aborted) return
         setPolicies(p)
         setQuotas(q)
@@ -38,7 +38,7 @@ export default function Governance() {
           setPolicies(prev => unwrapSettled(pRes) ?? prev)
           setQuotas(prev => unwrapSettled(qRes) ?? prev)
           setSpend(prev => unwrapSettled(sRes) ?? prev)
-          setError(err instanceof Error ? err.message : String(err))
+          setError('Some data could not be loaded: ' + (err instanceof Error ? err.message : (typeof err === 'string' ? err : '')))
           setLoading(false)
         })
       })

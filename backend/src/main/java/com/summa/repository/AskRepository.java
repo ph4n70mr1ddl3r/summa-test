@@ -9,7 +9,9 @@ import java.util.List;
 @Repository
 public interface AskRepository extends JpaRepository<Ask, String> {
     List<Ask> findByStatus(String status);
-    
+
+    List<Ask> findByTo(String to);
+
     @Query("SELECT a FROM Ask a WHERE a.to = :to AND a.status = 'pending' ORDER BY a.deadline ASC")
     List<Ask> findByToAndStatusPending(String to);
     

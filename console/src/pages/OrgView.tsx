@@ -72,7 +72,7 @@ export default function OrgView() {
               {humans.map((h) => (
                 <div key={h.id} className="flex items-center justify-between bg-gray-700 rounded px-3 py-2">
                   <span className="text-gray-200 text-sm">{escapeHtml(h.name)}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded ${rbacRoleColor(h.rbac as 'admin' | 'owner' | 'member' | 'viewer')}`} aria-label={`RBAC role: ${h.rbac}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded ${rbacRoleColor(h.rbac)}`} aria-label={`RBAC role: ${h.rbac}`}>
                     {escapeHtml(h.rbac)}
                   </span>
                 </div>
