@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { DnaDecision } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
-import { formatDate } from '../utils/formatting'
+import { formatDate, truncateSnippet } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function DNADecisions() {
@@ -52,10 +52,10 @@ export default function DNADecisions() {
                 </div>
               </div>
               <pre className="mt-2 text-xs text-gray-400 bg-gray-900 rounded p-3 overflow-x-auto whitespace-pre-wrap">
-                {contextPreview.slice(0, 150)}{contextPreview.length > 150 ? '...' : ''}
+                {truncateSnippet(contextPreview, 150)}
               </pre>
               <pre className="mt-1 text-xs text-gray-500 bg-gray-900 rounded p-3 overflow-x-auto whitespace-pre-wrap">
-                {outcomePreview.slice(0, 150)}{outcomePreview.length > 150 ? '...' : ''}
+                {truncateSnippet(outcomePreview, 150)}
               </pre>
               <p className="text-xs text-gray-500 mt-2">
                 Decided: {formatDate(d.decidedAt)}

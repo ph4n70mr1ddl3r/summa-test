@@ -6,9 +6,6 @@ build/
 *.war
 *.ear
 .env
-.env.*
-.env.local
-.env.production
 .env.*.local
 .DS_Store
 *.log

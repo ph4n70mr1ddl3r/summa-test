@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { api } from '../services/api'
 import type { Ask } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
@@ -14,6 +14,20 @@ export default function AskInbox() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null)
   const [respondingForId, setRespondingForId] = useState<string | null>(null)
+
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      if (respondingId !== null) {
+        setRespondingId(null)
+        setResponseText('')
+      }
+    }
+  }, [respondingId])
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleKeyDown])
 
   const loadAsks = () => {
     setLoading(true)
@@ -117,7 +131,7 @@ export default function AskInbox() {
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <span className="text-xl">{kindIcon(ask.kind)}</span>
+                  <span className="text-xl" aria-label={`${ask.kind} ask`}>{kindIcon(ask.kind)}</span>
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-gray-200">{escapeHtml(ask.kind.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))}</span>

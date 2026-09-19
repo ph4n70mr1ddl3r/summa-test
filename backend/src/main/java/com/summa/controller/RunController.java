@@ -58,10 +58,15 @@ public class RunController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        String agentId = body.get("agentId");
+        if (agentId == null || agentId.isBlank()) {
+            return ControllerResponses.validation(auditService, "agentId is required");
+        }
+        String workspaceId = body.get("workspaceId");
         try {
             Run run = runService.create(
-                body.get("agentId"),
-                body.get("workspaceId"),
+                agentId,
+                workspaceId,
                 body.get("initiativeId"),
                 body.get("triggerId"),
                 body.get("prompt"),

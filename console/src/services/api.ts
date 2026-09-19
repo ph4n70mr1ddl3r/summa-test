@@ -533,7 +533,7 @@ export const api = {
       request<DnaDecision[]>(`/dna/decisions${buildQuery(domainId ? { domainId } : undefined)}`),
     search: async (query: string) => {
       const res = await request<{ results: Array<Record<string, unknown>>; count: number }>(`/dna/search${buildQuery({ q: query })}`);
-      return res.results;
+      return res?.results ?? [];
     },
     domains: () => request<DnaDomain[]>('/dna/domains'),
     archiveDomain: (id: string) =>

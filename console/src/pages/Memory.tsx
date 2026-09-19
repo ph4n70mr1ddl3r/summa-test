@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { MemoryItem } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
+import { truncateSnippet } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Memory() {
@@ -129,7 +130,7 @@ export default function Memory() {
                 const contentPreview = escapeHtml(item.contentMd)
                 return (
                   <pre className="mt-2 text-xs text-gray-400 bg-gray-900 rounded p-3 overflow-x-auto whitespace-pre-wrap">
-                    {contentPreview.slice(0, 300)}{contentPreview.length > 300 ? '...' : ''}
+                    {truncateSnippet(contentPreview, 300)}
                   </pre>
                 )
               })()}
