@@ -242,7 +242,7 @@ public class SpawnService {
 
         // SPW-062: Check spend halt — accept under halt is audit-only, return with distinct status
         if (governanceService.isSpendHaltTripped()) {
-            request.setStatus("archived");
+            request.setStatus("denied");
             request.setApprovedBy(approvedBy);
             request.setApprovedAt(Instant.now());
             SpawnRequest saved = spawnRepository.save(request);

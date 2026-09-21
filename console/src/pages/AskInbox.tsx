@@ -44,18 +44,14 @@ export default function AskInbox() {
     return cancel
   }, [])
 
-  const formatDeadline = (deadline: number) => {
-    return formatDate(deadline, { dateOnly: false })
-  }
-
   const kindIcon = (kind: string) => {
     switch (kind) {
-      case 'approval': return '\u23FA'
+      case 'approval': return '🔴'
       case 'question': return '?'
-      case 'assignment': return '\u2192'
+      case 'assignment': return '→'
       case 'spawn_request': return '+'
-      case 'promotion': return '\u2191'
-      default: return '\u2022'
+      case 'promotion': return '↑'
+      default: return '•'
     }
   }
 
@@ -153,7 +149,7 @@ export default function AskInbox() {
                 <div className="text-right shrink-0">
                   <p className="text-xs text-gray-500">Deadline</p>
                   <p className="text-sm text-gray-300">
-                    {formatDeadline(ask.deadline)}
+                    {formatDate(ask.deadline, { dateOnly: false })}
                   </p>
                   {ask.quorumRequired && ask.quorumRequired > 1 && (
                     <p className="text-xs text-gray-500 mt-1">

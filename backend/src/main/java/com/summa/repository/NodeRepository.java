@@ -9,8 +9,5 @@ import java.util.Optional;
 @Repository
 public interface NodeRepository extends JpaRepository<Node, String> {
     Optional<Node> findByPubkey(String pubkey);
-    
-    List<Node> findByStatus(String status);
-    
-    long countByStatus(String status);
+
 }

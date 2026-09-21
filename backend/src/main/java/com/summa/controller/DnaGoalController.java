@@ -66,6 +66,9 @@ public class DnaGoalController {
             Instant effectiveFrom = JsonHelpers.parseOptionalInstant(body.get("effectiveFrom"), "effectiveFrom");
             if (effectiveFrom == null) effectiveFrom = Instant.now();
             Instant effectiveTo = JsonHelpers.parseOptionalInstant(body.get("effectiveTo"), "effectiveTo");
+            if (effectiveTo != null && effectiveTo.isBefore(effectiveFrom)) {
+                throw new IllegalArgumentException("effectiveTo must not be before effectiveFrom");
+            }
 
             DnaGoal goal = goalService.create(
                 generatedId,
@@ -113,6 +116,8 @@ public class DnaGoalController {
             return ResponseEntity.ok(goal);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
+        } catch (IllegalStateException e) {
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 }

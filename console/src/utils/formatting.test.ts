@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatDate, tierColor, spawnStatusColor, triggerStatusColor, boardTaskStatusColor, roleTemplateStatusColor, dnaCardStatusColor, dnaGoalStatusColor, dnaRuleStatusColor, nodeStatusColor, groupStatusColor, rbacRoleColor, initiativeStatusColor, runStatusColor, agentStatusColor, askStatusColor } from './formatting'
+import { formatDate, tierColor, spawnStatusColor, triggerStatusColor, triggerCriticalityColor, boardTaskStatusColor, roleTemplateStatusColor, dnaCardStatusColor, dnaGoalStatusColor, dnaRuleStatusColor, nodeStatusColor, groupStatusColor, rbacRoleColor, initiativeStatusColor, runStatusColor, agentStatusColor, askStatusColor } from './formatting'
 import type { AskTier, SpawnStatus, TriggerStatus, BoardTaskStatus, RoleTemplateStatus, DnaCardStatus, DnaGoalStatus, DnaRuleStatus, NodeStatus, GroupStatus, InitiativeStatus, RunStatus, AgentStatus, AskStatus } from '../services/api'
 import type { RbacRole } from '../services/api'
 
@@ -49,6 +49,24 @@ describe('spawnStatusColor', () => {
 
   it('returns red for denied', () => {
     expect(spawnStatusColor('denied' as SpawnStatus)).toContain('red')
+  })
+
+  it('returns gray for expired', () => {
+    expect(spawnStatusColor('expired' as SpawnStatus)).toContain('gray')
+  })
+
+  it('returns gray for archived', () => {
+    expect(spawnStatusColor('archived' as SpawnStatus)).toContain('gray')
+  })
+})
+
+describe('triggerCriticalityColor', () => {
+  it('returns red for critical', () => {
+    expect(triggerCriticalityColor('critical')).toContain('red')
+  })
+
+  it('returns yellow for standard', () => {
+    expect(triggerCriticalityColor('standard')).toContain('yellow')
   })
 })
 

@@ -11,7 +11,6 @@ import java.util.Optional;
 @Repository
 public interface HumanRepository extends JpaRepository<Human, String> {
     Optional<Human> findByEmail(String email);
-    Optional<Human> findByName(String name);
     
     @Query("SELECT h FROM Human h WHERE h.deactivatedAt IS NULL AND h.rbac = :role")
     java.util.List<Human> findActiveByRole(String role);

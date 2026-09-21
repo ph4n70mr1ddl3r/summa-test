@@ -20,12 +20,14 @@ import type {
 
 export function formatDate(epochSeconds: number | undefined | null, options?: { dateOnly?: boolean }): string {
   if (epochSeconds === null || epochSeconds === undefined) return '?'
+  const date = new Date(epochSeconds * 1000)
+  if (Number.isNaN(date.getTime())) return '?'
   const fmt = new Intl.DateTimeFormat(undefined, {
     timeZone: 'UTC',
     year: 'numeric', month: '2-digit', day: '2-digit',
     ...(options?.dateOnly ? {} : { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
   })
-  const base = fmt.format(new Date(epochSeconds * 1000))
+  const base = fmt.format(date)
   return options?.dateOnly ? base : `${base} UTC`
 }
 
@@ -64,6 +66,8 @@ export function spawnStatusColor(status: SpawnStatus): string {
     case 'requested': return 'bg-yellow-900/50 text-yellow-400'
     case 'approved': return 'bg-green-900/50 text-green-400'
     case 'denied': return 'bg-red-900/50 text-red-400'
+    case 'expired': return 'bg-gray-600 text-gray-400'
+    case 'archived': return 'bg-gray-600 text-gray-400'
     default: return 'bg-gray-700 text-gray-300'
   }
 }
@@ -190,6 +194,14 @@ export function proposalStatusColor(status: DnaProposalStatus): string {
     case 'rejected': return 'bg-red-900/50 text-red-400'
     case 'withdrawn': return 'bg-gray-600 text-gray-400'
     default: return 'bg-gray-700 text-gray-300'
+  }
+}
+
+export function triggerCriticalityColor(criticality: 'critical' | 'standard'): string {
+  switch (criticality) {
+    case 'critical': return 'text-red-400 bg-red-900/30 border-red-700'
+    case 'standard': return 'text-yellow-400 bg-yellow-900/30 border-yellow-700'
+    default: return 'text-gray-400 bg-gray-800 border-gray-600'
   }
 }
 

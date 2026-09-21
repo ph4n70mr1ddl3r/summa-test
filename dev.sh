@@ -64,13 +64,14 @@ mkdir -p ~/.summa/dna ~/.summa/db
 
 # Start backend in background
 echo "[1/2] Starting backend..."
-(pushd backend > /dev/null && nohup mvn spring-boot:run -Dspring-boot.run.profiles=dev \
+pushd backend > /dev/null
+nohup mvn spring-boot:run -Dspring-boot.run.profiles=dev \
     -Dspring-boot.run.jvmArguments="${JAVA_OPTS:--Xmx512m -Xms256m -XX:MaxMetaspaceSize=128m}" \
     -Dsumma.auth.local-auth-enabled=${SUMMA_LOCAL_AUTH_ENABLED:-true} \
     > /tmp/summa-backend.log 2>&1 &
 BACKEND_PID=$!
+popd > /dev/null
 echo "      Backend PID: $BACKEND_PID"
-popd > /dev/null)
 
 # Wait for backend to start
 echo "      Waiting for backend on :8080..."

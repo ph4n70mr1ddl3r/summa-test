@@ -140,15 +140,34 @@ public class WorkspaceService {
         // Drop initiative bindings — goal slice re-derives at once
         ws.setInitiativeIds("[]");
 
-        // Kill the node claim — clear the workspace-side ref and the node-side claim
+        // Kill the node claim — clear only this workspace's ref from the node's claim JSON
         String previousNodeId = ws.getNodeId();
         ws.setNodeId(null);
         ws.setClaimEpoch(0);
         ws.setLeaseExpiresAt(null);
         if (previousNodeId != null) {
             nodeRepository.findById(previousNodeId).ifPresent(node -> {
-                node.setClaim(null);
-                nodeRepository.save(node);
+                String claim = node.getClaim();
+                if (claim != null && !claim.isBlank()) {
+                    try {
+                        com.fasterxml.jackson.databind.JsonNode claimNode = objectMapper.readTree(claim);
+                        if (claimNode.isArray()) {
+                            java.util.List<String> claims = new ArrayList<>();
+                            for (com.fasterxml.jackson.databind.JsonNode c : claimNode) {
+                                if (c.isTextual() && !c.asText().equals(id)) {
+                                    claims.add(c.asText());
+                                }
+                            }
+                            node.setClaim(objectMapper.writeValueAsString(claims));
+                        } else {
+                            node.setClaim(null);
+                        }
+                        nodeRepository.save(node);
+                    } catch (Exception e) {
+                        node.setClaim(null);
+                        nodeRepository.save(node);
+                    }
+                }
                 auditService.log(actor, "ARCHIVE_CLEAR_NODE_CLAIM", "node", previousNodeId,
                     String.format("{\"workspaceId\":\"%s\",\"reason\":\"workspace_archived\"}", id));
             });

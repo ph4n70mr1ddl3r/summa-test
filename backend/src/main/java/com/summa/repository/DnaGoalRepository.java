@@ -16,6 +16,5 @@ public interface DnaGoalRepository extends JpaRepository<DnaGoal, String> {
     
     @Query("SELECT g FROM DnaGoal g WHERE g.status = 'active' AND g.effectiveFrom <= :now AND (g.effectiveTo IS NULL OR g.effectiveTo > :now) ORDER BY g.inject DESC, g.id ASC")
     List<DnaGoal> findAllActiveWindowed(Instant now);
-    
-    long countByStatus(String status);
+
 }

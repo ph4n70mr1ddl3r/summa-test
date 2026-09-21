@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { Trigger } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
-import { triggerStatusColor } from '../utils/formatting'
+import { triggerStatusColor, triggerCriticalityColor } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Triggers() {
@@ -54,6 +54,9 @@ export default function Triggers() {
                   )}
                 </div>
                 <span className={`text-xs px-2 py-1 rounded ${triggerStatusColor(t.status)}`} aria-label={`Status: ${t.status}`}>{escapeHtml(t.status)}</span>
+                <span className={`ml-2 text-xs px-2 py-1 rounded border ${triggerCriticalityColor(t.criticality)}`} aria-label={`Criticality: ${t.criticality}`}>
+                  {escapeHtml(t.criticality)}
+                </span>
               </div>
             </div>
           ))}
