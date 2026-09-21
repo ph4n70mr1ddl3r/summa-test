@@ -66,8 +66,13 @@ public class BoardTaskController {
                     throw new IllegalArgumentException("priority must be a valid integer");
                 }
             }
-            Instant dueAt = JsonHelpers.parseOptionalInstant(body.get("dueAt"), "dueAt");
-            
+            Instant dueAt;
+            try {
+                dueAt = JsonHelpers.parseOptionalInstant(body.get("dueAt"), "dueAt");
+            } catch (IllegalArgumentException e) {
+                return ControllerResponses.validation(auditService, e.getMessage());
+            }
+
             BoardTask task = taskService.create(
                 body.get("title") != null && !body.get("title").isBlank() ? body.get("title") : null,
                 body.get("description"),

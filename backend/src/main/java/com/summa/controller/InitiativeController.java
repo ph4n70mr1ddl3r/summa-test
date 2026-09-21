@@ -61,7 +61,12 @@ public class InitiativeController {
                 throw new IllegalArgumentException("lead is required");
             }
             String generatedId = UUID.randomUUID().toString();
-            Instant deadline = JsonHelpers.parseOptionalInstant(body.get("deadline"), "deadline");
+            Instant deadline;
+            try {
+                deadline = JsonHelpers.parseOptionalInstant(body.get("deadline"), "deadline");
+            } catch (IllegalArgumentException e) {
+                return ControllerResponses.validation(auditService, e.getMessage());
+            }
             Initiative initiative = initiativeService.create(
                 generatedId,
                 body.get("title"),
