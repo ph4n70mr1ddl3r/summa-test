@@ -311,6 +311,21 @@ public class AgentService {
                 if (fresh.isEmpty()) continue;
                 Agent current = fresh.get();
                 if (!"suspended".equals(current.getStatus())) continue;
+                // CLC-002: SUSPENDED-002: suspended agents also need dependency cleanup before archival
+                for (Ask ask : askRepository.findByFromAndStatusPending(current.getId())) {
+                    ask.setStatus("withdrawn");
+                    askRepository.save(ask);
+                }
+                for (Ask ask : askRepository.findByToAndStatusPending(current.getId())) {
+                    ask.setStatus("withdrawn");
+                    askRepository.save(ask);
+                }
+                for (SpawnRequest spawn : spawnRequestRepository.findByRequesterId(current.getId())) {
+                    if ("requested".equals(spawn.getStatus())) {
+                        spawn.setStatus("archived");
+                        spawnRequestRepository.save(spawn);
+                    }
+                }
                 current.setStatus("archived");
                 current.setArchivedAt(now);
                 agentRepository.save(current);

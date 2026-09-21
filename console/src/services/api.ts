@@ -70,9 +70,11 @@ export function isAuthenticated(): boolean {
     if (header.alg !== 'HS256') return false;
     const payloadB64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
     const payloadJson = payloadB64 + '='.repeat((4 - payloadB64.length % 4) % 4);
-    const payload = JSON.parse(atob(payloadJson)) as { exp?: number };
+    const payload = JSON.parse(atob(payloadJson)) as { exp?: number; nbf?: number };
     if (payload.exp === undefined) return false;
-    return payload.exp > Math.floor(Date.now() / 1000);
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    if (payload.nbf !== undefined && nowSeconds < payload.nbf) return false;
+    return payload.exp > nowSeconds;
   } catch {
     return false;
   }
@@ -103,7 +105,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     }
     const err = new ApiError(message, res.status);
     if (res.status === 429) {
-      err.message = 'Rate limited. Please wait before retrying.';
+      err.message = message; // preserve server-provided rate limit message (may include retry-after)
     }
     if (res.status === 401 || res.status === 403) {
       setAuthToken(null);

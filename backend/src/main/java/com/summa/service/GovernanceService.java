@@ -184,7 +184,7 @@ public class GovernanceService {
         settings.putIfAbsent("asks-tier-bulk-deadline-hours", Defaults.DEFAULT_BULK_ASK_DEADLINE_HOURS);
         settings.putIfAbsent("asks-storm-collapse-window-hours", 1);
         settings.putIfAbsent("asks-rate-limit-per-source-per-hour", 60);
-        settings.putIfAbsent("dna-default-review-sla-days", 7);
+        settings.putIfAbsent("summa.dna.default-review-sla-days", 7);
         settings.putIfAbsent("spend-org-ceiling", spendCeilingOverride > 0 ? spendCeilingOverride : Defaults.DEFAULT_SPEND_CEILING);
         settings.putIfAbsent("spend-critical-floor-percent", 5.0);
         settings.putIfAbsent("spend-evaluation-window-days", Defaults.DEFAULT_EVALUATION_WINDOW_DAYS);
