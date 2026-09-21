@@ -59,7 +59,8 @@ public class SpendLedger {
 
     @PreUpdate
     public void preUpdate() {
-        createdAt = Instant.now();
+        // No mutable fields on SpendLedger; this is a holdover from an earlier design.
+        // Kept empty to avoid accidentally overwriting createdAt on every update.
     }
 
     public String getId() { return id; }

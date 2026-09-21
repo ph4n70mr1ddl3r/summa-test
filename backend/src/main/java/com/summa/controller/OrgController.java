@@ -167,7 +167,7 @@ public class OrgController {
 
             orgService.erasure(id, actor);
             return ResponseEntity.ok(Map.of("status", "erased", "id", id));
-        } catch (IllegalArgumentException e) {
+        } catch (EntityNotFoundException e) {
             return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }

@@ -6,6 +6,7 @@ import com.summa.repository.AgentRepository;
 import com.summa.model.Agent;
 import com.summa.repository.SpawnRequestRepository;
 import com.summa.constants.Defaults;
+import com.summa.util.JsonHelpers;
 import com.summa.exception.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +34,7 @@ public class RoleTemplateService {
     }
 
     @Transactional
-    public RoleTemplate create(String name, String agentClass, String body, String defaultScopes) {
+    public RoleTemplate create(String name, String agentClass, String body, String defaultScopes, String actor) {
         RoleTemplate template = new RoleTemplate();
         template.setId(UUID.randomUUID().toString());
         template.setName(name);
@@ -43,8 +44,8 @@ public class RoleTemplateService {
         template.setStatus("draft");
 
         RoleTemplate saved = templateRepository.save(template);
-        auditService.log(Defaults.SYSTEM_ACTOR, "CREATE", "role_template", template.getId(),
-            String.format("{\"name\":\"%s\",\"class\":\"%s\"}", name, agentClass));
+        auditService.log(actor != null ? actor : Defaults.SYSTEM_ACTOR, "CREATE", "role_template", template.getId(),
+            String.format("{\"name\":%s,\"class\":%s}", JsonHelpers.jsonString(name), JsonHelpers.jsonString(agentClass)));
         return saved;
     }
 

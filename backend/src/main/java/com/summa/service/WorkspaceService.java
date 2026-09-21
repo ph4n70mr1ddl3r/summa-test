@@ -150,10 +150,10 @@ public class WorkspaceService {
                 String claim = node.getClaim();
                 if (claim != null && !claim.isBlank()) {
                     try {
-                        com.fasterxml.jackson.databind.JsonNode claimNode = objectMapper.readTree(claim);
+                        JsonNode claimNode = objectMapper.readTree(claim);
                         if (claimNode.isArray()) {
-                            java.util.List<String> claims = new ArrayList<>();
-                            for (com.fasterxml.jackson.databind.JsonNode c : claimNode) {
+                            List<String> claims = new ArrayList<>();
+                            for (JsonNode c : claimNode) {
                                 if (c.isTextual() && !c.asText().equals(id)) {
                                     claims.add(c.asText());
                                 }

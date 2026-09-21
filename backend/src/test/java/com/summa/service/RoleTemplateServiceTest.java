@@ -44,7 +44,7 @@ class RoleTemplateServiceTest {
     void create_draftTemplate() {
         when(templateRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        RoleTemplate result = service.create("tpl-1", "persistent", "{}", "{}");
+        RoleTemplate result = service.create("tpl-1", "persistent", "{}", "{}", "system");
 
         assertNotNull(result);
         assertEquals("draft", result.getStatus());

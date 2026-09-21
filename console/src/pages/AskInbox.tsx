@@ -69,10 +69,10 @@ export default function AskInbox() {
       setSubmitSuccess('Response recorded')
       setRespondingId(null)
       setResponseText('')
-      loadAsks()
+      api.asks.listByStatus('pending').then((data) => setAsks(data)).catch((err) => setError(err instanceof Error ? err.message : String(err)))
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err))
-      loadAsks()
+      api.asks.listByStatus('pending').then((data) => setAsks(data)).catch((err) => setError(err instanceof Error ? err.message : String(err)))
     } finally {
       setRespondingForId(null)
     }
@@ -81,10 +81,10 @@ export default function AskInbox() {
   const handleWithdraw = async (id: string) => {
     try {
       await api.asks.withdraw(id)
-      loadAsks()
+      api.asks.listByStatus('pending').then((data) => setAsks(data)).catch((err) => setError(err instanceof Error ? err.message : String(err)))
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err))
-      loadAsks()
+      api.asks.listByStatus('pending').then((data) => setAsks(data)).catch((err) => setError(err instanceof Error ? err.message : String(err)))
     }
   }
 

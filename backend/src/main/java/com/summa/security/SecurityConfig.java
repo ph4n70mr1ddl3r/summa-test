@@ -1,5 +1,6 @@
 package com.summa.security;
 
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -31,8 +32,20 @@ public class SecurityConfig {
             .addFilterBefore(jwtFilter, RbacAuthorizationFilter.class)
             .addFilterBefore(rbacFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(JwtAuthenticationFilter.PUBLIC_PATHS.toArray(String[]::new)).permitAll()
+                .requestMatchers(request -> {
+                    String path = request.getRequestURI();
+                    for (String publicPath : JwtAuthenticationFilter.PUBLIC_PATHS) {
+                        if (path.equals(publicPath) || path.equals(publicPath + "/")) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }).permitAll()
                 .anyRequest().authenticated()
+            )
+            .headers(headers -> headers
+                .frameOptions(frame -> frame.sameOrigin())
+                .referrerPolicy(referrer -> referrer.policy(org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
             );
 
         return http.build();

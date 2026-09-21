@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.security.SecureRandom;
@@ -196,7 +197,7 @@ public class NodeService {
         // Store claim on node
         try {
             String claimJson = objectMapper.writeValueAsString(
-                java.util.Map.of("workspaceId", workspaceId, "epoch", newEpoch,
+                Map.of("workspaceId", workspaceId, "epoch", newEpoch,
                     "expiresAt", Instant.now().getEpochSecond()));
             node.setClaim(claimJson);
         } catch (Exception e) {

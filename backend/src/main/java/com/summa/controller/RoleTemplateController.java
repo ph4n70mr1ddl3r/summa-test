@@ -54,7 +54,8 @@ public class RoleTemplateController {
                 body.get("name"),
                 body.get("class"),
                 body.get("body"),
-                body.get("defaultScopes")
+                body.get("defaultScopes"),
+                actor
             );
             return ResponseEntity.ok(template);
         } catch (IllegalArgumentException e) {

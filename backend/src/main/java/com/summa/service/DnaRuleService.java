@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import com.summa.util.ScanUtils;
+import com.summa.util.JsonHelpers;
 import com.summa.exception.EntityNotFoundException;
 
 @Service
@@ -69,7 +70,7 @@ public class DnaRuleService {
 
         DnaRule saved = ruleRepository.save(rule);
         auditService.log(actor, "CREATE_RULE", "dna_rule", id,
-            String.format("{\"domainId\":\"%s\",\"effectiveFrom\":\"%s\"}", domainId, effectiveFrom));
+            String.format("{\"domainId\":%s,\"effectiveFrom\":%s}", JsonHelpers.jsonString(domainId), JsonHelpers.jsonString(effectiveFrom != null ? String.valueOf(effectiveFrom) : null)));
         return saved;
     }
 

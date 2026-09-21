@@ -32,12 +32,10 @@ export default function Groups() {
     setArchivingId(id)
     try {
       await api.groups.archive(id)
-      api.groups.list()
-        .then((data) => setGroups(data))
-        .catch((err) => setActionError(err instanceof Error ? err.message : String(err)))
-        .finally(() => setArchivingId(null))
+      api.groups.list().then((data) => setGroups(data)).catch((err) => setActionError(err instanceof Error ? err.message : String(err)))
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err))
+    } finally {
       setArchivingId(null)
     }
   }

@@ -85,7 +85,7 @@ public class GlobalExceptionHandler {
         log.warn("Data integrity conflict: {}", e.getMostSpecificCause() != null
                 ? e.getMostSpecificCause().getMessage() : e.getMessage());
         String actor = currentActor();
-        AuditEvent audit = auditService.log(actor, "REFUSAL", "conflict", "resource_conflict", "Resource conflict: the request violates a uniqueness or integrity constraint");
+        AuditEvent audit = auditService.log(actor, "REFUSAL", "http_request", "resource_conflict", "Resource conflict: the request violates a uniqueness or integrity constraint");
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(Map.of(
                     "code", "conflict",

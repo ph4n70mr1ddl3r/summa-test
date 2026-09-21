@@ -41,7 +41,9 @@ public class WebConfig implements WebMvcConfigurer {
             for (String origin : extraCorsOrigins.split(",")) {
                 String o = origin.trim();
                 if (!o.isEmpty() && !o.contains("*")) {
-                    mapping.allowedOriginPatterns(o);
+                    if (!o.startsWith("http://") || o.startsWith("http://localhost") || o.startsWith("http://127.0.0.1")) {
+                        mapping.allowedOriginPatterns(o);
+                    }
                 }
             }
         }

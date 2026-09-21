@@ -30,7 +30,7 @@ public class GroupService {
     public Group create(String name, String leaderMemberId) {
         // Check uniqueness
         Optional<Group> existing = groupRepository.findByNameAndStatusNot(name, "archived");
-        if (existing.isPresent()) {
+        if (!existing.isEmpty()) {
             throw new IllegalArgumentException("Group name already exists: " + name);
         }
 
@@ -72,7 +72,7 @@ public class GroupService {
         // ORG-042: Validate leader eligibility — active human, not viewer, not ephemeral
         Optional<Human> leaderOpt = memberService.findHuman(leaderMemberId);
         if (leaderOpt.isEmpty()) {
-            throw new IllegalStateException("Leader member not found: " + leaderMemberId);
+            throw new EntityNotFoundException("Leader member not found: " + leaderMemberId);
         }
         Human leader = leaderOpt.get();
         if (!leader.isActive()) {

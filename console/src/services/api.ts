@@ -568,7 +568,7 @@ export const api = {
         method: 'PATCH',
         body: JSON.stringify({ status }),
       }),
-    updateGoalWindow: (id: string, effectiveFrom?: number, effectiveTo?: number) => {
+    updateGoalWindow: async (id: string, effectiveFrom?: number, effectiveTo?: number) => {
         if (effectiveFrom == null && effectiveTo == null) {
             throw new ApiError('At least one of effectiveFrom or effectiveTo must be provided', 400);
         }

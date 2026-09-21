@@ -166,8 +166,11 @@ public class DnaDomainService {
                                   String ownerHumanId, String access, String store,
                                   String sod, String residency,
                                   String namedReaders,
-                                  List<String> itemIds, List<String> workspaceIds,
-                                  List<String> proposalIds) {
+                                   List<String> itemIds, List<String> workspaceIds,
+                                   List<String> proposalIds) {
+        if (itemIds == null) itemIds = List.of();
+        if (workspaceIds == null) workspaceIds = List.of();
+        if (proposalIds == null) proposalIds = List.of();
         DnaDomain parent = domainRepository.findById(parentId)
                 .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + parentId));
 

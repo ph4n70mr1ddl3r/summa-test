@@ -29,6 +29,11 @@ public class TriggerFiring {
         if (firedAt == null) firedAt = Instant.now();
     }
 
+    @PreUpdate
+    public void preUpdate() {
+        // TriggerFiring is append-only; no mutable fields to update.
+    }
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getTriggerId() { return triggerId; }

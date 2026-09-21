@@ -40,10 +40,7 @@ export default function Memory() {
       setReviewingId(null)
       const params: Record<string, string> = {}
       if (filter === 'tainted') params.tainted = 'true'
-      api.memory.list(params)
-        .then((data) => setItems(data))
-        .catch((err) => setReviewResult(err instanceof Error ? err.message : String(err)))
-        .finally(() => setReviewingForId(null))
+      api.memory.list(params).then((data) => setItems(data)).catch((err) => setReviewResult(err instanceof Error ? err.message : String(err)))
     } catch (err) {
       setReviewResult(err instanceof Error ? err.message : String(err))
       setReviewingForId(null)

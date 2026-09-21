@@ -27,6 +27,11 @@ public class GroupMembership {
         if (addedAt == null) addedAt = Instant.now();
     }
 
+    @PreUpdate
+    public void preUpdate() {
+        // GroupMembership removal sets removedAt via direct setter; no auto-update needed.
+    }
+
     public GroupMembershipId getId() { return id; }
     public void setId(GroupMembershipId id) { this.id = id; }
     public String getAddedBy() { return addedBy; }

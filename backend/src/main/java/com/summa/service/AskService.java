@@ -267,7 +267,7 @@ public class AskService {
                 Instant.now().plusSeconds(Defaults.DEFAULT_CRITICAL_ASK_DEADLINE_HOURS * 3600L),
                 originalAsk.getInitiativeId(), originalAsk.getWorkspaceId());
             auditService.logSystem("ORG_STALL_BROADCAST", "ask", originalAsk.getId(),
-                "{\"reason\":\"chain_exhausted\",\"originalAskId\":\"%s\"}".formatted(originalAsk.getId()));
+                String.format("{\"reason\":\"chain_exhausted\",\"originalAskId\":\"%s\"}", originalAsk.getId()));
         } catch (Exception e) {
             auditService.logSystem("ORG_STALL_BROADCAST_FAIL", "ask", originalAsk.getId(),
                 String.format("{\"error\":\"%s\"}", e.getMessage()));

@@ -43,6 +43,11 @@ public class AuditEvent {
         if (detail == null) detail = "{}";
     }
 
+    @PreUpdate
+    public void preUpdate() {
+        // AuditEvent is append-only; no mutable fields to update.
+    }
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public Instant getAt() { return at; }

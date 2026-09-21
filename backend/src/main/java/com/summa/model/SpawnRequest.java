@@ -73,6 +73,11 @@ public class SpawnRequest {
         if (purpose == null) purpose = "";
     }
 
+    @PreUpdate
+    public void preUpdate() {
+        // SpawnRequest status transitions are handled by direct setter calls.
+    }
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getRequesterId() { return requesterId; }

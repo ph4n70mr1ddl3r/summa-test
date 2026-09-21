@@ -64,7 +64,7 @@ public class OrgService {
         human.setPasswordHash(passwordUtil.hash(password));
 
         Human saved = humanRepository.save(human);
-        auditService.log("system", "BOOTSTRAP", "human", saved.getId(),
+        auditService.logSystem("BOOTSTRAP", "human", saved.getId(),
             "{\"name\":" + JsonHelpers.jsonString(name) + ",\"rbac\":" + JsonHelpers.jsonString(effectiveRbac) + "}");
         return saved;
     }
