@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom'
 import { setAuthToken, isAuthenticated, getUser, setNavigate } from './services/api'
+import type { RbacRole } from './services/api'
 
 interface NavItem {
   to: string
@@ -34,7 +35,7 @@ const publicNavItems: NavItem[] = [
   { to: '/initiatives', label: 'Initiatives' },
 ]
 
-function getFilteredNavItems(user: { rbac: string } | null): NavItem[] {
+function getFilteredNavItems(user: { rbac: RbacRole } | null): NavItem[] {
   if (user && (user.rbac === 'admin' || user.rbac === 'owner')) {
     return [...publicNavItems, ...adminNavItems]
   }

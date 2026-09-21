@@ -58,7 +58,7 @@ export default function DNADecisions() {
                 {truncateSnippet(outcomePreview, 150)}
               </pre>
               <p className="text-xs text-gray-500 mt-2">
-                Decided: {formatDate(d.decidedAt)}
+                Decided: {formatDate(d.decidedAt, { dateOnly: true })}
               </p>
             </div>
             )

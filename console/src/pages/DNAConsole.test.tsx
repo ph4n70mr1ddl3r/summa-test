@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import DnaConsole from './DnaConsole'
+import DNAConsole from './DNAConsole'
 import * as apiModule from '../services/api'
 
 vi.mock('../services/api', () => ({
@@ -19,7 +19,7 @@ vi.mock('../services/api', () => ({
   },
 }))
 
-describe('DnaConsole page', () => {
+describe('DNAConsole page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -34,7 +34,7 @@ describe('DnaConsole page', () => {
     vi.mocked(apiModule.api.dna.goals).mockResolvedValue([])
     vi.mocked(apiModule.api.dna.reviewQueue).mockResolvedValue([])
 
-    render(wrapper(<DnaConsole />))
+    render(wrapper(<DNAConsole />))
     await waitFor(() => expect(screen.getByText('DNA Console')).toBeInTheDocument())
   })
 
@@ -46,7 +46,7 @@ describe('DnaConsole page', () => {
     vi.mocked(apiModule.api.dna.goals).mockResolvedValue([])
     vi.mocked(apiModule.api.dna.reviewQueue).mockResolvedValue([])
 
-    render(wrapper(<DnaConsole />))
+    render(wrapper(<DNAConsole />))
     await waitFor(() => expect(screen.getByText('Domains (1)')).toBeInTheDocument())
   })
 
@@ -58,7 +58,7 @@ describe('DnaConsole page', () => {
       { id: 'p1', kind: 'rule', payload: '{}', revision: 1, proposedBy: 'h1', provenance: '', status: 'open' },
     ])
 
-    render(wrapper(<DnaConsole />))
+    render(wrapper(<DNAConsole />))
     await waitFor(() => expect(screen.getByText('Review Queue (1 open)')).toBeInTheDocument())
   })
 
@@ -68,7 +68,7 @@ describe('DnaConsole page', () => {
     vi.mocked(apiModule.api.dna.goals).mockResolvedValue([])
     vi.mocked(apiModule.api.dna.reviewQueue).mockResolvedValue([])
 
-    render(wrapper(<DnaConsole />))
+    render(wrapper(<DNAConsole />))
     await waitFor(() => {
       // Should show three "0" counts for cards, goals, domains
       const allZero = screen.queryAllByText('0')

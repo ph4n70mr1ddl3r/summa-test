@@ -34,7 +34,6 @@ export default function Memory() {
   const handleReview = async (id: string) => {
     setReviewResult(null)
     setReviewingForId(id)
-    const reloadAborted = false
     try {
       await api.memory.review(id)
       setReviewResult('Item reviewed and taint cleared')
@@ -42,9 +41,9 @@ export default function Memory() {
       const params: Record<string, string> = {}
       if (filter === 'tainted') params.tainted = 'true'
       api.memory.list(params)
-        .then((data) => { if (!reloadAborted) setItems(data) })
-        .catch((err) => { if (!reloadAborted) setReviewResult(err instanceof Error ? err.message : String(err)) })
-        .finally(() => { if (!reloadAborted) setReviewingForId(null) })
+        .then((data) => setItems(data))
+        .catch((err) => setReviewResult(err instanceof Error ? err.message : String(err)))
+        .finally(() => setReviewingForId(null))
     } catch (err) {
       setReviewResult(err instanceof Error ? err.message : String(err))
       setReviewingForId(null)

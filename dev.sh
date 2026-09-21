@@ -38,7 +38,7 @@ if ! command -v mvn &> /dev/null; then
     exit 1
 fi
 
-MAVEN_VERSION=$(mvn -v 2>&1 | head -n 1 | grep -oP '\d+\.\d+' | head -1)
+MAVEN_VERSION=$(mvn -v 2>&1 | head -n 1 | sed -n 's/.*\(\d\+\.\d\+\).*/\1/p' | head -1)
 if [ -n "$MAVEN_VERSION" ]; then
     MAVEN_MAJOR=$(echo "$MAVEN_VERSION" | cut -d'.' -f1)
     MAVEN_MINOR=$(echo "$MAVEN_VERSION" | cut -d'.' -f2)

@@ -58,8 +58,8 @@ describe('Login page', () => {
   })
 
   it('shows loading state while submitting', async () => {
-    let resolveLogin: (v: { token: string; userId: string; rbac: string; name: string }) => void
-    const loginPromise = new Promise<{ token: string; userId: string; rbac: string; name: string }>((resolve) => {
+    let resolveLogin: (v: { token: string; userId: string; rbac: import('../services/api').RbacRole; name: string }) => void
+    const loginPromise = new Promise<{ token: string; userId: string; rbac: import('../services/api').RbacRole; name: string }>((resolve) => {
       resolveLogin = resolve
     })
     vi.mocked(apiModule.api.auth.login).mockImplementation(() => loginPromise)

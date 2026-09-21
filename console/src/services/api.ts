@@ -26,7 +26,7 @@ export function setNavigate(fn: ((path: string, options?: { replace?: boolean })
   navigateRef = fn;
 }
 
-export function setAuthToken(token: string | null, user?: { userId: string; rbac: string; name: string } | null) {
+export function setAuthToken(token: string | null, user?: { userId: string; rbac: RbacRole; name: string } | null) {
   authToken = token;
   try {
     if (token) {
@@ -533,10 +533,6 @@ export const api = {
       }),
     decisions: (domainId?: string) =>
       request<DnaDecision[]>(`/dna/decisions${buildQuery(domainId ? { domainId } : undefined)}`),
-    search: async (query: string) => {
-      const res = await request<{ results: Array<Record<string, unknown>>; count: number }>(`/dna/search${buildQuery({ q: query })}`);
-      return res?.results ?? [];
-    },
     domains: () => request<DnaDomain[]>('/dna/domains'),
     archiveDomain: (id: string) =>
       request<DnaDomain>(`/dna/domains/${id}/archive`, {
@@ -732,7 +728,7 @@ export const api = {
   },
   auth: {
     login: (email: string, password: string) =>
-      request<{ token: string; userId: string; rbac: string; name: string }>('/auth/login', {
+      request<{ token: string; userId: string; rbac: RbacRole; name: string }>('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       }),

@@ -18,8 +18,8 @@ WORKDIR /app
 # Install curl for healthcheck
 RUN apk add --no-cache curl
 
-RUN JAR=$(find /build/backend/target -name 'summa-backend-*.jar' ! -name '*plain*' | head -1) && \
-    [ -n "$JAR" ] && cp "$JAR" /app/app.jar
+COPY --from=builder /build/backend/target/summa-backend-*.jar /app/app.jar
+RUN [ -f /app/app.jar ] || { echo "ERROR: No JAR found in build output" >&2; exit 1; }
 
 # Create data directories and non-root user
 RUN addgroup -g 1000 -S summa && adduser -u 1000 -S summa -G summa && \

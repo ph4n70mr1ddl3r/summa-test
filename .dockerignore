@@ -22,5 +22,5 @@ opencode.json
 opencode.jsonc
 **/AGENTS.md
 **/.gitignore
-# Root lockfile only — console/package-lock.json MUST stay in context for `npm ci`.
+# Exclude root lockfile — Dockerfile uses Maven only; console build gets its own context.
 /package-lock.json
