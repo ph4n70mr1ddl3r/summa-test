@@ -67,13 +67,11 @@ public class RoleTemplateService {
                 .orElseThrow(() -> new EntityNotFoundException("Template not found: " + id));
 
         // TPL-003: Class is immutable across a name's versions — check against any existing row
-        List<RoleTemplate> sameName = templateRepository.findAll().stream()
-                .filter(t -> t.getName().equals(template.getName()) && !t.getId().equals(id))
-                .toList();
-        for (RoleTemplate existing : sameName) {
-            if (!existing.getAgentClass().equals(template.getAgentClass())) {
+        Optional<RoleTemplate> sameNameOpt = templateRepository.findByName(template.getName());
+        if (sameNameOpt.isPresent() && !sameNameOpt.get().getId().equals(id)) {
+            if (!sameNameOpt.get().getAgentClass().equals(template.getAgentClass())) {
                 throw new IllegalStateException(
-                    "Class flip refused: name '" + template.getName() + "' already has class '" + existing.getAgentClass() + "'");
+                    "Class flip refused: name '" + template.getName() + "' already has class '" + sameNameOpt.get().getAgentClass() + "'");
             }
         }
 
@@ -84,9 +82,7 @@ public class RoleTemplateService {
         RoleTemplate saved = templateRepository.save(template);
 
         // TPL-011: File approval ask to each pinned agent's owner
-        List<Agent> pinnedAgents = agentRepository.findAll().stream()
-                .filter(a -> id.equals(a.getTemplateId()) && a.isActive())
-                .toList();
+        List<Agent> pinnedAgents = agentRepository.findActiveByTemplateId(id);
         for (Agent agent : pinnedAgents) {
             try {
                 String payload = String.format(
@@ -119,13 +115,9 @@ public class RoleTemplateService {
                 .orElseThrow(() -> new EntityNotFoundException("Template not found: " + id));
 
         // Check for live pins: active agents pinned to this template
-        long activeAgentPins = agentRepository.findAll().stream()
-                .filter(a -> id.equals(a.getTemplateId()) && a.isActive())
-                .count();
+        long activeAgentPins = agentRepository.countByTemplateIdAndStatus(id, "active");
         // Check for pending spawn requests pinning this template
-        long pendingSpawnPins = spawnRequestRepository.findByStatus("requested").stream()
-                .filter(s -> id.equals(s.getTemplateId()))
-                .count();
+        long pendingSpawnPins = spawnRequestRepository.countByTemplateIdAndStatus(id, "requested");
 
         if (activeAgentPins > 0 || pendingSpawnPins > 0) {
             throw new IllegalStateException(

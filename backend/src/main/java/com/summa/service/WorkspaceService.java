@@ -84,7 +84,7 @@ public class WorkspaceService {
 
         Workspace saved = workspaceRepository.save(ws);
         auditService.logSystem("CREATE_WORKSPACE", "workspace", id,
-            String.format("{\"name\":\"%s\",\"kind\":\"%s\"}", name, kind));
+            String.format("{\"name\":\"%s\",\"kind\":\"%s\"}", name, ws.getKind()));
         return saved;
     }
 

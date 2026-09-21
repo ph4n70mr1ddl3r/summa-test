@@ -52,7 +52,7 @@ public class NodeAuthFilter extends OncePerRequestFilter {
         }
 
         // Enroll is a public operation — skip signature verification
-        if (path.equals("/api/nodes/enroll") || path.startsWith("/api/nodes/enroll?")) {
+        if (path.equals("/api/nodes/enroll") || path.startsWith("/api/nodes/enroll?") || path.equals("/api/nodes/enroll/")) {
             filterChain.doFilter(wrappedRequest, response);
             return;
         }

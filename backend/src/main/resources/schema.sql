@@ -501,11 +501,9 @@ CREATE INDEX IF NOT EXISTS idx_spawn_requests_approved ON spawn_requests(approve
 CREATE INDEX IF NOT EXISTS idx_board_tasks_initiative ON board_tasks(initiative_id);
 
 CREATE INDEX IF NOT EXISTS idx_runs_workspace_status ON runs(workspace_id, status);
-CREATE INDEX IF NOT EXISTS idx_runs_agent_status ON runs(agent_id, status);
 CREATE INDEX IF NOT EXISTS idx_triggers_status ON triggers(status);
 CREATE INDEX IF NOT EXISTS idx_triggers_agent ON triggers(agent_id);
 CREATE INDEX IF NOT EXISTS idx_triggers_workspace ON triggers(workspace_id);
-CREATE INDEX IF NOT EXISTS idx_initiatives_status ON initiatives(status);
 CREATE INDEX IF NOT EXISTS idx_initiatives_sponsor ON initiatives(sponsor);
 CREATE INDEX IF NOT EXISTS idx_initiatives_lead ON initiatives(lead);
 CREATE INDEX IF NOT EXISTS idx_asks_to_status_deadline ON asks(to, status, deadline);

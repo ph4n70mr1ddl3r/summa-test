@@ -80,8 +80,8 @@ class RoleTemplateServiceTest {
         tpl.setVersion(1);
         tpl.setStatus("draft");
         when(templateRepository.findById("tpl-1")).thenReturn(Optional.of(tpl));
-        when(templateRepository.findAll()).thenReturn(List.of(tpl));
-        when(agentRepository.findAll()).thenReturn(List.of());
+        when(templateRepository.findByName("Worker")).thenReturn(Optional.empty());
+        when(agentRepository.findActiveByTemplateId("tpl-1")).thenReturn(List.of());
         when(templateRepository.save(any())).thenReturn(tpl);
 
         RoleTemplate result = service.publish("tpl-1", "admin");
@@ -109,7 +109,7 @@ class RoleTemplateServiceTest {
         existing.setStatus("active");
 
         when(templateRepository.findById("tpl-1")).thenReturn(Optional.of(current));
-        when(templateRepository.findAll()).thenReturn(List.of(current, existing));
+        when(templateRepository.findByName("Worker")).thenReturn(Optional.of(existing));
 
         assertThrows(IllegalStateException.class, () -> service.publish("tpl-1", "admin"));
     }
@@ -121,14 +121,8 @@ class RoleTemplateServiceTest {
         tpl.setName("Worker");
         tpl.setStatus("active");
 
-        Agent agent = new Agent();
-        agent.setId("agent-1");
-        agent.setTemplateId("tpl-1");
-        agent.setStatus("active");
-
         when(templateRepository.findById("tpl-1")).thenReturn(Optional.of(tpl));
-        when(agentRepository.findAll()).thenReturn(List.of(agent));
-        when(spawnRequestRepository.findByStatus("requested")).thenReturn(List.of());
+        when(agentRepository.countByTemplateIdAndStatus("tpl-1", "active")).thenReturn(1L);
 
         assertThrows(IllegalStateException.class, () -> service.retire("tpl-1", "admin"));
     }
@@ -140,14 +134,9 @@ class RoleTemplateServiceTest {
         tpl.setName("Worker");
         tpl.setStatus("active");
 
-        SpawnRequest spawn = new SpawnRequest();
-        spawn.setId("spawn-1");
-        spawn.setTemplateId("tpl-1");
-        spawn.setStatus("requested");
-
         when(templateRepository.findById("tpl-1")).thenReturn(Optional.of(tpl));
-        when(agentRepository.findAll()).thenReturn(List.of());
-        when(spawnRequestRepository.findByStatus("requested")).thenReturn(List.of(spawn));
+        when(agentRepository.countByTemplateIdAndStatus("tpl-1", "active")).thenReturn(0L);
+        when(spawnRequestRepository.countByTemplateIdAndStatus("tpl-1", "requested")).thenReturn(1L);
 
         assertThrows(IllegalStateException.class, () -> service.retire("tpl-1", "admin"));
     }
@@ -160,8 +149,8 @@ class RoleTemplateServiceTest {
         tpl.setStatus("active");
 
         when(templateRepository.findById("tpl-1")).thenReturn(Optional.of(tpl));
-        when(agentRepository.findAll()).thenReturn(List.of());
-        when(spawnRequestRepository.findByStatus("requested")).thenReturn(List.of());
+        when(agentRepository.countByTemplateIdAndStatus("tpl-1", "active")).thenReturn(0L);
+        when(spawnRequestRepository.countByTemplateIdAndStatus("tpl-1", "requested")).thenReturn(0L);
         when(templateRepository.save(any())).thenReturn(tpl);
 
         RoleTemplate result = service.retire("tpl-1", "admin");

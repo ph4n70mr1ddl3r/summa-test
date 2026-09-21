@@ -87,6 +87,9 @@ public class NodeController {
             }
             String epochStr = body.get("epoch");
             int currentEpoch = epochStr != null ? Integer.parseInt(epochStr.trim()) : 0;
+            if (currentEpoch < 0) {
+                throw new IllegalArgumentException("epoch must be non-negative");
+            }
             Node node = nodeService.claimWorkspace(id, workspaceId, currentEpoch);
             return ResponseEntity.ok(node);
         } catch (NumberFormatException e) {

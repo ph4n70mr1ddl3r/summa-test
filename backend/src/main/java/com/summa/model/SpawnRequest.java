@@ -70,6 +70,7 @@ public class SpawnRequest {
         if (spawnClass == null) spawnClass = "ephemeral";
         if (workspaceBindings == null) workspaceBindings = "[]";
         if (scopeCeiling == null) scopeCeiling = "{}";
+        if (purpose == null) purpose = "";
     }
 
     public String getId() { return id; }
@@ -106,6 +107,4 @@ public class SpawnRequest {
     public void setGateTarget(String gateTarget) { this.gateTarget = gateTarget; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
-    public boolean isPending() { return "requested".equals(status); }
-    public boolean isApproved() { return "approved".equals(status); }
 }

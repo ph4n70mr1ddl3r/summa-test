@@ -120,13 +120,8 @@ public class GovernanceService {
     @Transactional(readOnly = true)
     public boolean isSpendHaltTripped() {
         try {
-            Double ceiling = getSetting("spend-org-ceiling", Double.class);
-            if (ceiling == null || ceiling <= 0) ceiling = spendCeilingOverride > 0 ? spendCeilingOverride : Defaults.DEFAULT_SPEND_CEILING;
-            Object windowDaysObj = getSetting("spend-evaluation-window-days");
-            long windowDays = Defaults.DEFAULT_EVALUATION_WINDOW_DAYS;
-            if (windowDaysObj instanceof Number) {
-                windowDays = ((Number) windowDaysObj).longValue();
-            }
+            double ceiling = resolveSpendCeiling();
+            long windowDays = resolveSpendWindowDays();
             Instant window = Instant.now().minus(windowDays, ChronoUnit.DAYS);
             Double reservedObj = spendLedgerRepository.sumReservedSince(window);
             // SPW-035: unacknowledged overruns trip the breaker; acknowledged ones do not
@@ -146,13 +141,8 @@ public class GovernanceService {
     }
 
     public Map<String, Object> getSpendView() {
-        Double ceiling = getSetting("spend-org-ceiling", Double.class);
-        if (ceiling == null || ceiling <= 0) ceiling = spendCeilingOverride > 0 ? spendCeilingOverride : Defaults.DEFAULT_SPEND_CEILING;
-        Object windowDaysObj = getSetting("spend-evaluation-window-days");
-        long windowDays = Defaults.DEFAULT_EVALUATION_WINDOW_DAYS;
-        if (windowDaysObj instanceof Number) {
-            windowDays = ((Number) windowDaysObj).longValue();
-        }
+        double ceiling = resolveSpendCeiling();
+        long windowDays = resolveSpendWindowDays();
         Instant window = Instant.now().minus(windowDays, ChronoUnit.DAYS);
         Double reservedObj = spendLedgerRepository.sumReservedSince(window);
         Double settledObj = spendLedgerRepository.sumSettleCostSince(window);
@@ -166,6 +156,21 @@ public class GovernanceService {
         view.put("utilization", String.format("%.2f%%", utilization * 100));
         view.put("halted", isSpendHaltTripped());
         return view;
+    }
+
+    private double resolveSpendCeiling() {
+        Double ceiling = getSetting("spend-org-ceiling", Double.class);
+        if (ceiling == null || ceiling <= 0) ceiling = spendCeilingOverride > 0 ? spendCeilingOverride : Defaults.DEFAULT_SPEND_CEILING;
+        return ceiling;
+    }
+
+    private long resolveSpendWindowDays() {
+        Object windowDaysObj = getSetting("spend-evaluation-window-days");
+        long windowDays = Defaults.DEFAULT_EVALUATION_WINDOW_DAYS;
+        if (windowDaysObj instanceof Number) {
+            windowDays = ((Number) windowDaysObj).longValue();
+        }
+        return windowDays;
     }
 
     private void applyDefaults(Map<String, Object> settings) {

@@ -72,7 +72,7 @@ public class NodeService {
         Node saved = nodeRepository.save(node);
         auditService.log(Defaults.SYSTEM_ACTOR, "ENROLL", "node", node.getId(),
             String.format("{\"name\":\"%s\",\"kind\":\"%s\",\"token_expires_at\":%d}",
-                name, kind, Instant.now().getEpochSecond() + ENROLLMENT_TOKEN_TTL_SECONDS));
+                name, node.getKind(), Instant.now().getEpochSecond() + ENROLLMENT_TOKEN_TTL_SECONDS));
         return saved;
     }
 

@@ -63,7 +63,7 @@ export function isAuthenticated(): boolean {
   try {
     const parts = authToken.split('.');
     if (parts.length !== 3) return false;
-    // Reject alg=none and any non-HS256 algorithm (security: prevent token forgery)
+    // Reject alg=none and any non-HS256 algorithm (security: frontend validates token structure)
     const headerB64 = parts[0].replace(/-/g, '+').replace(/_/g, '/');
     const headerJson = headerB64 + '='.repeat((4 - headerB64.length % 4) % 4);
     const header = JSON.parse(atob(headerJson)) as { alg?: string };
@@ -206,6 +206,7 @@ export interface SpawnRequest {
   budgetCap?: number;
   ttlHours?: number;
   approvedBy?: string;
+  gateTarget?: string;
   createdAt?: number;
 }
 

@@ -19,9 +19,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.Map;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.summa.util.JsonHelpers;
@@ -93,7 +94,7 @@ public class SpawnService {
 
         // SPW-010: Ephemeral requester refused a persistent-hire request at write
         if (AgentClass.PERSISTENT.getValue().equals(effectiveSpawnClass)) {
-            if (AgentClass.EPHEMERAL.getValue().equals(requesterOpt.get().getAgentClass())) {
+            if (Objects.equals(AgentClass.EPHEMERAL.getValue(), requesterOpt.get().getAgentClass())) {
                 throw new IllegalStateException("Ephemeral agents cannot request persistent hires");
             }
         }

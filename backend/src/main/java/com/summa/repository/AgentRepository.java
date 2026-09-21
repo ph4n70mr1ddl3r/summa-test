@@ -22,4 +22,9 @@ public interface AgentRepository extends JpaRepository<Agent, String> {
 
     @Query("SELECT a FROM Agent a WHERE a.status = :status")
     List<Agent> findByStatus(String status);
+
+    @Query("SELECT a FROM Agent a WHERE a.templateId = :templateId AND a.status = 'active'")
+    List<Agent> findActiveByTemplateId(String templateId);
+
+    long countByTemplateIdAndStatus(String templateId, String status);
 }

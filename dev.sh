@@ -92,6 +92,10 @@ fi
 # Start console
 echo "[2/2] Starting console..."
 cd console
+if [ ! -d "node_modules" ]; then
+    echo "      Installing console dependencies..."
+    npm ci --prefer-offline 2>/dev/null || npm install
+fi
 npm run dev > /tmp/summa-console.log 2>&1 &
 CONSOLE_PID=$!
 echo "      Console PID: $CONSOLE_PID"
