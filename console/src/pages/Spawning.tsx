@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, loadWithFallback } from '../services/api'
 import type { SpawnRequest, SpawnStats } from '../types'
-import { escapeHtml } from '../utils/escapeHtml'
 import { spawnStatusColor } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
@@ -26,7 +25,7 @@ export default function Spawning() {
       ]),
     ).then(({ data, error: loadError }) => {
       if (aborted) return
-      setRequests(data[0] as SpawnRequest[])
+      setRequests(data[0] != null ? (data[0] as SpawnRequest[]) : [])
       setStats(data[1] as SpawnStats | null)
       setError(loadError)
       setLoading(false)
@@ -65,14 +64,14 @@ export default function Spawning() {
             <div key={req.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium text-gray-200">{escapeHtml(req.purpose || 'Untitled request')}</p>
+                  <p className="font-medium text-gray-200">{req.purpose || 'Untitled request'}</p>
                   <p className="text-sm text-gray-400 mt-1">
-                    Class: {escapeHtml(req.class)} · Requester: {escapeHtml(req.requesterId)}
-                    {req.templateId ? ` · Template: ${escapeHtml(req.templateId)}` : ''}
+                    Class: {req.class} · Requester: {req.requesterId}
+                    {req.templateId ? ` · Template: ${req.templateId}` : ''}
                   </p>
                 </div>
                 <span className={`text-xs px-2 py-1 rounded ${spawnStatusColor(req.status)}`} aria-label={`Status: ${req.status}`}>
-                  {escapeHtml(req.status)}
+                  {req.status}
                 </span>
               </div>
               {req.budgetCap && (

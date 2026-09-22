@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { RoleTemplate } from '../types'
-import { escapeHtml } from '../utils/escapeHtml'
 import { roleTemplateStatusColor } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
@@ -44,10 +43,10 @@ export default function RoleTemplates() {
             <div key={t.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium text-gray-200">{escapeHtml(t.name)}</p>
-                  <p className="text-sm text-gray-400 mt-1">Class: {escapeHtml(t.class)} | Version: {escapeHtml(String(t.version))}</p>
+                  <p className="font-medium text-gray-200">{t.name}</p>
+                  <p className="text-sm text-gray-400 mt-1">Class: {t.class} | Version: {t.version}</p>
                 </div>
-                <span className={`text-xs px-2 py-1 rounded ${roleTemplateStatusColor(t.status)}`} aria-label={`Status: ${t.status}`}>{escapeHtml(t.status)}</span>
+                <span className={`text-xs px-2 py-1 rounded ${roleTemplateStatusColor(t.status)}`} aria-label={`Status: ${t.status}`}>{t.status}</span>
               </div>
             </div>
           ))}

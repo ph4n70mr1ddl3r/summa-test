@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { Initiative } from '../types'
-import { escapeHtml } from '../utils/escapeHtml'
 import { formatDate, initiativeStatusColor } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
@@ -44,10 +43,10 @@ export default function Initiatives() {
             <div key={ini.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium text-gray-200">{escapeHtml(ini.title)}</p>
+                  <p className="font-medium text-gray-200">{ini.title}</p>
                   <p className="text-sm text-gray-400 mt-1">
-                    Sponsor: {escapeHtml(ini.sponsor)} | Lead: {escapeHtml(ini.lead)}
-                    {ini.goalRef && <span className="ml-2">Goal: {escapeHtml(ini.goalRef)}</span>}
+                    Sponsor: {ini.sponsor} | Lead: {ini.lead}
+                    {ini.goalRef && <span className="ml-2">Goal: {ini.goalRef}</span>}
                     {ini.deadline && (
                       <span className="ml-2 text-xs text-gray-500">
                         Deadline: {formatDate(ini.deadline, { dateOnly: true })}
@@ -56,7 +55,7 @@ export default function Initiatives() {
                   </p>
                 </div>
                 <span className={`text-xs px-2 py-0.5 rounded ${initiativeStatusColor(ini.status)}`} aria-label={`Status: ${ini.status}`}>
-                  {escapeHtml(ini.status)}
+                  {ini.status}
                 </span>
               </div>
             </div>

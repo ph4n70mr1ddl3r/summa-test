@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, loadWithFallback } from '../services/api'
 import type { Group, Member } from '../types'
-import { escapeHtml } from '../utils/escapeHtml'
 import { groupStatusColor, rbacRoleColor, agentStatusColor } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
@@ -28,7 +27,7 @@ export default function OrgView() {
       if (aborted) return
       const membersData = data[0]
       setMembers(membersData != null && 'members' in membersData ? (membersData as { members: Member[] }).members : [])
-      setGroups(data[1] as Group[])
+      setGroups(data[1] != null ? (data[1] as Group[]) : [])
       setError(loadError)
       setLoading(false)
     })
@@ -62,9 +61,9 @@ export default function OrgView() {
             <div className="space-y-2">
               {humans.map((h) => (
                 <div key={h.id} className="flex items-center justify-between bg-gray-700 rounded px-3 py-2">
-                  <span className="text-gray-200 text-sm">{escapeHtml(h.name)}</span>
+                  <span className="text-gray-200 text-sm">{h.name}</span>
                   <span className={`text-xs px-2 py-0.5 rounded ${rbacRoleColor(h.rbac)}`} aria-label={`RBAC role: ${h.rbac}`}>
-                    {escapeHtml(h.rbac)}
+                    {h.rbac}
                   </span>
                 </div>
               ))}
@@ -80,11 +79,11 @@ export default function OrgView() {
             <div className="space-y-2">
               {agents.map((a) => (
                 <div key={a.id} className="flex items-center justify-between bg-gray-700 rounded px-3 py-2">
-                  <span className="text-gray-200 text-sm">{escapeHtml(a.name)}</span>
+                  <span className="text-gray-200 text-sm">{a.name}</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500">{escapeHtml(a.class)}</span>
+                    <span className="text-xs text-gray-500">{a.class}</span>
                     <span className={`text-xs px-2 py-0.5 rounded ${agentStatusColor(a.status)}`} aria-label={`Status: ${a.status}`}>
-                      {escapeHtml(a.status)}
+                      {a.status}
                     </span>
                   </div>
                 </div>
@@ -102,9 +101,9 @@ export default function OrgView() {
           <div className="space-y-2">
             {groups.map((g) => (
               <div key={g.id} className="flex items-center justify-between bg-gray-700 rounded px-3 py-2">
-                <span className="text-gray-200 text-sm">{escapeHtml(g.name)}</span>
+                <span className="text-gray-200 text-sm">{g.name}</span>
                 <span className={`text-xs px-2 py-0.5 rounded ${groupStatusColor(g.status)}`} aria-label={`Status: ${g.status}`}>
-                  {escapeHtml(g.status)}
+                  {g.status}
                 </span>
               </div>
             ))}

@@ -20,4 +20,19 @@ public final class Defaults {
     public static final int DEFAULT_DNA_DEFAULT_REVIEW_SLA_DAYS = 7;
     public static final double DEFAULT_SPEND_CRITICAL_FLOOR_PERCENT = 5.0;
     public static final String SYSTEM_ACTOR = "system";
+
+    // Scheduling intervals (milliseconds)
+    public static final long STALL_CHECK_INTERVAL_MS = 300000L;
+    public static final long TTL_REAP_INTERVAL_MS = 300000L;
+
+    // Timeouts (seconds)
+    public static final long STALL_ASK_DEADLINE_SECONDS = 7L * 86400;
+    public static final long STALL_ASK_DEDUP_WINDOW_SECONDS = 3600L;
+    public static final long ENROLLMENT_TOKEN_TTL_SECONDS = 3600L;
+    public static final long REBIND_ASK_DEADLINE_SECONDS = 7L * 86400;
+    public static final long MAX_DEADLINE_SECONDS = 365L * 86400;
+
+    // Algorithmic bounds
+    public static final int MAX_EXPIRE_SUCCESSOR_DEPTH = 5;
+    public static final int DEFAULT_CYCLE_DETECTION_MAX_STEPS = 50;
 }

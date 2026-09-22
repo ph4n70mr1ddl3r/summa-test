@@ -51,8 +51,6 @@ public class AskService {
     private final InitiativeRepository initiativeRepository;
     private final long stormCollapseWindowSeconds;
 
-    private static final int MAX_EXPIRE_SUCCESSOR_DEPTH = 5;
-
     // ASK-100: Storm collapse window — tracks recent ask creation by (kind, to, payloadHash)
     // Uses bounded maps with TTL-based eviction to prevent unbounded memory growth.
     private final ConcurrentHashMap<String, ExpiringEntry<Instant>> collapseWindowTimestamps = new ConcurrentHashMap<>();
@@ -138,7 +136,11 @@ public class AskService {
             ExpiringEntry<Instant> slotValue = collapseWindowTimestamps.computeIfAbsent(collapseKey, k -> new ExpiringEntry<>(now, nowSeconds + stormCollapseWindowSeconds));
             if (nowSeconds - slotValue.value.getEpochSecond() < stormCollapseWindowSeconds) {
                 // Collapse: increment collapsed_count on nearest pending canonical
-                List<Ask> candidates = findPendingByKindAndTo(kind, to);
+                List<Ask> candidates = askRepository.findByToAndStatusPending(to);
+                if (candidates == null) candidates = List.of();
+                candidates = candidates.stream()
+                    .filter(a -> kind.equals(a.getKind()) && "pending".equals(a.getStatus()))
+                    .toList();
                 if (!candidates.isEmpty()) {
                     Ask canonical = candidates.get(0);
                     canonical.setCollapsedCount(canonical.getCollapsedCount() + 1);
@@ -217,7 +219,7 @@ public class AskService {
                     try {
                          ExpiringEntry<Integer> depthEntry = successorDepth.get(ask.getId());
                          int depth = (depthEntry != null ? depthEntry.value : 0) + 1;
-                         if (depth >= MAX_EXPIRE_SUCCESSOR_DEPTH) {
+                          if (depth >= Defaults.MAX_EXPIRE_SUCCESSOR_DEPTH) {
                             // ASK-057: Chain exhausted — broadcast org-stall alert
                             broadcastOrgStall(ask);
                             auditService.logSystem("EXPIRE_CHAIN_EXHAUSTED", "ask", ask.getId(),
@@ -390,9 +392,9 @@ public class AskService {
                 // Close the initiative — handled by the caller's close endpoint
                 auditService.logSystem("DIRECTION_CLOSE", "ask", ask.getId(),
                     String.format("{\"initiativeId\":\"%s\"}", initiativeId));
-            } else if ("re-base".equals(action) || action.equals("rebase")) {
+            } else if ("re-base".equals(action) || "rebase".equals(action)) {
                 updateGoalRef(initiativeId, payload, "DIRECTION_REBASE");
-            } else if ("re-target".equals(action) || action.equals("retarget")) {
+            } else if ("re-target".equals(action) || "retarget".equals(action)) {
                 updateGoalRef(initiativeId, payload, "DIRECTION_RETARGET");
             }
         } catch (Exception e) {

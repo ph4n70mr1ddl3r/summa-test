@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, loadWithFallback } from '../services/api'
 import type { SpendSnapshot } from '../types'
-import { escapeHtml } from '../utils/escapeHtml'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Governance() {
@@ -28,9 +27,12 @@ export default function Governance() {
       ]),
     ).then(({ data, error: loadError }) => {
       if (aborted) return
-      setPolicies(data[0] as Record<string, unknown>)
-      setQuotas(data[1] as Record<string, unknown>)
-      setSpend(data[2] as SpendSnapshot | null)
+      const policiesData = data[0] as Record<string, unknown> | null
+      const quotasData = data[1] as Record<string, unknown> | null
+      const spendData = data[2] as SpendSnapshot | null
+      setPolicies(policiesData != null ? policiesData : {})
+      setQuotas(quotasData != null ? quotasData : {})
+      setSpend(spendData)
       setError(loadError)
       setLoading(false)
     })
@@ -62,7 +64,7 @@ export default function Governance() {
               {policyEntries.slice(0, 10).map(([k, v]) => (
                 <div key={k} className="flex justify-between text-sm">
                   <span className="text-gray-400">{k}</span>
-                  <span className="text-gray-200 font-mono whitespace-pre-wrap break-all">{escapeHtml(typeof v === 'object' && v !== null ? JSON.stringify(v, null, 2) : String(v))}</span>
+                  <span className="text-gray-200 font-mono whitespace-pre-wrap break-all">{typeof v === 'object' && v !== null ? JSON.stringify(v, null, 2) : String(v)}</span>
                 </div>
               ))}
             </div>
@@ -78,7 +80,7 @@ export default function Governance() {
               {quotaEntries.slice(0, 10).map(([k, v]) => (
                 <div key={k} className="flex justify-between text-sm">
                   <span className="text-gray-400">{k}</span>
-                  <span className="text-gray-200 font-mono whitespace-pre-wrap break-all">{escapeHtml(typeof v === 'object' && v !== null ? JSON.stringify(v, null, 2) : String(v))}</span>
+                  <span className="text-gray-200 font-mono whitespace-pre-wrap break-all">{typeof v === 'object' && v !== null ? JSON.stringify(v, null, 2) : String(v)}</span>
                 </div>
               ))}
             </div>

@@ -60,7 +60,6 @@ class OrgServiceTest {
 
     @Test
     void offboard_refusesLastAdmin() {
-        when(humanRepository.findByIdForUpdate("human-1")).thenReturn(Optional.of(createHuman("human-1", "admin")));
         when(humanRepository.countByDeactivatedAtIsNullAndRbac("admin")).thenReturn(1L);
 
         assertThrows(IllegalStateException.class, () -> {

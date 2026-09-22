@@ -1,6 +1,7 @@
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 const TOKEN_KEY = 'summa_auth_token';
 const USER_KEY = 'summa_user';
+const REQUEST_TIMEOUT_MS = 30000;
 
 export class ApiError extends Error {
   status: number;
@@ -81,44 +82,54 @@ export function isAuthenticated(): boolean {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const headers = new Headers(init?.headers);
-  headers.set('Content-Type', 'application/json');
-  if (authToken) {
-    headers.set('Authorization', `Bearer ${authToken}`);
-  }
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    headers,
-  });
-  if (!res.ok) {
-    let message: string;
-    try {
-      const text = await res.text();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    const headers = new Headers(init?.headers);
+    if (init?.method !== 'GET' && init?.method !== 'HEAD') {
+      headers.set('Content-Type', 'application/json');
+    }
+    if (authToken) {
+      headers.set('Authorization', `Bearer ${authToken}`);
+    }
+    const res = await fetch(`${API_BASE}${path}`, {
+      ...init,
+      headers,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    if (!res.ok) {
+      let message: string;
       try {
-        const err = JSON.parse(text) as { code?: string; message?: string };
-        message = err.message || `HTTP ${res.status}`;
+        const text = await res.text();
+        try {
+          const err = JSON.parse(text) as { code?: string; message?: string };
+          message = err.message || `HTTP ${res.status}`;
+        } catch {
+          message = text || `HTTP ${res.status}`;
+        }
       } catch {
-        message = text || `HTTP ${res.status}`;
+        message = `Network error: HTTP ${res.status}`;
       }
-    } catch {
-      message = `Network error: HTTP ${res.status}`;
-    }
-    const err = new ApiError(message, res.status);
-    if (res.status === 401 || res.status === 403) {
-      setAuthToken(null);
-      if (navigateRef) {
-        navigateRef('/login', { replace: true });
-      } else {
-        window.location.href = '/login';
+      const err = new ApiError(message, res.status);
+      if (res.status === 401 || res.status === 403) {
+        setAuthToken(null);
+        if (navigateRef) {
+          navigateRef('/login', { replace: true });
+        } else {
+          window.location.href = '/login';
+        }
+        throw err;
       }
-      throw err;
     }
+    if (res.status === 204) {
+      return undefined as unknown as T;
+    }
+    const json = await res.json();
+    return json as T;
+  } finally {
+    clearTimeout(timeoutId);
   }
-  if (res.status === 204) {
-    return undefined as unknown as T;
-  }
-  const json = await res.json();
-  return json as T;
 }
 
 export function unwrapSettled<T>(result: PromiseSettledResult<T>): T | null {

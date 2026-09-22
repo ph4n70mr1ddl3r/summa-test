@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { Group } from '../types'
-import { escapeHtml } from '../utils/escapeHtml'
 import { groupStatusColor } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
@@ -52,7 +51,7 @@ export default function Groups() {
 
       {actionError && (
         <div className="rounded-lg p-3 text-sm bg-red-900/30 border border-red-700 text-red-400" role="alert">
-          {escapeHtml(actionError)}
+          {actionError}
           <button onClick={() => setActionError(null)} className="ml-2 text-red-300 hover:text-white" aria-label="Dismiss error">×</button>
         </div>
       )}
@@ -70,14 +69,14 @@ export default function Groups() {
             <div key={g.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium text-gray-200">{escapeHtml(g.name)}</p>
+                  <p className="font-medium text-gray-200">{g.name}</p>
                   <p className="text-sm text-gray-400 mt-1">
-                    {g.leaderMemberId ? `Leader: ${escapeHtml(g.leaderMemberId)}` : 'No leader assigned'}
+                    {g.leaderMemberId ? `Leader: ${g.leaderMemberId}` : 'No leader assigned'}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`text-xs px-2 py-1 rounded ${groupStatusColor(g.status)}`} aria-label={`Status: ${g.status}`}>
-                    {escapeHtml(g.status)}
+                    {g.status}
                   </span>
                   {g.status === 'active' && (
                     <button
@@ -85,7 +84,7 @@ export default function Groups() {
                       onClick={() => handleArchive(g.id)}
                       disabled={archivingId !== null}
                       className="px-2 py-1 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 rounded text-xs text-gray-400"
-                      aria-label={`Archive ${escapeHtml(g.name)}`}
+                      aria-label={`Archive ${g.name}`}
                     >
                       {archivingId === g.id ? 'Archiving...' : 'Archive'}
                     </button>

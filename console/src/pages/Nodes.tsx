@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { Node } from '../types'
-import { escapeHtml } from '../utils/escapeHtml'
 import { formatDate, nodeStatusColor } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
@@ -44,16 +43,16 @@ export default function Nodes() {
             <div key={n.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium text-gray-200">{escapeHtml(n.name)}</p>
+                  <p className="font-medium text-gray-200">{n.name}</p>
                   <p className="text-sm text-gray-400 mt-1">
-                    Kind: {escapeHtml(n.kind)} | Region: {escapeHtml(n.region ?? 'default')}
+                    Kind: {n.kind} | Region: {n.region ?? 'default'}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    Pubkey: {n.pubkey ? escapeHtml(n.pubkey.slice(0, 16)) : '?'}… | Enrolled: {n.enrolledAt != null ? formatDate(n.enrolledAt, { dateOnly: true }) : '—'}
+                    Pubkey: {n.pubkey ? n.pubkey.slice(0, 16) : '?'}… | Enrolled: {n.enrolledAt != null ? formatDate(n.enrolledAt, { dateOnly: true }) : '—'}
                   </p>
                 </div>
                 <span className={`text-xs px-2 py-1 rounded ${nodeStatusColor(n.status)}`} aria-label={`Status: ${n.status}`}>
-                  {escapeHtml(n.status)}
+                  {n.status}
                 </span>
               </div>
             </div>

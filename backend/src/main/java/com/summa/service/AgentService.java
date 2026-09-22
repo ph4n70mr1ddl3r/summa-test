@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 import com.summa.model.Human;
 import com.summa.util.JsonHelpers;
+import com.summa.constants.Defaults;
 import com.summa.exception.EntityNotFoundException;
 
 @Service
@@ -37,8 +38,6 @@ public class AgentService {
     private final SpawnRequestRepository spawnRequestRepository;
     private final RunRepository runRepository;
     private final int depthCap;
-
-    private static final long TTL_REAP_INTERVAL_MS = 300000;
 
     public AgentService(AgentRepository agentRepository, AuditService auditService,
                         MemberService memberService, AskRepository askRepository,
@@ -287,13 +286,17 @@ public class AgentService {
      * Runs every 5 minutes; reaps agents whose ttl_at has passed.
      * Each agent is processed in its own transaction to isolate failures.
      */
-    @Scheduled(fixedRate = TTL_REAP_INTERVAL_MS)
+    @Scheduled(fixedRate = Defaults.TTL_REAP_INTERVAL_MS)
     public void reapExpiredAgents() {
         Instant now = Instant.now();
-        List<Agent> activeExpired = agentRepository.findByStatus("active").stream()
+        List<Agent> activeExpired = agentRepository.findByStatus("active");
+        if (activeExpired == null) activeExpired = List.of();
+        activeExpired = activeExpired.stream()
             .filter(a -> a.getTtlAt() != null && a.getTtlAt().isBefore(now))
             .toList();
-        List<Agent> suspendedExpired = agentRepository.findByStatus("suspended").stream()
+        List<Agent> suspendedExpired = agentRepository.findByStatus("suspended");
+        if (suspendedExpired == null) suspendedExpired = List.of();
+        suspendedExpired = suspendedExpired.stream()
             .filter(a -> a.getTtlAt() != null && a.getTtlAt().isBefore(now))
             .toList();
         for (Agent agent : activeExpired) {

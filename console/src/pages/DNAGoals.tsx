@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { DnaGoal } from '../types'
-import { escapeHtml } from '../utils/escapeHtml'
 import { formatDate, dnaGoalStatusColor } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
@@ -44,10 +43,10 @@ export default function DNAGoals() {
             <div key={goal.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium text-gray-200">{escapeHtml(goal.statementMd)}</p>
+                  <p className="font-medium text-gray-200">{goal.statementMd}</p>
                   <p className="text-sm text-gray-400 mt-1">
-                    Owner: {escapeHtml(goal.owner)} | Inject: {escapeHtml(goal.inject)}
-                    {goal.quarter && <span> | Q{escapeHtml(goal.quarter)}</span>}
+                    Owner: {goal.owner} | Inject: {goal.inject}
+                    {goal.quarter && <span> | Q{goal.quarter}</span>}
                   </p>
                   {goal.effectiveFrom != null && (
                     <p className="text-xs text-gray-500 mt-1">
@@ -56,7 +55,7 @@ export default function DNAGoals() {
                     </p>
                   )}
                 </div>
-                <span className={`text-xs px-2 py-1 rounded ${dnaGoalStatusColor(goal.status)}`} aria-label={`Status: ${goal.status}`}>{escapeHtml(goal.status)}</span>
+                <span className={`text-xs px-2 py-1 rounded ${dnaGoalStatusColor(goal.status)}`} aria-label={`Status: ${goal.status}`}>{goal.status}</span>
               </div>
             </div>
           ))}

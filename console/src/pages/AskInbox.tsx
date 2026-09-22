@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { api } from '../services/api'
 import type { Ask } from '../types'
-import { escapeHtml } from '../utils/escapeHtml'
 import { tierColor, formatDate } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
@@ -105,12 +104,12 @@ export default function AskInbox() {
 
       {submitError && (
         <div className="bg-red-900/30 border border-red-700 rounded-lg p-3 text-red-400 text-sm" role="alert">
-          {escapeHtml(submitError)}
+          {submitError}
         </div>
       )}
       {submitSuccess && (
         <div className="bg-green-900/30 border border-green-700 rounded-lg p-3 text-green-400 text-sm" role="alert">
-          {escapeHtml(submitSuccess)}
+          {submitSuccess}
         </div>
       )}
 
@@ -130,9 +129,9 @@ export default function AskInbox() {
                   <span className="text-xl" aria-label={`${ask.kind} ask`}>{kindIcon(ask.kind)}</span>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-gray-200">{escapeHtml(ask.kind.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))}</span>
+                      <span className="font-medium text-gray-200">{ask.kind.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</span>
                       <span className={`text-xs px-2 py-0.5 rounded border ${tierColor(ask.slaTier)}`}>
-                        {escapeHtml(ask.slaTier)}
+                        {ask.slaTier}
                       </span>
                       {ask.collapsedCount != null && ask.collapsedCount > 1 && (
                         <span className="text-xs text-gray-500">
@@ -141,8 +140,8 @@ export default function AskInbox() {
                       )}
                     </div>
                     <p className="text-sm text-gray-400 mt-1">
-                      From: <span className="text-gray-300">{escapeHtml(ask.from)}</span>
-                      {` → `}To: <span className="text-gray-300">{escapeHtml(ask.to)}</span>
+                      From: <span className="text-gray-300">{ask.from}</span>
+                      {` → `}To: <span className="text-gray-300">{ask.to}</span>
                     </p>
                   </div>
                 </div>
@@ -163,7 +162,7 @@ export default function AskInbox() {
                   View payload
                 </summary>
                 <pre className="mt-2 text-xs text-gray-400 bg-gray-900 rounded p-3 overflow-x-auto">
-                  {escapeHtml(ask.payload)}
+                  {ask.payload}
                 </pre>
               </details>
               <div className="mt-3 flex items-center gap-2">
@@ -171,7 +170,7 @@ export default function AskInbox() {
                   type="button"
                   onClick={() => { setRespondingId(ask.id); setResponseText('') }}
                   className="px-3 py-1 bg-blue-700 hover:bg-blue-600 rounded text-sm text-blue-100"
-                  aria-label={`Respond to ask from ${escapeHtml(ask.from)}`}
+                   aria-label={`Respond to ask from ${ask.from}`}
                 >
                   Respond
                 </button>
@@ -179,7 +178,7 @@ export default function AskInbox() {
                   type="button"
                   onClick={() => handleWithdraw(ask.id)}
                   className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm text-gray-300"
-                  aria-label={`Withdraw ask from ${escapeHtml(ask.from)}`}
+                   aria-label={`Withdraw ask from ${ask.from}`}
                 >
                   Withdraw
                 </button>

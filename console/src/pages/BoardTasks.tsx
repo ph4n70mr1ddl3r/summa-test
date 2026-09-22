@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { BoardTask } from '../types'
-import { escapeHtml } from '../utils/escapeHtml'
 import { boardTaskStatusColor } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
@@ -44,13 +43,13 @@ export default function BoardTasks() {
             <div key={task.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium text-gray-200">{escapeHtml(task.title)}</p>
+                  <p className="font-medium text-gray-200">{task.title}</p>
                   {task.description && (
-                    <p className="text-sm text-gray-400 mt-1">{escapeHtml(task.description)}</p>
+                    <p className="text-sm text-gray-400 mt-1">{task.description}</p>
                   )}
-                  <p className="text-sm text-gray-400 mt-1">Priority: {task.priority} | Assignee: {escapeHtml(task.assigneeMemberId ?? 'unassigned')}</p>
+                  <p className="text-sm text-gray-400 mt-1">Priority: {task.priority} | Assignee: {task.assigneeMemberId ?? 'unassigned'}</p>
                 </div>
-                <span className={`text-xs px-2 py-1 rounded ${boardTaskStatusColor(task.status)}`} aria-label={`Status: ${task.status}`}>{escapeHtml(task.status)}</span>
+                <span className={`text-xs px-2 py-1 rounded ${boardTaskStatusColor(task.status)}`} aria-label={`Status: ${task.status}`}>{task.status}</span>
               </div>
             </div>
           ))}

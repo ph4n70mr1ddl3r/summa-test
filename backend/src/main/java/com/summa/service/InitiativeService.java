@@ -18,6 +18,7 @@ import com.summa.model.Workspace;
 import com.summa.model.SpawnRequest;
 import com.summa.util.JsonHelpers;
 import com.summa.util.KeyedUnionValidator;
+import com.summa.constants.Defaults;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,10 +39,6 @@ import com.summa.exception.EntityNotFoundException;
 
 @Service
 public class InitiativeService {
-    private static final long STALL_CHECK_INTERVAL_MS = 300000; // 5 minutes
-    private static final long STALL_ASK_DEADLINE_SECONDS = 7 * 86400L; // 7 days
-    private static final long STALL_ASK_DEDUP_WINDOW_SECONDS = 3600L; // 1 hour
-
     private final InitiativeRepository initiativeRepository;
     private final BoardTaskRepository boardTaskRepository;
     private final AuditService auditService;
@@ -233,7 +230,7 @@ public class InitiativeService {
                         id, initiative.getGoalRef());
                     askService.create("question", "system", initiative.getSponsor(),
                         payload, "bulk", "escalate", 1,
-                        Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
+                                      Instant.now().plusSeconds(Defaults.STALL_ASK_DEADLINE_SECONDS), null, null);
                     return initiative;
                 }
             }
@@ -243,7 +240,7 @@ public class InitiativeService {
                 id, initiative.getTitle(), actor);
             askService.create("approval", "system", initiative.getSponsor(),
                 payload, "standard", "deny", 1,
-                Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
+                Instant.now().plusSeconds(Defaults.STALL_ASK_DEADLINE_SECONDS), null, null);
             auditService.logSystem("ACTIVATE_REQUESTED", "initiative", id,
                 String.format("{\"actor\":%s,\"sponsor\":%s}", JsonHelpers.jsonString(actor), JsonHelpers.jsonString(initiative.getSponsor())));
             return initiative;
@@ -414,7 +411,7 @@ public class InitiativeService {
                 id, initiative.getTitle());
             askService.create("question", "system", retrospectiveLead,
                 retroPayload, "bulk", "escalate", 1,
-                Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
+                Instant.now().plusSeconds(Defaults.STALL_ASK_DEADLINE_SECONDS), null, null);
         } catch (Exception e) {
             auditService.logSystem("CLOSE_RETRO_ASK_FAIL", "initiative", id,
                 String.format("{\"error\":\"%s\"}", e.getMessage()));
@@ -479,11 +476,11 @@ public class InitiativeService {
      * Deduplicates by refusing to file a new ask if one was created within
      * STALL_ASK_DEDUP_WINDOW_SECONDS for the same initiative and reason.
      */
-    @Scheduled(fixedRate = STALL_CHECK_INTERVAL_MS) // every 5 minutes
+    @Scheduled(fixedRate = Defaults.STALL_CHECK_INTERVAL_MS) // every 5 minutes
     @Transactional
     public void checkStallsAndDirections() {
         Instant now = Instant.now();
-        Instant dedupCutoff = now.minusSeconds(STALL_ASK_DEDUP_WINDOW_SECONDS);
+        Instant dedupCutoff = now.minusSeconds(Defaults.STALL_ASK_DEDUP_WINDOW_SECONDS);
         // INT-062: Clock runs while active AND proposed; paused suspends it; closed stops it
         List<Initiative> active = initiativeRepository.findByStatus("active");
         List<Initiative> proposed = initiativeRepository.findByStatus("proposed");
@@ -501,7 +498,8 @@ public class InitiativeService {
                         auditService.logSystem("STALL_CHECK", "initiative", init.getId(),
                             String.format("{\"deadlinePassed\":true,\"sponsor\":%s,\"status\":%s}", JsonHelpers.jsonString(init.getSponsor()), JsonHelpers.jsonString(init.getStatus())));
                         // INT-060: File stall ask when open work exists; INT-063: close-out ask when none
-                        boolean hasOpenWork = boardTaskRepository.findByInitiativeId(init.getId()).stream()
+                        List<BoardTask> openTasks = boardTaskRepository.findByInitiativeId(init.getId());
+                        boolean hasOpenWork = openTasks != null && openTasks.stream()
                                 .anyMatch(t -> !"done".equals(t.getStatus()));
                         String stallReason = hasOpenWork ? "stall" : "closeout";
                         // Dedup: skip if a stall/close-out ask was filed recently for this initiative
@@ -510,7 +508,7 @@ public class InitiativeService {
                                 askService.create("question", "system", init.getSponsor(),
                                     String.format("{\"initiativeId\":\"%s\",\"reason\":\"%s\"}", init.getId(), stallReason),
                                     "bulk", "escalate", 1,
-                                    Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
+                                    Instant.now().plusSeconds(Defaults.STALL_ASK_DEADLINE_SECONDS), null, null);
                             } catch (Exception ex) {
                                 auditService.logSystem("STALL_ASK_FAIL", "initiative", init.getId(),
                                     JsonHelpers.toJson(Map.of("error", ex.getMessage()), objectMapper));
@@ -536,7 +534,7 @@ public class InitiativeService {
                                  askService.create("question", "system", init.getSponsor(),
                                      objectMapper.writeValueAsString(Map.of("initiativeId", init.getId(), "goalRef", init.getGoalRef(), "reason", reason, "goalStatus", goalStatus)),
                                      "bulk", "escalate", 1,
-                                     Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
+                Instant.now().plusSeconds(Defaults.STALL_ASK_DEADLINE_SECONDS), null, null);
                                  auditService.logSystem("DIRECTION_ASK_CREATED", "initiative", init.getId(),
                                      objectMapper.writeValueAsString(Map.of("goalRef", init.getGoalRef(), "sponsor", init.getSponsor(), "reason", reason)));
                             }
@@ -601,7 +599,7 @@ public class InitiativeService {
                         dep.getId(), closedId);
                     askService.create("question", "system", askTo,
                         payload, "bulk", "escalate", 1,
-                        Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), dep.getId(), null);
+                        Instant.now().plusSeconds(Defaults.STALL_ASK_DEADLINE_SECONDS), dep.getId(), null);
                     auditService.logSystem("DEPENDENT_CLOSE_ASK", "initiative", dep.getId(),
                         String.format("{\"upstreamClosed\":%s,\"sponsor\":%s}", JsonHelpers.jsonString(closedId), JsonHelpers.jsonString(askTo)));
                 }

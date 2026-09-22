@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { DnaCard } from '../types'
-import { escapeHtml } from '../utils/escapeHtml'
 import { formatDate, dnaCardStatusColor, truncateSnippet } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
@@ -44,15 +43,15 @@ export default function DNACards() {
             <div key={card.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium text-gray-200">{escapeHtml(card.title)}</p>
-                  <p className="text-sm text-gray-400 mt-1">Domain: {escapeHtml(card.domainId)}</p>
+                  <p className="font-medium text-gray-200">{card.title}</p>
+                  <p className="text-sm text-gray-400 mt-1">Domain: {card.domainId}</p>
                 </div>
                 <span className={`text-xs px-2 py-1 rounded ${dnaCardStatusColor(card.status)}`} aria-label={`Status: ${card.status}`}>
-                  {escapeHtml(card.status)}
+                  {card.status}
                 </span>
               </div>
               <pre className="mt-2 text-xs text-gray-400 bg-gray-900 rounded p-3 overflow-x-auto whitespace-pre-wrap">
-                {truncateSnippet(escapeHtml(card.definitionMd), 200)}
+                {truncateSnippet(card.definitionMd, 200)}
               </pre>
               <p className="text-xs text-gray-500 mt-2">v{card.version} · Created {card.createdAt ? formatDate(card.createdAt, { dateOnly: true }) : '?'}</p>
             </div>

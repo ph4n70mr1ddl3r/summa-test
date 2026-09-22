@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { api } from '../services/api'
 import type { Run } from '../types'
-import { escapeHtml } from '../utils/escapeHtml'
 import { runStatusColor, formatDate } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
@@ -9,7 +8,7 @@ export default function Runs() {
   const [runs, setRuns] = useState<Run[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [filter, setFilter] = useState<'all' | 'queued' | 'running' | 'suspended' | 'completed' | 'failed' | 'cancelled'>('all')
+  const [filter, setFilter] = useState<Run['status'] | 'all'>('all')
 
   const loadRuns = () => {
     setLoading(true)
@@ -74,18 +73,18 @@ export default function Runs() {
             <div key={run.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium text-gray-200">Run {escapeHtml(run.id.slice(0, 8))}</p>
+                  <p className="font-medium text-gray-200">Run {run.id.slice(0, 8)}</p>
                   <p className="text-sm text-gray-400 mt-1">
-                    Agent: {escapeHtml(run.agentId)}
-                    {run.workspaceId ? ` · Workspace: ${escapeHtml(run.workspaceId)}` : ''}
-                    {run.initiativeId ? ` · Initiative: ${escapeHtml(run.initiativeId)}` : ''}
+                    Agent: {run.agentId}
+                    {run.workspaceId ? ` · Workspace: ${run.workspaceId}` : ''}
+                    {run.initiativeId ? ` · Initiative: ${run.initiativeId}` : ''}
                   </p>
                   {run.prompt && (
-                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">{escapeHtml(run.prompt)}</p>
+                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">{run.prompt}</p>
                   )}
                 </div>
                 <span className={`text-xs px-2 py-1 rounded ${runStatusColor(run.status)}`} aria-label={`Status: ${run.status}`}>
-                  {escapeHtml(run.status)}
+                  {run.status}
                 </span>
               </div>
               <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
@@ -95,10 +94,10 @@ export default function Runs() {
                 {run.completedAt && <span>Completed: {formatDate(run.completedAt, { dateOnly: true })}</span>}
               </div>
               {run.errorMessage && (
-                <p className="text-xs text-red-400 mt-1">Error: {escapeHtml(run.errorMessage)}</p>
+                <p className="text-xs text-red-400 mt-1">Error: {run.errorMessage}</p>
               )}
               {run.result && (
-                <p className="text-xs text-gray-500 mt-1 line-clamp-2">{escapeHtml(run.result)}</p>
+                <p className="text-xs text-gray-500 mt-1 line-clamp-2">{run.result}</p>
               )}
             </div>
           ))}

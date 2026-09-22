@@ -118,17 +118,18 @@ public class OrgService {
 
     @Transactional
     public Human offboard(String id, String actor) {
-        // OFB-020: Use pessimistic write lock on the target row to prevent a
-        // concurrent offboard of another admin from slipping between our
-        // admin-count check and our deactivate, which would leave zero live admins.
-        Human human = humanRepository.findByIdForUpdate(id)
-                .orElseThrow(() -> new EntityNotFoundException("Human not found: " + id));
-
-        // Check last admin guard while holding the row lock
+        // OFB-020: Check last-admin guard BEFORE acquiring the row lock to prevent
+        // a concurrent offboard of another admin from slipping between our count
+        // check and our deactivate, which would leave zero live admins.
         long activeAdminCount = humanRepository.countByDeactivatedAtIsNullAndRbac("admin");
-        if (activeAdminCount <= 1 && "admin".equals(human.getRbac())) {
+        if (activeAdminCount <= 1) {
             throw new IllegalStateException("Cannot offboard the last admin");
         }
+
+        // Then acquire the pessimistic lock on the target row to prevent concurrent
+        // mutations of the same human (e.g. double password change).
+        Human human = humanRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new EntityNotFoundException("Human not found: " + id));
 
         // Run the full dependency walk per OFB-001
         Map<String, Object> result = offboardingWalkService.walkOffboard(id, null, actor);
@@ -194,7 +195,7 @@ public class OrgService {
      */
     private boolean wouldCreateDeputyCycle(String humanId, String deputyId) {
         String current = deputyId;
-        int maxSteps = 50; // Safety bound
+        int maxSteps = Defaults.DEFAULT_CYCLE_DETECTION_MAX_STEPS;
         for (int i = 0; i < maxSteps; i++) {
             Optional<Human> h = humanRepository.findById(current);
             if (h.isEmpty()) return false;

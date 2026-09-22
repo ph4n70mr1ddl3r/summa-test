@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { api } from '../services/api'
 import type { DnaProposal } from '../types'
-import { escapeHtml } from '../utils/escapeHtml'
 import { formatDate, proposalKindColor, proposalStatusColor } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
@@ -39,7 +38,7 @@ export default function DNAProposals() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">DNA Proposals</h2>
-        <div className="flex space-x-2 text-sm">
+        <div className="flex space-x-2 text-sm" role="group" aria-label="Filter proposals by status">
           <button
             onClick={() => setFilter('all')}
             className={`px-3 py-1 rounded ${filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400 hover:text-white'}`}
@@ -74,21 +73,21 @@ export default function DNAProposals() {
                 <div>
                   <p className="font-medium text-gray-200">
                     <span className={`text-xs px-2 py-0.5 rounded mr-2 ${proposalKindColor(p.kind)}`}>
-                      {escapeHtml(p.kind)}
+                      {p.kind}
                     </span>
-                    {escapeHtml(p.proposedBy)}
+                    {p.proposedBy}
                   </p>
                   <p className="text-sm text-gray-400 mt-1">
-                    {p.domainId ? `Domain: ${escapeHtml(p.domainId)}` : 'Organization-wide'}
+                    {p.domainId ? `Domain: ${p.domainId}` : 'Organization-wide'}
                   </p>
                 </div>
                 <span className={`text-xs px-2 py-1 rounded ${proposalStatusColor(p.status)}`} aria-label={`Status: ${p.status}`}>
-                  {escapeHtml(p.status)}
+                  {p.status}
                 </span>
               </div>
               <p className="text-xs text-gray-500 mt-2">
                 Rev {p.revision} · Created {p.createdAt ? formatDate(p.createdAt, { dateOnly: true }) : '?'}
-                {p.reviewedBy ? ` · Reviewed by ${escapeHtml(p.reviewedBy)}` : ''}
+                {p.reviewedBy ? ` · Reviewed by ${p.reviewedBy}` : ''}
               </p>
             </div>
           ))}

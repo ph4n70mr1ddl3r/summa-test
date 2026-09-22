@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { MemoryItem } from '../types'
-import { escapeHtml } from '../utils/escapeHtml'
 import { truncateSnippet } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
@@ -81,7 +80,7 @@ export default function Memory() {
             ? 'bg-green-900/30 border border-green-700 text-green-400'
             : 'bg-red-900/30 border border-red-700 text-red-400'
         }`} role="alert">
-          {escapeHtml(reviewResult)}
+          {reviewResult}
         </div>
       )}
 
@@ -96,7 +95,7 @@ export default function Memory() {
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-gray-200">Tier: {escapeHtml(item.tier)}</span>
+                    <span className="font-medium text-gray-200">Tier: {item.tier}</span>
                     <span className={`text-xs px-2 py-0.5 rounded ${
                       item.tainted ? 'bg-red-900/50 text-red-400' : 'bg-gray-700 text-gray-300'
                     }`}>
@@ -104,9 +103,9 @@ export default function Memory() {
                     </span>
                   </div>
                   <p className="text-sm text-gray-400 mt-1">
-                    {item.memberId ? `Member: ${escapeHtml(item.memberId)}` : 'System'}
-                    {item.workspaceId ? ` · Workspace: ${escapeHtml(item.workspaceId)}` : ''}
-                    {item.reviewedBy ? ` · Reviewed by: ${escapeHtml(item.reviewedBy)}` : ''}
+                    {item.memberId ? `Member: ${item.memberId}` : 'System'}
+                    {item.workspaceId ? ` · Workspace: ${item.workspaceId}` : ''}
+                    {item.reviewedBy ? ` · Reviewed by: ${item.reviewedBy}` : ''}
                   </p>
                 </div>
                 {item.tainted && (
@@ -115,14 +114,14 @@ export default function Memory() {
                       onClick={() => setReviewingId(item.id)}
                       disabled={reviewingForId !== null && reviewingForId !== item.id}
                       className="px-3 py-1 bg-yellow-700 hover:bg-yellow-600 disabled:bg-gray-700 disabled:text-gray-500 rounded text-sm text-yellow-100"
-                      aria-label={`Review tainted item ${escapeHtml(item.id.slice(0, 8))}`}
+                      aria-label={`Review tainted item ${item.id.slice(0, 8)}`}
                     >
                       Review
                     </button>
                 )}
               </div>
               <pre className="mt-2 text-xs text-gray-400 bg-gray-900 rounded p-3 overflow-x-auto whitespace-pre-wrap">
-                {truncateSnippet(escapeHtml(item.contentMd), 300)}
+                {truncateSnippet(item.contentMd, 300)}
               </pre>
               {reviewingId === item.id && (
                 <div className="mt-3 space-y-2">
@@ -133,7 +132,7 @@ export default function Memory() {
                        onClick={() => handleReview(item.id)}
                        disabled={reviewingForId === item.id}
                        className="px-3 py-1 bg-green-700 hover:bg-green-600 disabled:bg-gray-700 disabled:text-gray-500 rounded text-sm text-green-100"
-                       aria-label={reviewingForId === item.id ? 'Reviewing item' : `Confirm review of item ${escapeHtml(item.id.slice(0, 8))}`}
+                        aria-label={reviewingForId === item.id ? 'Reviewing item' : `Confirm review of item ${item.id.slice(0, 8)}`}
                      >
                        {reviewingForId === item.id ? 'Reviewing...' : 'Confirm Review'}
                      </button>

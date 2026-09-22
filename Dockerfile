@@ -1,4 +1,4 @@
-FROM maven:3.9-eclipse-temurin-21-alpine AS builder
+FROM maven:3.9.6-eclipse-temurin-21-alpine AS builder
 
 WORKDIR /build
 
@@ -9,7 +9,7 @@ RUN cd backend && mvn -q -B dependency:go-offline
 COPY backend/src backend/src
 RUN cd backend && mvn -q -B clean package -DskipTests
 
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:21.0.4_7-jre-alpine
 LABEL maintainer="summa-team"
 LABEL org.opencontainers.image.source="https://github.com/summa-org/summa"
 
