@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import com.summa.exception.EntityNotFoundException;
+import com.summa.util.JsonHelpers;
 
 @Service
 public class RunService {
@@ -53,26 +54,31 @@ public class RunService {
 
         Run saved = runRepository.save(run);
         auditService.log(actor, "CREATE_RUN", "run", saved.getId(),
-            String.format("{\"agentId\":\"%s\",\"status\":\"queued\"}", agentId));
+            String.format("{\"agentId\":%s,\"status\":%s}", JsonHelpers.jsonString(agentId), JsonHelpers.jsonString("queued")));
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public Optional<Run> findById(String id) {
         return runRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<Run> findByAgent(String agentId, int limit) {
         return runRepository.findByAgentIdOrderByCreatedAtDesc(agentId).stream().limit(limit).toList();
     }
 
+    @Transactional(readOnly = true)
     public List<Run> findByWorkspace(String workspaceId, int limit) {
         return runRepository.findByWorkspaceIdOrderByCreatedAtDesc(workspaceId).stream().limit(limit).toList();
     }
 
+    @Transactional(readOnly = true)
     public List<Run> findByStatus(String status, int limit) {
         return runRepository.findByStatusOrderByCreatedAtDesc(status).stream().limit(limit).toList();
     }
 
+    @Transactional(readOnly = true)
     public List<Run> findRecent(int limit) {
         return runRepository.findByOrderByCreatedAtDesc().stream()
                 .limit(limit)
@@ -122,7 +128,7 @@ public class RunService {
         run.setCompletedAt(Instant.now());
         Run saved = runRepository.save(run);
         auditService.logSystem("FAIL_RUN", "run", id,
-            String.format("{\"error\":\"%s\"}", errorMessage != null ? errorMessage.substring(0, Math.min(200, errorMessage.length())) : ""));
+            String.format("{\"error\":%s}", JsonHelpers.jsonString(errorMessage != null ? errorMessage.substring(0, Math.min(200, errorMessage.length())) : "")));
         return saved;
     }
 
@@ -153,14 +159,17 @@ public class RunService {
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public List<Run> findByStatus(String status) {
         return runRepository.findByStatus(status);
     }
 
+    @Transactional(readOnly = true)
     public long countByStatus(String status) {
         return runRepository.countByStatus(status);
     }
 
+    @Transactional(readOnly = true)
     public long countByAgent(String agentId) {
         return runRepository.countByAgentId(agentId);
     }

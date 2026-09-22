@@ -26,8 +26,8 @@ describe('escapeHtml', () => {
     expect(escapeHtml('hello world')).toBe('hello world')
   })
 
-  it('leaves newlines as-is (handled by React JSX)', () => {
-    expect(escapeHtml('line1\nline2')).toBe('line1\nline2')
+  it('converts newlines to <br /> tags', () => {
+    expect(escapeHtml('line1\nline2')).toBe('line1<br />line2')
   })
 
   it('escapes all special characters together', () => {

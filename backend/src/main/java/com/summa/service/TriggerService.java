@@ -14,6 +14,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.Map;
 import com.summa.exception.EntityNotFoundException;
+import com.summa.util.JsonHelpers;
 
 @Service
 public class TriggerService {
@@ -44,18 +45,21 @@ public class TriggerService {
 
         Trigger saved = triggerRepository.save(trigger);
         auditService.log(actor, "CREATE_TRIGGER", "trigger", saved.getId(),
-            String.format("{\"kind\":\"%s\",\"expression\":\"%s\"}", kind, expression));
+            String.format("{\"kind\":%s,\"expression\":%s}", JsonHelpers.jsonString(kind), JsonHelpers.jsonString(expression)));
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public Optional<Trigger> findById(String id) {
         return triggerRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<Trigger> findAll() {
         return triggerRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public List<Trigger> findByAgent(String agentId) {
         return triggerRepository.findByAgentId(agentId);
     }

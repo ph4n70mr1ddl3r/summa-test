@@ -54,7 +54,7 @@ public class HealthController {
 
     private String checkGitStore() {
         try {
-            Path path = Paths.get(dnaRepoPath.isEmpty() ? System.getProperty("user.home") + "/.summa/dna" : dnaRepoPath);
+            Path path = Paths.get(dnaRepoPath == null || dnaRepoPath.isEmpty() ? System.getProperty("user.home") + "/.summa/dna" : dnaRepoPath);
             if (Files.isDirectory(path) && Files.isReadable(path)) {
                 return "UP";
             }

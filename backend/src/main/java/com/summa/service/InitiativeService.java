@@ -227,7 +227,7 @@ public class InitiativeService {
                 if (goalOpt.isEmpty() || goalOpt.get().getStatus() == null || !"active".equals(goalOpt.get().getStatus())) {
                     // Goal died mid-wait: audit-only activation, file successor ask
                     auditService.logSystem("ACTIVATE_GOAL_DIED", "initiative", id,
-                        String.format("{\"actor\":\"%s\",\"goalRef\":\"%s\"}", actor, initiative.getGoalRef()));
+                        String.format("{\"actor\":%s,\"goalRef\":%s}", JsonHelpers.jsonString(actor), JsonHelpers.jsonString(initiative.getGoalRef())));
                     String payload = String.format(
                         "{\"initiativeId\":\"%s\",\"reason\":\"goal_died_during_activation\",\"goalRef\":\"%s\"}",
                         id, initiative.getGoalRef());
@@ -245,7 +245,7 @@ public class InitiativeService {
                 payload, "standard", "deny", 1,
                 Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), null, null);
             auditService.logSystem("ACTIVATE_REQUESTED", "initiative", id,
-                String.format("{\"actor\":\"%s\",\"sponsor\":\"%s\"}", actor, initiative.getSponsor()));
+                String.format("{\"actor\":%s,\"sponsor\":%s}", JsonHelpers.jsonString(actor), JsonHelpers.jsonString(initiative.getSponsor())));
             return initiative;
         }
 
@@ -496,7 +496,7 @@ public class InitiativeService {
                     boolean isProposed = "proposed".equals(init.getStatus());
                     if (isActive || isProposed) {
                         auditService.logSystem("STALL_CHECK", "initiative", init.getId(),
-                            String.format("{\"deadlinePassed\":true,\"sponsor\":\"%s\",\"status\":\"%s\"}", init.getSponsor(), init.getStatus()));
+                            String.format("{\"deadlinePassed\":true,\"sponsor\":%s,\"status\":%s}", JsonHelpers.jsonString(init.getSponsor()), JsonHelpers.jsonString(init.getStatus())));
                         // INT-060: File stall ask when open work exists; INT-063: close-out ask when none
                         boolean hasOpenWork = boardTaskRepository.findByInitiativeId(init.getId()).stream()
                                 .anyMatch(t -> !"done".equals(t.getStatus()));
@@ -600,7 +600,7 @@ public class InitiativeService {
                         payload, "bulk", "escalate", 1,
                         Instant.now().plusSeconds(STALL_ASK_DEADLINE_SECONDS), dep.getId(), null);
                     auditService.logSystem("DEPENDENT_CLOSE_ASK", "initiative", dep.getId(),
-                        String.format("{\"upstreamClosed\":\"%s\",\"sponsor\":\"%s\"}", closedId, askTo));
+                        String.format("{\"upstreamClosed\":%s,\"sponsor\":%s}", JsonHelpers.jsonString(closedId), JsonHelpers.jsonString(askTo)));
                 }
             } catch (Exception e) {
                 auditService.logSystem("DEPENDENT_CLOSE_ASK_FAIL", "initiative", dep.getId(),

@@ -31,6 +31,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.Collections;
 import com.summa.exception.EntityNotFoundException;
+import com.summa.util.JsonHelpers;
 
 @Service
 public class DnaDomainService {
@@ -84,7 +85,7 @@ public class DnaDomainService {
 
         DnaDomain saved = domainRepository.save(domain);
         auditService.log(actor != null ? actor : "system", "CREATE", "dna_domain", id,
-            String.format("{\"name\":\"%s\",\"access\":\"%s\",\"store\":\"%s\"}", name, domain.getAccess(), domain.getStore()));
+            String.format("{\"name\":%s,\"access\":%s,\"store\":%s}", JsonHelpers.jsonString(name), JsonHelpers.jsonString(domain.getAccess()), JsonHelpers.jsonString(domain.getStore())));
         return saved;
     }
 
@@ -133,7 +134,7 @@ public class DnaDomainService {
         domain.setName(newName);
         DnaDomain saved = domainRepository.save(domain);
         auditService.logWithNode(actor, "RENAME", "dna_domain", id, null,
-            String.format("{\"newName\":\"%s\"}", newName));
+            String.format("{\"newName\":%s}", JsonHelpers.jsonString(newName)));
         return saved;
     }
 
@@ -144,7 +145,7 @@ public class DnaDomainService {
         domain.setOwnerHumanId(newOwnerId);
         DnaDomain saved = domainRepository.save(domain);
         auditService.log(actor, "UPDATE_OWNER", "dna_domain", id, 
-            String.format("{\"newOwner\":\"%s\"}", newOwnerId));
+            String.format("{\"newOwner\":%s}", JsonHelpers.jsonString(newOwnerId)));
         return saved;
     }
 
@@ -244,7 +245,7 @@ public class DnaDomainService {
         domainRepository.save(parent);
 
         auditService.log(actor, "SPLIT", "dna_domain", parentId,
-            String.format("{\"childId\":\"%s\"}", savedChild.getId()));
+            String.format("{\"childId\":%s}", JsonHelpers.jsonString(savedChild.getId())));
         return Collections.singletonList(savedChild);
     }
 
@@ -342,7 +343,7 @@ public class DnaDomainService {
         DnaDomain savedSurvivor = domainRepository.save(survivor);
 
         auditService.log(actor, "MERGE", "dna_domain", survivorId,
-            String.format("{\"sourceId\":\"%s\",\"access\":\"%s\"}", sourceId, resolvedAccess));
+            String.format("{\"sourceId\":%s,\"access\":%s}", JsonHelpers.jsonString(sourceId), JsonHelpers.jsonString(resolvedAccess)));
         return savedSurvivor;
     }
 
@@ -386,8 +387,9 @@ public class DnaDomainService {
                 ask.setTo(newOwner);
                 askRepository.save(ask);
                 auditService.logSystem("REKEY_ASK", "ask", ask.getId(),
-                    String.format("{\"oldDomain\":\"%s\",\"newDomain\":\"%s\",\"oldTo\":\"%s\",\"newTo\":\"%s\"}",
-                        oldDomainId, newDomainId, oldOwner, newOwner));
+                    String.format("{\"oldDomain\":%s,\"newDomain\":%s,\"oldTo\":%s,\"newTo\":%s}",
+                        JsonHelpers.jsonString(oldDomainId), JsonHelpers.jsonString(newDomainId),
+                        JsonHelpers.jsonString(oldOwner), JsonHelpers.jsonString(newOwner)));
             }
         }
     }

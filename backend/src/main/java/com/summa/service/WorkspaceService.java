@@ -26,6 +26,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Map;
 import com.summa.constants.Defaults;
 import com.summa.exception.EntityNotFoundException;
+import com.summa.util.JsonHelpers;
 
 @Service
 public class WorkspaceService {
@@ -84,18 +85,21 @@ public class WorkspaceService {
 
         Workspace saved = workspaceRepository.save(ws);
         auditService.logSystem("CREATE_WORKSPACE", "workspace", id,
-            String.format("{\"name\":\"%s\",\"kind\":\"%s\"}", name, ws.getKind()));
+            String.format("{\"name\":%s,\"kind\":%s}", JsonHelpers.jsonString(name), JsonHelpers.jsonString(ws.getKind())));
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public Optional<Workspace> findById(String id) {
         return workspaceRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<Workspace> findAllActive() {
         return workspaceRepository.findByArchivedAtIsNull();
     }
 
+    @Transactional(readOnly = true)
     public List<Workspace> findByNode(String nodeId) {
         return workspaceRepository.findByNodeId(nodeId);
     }
@@ -108,7 +112,7 @@ public class WorkspaceService {
         ws.setNodeId(targetNodeId);
         Workspace saved = workspaceRepository.save(ws);
         auditService.log(actor, "REBIND_WORKSPACE", "workspace", id,
-            String.format("{\"targetNodeId\":\"%s\"}", targetNodeId));
+            String.format("{\"targetNodeId\":%s}", JsonHelpers.jsonString(targetNodeId)));
         return saved;
     }
 

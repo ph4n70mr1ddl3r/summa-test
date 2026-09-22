@@ -50,18 +50,22 @@ public class DnaGoalService {
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public Optional<DnaGoal> findById(String id) {
         return goalRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<DnaGoal> findByDomain(String domainId) {
         return goalRepository.findByDomainId(domainId);
     }
 
+    @Transactional(readOnly = true)
     public List<DnaGoal> findActiveInject(String inject, Instant now) {
         return goalRepository.findActiveInject(inject, now);
     }
 
+    @Transactional(readOnly = true)
     public List<DnaGoal> findAllActiveWindowed(Instant now) {
         return goalRepository.findAllActiveWindowed(now);
     }
@@ -85,7 +89,7 @@ public class DnaGoalService {
         goal.setStatus(status);
         DnaGoal saved = goalRepository.save(goal);
         auditService.log(actor, "UPDATE_GOAL_STATUS", "dna_goal", id,
-            String.format("{\"newStatus\":\"%s\",\"previousStatus\":\"%s\"}", status, oldStatus));
+            String.format("{\"newStatus\":%s,\"previousStatus\":%s}", JsonHelpers.jsonString(status), JsonHelpers.jsonString(oldStatus)));
         return saved;
     }
 

@@ -6,4 +6,5 @@ export function escapeHtml(str: string): string {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#x27;')
     .replace(/\r/g, '')
+    .replace(/\n/g, '<br />')
 }
