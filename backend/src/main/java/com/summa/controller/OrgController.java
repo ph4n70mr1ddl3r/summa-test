@@ -262,10 +262,7 @@ public class OrgController {
             @RequestParam(required = false) String objectType,
             @RequestParam(required = false) String objectId) {
         if (limit <= 0 || limit > 1000) {
-            Map<String, Object> error = new java.util.HashMap<>();
-            error.put("code", "UNPROCESSABLE_ENTITY");
-            error.put("message", "limit must be between 1 and 1000");
-            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY).body(error);
+            return ControllerResponses.validation(auditService, "limit must be between 1 and 1000");
         }
         if (objectType != null && objectId != null) {
             return ResponseEntity.ok(orgService.getAuditLogForEntity(objectType, objectId));

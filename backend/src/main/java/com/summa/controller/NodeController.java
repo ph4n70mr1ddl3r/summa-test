@@ -91,7 +91,12 @@ public class NodeController {
                 throw new IllegalArgumentException("workspaceId is required");
             }
             String epochStr = body.get("epoch");
-            int currentEpoch = epochStr != null ? Integer.parseInt(epochStr.trim()) : 0;
+            int currentEpoch;
+            try {
+                currentEpoch = epochStr != null ? Integer.parseInt(epochStr.trim()) : 0;
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid epoch value: " + epochStr);
+            }
             if (currentEpoch < 0) {
                 throw new IllegalArgumentException("epoch must be non-negative");
             }

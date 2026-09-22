@@ -70,7 +70,7 @@ mkdir -p ~/.summa/dna ~/.summa/db
 echo "[1/2] Starting backend..."
 pushd backend > /dev/null
 nohup mvn spring-boot:run -Dspring-boot.run.profiles=dev \
-    -Dspring-boot.run.jvmArguments="${JAVA_OPTS:--Xmx512m -Xms256m -XX:MaxMetaspaceSize=128m}" \
+    "-Dspring-boot.run.jvmArguments=${JAVA_OPTS:--Xmx512m -Xms256m -XX:MaxMetaspaceSize=128m}" \
     -Dsumma.auth.local-auth-enabled=${SUMMA_LOCAL_AUTH_ENABLED:-true} \
     > /tmp/summa-backend.log 2>&1 &
 BACKEND_PID=$!

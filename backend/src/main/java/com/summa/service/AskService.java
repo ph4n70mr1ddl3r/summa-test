@@ -210,7 +210,6 @@ public class AskService {
                 if ("deny".equals(behavior)) {
                     expire(ask.getId());
                 } else if ("escalate".equals(behavior) || "reassign".equals(behavior)) {
-                    expire(ask.getId());
                     try {
                          ExpiringEntry<Integer> depthEntry = successorDepth.get(ask.getId());
                          int depth = (depthEntry != null ? depthEntry.value : 0) + 1;
@@ -219,6 +218,8 @@ public class AskService {
                             broadcastOrgStall(ask);
                             auditService.logSystem("EXPIRE_CHAIN_EXHAUSTED", "ask", ask.getId(),
                                 String.format("{\"depth\":%d,\"behavior\":\"%s\"}", depth, behavior));
+                            expire(ask.getId());
+                            successorDepth.remove(ask.getId());
                             continue;
                         }
                         String successorTo = OffboardingWalkService.ADMIN_BROADCAST;
@@ -233,13 +234,13 @@ public class AskService {
                             ask.getQuorumRequired(),
                             Instant.now().plusSeconds(successorDeadlineSeconds),
                             ask.getInitiativeId(), ask.getWorkspaceId());
-                         // Track depth by the successor's ID so the next expire cycle sees the correct depth
+                         // Track depth by the original ask's ID so the next expire cycle sees the correct depth
                          long expireNowSeconds = Instant.now().getEpochSecond();
-                         successorDepth.put(successor.getId(), new ExpiringEntry<>(depth, expireNowSeconds + stormCollapseWindowSeconds));
-                        auditService.logSystem("EXPIRE_SUCCESSOR_CREATED", "ask", successor.getId(),
+                         successorDepth.put(ask.getId(), new ExpiringEntry<>(depth, expireNowSeconds + stormCollapseWindowSeconds));
+                        auditService.logSystem("EXPIRE_SUCCESSOR_CREATED", "ask", ask.getId(),
                             String.format("{\"originalId\":\"%s\",\"behavior\":\"%s\",\"depth\":%d}", ask.getId(), behavior, depth));
-                        // Clean up the original ask's depth entry to prevent unbounded growth
-                        successorDepth.remove(ask.getId());
+                        // Expire the original ask after scheduling the successor
+                        expire(ask.getId());
                     } catch (Exception ex) {
                         auditService.logSystem("EXPIRE_SUCCESSOR_FAIL", "ask", ask.getId(),
                             String.format("{\"behavior\":\"%s\",\"error\":\"%s\"}", behavior, ex.getMessage()));

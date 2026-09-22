@@ -156,12 +156,7 @@ public class BackupService {
                 copyDirectory(dnaSrc, dnaDest);
             }
         } finally {
-            try (java.util.stream.Stream<Path> walk = Files.walk(restoreDir)) {
-                walk.sorted((a, b) -> b.compareTo(a))
-                    .forEach(p -> {
-                        try { Files.delete(p); } catch (IOException ignored) {}
-                    });
-            } catch (IOException ignored) {}
+            deleteRestoredDir(restoreDir);
         }
     }
 
@@ -175,6 +170,15 @@ public class BackupService {
         try (java.util.stream.Stream<Path> walk = Files.walk(dir)) {
             walk.forEach(file -> addEntryQuietly(zos, file, dir, baseName));
         }
+    }
+
+    private void deleteRestoredDir(Path restoreDir) {
+        try (java.util.stream.Stream<Path> walk = Files.walk(restoreDir)) {
+            walk.sorted((a, b) -> b.compareTo(a))
+                .forEach(p -> {
+                    try { Files.delete(p); } catch (IOException ignored) {}
+                });
+        } catch (IOException ignored) {}
     }
 
     private void copyPathQuietly(Path source, Path dest, Path root) {
