@@ -104,7 +104,12 @@ public class BackupService {
         }
         Path normalizedResolved = resolved.toAbsolutePath().normalize();
         String tmpDirStr = tmpDir.toString();
-        if (!normalizedResolved.startsWith(tmpDirStr) && !normalizedResolved.startsWith(dataDirStr)) {
+        String dataDirPrefix = dataDirStr + java.io.File.separator;
+        String tmpDirPrefix = tmpDirStr + java.io.File.separator;
+        if (!normalizedResolved.toString().equals(dataDirStr)
+                && !normalizedResolved.toString().startsWith(dataDirPrefix)
+                && !normalizedResolved.toString().equals(tmpDirStr)
+                && !normalizedResolved.toString().startsWith(tmpDirPrefix)) {
             throw new IllegalArgumentException("Backup path must be under tmpdir or data directory");
         }
 
@@ -147,9 +152,8 @@ public class BackupService {
                 copyDirectory(dnaSrc, dnaDest);
             }
         } finally {
-            try {
-                Files.walk(restoreDir)
-                    .sorted((a, b) -> b.compareTo(a))
+            try (java.util.stream.Stream<Path> walk = Files.walk(restoreDir)) {
+                walk.sorted((a, b) -> b.compareTo(a))
                     .forEach(p -> {
                         try { Files.delete(p); } catch (IOException ignored) {}
                     });
@@ -185,9 +189,12 @@ public class BackupService {
                 zos.putNextEntry(new ZipEntry(entryName + "/"));
             } else {
                 zos.putNextEntry(new ZipEntry(entryName));
-                Files.copy(file, zos);
+                try {
+                    Files.copy(file, zos);
+                } finally {
+                    zos.closeEntry();
+                }
             }
-            zos.closeEntry();
         } catch (IOException e) {
             log.warn("Failed to add zip entry: {}", e.getMessage());
         }

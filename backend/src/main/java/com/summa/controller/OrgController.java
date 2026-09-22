@@ -43,6 +43,28 @@ public class OrgController {
 
     @PostMapping("/bootstrap")
     public ResponseEntity<?> bootstrap(@RequestBody Map<String, String> body) {
+        // First bootstrap is special — it creates the initial admin without auth.
+        // Subsequent calls are gated by the WriteGate which requires admin auth.
+        boolean alreadyInitialized = orgService.isInitialized();
+        if (!alreadyInitialized) {
+            try {
+                Human human = orgService.bootstrap(
+                    body.get("name"),
+                    body.get("email"),
+                    body.get("rbac"),
+                    body.get("password")
+                );
+                return ResponseEntity.ok(Map.of("id", human.getId(), "email", human.getEmail(), "rbac", human.getRbac()));
+            } catch (IllegalStateException e) {
+                return ControllerResponses.gate(auditService, e.getMessage());
+            }
+        }
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, "Bootstrap requires admin role when org is initialized");
+        }
         try {
             Human human = orgService.bootstrap(
                 body.get("name"),
@@ -57,7 +79,11 @@ public class OrgController {
     }
 
     @GetMapping("/humans")
-    public ResponseEntity<List<Human>> listHumans(@RequestParam(defaultValue = "true") boolean active) {
+    public ResponseEntity<?> listHumans(@RequestParam(defaultValue = "true") boolean active) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!orgService.isInitialized() || !memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, "Admin access required to list humans");
+        }
         List<Human> humans = active ? orgService.findAllActiveHumans() : orgService.findAllHumans();
         return ResponseEntity.ok(humans);
     }

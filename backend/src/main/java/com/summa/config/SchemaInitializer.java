@@ -7,6 +7,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,10 +27,13 @@ public class SchemaInitializer {
     public void init() {
         try {
             ClassPathResource resource = new ClassPathResource("schema.sql");
-            String sql = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            
+            String sql;
+            try (InputStream is = resource.getInputStream()) {
+                sql = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            }
+
             List<String> statements = parseSqlStatements(sql);
-            
+
             for (String statement : statements) {
                 String s = statement.trim();
                 if (!s.isEmpty() && !s.startsWith("--")) {
@@ -37,8 +41,8 @@ public class SchemaInitializer {
                         jdbcTemplate.execute(s);
                     } catch (Exception e) {
                         String msg = e.getMessage();
-                        if (msg != null && (msg.contains("already exists") || (msg.contains("table") && msg.contains("exists")))) {
-                            // Expected — schema already initialized
+                        if (msg != null && msg.toLowerCase().contains("already exists")) {
+                            // Expected - schema already initialized
                         } else {
                             log.error("Schema init failure: {}", msg);
                             throw new RuntimeException("Schema initialization failed: " + msg, e);
@@ -54,15 +58,16 @@ public class SchemaInitializer {
     /**
      * Parse SQL into statements:
      * <ul>
-     *   <li>strips {@code --} line comments (outside string literals), so a
-     *       comment preceding a statement no longer discards that statement;</li>
+     *   <li>strips {@code --} line comments and C-style block comments
+     *       (outside string literals), so a comment preceding a statement no
+     *       longer discards that statement;</li>
      *   <li>respects single-quoted string literals (incl. {@code ''} escapes);</li>
-     *   <li>tracks CREATE TRIGGER … BEGIN … END state to avoid splitting on
+     *   <li>tracks CREATE TRIGGER ... BEGIN ... END state to avoid splitting on
      *       semicolons inside trigger bodies.</li>
      * </ul>
      */
     private List<String> parseSqlStatements(String sql) {
-        String withoutComments = stripLineComments(sql);
+        String withoutComments = stripComments(sql);
         List<String> statements = new ArrayList<>();
         StringBuilder current = new StringBuilder();
         boolean inSingleQuote = false;
@@ -110,22 +115,11 @@ public class SchemaInitializer {
         return statements;
     }
 
-    private boolean isWordBoundaryMatch(String text, int offset, String word) {
-        if (offset + word.length() > text.length()) return false;
-        for (int j = 0; j < word.length(); j++) {
-            if (text.charAt(offset + j) != word.charAt(j)) return false;
-        }
-        boolean leftOk = offset == 0 || !isWordChar(text.charAt(offset - 1));
-        int after = offset + word.length();
-        boolean rightOk = after >= text.length() || !isWordChar(text.charAt(after));
-        return leftOk && rightOk;
-    }
-
     /**
-     * Remove {@code --} comments running to end-of-line, ignoring occurrences
-     * inside single-quoted string literals.
+     * Remove both {@code --} line comments and C-style block comments,
+     * ignoring occurrences inside single-quoted string literals.
      */
-    private String stripLineComments(String sql) {
+    private String stripComments(String sql) {
         StringBuilder out = new StringBuilder(sql.length());
         boolean inSingleQuote = false;
         for (int i = 0; i < sql.length(); i++) {
@@ -140,7 +134,7 @@ public class SchemaInitializer {
                     inSingleQuote = false;
                     out.append(c);
                 }
-            } else if (c == '-' && !inSingleQuote && i + 1 < sql.length() && sql.charAt(i + 1) == '-') {
+            } else if (!inSingleQuote && c == '-' && i + 1 < sql.length() && sql.charAt(i + 1) == '-') {
                 // Skip to end of line (keep the newline itself).
                 while (i < sql.length() && sql.charAt(i) != '\n') {
                     i++;
@@ -148,11 +142,28 @@ public class SchemaInitializer {
                 if (i < sql.length()) {
                     out.append('\n');
                 }
+            } else if (!inSingleQuote && c == '/' && i + 1 < sql.length() && sql.charAt(i + 1) == '*') {
+                i += 2;
+                while (i + 1 < sql.length() && !(sql.charAt(i) == '*' && sql.charAt(i + 1) == '/')) {
+                    i++;
+                }
+                if (i + 1 < sql.length()) i++; // skip '/'
             } else {
                 out.append(c);
             }
         }
         return out.toString();
+    }
+
+    private boolean isWordBoundaryMatch(String text, int offset, String word) {
+        if (offset + word.length() > text.length()) return false;
+        for (int j = 0; j < word.length(); j++) {
+            if (text.charAt(offset + j) != word.charAt(j)) return false;
+        }
+        boolean leftOk = offset == 0 || !isWordChar(text.charAt(offset - 1));
+        int after = offset + word.length();
+        boolean rightOk = after >= text.length() || !isWordChar(text.charAt(after));
+        return leftOk && rightOk;
     }
 
     private boolean isWordChar(char c) {

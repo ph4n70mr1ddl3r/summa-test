@@ -112,9 +112,9 @@ export default function Memory() {
                 {item.tainted && (
                     <button
                       onClick={() => setReviewingId(item.id)}
-                      disabled={reviewingForId !== null}
+                      disabled={reviewingForId !== null && reviewingForId !== item.id}
                       className="px-3 py-1 bg-yellow-700 hover:bg-yellow-600 disabled:bg-gray-700 disabled:text-gray-500 rounded text-sm text-yellow-100"
-                      aria-label={`Review item ${escapeHtml(item.id)}`}
+                      aria-label={`Review tainted item ${escapeHtml(item.id.slice(0, 8))}`}
                     >
                       Review
                     </button>
@@ -136,12 +136,14 @@ export default function Memory() {
                       onClick={() => handleReview(item.id)}
                       disabled={reviewingForId === item.id}
                       className="px-3 py-1 bg-green-700 hover:bg-green-600 disabled:bg-gray-700 disabled:text-gray-500 rounded text-sm text-green-100"
+                      aria-label={reviewingForId === item.id ? 'Reviewing item' : `Confirm review of item ${escapeHtml(item.id.slice(0, 8))}`}
                     >
                       {reviewingForId === item.id ? 'Reviewing...' : 'Confirm Review'}
                     </button>
                     <button
                       onClick={() => setReviewingId(null)}
                       className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm text-gray-300"
+                      aria-label="Cancel review"
                     >
                       Cancel
                     </button>

@@ -87,9 +87,9 @@ public class JwtUtil {
         try {
             String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
             Map<String, Object> payload = MAPPER.readValue(payloadJson, new TypeReference<Map<String, Object>>() {});
-            Number expNum = (Number) payload.get("exp");
-            if (expNum == null) return null;
-            long exp = expNum.longValue();
+            Object expObj = payload.get("exp");
+            if (!(expObj instanceof Number)) return null;
+            long exp = ((Number) expObj).longValue();
             if (exp <= 0 || exp > 4102444800L) return null; // reject nonsensical/expired timestamps
             // Use division to avoid signed long overflow: exp * 1000 overflows when exp > Long.MAX_VALUE/1000
             // 4102444800s is ~2100, well within safe range, but guard against future-proofing

@@ -34,6 +34,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException e) {
         String actor = currentActor();
         AuditEvent audit = auditService.log(actor, "REFUSAL", "http_request", "validation", e.getMessage());
+        if (audit == null) {
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body(Map.of("code", "validation", "message", e.getMessage()));
+        }
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
                 .body(Map.of(
                     "code", "validation",
@@ -46,6 +50,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleConflict(ConflictException e) {
         String actor = currentActor();
         AuditEvent audit = auditService.log(actor, "REFUSAL", "http_request", "conflict", e.getMessage());
+        if (audit == null) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("code", "conflict", "message", e.getMessage()));
+        }
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(Map.of(
                     "code", "conflict",
@@ -59,6 +67,10 @@ public class GlobalExceptionHandler {
         String actor = currentActor();
         String message = e.getMessage();
         AuditEvent audit = auditService.log(actor, "REFUSAL", "http_request", "gate", message);
+        if (audit == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("code", "gate", "message", message));
+        }
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(Map.of(
                     "code", "gate",
@@ -71,6 +83,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleNotFound(EntityNotFoundException e) {
         String actor = currentActor();
         AuditEvent audit = auditService.log(actor, "REFUSAL", "http_request", "not_found", e.getMessage());
+        if (audit == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("code", "not_found", "message", e.getMessage()));
+        }
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(Map.of(
                     "code", "not_found",
@@ -86,6 +102,10 @@ public class GlobalExceptionHandler {
                 ? e.getMostSpecificCause().getMessage() : e.getMessage());
         String actor = currentActor();
         AuditEvent audit = auditService.log(actor, "REFUSAL", "http_request", "resource_conflict", "Resource conflict: the request violates a uniqueness or integrity constraint");
+        if (audit == null) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("code", "conflict", "message", "Resource conflict: the request violates a uniqueness or integrity constraint"));
+        }
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(Map.of(
                     "code", "conflict",
@@ -99,6 +119,10 @@ public class GlobalExceptionHandler {
         log.error("Unhandled exception", e);
         String actor = currentActor();
         AuditEvent audit = auditService.log(actor, "REFUSAL", "http_request", "internal_error", "Internal server error");
+        if (audit == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("code", "internal", "message", "Internal server error"));
+        }
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of(
                     "code", "internal",

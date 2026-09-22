@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Per-identifier sliding-window rate limiter using atomic ConcurrentHashMap operations.
@@ -14,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class RateLimiter {
     private final Map<String, Long> attemptCounts = new ConcurrentHashMap<>();
     private final Map<String, Instant> windowStarts = new ConcurrentHashMap<>();
+    private final Map<String, ReentrantLock> locks = new ConcurrentHashMap<>();
 
     private static final int MAX_ATTEMPTS = 5;
     private static final long WINDOW_SECONDS = 60L;
@@ -24,8 +26,10 @@ public class RateLimiter {
         Instant now = Instant.now();
         long windowStart = now.getEpochSecond() / WINDOW_SECONDS * WINDOW_SECONDS;
 
-        // Use a synchronized block on the identifier to make the window check + count update atomic.
-        synchronized (identifier.intern()) {
+        // Use a per-key lock to make the window check + count update atomic.
+        ReentrantLock lock = locks.computeIfAbsent(identifier, k -> new ReentrantLock());
+        lock.lock();
+        try {
             Instant window = windowStarts.get(identifier);
             if (window == null || window.getEpochSecond() != windowStart) {
                 windowStarts.put(identifier, Instant.ofEpochSecond(windowStart));
@@ -36,6 +40,8 @@ public class RateLimiter {
             long capped = Math.min(count, MAX_ATTEMPTS + 1L);
             attemptCounts.put(identifier, capped);
             return capped <= MAX_ATTEMPTS;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -43,6 +49,19 @@ public class RateLimiter {
         Instant now = Instant.now();
         long windowStart = now.getEpochSecond() / WINDOW_SECONDS * WINDOW_SECONDS;
 
+        ReentrantLock lock = locks.get(identifier);
+        if (lock != null) {
+            lock.lock();
+            try {
+                return computeRemaining(identifier, windowStart);
+            } finally {
+                lock.unlock();
+            }
+        }
+        return computeRemaining(identifier, windowStart);
+    }
+
+    private long computeRemaining(String identifier, long windowStart) {
         final long[] remaining = new long[1];
         attemptCounts.compute(identifier, (key, count) -> {
             Instant window = windowStarts.get(key);
@@ -54,7 +73,6 @@ public class RateLimiter {
             remaining[0] = Math.max(0, MAX_ATTEMPTS - used);
             return count;
         });
-
         return remaining[0];
     }
 
@@ -69,6 +87,7 @@ public class RateLimiter {
     public void reset(String identifier) {
         attemptCounts.remove(identifier);
         windowStarts.remove(identifier);
+        locks.remove(identifier);
     }
 
     private void purgeIfNeeded() {

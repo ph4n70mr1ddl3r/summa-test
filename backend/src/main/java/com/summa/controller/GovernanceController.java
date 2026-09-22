@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.enums.RbacRole;
+import com.summa.exception.EntityNotFoundException;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Optional;
@@ -130,7 +131,7 @@ public class GovernanceController {
         if (!requireAdmin(actor)) return ControllerResponses.gate(auditService, "Admin access required to acknowledge spend overruns");
         try {
             SpendLedger ledger = spendLedgerService.findById(id)
-                    .orElseThrow(() -> new IllegalArgumentException("Spend ledger row not found: " + id));
+                    .orElseThrow(() -> new EntityNotFoundException("Spend ledger row not found: " + id));
             if (!Boolean.TRUE.equals(ledger.getAcknowledged())) {
                 spendLedgerService.acknowledge(id, actor);
             }

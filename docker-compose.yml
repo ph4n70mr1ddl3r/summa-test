@@ -1,5 +1,7 @@
 services:
   summa:
+    env_file:
+      - .env
     build:
       context: .
       dockerfile: Dockerfile

@@ -212,10 +212,9 @@ public class AskService {
                 } else if ("escalate".equals(behavior) || "reassign".equals(behavior)) {
                     expire(ask.getId());
                     try {
-                        ExpiringEntry<Integer> depthEntry = successorDepth.get(ask.getId());
-                        int depth = (depthEntry != null ? depthEntry.value : 0) + 1;
-                        long expireNowSeconds = Instant.now().getEpochSecond();
-                        if (depth >= MAX_EXPIRE_SUCCESSOR_DEPTH) {
+                         ExpiringEntry<Integer> depthEntry = successorDepth.get(ask.getId());
+                         int depth = (depthEntry != null ? depthEntry.value : 0) + 1;
+                         if (depth >= MAX_EXPIRE_SUCCESSOR_DEPTH) {
                             // ASK-057: Chain exhausted — broadcast org-stall alert
                             broadcastOrgStall(ask);
                             auditService.logSystem("EXPIRE_CHAIN_EXHAUSTED", "ask", ask.getId(),
@@ -234,8 +233,9 @@ public class AskService {
                             ask.getQuorumRequired(),
                             Instant.now().plusSeconds(successorDeadlineSeconds),
                             ask.getInitiativeId(), ask.getWorkspaceId());
-                        // Track depth by the successor's ID so the next expire cycle sees the correct depth
-                        successorDepth.put(successor.getId(), new ExpiringEntry<>(depth, expireNowSeconds + stormCollapseWindowSeconds));
+                         // Track depth by the successor's ID so the next expire cycle sees the correct depth
+                         long expireNowSeconds = Instant.now().getEpochSecond();
+                         successorDepth.put(successor.getId(), new ExpiringEntry<>(depth, expireNowSeconds + stormCollapseWindowSeconds));
                         auditService.logSystem("EXPIRE_SUCCESSOR_CREATED", "ask", successor.getId(),
                             String.format("{\"originalId\":\"%s\",\"behavior\":\"%s\",\"depth\":%d}", ask.getId(), behavior, depth));
                         // Clean up the original ask's depth entry to prevent unbounded growth

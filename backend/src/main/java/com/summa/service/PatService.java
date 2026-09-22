@@ -69,6 +69,7 @@ public class PatService {
         return saved;
     }
 
+    @Transactional
     public void touchLastUsed(String id) {
         patRepository.findById(id).ifPresent(pat -> {
             pat.setLastUsedAt(Instant.now());

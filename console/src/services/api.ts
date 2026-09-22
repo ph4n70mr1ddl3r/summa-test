@@ -105,7 +105,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     }
     const err = new ApiError(message, res.status);
     if (res.status === 429) {
-      err.message = message; // preserve server-provided rate limit message (may include retry-after)
+      Object.defineProperty(err, 'message', { value: message, writable: true, configurable: true });
     }
     if (res.status === 401 || res.status === 403) {
       setAuthToken(null);
@@ -120,7 +120,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (res.status === 204) {
     return null as unknown as T;
   }
-  return res.json() as Promise<T>;
+  const json = await res.json();
+  return json as T;
 }
 
 export function unwrapSettled<T>(result: PromiseSettledResult<T>): T | null {

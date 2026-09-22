@@ -110,5 +110,5 @@ public class Agent {
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
     public boolean isActive() { return "active".equals(status); }
-    public boolean isEphemeral() { return "ephemeral".equals(agentClass); }
+    public boolean isEphemeral() { return "ephemeral".equals(agentClass) || "ephemeral-subagent".equals(agentClass); }
 }

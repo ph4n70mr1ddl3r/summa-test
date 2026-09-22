@@ -108,6 +108,10 @@ public class OrgService {
         return humanRepository.findAll();
     }
 
+    public boolean isInitialized() {
+        return humanRepository.count() > 0;
+    }
+
     public List<Human> findAllActiveHumans() {
         return humanRepository.findAllActive();
     }

@@ -28,11 +28,11 @@ export default function Runs() {
     return cancel
   }, [filter])
 
-  if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
-  if (error) return <ErrorBanner message={error} onRetry={loadRuns} />
-
   const statusCounts: Record<string, number> = {}
   runs.forEach(r => { statusCounts[r.status] = (statusCounts[r.status] || 0) + 1 })
+
+  if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
+  if (error) return <ErrorBanner message={error} onRetry={loadRuns} />
 
   return (
     <div className="space-y-6">

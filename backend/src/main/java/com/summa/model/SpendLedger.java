@@ -57,12 +57,6 @@ public class SpendLedger {
         if (acknowledged == null) acknowledged = false;
     }
 
-    @PreUpdate
-    public void preUpdate() {
-        // No mutable fields on SpendLedger; this is a holdover from an earlier design.
-        // Kept empty to avoid accidentally overwriting createdAt on every update.
-    }
-
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getMemberId() { return memberId; }
