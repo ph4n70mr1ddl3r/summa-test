@@ -560,7 +560,7 @@ public class InitiativeService {
             for (Ask ask : recent) {
                 if (ask.getCreatedAt() == null || ask.getCreatedAt().isBefore(cutoff)) continue;
                 try {
-                    com.fasterxml.jackson.databind.JsonNode node = objectMapper.readTree(ask.getPayload());
+                    JsonNode node = objectMapper.readTree(ask.getPayload());
                     if (node.has("reason") && node.get("reason").asText().equals(reason)) {
                         return true;
                     }

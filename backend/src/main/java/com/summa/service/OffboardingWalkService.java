@@ -475,7 +475,7 @@ public class OffboardingWalkService {
                     JsonNode participants =
                         objectMapper.readTree(ws.getParticipants());
                     int before = participants.size();
-                    com.fasterxml.jackson.databind.node.ArrayNode filtered = objectMapper.createArrayNode();
+                    ArrayNode filtered = objectMapper.createArrayNode();
                     for (int i = 0; i < participants.size(); i++) {
                         if (!humanId.equals(participants.get(i).asText())) {
                             filtered.add(participants.get(i));

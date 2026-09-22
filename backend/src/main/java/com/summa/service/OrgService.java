@@ -7,6 +7,7 @@ import com.summa.model.AuditEvent;
 import com.summa.security.PasswordUtil;
 import com.summa.security.PasswordValidator;
 import com.summa.util.JsonHelpers;
+import com.summa.constants.Defaults;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -82,7 +83,7 @@ public class OrgService {
         human.setPasswordHash(passwordUtil.hash(password));
 
         Human saved = humanRepository.save(human);
-        auditService.log("system", "CREATE_HUMAN", "human", saved.getId(),
+        auditService.log(Defaults.SYSTEM_ACTOR, "CREATE_HUMAN", "human", saved.getId(),
             String.format("{\"name\":%s,\"rbac\":%s}", JsonHelpers.jsonString(name), JsonHelpers.jsonString(rbac)));
         return saved;
     }

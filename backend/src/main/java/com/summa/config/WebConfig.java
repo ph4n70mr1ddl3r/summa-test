@@ -40,8 +40,11 @@ public class WebConfig implements WebMvcConfigurer {
         if (extraCorsOrigins != null && !extraCorsOrigins.isBlank()) {
             for (String origin : extraCorsOrigins.split(",")) {
                 String o = origin.trim();
-                if (!o.isEmpty() && !o.contains("*") && (o.startsWith("http://") || o.startsWith("https://"))) {
-                    if (!o.startsWith("http://localhost") && !o.startsWith("http://127.0.0.1")) {
+                if (!o.isEmpty() && !o.contains("*")) {
+                    // Production origins must be HTTPS; localhost dev may use HTTP.
+                    if (o.startsWith("http://localhost") || o.startsWith("http://127.0.0.1")) {
+                        mapping.allowedOriginPatterns(o);
+                    } else if (o.startsWith("https://")) {
                         mapping.allowedOriginPatterns(o);
                     }
                 }
