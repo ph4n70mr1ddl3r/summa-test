@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { api } from '../services/api'
 import type { Run } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
@@ -28,8 +28,11 @@ export default function Runs() {
     return cancel
   }, [filter])
 
-  const statusCounts: Record<string, number> = {}
-  runs.forEach(r => { statusCounts[r.status] = (statusCounts[r.status] || 0) + 1 })
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    runs.forEach(r => { counts[r.status] = (counts[r.status] || 0) + 1 })
+    return counts
+  }, [runs])
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
   if (error) return <ErrorBanner message={error} onRetry={loadRuns} />

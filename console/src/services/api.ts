@@ -104,9 +104,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       message = `Network error: HTTP ${res.status}`;
     }
     const err = new ApiError(message, res.status);
-    if (res.status === 429) {
-      Object.defineProperty(err, 'message', { value: message, writable: true, configurable: true });
-    }
     if (res.status === 401 || res.status === 403) {
       setAuthToken(null);
       if (navigateRef) {

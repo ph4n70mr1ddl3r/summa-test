@@ -11,6 +11,7 @@ export function ErrorBanner({ message, onRetry }: ErrorBannerProps) {
       Failed to load: {escapeHtml(message)}
       {onRetry && (
         <button
+          type="button"
           onClick={onRetry}
           className="ml-4 px-3 py-1 bg-red-700 hover:bg-red-600 rounded text-sm text-red-100"
           aria-label="Retry loading"

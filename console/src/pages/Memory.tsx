@@ -111,6 +111,7 @@ export default function Memory() {
                 </div>
                 {item.tainted && (
                     <button
+                      type="button"
                       onClick={() => setReviewingId(item.id)}
                       disabled={reviewingForId !== null && reviewingForId !== item.id}
                       className="px-3 py-1 bg-yellow-700 hover:bg-yellow-600 disabled:bg-gray-700 disabled:text-gray-500 rounded text-sm text-yellow-100"
@@ -120,33 +121,30 @@ export default function Memory() {
                     </button>
                 )}
               </div>
-              {(() => {
-                const contentPreview = escapeHtml(item.contentMd)
-                return (
-                  <pre className="mt-2 text-xs text-gray-400 bg-gray-900 rounded p-3 overflow-x-auto whitespace-pre-wrap">
-                    {truncateSnippet(contentPreview, 300)}
-                  </pre>
-                )
-              })()}
+              <pre className="mt-2 text-xs text-gray-400 bg-gray-900 rounded p-3 overflow-x-auto whitespace-pre-wrap">
+                {truncateSnippet(escapeHtml(item.contentMd), 300)}
+              </pre>
               {reviewingId === item.id && (
                 <div className="mt-3 space-y-2">
                   <p className="text-sm text-yellow-400">Review this item to clear taint?</p>
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => handleReview(item.id)}
-                      disabled={reviewingForId === item.id}
-                      className="px-3 py-1 bg-green-700 hover:bg-green-600 disabled:bg-gray-700 disabled:text-gray-500 rounded text-sm text-green-100"
-                      aria-label={reviewingForId === item.id ? 'Reviewing item' : `Confirm review of item ${escapeHtml(item.id.slice(0, 8))}`}
-                    >
-                      {reviewingForId === item.id ? 'Reviewing...' : 'Confirm Review'}
-                    </button>
-                    <button
-                      onClick={() => setReviewingId(null)}
-                      className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm text-gray-300"
-                      aria-label="Cancel review"
-                    >
-                      Cancel
-                    </button>
+                     <button
+                       type="button"
+                       onClick={() => handleReview(item.id)}
+                       disabled={reviewingForId === item.id}
+                       className="px-3 py-1 bg-green-700 hover:bg-green-600 disabled:bg-gray-700 disabled:text-gray-500 rounded text-sm text-green-100"
+                       aria-label={reviewingForId === item.id ? 'Reviewing item' : `Confirm review of item ${escapeHtml(item.id.slice(0, 8))}`}
+                     >
+                       {reviewingForId === item.id ? 'Reviewing...' : 'Confirm Review'}
+                     </button>
+                     <button
+                       type="button"
+                       onClick={() => setReviewingId(null)}
+                       className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm text-gray-300"
+                       aria-label="Cancel review"
+                     >
+                       Cancel
+                     </button>
                   </div>
                 </div>
               )}

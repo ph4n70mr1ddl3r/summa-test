@@ -166,10 +166,30 @@ export function groupStatusColor(status: GroupStatus): string {
   }
 }
 
+export function domainAccessColor(access: 'public' | 'domain' | 'named'): string {
+  switch (access) {
+    case 'public': return 'bg-green-900/50 text-green-400'
+    case 'domain': return 'bg-blue-900/50 text-blue-400'
+    case 'named': return 'bg-yellow-900/50 text-yellow-400'
+    default: return 'bg-gray-700 text-gray-300'
+  }
+}
+
+export function proposalStatusColor(status: DnaProposalStatus): string {
+  switch (status) {
+    case 'open': return 'bg-blue-900/50 text-blue-400'
+    case 'published': return 'bg-green-900/50 text-green-400'
+    case 'rejected': return 'bg-red-900/50 text-red-400'
+    case 'withdrawn': return 'bg-gray-600 text-gray-400'
+    default: return 'bg-gray-700 text-gray-300'
+  }
+}
+
 export function rbacRoleColor(role: RbacRole): string {
   switch (role) {
     case 'admin': return 'bg-red-900/50 text-red-400'
     case 'owner': return 'bg-yellow-900/50 text-yellow-400'
+    case 'member': return 'bg-blue-900/50 text-blue-400'
     case 'viewer': return 'bg-gray-600 text-gray-400'
     default: return 'bg-gray-700 text-gray-300'
   }
@@ -183,16 +203,6 @@ export function proposalKindColor(kind: DnaProposalKind): string {
     case 'goal': return 'bg-purple-900/50 text-purple-400'
     case 'glossary': return 'bg-pink-900/50 text-pink-400'
     case 'edit': return 'bg-gray-700 text-gray-300'
-    default: return 'bg-gray-700 text-gray-300'
-  }
-}
-
-export function proposalStatusColor(status: DnaProposalStatus): string {
-  switch (status) {
-    case 'open': return 'bg-blue-900/50 text-blue-400'
-    case 'published': return 'bg-green-900/50 text-green-400'
-    case 'rejected': return 'bg-red-900/50 text-red-400'
-    case 'withdrawn': return 'bg-gray-600 text-gray-400'
     default: return 'bg-gray-700 text-gray-300'
   }
 }

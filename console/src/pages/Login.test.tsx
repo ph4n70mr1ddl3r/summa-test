@@ -91,7 +91,7 @@ describe('Login page', () => {
       writable: true,
     })
     const { getByLabelText, getByText } = render(
-      <MemoryRouter initialEntries={['/login?from=https://evil.com']}>
+      <MemoryRouter initialEntries={[{ pathname: '/login', state: { from: { pathname: 'https://evil.com' } } }]}>
         <Login />
       </MemoryRouter>
     )

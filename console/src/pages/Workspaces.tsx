@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { Workspace } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
-import { countParticipants } from '../utils/formatting'
+import { countParticipants, formatDate } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Workspaces() {
@@ -45,7 +45,7 @@ export default function Workspaces() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="font-medium text-gray-200">{escapeHtml(ws.name)}</p>
-                    <p className="text-sm text-gray-400 mt-1">Kind: {escapeHtml(ws.kind)} | Epoch: {ws.claimEpoch}</p>
+                    <p className="text-sm text-gray-400 mt-1">Kind: {escapeHtml(ws.kind)} | Epoch: {formatDate(ws.claimEpoch, { dateOnly: true })}</p>
                 </div>
                   <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300">
                     {countParticipants(ws.participants)} participants

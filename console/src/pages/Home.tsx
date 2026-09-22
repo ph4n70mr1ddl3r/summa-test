@@ -1,5 +1,5 @@
-import { NavLink } from 'react-router-dom'
 import { useEffect, useState } from 'react'
+import { NavLink } from 'react-router-dom'
 import { api } from '../services/api'
 
 export default function Home() {
@@ -82,6 +82,7 @@ function ApiStatusCheck() {
   return (
     <div className="flex items-center space-x-2 text-sm">
       <span
+        role="status"
         className={`w-2 h-2 rounded-full ${
           status === 'ok' ? 'bg-green-400' : status === 'error' ? 'bg-red-400' : 'bg-yellow-400'
         }`}

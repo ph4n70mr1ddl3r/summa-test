@@ -81,6 +81,7 @@ export default function Groups() {
                   </span>
                   {g.status === 'active' && (
                     <button
+                      type="button"
                       onClick={() => handleArchive(g.id)}
                       disabled={archivingId !== null}
                       className="px-2 py-1 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 rounded text-xs text-gray-400"

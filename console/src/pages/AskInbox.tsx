@@ -168,6 +168,7 @@ export default function AskInbox() {
               </details>
               <div className="mt-3 flex items-center gap-2">
                 <button
+                  type="button"
                   onClick={() => { setRespondingId(ask.id); setResponseText('') }}
                   className="px-3 py-1 bg-blue-700 hover:bg-blue-600 rounded text-sm text-blue-100"
                   aria-label={`Respond to ask from ${escapeHtml(ask.from)}`}
@@ -175,6 +176,7 @@ export default function AskInbox() {
                   Respond
                 </button>
                 <button
+                  type="button"
                   onClick={() => handleWithdraw(ask.id)}
                   className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm text-gray-300"
                   aria-label={`Withdraw ask from ${escapeHtml(ask.from)}`}
@@ -194,6 +196,7 @@ export default function AskInbox() {
                   />
                   <div className="flex gap-2">
                     <button
+                      type="button"
                       onClick={() => handleRespond(ask.id)}
                       disabled={!responseText.trim() || respondingForId === ask.id}
                       className="px-3 py-1 bg-green-700 hover:bg-green-600 disabled:bg-gray-700 disabled:text-gray-500 rounded text-sm text-green-100"
@@ -202,8 +205,10 @@ export default function AskInbox() {
                       {respondingForId === ask.id ? 'Submitting...' : 'Submit'}
                     </button>
                     <button
+                      type="button"
                       onClick={() => { setRespondingId(null); setResponseText('') }}
                       className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm text-gray-300"
+                      aria-label="Cancel response"
                     >
                       Cancel
                     </button>
