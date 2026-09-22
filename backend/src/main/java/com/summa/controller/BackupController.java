@@ -10,10 +10,10 @@ import com.summa.service.OrgService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.Files;
 import java.util.Map;
 import java.util.Optional;
 
@@ -51,7 +51,7 @@ public class BackupController {
             return ResponseEntity.ok(Map.of("path", path));
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
-        } catch (Exception e) {
+        } catch (IOException e) {
             return ControllerResponses.internalError(auditService, e.getMessage());
         }
     }
@@ -77,7 +77,7 @@ public class BackupController {
             return ResponseEntity.ok(Map.of("status", "restored"));
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
-        } catch (Exception e) {
+        } catch (IOException e) {
             return ControllerResponses.internalError(auditService, e.getMessage());
         }
     }
@@ -86,7 +86,7 @@ public class BackupController {
      * Validate that the given path resolves under the allowed directory.
      * Handles both existing and non-existing paths by walking up to the nearest ancestor.
      */
-    private Path validatePathUnder(String rawPath, Path allowedDir, String paramName) throws Exception {
+    private Path validatePathUnder(String rawPath, Path allowedDir, String paramName) throws IOException {
         Path p = Paths.get(rawPath).normalize();
         Path resolved;
         try {

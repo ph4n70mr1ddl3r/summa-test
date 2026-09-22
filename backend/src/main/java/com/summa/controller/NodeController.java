@@ -97,8 +97,6 @@ public class NodeController {
             }
             Node node = nodeService.claimWorkspace(id, workspaceId, currentEpoch);
             return ResponseEntity.ok(node);
-        } catch (NumberFormatException e) {
-            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -147,8 +145,6 @@ public class NodeController {
             String memberId = body.get("memberId");
             Run run = nodeService.reportRun(id, runId, result, artifacts, costTokens, costUsd, memberId);
             return ResponseEntity.ok(run);
-        } catch (NumberFormatException e) {
-            return ControllerResponses.validation(auditService, "Invalid numeric field: " + e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {

@@ -47,7 +47,7 @@ export default function RoleTemplates() {
                   <p className="font-medium text-gray-200">{escapeHtml(t.name)}</p>
                   <p className="text-sm text-gray-400 mt-1">Class: {escapeHtml(t.class)} | Version: {escapeHtml(String(t.version))}</p>
                 </div>
-                <span className={`text-xs px-2 py-1 rounded ${roleTemplateStatusColor(t.status)}`} aria-label={`Status: ${escapeHtml(t.status)}`}>{escapeHtml(t.status)}</span>
+                <span className={`text-xs px-2 py-1 rounded ${roleTemplateStatusColor(t.status)}`} aria-label={`Status: ${t.status}`}>{escapeHtml(t.status)}</span>
               </div>
             </div>
           ))}

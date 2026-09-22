@@ -115,7 +115,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     }
   }
   if (res.status === 204) {
-    return null as unknown as T;
+    return undefined as unknown as T;
   }
   const json = await res.json();
   return json as T;

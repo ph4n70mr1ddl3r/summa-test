@@ -4,9 +4,9 @@ import com.summa.service.RunService;
 import com.summa.model.Run;
 import com.summa.service.AuditService;
 import com.summa.security.WriteGate;
+import com.summa.security.RbacAuthorizationFilter;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.summa.security.RbacAuthorizationFilter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -108,15 +108,13 @@ public class RunController {
                 try {
                     costTokens = Long.parseLong(body.get("costTokens"));
                     if (costTokens < 0) throw new IllegalArgumentException("costTokens must be non-negative");
-                }
-                catch (NumberFormatException e) { throw new IllegalArgumentException("Invalid costTokens: " + body.get("costTokens")); }
+                } catch (NumberFormatException e) { throw new IllegalArgumentException("Invalid costTokens: " + body.get("costTokens")); }
             }
             if (body.containsKey("costUsd") && body.get("costUsd") != null && !body.get("costUsd").isBlank()) {
                 try {
                     costUsd = Double.parseDouble(body.get("costUsd"));
                     if (costUsd < 0) throw new IllegalArgumentException("costUsd must be non-negative");
-                }
-                catch (NumberFormatException e) { throw new IllegalArgumentException("Invalid costUsd: " + body.get("costUsd")); }
+                } catch (NumberFormatException e) { throw new IllegalArgumentException("Invalid costUsd: " + body.get("costUsd")); }
             }
 
             Run run = runService.complete(id, result, costTokens, costUsd);

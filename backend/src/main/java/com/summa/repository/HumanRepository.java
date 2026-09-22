@@ -17,9 +17,7 @@ public interface HumanRepository extends JpaRepository<Human, String> {
     
     @Query("SELECT h FROM Human h WHERE h.deactivatedAt IS NULL")
     java.util.List<Human> findAllActive();
-    
-    long countByDeactivatedAtIsNull();
-    
+
     long countByDeactivatedAtIsNullAndRbac(String rbac);
 
     /**

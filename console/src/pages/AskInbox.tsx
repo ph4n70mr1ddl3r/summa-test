@@ -5,6 +5,17 @@ import { escapeHtml } from '../utils/escapeHtml'
 import { tierColor, formatDate } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
+function kindIcon(kind: string): string {
+  switch (kind) {
+    case 'approval': return '🔴'
+    case 'question': return '?'
+    case 'assignment': return '→'
+    case 'spawn_request': return '+'
+    case 'promotion': return '↑'
+    default: return '•'
+  }
+}
+
 export default function AskInbox() {
   const [asks, setAsks] = useState<Ask[]>([])
   const [loading, setLoading] = useState(true)
@@ -43,17 +54,6 @@ export default function AskInbox() {
     const cancel = loadAsks()
     return cancel
   }, [])
-
-  const kindIcon = (kind: string) => {
-    switch (kind) {
-      case 'approval': return '🔴'
-      case 'question': return '?'
-      case 'assignment': return '→'
-      case 'spawn_request': return '+'
-      case 'promotion': return '↑'
-      default: return '•'
-    }
-  }
 
   const handleRespond = async (id: string) => {
     setSubmitError(null)

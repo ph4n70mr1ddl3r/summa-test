@@ -28,7 +28,7 @@ RUN addgroup -g 1000 -S summa && adduser -u 1000 -S summa -G summa && \
 ENV SUMMA_DB_PATH=/data/db/summa.db \
     SUMMA_DNA_REPO=/data/dna \
     SPRING_PROFILES_ACTIVE=prod \
-    JAVA_OPTS="-Xmx512m -Xms256m -XX:MaxMetaspaceSize=128m"
+    JAVA_OPTS="-Xmx384m -Xms256m -XX:MaxMetaspaceSize=96m"
 
 EXPOSE 8080
 

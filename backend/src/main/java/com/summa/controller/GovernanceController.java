@@ -7,11 +7,11 @@ import com.summa.service.AuditService;
 import com.summa.model.SpendLedger;
 import com.summa.model.Human;
 import com.summa.security.WriteGate;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.enums.RbacRole;
 import com.summa.exception.EntityNotFoundException;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Optional;
@@ -137,7 +137,7 @@ public class GovernanceController {
             }
             return ResponseEntity.ok(Map.of("status", "overrun_acknowledged", "rowId", id,
                     "haltTripped", governanceService.isSpendHaltTripped()));
-        } catch (IllegalArgumentException e) {
+        } catch (EntityNotFoundException e) {
             return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }

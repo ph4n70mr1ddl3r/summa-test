@@ -2,7 +2,9 @@ node_modules
 # Backend is built inside the Docker multi-stage build from src+pom;
 # local build output must not pollute the context.
 backend/target
+backend/.mvn
 console/node_modules
+console/.vite
 .git
 .gitignore
 *.log
@@ -24,3 +26,7 @@ opencode.jsonc
 **/.gitignore
 # Exclude root lockfile — Dockerfile uses Maven only; console build gets its own context.
 /package-lock.json
+# Python tooling not needed in Docker builds
+tools/
+# Runtime log output
+target/logs/

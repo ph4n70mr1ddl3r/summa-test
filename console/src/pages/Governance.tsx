@@ -38,7 +38,7 @@ export default function Governance() {
           setPolicies(prev => unwrapSettled(pRes) ?? prev)
           setQuotas(prev => unwrapSettled(qRes) ?? prev)
           setSpend(prev => unwrapSettled(sRes) ?? prev)
-           setError('Some data could not be loaded: ' + (e instanceof Error ? e.message : (typeof e === 'string' ? e : '')))
+          setError('Some data could not be loaded: ' + (e instanceof Error ? e.message : (typeof e === 'string' ? e : '')))
           setLoading(false)
         })
       })

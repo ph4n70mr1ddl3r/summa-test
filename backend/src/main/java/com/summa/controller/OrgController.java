@@ -169,10 +169,10 @@ public class OrgController {
         try {
             Human human = orgService.offboard(id, actor);
             return ResponseEntity.ok(human);
-        } catch (IllegalStateException e) {
-            return ControllerResponses.gate(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
+        } catch (IllegalStateException e) {
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
@@ -257,12 +257,15 @@ public class OrgController {
     }
 
     @GetMapping("/audit")
-    public ResponseEntity<List<AuditEvent>> getAuditLog(
+    public ResponseEntity<?> getAuditLog(
             @RequestParam(defaultValue = "100") int limit,
             @RequestParam(required = false) String objectType,
             @RequestParam(required = false) String objectId) {
         if (limit <= 0 || limit > 1000) {
-            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY).build();
+            Map<String, Object> error = new java.util.HashMap<>();
+            error.put("code", "UNPROCESSABLE_ENTITY");
+            error.put("message", "limit must be between 1 and 1000");
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY).body(error);
         }
         if (objectType != null && objectId != null) {
             return ResponseEntity.ok(orgService.getAuditLogForEntity(objectType, objectId));
