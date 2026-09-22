@@ -97,7 +97,7 @@ public class DnaRuleService {
                 .orElseThrow(() -> new EntityNotFoundException("Rule not found: " + id));
 
         if (!"active".equals(rule.getStatus())) {
-            throw new IllegalStateException("Cannot update non-active rule: " + rule.getStatus());
+            throw new IllegalArgumentException("Cannot update non-active rule: " + rule.getStatus());
         }
 
         if (statementMd != null) rule.setStatementMd(statementMd);

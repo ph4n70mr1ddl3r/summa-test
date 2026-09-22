@@ -41,7 +41,7 @@ export default function Groups() {
   }
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
-  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadGroups} />
+  if (error) return <ErrorBanner message={error} onRetry={loadGroups} />
 
   return (
     <div className="space-y-6">
@@ -84,6 +84,7 @@ export default function Groups() {
                       onClick={() => handleArchive(g.id)}
                       disabled={archivingId !== null}
                       className="px-2 py-1 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 rounded text-xs text-gray-400"
+                      aria-label={`Archive ${escapeHtml(g.name)}`}
                     >
                       {archivingId === g.id ? 'Archiving...' : 'Archive'}
                     </button>

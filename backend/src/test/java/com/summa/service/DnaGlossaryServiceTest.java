@@ -121,7 +121,7 @@ class DnaGlossaryServiceTest {
         entry.setStatus("retired");
         when(glossaryRepository.findById("g1")).thenReturn(Optional.of(entry));
 
-        assertThrows(IllegalStateException.class, () ->
+        assertThrows(IllegalArgumentException.class, () ->
             glossaryService.update("g1", "new def", null, "actor"));
     }
 

@@ -53,7 +53,7 @@ class DnaRuleServiceTest {
         rule.setStatus("superseded");
         when(ruleRepository.findById("rule-1")).thenReturn(Optional.of(rule));
 
-        assertThrows(IllegalStateException.class, () -> {
+        assertThrows(IllegalArgumentException.class, () -> {
             ruleService.update("rule-1", null, null, null, "actor");
         });
     }

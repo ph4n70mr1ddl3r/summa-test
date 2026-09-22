@@ -26,7 +26,7 @@ export default function Workspaces() {
   }, [])
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
-  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadWorkspaces} />
+  if (error) return <ErrorBanner message={error} onRetry={loadWorkspaces} />
 
   return (
     <div className="space-y-6">

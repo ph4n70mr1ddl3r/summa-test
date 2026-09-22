@@ -297,6 +297,7 @@ export interface DnaDecision {
   decidedAt: number;
   refs?: string;
   provenance?: string;
+  createdAt?: number;
 }
 
 export interface DnaProposal {

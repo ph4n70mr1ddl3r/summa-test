@@ -50,7 +50,7 @@ export default function OrgView() {
   }, [])
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
-  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadData} />
+  if (error) return <ErrorBanner message={error} onRetry={loadData} />
 
   const humans = members.filter(m => m.kind === 'human')
   const agents = members.filter(m => m.kind === 'agent')

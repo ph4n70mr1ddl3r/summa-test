@@ -69,7 +69,7 @@ public class GovernanceController {
             "asks-tier-bulk-deadline-hours",
             "asks-storm-collapse-window-hours",
             "asks-rate-limit-per-source-per-hour",
-            "dna-default-review-sla-days",
+            "summa.dna.default-review-sla-days",
             "spend-org-ceiling",
             "spend-critical-floor-percent",
             "spend-evaluation-window-days"

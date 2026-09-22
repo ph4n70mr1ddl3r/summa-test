@@ -38,9 +38,7 @@ export default function Memory() {
       await api.memory.review(id)
       setReviewResult('Item reviewed and taint cleared')
       setReviewingId(null)
-      const params: Record<string, string> = {}
-      if (filter === 'tainted') params.tainted = 'true'
-      api.memory.list(params).then((data) => setItems(data)).catch((err) => setReviewResult(err instanceof Error ? err.message : String(err)))
+      loadItems()
     } catch (err) {
       setReviewResult(err instanceof Error ? err.message : String(err))
       setReviewingForId(null)
@@ -48,7 +46,7 @@ export default function Memory() {
   }
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
-  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadItems} />
+  if (error) return <ErrorBanner message={error} onRetry={loadItems} />
 
   const taintedCount = items.filter(i => i.tainted).length
 
@@ -116,6 +114,7 @@ export default function Memory() {
                       onClick={() => setReviewingId(item.id)}
                       disabled={reviewingForId !== null}
                       className="px-3 py-1 bg-yellow-700 hover:bg-yellow-600 disabled:bg-gray-700 disabled:text-gray-500 rounded text-sm text-yellow-100"
+                      aria-label={`Review item ${escapeHtml(item.id)}`}
                     >
                       Review
                     </button>

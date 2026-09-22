@@ -69,10 +69,10 @@ export default function AskInbox() {
       setSubmitSuccess('Response recorded')
       setRespondingId(null)
       setResponseText('')
-      api.asks.listByStatus('pending').then((data) => setAsks(data)).catch((err) => setError(err instanceof Error ? err.message : String(err)))
+      loadAsks()
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err))
-      api.asks.listByStatus('pending').then((data) => setAsks(data)).catch((err) => setError(err instanceof Error ? err.message : String(err)))
+      loadAsks()
     } finally {
       setRespondingForId(null)
     }
@@ -81,10 +81,10 @@ export default function AskInbox() {
   const handleWithdraw = async (id: string) => {
     try {
       await api.asks.withdraw(id)
-      api.asks.listByStatus('pending').then((data) => setAsks(data)).catch((err) => setError(err instanceof Error ? err.message : String(err)))
+      loadAsks()
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err))
-      api.asks.listByStatus('pending').then((data) => setAsks(data)).catch((err) => setError(err instanceof Error ? err.message : String(err)))
+      loadAsks()
     }
   }
 
@@ -93,7 +93,7 @@ export default function AskInbox() {
   }
 
   if (error) {
-    return <ErrorBanner message={escapeHtml(error)} onRetry={loadAsks} />
+    return <ErrorBanner message={error} onRetry={loadAsks} />
   }
 
   return (
@@ -197,6 +197,7 @@ export default function AskInbox() {
                       onClick={() => handleRespond(ask.id)}
                       disabled={!responseText.trim() || respondingForId === ask.id}
                       className="px-3 py-1 bg-green-700 hover:bg-green-600 disabled:bg-gray-700 disabled:text-gray-500 rounded text-sm text-green-100"
+                      aria-label="Submit response"
                     >
                       {respondingForId === ask.id ? 'Submitting...' : 'Submit'}
                     </button>

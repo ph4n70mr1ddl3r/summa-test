@@ -23,6 +23,7 @@ import com.summa.repository.InitiativeRepository;
 import com.summa.model.Initiative;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.Objects;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -376,7 +377,7 @@ public class DnaDomainService {
         if (oldOpt.isEmpty() || newOpt.isEmpty()) return;
         String oldOwner = oldOpt.get().getOwnerHumanId();
         String newOwner = newOpt.get().getOwnerHumanId();
-        if (oldOwner.equals(newOwner)) return;
+        if (Objects.equals(oldOwner, newOwner)) return;
         // Re-key pending asks addressed to the old owner that are scoped to this domain
         // (by initiative or workspace) so we don't redirect asks belonging to other domains.
         for (Ask ask : askRepository.findByToAndStatusPending(oldOwner)) {

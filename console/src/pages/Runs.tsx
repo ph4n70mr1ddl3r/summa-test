@@ -29,7 +29,7 @@ export default function Runs() {
   }, [filter])
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
-  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadRuns} />
+  if (error) return <ErrorBanner message={error} onRetry={loadRuns} />
 
   const statusCounts: Record<string, number> = {}
   runs.forEach(r => { statusCounts[r.status] = (statusCounts[r.status] || 0) + 1 })

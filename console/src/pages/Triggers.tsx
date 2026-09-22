@@ -26,7 +26,7 @@ export default function Triggers() {
   }, [])
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
-  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadTriggers} />
+  if (error) return <ErrorBanner message={error} onRetry={loadTriggers} />
 
   return (
     <div className="space-y-6">

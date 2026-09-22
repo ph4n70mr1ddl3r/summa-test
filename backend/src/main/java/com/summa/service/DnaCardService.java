@@ -61,7 +61,7 @@ public class DnaCardService {
                 .orElseThrow(() -> new EntityNotFoundException("Card not found: " + id));
 
         if (!"active".equals(card.getStatus()) && !"draft".equals(card.getStatus())) {
-            throw new IllegalStateException("Cannot update retired card: " + card.getStatus());
+            throw new IllegalArgumentException("Cannot update retired card: " + card.getStatus());
         }
 
         if (title != null) card.setTitle(title);

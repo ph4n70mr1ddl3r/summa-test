@@ -73,7 +73,7 @@ public class DnaGoalService {
 
         // Terminal statuses are immutable
         if ("met".equals(goal.getStatus()) || "missed".equals(goal.getStatus()) || "retired".equals(goal.getStatus())) {
-            throw new IllegalStateException("Cannot update terminal goal: " + goal.getStatus());
+            throw new IllegalArgumentException("Cannot update terminal goal: " + goal.getStatus());
         }
 
         // Allowlist: only recognized status transitions are permitted

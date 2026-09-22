@@ -26,7 +26,7 @@ export default function BoardTasks() {
   }, [])
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
-  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadTasks} />
+  if (error) return <ErrorBanner message={error} onRetry={loadTasks} />
 
   return (
     <div className="space-y-6">

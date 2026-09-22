@@ -15,8 +15,6 @@ export default function DNAProposals() {
     setLoading(true)
     setError(null)
     let aborted = false
-    const params: Record<string, string> = {}
-    if (filter !== 'all') params.status = filter
     api.dna.proposals(filter !== 'all' ? filter : undefined)
       .then((data) => { if (!aborted) { setProposals(data); setLoading(false) } })
       .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
@@ -35,7 +33,7 @@ export default function DNAProposals() {
   }, [proposals])
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
-  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadProposals} />
+  if (error) return <ErrorBanner message={error} onRetry={loadProposals} />
 
   return (
     <div className="space-y-6">

@@ -33,12 +33,17 @@ public class DnaDecision {
     @Column(name = "provenance", columnDefinition = "TEXT")
     private String provenance;
 
+    @Column(name = "created_at")
+    @Convert(converter = InstantToUnixEpochConverter.class)
+    private Instant createdAt;
+
     @Column(name = "updated_at")
     @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant updatedAt;
 
     @PrePersist
     public void prePersist() {
+        if (createdAt == null) createdAt = Instant.now();
         if (decidedAt == null) decidedAt = Instant.now();
         if (updatedAt == null) updatedAt = Instant.now();
         if (refs == null) refs = "[]";
@@ -67,6 +72,8 @@ public class DnaDecision {
     public void setRefs(String refs) { this.refs = refs; }
     public String getProvenance() { return provenance; }
     public void setProvenance(String provenance) { this.provenance = provenance; }
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
 }

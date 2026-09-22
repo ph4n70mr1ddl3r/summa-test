@@ -77,7 +77,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return;
     }
 
-    private boolean isPublicPath(String path) {
+    static boolean isPublicPath(String path) {
         if (path == null) return false;
         if (PUBLIC_PATHS.contains(path)) return true;
         // Tolerate a trailing slash (e.g. /api/health/) without opening prefixes.

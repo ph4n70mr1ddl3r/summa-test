@@ -26,7 +26,7 @@ export default function DNADecisions() {
   }, [])
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
-  if (error) return <ErrorBanner message={escapeHtml(error)} onRetry={loadDecisions} />
+  if (error) return <ErrorBanner message={error} onRetry={loadDecisions} />
 
   return (
     <div className="space-y-6">

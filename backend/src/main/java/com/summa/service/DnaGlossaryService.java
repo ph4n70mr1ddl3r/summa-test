@@ -76,7 +76,7 @@ public class DnaGlossaryService {
                 .orElseThrow(() -> new EntityNotFoundException("Glossary entry not found: " + id));
 
         if (!"active".equals(entry.getStatus()) && !"draft".equals(entry.getStatus())) {
-            throw new IllegalStateException("Cannot update retired entry");
+            throw new IllegalArgumentException("Cannot update retired entry");
         }
 
         if (definition != null) entry.setDefinition(definition);

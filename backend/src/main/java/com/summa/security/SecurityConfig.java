@@ -32,15 +32,7 @@ public class SecurityConfig {
             .addFilterBefore(jwtFilter, RbacAuthorizationFilter.class)
             .addFilterBefore(rbacFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(request -> {
-                    String path = request.getRequestURI();
-                    for (String publicPath : JwtAuthenticationFilter.PUBLIC_PATHS) {
-                        if (path.equals(publicPath) || path.equals(publicPath + "/")) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }).permitAll()
+                .requestMatchers(request -> JwtAuthenticationFilter.isPublicPath(request.getRequestURI())).permitAll()
                 .anyRequest().authenticated()
             )
             .headers(headers -> headers

@@ -75,7 +75,7 @@ class DnaGoalServiceTest {
         goal.setStatus("met");
         when(goalRepository.findById("g1")).thenReturn(Optional.of(goal));
 
-        assertThrows(IllegalStateException.class, () ->
+        assertThrows(IllegalArgumentException.class, () ->
             goalService.updateStatus("g1", "active", "admin"));
     }
 
