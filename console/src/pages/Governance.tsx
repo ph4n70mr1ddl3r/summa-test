@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import { api } from '../services/api'
+import { api, loadWithFallback } from '../services/api'
 import type { SpendSnapshot } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
 import { ErrorBanner } from '../components/ErrorBanner'
-import { unwrapSettled } from '../services/api'
 
 export default function Governance() {
   const [policies, setPolicies] = useState<Record<string, unknown>>({})
@@ -16,32 +15,25 @@ export default function Governance() {
     setLoading(true)
     setError(null)
     let aborted = false
-    Promise.all([
-      api.governance.policies(),
-      api.governance.quotas(),
-      api.governance.spend(),
-    ]).then(([p, q, s]) => {
-        if (aborted) return
-        setPolicies(p)
-        setQuotas(q)
-        setSpend(s)
-        setLoading(false)
-        }).catch((e) => {
-        if (aborted) return
-        // Recover partial data from individual calls without overwriting already-loaded state
-        Promise.allSettled([
-          api.governance.policies().catch(() => null),
-          api.governance.quotas().catch(() => null),
-          api.governance.spend().catch(() => null),
-        ]).then(([pRes, qRes, sRes]) => {
-          if (aborted) return
-          setPolicies(prev => unwrapSettled(pRes) ?? prev)
-          setQuotas(prev => unwrapSettled(qRes) ?? prev)
-          setSpend(prev => unwrapSettled(sRes) ?? prev)
-          setError('Some data could not be loaded: ' + (e instanceof Error ? e.message : (typeof e === 'string' ? e : '')))
-          setLoading(false)
-        })
-      })
+    loadWithFallback(
+      () => Promise.all([
+        api.governance.policies(),
+        api.governance.quotas(),
+        api.governance.spend(),
+      ]),
+      () => Promise.all([
+        api.governance.policies().catch(() => null),
+        api.governance.quotas().catch(() => null),
+        api.governance.spend().catch(() => null),
+      ]),
+    ).then(({ data, error: loadError }) => {
+      if (aborted) return
+      setPolicies(data[0] as Record<string, unknown>)
+      setQuotas(data[1] as Record<string, unknown>)
+      setSpend(data[2] as SpendSnapshot | null)
+      setError(loadError)
+      setLoading(false)
+    })
     return () => { aborted = true }
   }
 

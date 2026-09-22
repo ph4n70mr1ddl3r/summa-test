@@ -115,7 +115,7 @@ export default function AskInbox() {
       )}
 
       {asks.length === 0 ? (
-        <div className="bg-gray-800 rounded-lg p-8 border border-gray-700 text-center">
+        <div className="bg-gray-800 rounded-lg p-8 border border-gray-700 text-center" aria-live="polite">
           <p className="text-gray-400">No pending asks.</p>
         </div>
       ) : (

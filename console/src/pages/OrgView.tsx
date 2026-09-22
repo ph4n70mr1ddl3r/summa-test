@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import { api } from '../services/api'
+import { api, loadWithFallback } from '../services/api'
 import type { Group, Member } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
 import { groupStatusColor, rbacRoleColor, agentStatusColor } from '../utils/formatting'
-import { unwrapSettled } from '../services/api'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function OrgView() {
@@ -16,31 +15,23 @@ export default function OrgView() {
     setLoading(true)
     setError(null)
     let aborted = false
-    Promise.all([
-      api.org.members(),
-      api.groups.list(),
-      ]).then(([m, g]) => {
-        if (aborted) return
-        setMembers(m.members)
-        setGroups(g)
-        setLoading(false)
-      }).catch((e) => {
-        if (aborted) return
-        // Recover partial data from individual calls without overwriting already-loaded state
-        Promise.allSettled([
-          api.org.members().catch(() => null),
-          api.groups.list().catch(() => null),
-        ]).then(([mRes, gRes]) => {
-          if (aborted) return
-          setMembers(prev => {
-            const data = unwrapSettled(mRes)
-            return data?.members ?? prev
-          })
-          setGroups(prev => unwrapSettled(gRes) ?? prev)
-          setError('Some data could not be loaded: ' + (e instanceof Error ? e.message : (typeof e === 'string' ? e : '')))
-          setLoading(false)
-        })
-      })
+    loadWithFallback(
+      () => Promise.all([
+        api.org.members(),
+        api.groups.list(),
+      ]),
+      () => Promise.all([
+        api.org.members().catch(() => null),
+        api.groups.list().catch(() => null),
+      ]),
+    ).then(({ data, error: loadError }) => {
+      if (aborted) return
+      const membersData = data[0]
+      setMembers(membersData != null && 'members' in membersData ? (membersData as { members: Member[] }).members : [])
+      setGroups(data[1] as Group[])
+      setError(loadError)
+      setLoading(false)
+    })
     return () => { aborted = true }
   }
 

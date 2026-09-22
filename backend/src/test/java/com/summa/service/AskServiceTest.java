@@ -171,10 +171,12 @@ class AskServiceTest {
         ask.setFrom("agent-1");
         ask.setTo("human-1");
         ask.setQuorumRequired(1);
+        ask.setKind("approval");
 
         when(askRepository.findExpiredBefore(any())).thenReturn(List.of(ask));
         when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
         when(askRepository.save(any())).thenReturn(ask);
+        lenient().when(askRepository.findByToAndStatusPending(any())).thenReturn(List.of());
 
         Human human1 = new Human();
         human1.setId("human-1");

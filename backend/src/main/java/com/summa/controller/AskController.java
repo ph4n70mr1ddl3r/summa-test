@@ -17,6 +17,7 @@ import java.util.Set;
 @RestController
 @RequestMapping("/asks")
 public class AskController {
+    private static final long MAX_DEADLINE_SECONDS = 365L * 86400; // 365 days
     private final AskService askService;
     private final AuditService auditService;
     private final WriteGate writeGate;
@@ -78,7 +79,7 @@ public class AskController {
                 if (deadlineSeconds <= 0) {
                     return ControllerResponses.validation(auditService, "deadlineSeconds must be positive");
                 }
-                if (deadlineSeconds > 365L * 86400) {
+                if (deadlineSeconds > MAX_DEADLINE_SECONDS) {
                     return ControllerResponses.validation(auditService, "deadlineSeconds must not exceed 365 days");
                 }
             }

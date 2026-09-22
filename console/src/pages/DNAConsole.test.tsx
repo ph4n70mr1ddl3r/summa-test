@@ -17,6 +17,19 @@ vi.mock('../services/api', () => ({
     if (result.status === 'fulfilled') return result.value ?? null;
     return null;
   },
+  loadWithFallback: async (fetchAll: () => Promise<unknown[]>, fetchIndividual: () => Promise<unknown[]>) => {
+    try {
+      const data = await fetchAll()
+      return { data, error: null }
+    } catch (e) {
+      const results = await fetchIndividual()
+      const hasError = results.some((r: unknown) => r === null)
+      const error = hasError
+        ? 'Some data could not be loaded: ' + (e instanceof Error ? e.message : String(e))
+        : null
+      return { data: results, error }
+    }
+  },
 }))
 
 describe('DNAConsole page', () => {

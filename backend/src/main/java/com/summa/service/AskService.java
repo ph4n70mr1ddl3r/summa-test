@@ -130,19 +130,23 @@ public class AskService {
         String collapseKey = buildCollapseKey(kind, to, payload);
         Instant now = Instant.now();
         long nowSeconds = now.getEpochSecond();
-        // Use computeIfAbsent for atomic check-and-insert to prevent race between
-        // reading the window and inserting a new entry.
-        ExpiringEntry<Instant> slotValue = collapseWindowTimestamps.computeIfAbsent(collapseKey, k -> new ExpiringEntry<>(now, nowSeconds + stormCollapseWindowSeconds));
-        if (nowSeconds - slotValue.value.getEpochSecond() < stormCollapseWindowSeconds) {
-            // Collapse: increment collapsed_count on nearest pending canonical
-            List<Ask> candidates = findPendingByKindAndTo(kind, to);
-            if (!candidates.isEmpty()) {
-                Ask canonical = candidates.get(0);
-                canonical.setCollapsedCount(canonical.getCollapsedCount() + 1);
-                Ask saved = askRepository.save(canonical);
-                auditService.log(from, "COLLAPSED_ASK", "ask", saved.getId(),
-                    String.format("{\"newAskId\":\"%s\",\"collapsedCount\":%d}", ask.getId(), saved.getCollapsedCount()));
-                return saved;
+        // Synchronize on the collapse window map to prevent TOCTOU race between
+        // checking the window and inserting a new entry. Without synchronization,
+        // two concurrent asks with the same key could both pass the window check
+        // and both create separate canonical asks instead of collapsing.
+        synchronized (collapseWindowTimestamps) {
+            ExpiringEntry<Instant> slotValue = collapseWindowTimestamps.computeIfAbsent(collapseKey, k -> new ExpiringEntry<>(now, nowSeconds + stormCollapseWindowSeconds));
+            if (nowSeconds - slotValue.value.getEpochSecond() < stormCollapseWindowSeconds) {
+                // Collapse: increment collapsed_count on nearest pending canonical
+                List<Ask> candidates = findPendingByKindAndTo(kind, to);
+                if (!candidates.isEmpty()) {
+                    Ask canonical = candidates.get(0);
+                    canonical.setCollapsedCount(canonical.getCollapsedCount() + 1);
+                    Ask saved = askRepository.save(canonical);
+                    auditService.log(from, "COLLAPSED_ASK", "ask", saved.getId(),
+                        String.format("{\"newAskId\":\"%s\",\"collapsedCount\":%d}", ask.getId(), saved.getCollapsedCount()));
+                    return saved;
+                }
             }
         }
 

@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { api } from '../services/api'
+import { api, loadWithFallback } from '../services/api'
 import type { DnaDomain, DnaCard, DnaGoal, DnaProposal } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
 import { ErrorBanner } from '../components/ErrorBanner'
-import { unwrapSettled } from '../services/api'
 import { domainAccessColor, proposalStatusColor } from '../utils/formatting'
 
 export default function DNAConsole() {
@@ -19,37 +18,28 @@ export default function DNAConsole() {
     setLoading(true)
     setError(null)
     let aborted = false
-    Promise.all([
-      api.dna.domains(),
-      api.dna.cards(),
-      api.dna.goals(),
-      api.dna.reviewQueue(),
-    ]).then(([d, c, g, p]) => {
-        if (aborted) return
-        setDomains(d)
-        setCards(c)
-        setGoals(g)
-        setProposals(p)
-        setLoading(false)
-      }).catch((e) => {
-        if (aborted) return
-        // If we get here, at least one call failed. Try to recover partial data
-        // without overwriting fields that already loaded successfully.
-        Promise.allSettled([
-          api.dna.domains().catch(() => null),
-          api.dna.cards().catch(() => null),
-          api.dna.goals().catch(() => null),
-          api.dna.reviewQueue().catch(() => null),
-        ]).then(([d, c, g, p]) => {
-          if (aborted) return
-          setDomains(prev => unwrapSettled(d) ?? prev)
-          setCards(prev => unwrapSettled(c) ?? prev)
-          setGoals(prev => unwrapSettled(g) ?? prev)
-          setProposals(prev => unwrapSettled(p) ?? prev)
-          setError('Some data could not be loaded: ' + (e instanceof Error ? e.message : (typeof e === 'string' ? e : '')))
-          setLoading(false)
-        })
-      })
+    loadWithFallback(
+      () => Promise.all([
+        api.dna.domains(),
+        api.dna.cards(),
+        api.dna.goals(),
+        api.dna.reviewQueue(),
+      ]),
+      () => Promise.all([
+        api.dna.domains().catch(() => null),
+        api.dna.cards().catch(() => null),
+        api.dna.goals().catch(() => null),
+        api.dna.reviewQueue().catch(() => null),
+      ]),
+    ).then(({ data, error: loadError }) => {
+      if (aborted) return
+      setDomains(data[0] as DnaDomain[])
+      setCards(data[1] as DnaCard[])
+      setGoals(data[2] as DnaGoal[])
+      setProposals(data[3] as DnaProposal[])
+      setError(loadError)
+      setLoading(false)
+    })
     return () => { aborted = true }
   }
 

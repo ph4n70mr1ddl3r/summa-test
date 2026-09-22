@@ -14,7 +14,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class SummaApplication {
     private static final Logger log = LoggerFactory.getLogger(SummaApplication.class);
-    private static final int MIN_JWT_SECRET_BYTES = 32;
+    public static final int MIN_JWT_SECRET_LENGTH = 32;
 
     public static void main(String[] args) {
         SpringApplication app = new SpringApplication(SummaApplication.class);
@@ -39,12 +39,12 @@ public class SummaApplication {
             log.error("FATAL: summa.auth.jwt-secret is not configured. Set SUMMA_JWT_SECRET environment variable.");
             throw new IllegalStateException("SUMMA_JWT_SECRET environment variable is required");
         }
-        if (jwtSecret.length() < MIN_JWT_SECRET_BYTES) {
+        if (jwtSecret.length() < MIN_JWT_SECRET_LENGTH) {
             log.error("FATAL: summa.auth.jwt-secret must be at least {} characters ({} bits recommended). Found {} characters.",
-                    MIN_JWT_SECRET_BYTES, MIN_JWT_SECRET_BYTES * 8, jwtSecret.length());
+                    MIN_JWT_SECRET_LENGTH, MIN_JWT_SECRET_LENGTH * 8, jwtSecret.length());
             throw new IllegalStateException(
-                "SUMMA_JWT_SECRET must be at least " + MIN_JWT_SECRET_BYTES + " characters ("
-                + MIN_JWT_SECRET_BYTES * 8 + " bits). Generate with: openssl rand -hex " + MIN_JWT_SECRET_BYTES);
+                "SUMMA_JWT_SECRET must be at least " + MIN_JWT_SECRET_LENGTH + " characters ("
+                + MIN_JWT_SECRET_LENGTH * 8 + " bits). Generate with: openssl rand -hex " + MIN_JWT_SECRET_LENGTH);
         }
         log.info("JWT secret validated: {} characters", jwtSecret.length());
     }

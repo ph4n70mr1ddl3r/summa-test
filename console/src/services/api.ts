@@ -126,6 +126,28 @@ export function unwrapSettled<T>(result: PromiseSettledResult<T>): T | null {
   return null;
 }
 
+/**
+ * Tries parallel fetches; on any failure, falls back to individual settle calls
+ * so that successfully-loaded data is still displayed. Returns an error string
+ * when at least one call failed, or null when all succeeded.
+ */
+export async function loadWithFallback<T>(
+  fetchAll: () => Promise<T[]>,
+  fetchIndividual: () => Promise<(T | null)[]>,
+): Promise<{ data: T[]; error: string | null }> {
+  try {
+    const data = await fetchAll()
+    return { data, error: null }
+  } catch (e) {
+    const results = await fetchIndividual()
+    const hasError = results.some(r => r === null)
+    const error = hasError
+      ? 'Some data could not be loaded: ' + (e instanceof Error ? e.message : (typeof e === 'string' ? e : ''))
+      : null
+    return { data: results as T[], error }
+  }
+}
+
 export interface Human {
   id: string;
   name: string;

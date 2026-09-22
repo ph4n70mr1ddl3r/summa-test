@@ -14,6 +14,7 @@ import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import com.summa.SummaApplication;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -31,8 +32,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (jwtSecret == null || jwtSecret.isBlank()) {
             throw new IllegalStateException("summa.auth.jwt-secret must not be blank");
         }
-        if (jwtSecret.length() < 32) {
-            throw new IllegalStateException("summa.auth.jwt-secret must be at least 32 characters (256 bits recommended), got " + jwtSecret.length());
+        if (jwtSecret.length() < SummaApplication.MIN_JWT_SECRET_LENGTH) {
+            throw new IllegalStateException("summa.auth.jwt-secret must be at least " + SummaApplication.MIN_JWT_SECRET_LENGTH + " characters (256 bits recommended), got " + jwtSecret.length());
         }
     }
 

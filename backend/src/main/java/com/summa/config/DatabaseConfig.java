@@ -1,11 +1,11 @@
 package com.summa.config;
 
-import javax.sql.DataSource;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import java.io.File;
 
@@ -16,7 +16,7 @@ public class DatabaseConfig {
     private String dbPath;
 
     @Bean
-    public DataSource dataSource() throws Exception {
+    public HikariDataSource dataSource() throws Exception {
         String path = expandPath(dbPath);
         File file = new File(path);
         File parent = file.getParentFile();
@@ -24,14 +24,21 @@ public class DatabaseConfig {
             parent.mkdirs();
         }
 
-        DriverManagerDataSource ds = new DriverManagerDataSource();
-        ds.setDriverClassName("org.sqlite.JDBC");
-        ds.setUrl("jdbc:sqlite:" + path + "?journal_mode=WAL&cache=shared");
-        return ds;
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl("jdbc:sqlite:" + path + "?journal_mode=WAL");
+        config.setDriverClassName("org.sqlite.JDBC");
+        config.setPoolName("SummaHikariPool");
+        config.setMaximumPoolSize(5);
+        config.setMinimumIdle(1);
+        config.setIdleTimeout(30000);
+        config.setMaxLifetime(600000);
+        config.setConnectionTestQuery("SELECT 1");
+
+        return new HikariDataSource(config);
     }
 
     @Bean
-    public JdbcTemplate jdbcTemplate(DataSource dataSource) {
+    public JdbcTemplate jdbcTemplate(HikariDataSource dataSource) {
         return new JdbcTemplate(dataSource);
     }
 

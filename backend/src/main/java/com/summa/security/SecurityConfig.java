@@ -26,7 +26,7 @@ public class SecurityConfig {
                                               JwtAuthenticationFilter jwtFilter,
                                               RbacAuthorizationFilter rbacFilter) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
+            .csrf(csrf -> csrf.disable()) // Stateless JWT auth; CSRF applies to browser-form submissions, not API tokens
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .addFilterBefore(nodeAuthFilter, JwtAuthenticationFilter.class)
             .addFilterBefore(jwtFilter, RbacAuthorizationFilter.class)

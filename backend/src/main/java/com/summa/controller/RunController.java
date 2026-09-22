@@ -14,6 +14,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/runs")
 public class RunController {
+    private static final int MAX_LIST_LIMIT = 200;
     private final RunService runService;
     private final AuditService auditService;
     private final WriteGate writeGate;
@@ -30,7 +31,7 @@ public class RunController {
             @RequestParam(required = false) String workspaceId,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "50") int limit) {
-        int cappedLimit = Math.min(Math.max(limit, 1), 200);
+        int cappedLimit = Math.min(Math.max(limit, 1), MAX_LIST_LIMIT);
         List<Run> all;
         if (agentId != null) {
             all = runService.findByAgent(agentId, cappedLimit);

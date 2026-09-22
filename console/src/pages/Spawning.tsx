@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
-import { api } from '../services/api'
+import { api, loadWithFallback } from '../services/api'
 import type { SpawnRequest, SpawnStats } from '../types'
 import { escapeHtml } from '../utils/escapeHtml'
 import { spawnStatusColor } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
-import { unwrapSettled } from '../services/api'
 
 export default function Spawning() {
   const [requests, setRequests] = useState<SpawnRequest[]>([])
@@ -16,28 +15,22 @@ export default function Spawning() {
     setLoading(true)
     setError(null)
     let aborted = false
-    Promise.all([
-      api.spawn.list(),
-      api.spawn.stats(),
-      ]).then(([r, s]) => {
-        if (aborted) return
-        setRequests(r)
-        setStats(s)
-        setLoading(false)
-      }).catch((e) => {
-        if (aborted) return
-        // Recover partial data from individual calls without overwriting already-loaded state
-        Promise.allSettled([
-          api.spawn.list().catch(() => null),
-          api.spawn.stats().catch(() => null),
-        ]).then(([rRes, sRes]) => {
-          if (aborted) return
-          setRequests(prev => unwrapSettled(rRes) ?? prev)
-          setStats(prev => unwrapSettled(sRes) ?? prev)
-          setError('Some data could not be loaded: ' + (e instanceof Error ? e.message : (typeof e === 'string' ? e : '')))
-          setLoading(false)
-        })
-      })
+    loadWithFallback(
+      () => Promise.all([
+        api.spawn.list(),
+        api.spawn.stats(),
+      ]),
+      () => Promise.all([
+        api.spawn.list().catch(() => null),
+        api.spawn.stats().catch(() => null),
+      ]),
+    ).then(({ data, error: loadError }) => {
+      if (aborted) return
+      setRequests(data[0] as SpawnRequest[])
+      setStats(data[1] as SpawnStats | null)
+      setError(loadError)
+      setLoading(false)
+    })
     return () => { aborted = true }
   }
 

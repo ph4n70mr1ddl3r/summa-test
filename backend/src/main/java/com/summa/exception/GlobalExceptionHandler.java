@@ -30,69 +30,38 @@ public class GlobalExceptionHandler {
         }
     }
 
+    private ResponseEntity<Map<String, Object>> auditAndRespond(String auditAction, String errorCode,
+            String message, HttpStatus status) {
+        String actor = currentActor();
+        AuditEvent audit = auditService.log(actor, auditAction, "http_request", errorCode, message);
+        if (audit == null) {
+            return ResponseEntity.status(status).body(Map.of("code", errorCode, "message", message));
+        }
+        return ResponseEntity.status(status).body(Map.of(
+            "code", errorCode,
+            "message", message,
+            "audit_event_id", audit.getId()
+        ));
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException e) {
-        String actor = currentActor();
-        AuditEvent audit = auditService.log(actor, "REFUSAL", "http_request", "validation", e.getMessage());
-        if (audit == null) {
-            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body(Map.of("code", "validation", "message", e.getMessage()));
-        }
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                .body(Map.of(
-                    "code", "validation",
-                    "message", e.getMessage(),
-                    "audit_event_id", audit.getId()
-                ));
+        return auditAndRespond("REFUSAL", "validation", e.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<Map<String, Object>> handleConflict(ConflictException e) {
-        String actor = currentActor();
-        AuditEvent audit = auditService.log(actor, "REFUSAL", "http_request", "conflict", e.getMessage());
-        if (audit == null) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("code", "conflict", "message", e.getMessage()));
-        }
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(Map.of(
-                    "code", "conflict",
-                    "message", e.getMessage(),
-                    "audit_event_id", audit.getId()
-                ));
+        return auditAndRespond("REFUSAL", "conflict", e.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalState(IllegalStateException e) {
-        String actor = currentActor();
-        String message = e.getMessage();
-        AuditEvent audit = auditService.log(actor, "REFUSAL", "http_request", "gate", message);
-        if (audit == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("code", "gate", "message", message));
-        }
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(Map.of(
-                    "code", "gate",
-                    "message", message,
-                    "audit_event_id", audit.getId()
-                ));
+        return auditAndRespond("REFUSAL", "gate", e.getMessage(), HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(EntityNotFoundException e) {
-        String actor = currentActor();
-        AuditEvent audit = auditService.log(actor, "REFUSAL", "http_request", "not_found", e.getMessage());
-        if (audit == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("code", "not_found", "message", e.getMessage()));
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of(
-                    "code", "not_found",
-                    "message", e.getMessage(),
-                    "audit_event_id", audit.getId()
-                ));
+        return auditAndRespond("REFUSAL", "not_found", e.getMessage(), HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
@@ -100,34 +69,13 @@ public class GlobalExceptionHandler {
         // Never leak SQL/schema text to clients — log the detail, return a generic code.
         log.warn("Data integrity conflict: {}", e.getMostSpecificCause() != null
                 ? e.getMostSpecificCause().getMessage() : e.getMessage());
-        String actor = currentActor();
-        AuditEvent audit = auditService.log(actor, "REFUSAL", "http_request", "resource_conflict", "Resource conflict: the request violates a uniqueness or integrity constraint");
-        if (audit == null) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("code", "conflict", "message", "Resource conflict: the request violates a uniqueness or integrity constraint"));
-        }
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(Map.of(
-                    "code", "conflict",
-                    "message", "Resource conflict: the request violates a uniqueness or integrity constraint",
-                    "audit_event_id", audit.getId()
-                ));
+        String message = "Resource conflict: the request violates a uniqueness or integrity constraint";
+        return auditAndRespond("REFUSAL", "resource_conflict", message, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneric(Exception e) {
         log.error("Unhandled exception", e);
-        String actor = currentActor();
-        AuditEvent audit = auditService.log(actor, "REFUSAL", "http_request", "internal_error", "Internal server error");
-        if (audit == null) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("code", "internal", "message", "Internal server error"));
-        }
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of(
-                    "code", "internal",
-                    "message", "Internal server error",
-                    "audit_event_id", audit.getId()
-                ));
+        return auditAndRespond("REFUSAL", "internal_error", "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
