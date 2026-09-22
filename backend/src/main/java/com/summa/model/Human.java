@@ -91,6 +91,7 @@ public class Human {
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
     public Instant getDeactivatedAt() { return deactivatedAt; }
     public void setDeactivatedAt(Instant deactivatedAt) { this.deactivatedAt = deactivatedAt; }
+    @JsonIgnore
     public String getPasswordHash() { return passwordHash; }
     @JsonIgnore
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }

@@ -3,7 +3,7 @@ package com.summa.util;
 import java.util.regex.Pattern;
 
 public final class KeyedUnionValidator {
-    public static final Pattern KEYED_UNION_PATTERN = Pattern.compile("^[ha]?:.+$");
+    public static final Pattern KEYED_UNION_PATTERN = Pattern.compile("^[ha]:.+$");
 
     private KeyedUnionValidator() {}
 

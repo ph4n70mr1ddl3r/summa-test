@@ -60,16 +60,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            Map<String, Object> payload = JwtUtil.parseToken(token, jwtSecret);
-            if (payload != null) {
-                String subject = (String) payload.get("sub");
-                request.setAttribute("authSubject", subject);
-                request.setAttribute("actor", subject);
-                filterChain.doFilter(request, response);
-                return;
+            if (authHeader.length() > 7) {
+                String token = authHeader.substring(7);
+                Map<String, Object> payload = JwtUtil.parseToken(token, jwtSecret);
+                if (payload != null) {
+                    String subject = (String) payload.get("sub");
+                    request.setAttribute("authSubject", subject);
+                    request.setAttribute("actor", subject);
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+                log.warn("[SUMMA] invalid/expired JWT from {} path={}", request.getRemoteAddr(), path);
             }
-            log.warn("[SUMMA] invalid/expired JWT from {} path={}", request.getRemoteAddr(), path);
         }
 
         // Reject requests without valid JWT

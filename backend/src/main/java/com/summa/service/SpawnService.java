@@ -360,7 +360,9 @@ public class SpawnService {
     private void validateScopeCeiling(String requesterId, String scopeCeiling) {
         try {
             Optional<Agent> parentOpt = agentRepository.findById(requesterId);
-            if (parentOpt.isEmpty()) return;
+            if (parentOpt.isEmpty()) {
+                throw new IllegalStateException("Parent agent not found for scope validation: " + requesterId);
+            }
             Agent parent = parentOpt.get();
             if (parent.getTemplateId() == null) return; // No template = no scope constraints
 

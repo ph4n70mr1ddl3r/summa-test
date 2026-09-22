@@ -90,6 +90,8 @@ public class WorkspaceController {
             return ResponseEntity.ok(ws);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
+        } catch (IllegalStateException e) {
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 

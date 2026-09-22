@@ -25,6 +25,9 @@ public class PatService {
 
     @Transactional
     public PatWithToken create(String memberId, String name, List<String> scopes, int expiryDays) {
+        if (expiryDays <= 0) {
+            throw new IllegalArgumentException("expiryDays must be positive");
+        }
         String rawToken = generateToken();
         String tokenHash = hashToken(rawToken);
 

@@ -89,7 +89,9 @@ public class RoleTemplateService {
                 String payload = String.format(
                     "{\"templateId\":\"%s\",\"newVersion\":%d,\"agentId\":\"%s\",\"agentName\":\"%s\"}",
                     id, nextVersion, agent.getId(), agent.getName());
-                askService.create("approval", agent.getOwnerHumanId(), "admins",
+                String askTo = agent.getOwnerHumanId() != null && !agent.getOwnerHumanId().isBlank()
+                    ? agent.getOwnerHumanId() : OffboardingWalkService.ADMIN_BROADCAST;
+                askService.create("approval", askTo, "admins",
                     payload, "standard", "deny", 1,
                     Instant.now().plusSeconds(7 * 86400L), null, null);
                 auditService.logSystem("UPGRADE_ASK_FILED", "role_template", id,

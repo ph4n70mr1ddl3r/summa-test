@@ -473,7 +473,7 @@ public class AskService {
         Ask ask = askRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Ask not found: " + id));
 
-        if (!ask.getFrom().equals(originator)) {
+        if (originator == null || !originator.equals(ask.getFrom())) {
             throw new IllegalArgumentException("Only the originator can withdraw");
         }
 

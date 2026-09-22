@@ -90,7 +90,7 @@ public class RunService {
         Run run = runRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Run not found: " + id));
         if (!"queued".equals(run.getStatus())) {
-            throw new IllegalArgumentException("Cannot start run with status: " + run.getStatus());
+            throw new IllegalStateException("Cannot start run with status: " + run.getStatus());
         }
         run.setStatus("running");
         run.setStartedAt(Instant.now());

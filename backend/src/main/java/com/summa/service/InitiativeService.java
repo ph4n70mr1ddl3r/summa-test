@@ -405,6 +405,9 @@ public class InitiativeService {
         // to the lead — the sponsor when the lead is non-active.
         String retrospectiveLead = isMemberActive(initiative.getLead())
             ? initiative.getLead() : initiative.getSponsor();
+        if (retrospectiveLead == null || retrospectiveLead.isBlank()) {
+            retrospectiveLead = OffboardingWalkService.ADMIN_BROADCAST;
+        }
         try {
             String retroPayload = String.format(
                 "{\"initiativeId\":\"%s\",\"title\":\"%s\",\"outcome\":\"closed\"}",

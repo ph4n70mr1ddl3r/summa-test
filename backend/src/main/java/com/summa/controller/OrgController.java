@@ -126,6 +126,8 @@ public class OrgController {
             return ResponseEntity.ok(human);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
+        } catch (IllegalStateException e) {
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
@@ -202,9 +204,6 @@ public class OrgController {
 
     @GetMapping("/lineage")
     public ResponseEntity<?> lineage(@RequestParam String memberId) {
-        if (memberId == null || memberId.isBlank()) {
-            return ControllerResponses.validation(auditService, "memberId is required");
-        }
         // API-004: full lineage graph from any member
         int depthCap = agentService.getDepthCap();
         List<String> lineage = new ArrayList<>();
@@ -236,6 +235,9 @@ public class OrgController {
             @RequestParam(defaultValue = "100") int limit,
             @RequestParam(required = false) String objectType,
             @RequestParam(required = false) String objectId) {
+        if (limit <= 0 || limit > 1000) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY).build();
+        }
         if (objectType != null && objectId != null) {
             return ResponseEntity.ok(orgService.getAuditLogForEntity(objectType, objectId));
         }

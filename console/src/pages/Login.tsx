@@ -21,7 +21,7 @@ export default function Login() {
     // Check both raw and decoded to catch double-encoding attacks
     const isSafe = (s: string) =>
       !s.startsWith('//') && !s.startsWith('http://') && !s.startsWith('https://') &&
-      !s.startsWith('javascript:') && !s.includes('://')
+      !s.startsWith('javascript:') && !s.includes('://') && !s.toLowerCase().startsWith('data:')
     if (isSafe(candidate) && isSafe(decoded)) {
       from = candidate
     }

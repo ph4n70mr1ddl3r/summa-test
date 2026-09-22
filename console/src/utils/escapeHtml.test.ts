@@ -26,8 +26,12 @@ describe('escapeHtml', () => {
     expect(escapeHtml('hello world')).toBe('hello world')
   })
 
-  it('converts newlines to <br /> tags', () => {
-    expect(escapeHtml('line1\nline2')).toBe('line1<br />line2')
+  it('preserves newlines as literal newline characters', () => {
+    expect(escapeHtml('line1\nline2')).toBe('line1\nline2')
+  })
+
+  it('normalizes CRLF to LF', () => {
+    expect(escapeHtml('line1\r\nline2')).toBe('line1\nline2')
   })
 
   it('escapes all special characters together', () => {

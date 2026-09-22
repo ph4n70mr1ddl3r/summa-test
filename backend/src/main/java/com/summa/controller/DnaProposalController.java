@@ -90,6 +90,8 @@ public class DnaProposalController {
             try {
                 DnaProposal proposal = proposalService.publish(id, reviewedBy != null && !reviewedBy.isBlank() ? reviewedBy : actor, actor);
                 return ResponseEntity.ok(proposal);
+            } catch (IllegalArgumentException e) {
+                return ControllerResponses.validation(auditService, e.getMessage());
             } catch (IllegalStateException e) {
                 return ControllerResponses.gate(auditService, e.getMessage());
             }
@@ -97,6 +99,8 @@ public class DnaProposalController {
             try {
                 DnaProposal proposal = proposalService.reject(id, reviewedBy != null && !reviewedBy.isBlank() ? reviewedBy : actor, actor);
                 return ResponseEntity.ok(proposal);
+            } catch (IllegalArgumentException e) {
+                return ControllerResponses.validation(auditService, e.getMessage());
             } catch (IllegalStateException e) {
                 return ControllerResponses.gate(auditService, e.getMessage());
             }

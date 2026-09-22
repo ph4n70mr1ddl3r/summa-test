@@ -9,7 +9,7 @@ export default function DNAProposals() {
   const [proposals, setProposals] = useState<DnaProposal[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [filter, setFilter] = useState<string>('all')
+  const [filter, setFilter] = useState<'all' | 'open' | 'published' | 'rejected' | 'withdrawn'>('all')
 
   const loadProposals = () => {
     setLoading(true)

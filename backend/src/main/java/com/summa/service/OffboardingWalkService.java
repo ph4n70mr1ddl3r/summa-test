@@ -294,9 +294,6 @@ public class OffboardingWalkService {
             human.setDeactivatedAt(Instant.now());
             memberService.saveHuman(human);
         });
-        if (humanOpt.isEmpty()) {
-            throw new IllegalStateException("Human not found during offboarding walk: " + humanId);
-        }
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("humanId", humanId);

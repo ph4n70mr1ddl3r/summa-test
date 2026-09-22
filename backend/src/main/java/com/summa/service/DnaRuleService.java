@@ -61,8 +61,8 @@ public class DnaRuleService {
         DnaRule rule = new DnaRule();
         rule.setId(id);
         rule.setDomainId(domainId);
-        rule.setStatementMd(statementMd);
-        rule.setMachineHint(machineHint);
+        rule.setStatementMd(statementMd != null ? statementMd : "");
+        rule.setMachineHint(machineHint != null ? machineHint : "");
         rule.setEffectiveFrom(effectiveFrom);
         rule.setEffectiveTo(effectiveTo);
         rule.setSupersedesId(supersedesId);

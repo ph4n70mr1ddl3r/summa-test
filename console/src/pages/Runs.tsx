@@ -9,7 +9,7 @@ export default function Runs() {
   const [runs, setRuns] = useState<Run[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [filter, setFilter] = useState<string>('all')
+  const [filter, setFilter] = useState<'all' | 'queued' | 'running' | 'suspended' | 'completed' | 'failed' | 'cancelled'>('all')
 
   const loadRuns = () => {
     setLoading(true)

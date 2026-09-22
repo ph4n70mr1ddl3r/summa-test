@@ -69,10 +69,10 @@ export default function AskInbox() {
       setSubmitSuccess('Response recorded')
       setRespondingId(null)
       setResponseText('')
-      loadAsks()
+      await loadAsks()
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err))
-      loadAsks()
+      await loadAsks()
     } finally {
       setRespondingForId(null)
     }
@@ -81,10 +81,10 @@ export default function AskInbox() {
   const handleWithdraw = async (id: string) => {
     try {
       await api.asks.withdraw(id)
-      loadAsks()
+      await loadAsks()
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err))
-      loadAsks()
+      await loadAsks()
     }
   }
 

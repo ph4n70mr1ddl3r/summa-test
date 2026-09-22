@@ -38,7 +38,7 @@ export default function Memory() {
       await api.memory.review(id)
       setReviewResult('Item reviewed and taint cleared')
       setReviewingId(null)
-      loadItems()
+      await loadItems()
     } catch (err) {
       setReviewResult(err instanceof Error ? err.message : String(err))
       setReviewingForId(null)

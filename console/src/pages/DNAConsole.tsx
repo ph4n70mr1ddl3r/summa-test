@@ -67,7 +67,7 @@ export default function DNAConsole() {
       <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-blue-300">Domains ({domains.length})</h3>
-          <NavLink to="/dna/cards" className="text-sm text-blue-400 hover:text-blue-300">Manage →</NavLink>
+          <NavLink to="/dna/cards" className="text-sm text-blue-400 hover:text-blue-300" aria-label="Manage DNA cards">Manage →</NavLink>
         </div>
         {domains.length === 0 ? (
           <p className="text-gray-500 text-sm">No domains configured.</p>
@@ -88,7 +88,7 @@ export default function DNAConsole() {
       <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-blue-300">Review Queue ({proposals.length} open)</h3>
-           <NavLink to="/dna/proposals" className="text-sm text-blue-400 hover:text-blue-300">Review →</NavLink>
+            <NavLink to="/dna/proposals" className="text-sm text-blue-400 hover:text-blue-300" aria-label="Review DNA proposals">Review →</NavLink>
         </div>
         {proposals.length === 0 ? (
           <p className="text-gray-500 text-sm">No open proposals.</p>
