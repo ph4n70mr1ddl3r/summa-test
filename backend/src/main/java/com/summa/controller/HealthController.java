@@ -17,7 +17,7 @@ public class HealthController {
     @Value("${summa.mode:single-process}")
     private String mode;
 
-    @Value("${summa.git.dna-repo-path:~/.summa/dna}")
+    @Value("${summa.git.dna-repo-path:${user.home}/.summa/dna}")
     private String dnaRepoPath;
 
     private final JdbcTemplate jdbcTemplate;

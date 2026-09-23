@@ -47,8 +47,8 @@ describe('spawnStatusColor', () => {
     expect(spawnStatusColor('approved' as SpawnStatus)).toContain('green')
   })
 
-  it('returns red for denied', () => {
-    expect(spawnStatusColor('denied' as SpawnStatus)).toContain('red')
+  it('returns orange for halted', () => {
+    expect(spawnStatusColor('halted' as SpawnStatus)).toContain('orange')
   })
 
   it('returns gray for expired', () => {

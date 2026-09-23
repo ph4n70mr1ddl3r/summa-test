@@ -256,7 +256,7 @@ export interface SpawnRequest {
   createdAt?: number;
 }
 
-export type SpawnStatus = 'requested' | 'approved' | 'denied' | 'halted' | 'expired' | 'archived';
+export type SpawnStatus = 'requested' | 'approved' | 'halted' | 'expired' | 'archived';
 export interface SpawnStats {
   requested: number;
   approved: number;

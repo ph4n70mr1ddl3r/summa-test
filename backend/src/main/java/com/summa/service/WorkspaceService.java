@@ -184,7 +184,7 @@ public class WorkspaceService {
                     }
                 }
                 auditService.log(actor, "ARCHIVE_CLEAR_NODE_CLAIM", "node", previousNodeId,
-                    String.format("{\"workspaceId\":\"%s\",\"reason\":\"workspace_archived\"}", id));
+                    String.format("{\"workspaceId\":%s,\"reason\":\"workspace_archived\"}", JsonHelpers.jsonString(id)));
             });
         }
 
@@ -195,7 +195,7 @@ public class WorkspaceService {
                 t.setStatus("paused");
                 triggerRepository.save(t);
                 auditService.log(actor, "ARCHIVE_PAUSE_TRIGGER", "trigger", t.getId(),
-                    String.format("{\"workspaceId\":\"%s\",\"reason\":\"workspace_archived\"}", id));
+                    String.format("{\"workspaceId\":%s,\"reason\":\"workspace_archived\"}", JsonHelpers.jsonString(id)));
             }
         }
 
@@ -208,7 +208,7 @@ public class WorkspaceService {
         }
         for (Playbook pb : boundPlaybooks) {
             auditService.log(actor, "ARCHIVE_NOTE_PLAYBOOK", "playbook", pb.getId(),
-                String.format("{\"workspaceId\":\"%s\",\"reason\":\"workspace_archived\"}", id));
+                String.format("{\"workspaceId\":%s,\"reason\":\"workspace_archived\"}", JsonHelpers.jsonString(id)));
         }
 
         // CLC-040: Archive pending spawn requests binding to this workspace
@@ -217,7 +217,7 @@ public class WorkspaceService {
             sr.setStatus("archived");
             spawnRequestRepository.save(sr);
             auditService.log(actor, "ARCHIVE_PENDING_SPAWN", "spawn_request", sr.getId(),
-                String.format("{\"workspaceId\":\"%s\",\"reason\":\"workspace_archived\"}", id));
+                String.format("{\"workspaceId\":%s,\"reason\":\"workspace_archived\"}", JsonHelpers.jsonString(id)));
         }
 
         ws.setArchivedAt(Instant.now());

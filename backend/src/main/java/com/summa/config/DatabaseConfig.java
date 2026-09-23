@@ -12,7 +12,7 @@ import java.io.File;
 @Configuration
 public class DatabaseConfig {
 
-    @Value("${summa.database.path:~/.summa/summa.db}")
+    @Value("${summa.database.path:${user.home}/.summa/summa.db}")
     private String dbPath;
 
     @Bean

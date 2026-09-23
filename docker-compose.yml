@@ -26,7 +26,7 @@ services:
       - SUMMA_CORS_ORIGINS=${SUMMA_CORS_ORIGINS:-}
       - SUMMA_SPEND_CEILING=${SUMMA_SPEND_CEILING:-1000000}
       - SUMMA_GIT_BRANCH=${SUMMA_GIT_BRANCH:-main}
-      - SUMMA_LOCAL_AUTH_ENABLED=${SUMMA_LOCAL_AUTH_ENABLED:true}
+      - SUMMA_LOCAL_AUTH_ENABLED=${SUMMA_LOCAL_AUTH_ENABLED:-true}
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:8080/api/health || exit 1"]

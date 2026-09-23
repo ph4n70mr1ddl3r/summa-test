@@ -32,9 +32,13 @@ fi
 echo "Java version: $(java -version 2>&1 | head -n 1)"
 
 # Find the backend JAR
+if [ ! -d "backend/target" ]; then
+    echo "ERROR: backend/target/ not found. Run 'npm run build:backend' (or 'cd backend && mvn package') first."
+    exit 1
+fi
 JAR_FILE=$(ls backend/target/summa-backend-*.jar 2>/dev/null | grep -v sources | grep -v plain | head -n 1)
 if [ -z "$JAR_FILE" ]; then
-    echo "ERROR: Backend JAR not found. Run 'npm run build:backend' (or 'cd backend && mvn package') first."
+    echo "ERROR: Backend JAR not found in backend/target/. Run 'npm run build:backend' (or 'cd backend && mvn package') first."
     exit 1
 fi
 echo "Using JAR: $JAR_FILE"

@@ -86,14 +86,17 @@ public class AgentService {
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public Optional<Agent> findById(String id) {
         return agentRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<Agent> findAll() {
         return agentRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public List<Agent> findAllActive() {
         return agentRepository.findAllActive();
     }

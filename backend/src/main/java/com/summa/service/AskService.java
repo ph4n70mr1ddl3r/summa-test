@@ -160,26 +160,32 @@ public class AskService {
         }
     }
 
+    @Transactional(readOnly = true)
     public Optional<Ask> findById(String id) {
         return askRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<Ask> findByTo(String to) {
         return askRepository.findByTo(to);
     }
 
+    @Transactional(readOnly = true)
     public List<Ask> findByToAndStatusPending(String to) {
         return askRepository.findByToAndStatusPending(to);
     }
 
+    @Transactional(readOnly = true)
     public List<Ask> findByStatus(String status) {
         return askRepository.findByStatus(status);
     }
 
+    @Transactional(readOnly = true)
     public List<Ask> findAllPending() {
         return askRepository.findByStatus("pending");
     }
 
+    @Transactional(readOnly = true)
     public List<Ask> findExpired() {
         return askRepository.findExpiredBefore(Instant.now());
     }

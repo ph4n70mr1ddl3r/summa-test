@@ -109,6 +109,9 @@ public class DnaGoalService {
         if (effectiveFrom == null && effectiveTo == null) {
             throw new IllegalArgumentException("At least one of effectiveFrom or effectiveTo must be provided");
         }
+        if (effectiveFrom != null && effectiveTo != null && effectiveTo.isBefore(effectiveFrom)) {
+            throw new IllegalArgumentException("effectiveTo must not be before effectiveFrom");
+        }
         if (effectiveFrom != null) goal.setEffectiveFrom(effectiveFrom);
         if (effectiveTo != null) goal.setEffectiveTo(effectiveTo);
 

@@ -186,18 +186,22 @@ public class InitiativeService {
         return false;
     }
 
+    @Transactional(readOnly = true)
     public Optional<Initiative> findById(String id) {
         return initiativeRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<Initiative> findAll() {
         return initiativeRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public List<Initiative> findAllActive() {
         return initiativeRepository.findByStatus("active");
     }
 
+    @Transactional(readOnly = true)
     public List<Initiative> findByStatus(String status) {
         return initiativeRepository.findByStatus(status);
     }

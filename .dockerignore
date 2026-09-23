@@ -14,9 +14,6 @@ console/.vite
 console/dist
 .env
 .env.*
-.env.local
-.env.production
-.env.*.local
 *.keystore
 *.p12
 *.jks

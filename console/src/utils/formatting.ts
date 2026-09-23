@@ -65,7 +65,6 @@ export function spawnStatusColor(status: SpawnStatus): string {
   switch (status) {
     case 'requested': return 'bg-yellow-900/50 text-yellow-400'
     case 'approved': return 'bg-green-900/50 text-green-400'
-    case 'denied': return 'bg-red-900/50 text-red-400'
     case 'halted': return 'bg-orange-900/50 text-orange-400'
     case 'expired': return 'bg-gray-600 text-gray-400'
     case 'archived': return 'bg-gray-600 text-gray-400'
