@@ -151,7 +151,8 @@ public class OffboardingWalkService {
         }
 
         // OFB-011: Re-own or retire dependent agents
-        for (Agent agent : agentService.findByOwner(humanId)) {
+        List<Agent> ownedAgents = agentService.findByOwner(humanId);
+        for (Agent agent : ownedAgents) {
             agent.setOwnerHumanId(finalTargetOwner);
             // Retire personal assistants (CLC-051: mirrored scopes die with member)
             if (isPersonalAssistant(agent)) {
@@ -163,7 +164,8 @@ public class OffboardingWalkService {
         }
 
         // OFB-012: Reassign initiatives (sponsor/lead) — only active ones
-        for (Initiative init : initiativeService.findAllActive()) {
+        List<Initiative> activeInitiatives = initiativeService.findAllActive();
+        for (Initiative init : activeInitiatives) {
             boolean changed = false;
             if (Objects.equals(humanId, init.getSponsor())) {
                 init.setSponsor(finalTargetOwner);
@@ -359,7 +361,8 @@ public class OffboardingWalkService {
         }
 
         // OFB-030/033: Re-own or retire dependent agents; personal assistants always retire
-        for (Agent agent : agentService.findByOwner(humanId)) {
+        List<Agent> ownedAgentsDemote = agentService.findByOwner(humanId);
+        for (Agent agent : ownedAgentsDemote) {
             // CLC-051: demotion to viewer retires the assistant (mirrored viewer scopes are read-only)
             if ("viewer".equals(newRbac) && isPersonalAssistant(agent)) {
                 agentService.retire(agent.getId(), actor);
@@ -375,7 +378,8 @@ public class OffboardingWalkService {
         }
 
         // OFB-032: Withdraw authored open proposals when new role cannot propose
-        for (DnaProposal prop : proposalService.findAllOpen()) {
+        List<DnaProposal> openProposals = proposalService.findAllOpen();
+        for (DnaProposal prop : openProposals) {
             if (!humanId.equals(prop.getProposedBy())) continue;
             boolean canPropose = !"viewer".equals(newRbac);
             if (!canPropose) {
@@ -388,7 +392,8 @@ public class OffboardingWalkService {
         }
 
         // OFB-031: Reassign or retire sponsored/led initiatives
-        for (Initiative init : initiativeService.findAllActive()) {
+        List<Initiative> activeForDemote = initiativeService.findAllActive();
+        for (Initiative init : activeForDemote) {
             boolean changed = false;
             if (Objects.equals(humanId, init.getSponsor())) {
                 init.setSponsor(targetOwner);
@@ -439,7 +444,8 @@ public class OffboardingWalkService {
         }
 
         // OFB-031: Close asks to the member up the chain; asks from the member close with audit note
-        for (Ask ask : askRepository.findByStatus("pending")) {
+        List<Ask> pendingAsks = askRepository.findByStatus("pending");
+        for (Ask ask : pendingAsks) {
             if (humanId.equals(ask.getTo())) {
                 ask.setTo(targetOwner);
                 askRepository.save(ask);
@@ -464,7 +470,8 @@ public class OffboardingWalkService {
         }
 
         // OFB-014/OFB-031: Clear workspace participant entries and named domain access
-        for (Workspace ws : workspaceRepository.findAll()) {
+        List<Workspace> allWorkspaces = workspaceRepository.findAll();
+        for (Workspace ws : allWorkspaces) {
             boolean changed = false;
             if (ws.getParticipants() != null && !ws.getParticipants().isBlank()
                     && !ws.getParticipants().equals("[]")) {

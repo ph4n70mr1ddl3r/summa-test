@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { DnaCard } from '../types'
 import { formatDate, dnaCardStatusColor, truncateSnippet } from '../utils/formatting'
+import { escapeHtml } from '../utils/escapeHtml'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function DNACards() {
@@ -51,7 +52,7 @@ export default function DNACards() {
                 </span>
               </div>
               <pre className="mt-2 text-xs text-gray-400 bg-gray-900 rounded p-3 overflow-x-auto whitespace-pre-wrap">
-                {truncateSnippet(card.definitionMd, 200)}
+                {escapeHtml(truncateSnippet(card.definitionMd, 200))}
               </pre>
               <p className="text-xs text-gray-500 mt-2">v{card.version} · Created {card.createdAt ? formatDate(card.createdAt, { dateOnly: true }) : '?'}</p>
             </div>

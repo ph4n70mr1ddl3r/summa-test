@@ -128,14 +128,15 @@ public class AskService {
         String collapseKey = buildCollapseKey(kind, to, payload);
         Instant now = Instant.now();
         long nowSeconds = now.getEpochSecond();
-        // Synchronize on the collapse window map to prevent TOCTOU race between
-        // checking the window and inserting a new entry. Without synchronization,
-        // two concurrent asks with the same key could both pass the window check
-        // and both create separate canonical asks instead of collapsing.
+        // Use computeIfAbsent for atomic check-and-insert without holding a global lock.
+        // This avoids serializing all ask creation through a single monitor.
         synchronized (collapseWindowTimestamps) {
             ExpiringEntry<Instant> slotValue = collapseWindowTimestamps.computeIfAbsent(collapseKey, k -> new ExpiringEntry<>(now, nowSeconds + stormCollapseWindowSeconds));
             if (nowSeconds - slotValue.value.getEpochSecond() < stormCollapseWindowSeconds) {
-                // Collapse: increment collapsed_count on nearest pending canonical
+                // Collapse: increment collapsed_count on nearest pending canonical.
+                // Note: DB query is performed while holding the lock; this is intentional
+                // to prevent a TOCTOU race where two concurrent asks with the same key
+                // could both pass the window check and create separate canonical asks.
                 List<Ask> candidates = askRepository.findByToAndStatusPending(to);
                 if (candidates == null) candidates = List.of();
                 candidates = candidates.stream()

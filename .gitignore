@@ -6,12 +6,7 @@ build/
 *.war
 *.ear
 .env
-.env.local
-.env.production
-.env.development
-.env.test
-.env.*.local
-.env.test.*
+.env.*
 .DS_Store
 *.log
 coverage/
@@ -26,7 +21,6 @@ console/.vite/
 .opencode/node_modules/
 .opencode/package-lock.json
 .summa/
-target/logs/
 *.keystore
 *.p12
 *.jks

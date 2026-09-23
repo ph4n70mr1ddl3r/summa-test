@@ -6,13 +6,15 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     ports:
       - "8080:8080"
     volumes:
       - summa-data:/data
     environment:
-      - SUMMA_DB_PATH=/data/db/summa.db
-      - SUMMA_DNA_REPO=/data/dna
+      - SUMMA_DB_PATH=${SUMMA_DB_PATH:-/data/db/summa.db}
+      - SUMMA_DNA_REPO=${SUMMA_DNA_REPO:-/data/dna}
       # JWT secret must be set and at least 32 characters (validated at startup)
       - SUMMA_JWT_SECRET=${SUMMA_JWT_SECRET:?JWT secret must be set and at least 32 characters}
       - SUMMA_CORS_ORIGINS=${SUMMA_CORS_ORIGINS:-}
@@ -45,6 +47,8 @@ services:
         VITE_API_URL: ${VITE_API_URL:-/api}
         VITE_SUMMA_MODE: ${VITE_SUMMA_MODE:-single-process}
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     ports:
       - "3000:80"
     depends_on:

@@ -36,7 +36,9 @@ public class GovernanceService {
         double override = 0.0;
         if (spendCeilingStr != null && !spendCeilingStr.isBlank()) {
             try { override = Double.parseDouble(spendCeilingStr.trim()); }
-            catch (NumberFormatException ignored) {}
+            catch (NumberFormatException e) {
+                log.debug("Invalid spend ceiling override '{}': {}", spendCeilingStr, e.getMessage());
+            }
         }
         this.spendCeilingOverride = override > 0 ? override : -1.0;
     }
@@ -62,24 +64,34 @@ public class GovernanceService {
         if (type.equals(Integer.class) || type.equals(int.class)) {
             if (value instanceof Number) return type.cast(((Number) value).intValue());
             try { return type.cast((int) Math.round(Double.parseDouble(value.toString()))); }
-            catch (NumberFormatException ignored) {
+            catch (NumberFormatException e) {
+                log.debug("Cannot cast '{}' to Integer: {}", value, e.getMessage());
                 try { return type.cast(Integer.parseInt(value.toString())); }
-                catch (NumberFormatException ignored2) {}
+                catch (NumberFormatException e2) {
+                    log.debug("Cannot cast '{}' to Integer: {}", value, e2.getMessage());
+                }
             }
             return null;
         }
         if (type.equals(Long.class) || type.equals(long.class)) {
             if (value instanceof Number) return type.cast(((Number) value).longValue());
             try { return type.cast((long) Math.round(Double.parseDouble(value.toString()))); }
-            catch (NumberFormatException ignored) {
+            catch (NumberFormatException e) {
+                log.debug("Cannot cast '{}' to Long: {}", value, e.getMessage());
                 try { return type.cast(Long.parseLong(value.toString())); }
-                catch (NumberFormatException ignored2) {}
+                catch (NumberFormatException e2) {
+                    log.debug("Cannot cast '{}' to Long: {}", value, e2.getMessage());
+                }
             }
             return null;
         }
         if (type.equals(Double.class) || type.equals(double.class)) {
             if (value instanceof Number) return type.cast(((Number) value).doubleValue());
-            return type.cast(Double.parseDouble(value.toString()));
+            try { return type.cast(Double.parseDouble(value.toString())); }
+            catch (NumberFormatException e) {
+                log.debug("Cannot cast '{}' to Double: {}", value, e.getMessage());
+                return null;
+            }
         }
         if (type.equals(Boolean.class) || type.equals(boolean.class)) {
             return type.cast(Boolean.parseBoolean(value.toString()));
@@ -132,10 +144,10 @@ public class GovernanceService {
         } catch (PersistenceException e) {
             // SEC-011/SPW-060: Fail-closed on DB errors — a corrupted ledger must
             // trip the breaker rather than silently allow unchecked spending.
-            log.error("[SUMMA] spend halt evaluation failed (DB error), tripping breaker: {}", e.getMessage());
+            log.error("[SUMMA] spend halt evaluation failed (DB error), tripping breaker: {}", e.getMessage(), e);
             return true;
         } catch (Exception e) {
-            log.error("[SUMMA] spend halt evaluation failed, tripping breaker: {}", e.getMessage());
+            log.error("[SUMMA] spend halt evaluation failed, tripping breaker: {}", e.getMessage(), e);
             return true;
         }
     }

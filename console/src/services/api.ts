@@ -2,6 +2,11 @@ const API_BASE = import.meta.env.VITE_API_URL || '/api';
 const TOKEN_KEY = 'summa_auth_token';
 const USER_KEY = 'summa_user';
 const REQUEST_TIMEOUT_MS = 30000;
+declare global {
+  interface Window {
+    __summaRedirecting?: boolean;
+  }
+}
 
 export class ApiError extends Error {
   status: number;
@@ -114,10 +119,15 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       const err = new ApiError(message, res.status);
       if (res.status === 401 || res.status === 403) {
         setAuthToken(null);
-        if (navigateRef) {
-          navigateRef('/login', { replace: true });
-        } else {
-          window.location.href = '/login';
+        // Prevent duplicate redirects if multiple requests fail simultaneously
+        if (!window.__summaRedirecting) {
+          window.__summaRedirecting = true;
+          if (navigateRef) {
+            navigateRef('/login', { replace: true });
+          } else {
+            window.location.href = '/login';
+          }
+          setTimeout(() => { window.__summaRedirecting = false; }, 1000);
         }
         throw err;
       }

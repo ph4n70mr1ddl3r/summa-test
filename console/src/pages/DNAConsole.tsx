@@ -32,10 +32,10 @@ export default function DNAConsole() {
       ]),
     ).then(({ data, error: loadError }) => {
       if (aborted) return
-      setDomains(data[0] as DnaDomain[])
-      setCards(data[1] as DnaCard[])
-      setGoals(data[2] as DnaGoal[])
-      setProposals(data[3] as DnaProposal[])
+      setDomains(Array.isArray(data[0]) ? data[0] as DnaDomain[] : [])
+      setCards(Array.isArray(data[1]) ? data[1] as DnaCard[] : [])
+      setGoals(Array.isArray(data[2]) ? data[2] as DnaGoal[] : [])
+      setProposals(Array.isArray(data[3]) ? data[3] as DnaProposal[] : [])
       setError(loadError)
       setLoading(false)
     })

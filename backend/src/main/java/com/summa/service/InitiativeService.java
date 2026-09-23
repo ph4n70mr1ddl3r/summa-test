@@ -313,10 +313,7 @@ public class InitiativeService {
 
         // INT-022 / INT-040: Unbind workspaces and archive pending spawn requests
         try {
-            List<Workspace> boundWorkspaces = workspaceRepository.findAll().stream()
-                .filter(ws -> ws.getInitiativeIds() != null && !ws.getInitiativeIds().isBlank()
-                    && !ws.getInitiativeIds().equals("[]"))
-                .toList();
+            List<Workspace> boundWorkspaces = workspaceRepository.findByInitiativeIdsContaining(id);
             for (Workspace ws : boundWorkspaces) {
                 try {
                     JsonNode initIds = objectMapper.readTree(ws.getInitiativeIds());
@@ -354,10 +351,7 @@ public class InitiativeService {
 
         // INT-040: Archive pending spawn requests with template pins drained
         try {
-            List<SpawnRequest> pendingSpawns = spawnRequestRepository.findByStatus("requested").stream()
-                .filter(sr -> sr.getWorkspaceBindings() != null && !sr.getWorkspaceBindings().isBlank()
-                    && !sr.getWorkspaceBindings().equals("[]"))
-                .toList();
+            List<SpawnRequest> pendingSpawns = spawnRequestRepository.findByStatusAndWorkspaceBindingsContaining("requested", id);
             for (SpawnRequest sr : pendingSpawns) {
                 try {
                     JsonNode bindings = objectMapper.readTree(sr.getWorkspaceBindings());
@@ -582,7 +576,7 @@ public class InitiativeService {
      * sponsor: proceed, re-base (dependency edge re-pointed), or pause.
      */
     private void raiseDependentCloseAsks(String closedId, String actor) {
-        List<Initiative> allInitiatives = findAll();
+        List<Initiative> allInitiatives = initiativeRepository.findAll();
         for (Initiative dep : allInitiatives) {
             if ("closed".equals(dep.getStatus())) continue;
             if (dep.getId().equals(closedId)) continue;

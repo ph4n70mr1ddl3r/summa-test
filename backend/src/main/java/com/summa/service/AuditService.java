@@ -2,6 +2,8 @@ package com.summa.service;
 
 import com.summa.repository.AuditEventRepository;
 import com.summa.model.AuditEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,6 +16,7 @@ import com.summa.util.JsonHelpers;
 
 @Service
 public class AuditService {
+    private static final Logger log = LoggerFactory.getLogger(AuditService.class);
     // Patterns to redact sensitive data from audit log details
     private static final Pattern PASSWORD_PATTERN = Pattern.compile(
         "(?i)(password|passwd|pwd|secret|token_hash)\\s*[:=]\\s*\"[^\"]{3,}\"|" +
@@ -85,8 +88,9 @@ public class AuditService {
                 }
                 return obj.toString();
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
             // Not valid JSON — fall through to regex-based redaction
+            log.trace("Detail is not valid JSON, using regex redaction: {}", e.getMessage());
         }
         String sanitized = PASSWORD_PATTERN.matcher(detail).replaceAll("\"$1\":\"[REDACTED]\"");
         sanitized = EMAIL_PATTERN.matcher(sanitized).replaceAll("\"$1\":\"[REDACTED]\"");

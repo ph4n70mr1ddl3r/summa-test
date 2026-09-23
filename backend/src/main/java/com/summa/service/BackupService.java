@@ -48,7 +48,7 @@ public class BackupService {
             try {
                 jdbcTemplate.execute("PRAGMA wal_checkpoint(PASSIVE)");
             } catch (Exception e) {
-                log.warn("WAL checkpoint failed, proceeding with best-effort backup: {}", e.getMessage());
+                log.warn("WAL checkpoint failed, proceeding with best-effort backup: {}", e.getMessage(), e);
             }
             Path dbDest = backupPath.resolve("summa.db");
             Files.copy(dbSrc, dbDest, StandardCopyOption.REPLACE_EXISTING);
@@ -176,9 +176,12 @@ public class BackupService {
         try (java.util.stream.Stream<Path> walk = Files.walk(restoreDir)) {
             walk.sorted((a, b) -> b.compareTo(a))
                 .forEach(p -> {
-                    try { Files.delete(p); } catch (IOException ignored) {}
+                    try { Files.delete(p); }
+                    catch (IOException e) { log.warn("Failed to delete restored path {}: {}", p, e.getMessage()); }
                 });
-        } catch (IOException ignored) {}
+        } catch (IOException e) {
+            log.warn("Failed to delete restored directory: {}", e.getMessage());
+        }
     }
 
     private void copyPathQuietly(Path source, Path dest, Path root) {
@@ -186,7 +189,7 @@ public class BackupService {
             Path destination = dest.resolve(root.relativize(source));
             Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            log.warn("Failed to copy path: {}", e.getMessage());
+            log.warn("Failed to copy path: {}", e.getMessage(), e);
         }
     }
 
@@ -204,7 +207,7 @@ public class BackupService {
                 }
             }
         } catch (IOException e) {
-            log.warn("Failed to add zip entry: {}", e.getMessage());
+            log.warn("Failed to add zip entry: {}", e.getMessage(), e);
         }
     }
 
@@ -212,7 +215,7 @@ public class BackupService {
         try {
             Files.delete(p);
         } catch (IOException e) {
-            log.warn("Failed to delete path: {}", e.getMessage());
+            log.warn("Failed to delete path: {}", e.getMessage(), e);
         }
     }
 

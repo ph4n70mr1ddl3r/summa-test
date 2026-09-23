@@ -183,8 +183,9 @@ public class WorkspaceService {
             }
         }
 
+        List<Playbook> allPlaybooks = playbookRepository.findAll();
         List<Playbook> boundPlaybooks = new ArrayList<>();
-        for (Playbook pb : playbookRepository.findAll()) {
+        for (Playbook pb : allPlaybooks) {
             if (pb.getBody() != null && isWorkspaceReferencedInJson(pb.getBody(), id)) {
                 boundPlaybooks.add(pb);
             }
