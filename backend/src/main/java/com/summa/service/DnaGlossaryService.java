@@ -3,6 +3,8 @@ package com.summa.service;
 import com.summa.repository.DnaGlossaryRepository;
 import com.summa.model.DnaGlossary;
 import com.summa.exception.EntityNotFoundException;
+import com.summa.util.ScanUtils;
+import com.summa.service.SecretsScanner;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -12,10 +14,13 @@ import java.util.Optional;
 public class DnaGlossaryService {
     private final DnaGlossaryRepository glossaryRepository;
     private final AuditService auditService;
+    private final SecretsScanner secretsScanner;
 
-    public DnaGlossaryService(DnaGlossaryRepository glossaryRepository, AuditService auditService) {
+    public DnaGlossaryService(DnaGlossaryRepository glossaryRepository, AuditService auditService,
+                              SecretsScanner secretsScanner) {
         this.glossaryRepository = glossaryRepository;
         this.auditService = auditService;
+        this.secretsScanner = secretsScanner;
     }
 
     @Transactional
@@ -26,6 +31,9 @@ public class DnaGlossaryService {
         if (existing.isPresent() && !"retired".equals(existing.get().getStatus())) {
             throw new IllegalArgumentException("Term already exists in this domain: " + term);
         }
+
+        // SEC-030: scan for secrets before writing
+        ScanUtils.scanForSecrets(definition, actor, "dna_glossary", id, secretsScanner, auditService);
 
         DnaGlossary entry = new DnaGlossary();
         entry.setId(id);

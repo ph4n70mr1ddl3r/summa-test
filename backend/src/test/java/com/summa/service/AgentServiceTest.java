@@ -7,6 +7,7 @@ import com.summa.repository.InitiativeRepository;
 import com.summa.repository.SpawnRequestRepository;
 import com.summa.repository.TriggerRepository;
 import com.summa.repository.RunRepository;
+import com.summa.repository.DnaProposalRepository;
 import com.summa.model.Agent;
 import com.summa.model.Ask;
 import com.summa.model.Human;
@@ -53,6 +54,9 @@ class AgentServiceTest {
     @Mock
     private RunRepository runRepository;
 
+    @Mock
+    private DnaProposalRepository proposalRepository;
+
     private AgentService agentService;
 
     @SuppressWarnings("unchecked")
@@ -60,7 +64,7 @@ class AgentServiceTest {
     void setUp() {
         agentService = new AgentService(agentRepository, auditService, memberService, askRepository,
             boardTaskRepository, initiativeRepository, triggerRepository, spawnRequestRepository,
-            runRepository, 2);
+            runRepository, proposalRepository, 2);
     }
 
     @Test

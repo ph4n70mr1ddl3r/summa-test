@@ -29,6 +29,9 @@ class DnaGoalServiceTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private SecretsScanner secretsScanner;
+
     @InjectMocks
     private DnaGoalService goalService;
 

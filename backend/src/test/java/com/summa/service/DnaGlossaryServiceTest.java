@@ -24,6 +24,9 @@ class DnaGlossaryServiceTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private SecretsScanner secretsScanner;
+
     @InjectMocks
     private DnaGlossaryService glossaryService;
 

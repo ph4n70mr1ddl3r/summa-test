@@ -9,11 +9,13 @@ import com.summa.repository.InitiativeRepository;
 import com.summa.repository.TriggerRepository;
 import com.summa.repository.SpawnRequestRepository;
 import com.summa.repository.RunRepository;
+import com.summa.repository.DnaProposalRepository;
 import com.summa.model.BoardTask;
 import com.summa.model.Initiative;
 import com.summa.model.Trigger;
 import com.summa.model.SpawnRequest;
 import com.summa.model.Run;
+import com.summa.model.DnaProposal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -37,6 +39,7 @@ public class AgentService {
     private final TriggerRepository triggerRepository;
     private final SpawnRequestRepository spawnRequestRepository;
     private final RunRepository runRepository;
+    private final DnaProposalRepository proposalRepository;
     private final int depthCap;
 
     public AgentService(AgentRepository agentRepository, AuditService auditService,
@@ -46,6 +49,7 @@ public class AgentService {
                         TriggerRepository triggerRepository,
                         SpawnRequestRepository spawnRequestRepository,
                         RunRepository runRepository,
+                        DnaProposalRepository proposalRepository,
                         @Value("${summa.spawn.depth-cap:2}") int depthCap) {
         this.agentRepository = agentRepository;
         this.auditService = auditService;
@@ -56,6 +60,7 @@ public class AgentService {
         this.triggerRepository = triggerRepository;
         this.spawnRequestRepository = spawnRequestRepository;
         this.runRepository = runRepository;
+        this.proposalRepository = proposalRepository;
         this.depthCap = Math.max(2, depthCap);
     }
 
@@ -209,6 +214,14 @@ public class AgentService {
                 auditService.logSystem("RETIRE_PAUSE_INITIATIVE", "initiative", init.getId(),
                     String.format("{\"agentId\":%s,\"reason\":\"agent_retiring\"}", JsonHelpers.jsonString(id)));
             }
+        }
+
+        // CLC-026: Withdraw open DNA proposals authored by the retiring agent
+        for (DnaProposal prop : proposalRepository.findByProposedByAndStatus(id, "open")) {
+            prop.setStatus("withdrawn");
+            proposalRepository.save(prop);
+            auditService.logSystem("RETIRE_WITHDRAW_PROPOSAL", "dna_proposal", prop.getId(),
+                String.format("{\"agentId\":%s,\"reason\":\"agent_retiring\"}", JsonHelpers.jsonString(id)));
         }
 
         agent.setStatus("retiring");

@@ -565,10 +565,13 @@ public class OffboardingWalkService {
 
     private boolean isPersonalAssistant(Agent agent) {
         if (agent.getTemplateId() == null) return false;
+        // CLC-051 / OFB-011: Conservatively treat as PA when template is missing.
+        // A deleted template likely means the PA template was removed; the agent's
+        // mirrored-scope contract still dies with the member.
         return roleTemplateRepository.findById(agent.getTemplateId())
                 .map(RoleTemplate::getName)
                 .map(name -> name.contains("personal-assistant"))
-                .orElse(false);
+                .orElse(true);
     }
 
     private String findAnyAdminId() {

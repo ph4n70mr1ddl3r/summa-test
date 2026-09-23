@@ -5,6 +5,8 @@ import com.summa.repository.DnaDomainRepository;
 import com.summa.model.DnaGoal;
 import com.summa.util.JsonHelpers;
 import com.summa.util.KeyedUnionValidator;
+import com.summa.util.ScanUtils;
+import com.summa.service.SecretsScanner;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -17,11 +19,14 @@ public class DnaGoalService {
     private final DnaGoalRepository goalRepository;
     private final DnaDomainRepository domainRepository;
     private final AuditService auditService;
+    private final SecretsScanner secretsScanner;
 
-    public DnaGoalService(DnaGoalRepository goalRepository, DnaDomainRepository domainRepository, AuditService auditService) {
+    public DnaGoalService(DnaGoalRepository goalRepository, DnaDomainRepository domainRepository,
+                          AuditService auditService, SecretsScanner secretsScanner) {
         this.goalRepository = goalRepository;
         this.domainRepository = domainRepository;
         this.auditService = auditService;
+        this.secretsScanner = secretsScanner;
     }
 
     @Transactional
@@ -32,6 +37,8 @@ public class DnaGoalService {
             domainRepository.findById(domainId).orElseThrow(
                 () -> new EntityNotFoundException("Domain not found: " + domainId));
         }
+        // SEC-030: scan for secrets before writing
+        ScanUtils.scanForSecrets(statementMd, actor, "dna_goal", id, secretsScanner, auditService);
         DnaGoal goal = new DnaGoal();
         goal.setId(id);
         goal.setDomainId(domainId);

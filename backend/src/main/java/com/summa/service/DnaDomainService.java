@@ -254,7 +254,10 @@ public class DnaDomainService {
     // Merge never silently widens access.
     @Transactional
     public DnaDomain merge(String sourceId, String survivorId, String actor,
-                            String declaredAccess, String declaredNamedReaders) {
+                             String declaredAccess, String declaredNamedReaders) {
+        if (sourceId.equals(survivorId)) {
+            throw new IllegalStateException("Cannot merge a domain onto itself");
+        }
         DnaDomain source = domainRepository.findById(sourceId)
                 .orElseThrow(() -> new EntityNotFoundException("Source domain not found: " + sourceId));
         DnaDomain survivor = domainRepository.findById(survivorId)

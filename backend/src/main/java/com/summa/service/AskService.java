@@ -168,12 +168,6 @@ public class AskService {
         }
     }
 
-    private List<Ask> findPendingByKindAndTo(String kind, String to) {
-        return askRepository.findByToAndStatusPending(to).stream()
-                .filter(a -> kind.equals(a.getKind()) && "pending".equals(a.getStatus()))
-                .toList();
-    }
-
     public Optional<Ask> findById(String id) {
         return askRepository.findById(id);
     }
