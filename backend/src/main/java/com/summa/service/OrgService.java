@@ -141,6 +141,10 @@ public class OrgService {
 
     @Transactional
     public Human updateRbac(String id, String newRbac, String actor) {
+        if (newRbac == null || newRbac.isBlank()) {
+            throw new IllegalArgumentException("New RBAC role is required");
+        }
+
         // OFB-021: Last-admin guard — same check as demote to prevent bricking the org
         long activeAdminCount = humanRepository.countByDeactivatedAtIsNullAndRbac("admin");
         boolean isCurrentAdmin = humanRepository.findById(id).map(h -> "admin".equals(h.getRbac())).orElse(false);

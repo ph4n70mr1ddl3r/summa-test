@@ -240,9 +240,9 @@ public class SpawnService {
             throw new IllegalStateException("Cannot approve non-requested spawn: " + request.getStatus());
         }
 
-        // SPW-062: Check spend halt — accept under halt is audit-only, return with distinct status
+        // SPW-062: Check spend halt — accept under halt is audit-only, return with halted status
         if (governanceService.isSpendHaltTripped()) {
-            request.setStatus("denied");
+            request.setStatus("halted");
             request.setApprovedBy(approvedBy);
             request.setApprovedAt(Instant.now());
             SpawnRequest saved = spawnRepository.save(request);

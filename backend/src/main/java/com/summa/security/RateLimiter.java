@@ -101,6 +101,7 @@ public class RateLimiter {
             if (window != null && window.plusSeconds(WINDOW_SECONDS).isBefore(Instant.now())) {
                 attemptCounts.remove(key);
                 windowStarts.remove(key);
+                locks.remove(key);
             }
         }
     }

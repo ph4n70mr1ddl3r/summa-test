@@ -5,6 +5,7 @@ import com.summa.model.Ask;
 import com.summa.service.AuditService;
 import com.summa.security.WriteGate;
 import com.summa.security.RbacAuthorizationFilter;
+import com.summa.enums.AskKind;
 import com.summa.util.JsonHelpers;
 import com.summa.constants.Defaults;
 import org.springframework.http.ResponseEntity;
@@ -60,7 +61,8 @@ public class AskController {
             if (kind == null || kind.isBlank()) {
                 throw new IllegalArgumentException("kind is required");
             }
-            Set<String> validKinds = Set.of("approval", "question", "assignment", "spawn_request", "promotion");
+            Set<String> validKinds = new java.util.HashSet<>();
+            for (AskKind k : AskKind.values()) { validKinds.add(k.getValue()); }
             if (!validKinds.contains(kind)) {
                 throw new IllegalArgumentException("Invalid kind: " + kind + ". Must be one of: " + String.join(", ", validKinds));
             }

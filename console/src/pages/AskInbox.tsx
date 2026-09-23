@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { api } from '../services/api'
+import { api, getUser } from '../services/api'
 import type { Ask } from '../types'
 import { tierColor, formatDate } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
@@ -16,6 +16,7 @@ function kindIcon(kind: string): string {
 }
 
 export default function AskInbox() {
+  const currentUser = getUser();
   const [asks, setAsks] = useState<Ask[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -177,9 +178,10 @@ export default function AskInbox() {
                 <button
                   type="button"
                   onClick={() => handleWithdraw(ask.id)}
-                  className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm text-gray-300"
+                  disabled={currentUser === null || currentUser.userId !== ask.from}
+                  className="px-3 py-1 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 rounded text-sm text-gray-300"
                    aria-label={`Withdraw ask from ${ask.from}`}
-                >
+               >
                   Withdraw
                 </button>
               </div>

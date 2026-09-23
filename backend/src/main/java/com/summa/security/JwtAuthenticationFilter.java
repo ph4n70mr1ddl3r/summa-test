@@ -42,13 +42,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         "/api/nodes/enroll", "/api/org/bootstrap"
     );
 
+    public static boolean isNodePath(String path) {
+        return path != null && path.startsWith("/api/nodes");
+    }
+
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
                                       @NonNull HttpServletResponse response,
                                       @NonNull FilterChain filterChain) throws ServletException, IOException {
         String path = request.getRequestURI();
 
-        if (isPublicPath(path)) {
+        if (isPublicPath(path) || isNodePath(path)) {
             filterChain.doFilter(request, response);
             return;
         }

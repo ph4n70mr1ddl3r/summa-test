@@ -146,7 +146,7 @@ public class AskService {
                     canonical.setCollapsedCount(canonical.getCollapsedCount() + 1);
                     Ask saved = askRepository.save(canonical);
                     auditService.log(from, "COLLAPSED_ASK", "ask", saved.getId(),
-                        String.format("{\"newAskId\":\"%s\",\"collapsedCount\":%d}", ask.getId(), saved.getCollapsedCount()));
+                        String.format("{\"collapsedCount\":%d}", saved.getCollapsedCount()));
                     return saved;
                 }
             }

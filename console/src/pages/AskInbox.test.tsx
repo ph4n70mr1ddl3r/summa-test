@@ -12,6 +12,7 @@ vi.mock('../services/api', () => ({
       withdraw: vi.fn(),
     },
   },
+  getUser: vi.fn(() => ({ userId: 'agent-1', rbac: 'member', name: 'Test Agent' })),
 }))
 
 describe('AskInbox page', () => {

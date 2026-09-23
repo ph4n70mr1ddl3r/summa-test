@@ -66,7 +66,11 @@ public class DnaRuleService {
         rule.setEffectiveFrom(effectiveFrom);
         rule.setEffectiveTo(effectiveTo);
         rule.setSupersedesId(supersedesId);
-        rule.setStatus("active");
+        if (effectiveTo != null && effectiveTo.isBefore(Instant.now())) {
+            rule.setStatus("lapsed");
+        } else {
+            rule.setStatus("active");
+        }
 
         DnaRule saved = ruleRepository.save(rule);
         auditService.log(actor, "CREATE_RULE", "dna_rule", id,
