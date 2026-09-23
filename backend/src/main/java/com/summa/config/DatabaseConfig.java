@@ -30,8 +30,8 @@ public class DatabaseConfig {
         config.setPoolName("SummaHikariPool");
         config.setMaximumPoolSize(5);
         config.setMinimumIdle(1);
-        config.setIdleTimeout(30000);
-        config.setMaxLifetime(600000);
+        config.setIdleTimeout(300000);
+        config.setMaxLifetime(1800000);
         config.setConnectionTestQuery("SELECT 1");
 
         return new HikariDataSource(config);

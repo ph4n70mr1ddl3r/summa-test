@@ -152,12 +152,29 @@ public class WorkspaceService {
                         if (claimNode.isArray()) {
                             List<String> claims = new ArrayList<>();
                             for (JsonNode c : claimNode) {
-                                if (c.isTextual() && !c.asText().equals(id)) {
+                                if (c.isObject() && c.has("workspaceId") && id.equals(c.get("workspaceId").asText())) {
+                                    // skip the workspace being archived
+                                } else if (c.isTextual() && !c.asText().equals(id)) {
                                     claims.add(c.asText());
+                                } else if (c.isObject() && c.has("workspaceId")) {
+                                    claims.add(c.get("workspaceId").asText());
                                 }
                             }
-                            node.setClaim(objectMapper.writeValueAsString(claims));
-                        } else {
+                            // Also check remaining entries for workspaceId field
+                            List<String> remaining = new ArrayList<>();
+                            for (JsonNode c : claimNode) {
+                                if (c.isObject() && c.has("workspaceId")) {
+                                    String wsId = c.get("workspaceId").asText();
+                                    if (!wsId.equals(id) && !remaining.contains(wsId)) {
+                                        remaining.add(wsId);
+                                    }
+                                } else if (c.isTextual() && !c.asText().equals(id)) {
+                                    remaining.add(c.asText());
+                                }
+                            }
+                            node.setClaim(objectMapper.writeValueAsString(remaining));
+                        } else if (claimNode.isObject()) {
+                            // Legacy single-object claim format — clear entirely
                             node.setClaim(null);
                         }
                         nodeRepository.save(node);

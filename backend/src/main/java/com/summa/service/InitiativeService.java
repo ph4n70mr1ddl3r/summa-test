@@ -155,8 +155,13 @@ public class InitiativeService {
      * Walks the dependency graph from each dep; if any path reaches 'id', there's a cycle.
      */
     private boolean wouldCreateCycle(String newId, List<String> deps) {
-        Set<String> visited = new HashSet<>();
-        return hasPathTo(newId, deps, visited);
+        for (String depId : deps) {
+            Set<String> visited = new HashSet<>();
+            if (hasPathTo(newId, List.of(depId), visited)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean hasPathTo(String target, List<String> currentDeps, Set<String> visited) {

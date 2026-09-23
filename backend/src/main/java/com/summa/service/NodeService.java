@@ -25,6 +25,7 @@ import java.security.SecureRandom;
 import java.util.Base64;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.summa.exception.EntityNotFoundException;
 
 @Service
@@ -194,12 +195,14 @@ public class NodeService {
         ws.setLeaseExpiresAt(Instant.now().plusSeconds(leaseIntervalSeconds));
         workspaceRepository.save(ws);
 
-        // Store claim on node
+        // Store claim on node as an array (one entry per claimed workspace)
         try {
-            String claimJson = objectMapper.writeValueAsString(
-                Map.of("workspaceId", workspaceId, "epoch", newEpoch,
-                    "expiresAt", Instant.now().getEpochSecond()));
-            node.setClaim(claimJson);
+            ArrayNode claimArray = objectMapper.createArrayNode();
+            claimArray.add(objectMapper.createObjectNode()
+                .put("workspaceId", workspaceId)
+                .put("epoch", newEpoch)
+                .put("expiresAt", Instant.now().getEpochSecond()));
+            node.setClaim(objectMapper.writeValueAsString(claimArray));
         } catch (Exception e) {
             throw new IllegalStateException("Failed to serialize claim: " + e.getMessage());
         }
