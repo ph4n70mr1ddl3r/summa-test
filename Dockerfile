@@ -4,10 +4,10 @@ WORKDIR /build
 
 COPY backend/pom.xml backend/pom.xml
 # Pre-fetch dependencies for better layer caching
-RUN cd backend && mvn -q -B dependency:go-offline
+RUN mvn -q -B -f backend/pom.xml dependency:go-offline
 
 COPY backend/src backend/src
-RUN cd backend && mvn -q -B clean package -DskipTests
+RUN mvn -q -B -f backend/pom.xml clean package -DskipTests
 
 FROM eclipse-temurin:21.0.4_7-jre-alpine
 LABEL maintainer="summa-team"

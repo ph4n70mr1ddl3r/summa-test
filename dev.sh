@@ -14,7 +14,7 @@ if ! command -v java &> /dev/null; then
     exit 1
 fi
 
-JAVA_VERSION=$(java -version 2>&1 | grep -oP '(?<=build )\d+' | head -1)
+JAVA_VERSION=$(java -version 2>&1 | sed -n 's/.*build \(.*\)/\1/p' | head -1)
 if [ "$JAVA_VERSION" -lt 21 ]; then
     echo "ERROR: Java 21+ is required, found $JAVA_VERSION"
     exit 1

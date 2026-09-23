@@ -257,7 +257,7 @@ curl -X POST http://localhost:8080/api/admin/backup/restore \
 - [ ] Rotate node keypairs when a node is compromised (`POST /api/nodes/{id}/revoke` then re-enroll)
 - [ ] Data holds (`POST /api/governance/holds`) freeze erasure — verify holds are released promptly after legal review
 - [ ] Rate limits: login is limited to 5 attempts per 60s per email; password change is 5 per 60s per actor
-- [ ] Password policy: 8+ chars, at least one uppercase, one lowercase, one digit (enforced on bootstrap and `PUT /api/auth/change-password`)
+- [ ] Password policy: 12+ characters, at least one uppercase, one lowercase, one digit, and one special character (enforced on bootstrap and `PUT /api/auth/change-password`)
 
 ## Monitoring
 
@@ -300,7 +300,7 @@ curl -X POST http://localhost:8080/api/org/bootstrap \
   -H 'Content-Type: application/json' \
   -d '{"name":"Admin","email":"admin@example.com","password":"ChangeMe123"}'
 ```
-> `password` must be ≥8 characters with at least one uppercase, one lowercase, and one digit.
+> `password` must be ≥12 characters with at least one uppercase, one lowercase, one digit, and one special character.
 
 ## Spec Compliance
 

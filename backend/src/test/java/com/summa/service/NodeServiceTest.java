@@ -49,9 +49,12 @@ class NodeServiceTest {
     private NodeService nodeService;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         nodeService = new NodeService(nodeRepository, auditService, workspaceService, askRepository,
             runRepository, spendLedgerRepository, workspaceRepository, new ObjectMapper());
+        java.lang.reflect.Field f = NodeService.class.getDeclaredField("leaseIntervalSeconds");
+        f.setAccessible(true);
+        f.setLong(nodeService, 30L);
     }
 
     @Test

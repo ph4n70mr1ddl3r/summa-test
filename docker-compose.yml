@@ -8,8 +8,14 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/tmp
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     volumes:
       - summa-data:/data
     environment:
@@ -49,8 +55,11 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
     ports:
-      - "3000:80"
+      - "127.0.0.1:3000:80"
     depends_on:
       summa:
         condition: service_healthy

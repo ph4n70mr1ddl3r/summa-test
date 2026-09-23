@@ -27,3 +27,7 @@ console/.vite/
 dependency-reduced-pom.xml
 opencode.json
 opencode.jsonc
+*.swp
+*.swo
+*~
+Thumbs.db

@@ -14,6 +14,7 @@ import com.summa.service.WorkspaceService;
 import com.summa.constants.Defaults;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +25,6 @@ import java.security.SecureRandom;
 import java.util.Base64;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.springframework.beans.factory.annotation.Value;
 import com.summa.exception.EntityNotFoundException;
 
 @Service
@@ -167,6 +167,9 @@ public class NodeService {
     // A stale epoch is refused at this mediated boundary (ARC-024).
     @Transactional
     public Node claimWorkspace(String nodeId, String workspaceId, int currentEpoch) {
+        if (leaseIntervalSeconds <= 0) {
+            throw new IllegalArgumentException("summa.node.lease-interval-seconds must be positive, got: " + leaseIntervalSeconds);
+        }
         Node node = nodeRepository.findById(nodeId)
                 .orElseThrow(() -> new EntityNotFoundException("Node not found: " + nodeId));
         if (node.isRevoked()) {
@@ -242,7 +245,7 @@ public class NodeService {
     // API-060: Land run results, artifacts, and spend ledger lines.
     @Transactional
     public Run reportRun(String nodeId, String runId, String result, String artifacts,
-                          long costTokens, double costUsd, String memberId) {
+                           long costTokens, double costUsd, String memberId) {
         Node node = nodeRepository.findById(nodeId)
                 .orElseThrow(() -> new EntityNotFoundException("Node not found: " + nodeId));
         if (node.isRevoked()) {

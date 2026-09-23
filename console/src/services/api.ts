@@ -58,7 +58,10 @@ export function getAuthToken(): string | null {
 export function getUser(): { userId: string; rbac: RbacRole; name: string } | null {
   try {
     const raw = localStorage.getItem(USER_KEY);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const user = JSON.parse(raw);
+    if (!user?.userId || !user?.rbac || !user?.name) return null;
+    return user as { userId: string; rbac: RbacRole; name: string };
   } catch {
     return null;
   }

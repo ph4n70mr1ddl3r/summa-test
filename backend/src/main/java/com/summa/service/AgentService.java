@@ -302,14 +302,10 @@ public class AgentService {
     @Scheduled(fixedRate = Defaults.TTL_REAP_INTERVAL_MS)
     public void reapExpiredAgents() {
         Instant now = Instant.now();
-        List<Agent> activeExpired = agentRepository.findByStatus("active");
-        if (activeExpired == null) activeExpired = List.of();
-        activeExpired = activeExpired.stream()
+        List<Agent> activeExpired = agentRepository.findByStatus("active").stream()
             .filter(a -> a.getTtlAt() != null && a.getTtlAt().isBefore(now))
             .toList();
-        List<Agent> suspendedExpired = agentRepository.findByStatus("suspended");
-        if (suspendedExpired == null) suspendedExpired = List.of();
-        suspendedExpired = suspendedExpired.stream()
+        List<Agent> suspendedExpired = agentRepository.findByStatus("suspended").stream()
             .filter(a -> a.getTtlAt() != null && a.getTtlAt().isBefore(now))
             .toList();
         for (Agent agent : activeExpired) {
@@ -317,7 +313,7 @@ public class AgentService {
                 retire(agent.getId(), "system");
             } catch (Exception e) {
                 auditService.logSystem("TTL_REAP_FAIL", "agent", agent.getId(),
-                    String.format("{\"error\":\"%s\"}", e.getMessage()));
+                    String.format("{\"error\":\"%s\"}", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
             }
         }
         for (Agent agent : suspendedExpired) {
@@ -349,7 +345,7 @@ public class AgentService {
                     "{\"reason\":\"ttl_expired\"}");
             } catch (Exception e) {
                 auditService.logSystem("TTL_REAP_SUSPENDED_FAIL", "agent", agent.getId(),
-                    String.format("{\"error\":\"%s\"}", e.getMessage()));
+                    String.format("{\"error\":\"%s\"}", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
             }
         }
     }

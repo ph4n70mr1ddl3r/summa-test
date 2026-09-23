@@ -66,10 +66,6 @@ public class GovernanceService {
             try { return type.cast((int) Math.round(Double.parseDouble(value.toString()))); }
             catch (NumberFormatException e) {
                 log.debug("Cannot cast '{}' to Integer: {}", value, e.getMessage());
-                try { return type.cast(Integer.parseInt(value.toString())); }
-                catch (NumberFormatException e2) {
-                    log.debug("Cannot cast '{}' to Integer: {}", value, e2.getMessage());
-                }
             }
             return null;
         }
@@ -78,10 +74,6 @@ public class GovernanceService {
             try { return type.cast((long) Math.round(Double.parseDouble(value.toString()))); }
             catch (NumberFormatException e) {
                 log.debug("Cannot cast '{}' to Long: {}", value, e.getMessage());
-                try { return type.cast(Long.parseLong(value.toString())); }
-                catch (NumberFormatException e2) {
-                    log.debug("Cannot cast '{}' to Long: {}", value, e2.getMessage());
-                }
             }
             return null;
         }

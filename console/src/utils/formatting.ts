@@ -38,7 +38,7 @@ export function agentStatusColor(status: AgentStatus): string {
     case 'suspended': return 'bg-yellow-900/50 text-yellow-400'
     case 'retiring': return 'bg-orange-900/50 text-orange-400'
     case 'archived': return 'bg-gray-600 text-gray-400'
-    default: return 'bg-gray-700 text-gray-300'
+    default: { const _exhaustive: never = status; void _exhaustive; return 'bg-gray-700 text-gray-300'; }
   }
 }
 
@@ -48,7 +48,7 @@ export function askStatusColor(status: AskStatus): string {
     case 'answered': return 'bg-green-900/50 text-green-400'
     case 'expired': return 'bg-red-900/50 text-red-400'
     case 'withdrawn': return 'bg-gray-600 text-gray-400'
-    default: return 'bg-gray-700 text-gray-300'
+    default: { const _exhaustive: never = status; void _exhaustive; return 'bg-gray-700 text-gray-300'; }
   }
 }
 
@@ -57,7 +57,7 @@ export function tierColor(tier: AskTier): string {
     case 'critical': return 'text-red-400 bg-red-900/30 border-red-700'
     case 'standard': return 'text-yellow-400 bg-yellow-900/30 border-yellow-700'
     case 'bulk': return 'text-gray-400 bg-gray-800 border-gray-600'
-    default: return 'text-gray-400 bg-gray-800 border-gray-600'
+    default: { const _exhaustive: never = tier; void _exhaustive; return 'text-gray-400 bg-gray-800 border-gray-600'; }
   }
 }
 
@@ -66,9 +66,10 @@ export function spawnStatusColor(status: SpawnStatus): string {
     case 'requested': return 'bg-yellow-900/50 text-yellow-400'
     case 'approved': return 'bg-green-900/50 text-green-400'
     case 'denied': return 'bg-red-900/50 text-red-400'
+    case 'halted': return 'bg-orange-900/50 text-orange-400'
     case 'expired': return 'bg-gray-600 text-gray-400'
     case 'archived': return 'bg-gray-600 text-gray-400'
-    default: return 'bg-gray-700 text-gray-300'
+    default: { const _exhaustive: never = status; void _exhaustive; return 'bg-gray-700 text-gray-300'; }
   }
 }
 
@@ -78,7 +79,7 @@ export function initiativeStatusColor(status: InitiativeStatus): string {
     case 'active': return 'bg-green-900/50 text-green-400'
     case 'paused': return 'bg-yellow-900/50 text-yellow-400'
     case 'closed': return 'bg-gray-600 text-gray-400'
-    default: return 'bg-gray-700 text-gray-300'
+    default: { const _exhaustive: never = status; void _exhaustive; return 'bg-gray-700 text-gray-300'; }
   }
 }
 
@@ -90,7 +91,7 @@ export function runStatusColor(status: RunStatus): string {
     case 'queued': return 'bg-yellow-900/50 text-yellow-400'
     case 'cancelled': return 'bg-gray-600 text-gray-400'
     case 'suspended': return 'bg-orange-900/50 text-orange-400'
-    default: return 'bg-gray-700 text-gray-300'
+    default: { const _exhaustive: never = status; void _exhaustive; return 'bg-gray-700 text-gray-300'; }
   }
 }
 
@@ -99,7 +100,7 @@ export function triggerStatusColor(status: TriggerStatus): string {
     case 'active': return 'bg-green-900/50 text-green-400'
     case 'paused': return 'bg-yellow-900/50 text-yellow-400'
     case 'archived': return 'bg-gray-600 text-gray-400'
-    default: return 'bg-gray-700 text-gray-300'
+    default: { const _exhaustive: never = status; void _exhaustive; return 'bg-gray-700 text-gray-300'; }
   }
 }
 
@@ -109,7 +110,7 @@ export function boardTaskStatusColor(status: BoardTaskStatus): string {
     case 'in_progress': return 'bg-blue-900/50 text-blue-400'
     case 'cancelled': return 'bg-red-900/50 text-red-400'
     case 'open': return 'bg-yellow-900/50 text-yellow-400'
-    default: return 'bg-gray-700 text-gray-300'
+    default: { const _exhaustive: never = status; void _exhaustive; return 'bg-gray-700 text-gray-300'; }
   }
 }
 
@@ -118,7 +119,7 @@ export function roleTemplateStatusColor(status: RoleTemplateStatus): string {
     case 'active': return 'bg-green-900/50 text-green-400'
     case 'draft': return 'bg-yellow-900/50 text-yellow-400'
     case 'retired': return 'bg-gray-600 text-gray-400'
-    default: return 'bg-gray-700 text-gray-300'
+    default: { const _exhaustive: never = status; void _exhaustive; return 'bg-gray-700 text-gray-300'; }
   }
 }
 
@@ -127,7 +128,7 @@ export function dnaCardStatusColor(status: DnaCardStatus): string {
     case 'active': return 'bg-green-900/50 text-green-400'
     case 'draft': return 'bg-yellow-900/50 text-yellow-400'
     case 'retired': return 'bg-gray-600 text-gray-400'
-    default: return 'bg-gray-700 text-gray-300'
+    default: { const _exhaustive: never = status; void _exhaustive; return 'bg-gray-700 text-gray-300'; }
   }
 }
 
@@ -137,7 +138,7 @@ export function dnaGoalStatusColor(status: DnaGoalStatus): string {
     case 'met': return 'bg-blue-900/50 text-blue-400'
     case 'missed': return 'bg-red-900/50 text-red-400'
     case 'retired': return 'bg-gray-600 text-gray-400'
-    default: return 'bg-gray-700 text-gray-300'
+    default: { const _exhaustive: never = status; void _exhaustive; return 'bg-gray-700 text-gray-300'; }
   }
 }
 
@@ -146,7 +147,7 @@ export function dnaRuleStatusColor(status: DnaRuleStatus): string {
     case 'active': return 'bg-green-900/50 text-green-400'
     case 'superseded': return 'bg-gray-600 text-gray-400'
     case 'lapsed': return 'bg-yellow-900/50 text-yellow-400'
-    default: return 'bg-gray-700 text-gray-300'
+    default: { const _exhaustive: never = status; void _exhaustive; return 'bg-gray-700 text-gray-300'; }
   }
 }
 
@@ -154,7 +155,7 @@ export function nodeStatusColor(status: NodeStatus): string {
   switch (status) {
     case 'trusted': return 'bg-green-900/50 text-green-400'
     case 'revoked': return 'bg-red-900/50 text-red-400'
-    default: return 'bg-gray-700 text-gray-300'
+    default: { const _exhaustive: never = status; void _exhaustive; return 'bg-gray-700 text-gray-300'; }
   }
 }
 
@@ -162,7 +163,7 @@ export function groupStatusColor(status: GroupStatus): string {
   switch (status) {
     case 'active': return 'bg-green-900/50 text-green-400'
     case 'archived': return 'bg-gray-600 text-gray-400'
-    default: return 'bg-gray-700 text-gray-300'
+    default: { const _exhaustive: never = status; void _exhaustive; return 'bg-gray-700 text-gray-300'; }
   }
 }
 
@@ -171,7 +172,7 @@ export function domainAccessColor(access: 'public' | 'domain' | 'named'): string
     case 'public': return 'bg-green-900/50 text-green-400'
     case 'domain': return 'bg-blue-900/50 text-blue-400'
     case 'named': return 'bg-yellow-900/50 text-yellow-400'
-    default: return 'bg-gray-700 text-gray-300'
+    default: { const _exhaustive: never = access; void _exhaustive; return 'bg-gray-700 text-gray-300'; }
   }
 }
 
@@ -181,7 +182,7 @@ export function proposalStatusColor(status: DnaProposalStatus): string {
     case 'published': return 'bg-green-900/50 text-green-400'
     case 'rejected': return 'bg-red-900/50 text-red-400'
     case 'withdrawn': return 'bg-gray-600 text-gray-400'
-    default: return 'bg-gray-700 text-gray-300'
+    default: { const _exhaustive: never = status; void _exhaustive; return 'bg-gray-700 text-gray-300'; }
   }
 }
 
@@ -191,7 +192,7 @@ export function rbacRoleColor(role: RbacRole): string {
     case 'owner': return 'bg-yellow-900/50 text-yellow-400'
     case 'member': return 'bg-blue-900/50 text-blue-400'
     case 'viewer': return 'bg-gray-600 text-gray-400'
-    default: return 'bg-gray-700 text-gray-300'
+    default: { const _exhaustive: never = role; void _exhaustive; return 'bg-gray-700 text-gray-300'; }
   }
 }
 
@@ -203,7 +204,7 @@ export function proposalKindColor(kind: DnaProposalKind): string {
     case 'goal': return 'bg-purple-900/50 text-purple-400'
     case 'glossary': return 'bg-pink-900/50 text-pink-400'
     case 'edit': return 'bg-gray-700 text-gray-300'
-    default: return 'bg-gray-700 text-gray-300'
+    default: { const _exhaustive: never = kind; void _exhaustive; return 'bg-gray-700 text-gray-300'; }
   }
 }
 
@@ -211,7 +212,7 @@ export function triggerCriticalityColor(criticality: 'critical' | 'standard'): s
   switch (criticality) {
     case 'critical': return 'text-red-400 bg-red-900/30 border-red-700'
     case 'standard': return 'text-yellow-400 bg-yellow-900/30 border-yellow-700'
-    default: return 'text-gray-400 bg-gray-800 border-gray-600'
+    default: { const _exhaustive: never = criticality; void _exhaustive; return 'text-gray-400 bg-gray-800 border-gray-600'; }
   }
 }
 
