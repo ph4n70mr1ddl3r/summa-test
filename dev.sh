@@ -14,7 +14,7 @@ if ! command -v java &> /dev/null; then
     exit 1
 fi
 
-JAVA_VERSION=$(java -version 2>&1 | grep -oP '(?<=openjdk )\d+' | head -1)
+JAVA_VERSION=$(java -version 2>&1 | grep -oP '(?<=version ")[\d]+' | head -1)
 if [ -z "$JAVA_VERSION" ] || [ "$JAVA_VERSION" -lt 21 ]; then
     echo "ERROR: Java 21+ is required"
     exit 1
@@ -38,7 +38,7 @@ if ! command -v mvn &> /dev/null; then
     exit 1
 fi
 
-MAVEN_VERSION=$(mvn -v 2>&1 | head -n 1 | grep -oE '[0-9]+\.[0-9]+' | head -1)
+MAVEN_VERSION=$(mvn -v 2>&1 | grep -oP '(?<=Apache Maven )[\d.]+' | head -1)
 if [ -n "$MAVEN_VERSION" ]; then
     MAVEN_MAJOR=$(echo "$MAVEN_VERSION" | cut -d'.' -f1)
     MAVEN_MINOR=$(echo "$MAVEN_VERSION" | cut -d'.' -f2)

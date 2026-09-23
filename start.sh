@@ -13,7 +13,7 @@ if ! command -v java &> /dev/null; then
     exit 1
 fi
 
-JAVA_VERSION=$(java -version 2>&1 | grep -oP '(?<=openjdk )\d+' | head -1)
+JAVA_VERSION=$(java -version 2>&1 | grep -oP '(?<=version ")[\d]+' | head -1)
 if [ -z "$JAVA_VERSION" ] || [ "$JAVA_VERSION" -lt 21 ]; then
     echo "ERROR: Java 21+ is required"
     exit 1

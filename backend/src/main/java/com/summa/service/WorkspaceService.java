@@ -150,17 +150,6 @@ public class WorkspaceService {
                     try {
                         JsonNode claimNode = objectMapper.readTree(claim);
                         if (claimNode.isArray()) {
-                            List<String> claims = new ArrayList<>();
-                            for (JsonNode c : claimNode) {
-                                if (c.isObject() && c.has("workspaceId") && id.equals(c.get("workspaceId").asText())) {
-                                    // skip the workspace being archived
-                                } else if (c.isTextual() && !c.asText().equals(id)) {
-                                    claims.add(c.asText());
-                                } else if (c.isObject() && c.has("workspaceId")) {
-                                    claims.add(c.get("workspaceId").asText());
-                                }
-                            }
-                            // Also check remaining entries for workspaceId field
                             List<String> remaining = new ArrayList<>();
                             for (JsonNode c : claimNode) {
                                 if (c.isObject() && c.has("workspaceId")) {

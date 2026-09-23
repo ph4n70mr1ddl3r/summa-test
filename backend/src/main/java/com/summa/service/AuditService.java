@@ -62,11 +62,12 @@ public class AuditService {
         if (detail == null || detail.isBlank()) {
             return "{}";
         }
+        String cleaned = detail.replaceAll("[\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f]", "");
         try {
-            objectMapper.readTree(detail);
-            return detail;
+            objectMapper.readTree(cleaned);
+            return cleaned;
         } catch (Exception e) {
-            return "{\"raw\":" + JsonHelpers.jsonString(detail) + "}";
+            return "{\"raw\":" + JsonHelpers.jsonString(cleaned) + "}";
         }
     }
 

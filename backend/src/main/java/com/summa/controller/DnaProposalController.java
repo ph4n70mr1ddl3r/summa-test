@@ -10,11 +10,13 @@ import com.summa.security.RbacAuthorizationFilter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
-@RestController
-@RequestMapping("/dna/proposals")
-public class DnaProposalController {
+    @RestController
+    @RequestMapping("/dna/proposals")
+    public class DnaProposalController {
+        private static final Set<String> VALID_PROPOSAL_KINDS = Set.of("card", "rule", "decision", "goal", "glossary", "edit");
     private final DnaProposalService proposalService;
     private final AuditService auditService;
     private final WriteGate writeGate;
@@ -57,6 +59,9 @@ public class DnaProposalController {
             String kind = body.get("kind");
             if (kind == null || kind.isBlank()) {
                 throw new IllegalArgumentException("kind is required");
+            }
+            if (!VALID_PROPOSAL_KINDS.contains(kind)) {
+                throw new IllegalArgumentException("Invalid kind: " + kind + ". Must be one of: " + VALID_PROPOSAL_KINDS);
             }
             String payload = body.get("payload");
             if (payload == null || payload.isBlank()) {

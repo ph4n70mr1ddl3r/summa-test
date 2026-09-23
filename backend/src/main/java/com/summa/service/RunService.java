@@ -4,6 +4,8 @@ import com.summa.repository.RunRepository;
 import com.summa.model.Run;
 import com.summa.repository.InitiativeRepository;
 import com.summa.model.Initiative;
+import com.summa.repository.AgentRepository;
+import com.summa.model.Agent;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -18,12 +20,14 @@ public class RunService {
     private final RunRepository runRepository;
     private final AuditService auditService;
     private final InitiativeRepository initiativeRepository;
+    private final AgentRepository agentRepository;
 
     public RunService(RunRepository runRepository, AuditService auditService,
-                      InitiativeRepository initiativeRepository) {
+                      InitiativeRepository initiativeRepository, AgentRepository agentRepository) {
         this.runRepository = runRepository;
         this.auditService = auditService;
         this.initiativeRepository = initiativeRepository;
+        this.agentRepository = agentRepository;
     }
 
     @Transactional
@@ -172,5 +176,10 @@ public class RunService {
     @Transactional(readOnly = true)
     public long countByAgent(String agentId) {
         return runRepository.countByAgentId(agentId);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean agentExists(String agentId) {
+        return agentRepository.existsById(agentId);
     }
 }

@@ -145,11 +145,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 }
 
-export function unwrapSettled<T>(result: PromiseSettledResult<T>): T | null {
-  if (result.status === 'fulfilled') return result.value ?? null;
-  return null;
-}
-
 /**
  * Tries parallel fetches; on any failure, falls back to individual settle calls
  * so that successfully-loaded data is still displayed. Returns an error string

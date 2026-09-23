@@ -17,10 +17,19 @@ export default function Login() {
     // Decode percent-encoding first, then check for open-redirect patterns
     let decoded = candidate
     try { decoded = decodeURIComponent(candidate) } catch { /* already have raw candidate */ }
-    // Check both raw and decoded to catch double-encoding attacks
+    // Strict allowlist: only relative paths without protocol indicators are safe
     const isSafe = (s: string) =>
-      !s.startsWith('//') && !s.startsWith('http://') && !s.startsWith('https://') &&
-      !s.startsWith('javascript:') && !s.includes('://') && !s.toLowerCase().startsWith('data:')
+      typeof s === 'string' &&
+      !s.startsWith('//') &&
+      !s.includes('://') &&
+      !s.toLowerCase().startsWith('data:') &&
+      !s.toLowerCase().startsWith('javascript:') &&
+      !s.startsWith('http') &&
+      !s.startsWith('ftp') &&
+      !s.startsWith('file') &&
+      !s.startsWith('vbscript') &&
+      // Must be a valid relative path (starts with / or is empty, no absolute protocol)
+      (s.startsWith('/') || s.length === 0)
     if (isSafe(candidate) && isSafe(decoded)) {
       from = candidate
     }

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { api, getUser } from '../services/api'
 import type { Ask } from '../types'
 import { tierColor, formatDate } from '../utils/formatting'
@@ -26,15 +26,15 @@ export default function AskInbox() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null)
   const [respondingForId, setRespondingForId] = useState<string | null>(null)
+  const respondingIdRef = useRef<string | null>(null)
+  respondingIdRef.current = respondingId
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      if (respondingId !== null) {
-        setRespondingId(null)
-        setResponseText('')
-      }
+    if (e.key === 'Escape' && respondingIdRef.current !== null) {
+      setRespondingId(null)
+      setResponseText('')
     }
-  }, [respondingId])
+  }, [])
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown)
@@ -59,12 +59,11 @@ export default function AskInbox() {
   const handleRespond = async (id: string) => {
     setSubmitError(null)
     setSubmitSuccess(null)
-    setRespondingForId(id)
     if (!responseText.trim()) {
       setSubmitError('Response cannot be empty')
-      setRespondingForId(null)
       return
     }
+    setRespondingForId(id)
     try {
       await api.asks.respond(id, responseText)
       setSubmitSuccess('Response recorded')

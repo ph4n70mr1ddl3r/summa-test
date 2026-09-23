@@ -114,15 +114,14 @@ export default function App() {
                     key={to}
                     to={to}
                     end={end}
+                    aria-current={({ isActive }) => isActive ? 'page' : undefined}
                     className={({ isActive }) =>
                       isActive
                         ? 'text-white border-b-2 border-blue-400 px-1 py-2'
                         : 'text-gray-400 hover:text-white px-1 py-2'
                     }
                   >
-                    {({ isActive }) => (
-                      <span aria-current={isActive ? 'page' : undefined}>{label}</span>
-                    )}
+                    {label}
                   </NavLink>
                 ))}
               </nav>

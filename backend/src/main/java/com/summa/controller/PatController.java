@@ -9,6 +9,7 @@ import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
+import com.summa.constants.Defaults;
 import java.util.List;
 import java.util.Map;
 
@@ -48,6 +49,9 @@ public class PatController {
                     expiryDays = Integer.parseInt(body.get("expiryDays"));
                 } catch (NumberFormatException e) {
                     throw new IllegalArgumentException("expiryDays must be a valid integer");
+                }
+                if (expiryDays <= 0 || expiryDays > Defaults.MAX_PAT_EXPIRY_DAYS) {
+                    throw new IllegalArgumentException("expiryDays must be between 1 and " + Defaults.MAX_PAT_EXPIRY_DAYS);
                 }
             } else {
                 expiryDays = 90;

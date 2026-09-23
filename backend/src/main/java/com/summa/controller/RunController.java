@@ -7,6 +7,7 @@ import com.summa.security.WriteGate;
 import com.summa.security.RbacAuthorizationFilter;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.summa.constants.Defaults;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -14,7 +15,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/runs")
 public class RunController {
-    private static final int MAX_LIST_LIMIT = 200;
+    private static final int MAX_LIST_LIMIT = Defaults.MAX_LIST_LIMIT;
     private final RunService runService;
     private final AuditService auditService;
     private final WriteGate writeGate;
@@ -63,6 +64,9 @@ public class RunController {
         if (agentId == null || agentId.isBlank()) {
             return ControllerResponses.validation(auditService, "agentId is required");
         }
+        if (!runService.agentExists(agentId)) {
+            return ControllerResponses.validation(auditService, "agentId does not exist: " + agentId);
+        }
         String workspaceId = body.get("workspaceId");
         try {
             Run run = runService.create(
@@ -109,13 +113,20 @@ public class RunController {
                 try {
                     costTokens = Long.parseLong(body.get("costTokens"));
                     if (costTokens < 0) throw new IllegalArgumentException("costTokens must be non-negative");
-                } catch (NumberFormatException e) { throw new IllegalArgumentException("Invalid costTokens: " + body.get("costTokens")); }
+                    if (costTokens > 1_000_000_000L) throw new IllegalArgumentException("costTokens exceeds maximum");
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("Invalid costTokens: " + body.get("costTokens"));
+                }
             }
             if (body.containsKey("costUsd") && body.get("costUsd") != null && !body.get("costUsd").isBlank()) {
                 try {
                     costUsd = Double.parseDouble(body.get("costUsd"));
                     if (costUsd < 0) throw new IllegalArgumentException("costUsd must be non-negative");
-                } catch (NumberFormatException e) { throw new IllegalArgumentException("Invalid costUsd: " + body.get("costUsd")); }
+                    if (Double.isInfinite(costUsd) || Double.isNaN(costUsd)) throw new IllegalArgumentException("costUsd must be finite");
+                    if (costUsd > Defaults.DEFAULT_SPEND_CEILING) throw new IllegalArgumentException("costUsd exceeds spend ceiling");
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("Invalid costUsd: " + body.get("costUsd"));
+                }
             }
 
             Run run = runService.complete(id, result, costTokens, costUsd);

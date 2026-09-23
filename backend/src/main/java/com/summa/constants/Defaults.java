@@ -35,4 +35,14 @@ public final class Defaults {
     // Algorithmic bounds
     public static final int MAX_EXPIRE_SUCCESSOR_DEPTH = 5;
     public static final int DEFAULT_CYCLE_DETECTION_MAX_STEPS = 50;
+
+    // List limits
+    public static final int DEFAULT_LIST_LIMIT = 50;
+    public static final int MAX_LIST_LIMIT = 200;
+    public static final int MAX_AUDIT_LOG_LIMIT = 1000;
+    public static final int MAX_DNA_SEARCH_LIMIT = 100;
+    public static final int MAX_ASK_EXPIRY_DAYS = 365;
+
+    // PAT limits
+    public static final int MAX_PAT_EXPIRY_DAYS = 365;
 }
