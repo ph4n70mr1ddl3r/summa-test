@@ -69,7 +69,7 @@ Abridged — the full surface with REQ IDs lives in `specs/17-api-surface.md`
 
 ### Auth & Bootstrap
 - `POST /api/auth/login` — Email + password login (returns JWT)
-- `POST /api/org/bootstrap` — First-run company + admin creation (public, first-run only; body: `{"name": "<string>", "email": "<email>", "password": "<8+ chars, upper+lower+digit>"}`). Always creates an `admin`; `rbac` is ignored.
+- `POST /api/org/bootstrap` — First-run company + admin creation (public, first-run only; body: `{"name": "<string>", "email": "<email>", "password": "<12+ chars, upper+lower+digit+special>"}`). Always creates an `admin`; `rbac` is ignored.
 
 ### Organization
 - `GET /api/org/humans` — List humans
@@ -298,7 +298,7 @@ curl -X PUT http://localhost:8080/api/org/humans/<id>/rbac \
 # Option B: re-bootstrap (only works if org was never bootstrapped)
 curl -X POST http://localhost:8080/api/org/bootstrap \
   -H 'Content-Type: application/json' \
-  -d '{"name":"Admin","email":"admin@example.com","password":"ChangeMe123"}'
+   -d '{"name":"Admin","email":"admin@example.com","password":"ChangeMe123!"}'
 ```
 > `password` must be ≥12 characters with at least one uppercase, one lowercase, one digit, and one special character.
 

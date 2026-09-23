@@ -9,6 +9,7 @@ import java.util.Map;
  * Shared serialization helpers to prevent duplication across services and controllers.
  */
 public final class JsonHelpers {
+    private static final ObjectMapper MAPPER = new ObjectMapper();
     private JsonHelpers() {}
 
     public static String toJson(Map<String, Object> map, ObjectMapper mapper) {
@@ -22,8 +23,7 @@ public final class JsonHelpers {
     public static String jsonString(String value) {
         if (value == null) return "null";
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            return mapper.writeValueAsString(value);
+            return MAPPER.writeValueAsString(value);
         } catch (Exception e) {
             // Fallback to manual escaping if ObjectMapper fails
             StringBuilder sb = new StringBuilder("\"");

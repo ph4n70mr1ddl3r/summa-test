@@ -14,9 +14,9 @@ if ! command -v java &> /dev/null; then
     exit 1
 fi
 
-JAVA_VERSION=$(java -version 2>&1 | sed -n 's/.*build \(.*\)/\1/p' | head -1)
-if [ "$JAVA_VERSION" -lt 21 ]; then
-    echo "ERROR: Java 21+ is required, found $JAVA_VERSION"
+JAVA_VERSION=$(java -version 2>&1 | grep -oP '(?<=openjdk )\d+' | head -1)
+if [ -z "$JAVA_VERSION" ] || [ "$JAVA_VERSION" -lt 21 ]; then
+    echo "ERROR: Java 21+ is required"
     exit 1
 fi
 
@@ -64,7 +64,10 @@ if [ "${#SUMMA_JWT_SECRET}" -lt 32 ]; then
 fi
 
 # Create data directories
-mkdir -p ~/.summa/dna ~/.summa/db
+mkdir -p ~/.summa
+SUMMA_DNA_REPO="${SUMMA_DNA_REPO:-$HOME/.summa/dna}"
+SUMMA_DB_PATH="${SUMMA_DB_PATH:-$HOME/.summa/summa.db}"
+mkdir -p "$SUMMA_DNA_REPO" "$(dirname "$SUMMA_DB_PATH")"
 
 # Start backend in background
 echo "[1/2] Starting backend..."
@@ -72,7 +75,7 @@ pushd backend > /dev/null
 nohup mvn spring-boot:run -Dspring-boot.run.profiles=dev \
     "-Dspring-boot.run.jvmArguments=${JAVA_OPTS:--Xmx512m -Xms256m -XX:MaxMetaspaceSize=128m}" \
     -Dsumma.auth.local-auth-enabled=${SUMMA_LOCAL_AUTH_ENABLED:-true} \
-    > /tmp/summa-backend.log 2>&1 &
+    > ~/.summa/logs/backend.log 2>&1 &
 BACKEND_PID=$!
 popd > /dev/null
 echo "      Backend PID: $BACKEND_PID"
@@ -90,7 +93,7 @@ for i in $(seq 1 30); do
 done
 
 if [ "$BACKEND_READY" = false ]; then
-    echo "ERROR: Backend did not start within 30 seconds. Check /tmp/summa-backend.log"
+    echo "ERROR: Backend did not start within 30 seconds. Check ~/.summa/logs/backend.log"
     exit 1
 fi
 
@@ -101,7 +104,7 @@ if [ ! -d "node_modules" ]; then
     echo "      Installing console dependencies..."
     npm ci --prefer-offline 2>/dev/null || npm install
 fi
-npm run dev > /tmp/summa-console.log 2>&1 &
+npm run dev > ~/.summa/logs/console.log 2>&1 &
 CONSOLE_PID=$!
 echo "      Console PID: $CONSOLE_PID"
 cd ..
@@ -119,7 +122,7 @@ for i in $(seq 1 20); do
 done
 
 if [ "$CONSOLE_READY" = false ]; then
-    echo "WARNING: Console did not start within 20 seconds. Check /tmp/summa-console.log"
+    echo "WARNING: Console did not start within 20 seconds. Check ~/.summa/logs/console.log"
 fi
 
 echo ""

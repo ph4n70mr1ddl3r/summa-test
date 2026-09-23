@@ -79,7 +79,7 @@ Summa follows a defense-in-depth model. Key patterns:
 | SEC-001 | OIDC authn (deferred) |
 | SEC-003 | Agent scope re-validation |
 | SEC-012 | Node keypair auth |
-| SEC-030..040 | Audit, backups, data holds, secrets scanning |
+| SEC-030…040 | Audit, backups, data holds, secrets scanning |
 
 See `specs/18-security.md` for the full security requirement suite.
 

@@ -13,9 +13,9 @@ if ! command -v java &> /dev/null; then
     exit 1
 fi
 
-JAVA_VERSION=$(java -version 2>&1 | sed -n 's/.*build \(.*\)/\1/p' | head -1)
-if [ "$JAVA_VERSION" -lt 21 ]; then
-    echo "ERROR: Java 21+ is required, found $JAVA_VERSION"
+JAVA_VERSION=$(java -version 2>&1 | grep -oP '(?<=openjdk )\d+' | head -1)
+if [ -z "$JAVA_VERSION" ] || [ "$JAVA_VERSION" -lt 21 ]; then
+    echo "ERROR: Java 21+ is required"
     exit 1
 fi
 
@@ -40,7 +40,10 @@ fi
 echo "Using JAR: $JAR_FILE"
 
 # Create data directories
-mkdir -p ~/.summa/dna ~/.summa/db
+mkdir -p ~/.summa
+SUMMA_DNA_REPO="${SUMMA_DNA_REPO:-$HOME/.summa/dna}"
+SUMMA_DB_PATH="${SUMMA_DB_PATH:-$HOME/.summa/summa.db}"
+mkdir -p "$SUMMA_DNA_REPO" "$(dirname "$SUMMA_DB_PATH")"
 
 # Start the backend
 echo "Starting backend on port 8080..."

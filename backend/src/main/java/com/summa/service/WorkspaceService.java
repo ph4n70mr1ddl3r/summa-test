@@ -7,7 +7,6 @@ import com.summa.repository.DnaDomainRepository;
 import com.summa.model.Workspace;
 import com.summa.repository.InitiativeRepository;
 import com.summa.repository.TriggerRepository;
-import com.summa.model.Initiative;
 import com.summa.model.Trigger;
 import com.summa.repository.PlaybookRepository;
 import com.summa.model.Playbook;

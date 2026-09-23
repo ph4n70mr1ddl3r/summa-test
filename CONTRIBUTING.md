@@ -35,7 +35,7 @@ python3 tools/test_lint.py
 
 ### Adding a New Requirement
 
-1. Determine the prefix (see `DEVELOPMENT.md` section on IDs).
+1. Determine the prefix (see `DEVELOPMENT.md`'s Spec Traceability section).
 2. Add the requirement to the appropriate spec module in `specs/`.
 3. If the requirement touches the data model, update `specs/16-data-model.md` and `backend/src/main/resources/schema.sql`.
 4. Run `python3 tools/lint_specs.py` to validate.
