@@ -9,7 +9,7 @@ RUN mvn -q -B -f backend/pom.xml dependency:go-offline
 COPY backend/src backend/src
 RUN mvn -q -B -f backend/pom.xml clean package -DskipTests
 
-FROM eclipse-temurin:21.0.4_7-jre-alpine
+FROM eclipse-temurin:24.0.2_12-jre-alpine
 LABEL maintainer="summa-team"
 LABEL org.opencontainers.image.source="https://github.com/summa-org/summa"
 
