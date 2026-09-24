@@ -42,7 +42,7 @@ describe('buildQuery', () => {
   })
 
   it('handles null values', () => {
-    expect(buildQuery({ status: 'active', limit: null })).toBe('?status=active')
+    expect(buildQuery({ status: 'active', limit: undefined as unknown as string })).toBe('?status=active')
   })
 })
 
@@ -131,7 +131,7 @@ describe('auth helpers', () => {
   })
 
   it('getUser returns null when user missing required fields', () => {
-    setAuthToken('test-token', { userId: 'u1' } as Record<string, unknown>)
+    setAuthToken('test-token', { userId: 'u1', rbac: 'member' as RbacRole, name: '' } as { userId: string; rbac: RbacRole; name: string })
     expect(getUser()).toBe(null)
   })
 })

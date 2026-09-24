@@ -161,6 +161,41 @@ class AskServiceTest {
     }
 
     @Test
+    void respond_systemOriginatedAsk_allowsHumanResponder() {
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("pending");
+        ask.setFrom("system");
+        ask.setTo("human-1");
+        ask.setQuorumRequired(1);
+
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+        when(askRepository.save(any())).thenReturn(ask);
+
+        AskService svc = buildService();
+        Ask result = svc.respond("ask-1", "human-1", "approved");
+
+        assertEquals("answered", result.getStatus());
+    }
+
+    @Test
+    void respond_systemOriginatedAsk_rejectsSystemResponder() {
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("pending");
+        ask.setFrom("human-1");
+        ask.setTo("system");
+        ask.setQuorumRequired(1);
+
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+
+        AskService svc = buildService();
+        assertThrows(IllegalArgumentException.class, () -> {
+            svc.respond("ask-1", "system", "approved");
+        });
+    }
+
+    @Test
     void processExpiredAsks_escalate_createsSuccessor() {
         Ask ask = new Ask();
         ask.setId("ask-1");

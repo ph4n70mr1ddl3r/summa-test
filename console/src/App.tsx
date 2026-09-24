@@ -114,7 +114,6 @@ export default function App() {
                     key={to}
                     to={to}
                     end={end}
-                    aria-current={({ isActive }) => isActive ? 'page' : undefined}
                     className={({ isActive }) =>
                       isActive
                         ? 'text-white border-b-2 border-blue-400 px-1 py-2'

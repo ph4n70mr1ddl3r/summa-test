@@ -508,8 +508,8 @@ public class AskService {
      * ASK-040: Check if responder is eligible — matches target, deputy, or admin broadcast.
      */
     private boolean isEligibleResponder(Ask ask, String responder) {
-        // System originator cannot respond (ASK-031)
-        if ("system".equals(ask.getFrom())) {
+        // ASK-031: System cannot respond to its own or others' asks
+        if ("system".equals(responder)) {
             return false;
         }
 
