@@ -75,7 +75,7 @@ public class Ask {
         if (expiryBehavior == null) expiryBehavior = "deny";
         if (quorumRequired == null) quorumRequired = 1;
         if (responses == null) responses = "[]";
-        if (collapsedCount == null) collapsedCount = 1;
+        if (collapsedCount == null) collapsedCount = 0;
     }
 
     @PreUpdate

@@ -43,6 +43,11 @@ public class AuditEvent {
         if (detail == null) detail = "{}";
     }
 
+    @PreRemove
+    public void preRemove() {
+        throw new UnsupportedOperationException("audit_events is append-only per DAT-121");
+    }
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public Instant getAt() { return at; }

@@ -294,19 +294,25 @@ public class SpawnService {
         String ownerHumanId = approvedByHumanId;
         if (ownerHumanId == null || ownerHumanId.isBlank()) {
             ownerHumanId = request.getRequestedByHumanId();
+            // Validate requestedByHumanId is a human, not an agent
+            if (ownerHumanId != null && !ownerHumanId.isBlank()) {
+                Optional<Human> maybeHuman = memberService.findHuman(ownerHumanId);
+                if (maybeHuman.isEmpty()) {
+                    throw new IllegalStateException("Cannot activate spawn without a human owner: requestedByHumanId '" + ownerHumanId + "' is not a human");
+                }
+            }
         }
         if (ownerHumanId == null || ownerHumanId.isBlank()) {
             ownerHumanId = request.getRequesterId();
-            // Validate it is a human ID, not an agent ID — owner_human_id is a FK to humans(id)
-            Optional<Human> maybeHuman = memberService.findHuman(ownerHumanId);
-            if (maybeHuman.isEmpty()) {
-                throw new IllegalStateException("Cannot activate spawn without a human owner: no approvedBy, requestedByHumanId, and requester is not a human");
-            }
         }
         // Validate that the resolved owner is actually a human, not an agent
-        Optional<Human> maybeHuman = memberService.findHuman(ownerHumanId);
-        if (maybeHuman.isEmpty()) {
-            throw new IllegalStateException("Cannot activate spawn without a human owner: resolved owner '" + ownerHumanId + "' is not a human");
+        if (ownerHumanId != null && !ownerHumanId.isBlank()) {
+            Optional<Human> maybeHuman = memberService.findHuman(ownerHumanId);
+            if (maybeHuman.isEmpty()) {
+                throw new IllegalStateException("Cannot activate spawn without a human owner: resolved owner '" + ownerHumanId + "' is not a human");
+            }
+        } else {
+            throw new IllegalStateException("Cannot activate spawn without a human owner: no approvedBy, requestedByHumanId, or requester");
         }
         agent.setOwnerHumanId(ownerHumanId);
         agent.setAgentClass(request.getSpawnClass());
