@@ -48,7 +48,7 @@ public class OrgService {
             throw new IllegalArgumentException("Name is required");
         }
         if (email == null || email.isBlank()
-                || !email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+                || !email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]{2,}$")) {
             throw new IllegalArgumentException("A valid email is required");
         }
         // First user owns the org: force admin regardless of client-supplied rbac.

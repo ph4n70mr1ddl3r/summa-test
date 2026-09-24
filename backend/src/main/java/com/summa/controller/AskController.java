@@ -3,6 +3,7 @@ package com.summa.controller;
 import com.summa.service.AskService;
 import com.summa.model.Ask;
 import com.summa.service.AuditService;
+import com.summa.service.MemberService;
 import com.summa.security.WriteGate;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.enums.AskKind;
@@ -22,11 +23,14 @@ public class AskController {
     private final AskService askService;
     private final AuditService auditService;
     private final WriteGate writeGate;
+    private final MemberService memberService;
 
-    public AskController(AskService askService, AuditService auditService, WriteGate writeGate) {
+    public AskController(AskService askService, AuditService auditService, WriteGate writeGate,
+                         MemberService memberService) {
         this.askService = askService;
         this.auditService = auditService;
         this.writeGate = writeGate;
+        this.memberService = memberService;
     }
 
     @GetMapping
@@ -69,6 +73,9 @@ public class AskController {
             String to = body.get("to");
             if (to == null || to.isBlank()) {
                 throw new IllegalArgumentException("to is required");
+            }
+            if (memberService.findHuman(to).isEmpty() && memberService.findAgent(to).isEmpty()) {
+                throw new IllegalArgumentException("to does not reference an existing human or agent: " + to);
             }
             String deadlineStr = body.get("deadlineSeconds");
             long deadlineSeconds = 86400L;

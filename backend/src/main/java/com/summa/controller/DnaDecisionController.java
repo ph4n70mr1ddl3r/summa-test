@@ -3,6 +3,7 @@ package com.summa.controller;
 import com.summa.service.DnaDecisionService;
 import com.summa.model.DnaDecision;
 import com.summa.service.AuditService;
+import com.summa.service.MemberService;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,11 +19,14 @@ public class DnaDecisionController {
     private final DnaDecisionService decisionService;
     private final AuditService auditService;
     private final WriteGate writeGate;
+    private final MemberService memberService;
 
-    public DnaDecisionController(DnaDecisionService decisionService, AuditService auditService, WriteGate writeGate) {
+    public DnaDecisionController(DnaDecisionService decisionService, AuditService auditService, WriteGate writeGate,
+                                 MemberService memberService) {
         this.decisionService = decisionService;
         this.auditService = auditService;
         this.writeGate = writeGate;
+        this.memberService = memberService;
     }
 
     @GetMapping
@@ -60,6 +64,9 @@ public class DnaDecisionController {
             }
             if (body.get("decidedBy") == null || body.get("decidedBy").isBlank()) {
                 throw new IllegalArgumentException("decidedBy is required");
+            }
+            if (memberService.findHuman(body.get("decidedBy")).isEmpty() && memberService.findAgent(body.get("decidedBy")).isEmpty()) {
+                throw new IllegalArgumentException("decidedBy does not reference an existing human or agent: " + body.get("decidedBy"));
             }
             String generatedId = UUID.randomUUID().toString();
             DnaDecision decision = decisionService.create(

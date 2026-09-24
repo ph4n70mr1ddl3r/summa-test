@@ -3,6 +3,7 @@ package com.summa.controller;
 import com.summa.service.InitiativeService;
 import com.summa.model.Initiative;
 import com.summa.service.AuditService;
+import com.summa.service.MemberService;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,11 +21,14 @@ public class InitiativeController {
     private final InitiativeService initiativeService;
     private final AuditService auditService;
     private final WriteGate writeGate;
+    private final MemberService memberService;
 
-    public InitiativeController(InitiativeService initiativeService, AuditService auditService, WriteGate writeGate) {
+    public InitiativeController(InitiativeService initiativeService, AuditService auditService, WriteGate writeGate,
+                                MemberService memberService) {
         this.initiativeService = initiativeService;
         this.auditService = auditService;
         this.writeGate = writeGate;
+        this.memberService = memberService;
     }
 
     @GetMapping
@@ -59,6 +63,12 @@ public class InitiativeController {
             }
             if (body.get("lead") == null || body.get("lead").isBlank()) {
                 throw new IllegalArgumentException("lead is required");
+            }
+            if (memberService.findHuman(body.get("sponsor")).isEmpty() && memberService.findAgent(body.get("sponsor")).isEmpty()) {
+                throw new IllegalArgumentException("sponsor does not reference an existing human or agent: " + body.get("sponsor"));
+            }
+            if (memberService.findHuman(body.get("lead")).isEmpty() && memberService.findAgent(body.get("lead")).isEmpty()) {
+                throw new IllegalArgumentException("lead does not reference an existing human or agent: " + body.get("lead"));
             }
             String generatedId = UUID.randomUUID().toString();
             Instant deadline;

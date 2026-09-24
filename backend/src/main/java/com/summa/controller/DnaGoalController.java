@@ -3,6 +3,7 @@ package com.summa.controller;
 import com.summa.service.DnaGoalService;
 import com.summa.model.DnaGoal;
 import com.summa.service.AuditService;
+import com.summa.service.MemberService;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,11 +21,14 @@ public class DnaGoalController {
     private final DnaGoalService goalService;
     private final AuditService auditService;
     private final WriteGate writeGate;
+    private final MemberService memberService;
 
-    public DnaGoalController(DnaGoalService goalService, AuditService auditService, WriteGate writeGate) {
+    public DnaGoalController(DnaGoalService goalService, AuditService auditService, WriteGate writeGate,
+                             MemberService memberService) {
         this.goalService = goalService;
         this.auditService = auditService;
         this.writeGate = writeGate;
+        this.memberService = memberService;
     }
 
     @GetMapping
@@ -60,6 +64,9 @@ public class DnaGoalController {
             }
             if (body.get("owner") == null || body.get("owner").isBlank()) {
                 throw new IllegalArgumentException("owner is required");
+            }
+            if (memberService.findHuman(body.get("owner")).isEmpty() && memberService.findAgent(body.get("owner")).isEmpty()) {
+                throw new IllegalArgumentException("owner does not reference an existing human or agent: " + body.get("owner"));
             }
             // Security: reject client-supplied IDs — always generate server-side
             String generatedId = UUID.randomUUID().toString();

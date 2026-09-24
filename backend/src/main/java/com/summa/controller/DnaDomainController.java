@@ -3,6 +3,7 @@ package com.summa.controller;
 import com.summa.service.DnaDomainService;
 import com.summa.model.DnaDomain;
 import com.summa.service.AuditService;
+import com.summa.service.MemberService;
 import com.summa.security.WriteGate;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.util.JsonHelpers;
@@ -19,11 +20,14 @@ public class DnaDomainController {
     private final DnaDomainService domainService;
     private final AuditService auditService;
     private final WriteGate writeGate;
+    private final MemberService memberService;
 
-    public DnaDomainController(DnaDomainService domainService, AuditService auditService, WriteGate writeGate) {
+    public DnaDomainController(DnaDomainService domainService, AuditService auditService, WriteGate writeGate,
+                               MemberService memberService) {
         this.domainService = domainService;
         this.auditService = auditService;
         this.writeGate = writeGate;
+        this.memberService = memberService;
     }
 
     @GetMapping
@@ -51,6 +55,9 @@ public class DnaDomainController {
             }
             if (body.get("ownerHumanId") == null || body.get("ownerHumanId").isBlank()) {
                 throw new IllegalArgumentException("ownerHumanId is required");
+            }
+            if (memberService.findHuman(body.get("ownerHumanId")).isEmpty()) {
+                throw new IllegalArgumentException("ownerHumanId does not reference an existing human: " + body.get("ownerHumanId"));
             }
             DnaDomain domain = domainService.create(
                 UUID.randomUUID().toString(),

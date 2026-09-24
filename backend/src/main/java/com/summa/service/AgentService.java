@@ -24,6 +24,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import com.summa.model.Human;
+import com.summa.enums.AgentStatus;
 import com.summa.util.JsonHelpers;
 import com.summa.constants.Defaults;
 import com.summa.exception.EntityNotFoundException;
@@ -106,11 +107,11 @@ public class AgentService {
         Agent agent = agentRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Agent not found: " + id));
 
-        if (!"active".equals(agent.getStatus())) {
+        if (!AgentStatus.ACTIVE.getValue().equals(agent.getStatus())) {
             throw new IllegalStateException("Agent is not active: " + agent.getStatus());
         }
 
-        agent.setStatus("suspended");
+        agent.setStatus(AgentStatus.SUSPENDED.getValue());
         agent.setSuspendedAt(Instant.now());
         Agent saved = agentRepository.save(agent);
 
@@ -135,11 +136,11 @@ public class AgentService {
         Agent agent = agentRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Agent not found: " + id));
 
-        if (!"suspended".equals(agent.getStatus())) {
+        if (!AgentStatus.SUSPENDED.getValue().equals(agent.getStatus())) {
             throw new IllegalStateException("Agent is not suspended: " + agent.getStatus());
         }
 
-        agent.setStatus("active");
+        agent.setStatus(AgentStatus.ACTIVE.getValue());
         agent.setSuspendedAt(null);
         Agent saved = agentRepository.save(agent);
         auditService.log(actor, "RESUME", "agent", id, null);
@@ -151,7 +152,7 @@ public class AgentService {
         Agent agent = agentRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Agent not found: " + id));
 
-        if (!"active".equals(agent.getStatus())) {
+        if (!AgentStatus.ACTIVE.getValue().equals(agent.getStatus())) {
             throw new IllegalStateException("Can only retire active agents, current status: " + agent.getStatus());
         }
 
@@ -227,7 +228,7 @@ public class AgentService {
                 String.format("{\"agentId\":%s,\"reason\":\"agent_retiring\"}", JsonHelpers.jsonString(id)));
         }
 
-        agent.setStatus("retiring");
+        agent.setStatus(AgentStatus.RETIRING.getValue());
         agent.setRetiredAt(Instant.now());
         Agent saved = agentRepository.save(agent);
         auditService.log(actor, "RETIRE", "agent", id, null);
@@ -239,7 +240,7 @@ public class AgentService {
         Agent agent = agentRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Agent not found: " + id));
 
-        agent.setStatus("archived");
+        agent.setStatus(AgentStatus.ARCHIVED.getValue());
         agent.setArchivedAt(Instant.now());
         Agent saved = agentRepository.save(agent);
         auditService.log(actor, "ARCHIVE", "agent", id, null);
@@ -255,11 +256,11 @@ public class AgentService {
         Agent agent = agentRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Agent not found: " + id));
 
-        if (!"requested".equals(agent.getStatus())) {
+        if (!AgentStatus.REQUESTED.getValue().equals(agent.getStatus())) {
             throw new IllegalStateException("Can only deny requested agents, current status: " + agent.getStatus());
         }
 
-        agent.setStatus("archived");
+        agent.setStatus(AgentStatus.ARCHIVED.getValue());
         agent.setArchivedAt(Instant.now());
         Agent saved = agentRepository.save(agent);
         auditService.log(actor, "DENY", "agent", id, null);
@@ -305,12 +306,8 @@ public class AgentService {
     @Scheduled(fixedRate = Defaults.TTL_REAP_INTERVAL_MS)
     public void reapExpiredAgents() {
         Instant now = Instant.now();
-        List<Agent> activeExpired = agentRepository.findByStatus("active").stream()
-            .filter(a -> a.getTtlAt() != null && a.getTtlAt().isBefore(now))
-            .toList();
-        List<Agent> suspendedExpired = agentRepository.findByStatus("suspended").stream()
-            .filter(a -> a.getTtlAt() != null && a.getTtlAt().isBefore(now))
-            .toList();
+        List<Agent> activeExpired = agentRepository.findActiveExpiredBefore(now);
+        List<Agent> suspendedExpired = agentRepository.findSuspendedExpiredBefore(now);
         for (Agent agent : activeExpired) {
             try {
                 retire(agent.getId(), "system");
@@ -325,7 +322,7 @@ public class AgentService {
                 Optional<Agent> fresh = agentRepository.findById(agent.getId());
                 if (fresh.isEmpty()) continue;
                 Agent current = fresh.get();
-                if (!"suspended".equals(current.getStatus())) continue;
+                if (!AgentStatus.SUSPENDED.getValue().equals(current.getStatus())) continue;
                 // CLC-002: SUSPENDED-002: suspended agents also need dependency cleanup before archival
                 for (Ask ask : askRepository.findByFromAndStatusPending(current.getId())) {
                     ask.setStatus("withdrawn");
@@ -336,12 +333,12 @@ public class AgentService {
                     askRepository.save(ask);
                 }
                 for (SpawnRequest spawn : spawnRequestRepository.findByRequesterId(current.getId())) {
-                    if ("requested".equals(spawn.getStatus())) {
+            if (AgentStatus.REQUESTED.getValue().equals(spawn.getStatus())) {
                         spawn.setStatus("archived");
                         spawnRequestRepository.save(spawn);
                     }
                 }
-                current.setStatus("archived");
+                current.setStatus(AgentStatus.ARCHIVED.getValue());
                 current.setArchivedAt(now);
                 agentRepository.save(current);
                 auditService.logSystem("TTL_REAP_SUSPENDED", "agent", current.getId(),

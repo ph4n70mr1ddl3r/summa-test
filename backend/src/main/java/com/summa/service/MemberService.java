@@ -53,7 +53,8 @@ public class MemberService {
     }
 
     public boolean hasWriteSurface(Human human) {
-        return human != null && !isViewer(human) && human.isActive();
+        if (human == null) return false;
+        return human.isActive() && !isViewer(human);
     }
 
     public boolean hasWriteSurfaceAgent(Agent agent) {
@@ -64,6 +65,15 @@ public class MemberService {
         if (actorId == null || com.summa.constants.Defaults.SYSTEM_ACTOR.equals(actorId)) return false;
         Optional<Human> humanOpt = findHuman(actorId);
         return humanOpt.isPresent() && RbacRole.ADMIN.getValue().equals(humanOpt.get().getRbac());
+    }
+
+    public boolean canWrite(String rbac) {
+        if (rbac == null) return false;
+        try {
+            return RbacRole.valueOf(rbac.toUpperCase()).canWrite();
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
     @Transactional
