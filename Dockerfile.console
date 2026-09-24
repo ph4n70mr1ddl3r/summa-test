@@ -12,7 +12,7 @@ RUN npm ci
 COPY console/ .
 RUN npm run build
 
-FROM nginx:1.26.0-alpine
+FROM nginx:1.31.0-alpine
 RUN addgroup -g 1000 -S nginx && adduser -u 1000 -S nginx -G nginx
 USER nginx
 COPY --from=builder /app/console/dist /usr/share/nginx/html
