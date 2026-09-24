@@ -18,6 +18,7 @@ public final class Defaults {
     public static final int DEFAULT_ASKS_STORM_COLLAPSE_WINDOW_HOURS = 1;
     public static final int DEFAULT_ASKS_RATE_LIMIT_PER_SOURCE_PER_HOUR = 60;
     public static final int DEFAULT_DNA_DEFAULT_REVIEW_SLA_DAYS = 7;
+    public static final long DEFAULT_SPAWN_BUDGET_WINDOW_DAYS = 30;
     public static final double DEFAULT_SPEND_CRITICAL_FLOOR_PERCENT = 5.0;
     public static final String SYSTEM_ACTOR = "system";
 

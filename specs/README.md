@@ -59,7 +59,7 @@ disagree, fix one of them in the same change; never implement against a discrepa
 |---|---|---|---|
 | `01-product-and-principles.md` | VIS/PRN | Vision, actors, governing principles | §1, §2 |
 | `02-architecture-and-topology.md` | ARC | Deployment, nodes, leases, time, residency | §3 |
-| `03-dna-content-and-lifecycles.md` | DNC | Content model, item lifecycles | §4.1, §7 |
+| `03-dna-content-and-lifecycles.md` | DNC | Content model, item lifecycles | §4.1 |
 | `04-dna-read-path.md` | DRP | Injection, retrieval, citation, precedence | §4.2, §4.6 |
 | `05-dna-write-path.md` | DWP | Proposals, review, amendment, publish | §4.3 |
 | `06-dna-governance-and-topology.md` | DGV | Domains, reader sets, topology ops, locks | §4.4 |

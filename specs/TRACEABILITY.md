@@ -26,7 +26,7 @@ Both directions — every defined ID listed, every listed ID defined — are ver
 | §6.3 Lineage (authority, retire/suspend/resume, re-role, fencing) | 12 | CLC-001…003, CLC-010, CLC-015, CLC-020…027, CLC-030…034, CLC-040 |
 | §6.4 Personal assistants | 12 | CLC-050…053 |
 | §6.5 Templates & catalog (versioning, upgrades, promotion) | 13 | TPL-001…004, TPL-010…011, TPL-020…023, TPL-030, TPL-040…046 |
-| §7 Data model (all tables + inline invariants) | 16, 03, 12 | CLC-040; DAT-010…011, DAT-020…022, DAT-030, DAT-040, DAT-050, DAT-060…061, DAT-070, DAT-080…081, DAT-090…091, DAT-100…102, DAT-110, DAT-120…125 |
+| §7 Data model (all tables + inline invariants) | 16, 12 | CLC-040; DAT-010…011, DAT-020…022, DAT-030, DAT-040, DAT-050, DAT-060…061, DAT-070, DAT-080…081, DAT-090…091, DAT-100…102, DAT-110, DAT-120…125 |
 | §8.1 Agent runtime | 15 | SUB-001…005 |
 | §8.2 Tools & MCP (staged writes, send-once, reconciliation) | 15 | SUB-010…011, SUB-020…022 |
 | §8.3 Memory service (taint) | 15 | SUB-040…042 |

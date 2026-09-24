@@ -114,10 +114,11 @@ public class DnaProposalService {
             Optional<DnaDomain> domainOpt = domainService.findById(proposal.getDomainId());
             if (domainOpt.isPresent() && "reviewer-distinct".equals(domainOpt.get().getSod())) {
                 if (proposal.getProposedBy() != null && proposal.getProposedBy().equals(reviewedBy)) {
-                    // SoD breach: route publish to admin broadcast
-                    actualReviewer = OffboardingWalkService.ADMIN_BROADCAST;
+                    // SoD breach: null reviewedBy to avoid FK violation (admins is not a human ID),
+                    // and escalate to admin broadcast via ask instead
                     auditService.logSystem("SOD_ROUTE_TO_ADMIN", "dna_proposal", id,
                         String.format("{\"reason\":\"separation_of_duties\",\"proposer\":%s}", JsonHelpers.jsonString(proposal.getProposedBy())));
+                    actualReviewer = null;
                 }
             }
         }

@@ -650,7 +650,7 @@ export const api = {
         body: JSON.stringify({ payload }),
       }),
     reviewQueue: (domainId?: string) =>
-      request<DnaProposal[]>(`/dna/review-queue${buildQuery(domainId ? { domainId } : undefined)}`),
+      request<DnaProposal[]>(`/dna/proposals/review-queue${buildQuery(domainId ? { domainId } : undefined)}`),
   },
   asks: {
     list: () =>

@@ -73,7 +73,7 @@ mkdir -p "$SUMMA_DNA_REPO" "$(dirname "$SUMMA_DB_PATH")"
 echo "[1/2] Starting backend..."
 pushd backend > /dev/null
 nohup mvn spring-boot:run -Dspring-boot.run.profiles=dev \
-    "-Dspring-boot.run.jvmArguments=${JAVA_OPTS:--Xmx512m -Xms256m -XX:MaxMetaspaceSize=128m}" \
+    -Dspring-boot.run.jvmArguments="-Xmx512m -Xms256m -XX:MaxMetaspaceSize=128m" \
     -Dsumma.auth.local-auth-enabled=${SUMMA_LOCAL_AUTH_ENABLED:-true} \
     > ~/.summa/logs/backend.log 2>&1 &
 BACKEND_PID=$!

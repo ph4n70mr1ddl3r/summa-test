@@ -3,12 +3,10 @@ package com.summa.service;
 import com.summa.repository.PatRepository;
 import com.summa.model.Pat;
 import com.summa.exception.EntityNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.security.MessageDigest;
 import java.time.Instant;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,10 +15,13 @@ import java.util.UUID;
 public class PatService {
     private final PatRepository patRepository;
     private final AuditService auditService;
+    private final PasswordEncoder passwordEncoder;
 
-    public PatService(PatRepository patRepository, AuditService auditService) {
+    public PatService(PatRepository patRepository, AuditService auditService,
+                      PasswordEncoder passwordEncoder) {
         this.patRepository = patRepository;
         this.auditService = auditService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional
@@ -83,13 +84,7 @@ public class PatService {
     }
 
     private String hashToken(String token) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] digest = md.digest(token.getBytes(StandardCharsets.UTF_8));
-            return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to hash token", e);
-        }
+        return passwordEncoder.encode(token);
     }
 
     private String serializeScopes(List<String> scopes) {

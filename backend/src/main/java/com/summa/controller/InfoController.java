@@ -17,8 +17,7 @@ public class InfoController {
         return ResponseEntity.ok(Map.of(
             "name", "Summa",
             "description", "The operating system for a hybrid human + AI company",
-            "version", projectVersion,
-            "buildTime", System.currentTimeMillis()
+            "version", projectVersion
         ));
     }
 }

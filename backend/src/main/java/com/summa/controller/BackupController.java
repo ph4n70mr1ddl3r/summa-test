@@ -104,6 +104,6 @@ public class BackupController {
         if (!resolved.startsWith(allowedDir)) {
             throw new IllegalArgumentException(paramName + " must be under " + allowedDir);
         }
-        return p;
+        return resolved;
     }
 }

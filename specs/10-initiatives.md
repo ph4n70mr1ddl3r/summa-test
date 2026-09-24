@@ -77,7 +77,7 @@ Source: PLAN.md §5.1.
   the sponsor when the lead is non-active (a lead is required at write, INT-001; the walks
   re-point or close the post before it can sit unheld) — directing DNA proposals through the
   normal write path (DWP-010): a decision record of the outcome, plus the lessons worth
-  keeping. The ask's resolution is the filing; the §1 loop closes.
+  keeping. The ask's resolution is the filing; the improvement loop closes.
 
 ## Direction asks (goal linkage)
 

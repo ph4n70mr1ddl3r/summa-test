@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,11 +24,15 @@ class PatServiceTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
     @InjectMocks
     private PatService patService;
 
     @Test
     void create_generatesTokenAndHash() {
+        when(passwordEncoder.encode(any())).thenReturn("bcrypt_hash");
         Pat pat = new Pat();
         pat.setId("pat-1");
         pat.setName("Deploy Key");
@@ -38,7 +43,8 @@ class PatServiceTest {
         assertNotNull(result);
         assertNotNull(result.token());
         assertTrue(result.token().startsWith("summa_pat_"));
-        assertNotNull(result.pat().getTokenHash());
+        assertEquals("bcrypt_hash", result.pat().getTokenHash());
+        verify(passwordEncoder).encode(anyString());
     }
 
     @Test

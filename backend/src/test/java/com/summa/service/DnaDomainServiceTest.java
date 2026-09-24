@@ -201,7 +201,7 @@ class DnaDomainServiceTest {
         when(decisionRepository.findByDomainId("src")).thenReturn(List.of());
         when(glossaryRepository.findByDomainId("src")).thenReturn(List.of());
         when(goalRepository.findByDomainId("src")).thenReturn(List.of());
-        when(proposalRepository.findByDomainId("src")).thenReturn(List.of());
+        when(proposalRepository.findOpenByDomain("src")).thenReturn(List.of());
         when(workspaceRepository.findAll()).thenReturn(List.of());
         when(domainRepository.save(any())).thenAnswer(i -> i.getArgument(0));
         lenient().when(askRepository.findByToAndStatusPending(any())).thenReturn(List.of());
@@ -234,7 +234,7 @@ class DnaDomainServiceTest {
         lenient().when(decisionRepository.findByDomainId("src")).thenReturn(List.of());
         lenient().when(glossaryRepository.findByDomainId("src")).thenReturn(List.of());
         lenient().when(goalRepository.findByDomainId("src")).thenReturn(List.of());
-        lenient().when(proposalRepository.findByDomainId("src")).thenReturn(List.of());
+        lenient().when(proposalRepository.findOpenByDomain("src")).thenReturn(List.of());
         lenient().when(workspaceRepository.findAll()).thenReturn(List.of());
 
         assertThrows(IllegalStateException.class, () -> {

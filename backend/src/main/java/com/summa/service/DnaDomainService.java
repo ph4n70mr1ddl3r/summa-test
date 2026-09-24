@@ -308,8 +308,8 @@ public class DnaDomainService {
             goalRepository.save(goal);
         }
 
-        // Remap proposals (ids stable per DGV-042)
-        for (DnaProposal prop : proposalRepository.findByDomainId(sourceId)) {
+        // Remap proposals (ids stable per DGV-042) — only open proposals migrate
+        for (DnaProposal prop : proposalRepository.findOpenByDomain(sourceId)) {
             prop.setDomainId(survivorId);
             proposalRepository.save(prop);
         }

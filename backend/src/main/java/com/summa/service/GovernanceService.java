@@ -190,7 +190,7 @@ public class GovernanceService {
         settings.putIfAbsent("spawn-ephemeral-max-concurrent-per-spawner", Defaults.DEFAULT_SPAWN_EPHEMERAL_MAX_CONCURRENT_PER_SPAWNER);
         settings.putIfAbsent("spawn-org-wide-max-active-agents", Defaults.DEFAULT_SPAWN_ORG_WIDE_MAX_ACTIVE_AGENTS);
         settings.putIfAbsent("spawn-depth-cap", Defaults.DEFAULT_SPAWN_DEPTH_CAP);
-        settings.putIfAbsent("spawn-budget-window-days", Defaults.DEFAULT_EVALUATION_WINDOW_DAYS);
+        settings.putIfAbsent("spawn-budget-window-days", Defaults.DEFAULT_SPAWN_BUDGET_WINDOW_DAYS);
         settings.putIfAbsent("asks-tier-critical-deadline-hours", Defaults.DEFAULT_CRITICAL_ASK_DEADLINE_HOURS);
         settings.putIfAbsent("asks-tier-standard-deadline-hours", Defaults.DEFAULT_STANDARD_ASK_DEADLINE_HOURS);
         settings.putIfAbsent("asks-tier-bulk-deadline-hours", Defaults.DEFAULT_BULK_ASK_DEADLINE_HOURS);
