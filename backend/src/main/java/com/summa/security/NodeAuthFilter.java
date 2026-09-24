@@ -124,9 +124,13 @@ public class NodeAuthFilter extends OncePerRequestFilter {
     private String computeSignature(String method, String path, String body, String pubkey) {
         try {
             String keyBytes;
-            // If pubkey looks like base64 (contains + or / or ends with =), decode it;
-            // otherwise use raw UTF-8 bytes as the HMAC key.
-            if (pubkey.contains("+") || pubkey.contains("/") || pubkey.endsWith("=")) {
+            // Distinguish base64-encoded pubkeys from raw ASCII keys.
+            // A valid base64 string has length divisible by 4 (after padding),
+            // contains only [A-Za-z0-9+/=], and is not a valid UUID or short token.
+            boolean looksLikeBase64 = pubkey.matches("^[A-Za-z0-9+/]+=*$")
+                && pubkey.length() % 4 == 0
+                && pubkey.length() >= 24;
+            if (looksLikeBase64) {
                 keyBytes = new String(Base64.getDecoder().decode(pubkey), StandardCharsets.UTF_8);
             } else {
                 keyBytes = pubkey;

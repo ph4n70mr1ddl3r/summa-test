@@ -42,6 +42,7 @@ export default function Memory() {
     } catch (err) {
       setReviewResult(err instanceof Error ? err.message : String(err))
       setReviewingForId(null)
+      setReviewingId(null)
     }
   }
 

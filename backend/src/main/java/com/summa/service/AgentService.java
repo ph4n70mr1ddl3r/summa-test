@@ -338,6 +338,28 @@ public class AgentService {
                         spawnRequestRepository.save(spawn);
                     }
                 }
+                // Ensure initiative references are cleaned up (mirrors active-agent retire behavior)
+                for (Initiative init : initiativeRepository.findAll()) {
+                    boolean changed = false;
+                    if (current.getId().equals(init.getSponsor())) {
+                        init.setSponsor(null);
+                        changed = true;
+                    }
+                    if (current.getId().equals(init.getLead())) {
+                        init.setLead(null);
+                        changed = true;
+                    }
+                    if (changed) {
+                        initiativeRepository.save(init);
+                    }
+                }
+                // Pause any active triggers owned by this agent
+                for (Trigger trigger : triggerRepository.findByAgentId(current.getId())) {
+                    if ("active".equals(trigger.getStatus())) {
+                        trigger.setStatus("paused");
+                        triggerRepository.save(trigger);
+                    }
+                }
                 current.setStatus(AgentStatus.ARCHIVED.getValue());
                 current.setArchivedAt(now);
                 agentRepository.save(current);

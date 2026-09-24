@@ -74,17 +74,30 @@ public class OrgService {
     public Human createHuman(String name, String email, String rbac, String auth, String password) {
         PasswordValidator.validate(password);
 
+        // Validate rbac is one of the recognized roles; default to "member" if null
+        String effectiveRbac = "member";
+        if (rbac != null && !rbac.isBlank()) {
+            boolean validRole = false;
+            for (com.summa.enums.RbacRole role : com.summa.enums.RbacRole.values()) {
+                if (role.getValue().equals(rbac)) { validRole = true; break; }
+            }
+            if (!validRole) {
+                throw new IllegalArgumentException("Invalid rbac: " + rbac + ". Must be one of: admin, owner, member, viewer");
+            }
+            effectiveRbac = rbac;
+        }
+
         Human human = new Human();
         human.setId(UUID.randomUUID().toString());
         human.setName(name);
         human.setEmail(email);
-        human.setRbac(rbac != null ? rbac : "member");
+        human.setRbac(effectiveRbac);
         human.setAuth(auth != null ? auth : "{}");
         human.setPasswordHash(passwordUtil.hash(password));
 
         Human saved = humanRepository.save(human);
         auditService.log(Defaults.SYSTEM_ACTOR, "CREATE_HUMAN", "human", saved.getId(),
-            String.format("{\"name\":%s,\"rbac\":%s}", JsonHelpers.jsonString(name), JsonHelpers.jsonString(rbac)));
+            String.format("{\"name\":%s,\"rbac\":%s}", JsonHelpers.jsonString(name), JsonHelpers.jsonString(effectiveRbac)));
         return saved;
     }
 

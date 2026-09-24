@@ -83,7 +83,7 @@ public class WorkspaceController {
         if (gate != null) return gate;
         boolean isNodeAuth = Boolean.TRUE.equals(RbacAuthorizationFilter.getNodeAuth());
         if (!isNodeAuth && !memberService.isAdmin(actor)) {
-            return ControllerResponses.gate(auditService, "Workspace rebind requires admin role");
+            return ControllerResponses.gate(auditService, actor, "Workspace rebind requires admin role");
         }
         try {
             Workspace ws = workspaceService.rebind(id, body.get("targetNodeId"), actor);
@@ -102,7 +102,7 @@ public class WorkspaceController {
         if (gate != null) return gate;
         boolean isNodeAuth = Boolean.TRUE.equals(RbacAuthorizationFilter.getNodeAuth());
         if (!isNodeAuth && !memberService.isAdmin(actor)) {
-            return ControllerResponses.gate(auditService, "Workspace archive requires admin role");
+            return ControllerResponses.gate(auditService, actor, "Workspace archive requires admin role");
         }
         try {
             Workspace ws = workspaceService.archive(id, actor);

@@ -122,15 +122,20 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       const err = new ApiError(message, res.status);
       if (res.status === 401 || res.status === 403) {
         setAuthToken(null);
-        // Prevent duplicate redirects if multiple requests fail simultaneously
+        // Prevent duplicate redirects if multiple requests fail simultaneously.
+        // Use a closure-guarded flag so a second 401 during the navigation window
+        // does not trigger another redirect.
         if (!window.__summaRedirecting) {
           window.__summaRedirecting = true;
+          const cleanup = () => { window.__summaRedirecting = false; };
           if (navigateRef) {
             navigateRef('/login', { replace: true });
           } else {
             window.location.href = '/login';
           }
-          setTimeout(() => { window.__summaRedirecting = false; }, 1000);
+          // Extend the guard to cover the full navigation cycle, not just 1s
+          setTimeout(cleanup, 3000);
+          window.addEventListener('focus', cleanup, { once: true });
         }
         throw err;
       }
@@ -153,7 +158,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export async function loadWithFallback<T>(
   fetchAll: () => Promise<T[]>,
   fetchIndividual: () => Promise<(T | null)[]>,
-): Promise<{ data: T[]; error: string | null }> {
+): Promise<{ data: (T | null)[]; error: string | null }> {
   try {
     const data = await fetchAll()
     return { data, error: null }

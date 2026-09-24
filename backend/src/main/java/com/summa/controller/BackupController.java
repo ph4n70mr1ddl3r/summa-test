@@ -40,7 +40,7 @@ public class BackupController {
         if (gate != null) return gate;
         Optional<Human> actorOpt = orgService.findHuman(actor);
         if (actorOpt.isEmpty() || !RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac())) {
-            return ControllerResponses.gate(auditService, "Backup requires admin role");
+            return ControllerResponses.gate(auditService, actor, "Backup requires admin role");
         }
         try {
             String rawBackupDir = body.getOrDefault("backupDir", System.getProperty("java.io.tmpdir"));
@@ -63,7 +63,7 @@ public class BackupController {
         if (gate != null) return gate;
         Optional<Human> actorOpt = orgService.findHuman(actor);
         if (actorOpt.isEmpty() || !RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac())) {
-            return ControllerResponses.gate(auditService, "Restore requires admin role");
+            return ControllerResponses.gate(auditService, actor, "Restore requires admin role");
         }
         try {
             String rawPath = body.get("backupPath");

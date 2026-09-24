@@ -76,16 +76,14 @@ public class RateLimiter {
 
     private long computeRemainingLocked(String identifier, long windowStart) {
         final long[] remaining = new long[1];
-        attemptCounts.compute(identifier, (key, count) -> {
-            Instant window = windowStarts.get(key);
-            if (window == null || window.getEpochSecond() != windowStart) {
-                remaining[0] = MAX_ATTEMPTS;
-                return count;
-            }
+        Long count = attemptCounts.get(identifier);
+        Instant window = windowStarts.get(identifier);
+        if (window == null || window.getEpochSecond() != windowStart) {
+            remaining[0] = MAX_ATTEMPTS;
+        } else {
             long used = count != null ? count : 0L;
             remaining[0] = Math.max(0, MAX_ATTEMPTS - used);
-            return count;
-        });
+        }
         return remaining[0];
     }
 

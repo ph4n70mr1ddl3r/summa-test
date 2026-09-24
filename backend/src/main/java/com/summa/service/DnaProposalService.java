@@ -134,7 +134,7 @@ public class DnaProposalService {
 
     /**
      * DWP-042: Detect contradictions between the proposal payload and current domain state.
-     * Covers rule-vs-rule, goal-vs-goal, decision-vs-rule, and quorum-vs-pool shortfalls.
+     * Covers rule supersedence chain integrity and goal domain alignment.
      */
     private List<String> detectContradictions(DnaProposal proposal) {
         List<String> issues = new ArrayList<>();
@@ -147,10 +147,17 @@ public class DnaProposalService {
 
             if ("rule".equals(kind) && payload.has("supersedes_id") && !payload.get("supersedes_id").isNull()) {
                 String supersedesId = payload.get("supersedes_id").asText();
-                // DGV-025: Check supersedence chain integrity
-                List<DnaRule> successors = ruleRepository.findBySupersedesId(supersedesId);
-                if (!successors.isEmpty()) {
-                    issues.add("Supersession chain fork: " + supersedesId + " already has a live superseder");
+                // DGV-025: Check supersedence chain integrity — refuse if the target
+                // already has a live superseder (fork), or if the target itself is not
+                // found (reference to a non-existent rule).
+                Optional<DnaRule> supersedesOpt = ruleRepository.findById(supersedesId);
+                if (supersedesOpt.isEmpty()) {
+                    issues.add("Supersedes reference not found: " + supersedesId);
+                } else {
+                    List<DnaRule> successors = ruleRepository.findBySupersedesId(supersedesId);
+                    if (!successors.isEmpty()) {
+                        issues.add("Supersession chain fork: " + supersedesId + " already has a live superseder");
+                    }
                 }
             }
 

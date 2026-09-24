@@ -37,7 +37,7 @@ public class DataHoldController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         if (!memberService.isAdmin(actor)) {
-            return ControllerResponses.gate(auditService, "Data hold creation requires admin role");
+            return ControllerResponses.gate(auditService, actor, "Data hold creation requires admin role");
         }
         try {
             String kind = body.get("kind");

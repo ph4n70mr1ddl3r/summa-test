@@ -4,6 +4,7 @@ import com.summa.repository.DnaProposalRepository;
 import com.summa.repository.DnaRuleRepository;
 import com.summa.model.DnaProposal;
 import com.summa.model.DnaDomain;
+import com.summa.model.DnaRule;
 import com.summa.model.Ask;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -142,6 +143,9 @@ class DnaProposalServiceTest {
             throw new RuntimeException(e);
         }
         when(ruleRepository.findBySupersedesId("rule-old")).thenReturn(List.of());
+        DnaRule supersedesRule = new DnaRule();
+        supersedesRule.setId("rule-old");
+        when(ruleRepository.findById("rule-old")).thenReturn(Optional.of(supersedesRule));
         when(proposalRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         DnaProposal result = proposalService.publish("prop-1", "h:human-1", "h:human-1");

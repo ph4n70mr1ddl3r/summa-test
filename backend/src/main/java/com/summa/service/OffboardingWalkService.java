@@ -470,6 +470,7 @@ public class OffboardingWalkService {
         }
 
         // OFB-014/OFB-031: Clear workspace participant entries and named domain access
+        // Always run cleanup on any role reduction (not just to viewer) to prevent stale access
         List<Workspace> allWorkspaces = workspaceRepository.findAll();
         for (Workspace ws : allWorkspaces) {
             boolean changed = false;

@@ -81,7 +81,7 @@ public class GovernanceController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        if (!requireAdmin(actor)) return ControllerResponses.gate(auditService, "Admin access required to update governance policies");
+        if (!requireAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to update governance policies");
         for (String key : body.keySet()) {
             if (!POLICY_KEYS.contains(key)) {
                 return ControllerResponses.validation(auditService, "Unknown policy key: " + key);
@@ -94,7 +94,10 @@ public class GovernanceController {
             } else if (value instanceof String) {
                 // Strings must parse as a number (integer or float) — reject freeform text
                 try {
-                    Double.parseDouble((String) value);
+                    double parsed = Double.parseDouble((String) value);
+                    if (Double.isNaN(parsed) || Double.isInfinite(parsed) || parsed < 0) {
+                        return ControllerResponses.validation(auditService, "Policy value for '" + key + "' must be a non-negative number, not '" + value + "'");
+                    }
                 } catch (NumberFormatException e) {
                     return ControllerResponses.validation(auditService, "Policy value for '" + key + "' must be a number, not '" + value + "'");
                 }
@@ -111,7 +114,7 @@ public class GovernanceController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        if (!requireAdmin(actor)) return ControllerResponses.gate(auditService, "Admin access required to update governance quotas");
+        if (!requireAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to update governance quotas");
         for (String key : body.keySet()) {
             if (!QUOTA_KEYS.contains(key)) {
                 return ControllerResponses.validation(auditService, "Unknown quota key: " + key);
@@ -123,7 +126,10 @@ public class GovernanceController {
                 // Booleans are accepted as-is
             } else if (value instanceof String) {
                 try {
-                    Double.parseDouble((String) value);
+                    double parsed = Double.parseDouble((String) value);
+                    if (Double.isNaN(parsed) || Double.isInfinite(parsed) || parsed < 0) {
+                        return ControllerResponses.validation(auditService, "Quota value for '" + key + "' must be a non-negative number, not '" + value + "'");
+                    }
                 } catch (NumberFormatException e) {
                     return ControllerResponses.validation(auditService, "Quota value for '" + key + "' must be a number, not '" + value + "'");
                 }
@@ -141,7 +147,7 @@ public class GovernanceController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        if (!requireAdmin(actor)) return ControllerResponses.gate(auditService, "Admin access required to acknowledge spend overruns");
+        if (!requireAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to acknowledge spend overruns");
         try {
             SpendLedger ledger = spendLedgerService.findById(id)
                     .orElseThrow(() -> new EntityNotFoundException("Spend ledger row not found: " + id));

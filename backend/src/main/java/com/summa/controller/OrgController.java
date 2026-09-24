@@ -63,7 +63,7 @@ public class OrgController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         if (!memberService.isAdmin(actor)) {
-            return ControllerResponses.gate(auditService, "Bootstrap requires admin role when org is initialized");
+            return ControllerResponses.gate(auditService, actor, "Bootstrap requires admin role when org is initialized");
         }
         try {
             Human human = orgService.bootstrap(
@@ -82,7 +82,7 @@ public class OrgController {
     public ResponseEntity<?> listHumans(@RequestParam(defaultValue = "true") boolean active) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         if (!orgService.isInitialized() || !memberService.isAdmin(actor)) {
-            return ControllerResponses.gate(auditService, "Admin access required to list humans");
+            return ControllerResponses.gate(auditService, actor, "Admin access required to list humans");
         }
         List<Human> humans = active ? orgService.findAllActiveHumans() : orgService.findAllHumans();
         return ResponseEntity.ok(humans);
@@ -164,7 +164,7 @@ public class OrgController {
         if (gate != null) return gate;
         Optional<Human> actorOpt = orgService.findHuman(actor);
         if (actorOpt.isEmpty() || !RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac())) {
-            return ControllerResponses.gate(auditService, "Offboarding requires admin role");
+            return ControllerResponses.gate(auditService, actor, "Offboarding requires admin role");
         }
         try {
             Human human = orgService.offboard(id, actor);
@@ -182,7 +182,7 @@ public class OrgController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         if (!memberService.isAdmin(actor)) {
-            return ControllerResponses.gate(auditService, "Erasure requires admin role");
+            return ControllerResponses.gate(auditService, actor, "Erasure requires admin role");
         }
         // API-005: admin, audited, honors data_holds (STG-030..034)
         try {
