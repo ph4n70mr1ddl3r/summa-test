@@ -14,25 +14,19 @@ export default function Login() {
   let from = '/'
   if (state?.from?.pathname) {
     const candidate = state.from.pathname
-    // Decode percent-encoding first, then check for open-redirect patterns
+    // Decode percent-encoding, then validate both raw and decoded forms.
     let decoded = candidate
-    try { decoded = decodeURIComponent(candidate) } catch { /* already have raw candidate */ }
-    // Strict allowlist: only relative paths without protocol indicators are safe
+    try { decoded = decodeURIComponent(candidate) } catch { /* already raw */ }
     const isSafe = (s: string) =>
       typeof s === 'string' &&
-      !s.startsWith('//') &&
       !s.includes('://') &&
       !s.toLowerCase().startsWith('data:') &&
       !s.toLowerCase().startsWith('javascript:') &&
-      !s.startsWith('http') &&
-      !s.startsWith('ftp') &&
-      !s.startsWith('file') &&
-      !s.startsWith('vbscript') &&
-      // Must be a valid relative path (starts with / or is empty, no absolute protocol)
       (s.startsWith('/') || s.length === 0)
-    if (isSafe(candidate) && isSafe(decoded)) {
-      from = candidate
-    }
+    // Prefer the decoded form when it is safe; fall back to raw only if decoding
+    // did not change anything or the decoded form is unsafe.
+    const chosen = isSafe(decoded) ? decoded : isSafe(candidate) ? candidate : '/'
+    from = chosen
   }
 
   async function handleSubmit(e: React.FormEvent) {

@@ -211,7 +211,10 @@ public class AskService {
                     expire(ask.getId());
                 } else if ("escalate".equals(behavior) || "reassign".equals(behavior)) {
                     try {
-                        ExpiringEntry<Integer> depthEntry = successorDepth.get(ask.getId());
+                        // Depth is keyed by the root ask ID stored in the escalation field.
+                        // Successor asks carry the root ID so depth accumulates across the chain.
+                        String rootAskId = ask.getEscalation() != null ? ask.getEscalation() : ask.getId();
+                        ExpiringEntry<Integer> depthEntry = successorDepth.get(rootAskId);
                         int depth = (depthEntry != null ? depthEntry.value : 0) + 1;
                         if (depth >= Defaults.MAX_EXPIRE_SUCCESSOR_DEPTH) {
                             // ASK-057: Chain exhausted — broadcast org-stall alert
@@ -219,7 +222,7 @@ public class AskService {
                             auditService.logSystem("EXPIRE_CHAIN_EXHAUSTED", "ask", ask.getId(),
                                 String.format("{\"depth\":%d,\"behavior\":\"%s\"}", depth, behavior));
                             expire(ask.getId());
-                            successorDepth.remove(ask.getId());
+                            successorDepth.remove(rootAskId);
                             continue;
                         }
                         String successorTo = OffboardingWalkService.ADMIN_BROADCAST;
@@ -230,14 +233,18 @@ public class AskService {
                         // ASK-012/CFG-140: derive deadline from tier defaults
                         long successorDeadlineSeconds = deriveDeadlineFromTier(ask.getSlaTier());
                         Ask successor = create(ask.getKind(), ask.getFrom(), successorTo,
-                            ask.getPayload(), ask.getSlaTier(), "deny",
+                            ask.getPayload(), ask.getSlaTier(), ask.getExpiryBehavior(),
                             ask.getQuorumRequired(),
                             Instant.now().plusSeconds(successorDeadlineSeconds),
                             ask.getInitiativeId(), ask.getWorkspaceId());
+                        // Propagate the root ask ID into the successor's escalation field
+                        // so subsequent expiry cycles accumulate depth against the same key.
+                        successor.setEscalation(rootAskId);
+                        askRepository.save(successor);
                         // Store chain root in a stable cache key so subsequent expiry cycles
                         // find the accumulated depth rather than resetting to zero.
                         long expireNowSeconds = Instant.now().getEpochSecond();
-                        successorDepth.put(ask.getId(), new ExpiringEntry<>(depth, expireNowSeconds + stormCollapseWindowSeconds));
+                        successorDepth.put(rootAskId, new ExpiringEntry<>(depth, expireNowSeconds + stormCollapseWindowSeconds));
                         auditService.logSystem("EXPIRE_SUCCESSOR_CREATED", "ask", ask.getId(),
                             String.format("{\"originalId\":\"%s\",\"behavior\":\"%s\",\"depth\":%d}", ask.getId(), behavior, depth));
                         // Expire the original ask after scheduling the successor

@@ -13,10 +13,6 @@ vi.mock('../services/api', () => ({
       reviewQueue: vi.fn(),
     },
   },
-  unwrapSettled: (result: PromiseSettledResult<unknown>): unknown => {
-    if (result.status === 'fulfilled') return result.value ?? null;
-    return null;
-  },
   loadWithFallback: async (fetchAll: () => Promise<unknown[]>, fetchIndividual: () => Promise<unknown[]>) => {
     try {
       const data = await fetchAll()

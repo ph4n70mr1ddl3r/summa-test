@@ -9,6 +9,7 @@ import com.summa.security.RateLimiter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 
 @RestController
@@ -37,7 +38,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> body) {
+    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> body, HttpServletRequest request) {
         if (!localAuthEnabled) {
             return ControllerResponses.serviceUnavailable(auditService, "Local authentication is not enabled. Use OIDC/gateway auth instead.");
         }
@@ -49,9 +50,11 @@ public class AuthController {
             return ControllerResponses.validation(auditService, "email is required");
         }
 
-        // Rate limit by email to prevent brute-force
-        if (!rateLimiter.allow(email)) {
-            long remaining = rateLimiter.getRemainingAttempts(email);
+        // Rate limit by email+IP to prevent cross-user DoS via email-based keying.
+        String clientIp = resolveClientIp(request);
+        String rateKey = email + ":" + clientIp;
+        if (!rateLimiter.allow(rateKey)) {
+            long remaining = rateLimiter.getRemainingAttempts(rateKey);
             var audit = auditService.logSystem("REFUSAL", "auth_login", email, "Rate limited login attempt for: " + email);
             return ControllerResponses.tooManyRequests(audit, "Too many login attempts. Try again later.", remaining);
         }
@@ -78,7 +81,7 @@ public class AuthController {
         String token = JwtUtil.generateToken(human.getId(), jwtSecret, jwtExpiration);
         auditService.log(human.getId(), "LOGIN", "auth", human.getId(), null);
         // Reset rate limit counter on successful login
-        rateLimiter.reset(email);
+        rateLimiter.reset(rateKey);
 
         return ResponseEntity.ok(Map.of(
             "token", token,
@@ -157,5 +160,14 @@ public class AuthController {
             return authHeader.substring(7);
         }
         return null;
+    }
+
+    private String resolveClientIp(HttpServletRequest request) {
+        String xfwd = request.getHeader("X-Forwarded-For");
+        if (xfwd != null && !xfwd.isBlank()) {
+            return xfwd.split(",")[0].trim();
+        }
+        String remote = request.getRemoteAddr();
+        return "local".equals(remote) ? "127.0.0.1" : remote;
     }
 }
