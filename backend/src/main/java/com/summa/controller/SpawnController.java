@@ -31,9 +31,12 @@ public class SpawnController {
     }
 
     @GetMapping
-    public ResponseEntity<List<SpawnRequest>> listRequests(
+    public ResponseEntity<?> listRequests(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String requesterId) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         if (status != null) {
             return ResponseEntity.ok(spawnService.findByStatus(status));
         }

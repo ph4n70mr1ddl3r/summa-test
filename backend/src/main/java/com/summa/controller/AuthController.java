@@ -154,11 +154,16 @@ public class AuthController {
     }
 
     private String resolveClientIp(HttpServletRequest request) {
-        String xfwd = request.getHeader("X-Forwarded-For");
-        if (xfwd != null && !xfwd.isBlank()) {
-            return xfwd.split(",")[0].trim();
+        // Only trust X-Forwarded-For when the direct connection comes from a known proxy range.
+        // Without a reverse proxy, clients can spoof this header to bypass rate limiting.
+        String remoteAddr = request.getRemoteAddr();
+        if (!"local".equals(remoteAddr) && !"127.0.0.1".equals(remoteAddr)
+                && !"0:0:0:0:0:0:0:1".equals(remoteAddr)) {
+            String xfwd = request.getHeader("X-Forwarded-For");
+            if (xfwd != null && !xfwd.isBlank()) {
+                return xfwd.split(",")[0].trim();
+            }
         }
-        String remote = request.getRemoteAddr();
-        return "local".equals(remote) ? "127.0.0.1" : remote;
+        return "local".equals(remoteAddr) ? "127.0.0.1" : remoteAddr;
     }
 }

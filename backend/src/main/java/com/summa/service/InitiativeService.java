@@ -585,8 +585,7 @@ public class InitiativeService {
      * sponsor: proceed, re-base (dependency edge re-pointed), or pause.
      */
     private void raiseDependentCloseAsks(String closedId, String actor) {
-        List<Initiative> allInitiatives = initiativeRepository.findAll();
-        for (Initiative dep : allInitiatives) {
+        for (Initiative dep : initiativeRepository.findAll()) {
             if ("closed".equals(dep.getStatus())) continue;
             if (dep.getId().equals(closedId)) continue;
             if (dep.getDependsOn() == null || dep.getDependsOn().isBlank()) continue;

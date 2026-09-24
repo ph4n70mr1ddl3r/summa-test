@@ -12,6 +12,7 @@ public interface RunRepository extends JpaRepository<Run, String> {
     List<Run> findByAgentId(String agentId);
     List<Run> findByAgentIdAndStatus(String agentId, String status);
     List<Run> findByWorkspaceId(String workspaceId);
+    List<Run> findByWorkspaceIdAndStatus(String workspaceId, String status);
     List<Run> findByStatus(String status);
     List<Run> findByAgentIdOrderByCreatedAtDesc(String agentId);
     List<Run> findByWorkspaceIdOrderByCreatedAtDesc(String workspaceId);

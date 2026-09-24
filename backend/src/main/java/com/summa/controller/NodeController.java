@@ -50,7 +50,7 @@ public class NodeController {
         if (name == null || name.isBlank() || kind == null || kind.isBlank() || pubkey == null || pubkey.isBlank()) {
             return ControllerResponses.validation(auditService, "name, kind, and pubkey are required");
         }
-        if (!pubkey.matches("^[A-Za-z0-9+/]{43}={1}$|[A-Za-z0-9+/]{44}$")) {
+        if (!pubkey.matches("^(?:[A-Za-z0-9+/]{43}=|[A-Za-z0-9+/]{44})$")) {
             return ControllerResponses.validation(auditService, "pubkey must be a valid base64-encoded public key (44 or 45 chars)");
         }
         try {

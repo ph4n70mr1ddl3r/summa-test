@@ -39,4 +39,12 @@ describe('escapeHtml', () => {
       '&lt;a href=&quot;x&quot; onclick=&quot;alert(1)&quot;&gt;click&lt;/a&gt;'
     )
   })
+
+  it('returns empty string for null', () => {
+    expect(escapeHtml(null)).toBe('')
+  })
+
+  it('returns empty string for undefined', () => {
+    expect(escapeHtml(undefined)).toBe('')
+  })
 })

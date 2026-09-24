@@ -8,8 +8,10 @@ import java.util.List;
 @Repository
 public interface InitiativeRepository extends JpaRepository<Initiative, String> {
     List<Initiative> findByStatus(String status);
-    
+
     List<Initiative> findBySponsor(String sponsor);
-    
+
     List<Initiative> findByLead(String lead);
+
+    List<Initiative> findAll();
 }

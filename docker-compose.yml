@@ -22,7 +22,7 @@ services:
       - SUMMA_DB_PATH=${SUMMA_DB_PATH:-/data/db/summa.db}
       - SUMMA_DNA_REPO=${SUMMA_DNA_REPO:-/data/dna}
       # JWT secret must be set and at least 32 characters (validated at startup)
-      - SUMMA_JWT_SECRET=${SUMMA_JWT_SECRET:-dev-only-not-for-production-use-at-least-32-chars}
+      - SUMMA_JWT_SECRET=${SUMMA_JWT_SECRET}
       - SUMMA_CORS_ORIGINS=${SUMMA_CORS_ORIGINS:-}
       - SUMMA_SPEND_CEILING=${SUMMA_SPEND_CEILING:-1000000}
       - SUMMA_GIT_BRANCH=${SUMMA_GIT_BRANCH:-main}

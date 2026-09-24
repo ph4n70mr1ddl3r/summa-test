@@ -244,7 +244,7 @@ class NodeServiceTest {
 
         when(nodeRepository.findById("node-1")).thenReturn(Optional.of(node));
         when(workspaceService.findByNode("node-1")).thenReturn(List.of(ws));
-        when(runRepository.findByWorkspaceId("ws-1")).thenReturn(List.of(run));
+        when(runRepository.findByWorkspaceIdAndStatus("ws-1", "queued")).thenReturn(List.of(run));
 
         List<Run> result = nodeService.pullWork("node-1");
 

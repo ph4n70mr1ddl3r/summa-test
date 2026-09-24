@@ -26,10 +26,13 @@ public class MemoryController {
     }
 
     @GetMapping
-    public ResponseEntity<List<MemoryItem>> listMemory(
+    public ResponseEntity<?> listMemory(
             @RequestParam(required = false) String memberId,
             @RequestParam(required = false) String workspaceId,
             @RequestParam(required = false) Boolean tainted) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         if (memberId != null) {
             return ResponseEntity.ok(memoryService.findByMember(memberId));
         }

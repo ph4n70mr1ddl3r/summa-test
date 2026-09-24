@@ -238,9 +238,7 @@ public class NodeService {
         // Return queued runs for those workspaces
         List<Run> result = new ArrayList<>();
         for (String wsId : workspaceIds) {
-            result.addAll(runRepository.findByWorkspaceId(wsId).stream()
-                    .filter(r -> "queued".equals(r.getStatus()))
-                    .toList());
+            result.addAll(runRepository.findByWorkspaceIdAndStatus(wsId, "queued"));
         }
         return result;
     }

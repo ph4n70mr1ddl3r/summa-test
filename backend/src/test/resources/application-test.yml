@@ -16,11 +16,6 @@ spring:
     init:
       mode: never
 
-summa:
-  database:
-    path: target/test-db.db
-    wal-mode: true
-
 logging:
   level:
     com.summa: DEBUG

@@ -13,7 +13,7 @@ if ! command -v java &> /dev/null; then
     exit 1
 fi
 
-JAVA_VERSION=$(java -version 2>&1 | grep -oP '(?<=version ")[\d]+' | head -1)
+JAVA_VERSION=$(java -version 2>&1 | grep 'version' | awk -F'"' '{print $2}' | awk -F. '{print $1}')
 if [ -z "$JAVA_VERSION" ] || [ "$JAVA_VERSION" -lt 21 ]; then
     echo "ERROR: Java 21+ is required"
     exit 1
@@ -51,7 +51,7 @@ mkdir -p "$SUMMA_DNA_REPO" "$(dirname "$SUMMA_DB_PATH")"
 
 # Start the backend
 echo "Starting backend on port 8080..."
-exec java ${JAVA_OPTS:--Xmx512m -Xms256m -XX:MaxMetaspaceSize=128m} \
+exec java "${JAVA_OPTS:--Xmx512m -Xms256m -XX:MaxMetaspaceSize=128m}" \
     -Dspring.profiles.active=prod \
     -Dsumma.auth.local-auth-enabled=${SUMMA_LOCAL_AUTH_ENABLED:-true} \
     -jar "$JAR_FILE"

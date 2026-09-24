@@ -62,6 +62,19 @@ public class RateLimiter {
     }
 
     private long computeRemaining(String identifier, long windowStart) {
+        ReentrantLock lock = locks.get(identifier);
+        if (lock != null) {
+            lock.lock();
+            try {
+                return computeRemainingLocked(identifier, windowStart);
+            } finally {
+                lock.unlock();
+            }
+        }
+        return computeRemainingLocked(identifier, windowStart);
+    }
+
+    private long computeRemainingLocked(String identifier, long windowStart) {
         final long[] remaining = new long[1];
         attemptCounts.compute(identifier, (key, count) -> {
             Instant window = windowStarts.get(key);

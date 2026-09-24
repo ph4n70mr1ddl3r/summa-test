@@ -101,7 +101,7 @@ public class BackupController {
             }
             resolved = allowedDir;
         }
-        if (!resolved.toAbsolutePath().normalize().startsWith(allowedDir.toAbsolutePath().normalize())) {
+        if (!resolved.startsWith(allowedDir)) {
             throw new IllegalArgumentException(paramName + " must be under " + allowedDir);
         }
         return p;
