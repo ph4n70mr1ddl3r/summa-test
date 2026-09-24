@@ -333,7 +333,7 @@ public class AgentService {
                     askRepository.save(ask);
                 }
                 for (SpawnRequest spawn : spawnRequestRepository.findByRequesterId(current.getId())) {
-            if (AgentStatus.REQUESTED.getValue().equals(spawn.getStatus())) {
+                    if (AgentStatus.REQUESTED.getValue().equals(spawn.getStatus())) {
                         spawn.setStatus("archived");
                         spawnRequestRepository.save(spawn);
                     }

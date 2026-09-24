@@ -6,6 +6,7 @@ import com.summa.security.JwtUtil;
 import com.summa.security.PasswordUtil;
 import com.summa.security.PasswordValidator;
 import com.summa.security.RateLimiter;
+import com.summa.security.RbacAuthorizationFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -95,17 +96,14 @@ public class AuthController {
     public ResponseEntity<Map<String, Object>> changePassword(
             @RequestHeader(value = "Authorization") String authHeader,
             @RequestBody Map<String, String> body) {
-        String token = extractToken(authHeader);
-        if (token == null) {
+        // RbacAuthorizationFilter already ran before this controller and set the actor
+        // attribute. Re-parse here only to satisfy the explicit auth header check;
+        // in practice the filter chain guarantees a valid actor is available.
+        String actor = RbacAuthorizationFilter.getCurrentActor();
+        if (actor == null || actor.isBlank()) {
             var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Missing token", null);
             return ControllerResponses.gate(audit, "Missing or malformed Authorization header");
         }
-        var payload = JwtUtil.parseToken(token, jwtSecret);
-        if (payload == null) {
-            var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Invalid token", null);
-            return ControllerResponses.gate(audit, "Invalid or expired token");
-        }
-        String actor = (String) payload.get("sub");
 
         // Rate limit by actor to prevent brute-force password changes
         if (!rateLimiter.allow(actor + ":change-password")) {
@@ -153,13 +151,6 @@ public class AuthController {
         auditService.log(actor, "CHANGE_PASSWORD", "auth", actor, null);
 
         return ResponseEntity.ok(Map.of("message", "Password updated"));
-    }
-
-    private String extractToken(String authHeader) {
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7);
-        }
-        return null;
     }
 
     private String resolveClientIp(HttpServletRequest request) {

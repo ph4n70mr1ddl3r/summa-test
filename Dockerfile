@@ -19,7 +19,7 @@ WORKDIR /app
 RUN apk add --no-cache curl
 
 COPY --from=builder /build/backend/target/summa-backend-*.jar /app/app.jar
-RUN [ -f /app/app.jar ] || { echo "ERROR: No JAR found in build output" >&2; exit 1; }
+RUN if [ ! -f /app/app.jar ]; then echo "ERROR: No JAR found in build output" >&2; exit 1; fi
 
 # Create data directories and non-root user
 RUN addgroup -g 1000 -S summa && adduser -u 1000 -S summa -G summa && \

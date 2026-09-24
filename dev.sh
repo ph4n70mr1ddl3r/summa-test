@@ -14,7 +14,7 @@ if ! command -v java &> /dev/null; then
     exit 1
 fi
 
-JAVA_VERSION=$(java -version 2>&1 | grep -oP '(?<=version ")[\d]+' | head -1)
+JAVA_VERSION=$(java -version 2>&1 | awk -F'"' '/version/ {print $2}' | cut -d. -f1)
 if [ -z "$JAVA_VERSION" ] || [ "$JAVA_VERSION" -lt 21 ]; then
     echo "ERROR: Java 21+ is required"
     exit 1
@@ -38,7 +38,7 @@ if ! command -v mvn &> /dev/null; then
     exit 1
 fi
 
-MAVEN_VERSION=$(mvn -v 2>&1 | grep -oP '(?<=Apache Maven )[\d.]+' | head -1)
+MAVEN_VERSION=$(mvn -v 2>&1 | sed -n 's/.*Apache Maven \([0-9.]*\).*/\1/p' | head -1)
 if [ -n "$MAVEN_VERSION" ]; then
     MAVEN_MAJOR=$(echo "$MAVEN_VERSION" | cut -d'.' -f1)
     MAVEN_MINOR=$(echo "$MAVEN_VERSION" | cut -d'.' -f2)
@@ -99,7 +99,7 @@ fi
 
 # Start console
 echo "[2/2] Starting console..."
-cd console
+pushd console > /dev/null
 if [ ! -d "node_modules" ]; then
     echo "      Installing console dependencies..."
     npm ci --prefer-offline 2>/dev/null || npm install
@@ -107,7 +107,7 @@ fi
 npm run dev > ~/.summa/logs/console.log 2>&1 &
 CONSOLE_PID=$!
 echo "      Console PID: $CONSOLE_PID"
-cd ..
+popd > /dev/null
 
 # Wait for console to start
 echo "      Waiting for console on :3000..."
