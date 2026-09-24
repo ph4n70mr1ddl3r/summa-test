@@ -406,6 +406,7 @@ public class SpawnService {
         long requested = spawnRepository.countByStatus("requested");
         long approved = spawnRepository.countByStatus("approved");
         long archived = spawnRepository.countByStatus("archived");
-        return Map.of("requested", requested, "approved", approved, "archived", archived);
+        long halted = spawnRepository.countByStatus("halted");
+        return Map.of("requested", requested, "approved", approved, "archived", archived, "halted", halted);
     }
 }

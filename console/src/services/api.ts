@@ -256,6 +256,7 @@ export interface SpawnStats {
   requested: number;
   approved: number;
   archived: number;
+  halted?: number;
 }
 
 export interface Initiative {

@@ -44,17 +44,9 @@ public class GovernanceController {
     public ResponseEntity<Map<String, Object>> getQuotas() {
         Map<String, Object> all = governanceService.getAllSettings();
         Map<String, Object> quotas = new HashMap<>();
-        quotas.put("spawn-ephemeral-default-ttl-hours", all.get("spawn-ephemeral-default-ttl-hours"));
-        quotas.put("spawn-ephemeral-max-concurrent-per-spawner", all.get("spawn-ephemeral-max-concurrent-per-spawner"));
-        quotas.put("spawn-org-wide-max-active-agents", all.get("spawn-org-wide-max-active-agents"));
-        quotas.put("spawn-depth-cap", all.get("spawn-depth-cap"));
-        quotas.put("spawn-budget-window-days", all.get("spawn-budget-window-days"));
-        quotas.put("asks-tier-critical-deadline-hours", all.get("asks-tier-critical-deadline-hours"));
-        quotas.put("asks-tier-standard-deadline-hours", all.get("asks-tier-standard-deadline-hours"));
-        quotas.put("asks-tier-bulk-deadline-hours", all.get("asks-tier-bulk-deadline-hours"));
-        quotas.put("asks-storm-collapse-window-hours", all.get("asks-storm-collapse-window-hours"));
-        quotas.put("asks-rate-limit-per-source-per-hour", all.get("asks-rate-limit-per-source-per-hour"));
-        quotas.put("spend-evaluation-window-days", all.get("spend-evaluation-window-days"));
+        for (String key : QUOTA_KEYS) {
+            quotas.put(key, all.get(key));
+        }
         return ResponseEntity.ok(quotas);
     }
 
@@ -110,7 +102,7 @@ public class GovernanceController {
                 return ControllerResponses.validation(auditService, "Policy value for '" + key + "' must be a number, string, or boolean");
             }
         }
-        body.forEach((key, value) -> governanceService.setSetting(key, value, actor));
+        governanceService.setSettingsBulk(body, actor);
         return ResponseEntity.ok(governanceService.getAllSettings());
     }
 
@@ -139,7 +131,7 @@ public class GovernanceController {
                 return ControllerResponses.validation(auditService, "Quota value for '" + key + "' must be a number, string, or boolean");
             }
         }
-        body.forEach((key, value) -> governanceService.setSetting(key, value, actor));
+        governanceService.setSettingsBulk(body, actor);
         return ResponseEntity.ok(governanceService.getAllSettings());
     }
 

@@ -91,6 +91,10 @@ public class GovernanceService {
         throw new IllegalArgumentException("Cannot cast value to " + type.getName() + " for key: " + key);
     }
 
+    /**
+     * @deprecated Use {@link #getSetting(String, Class)} instead.
+     */
+    @Deprecated
     @Transactional(readOnly = true)
     public Object getSetting(String key) {
         Map<String, Object> settings = getAllSettings();
@@ -144,6 +148,13 @@ public class GovernanceService {
         }
     }
 
+    @Transactional
+    public void setSettingsBulk(Map<String, Object> entries, String editedBy) {
+        for (Map.Entry<String, Object> entry : entries.entrySet()) {
+            setSetting(entry.getKey(), entry.getValue(), editedBy);
+        }
+    }
+
     public Map<String, Object> getSpendView() {
         double ceiling = resolveSpendCeiling();
         long windowDays = resolveSpendWindowDays();
@@ -169,12 +180,9 @@ public class GovernanceService {
     }
 
     private long resolveSpendWindowDays() {
-        Object windowDaysObj = getSetting("spend-evaluation-window-days");
-        long windowDays = Defaults.DEFAULT_EVALUATION_WINDOW_DAYS;
-        if (windowDaysObj instanceof Number) {
-            windowDays = ((Number) windowDaysObj).longValue();
-        }
-        return windowDays;
+        Long windowDays = getSetting("spend-evaluation-window-days", Long.class);
+        long result = windowDays != null ? windowDays : Defaults.DEFAULT_EVALUATION_WINDOW_DAYS;
+        return result;
     }
 
     private void applyDefaults(Map<String, Object> settings) {

@@ -270,4 +270,3 @@ public class DnaProposalService {
         return proposedBy != null && proposedBy.equals(actor);
     }
 }
-

@@ -13,10 +13,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-    @RestController
-    @RequestMapping("/dna/proposals")
-    public class DnaProposalController {
-        private static final Set<String> VALID_PROPOSAL_KINDS = Set.of("card", "rule", "decision", "goal", "glossary", "edit");
+@RestController
+@RequestMapping("/dna/proposals")
+public class DnaProposalController {
+    private static final Set<String> VALID_PROPOSAL_KINDS = Set.of("card", "rule", "decision", "goal", "glossary", "edit");
     private final DnaProposalService proposalService;
     private final AuditService auditService;
     private final WriteGate writeGate;

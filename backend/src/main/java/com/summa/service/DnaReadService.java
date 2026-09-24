@@ -77,7 +77,7 @@ public class DnaReadService {
         // escape the quoted phrase boundary or inject sub-expressions.
         // Single quotes must also be escaped — unescaped quotes break the FTS5
         // quoted-phrase boundary and allow operator injection.
-        String escaped = safeQuery.replace("\\", "\\\\").replace("\"", "\\\"").replace("'", "\\'");
+        String escaped = safeQuery.replace("\\", "\\\\").replace("\"", "\\\"").replace("'", "''");
         String match = "\"" + escaped + "\"*";
         String sql = "SELECT id, title, definition_md, statement_md, context_md, outcome_md, " +
                      "term, definition, content_md, domain_id, kind, status " +

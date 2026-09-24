@@ -209,9 +209,9 @@ public class AskService {
                     expire(ask.getId());
                 } else if ("escalate".equals(behavior) || "reassign".equals(behavior)) {
                     try {
-                         ExpiringEntry<Integer> depthEntry = successorDepth.get(ask.getId());
-                         int depth = (depthEntry != null ? depthEntry.value : 0) + 1;
-                          if (depth >= Defaults.MAX_EXPIRE_SUCCESSOR_DEPTH) {
+                        ExpiringEntry<Integer> depthEntry = successorDepth.get(ask.getId());
+                        int depth = (depthEntry != null ? depthEntry.value : 0) + 1;
+                        if (depth >= Defaults.MAX_EXPIRE_SUCCESSOR_DEPTH) {
                             // ASK-057: Chain exhausted — broadcast org-stall alert
                             broadcastOrgStall(ask);
                             auditService.logSystem("EXPIRE_CHAIN_EXHAUSTED", "ask", ask.getId(),
@@ -232,9 +232,10 @@ public class AskService {
                             ask.getQuorumRequired(),
                             Instant.now().plusSeconds(successorDeadlineSeconds),
                             ask.getInitiativeId(), ask.getWorkspaceId());
-                         // Track depth by the original ask's ID so the next expire cycle sees the correct depth
-                         long expireNowSeconds = Instant.now().getEpochSecond();
-                         successorDepth.put(ask.getId(), new ExpiringEntry<>(depth, expireNowSeconds + stormCollapseWindowSeconds));
+                        // Store chain root in a stable cache key so subsequent expiry cycles
+                        // find the accumulated depth rather than resetting to zero.
+                        long expireNowSeconds = Instant.now().getEpochSecond();
+                        successorDepth.put(ask.getId(), new ExpiringEntry<>(depth, expireNowSeconds + stormCollapseWindowSeconds));
                         auditService.logSystem("EXPIRE_SUCCESSOR_CREATED", "ask", ask.getId(),
                             String.format("{\"originalId\":\"%s\",\"behavior\":\"%s\",\"depth\":%d}", ask.getId(), behavior, depth));
                         // Expire the original ask after scheduling the successor
@@ -412,6 +413,7 @@ public class AskService {
      * ASK-012/CFG-140: Derive deadline seconds from SLA tier defaults.
      */
     private long deriveDeadlineFromTier(String tier) {
+        if (tier == null) tier = "standard";
         if ("critical".equals(tier)) {
             Object val = governanceService.getSetting("asks-tier-critical-deadline-hours");
             if (val instanceof Number) return ((Number) val).longValue() * 3600L;
