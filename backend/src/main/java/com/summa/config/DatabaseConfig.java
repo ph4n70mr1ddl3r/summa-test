@@ -28,7 +28,7 @@ public class DatabaseConfig {
         config.setJdbcUrl("jdbc:sqlite:" + path + "?journal_mode=WAL");
         config.setDriverClassName("org.sqlite.JDBC");
         config.setPoolName("SummaHikariPool");
-        config.setMaximumPoolSize(5);
+        config.setMaximumPoolSize(1);
         config.setMinimumIdle(1);
         config.setIdleTimeout(300000);
         config.setMaxLifetime(1800000);

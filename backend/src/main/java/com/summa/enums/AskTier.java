@@ -14,4 +14,11 @@ public enum AskTier {
     public String getValue() {
         return value;
     }
+
+    public static AskTier fromValue(String value) {
+        for (AskTier t : values()) {
+            if (t.value.equals(value)) return t;
+        }
+        return null;
+    }
 }

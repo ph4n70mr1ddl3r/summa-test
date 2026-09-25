@@ -43,9 +43,6 @@ public class AskController {
     public ResponseEntity<?> listAsks(
             @RequestParam(required = false) String to,
             @RequestParam(required = false) String status) {
-        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
-        if (gate != null) return gate;
         if (to != null) {
             return ResponseEntity.ok(askService.findByTo(to));
         }

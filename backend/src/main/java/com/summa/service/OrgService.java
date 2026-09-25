@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.Map;
 import com.summa.exception.EntityNotFoundException;
+import com.summa.enums.RbacRole;
 
 @Service
 public class OrgService {
@@ -160,8 +161,8 @@ public class OrgService {
 
         // OFB-021: Last-admin guard — same check as demote to prevent bricking the org
         long activeAdminCount = humanRepository.countByDeactivatedAtIsNullAndRbac("admin");
-        boolean isCurrentAdmin = humanRepository.findById(id).map(h -> "admin".equals(h.getRbac())).orElse(false);
-        boolean becomesNonAdmin = isCurrentAdmin && !"admin".equals(newRbac);
+        boolean isCurrentAdmin = humanRepository.findById(id).map(h -> RbacRole.ADMIN.getValue().equals(h.getRbac())).orElse(false);
+        boolean becomesNonAdmin = isCurrentAdmin && !RbacRole.ADMIN.getValue().equals(newRbac);
         if (becomesNonAdmin && activeAdminCount <= 1) {
             throw new IllegalStateException("Cannot update rbac: would leave the org with zero admins");
         }
@@ -187,7 +188,7 @@ public class OrgService {
             throw new EntityNotFoundException("Deputy not found: " + deputyId);
         }
         Human deputy = deputyOpt.get();
-        if ("viewer".equals(deputy.getRbac())) {
+        if (RbacRole.VIEWER.getValue().equals(deputy.getRbac())) {
             throw new IllegalArgumentException("Deputy cannot be a viewer");
         }
         if (deputy.getId().equals(id)) {
@@ -231,8 +232,8 @@ public class OrgService {
 
         // OFB-021: Last-admin guard — demotion joining deactivation under the same transactional check
         long activeAdminCount = humanRepository.countByDeactivatedAtIsNullAndRbac("admin");
-        boolean isCurrentAdmin = "admin".equals(human.getRbac());
-        boolean becomesNonAdmin = "admin".equals(human.getRbac()) && !"admin".equals(newRbac);
+        boolean isCurrentAdmin = RbacRole.ADMIN.getValue().equals(human.getRbac());
+        boolean becomesNonAdmin = RbacRole.ADMIN.getValue().equals(human.getRbac()) && !RbacRole.ADMIN.getValue().equals(newRbac);
         if (becomesNonAdmin && activeAdminCount <= 1) {
             throw new IllegalStateException("Cannot demote the last admin");
         }

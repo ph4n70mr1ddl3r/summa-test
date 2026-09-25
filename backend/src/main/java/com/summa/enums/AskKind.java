@@ -16,4 +16,11 @@ public enum AskKind {
     public String getValue() {
         return value;
     }
+
+    public static AskKind fromValue(String value) {
+        for (AskKind k : values()) {
+            if (k.value.equals(value)) return k;
+        }
+        return null;
+    }
 }

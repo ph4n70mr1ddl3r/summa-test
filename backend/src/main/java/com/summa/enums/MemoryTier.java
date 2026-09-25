@@ -14,4 +14,11 @@ public enum MemoryTier {
     public String getValue() {
         return value;
     }
+
+    public static MemoryTier fromValue(String value) {
+        for (MemoryTier t : values()) {
+            if (t.value.equals(value)) return t;
+        }
+        return null;
+    }
 }

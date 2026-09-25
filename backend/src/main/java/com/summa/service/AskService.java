@@ -94,18 +94,10 @@ public class AskService {
         }
 
         // Service-level validation for defense-in-depth
-        boolean validKind = false;
-        for (AskKind k : AskKind.values()) {
-            if (k.getValue().equals(kind)) { validKind = true; break; }
-        }
-        if (!validKind) {
+        if (AskKind.fromValue(kind) == null) {
             throw new IllegalArgumentException("Invalid ask kind: " + kind);
         }
-        boolean validTier = false;
-        for (AskTier t : AskTier.values()) {
-            if (t.getValue().equals(slaTier)) { validTier = true; break; }
-        }
-        if (!validTier) {
+        if (AskTier.fromValue(slaTier) == null) {
             throw new IllegalArgumentException("Invalid SLA tier: " + slaTier);
         }
 
@@ -132,7 +124,7 @@ public class AskService {
             // Collapse: increment collapsed_count on nearest pending canonical.
             List<Ask> candidates = askRepository.findByToAndStatusPending(to);
             candidates = candidates.stream()
-                .filter(a -> kind.equals(a.getKind()) && "pending".equals(a.getStatus()))
+                .filter(a -> kind.equals(a.getKind()) && a.isPending())
                 .toList();
             if (!candidates.isEmpty()) {
                 Ask canonical = candidates.get(0);
@@ -203,7 +195,7 @@ public class AskService {
         List<Ask> expired = askRepository.findExpiredBefore(Instant.now());
         for (Ask ask : expired) {
             try {
-                if (!"pending".equals(ask.getStatus())) continue;
+                if (!ask.isPending()) continue;
                 String behavior = ask.getExpiryBehavior() != null ? ask.getExpiryBehavior() : "deny";
                 if ("deny".equals(behavior)) {
                     expire(ask.getId());
@@ -289,7 +281,7 @@ public class AskService {
         Ask ask = askRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Ask not found: " + id));
 
-        if (!"pending".equals(ask.getStatus())) {
+        if (!ask.isPending()) {
             throw new IllegalStateException("Ask is not pending: " + ask.getStatus());
         }
 
@@ -377,7 +369,7 @@ public class AskService {
     @Transactional
     public void handleDirectionAskResponse(Ask ask, String response) {
         if (ask.getInitiativeId() == null || ask.getInitiativeId().isBlank()) return;
-        if (!"question".equals(ask.getKind()) || !"bulk".equals(ask.getSlaTier())) return;
+        if (AskKind.QUESTION != AskKind.fromValue(ask.getKind()) || AskTier.BULK != AskTier.fromValue(ask.getSlaTier())) return;
 
         try {
             JsonNode payload = objectMapper.readTree(ask.getPayload());

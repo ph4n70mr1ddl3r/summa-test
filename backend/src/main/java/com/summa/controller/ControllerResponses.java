@@ -83,15 +83,15 @@ public final class ControllerResponses {
     }
 
     public static ResponseEntity<Map<String, Object>> internalError(AuditService audit, String message) {
-        AuditEvent event = audit.logSystem("ERROR", "internal", null, message);
+        AuditEvent event = audit.logSystem("ERROR", "internal_error", null, message);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("code", "internal", "message", message, "audit_event_id", event.getId()));
+                .body(Map.of("code", "internal_error", "message", message, "audit_event_id", event.getId()));
     }
 
     public static ResponseEntity<Map<String, Object>> internalError(AuditService audit, String actor, String message) {
-        AuditEvent event = audit.log(actor, "ERROR", "internal", null, message);
+        AuditEvent event = audit.log(actor, "ERROR", "internal_error", null, message);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("code", "internal", "message", message, "audit_event_id", event.getId()));
+                .body(Map.of("code", "internal_error", "message", message, "audit_event_id", event.getId()));
     }
 
     public static ResponseEntity<Map<String, Object>> serviceUnavailable(AuditService audit, String message) {
