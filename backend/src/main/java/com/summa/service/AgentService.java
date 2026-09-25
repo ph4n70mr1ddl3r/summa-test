@@ -21,6 +21,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -342,7 +343,7 @@ public class AgentService {
                 }
                 // Ensure initiative references are cleaned up (mirrors active-agent retire behavior)
                 // sponsor/lead are NOT NULL, so reassign rather than nullify
-                List<Initiative> owned = initiativeRepository.findBySponsor(current.getId());
+                List<Initiative> owned = new ArrayList<>(initiativeRepository.findBySponsor(current.getId()));
                 owned.addAll(initiativeRepository.findByLead(current.getId()));
                 // deduplicate since an initiative could be both sponsor and lead
                 Set<String> seen = new HashSet<>();

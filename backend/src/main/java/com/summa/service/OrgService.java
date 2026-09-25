@@ -159,7 +159,7 @@ public class OrgService {
         }
 
         // Acquire the row lock first to serialize concurrent rbac updates
-        Human human = humanRepository.findById(id)
+        Human human = humanRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new EntityNotFoundException("Human not found: " + id));
 
         // OFB-021: Last-admin guard — same check as demote to prevent bricking the org

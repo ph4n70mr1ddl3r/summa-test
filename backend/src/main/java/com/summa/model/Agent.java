@@ -1,6 +1,7 @@
 package com.summa.model;
 
 import com.summa.config.InstantToUnixEpochConverter;
+import com.summa.enums.AgentClass;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.Instant;
@@ -110,5 +111,8 @@ public class Agent {
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
     public boolean isActive() { return "active".equals(status); }
-    public boolean isEphemeral() { return "ephemeral".equals(agentClass) || "ephemeral-subagent".equals(agentClass); }
+    public boolean isEphemeral() {
+        AgentClass cls = AgentClass.fromValue(this.agentClass);
+        return cls != null && cls.isEphemeral();
+    }
 }

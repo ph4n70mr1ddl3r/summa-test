@@ -13,9 +13,17 @@ export default function Initiatives() {
     setLoading(true)
     setError(null)
     let aborted = false
-    api.initiatives.list()
-      .then((data) => { if (!aborted) { setInitiatives(data); setLoading(false) } })
-      .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
+    const fetchOnce = () =>
+      api.initiatives.list()
+        .then((data) => { if (!aborted) { setInitiatives(data); setLoading(false) } })
+        .catch(() => {
+          if (aborted) return
+          // Retry once on failure
+          api.initiatives.list()
+            .then((data) => { if (!aborted) { setInitiatives(data); setLoading(false) } })
+            .catch((retryErr) => { if (!aborted) { setError(retryErr instanceof Error ? retryErr.message : String(retryErr)); setLoading(false) } })
+        })
+    fetchOnce()
     return () => { aborted = true }
   }
 

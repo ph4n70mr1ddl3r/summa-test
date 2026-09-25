@@ -120,5 +120,6 @@ public class Ask {
     public Integer getCollapsedCount() { return collapsedCount; }
     public void setCollapsedCount(Integer collapsedCount) { this.collapsedCount = collapsedCount; }
     public boolean isPending() { return "pending".equals(status); }
-    public boolean isExpired() { return deadline != null && Instant.now().isAfter(deadline); }
+    public boolean isExpired() { return isExpiredAt(Instant.now()); }
+    public boolean isExpiredAt(Instant now) { return deadline != null && now.isAfter(deadline); }
 }

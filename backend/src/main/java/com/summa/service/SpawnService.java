@@ -101,6 +101,11 @@ public class SpawnService {
             }
         }
 
+        // SPW-022: Persistent hires cannot have a TTL
+        if (AgentClass.PERSISTENT.getValue().equals(effectiveSpawnClass) && ttlHours != null) {
+            throw new IllegalStateException("Persistent hires cannot have a TTL");
+        }
+
         // INT-080: Only active initiatives launch spawns — verify workspace bindings reference active initiatives
         JsonNode bindings = null;
         if (workspaceBindings != null && !workspaceBindings.isBlank() && !workspaceBindings.equals("[]")) {
@@ -125,6 +130,7 @@ public class SpawnService {
                             } catch (Exception e) {
                                 auditService.logSystem("SPAWN_PARSE_BINDINGS_FAIL", "spawn_request", "unknown",
                                     String.format("{\"error\":\"%s\"}", e.getMessage()));
+                                throw new IllegalStateException("Invalid initiativeIds JSON in workspace " + wsId + ": " + e.getMessage());
                             }
                             if (initIds != null && initIds.isArray()) {
                                 for (JsonNode initIdNode : initIds) {

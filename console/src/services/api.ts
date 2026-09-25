@@ -276,6 +276,7 @@ export interface Initiative {
   businessBudget?: string;
   closedAt?: number;
   dependsOn?: string;
+  createdAt?: number;
   updatedAt?: number;
 }
 

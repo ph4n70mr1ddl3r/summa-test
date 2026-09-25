@@ -163,7 +163,7 @@ public class GovernanceService {
         Double settledObj = spendLedgerRepository.sumSettleCostSince(window);
         double reserved = reservedObj != null ? reservedObj : 0.0;
         double settled = settledObj != null ? settledObj : 0.0;
-        double utilization = (reserved + settled) / ceiling;
+        double utilization = ceiling > 0 ? (reserved + settled) / ceiling : 0.0;
         Map<String, Object> view = new LinkedHashMap<>();
         view.put("reserved", reserved);
         view.put("settled", settled);

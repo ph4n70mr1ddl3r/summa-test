@@ -234,7 +234,10 @@ public class AskService {
                         // Store chain root in a stable cache key so subsequent expiry cycles
                         // find the accumulated depth rather than resetting to zero.
                         long expireNowSeconds = Instant.now().getEpochSecond();
-                        successorDepth.put(rootAskId, new ExpiringEntry<>(depth, expireNowSeconds + stormCollapseWindowSeconds));
+                        successorDepth.compute(rootAskId, (k, entry) -> {
+                            int d = (entry != null ? entry.value : 0) + 1;
+                            return new ExpiringEntry<>(d, expireNowSeconds + stormCollapseWindowSeconds);
+                        });
                         auditService.logSystem("EXPIRE_SUCCESSOR_CREATED", "ask", ask.getId(),
                             String.format("{\"originalId\":\"%s\",\"behavior\":\"%s\",\"depth\":%d}", ask.getId(), behavior, depth));
                         // Expire the original ask after scheduling the successor
@@ -475,6 +478,10 @@ public class AskService {
     public Ask withdraw(String id, String originator) {
         Ask ask = askRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Ask not found: " + id));
+
+        if (!ask.isPending()) {
+            throw new IllegalStateException("Can only withdraw pending asks, current status: " + ask.getStatus());
+        }
 
         if (originator == null || !originator.equals(ask.getFrom())) {
             throw new IllegalArgumentException("Only the originator can withdraw");
