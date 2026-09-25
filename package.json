@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:console\"",
-    "dev:backend": "cd backend && mvn spring-boot:run -Dspring-boot.run.profiles=dev",
+    "dev:backend": "cd backend && mvn spring-boot:run -Dspring-boot.run.profiles=dev -Dspring-boot.run.jvmArguments=\"-Xmx512m -Xms256m -XX:MaxMetaspaceSize=128m\" -Dsumma.auth.local-auth-enabled=${SUMMA_LOCAL_AUTH_ENABLED:-true}",
     "dev:console": "cd console && npm run dev",
     "build": "npm run build:backend && npm run build:console",
     "build:backend": "cd backend && mvn clean package -DskipTests",

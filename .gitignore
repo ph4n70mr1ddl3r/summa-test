@@ -19,8 +19,7 @@ coverage/
 backend/target/
 console/dist/
 console/.vite/
-.opencode/node_modules/
-.opencode/package-lock.json
+.opencode/
 .summa/
 *.keystore
 *.p12

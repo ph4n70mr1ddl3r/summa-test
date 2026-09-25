@@ -21,8 +21,10 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import com.summa.model.Human;
 import com.summa.enums.AgentStatus;
 import com.summa.util.JsonHelpers;
@@ -339,14 +341,20 @@ public class AgentService {
                     }
                 }
                 // Ensure initiative references are cleaned up (mirrors active-agent retire behavior)
-                for (Initiative init : initiativeRepository.findAll()) {
+                // sponsor/lead are NOT NULL, so reassign rather than nullify
+                List<Initiative> owned = initiativeRepository.findBySponsor(current.getId());
+                owned.addAll(initiativeRepository.findByLead(current.getId()));
+                // deduplicate since an initiative could be both sponsor and lead
+                Set<String> seen = new HashSet<>();
+                for (Initiative init : owned) {
+                    if (!seen.add(init.getId())) continue;
                     boolean changed = false;
                     if (current.getId().equals(init.getSponsor())) {
-                        init.setSponsor(null);
+                        init.setSponsor(OffboardingWalkService.ADMIN_BROADCAST);
                         changed = true;
                     }
                     if (current.getId().equals(init.getLead())) {
-                        init.setLead(null);
+                        init.setLead(OffboardingWalkService.ADMIN_BROADCAST);
                         changed = true;
                     }
                     if (changed) {

@@ -38,8 +38,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     public static final List<String> PUBLIC_PATHS = List.of(
-        "/api/auth/login", "/api/health", "/api/info",
-        "/api/nodes/enroll", "/api/org/bootstrap"
+        "/auth/login", "/health", "/info",
+        "/nodes/enroll", "/org/bootstrap"
     );
 
     public static boolean isNodePath(String path) {

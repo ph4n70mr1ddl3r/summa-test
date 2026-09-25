@@ -85,9 +85,8 @@ public class AskController {
             }
             String slaTier = body.get("slaTier");
             if (slaTier != null && !slaTier.isBlank()) {
-                Set<String> validTiers = Set.of("critical", "standard", "bulk");
-                if (!validTiers.contains(slaTier)) {
-                    throw new IllegalArgumentException("Invalid slaTier: " + slaTier + ". Must be one of: " + String.join(", ", validTiers));
+                if (com.summa.enums.AskTier.fromValue(slaTier) == null) {
+                    throw new IllegalArgumentException("Invalid slaTier: " + slaTier + ". Must be one of: critical, standard, bulk");
                 }
             }
             String deadlineStr = body.get("deadlineSeconds");

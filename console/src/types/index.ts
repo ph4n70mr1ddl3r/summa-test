@@ -1,6 +1,7 @@
 // Re-export key API types from services/api.ts for centralized type usage.
 export type {
   Agent,
+  AgentClass,
   AgentStatus,
   Ask,
   AskKind,

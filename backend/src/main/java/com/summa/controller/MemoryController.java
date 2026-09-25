@@ -75,7 +75,7 @@ public class MemoryController {
                 body.get("workspaceId"),
                 body.get("contentMd"),
                 body.get("provenance"),
-                Boolean.parseBoolean(body.getOrDefault("tainted", "false"))
+                Boolean.parseBoolean(body.getOrDefault("tainted", "false").toLowerCase())
             );
             return ResponseEntity.ok(item);
         } catch (IllegalArgumentException e) {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom'
 import { setAuthToken, isAuthenticated, getUser, setNavigate } from './services/api'
-import type { RbacRole } from './services/api'
+import type { RbacRole } from './types'
 
 interface NavItem {
   to: string
