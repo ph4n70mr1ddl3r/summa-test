@@ -89,6 +89,12 @@ public class AskController {
                     throw new IllegalArgumentException("Invalid slaTier: " + slaTier + ". Must be one of: critical, standard, bulk");
                 }
             }
+            String expiryBehavior = body.get("expiryBehavior");
+            if (expiryBehavior != null && !expiryBehavior.isBlank()) {
+                if (!"deny".equals(expiryBehavior) && !"escalate".equals(expiryBehavior) && !"reassign".equals(expiryBehavior)) {
+                    throw new IllegalArgumentException("Invalid expiryBehavior: " + expiryBehavior + ". Must be one of: deny, escalate, reassign");
+                }
+            }
             String deadlineStr = body.get("deadlineSeconds");
             long deadlineSeconds;
             if (deadlineStr != null && !deadlineStr.isBlank()) {

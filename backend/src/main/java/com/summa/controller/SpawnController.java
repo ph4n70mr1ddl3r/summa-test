@@ -70,7 +70,7 @@ public class SpawnController {
                 throw new IllegalArgumentException("Invalid spawn class: " + effectiveClass
                     + ". Must be one of: persistent, ephemeral, ephemeral-subagent");
             }
-            String normalizedClass = effectiveClass.toUpperCase().replace("-", "_");
+            String normalizedClass = effectiveClass;
             SpawnRequest request = spawnService.create(
                 requesterId,
                 body.get("templateId"),

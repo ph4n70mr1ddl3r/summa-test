@@ -233,7 +233,7 @@ public class OrgService {
         // OFB-021: Last-admin guard — demotion joining deactivation under the same transactional check
         long activeAdminCount = humanRepository.countByDeactivatedAtIsNullAndRbac("admin");
         boolean isCurrentAdmin = RbacRole.ADMIN.getValue().equals(human.getRbac());
-        boolean becomesNonAdmin = RbacRole.ADMIN.getValue().equals(human.getRbac()) && !RbacRole.ADMIN.getValue().equals(newRbac);
+        boolean becomesNonAdmin = isCurrentAdmin && !RbacRole.ADMIN.getValue().equals(newRbac);
         if (becomesNonAdmin && activeAdminCount <= 1) {
             throw new IllegalStateException("Cannot demote the last admin");
         }
