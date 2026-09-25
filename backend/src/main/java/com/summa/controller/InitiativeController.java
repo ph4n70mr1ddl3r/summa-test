@@ -65,10 +65,14 @@ public class InitiativeController {
             if (body.get("lead") == null || body.get("lead").isBlank()) {
                 throw new IllegalArgumentException("lead is required");
             }
-            if (memberService.findHuman(body.get("sponsor")).isEmpty() && memberService.findAgent(body.get("sponsor")).isEmpty()) {
-                throw new IllegalArgumentException("sponsor does not reference an existing human or agent: " + body.get("sponsor"));
+            String sponsorRaw = body.get("sponsor");
+            String sponsorClean = sponsorRaw != null ? sponsorRaw.replaceFirst("^[ha]?:", "") : sponsorRaw;
+            String leadRaw = body.get("lead");
+            String leadClean = leadRaw != null ? leadRaw.replaceFirst("^[ha]?:", "") : leadRaw;
+            if (memberService.findHuman(sponsorClean).isEmpty() && memberService.findAgent(sponsorClean).isEmpty()) {
+                throw new IllegalArgumentException("sponsor does not reference an existing human or agent: " + sponsorRaw);
             }
-            Optional<com.summa.model.Human> sponsorHuman = memberService.findHuman(body.get("sponsor"));
+            Optional<com.summa.model.Human> sponsorHuman = memberService.findHuman(sponsorClean);
             if (sponsorHuman.isPresent()) {
                 if (RbacRole.VIEWER.getValue().equals(sponsorHuman.get().getRbac())) {
                     throw new IllegalArgumentException("Viewers cannot sponsor initiatives");
@@ -77,15 +81,15 @@ public class InitiativeController {
                     throw new IllegalArgumentException("Deactivated humans cannot sponsor initiatives");
                 }
             } else {
-                Optional<com.summa.model.Agent> sponsorAgent = memberService.findAgent(body.get("sponsor"));
-                if (sponsorAgent.isPresent() && "ephemeral".equals(sponsorAgent.get().getAgentClass())) {
+                Optional<com.summa.model.Agent> sponsorAgent = memberService.findAgent(sponsorClean);
+                if (sponsorAgent.isPresent() && sponsorAgent.get().isEphemeral()) {
                     throw new IllegalArgumentException("Ephemeral agents cannot sponsor initiatives");
                 }
             }
-            if (memberService.findHuman(body.get("lead")).isEmpty() && memberService.findAgent(body.get("lead")).isEmpty()) {
-                throw new IllegalArgumentException("lead does not reference an existing human or agent: " + body.get("lead"));
+            if (memberService.findHuman(leadClean).isEmpty() && memberService.findAgent(leadClean).isEmpty()) {
+                throw new IllegalArgumentException("lead does not reference an existing human or agent: " + leadRaw);
             }
-            Optional<com.summa.model.Human> leadHuman = memberService.findHuman(body.get("lead"));
+            Optional<com.summa.model.Human> leadHuman = memberService.findHuman(leadClean);
             if (leadHuman.isPresent()) {
                 if (RbacRole.VIEWER.getValue().equals(leadHuman.get().getRbac())) {
                     throw new IllegalArgumentException("Viewers cannot lead initiatives");
@@ -94,8 +98,8 @@ public class InitiativeController {
                     throw new IllegalArgumentException("Deactivated humans cannot lead initiatives");
                 }
             } else {
-                Optional<com.summa.model.Agent> leadAgent = memberService.findAgent(body.get("lead"));
-                if (leadAgent.isPresent() && "ephemeral".equals(leadAgent.get().getAgentClass())) {
+                Optional<com.summa.model.Agent> leadAgent = memberService.findAgent(leadClean);
+                if (leadAgent.isPresent() && leadAgent.get().isEphemeral()) {
                     throw new IllegalArgumentException("Ephemeral agents cannot lead initiatives");
                 }
             }
@@ -109,8 +113,8 @@ public class InitiativeController {
             Initiative initiative = initiativeService.create(
                 generatedId,
                 body.get("title"),
-                body.get("sponsor"),
-                body.get("lead"),
+                sponsorClean,
+                leadClean,
                 body.get("goalRef"),
                 body.get("decisionRef"),
                 deadline,

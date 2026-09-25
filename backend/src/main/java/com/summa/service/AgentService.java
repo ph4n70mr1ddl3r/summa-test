@@ -326,58 +326,63 @@ public class AgentService {
                 if (fresh.isEmpty()) continue;
                 Agent current = fresh.get();
                 if (!AgentStatus.SUSPENDED.getValue().equals(current.getStatus())) continue;
-                // CLC-002: SUSPENDED-002: suspended agents also need dependency cleanup before archival
-                for (Ask ask : askRepository.findByFromAndStatusPending(current.getId())) {
-                    ask.setStatus("withdrawn");
-                    askRepository.save(ask);
-                }
-                for (Ask ask : askRepository.findByToAndStatusPending(current.getId())) {
-                    ask.setStatus("withdrawn");
-                    askRepository.save(ask);
-                }
-                for (SpawnRequest spawn : spawnRequestRepository.findByRequesterId(current.getId())) {
-                    if (AgentStatus.REQUESTED.getValue().equals(spawn.getStatus())) {
-                        spawn.setStatus("archived");
-                        spawnRequestRepository.save(spawn);
-                    }
-                }
-                // Ensure initiative references are cleaned up (mirrors active-agent retire behavior)
-                // sponsor/lead are NOT NULL, so reassign rather than nullify
-                List<Initiative> owned = new ArrayList<>(initiativeRepository.findBySponsor(current.getId()));
-                owned.addAll(initiativeRepository.findByLead(current.getId()));
-                // deduplicate since an initiative could be both sponsor and lead
-                Set<String> seen = new HashSet<>();
-                for (Initiative init : owned) {
-                    if (!seen.add(init.getId())) continue;
-                    boolean changed = false;
-                    if (current.getId().equals(init.getSponsor())) {
-                        init.setSponsor(OffboardingWalkService.ADMIN_BROADCAST);
-                        changed = true;
-                    }
-                    if (current.getId().equals(init.getLead())) {
-                        init.setLead(OffboardingWalkService.ADMIN_BROADCAST);
-                        changed = true;
-                    }
-                    if (changed) {
-                        initiativeRepository.save(init);
-                    }
-                }
-                // Pause any active triggers owned by this agent
-                for (Trigger trigger : triggerRepository.findByAgentId(current.getId())) {
-                    if ("active".equals(trigger.getStatus())) {
-                        trigger.setStatus("paused");
-                        triggerRepository.save(trigger);
-                    }
-                }
-                current.setStatus(AgentStatus.ARCHIVED.getValue());
-                current.setArchivedAt(now);
-                agentRepository.save(current);
-                auditService.logSystem("TTL_REAP_SUSPENDED", "agent", current.getId(),
-                    "{\"reason\":\"ttl_expired\"}");
+                cleanupSuspendedAgent(current);
             } catch (Exception e) {
                 auditService.logSystem("TTL_REAP_SUSPENDED_FAIL", "agent", agent.getId(),
                     String.format("{\"error\":\"%s\"}", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
             }
         }
+    }
+
+    /**
+     * CLC-002: SUSPENDED-002: dependency cleanup for a suspended agent before archival.
+     * Transactional to ensure all cleanup operations succeed or roll back together.
+     */
+    @Transactional
+    private void cleanupSuspendedAgent(Agent agent) {
+        for (Ask ask : askRepository.findByFromAndStatusPending(agent.getId())) {
+            ask.setStatus("withdrawn");
+            askRepository.save(ask);
+        }
+        for (Ask ask : askRepository.findByToAndStatusPending(agent.getId())) {
+            ask.setStatus("withdrawn");
+            askRepository.save(ask);
+        }
+        for (SpawnRequest spawn : spawnRequestRepository.findByRequesterId(agent.getId())) {
+            if (AgentStatus.REQUESTED.getValue().equals(spawn.getStatus())) {
+                spawn.setStatus("archived");
+                spawnRequestRepository.save(spawn);
+            }
+        }
+        // Ensure initiative references are cleaned up (mirrors active-agent retire behavior)
+        List<Initiative> owned = new ArrayList<>(initiativeRepository.findBySponsor(agent.getId()));
+        owned.addAll(initiativeRepository.findByLead(agent.getId()));
+        Set<String> seen = new HashSet<>();
+        for (Initiative init : owned) {
+            if (!seen.add(init.getId())) continue;
+            boolean changed = false;
+            if (agent.getId().equals(init.getSponsor())) {
+                init.setSponsor(OffboardingWalkService.ADMIN_BROADCAST);
+                changed = true;
+            }
+            if (agent.getId().equals(init.getLead())) {
+                init.setLead(OffboardingWalkService.ADMIN_BROADCAST);
+                changed = true;
+            }
+            if (changed) {
+                initiativeRepository.save(init);
+            }
+        }
+        for (Trigger trigger : triggerRepository.findByAgentId(agent.getId())) {
+            if ("active".equals(trigger.getStatus())) {
+                trigger.setStatus("paused");
+                triggerRepository.save(trigger);
+            }
+        }
+        agent.setStatus(AgentStatus.ARCHIVED.getValue());
+        agent.setArchivedAt(Instant.now());
+        agentRepository.save(agent);
+        auditService.logSystem("TTL_REAP_SUSPENDED", "agent", agent.getId(),
+            "{\"reason\":\"ttl_expired\"}");
     }
 }

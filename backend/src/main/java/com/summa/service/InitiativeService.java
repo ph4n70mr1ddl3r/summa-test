@@ -137,8 +137,9 @@ public class InitiativeService {
         Initiative initiative = new Initiative();
         initiative.setId(id);
         initiative.setTitle(title);
-        initiative.setSponsor(sponsor);
-        initiative.setLead(lead);
+        // Store clean (unprefixed) IDs so downstream lookups work without re-stripping
+        initiative.setSponsor(sponsorClean);
+        initiative.setLead(leadClean);
         initiative.setGoalRef(goalRef);
         initiative.setDecisionRef(decisionRef);
         initiative.setDeadline(deadline);
@@ -585,7 +586,7 @@ public class InitiativeService {
      * sponsor: proceed, re-base (dependency edge re-pointed), or pause.
      */
     private void raiseDependentCloseAsks(String closedId, String actor) {
-        for (Initiative dep : initiativeRepository.findByDependsOnContaining(closedId)) {
+        for (Initiative dep : initiativeRepository.findByDependsOnContaining(InitiativeRepository.escapeLike(closedId))) {
             if (dep.getId().equals(closedId)) continue;
             if (dep.getDependsOn() == null || dep.getDependsOn().isBlank()) continue;
             try {

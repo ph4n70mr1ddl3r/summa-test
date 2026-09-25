@@ -445,7 +445,14 @@ public class AskService {
         try {
             String resp = ask.getResponses();
             if (resp == null || resp.isBlank() || resp.equals("[]")) return new ArrayList<>();
-            return objectMapper.readValue(resp, new TypeReference<List<String>>() {});
+            List<Map<String, String>> entries = objectMapper.readValue(resp, new TypeReference<List<Map<String, String>>>() {});
+            List<String> ids = new ArrayList<>();
+            for (Map<String, String> entry : entries) {
+                if (entry.containsKey("responder")) {
+                    ids.add(entry.get("responder"));
+                }
+            }
+            return ids;
         } catch (Exception e) {
             return new ArrayList<>();
         }

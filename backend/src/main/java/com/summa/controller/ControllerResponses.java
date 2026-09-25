@@ -49,7 +49,7 @@ public final class ControllerResponses {
     }
 
     public static ResponseEntity<Map<String, Object>> notFound(AuditService audit, String message) {
-        AuditEvent event = audit.logSystem("REFUSAL", "not_found", null, message);
+        AuditEvent event = audit.logSystem("NOT_FOUND", "not_found", null, message);
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(Map.of("code", "not_found", "message", message, "audit_event_id", event.getId()));
     }
@@ -60,7 +60,7 @@ public final class ControllerResponses {
     }
 
     public static ResponseEntity<Map<String, Object>> notFound(AuditService audit, String actor, String message) {
-        AuditEvent event = audit.log(actor, "REFUSAL", "not_found", null, message);
+        AuditEvent event = audit.log(actor, "NOT_FOUND", "not_found", null, message);
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(Map.of("code", "not_found", "message", message, "audit_event_id", event.getId()));
     }

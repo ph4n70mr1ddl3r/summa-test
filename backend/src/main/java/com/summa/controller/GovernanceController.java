@@ -93,8 +93,6 @@ public class GovernanceController {
             Object value = body.get(key);
             if (value instanceof Number) {
                 // Numbers are accepted as-is
-            } else if (value instanceof Boolean) {
-                // Booleans are accepted as-is
             } else if (value instanceof String) {
                 // Strings must parse as a number (integer or float) — reject freeform text
                 try {
@@ -106,7 +104,7 @@ public class GovernanceController {
                     return ControllerResponses.validation(auditService, "Policy value for '" + key + "' must be a number, not '" + value + "'");
                 }
             } else {
-                return ControllerResponses.validation(auditService, "Policy value for '" + key + "' must be a number, string, or boolean");
+                return ControllerResponses.validation(auditService, "Policy value for '" + key + "' must be a number or string, got: " + (value != null ? value.getClass().getSimpleName() : "null"));
             }
         }
         governanceService.setSettingsBulk(body, actor);
@@ -126,8 +124,6 @@ public class GovernanceController {
             Object value = body.get(key);
             if (value instanceof Number) {
                 // Numbers are accepted as-is
-            } else if (value instanceof Boolean) {
-                // Booleans are accepted as-is
             } else if (value instanceof String) {
                 try {
                     double parsed = Double.parseDouble((String) value);
@@ -138,7 +134,7 @@ public class GovernanceController {
                     return ControllerResponses.validation(auditService, "Quota value for '" + key + "' must be a number, not '" + value + "'");
                 }
             } else {
-                return ControllerResponses.validation(auditService, "Quota value for '" + key + "' must be a number, string, or boolean");
+                return ControllerResponses.validation(auditService, "Quota value for '" + key + "' must be a number or string, got: " + (value != null ? value.getClass().getSimpleName() : "null"));
             }
         }
         governanceService.setSettingsBulk(body, actor);

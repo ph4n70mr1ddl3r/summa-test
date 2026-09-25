@@ -105,6 +105,9 @@ public class AskController {
                 }
             } else {
                 deadlineSeconds = askService.deriveDeadlineFromTier(slaTier);
+                if (deadlineSeconds > Defaults.MAX_DEADLINE_SECONDS) {
+                    return ControllerResponses.validation(auditService, "Derived deadline exceeds maximum of 365 days");
+                }
             }
             Instant deadline = Instant.now().plusSeconds(deadlineSeconds);
             Ask ask = askService.create(

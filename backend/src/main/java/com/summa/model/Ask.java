@@ -76,6 +76,7 @@ public class Ask {
         if (quorumRequired == null) quorumRequired = 1;
         if (responses == null) responses = "[]";
         if (collapsedCount == null) collapsedCount = 0;
+        if (payload == null) payload = "{}";
     }
 
     @PreUpdate
