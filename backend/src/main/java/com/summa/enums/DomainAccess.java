@@ -18,4 +18,11 @@ public enum DomainAccess {
     public boolean isRestricted() {
         return this != PUBLIC;
     }
+
+    public static DomainAccess fromValue(String value) {
+        for (DomainAccess d : values()) {
+            if (d.value.equals(value)) return d;
+        }
+        return null;
+    }
 }

@@ -11,6 +11,14 @@ vi.mock('../services/api', () => ({
     },
   },
   setAuthToken: vi.fn(),
+  ApiError: class ApiError extends Error {
+    status: number
+    constructor(message: string, status: number) {
+      super(message)
+      this.name = 'ApiError'
+      this.status = status
+    }
+  },
 }))
 
 const navigateMock = vi.fn()
@@ -106,6 +114,36 @@ describe('Login page', () => {
     await waitFor(() => {
       expect(navigateMock).not.toHaveBeenCalledWith('https://evil.com/', { replace: true })
       expect(navigateMock).toHaveBeenCalledWith('/', { replace: true })
+    })
+  })
+
+  it('displays rate-limit message on 429', async () => {
+    const ApiError = (apiModule as unknown as { ApiError: new (m: string, s: number) => { status: number } }).ApiError
+    vi.mocked(apiModule.api.auth.login).mockRejectedValue(new ApiError('Too many attempts', 429))
+    const { getByLabelText, getByText, findByText } = renderLogin()
+    fireEvent.change(getByLabelText(/email/i), { target: { value: 'test@example.com' } })
+    fireEvent.change(getByLabelText(/password/i), { target: { value: 'password123' } })
+    fireEvent.click(getByText('Sign in'))
+    await findByText('Too many login attempts. Please try again shortly.')
+  })
+
+  it('redirects to return path after login', async () => {
+    vi.mocked(apiModule.api.auth.login).mockResolvedValue({
+      token: 'fake-token',
+      userId: 'u1',
+      rbac: 'admin',
+      name: 'Test User',
+    })
+    const { getByLabelText, getByText } = render(
+      <MemoryRouter initialEntries={[{ pathname: '/login', state: { from: { pathname: '/orgs/abc' } } }]}>
+        <Login />
+      </MemoryRouter>
+    )
+    fireEvent.change(getByLabelText(/email/i), { target: { value: 'test@example.com' } })
+    fireEvent.change(getByLabelText(/password/i), { target: { value: 'password123' } })
+    fireEvent.click(getByText('Sign in'))
+    await waitFor(() => {
+      expect(navigateMock).toHaveBeenCalledWith('/orgs/abc', { replace: true })
     })
   })
 })

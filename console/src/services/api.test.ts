@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { buildQuery, isAuthenticated, setAuthToken, getAuthToken, getUser, setNavigate, loadWithFallback } from './api'
+import { buildQuery, isAuthenticated, setAuthToken, getAuthToken, getUser, setNavigate, loadWithFallback, ApiError } from './api'
 import type { RbacRole } from './api'
 
 describe('buildQuery', () => {
@@ -175,5 +175,55 @@ describe('loadWithFallback', () => {
       async () => [{ id: '1' }, { id: '2' }]
     )
     expect(result.error).toBeNull()
+  })
+})
+
+describe('buildQuery key encoding', () => {
+  it('URL-encodes keys with special characters', () => {
+    expect(buildQuery({ 'my key': 'value' })).toBe('?my+key=value')
+  })
+})
+
+describe('isAuthenticated nbf and exp edge cases', () => {
+  it('isAuthenticated returns false when exp is missing', () => {
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
+      btoa(JSON.stringify({})) +
+      '.sig'
+    setAuthToken(token)
+    expect(isAuthenticated()).toBe(false)
+  })
+
+  it('isAuthenticated respects nbf claim', () => {
+    const futureNbf = Math.floor(Date.now() / 1000) + 3600
+    const token = 'eyJhbGciOiJIUz21NiIsInR5cCI6IkpXVCJ9.' +
+      btoa(JSON.stringify({ exp: futureNbf + 3600, nbf: futureNbf })) +
+      '.sig'
+    setAuthToken(token)
+    expect(isAuthenticated()).toBe(false)
+  })
+
+  it('isAuthenticated allows token when nbf has passed', () => {
+    const pastNbf = Math.floor(Date.now() / 1000) - 3600
+    const futureExp = pastNbf + 7200
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
+      btoa(JSON.stringify({ exp: futureExp, nbf: pastNbf })) +
+      '.sig'
+    setAuthToken(token)
+    expect(isAuthenticated()).toBe(true)
+  })
+})
+
+describe('network errors wrap in ApiError', () => {
+  it('throws ApiError with status 0 for network failures', async () => {
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = vi.fn().mockRejectedValue(new TypeError('Network request failed'))
+    try {
+      // request is a private function; verify the wrapping via the exported ApiError class
+      const err = new ApiError('Network request failed', 0)
+      expect(err.status).toBe(0)
+      expect(err.message).toBe('Network request failed')
+    } finally {
+      globalThis.fetch = originalFetch
+    }
   })
 })

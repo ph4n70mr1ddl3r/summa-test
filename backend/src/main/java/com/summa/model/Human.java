@@ -1,6 +1,7 @@
 package com.summa.model;
 
 import com.summa.config.InstantToUnixEpochConverter;
+import com.summa.enums.RbacRole;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.Instant;
@@ -56,7 +57,7 @@ public class Human {
             createdAt = Instant.now();
         }
         if (updatedAt == null) updatedAt = Instant.now();
-        if (rbac == null || rbac.isBlank()) rbac = "member";
+        if (rbac == null || rbac.isBlank()) rbac = RbacRole.MEMBER.getValue();
         if (email != null) email = email.toLowerCase();
     }
 

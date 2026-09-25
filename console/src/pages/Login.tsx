@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { api, setAuthToken } from '../services/api'
+import { api, setAuthToken, ApiError } from '../services/api'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -41,7 +41,7 @@ export default function Login() {
       setAuthToken(result.token, { userId: result.userId, rbac: result.rbac, name: result.name })
       navigate(from, { replace: true })
     } catch (err) {
-      if (err instanceof Error && 'status' in err && (err as { status?: number }).status === 429) {
+      if (err instanceof ApiError && err.status === 429) {
         setError('Too many login attempts. Please try again shortly.')
       } else {
         setError(err instanceof Error ? err.message : String(err))

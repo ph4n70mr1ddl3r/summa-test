@@ -145,6 +145,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     }
     const json = await res.json();
     return json as T;
+  } catch (err) {
+    const networkErr = err instanceof Error ? err : new Error(String(err))
+    throw new ApiError(networkErr.message, 0)
   } finally {
     clearTimeout(timeoutId);
   }

@@ -73,6 +73,8 @@ public class Run {
         if (status == null) status = "queued";
         if (artifacts == null) artifacts = "[]";
         if (prompt == null) prompt = "";
+        if (costTokens == null) costTokens = 0L;
+        if (costUsd == null) costUsd = 0.0;
     }
 
     @PreUpdate

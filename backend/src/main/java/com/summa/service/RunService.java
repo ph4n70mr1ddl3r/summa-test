@@ -69,24 +69,22 @@ public class RunService {
 
     @Transactional(readOnly = true)
     public List<Run> findByAgent(String agentId, int limit) {
-        return runRepository.findByAgentIdOrderByCreatedAtDesc(agentId).stream().limit(limit).toList();
+        return runRepository.findByAgentIdOrderByCreatedAtDesc(agentId, limit);
     }
 
     @Transactional(readOnly = true)
     public List<Run> findByWorkspace(String workspaceId, int limit) {
-        return runRepository.findByWorkspaceIdOrderByCreatedAtDesc(workspaceId).stream().limit(limit).toList();
+        return runRepository.findByWorkspaceIdOrderByCreatedAtDesc(workspaceId, limit);
     }
 
     @Transactional(readOnly = true)
     public List<Run> findByStatus(String status, int limit) {
-        return runRepository.findByStatusOrderByCreatedAtDesc(status).stream().limit(limit).toList();
+        return runRepository.findByStatusOrderByCreatedAtDesc(status, limit);
     }
 
     @Transactional(readOnly = true)
     public List<Run> findRecent(int limit) {
-        return runRepository.findByOrderByCreatedAtDesc().stream()
-                .limit(limit)
-                .toList();
+        return runRepository.findByOrderByCreatedAtDesc(limit);
     }
 
     @Transactional

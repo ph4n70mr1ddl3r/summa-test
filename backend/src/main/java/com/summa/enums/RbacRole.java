@@ -27,4 +27,11 @@ public enum RbacRole {
     public boolean canSpawn() {
         return this == ADMIN || this == MEMBER || this == OWNER;
     }
+
+    public static RbacRole fromValue(String value) {
+        for (RbacRole r : values()) {
+            if (r.value.equals(value)) return r;
+        }
+        return null;
+    }
 }

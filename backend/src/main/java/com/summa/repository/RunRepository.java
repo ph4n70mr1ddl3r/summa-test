@@ -14,8 +14,13 @@ public interface RunRepository extends JpaRepository<Run, String> {
     List<Run> findByWorkspaceId(String workspaceId);
     List<Run> findByWorkspaceIdAndStatus(String workspaceId, String status);
     List<Run> findByStatus(String status);
+    @Query("SELECT r FROM Run r WHERE r.agentId = :agentId ORDER BY r.createdAt DESC")
     List<Run> findByAgentIdOrderByCreatedAtDesc(String agentId);
+
+    @Query("SELECT r FROM Run r WHERE r.workspaceId = :workspaceId ORDER BY r.createdAt DESC")
     List<Run> findByWorkspaceIdOrderByCreatedAtDesc(String workspaceId);
+
+    @Query("SELECT r FROM Run r WHERE r.status = :status ORDER BY r.createdAt DESC")
     List<Run> findByStatusOrderByCreatedAtDesc(String status);
     List<Run> findByInitiativeIdAndStatus(String initiativeId, String status);
     
@@ -27,4 +32,16 @@ public interface RunRepository extends JpaRepository<Run, String> {
 
     @Query("SELECT r FROM Run r ORDER BY r.createdAt DESC")
     List<Run> findByOrderByCreatedAtDesc();
+
+    @Query("SELECT r FROM Run r WHERE r.agentId = :agentId ORDER BY r.createdAt DESC LIMIT :limit")
+    List<Run> findByAgentIdOrderByCreatedAtDesc(String agentId, int limit);
+
+    @Query("SELECT r FROM Run r WHERE r.workspaceId = :workspaceId ORDER BY r.createdAt DESC LIMIT :limit")
+    List<Run> findByWorkspaceIdOrderByCreatedAtDesc(String workspaceId, int limit);
+
+    @Query("SELECT r FROM Run r WHERE r.status = :status ORDER BY r.createdAt DESC LIMIT :limit")
+    List<Run> findByStatusOrderByCreatedAtDesc(String status, int limit);
+
+    @Query("SELECT r FROM Run r ORDER BY r.createdAt DESC LIMIT :limit")
+    List<Run> findByOrderByCreatedAtDesc(int limit);
 }
