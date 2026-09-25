@@ -20,6 +20,9 @@ public interface AgentRepository extends JpaRepository<Agent, String> {
     @Query("SELECT a FROM Agent a WHERE a.ownerHumanId = :ownerId AND a.status = 'active'")
     List<Agent> findActiveByOwner(String ownerId);
 
+    @Query("SELECT a FROM Agent a WHERE a.ownerHumanId = :ownerId")
+    List<Agent> findByOwner(String ownerId);
+
     @Query("SELECT a FROM Agent a WHERE a.status = :status")
     List<Agent> findByStatus(String status);
 

@@ -222,6 +222,9 @@ public class AskService {
                         }
                         // ASK-012/CFG-140: derive deadline from tier defaults
                         long successorDeadlineSeconds = deriveDeadlineFromTier(ask.getSlaTier());
+                        if (successorDeadlineSeconds > Defaults.MAX_DEADLINE_SECONDS) {
+                            successorDeadlineSeconds = Defaults.MAX_DEADLINE_SECONDS;
+                        }
                         Ask successor = create(ask.getKind(), ask.getFrom(), successorTo,
                             ask.getPayload(), ask.getSlaTier(), ask.getExpiryBehavior(),
                             ask.getQuorumRequired(),

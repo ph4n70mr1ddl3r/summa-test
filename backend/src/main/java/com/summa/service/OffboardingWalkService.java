@@ -150,7 +150,7 @@ public class OffboardingWalkService {
             }
         }
 
-        // OFB-011: Re-own or retire dependent agents
+        // OFB-011: Re-own or retire dependent agents (all statuses, not just active)
         List<Agent> ownedAgents = agentService.findByOwner(humanId);
         for (Agent agent : ownedAgents) {
             agent.setOwnerHumanId(finalTargetOwner);
@@ -361,6 +361,7 @@ public class OffboardingWalkService {
         }
 
         // OFB-030/033: Re-own or retire dependent agents; personal assistants always retire
+        // (all statuses, not just active — retired/suspended agents may still be owned)
         List<Agent> ownedAgentsDemote = agentService.findByOwner(humanId);
         for (Agent agent : ownedAgentsDemote) {
             // CLC-051: demotion to viewer retires the assistant (mirrored viewer scopes are read-only)

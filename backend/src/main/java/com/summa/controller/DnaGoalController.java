@@ -124,6 +124,9 @@ public class DnaGoalController {
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         }
+        if (effectiveFrom == null && effectiveTo == null) {
+            return ControllerResponses.validation(auditService, "At least one of effectiveFrom or effectiveTo must be provided");
+        }
         try {
             DnaGoal goal = goalService.updateWindow(id, effectiveFrom, effectiveTo, actor);
             return ResponseEntity.ok(goal);

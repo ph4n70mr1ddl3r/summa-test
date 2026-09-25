@@ -56,7 +56,8 @@ public class RateLimiter {
             return MAX_ATTEMPTS;
         }
         long used = count != null ? count : 0L;
-        return Math.max(0, MAX_ATTEMPTS - used);
+        // Count may be capped at MAX_ATTEMPTS+1 in allow(), so clamp to avoid negative remaining.
+        return Math.max(0, MAX_ATTEMPTS - Math.min(used, MAX_ATTEMPTS));
     }
 
     public long getResetSeconds(String identifier) {

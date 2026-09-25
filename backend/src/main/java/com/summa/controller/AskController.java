@@ -7,6 +7,7 @@ import com.summa.service.MemberService;
 import com.summa.security.WriteGate;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.enums.AskKind;
+import com.summa.enums.AskTier;
 import com.summa.util.JsonHelpers;
 import com.summa.constants.Defaults;
 import com.summa.service.OffboardingWalkService;
@@ -85,7 +86,7 @@ public class AskController {
             }
             String slaTier = body.get("slaTier");
             if (slaTier != null && !slaTier.isBlank()) {
-                if (com.summa.enums.AskTier.fromValue(slaTier) == null) {
+                if (AskTier.fromValue(slaTier) == null) {
                     throw new IllegalArgumentException("Invalid slaTier: " + slaTier + ". Must be one of: critical, standard, bulk");
                 }
             }
@@ -115,16 +116,19 @@ public class AskController {
                     return ControllerResponses.validation(auditService, "Derived deadline exceeds maximum of 365 days");
                 }
             }
-            Instant deadline = Instant.now().plusSeconds(deadlineSeconds);
+            Integer quorumRequired = null;
+            if (body.containsKey("quorumRequired") && body.get("quorumRequired") != null && !body.get("quorumRequired").isBlank()) {
+                quorumRequired = JsonHelpers.parseIntSafe(body.get("quorumRequired"));
+            }
             Ask ask = askService.create(
-                body.get("kind"),
+                kind,
                 actor,
-                body.get("to"),
+                to,
                 body.get("payload"),
-                body.get("slaTier"),
-                body.get("expiryBehavior"),
-                body.containsKey("quorumRequired") && body.get("quorumRequired") != null && !body.get("quorumRequired").isBlank() ? JsonHelpers.parseIntSafe(body.get("quorumRequired")) : null,
-                deadline,
+                slaTier,
+                expiryBehavior,
+                quorumRequired,
+                Instant.now().plusSeconds(deadlineSeconds),
                 body.get("initiativeId"),
                 body.get("workspaceId")
             );

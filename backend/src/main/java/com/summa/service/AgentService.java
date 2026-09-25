@@ -275,6 +275,10 @@ public class AgentService {
     }
 
     public List<Agent> findByOwner(String ownerHumanId) {
+        return agentRepository.findByOwner(ownerHumanId);
+    }
+
+    public List<Agent> findByOwnerActive(String ownerHumanId) {
         return agentRepository.findActiveByOwner(ownerHumanId);
     }
 

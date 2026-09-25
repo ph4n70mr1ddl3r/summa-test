@@ -155,10 +155,18 @@ public class AuthController {
         if ("local".equals(addr) || "127.0.0.1".equals(addr) || "0:0:0:0:0:0:0:1".equals(addr)) {
             return false;
         }
-        // Simplified: trust X-Forwarded-For only if direct connection is from a private range
+        // RFC1918 private ranges: 10.0.0.0/8, 172.16.0.0/12 (172.16-31.x.x), 192.168.0.0/16
         return addr.startsWith("10.") || addr.startsWith("172.16.") || addr.startsWith("172.17.")
             || addr.startsWith("172.18.") || addr.startsWith("172.19.") || addr.startsWith("172.2")
-            || addr.startsWith("172.3") || addr.startsWith("192.168.");
+                && !addr.startsWith("172.200") && !addr.startsWith("172.201") && !addr.startsWith("172.202")
+                && !addr.startsWith("172.203") && !addr.startsWith("172.204") && !addr.startsWith("172.205")
+                && !addr.startsWith("172.206") && !addr.startsWith("172.207") && !addr.startsWith("172.208")
+                && !addr.startsWith("172.209") && !addr.startsWith("172.21") && !addr.startsWith("172.22")
+                && !addr.startsWith("172.23") && !addr.startsWith("172.24") && !addr.startsWith("172.25")
+                && !addr.startsWith("172.26") && !addr.startsWith("172.27") && !addr.startsWith("172.28")
+                && !addr.startsWith("172.29")
+            || addr.startsWith("172.3")
+            || addr.startsWith("192.168.");
     }
 
     private String resolveClientIp(HttpServletRequest request) {

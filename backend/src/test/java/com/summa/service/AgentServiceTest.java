@@ -188,7 +188,7 @@ class AgentServiceTest {
     void findByOwner() {
         Agent agent = new Agent();
         agent.setId("agent-1");
-        when(agentRepository.findActiveByOwner("human-1")).thenReturn(List.of(agent));
+        when(agentRepository.findByOwner("human-1")).thenReturn(List.of(agent));
 
         List<Agent> result = agentService.findByOwner("human-1");
 
