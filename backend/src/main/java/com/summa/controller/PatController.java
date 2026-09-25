@@ -98,6 +98,9 @@ public class PatController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        if (!isValidUuid(id)) {
+            return ControllerResponses.validation(auditService, "Invalid PAT ID: must be a valid UUID");
+        }
         try {
             Pat pat = patService.revoke(id, actor);
             return ResponseEntity.ok(pat);
@@ -105,6 +108,16 @@ public class PatController {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
+        }
+    }
+
+    private static boolean isValidUuid(String s) {
+        if (s == null || s.isBlank()) return false;
+        try {
+            java.util.UUID.fromString(s);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
         }
     }
 }

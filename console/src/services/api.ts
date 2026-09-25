@@ -94,7 +94,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
     const headers = new Headers(init?.headers);
-    if (init?.method !== 'GET' && init?.method !== 'HEAD') {
+    if ((init?.method ?? '').toUpperCase() !== 'GET' && (init?.method ?? '').toUpperCase() !== 'HEAD') {
       headers.set('Content-Type', 'application/json');
     }
     if (authToken) {

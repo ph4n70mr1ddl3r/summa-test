@@ -90,6 +90,10 @@ public class OrgController {
 
     @GetMapping("/humans/{id}")
     public ResponseEntity<?> getHuman(@PathVariable String id) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Admin access required to look up humans");
+        }
         Optional<Human> humanOpt = orgService.findHuman(id);
         if (humanOpt.isPresent()) {
             return ResponseEntity.ok(humanOpt.get());

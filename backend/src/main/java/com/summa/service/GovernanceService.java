@@ -86,7 +86,10 @@ public class GovernanceService {
             }
         }
         if (type.equals(Boolean.class) || type.equals(boolean.class)) {
-            return type.cast(Boolean.parseBoolean(value.toString()));
+            String lower = value.toString().toLowerCase();
+            if ("true".equals(lower) || "yes".equals(lower) || "1".equals(lower)) return type.cast(true);
+            if ("false".equals(lower) || "no".equals(lower) || "0".equals(lower)) return type.cast(false);
+            return null;
         }
         throw new IllegalArgumentException("Cannot cast value to " + type.getName() + " for key: " + key);
     }

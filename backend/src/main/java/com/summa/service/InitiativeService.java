@@ -239,7 +239,7 @@ public class InitiativeService {
                         id, initiative.getGoalRef());
                     askService.create("question", "system", initiative.getSponsor(),
                         payload, "bulk", "escalate", 1,
-                                      Instant.now().plusSeconds(Defaults.STALL_ASK_DEADLINE_SECONDS), null, null);
+                                       Instant.now().plusSeconds(Defaults.STALL_ASK_DEADLINE_SECONDS), id, null);
                     return initiative;
                 }
             }
@@ -249,7 +249,7 @@ public class InitiativeService {
                 id, initiative.getTitle(), actor);
             askService.create("approval", "system", initiative.getSponsor(),
                 payload, "standard", "deny", 1,
-                Instant.now().plusSeconds(Defaults.STALL_ASK_DEADLINE_SECONDS), null, null);
+                Instant.now().plusSeconds(Defaults.STALL_ASK_DEADLINE_SECONDS), id, null);
             auditService.logSystem("ACTIVATE_REQUESTED", "initiative", id,
                 String.format("{\"actor\":%s,\"sponsor\":%s}", JsonHelpers.jsonString(actor), JsonHelpers.jsonString(initiative.getSponsor())));
             return initiative;

@@ -26,8 +26,11 @@ export default function OrgView() {
     ).then(({ data, error: loadError }) => {
       if (aborted) return
       const membersData = data[0]
-      setMembers(membersData != null && 'members' in membersData ? (membersData as { members: Member[] }).members : [])
-      setGroups(data[1] != null ? (data[1] as Group[]) : [])
+      const membersList = Array.isArray((membersData as { members?: Member[] } | null)?.members)
+        ? (membersData as { members: Member[] }).members
+        : []
+      setMembers(membersList)
+      setGroups(Array.isArray(data[1]) ? data[1] as Group[] : [])
       setError(loadError)
       setLoading(false)
     })
