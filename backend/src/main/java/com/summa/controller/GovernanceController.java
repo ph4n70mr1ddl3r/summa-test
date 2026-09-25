@@ -12,8 +12,8 @@ import com.summa.enums.RbacRole;
 import com.summa.exception.EntityNotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.Optional;
 import java.util.Set;
 
@@ -43,7 +43,7 @@ public class GovernanceController {
     @GetMapping("/quotas")
     public ResponseEntity<Map<String, Object>> getQuotas() {
         Map<String, Object> all = governanceService.getAllSettings();
-        Map<String, Object> quotas = new HashMap<>();
+        Map<String, Object> quotas = new LinkedHashMap<>();
         for (String key : QUOTA_KEYS) {
             quotas.put(key, all.get(key));
         }

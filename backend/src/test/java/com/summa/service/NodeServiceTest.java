@@ -188,7 +188,7 @@ class NodeServiceTest {
         when(nodeRepository.save(any())).thenAnswer(i -> i.getArgument(0));
         when(workspaceRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        Node result = nodeService.claimWorkspace("node-1", "ws-1", 0);
+        Node result = nodeService.claimWorkspace("node-1", "ws-1", 1);
 
         assertEquals(1, ws.getClaimEpoch());
         assertNotNull(ws.getLeaseExpiresAt());

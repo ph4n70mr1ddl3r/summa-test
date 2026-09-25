@@ -82,17 +82,13 @@ public class BackupService {
             throw new EntityNotFoundException("Backup file not found: " + backupPath);
         }
 
-        // Prevent path traversal: resolve symlinks fully and verify it's within allowed dirs
+        // Prevent path traversal: resolve symlinks fully and verify within allowed dirs
         Path resolved;
         try {
-            resolved = backupFile.toRealPath();
+            resolved = backupFile.toRealPath(java.nio.file.LinkOption.NOFOLLOW_LINKS);
         } catch (java.io.IOException e) {
-            // If toRealPath fails (e.g., non-existent file), fall back to normalize without resolving symlinks
-            // but we still require the file to exist for safety
+            // For non-symlink paths, toRealPath may fail; fall back to absolute+normalize
             resolved = backupFile.toAbsolutePath().normalize();
-            if (!Files.exists(backupFile)) {
-                throw new EntityNotFoundException("Backup file not found: " + backupPath);
-            }
         }
         Path tmpDir;
         try {

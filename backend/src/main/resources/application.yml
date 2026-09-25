@@ -27,7 +27,7 @@ spring:
     allow-bean-definition-overriding: false
 
 summa:
-  mode: single-process
+  mode: ${SUMMA_MODE:single-process}
   cors:
     origins: ${SUMMA_CORS_ORIGINS:}
   database:
@@ -40,26 +40,26 @@ summa:
   auth:
     jwt-secret: ${SUMMA_JWT_SECRET}
     local-auth-enabled: ${SUMMA_LOCAL_AUTH_ENABLED:true}
-    jwt-expiration: 86400000
+    jwt-expiration: ${SUMMA_JWT_EXPIRATION:86400000}
     pat-default-expiry-days: 90
   node:
-    lease-interval-seconds: 30
-    heartbeat-timeout-seconds: 90
-    affinity-starvation-hours: 24
+    lease-interval-seconds: ${SUMMA_NODE_LEASE_INTERVAL:30}
+    heartbeat-timeout-seconds: ${SUMMA_NODE_HEARTBEAT_TIMEOUT:90}
+    affinity-starvation-hours: ${SUMMA_NODE_AFFINITY_STARVATION:24}
   spawn:
-    ephemeral-default-ttl-hours: 24
-    ephemeral-max-concurrent-per-spawner: 3
-    org-wide-max-active-agents: 100
-    depth-cap: 2
-    budget-window-days: 30
+    ephemeral-default-ttl-hours: ${SUMMA_SPAWN_EPH_TOKEN_TTL:24}
+    ephemeral-max-concurrent-per-spawner: ${SUMMA_SPAWN_MAX_CONCURRENT:3}
+    org-wide-max-active-agents: ${SUMMA_SPAWN_MAX_AGENTS:100}
+    depth-cap: ${SUMMA_SPAWN_DEPTH_CAP:2}
+    budget-window-days: ${SUMMA_SPAWN_BUDGET_WINDOW:30}
   asks:
-    tier-critical-deadline-hours: 1
-    tier-standard-deadline-hours: 24
-    tier-bulk-deadline-hours: 24
-    storm-collapse-window-hours: 1
-    rate-limit-per-source-per-hour: 60
+    tier-critical-deadline-hours: ${SUMMA_ASKS_CRITICAL_DEADLINE:1}
+    tier-standard-deadline-hours: ${SUMMA_ASKS_STANDARD_DEADLINE:24}
+    tier-bulk-deadline-hours: ${SUMMA_ASKS_BULK_DEADLINE:24}
+    storm-collapse-window-hours: ${SUMMA_ASKS_STORM_COLLAPSE:1}
+    rate-limit-per-source-per-hour: ${SUMMA_ASKS_RATE_LIMIT:60}
   dna:
-    default-review-sla-days: 7
+    default-review-sla-days: ${SUMMA_DNA_REVIEW_SLA:7}
     injection-layers:
       org-snapshot-token-budget: 1000
       glossary-token-budget: 2000
@@ -67,7 +67,7 @@ summa:
       goal-slice-token-budget: 1000
   spend:
     ceiling: ${SUMMA_SPEND_CEILING:1000000}
-    critical-floor-percent: 5
+    critical-floor-percent: ${SUMMA_CRITICAL_FLOOR_PERCENT:5}
 
 logging:
   level:

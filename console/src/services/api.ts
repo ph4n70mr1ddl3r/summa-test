@@ -602,7 +602,7 @@ export const api = {
         method: 'PATCH',
         body: JSON.stringify({ access }),
       }),
-    mergeDomain: (id: string, sourceId: string, access?: string, namedReaders?: string) =>
+    mergeDomain: (id: string, sourceId: string, access?: DomainAccess, namedReaders?: string) =>
       request<DnaDomain>(`/dna/domains/${id}/merge`, {
         method: 'POST',
         body: JSON.stringify({ sourceId, ...(access ? { access } : {}), ...(namedReaders ? { namedReaders } : {}) }),

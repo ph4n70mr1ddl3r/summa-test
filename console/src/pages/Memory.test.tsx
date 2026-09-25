@@ -7,6 +7,7 @@ vi.mock('../services/api', () => ({
   api: {
     memory: {
       list: vi.fn(),
+      review: vi.fn(),
     },
   },
 }))
@@ -62,20 +63,37 @@ describe('Memory page', () => {
   })
 
   it('shows success and reloads after reviewing a tainted item', async () => {
+    let resolveReview: () => void
+    const reviewPromise = new Promise<void>((resolve) => { resolveReview = resolve })
     vi.mocked(apiModule.api.memory.list).mockResolvedValue([
       { id: 'm-1', tier: 'personal', contentMd: 'Tainted content', provenance: 'test', tainted: true },
     ])
-    const { getByText } = render(<Memory />)
+    vi.mocked(apiModule.api.memory.review).mockImplementation(() => reviewPromise)
+    const { getByText, container } = render(<Memory />)
     await waitFor(() => {
       expect(getByText('tainted')).toBeInTheDocument()
     })
-    // The review button is only shown for tainted items
+    // Click Review to open the review panel
     const reviewBtn = getByText('Review')
     await act(async () => {
       reviewBtn.click()
     })
     await waitFor(() => {
       expect(getByText('Confirm Review')).toBeInTheDocument()
+    })
+    // Click Confirm Review to start the review process
+    const confirmBtn = getByText('Confirm Review')
+    await act(async () => {
+      confirmBtn.click()
+    })
+    // Button should be disabled while reviewing
+    expect(confirmBtn).toHaveAttribute('disabled')
+    // Resolve the review promise to simulate successful API response
+    await act(async () => {
+      resolveReview!()
+    })
+    await waitFor(() => {
+      expect(container.textContent).toContain('Item reviewed and taint cleared')
     })
   })
 })

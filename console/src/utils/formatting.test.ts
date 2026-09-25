@@ -196,6 +196,10 @@ describe('rbacRoleColor', () => {
   it('returns exact classes for viewer', () => {
     expect(rbacRoleColor('viewer' as RbacRole)).toBe('bg-gray-600 text-gray-400')
   })
+
+  it('returns exact classes for member', () => {
+    expect(rbacRoleColor('member' as RbacRole)).toBe('bg-blue-900/50 text-blue-400')
+  })
 })
 
 describe('initiativeStatusColor', () => {
@@ -231,6 +235,14 @@ describe('runStatusColor', () => {
 
   it('returns exact classes for queued', () => {
     expect(runStatusColor('queued' as RunStatus)).toBe('bg-yellow-900/50 text-yellow-400')
+  })
+
+  it('returns exact classes for cancelled', () => {
+    expect(runStatusColor('cancelled' as RunStatus)).toBe('bg-gray-600 text-gray-400')
+  })
+
+  it('returns exact classes for suspended', () => {
+    expect(runStatusColor('suspended' as RunStatus)).toBe('bg-orange-900/50 text-orange-400')
   })
 })
 

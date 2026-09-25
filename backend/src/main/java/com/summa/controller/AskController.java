@@ -25,6 +25,12 @@ public class AskController {
     private final WriteGate writeGate;
     private final MemberService memberService;
 
+    private static final Set<String> VALID_ASK_KINDS = Set.of(
+        AskKind.APPROVAL.getValue(), AskKind.QUESTION.getValue(),
+        AskKind.ASSIGNMENT.getValue(), AskKind.SPAWN_REQUEST.getValue(),
+        AskKind.PROMOTION.getValue()
+    );
+
     public AskController(AskService askService, AuditService auditService, WriteGate writeGate,
                          MemberService memberService) {
         this.askService = askService;
@@ -68,10 +74,8 @@ public class AskController {
             if (kind == null || kind.isBlank()) {
                 throw new IllegalArgumentException("kind is required");
             }
-            Set<String> validKinds = new java.util.HashSet<>();
-            for (AskKind k : AskKind.values()) { validKinds.add(k.getValue()); }
-            if (!validKinds.contains(kind)) {
-                throw new IllegalArgumentException("Invalid kind: " + kind + ". Must be one of: " + String.join(", ", validKinds));
+            if (!VALID_ASK_KINDS.contains(kind)) {
+                throw new IllegalArgumentException("Invalid kind: " + kind + ". Must be one of: " + String.join(", ", VALID_ASK_KINDS));
             }
             String to = body.get("to");
             if (to == null || to.isBlank()) {

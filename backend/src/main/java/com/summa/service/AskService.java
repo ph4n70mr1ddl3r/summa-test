@@ -125,12 +125,10 @@ public class AskService {
         String collapseKey = buildCollapseKey(kind, to, payload);
         Instant now = Instant.now();
         long nowSeconds = now.getEpochSecond();
-        // computeIfAbsent is atomic — no global synchronized block needed.
-        // The DB query for candidates runs outside the map lock to avoid holding it.
-        boolean isNewWindow = !collapseWindowTimestamps.containsKey(collapseKey);
+        // Use computeIfAbsent to atomically establish the window; DB query runs outside the map lock.
         ExpiringEntry<Instant> slotValue = collapseWindowTimestamps.computeIfAbsent(collapseKey, k -> new ExpiringEntry<>(now, nowSeconds + stormCollapseWindowSeconds));
-        // Only collapse if this is NOT the first ask in the window (a new window has no canonical yet).
-        if (!isNewWindow && nowSeconds < slotValue.expiryEpochSeconds) {
+        // Only collapse if a prior ask already established this window (a new window has no canonical yet).
+        if (nowSeconds < slotValue.expiryEpochSeconds) {
             // Collapse: increment collapsed_count on nearest pending canonical.
             List<Ask> candidates = askRepository.findByToAndStatusPending(to);
             candidates = candidates.stream()

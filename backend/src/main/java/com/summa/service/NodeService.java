@@ -183,8 +183,8 @@ public class NodeService {
             throw new IllegalStateException("Workspace is archived");
         }
 
-        // ARC-024: refuse stale epoch
-        if (ws.getClaimEpoch() != null && ws.getClaimEpoch() > currentEpoch) {
+        // ARC-024: refuse stale or equal epoch (equal epoch = replay attack)
+        if (ws.getClaimEpoch() != null && ws.getClaimEpoch() >= currentEpoch) {
             throw new IllegalStateException(
                 String.format("Stale epoch: workspace epoch=%d, claimed=%d", ws.getClaimEpoch(), currentEpoch));
         }

@@ -13,6 +13,15 @@ vi.mock('../services/api', () => ({
   setAuthToken: vi.fn(),
 }))
 
+const navigateMock = vi.fn()
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-router-dom')>()
+  return {
+    ...actual,
+    useNavigate: () => navigateMock,
+  }
+})
+
 function renderLogin() {
   return render(
     <MemoryRouter initialEntries={['/login']}>
@@ -79,16 +88,12 @@ describe('Login page', () => {
   })
 
   it('rejects open redirect to external domain', async () => {
+    navigateMock.mockClear()
     vi.mocked(apiModule.api.auth.login).mockResolvedValue({
       token: 'fake-token',
       userId: 'u1',
       rbac: 'admin',
       name: 'Test User',
-    })
-    const assignMock = vi.fn()
-    Object.defineProperty(window, 'location', {
-      value: { assign: assignMock },
-      writable: true,
     })
     const { getByLabelText, getByText } = render(
       <MemoryRouter initialEntries={[{ pathname: '/login', state: { from: { pathname: 'https://evil.com' } } }]}>
@@ -99,7 +104,8 @@ describe('Login page', () => {
     fireEvent.change(getByLabelText(/password/i), { target: { value: 'password123' } })
     fireEvent.click(getByText('Sign in'))
     await waitFor(() => {
-      expect(assignMock).not.toHaveBeenCalledWith('https://evil.com/')
+      expect(navigateMock).not.toHaveBeenCalledWith('https://evil.com/', { replace: true })
+      expect(navigateMock).toHaveBeenCalledWith('/', { replace: true })
     })
   })
 })

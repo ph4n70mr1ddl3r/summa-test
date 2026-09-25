@@ -49,29 +49,13 @@ public class RateLimiter {
         Instant now = Instant.now();
         long windowStart = now.getEpochSecond() / WINDOW_SECONDS * WINDOW_SECONDS;
 
-        ReentrantLock lock = locks.get(identifier);
-        if (lock != null) {
-            lock.lock();
-            try {
-                return computeRemaining(identifier, windowStart);
-            } finally {
-                lock.unlock();
-            }
+        ReentrantLock lock = locks.computeIfAbsent(identifier, k -> new ReentrantLock());
+        lock.lock();
+        try {
+            return computeRemainingLocked(identifier, windowStart);
+        } finally {
+            lock.unlock();
         }
-        return computeRemaining(identifier, windowStart);
-    }
-
-    private long computeRemaining(String identifier, long windowStart) {
-        ReentrantLock lock = locks.get(identifier);
-        if (lock != null) {
-            lock.lock();
-            try {
-                return computeRemainingLocked(identifier, windowStart);
-            } finally {
-                lock.unlock();
-            }
-        }
-        return computeRemainingLocked(identifier, windowStart);
     }
 
     private long computeRemainingLocked(String identifier, long windowStart) {

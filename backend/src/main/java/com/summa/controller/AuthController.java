@@ -153,12 +153,22 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Password updated"));
     }
 
+    @Value("${summa.proxy.trusted-ips:10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}")
+    private String trustedProxyRanges;
+
+    private boolean isTrustedProxy(String addr) {
+        if ("local".equals(addr) || "127.0.0.1".equals(addr) || "0:0:0:0:0:0:0:1".equals(addr)) {
+            return false;
+        }
+        // Simplified: trust X-Forwarded-For only if direct connection is from a private range
+        return addr.startsWith("10.") || addr.startsWith("172.16.") || addr.startsWith("172.17.")
+            || addr.startsWith("172.18.") || addr.startsWith("172.19.") || addr.startsWith("172.2")
+            || addr.startsWith("172.3") || addr.startsWith("192.168.");
+    }
+
     private String resolveClientIp(HttpServletRequest request) {
-        // Only trust X-Forwarded-For when the direct connection comes from a known proxy range.
-        // Without a reverse proxy, clients can spoof this header to bypass rate limiting.
         String remoteAddr = request.getRemoteAddr();
-        if (!"local".equals(remoteAddr) && !"127.0.0.1".equals(remoteAddr)
-                && !"0:0:0:0:0:0:0:1".equals(remoteAddr)) {
+        if (isTrustedProxy(remoteAddr)) {
             String xfwd = request.getHeader("X-Forwarded-For");
             if (xfwd != null && !xfwd.isBlank()) {
                 return xfwd.split(",")[0].trim();

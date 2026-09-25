@@ -125,11 +125,14 @@ public class NodeAuthFilter extends OncePerRequestFilter {
         try {
             String keyBytes;
             // Distinguish base64-encoded pubkeys from raw ASCII keys.
-            // A valid base64 string has length divisible by 4 (after padding),
-            // contains only [A-Za-z0-9+/=], and is not a valid UUID or short token.
-            boolean looksLikeBase64 = pubkey.matches("^[A-Za-z0-9+/]+=*$")
-                && pubkey.length() % 4 == 0
-                && pubkey.length() >= 24;
+            // ECDSA P-256 public keys are 65 bytes (0x04 prefix + 32x32 coords) → 88 chars base64,
+            // or 32 bytes → 44 chars base64url without padding. We accept both formats strictly.
+            boolean isStandardBase64 = pubkey.matches("^[A-Za-z0-9+/]{44}={0,3}$")
+                || pubkey.matches("^[A-Za-z0-9+/]{88}={0,3}$");
+            boolean isBase64Url = pubkey.matches("^[A-Za-z0-9_-]{43}={0,1}$")
+                || pubkey.matches("^[A-Za-z0-9_-]{64}$")
+                || pubkey.matches("^[A-Za-z0-9_-]{86}={0,1}$");
+            boolean looksLikeBase64 = (isStandardBase64 || isBase64Url) && pubkey.length() >= 32;
             if (looksLikeBase64) {
                 keyBytes = new String(Base64.getDecoder().decode(pubkey), StandardCharsets.UTF_8);
             } else {

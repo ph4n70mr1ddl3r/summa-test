@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.summa.util.JsonHelpers;
 import com.summa.util.KeyedUnionValidator;
 import com.summa.exception.EntityNotFoundException;
+import com.summa.model.Human;
 import com.summa.service.GovernanceService;
 
 @Service
@@ -114,11 +115,16 @@ public class DnaProposalService {
             Optional<DnaDomain> domainOpt = domainService.findById(proposal.getDomainId());
             if (domainOpt.isPresent() && "reviewer-distinct".equals(domainOpt.get().getSod())) {
                 if (proposal.getProposedBy() != null && proposal.getProposedBy().equals(reviewedBy)) {
-                    // SoD breach: null reviewedBy to avoid FK violation (admins is not a human ID),
-                    // and escalate to admin broadcast via ask instead
+                    // SoD breach: route to admin broadcast instead of self-approval
                     auditService.logSystem("SOD_ROUTE_TO_ADMIN", "dna_proposal", id,
-                        String.format("{\"reason\":\"separation_of_duties\",\"proposer\":%s}", JsonHelpers.jsonString(proposal.getProposedBy())));
-                    actualReviewer = null;
+                        String.format("{\"reason\":\"separation_of_duties\",\"proposer\":\"%s\"}", proposal.getProposedBy()));
+                    // Find an admin to review instead
+                    List<Human> admins = memberService.findAdmins();
+                    if (!admins.isEmpty()) {
+                        actualReviewer = admins.get(0).getId();
+                    } else {
+                        throw new IllegalStateException("No admin available for SoD review");
+                    }
                 }
             }
         }
