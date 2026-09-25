@@ -46,4 +46,7 @@ public final class Defaults {
 
     // PAT limits
     public static final int MAX_PAT_EXPIRY_DAYS = 365;
+
+    // Node affinity
+    public static final long DEFAULT_NODE_AFFINITY_STARVATION_HOURS = 24;
 }

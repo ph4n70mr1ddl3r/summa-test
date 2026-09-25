@@ -203,6 +203,7 @@ public class GovernanceService {
         settings.putIfAbsent("spend-org-ceiling", spendCeilingOverride > 0 ? spendCeilingOverride : Defaults.DEFAULT_SPEND_CEILING);
         settings.putIfAbsent("spend-critical-floor-percent", Defaults.DEFAULT_SPEND_CRITICAL_FLOOR_PERCENT);
         settings.putIfAbsent("spend-evaluation-window-days", Defaults.DEFAULT_EVALUATION_WINDOW_DAYS);
+        settings.putIfAbsent("node-affinity-starvation-hours", Defaults.DEFAULT_NODE_AFFINITY_STARVATION_HOURS);
     }
 
     private Object parseValue(String value) {

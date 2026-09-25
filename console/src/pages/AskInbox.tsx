@@ -7,12 +7,12 @@ import { ErrorBanner } from '../components/ErrorBanner'
 
 function kindIcon(kind: string): string {
   switch (kind) {
-    case 'approval': return '🔴'
-    case 'question': return '?'
-    case 'assignment': return '→'
-    case 'spawn_request': return '+'
-    case 'promotion': return '↑'
-    default: return '•'
+    case 'approval': return '[!]'
+    case 'question': return '[?]'
+    case 'assignment': return '[→]'
+    case 'spawn_request': return '[+]'
+    case 'promotion': return '[↑]'
+    default: return '[·]'
   }
 }
 
