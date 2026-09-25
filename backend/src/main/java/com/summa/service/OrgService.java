@@ -132,18 +132,17 @@ public class OrgService {
 
     @Transactional
     public Human offboard(String id, String actor) {
-        // OFB-020: Check last-admin guard BEFORE acquiring the row lock to prevent
-        // a concurrent offboard of another admin from slipping between our count
-        // check and our deactivate, which would leave zero live admins.
+        // OFB-020: Acquire the pessimistic lock on the target row first to serialize
+        // concurrent offboard attempts on the same human.
+        Human human = humanRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new EntityNotFoundException("Human not found: " + id));
+
+        // Then check last-admin guard with the lock held — no concurrent transaction
+        // can offboard another admin until this transaction commits.
         long activeAdminCount = humanRepository.countByDeactivatedAtIsNullAndRbac("admin");
         if (activeAdminCount <= 1) {
             throw new IllegalStateException("Cannot offboard the last admin");
         }
-
-        // Then acquire the pessimistic lock on the target row to prevent concurrent
-        // mutations of the same human (e.g. double password change).
-        Human human = humanRepository.findByIdForUpdate(id)
-                .orElseThrow(() -> new EntityNotFoundException("Human not found: " + id));
 
         // Run the full dependency walk per OFB-001
         Map<String, Object> result = offboardingWalkService.walkOffboard(id, null, actor);
@@ -159,16 +158,17 @@ public class OrgService {
             throw new IllegalArgumentException("New RBAC role is required");
         }
 
+        // Acquire the row lock first to serialize concurrent rbac updates
+        Human human = humanRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Human not found: " + id));
+
         // OFB-021: Last-admin guard — same check as demote to prevent bricking the org
         long activeAdminCount = humanRepository.countByDeactivatedAtIsNullAndRbac("admin");
-        boolean isCurrentAdmin = humanRepository.findById(id).map(h -> RbacRole.ADMIN.getValue().equals(h.getRbac())).orElse(false);
+        boolean isCurrentAdmin = RbacRole.ADMIN.getValue().equals(human.getRbac());
         boolean becomesNonAdmin = isCurrentAdmin && !RbacRole.ADMIN.getValue().equals(newRbac);
         if (becomesNonAdmin && activeAdminCount <= 1) {
             throw new IllegalStateException("Cannot update rbac: would leave the org with zero admins");
         }
-
-        Human human = humanRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Human not found: " + id));
 
         human.setRbac(newRbac);
         Human saved = humanRepository.save(human);

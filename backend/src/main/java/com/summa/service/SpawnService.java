@@ -1,6 +1,7 @@
 package com.summa.service;
 
 import com.summa.enums.AgentClass;
+import com.summa.enums.AgentStatus;
 import com.summa.repository.SpawnRequestRepository;
 import com.summa.model.SpawnRequest;
 import com.summa.repository.RoleTemplateRepository;
@@ -79,7 +80,8 @@ public class SpawnService {
         if (requesterOpt.isEmpty()) {
             throw new EntityNotFoundException("Requester agent not found: " + requesterId);
         }
-        if (!"active".equals(requesterOpt.get().getStatus())) {
+        AgentStatus requesterStatus = AgentStatus.fromValue(requesterOpt.get().getStatus());
+        if (requesterStatus == null || !requesterStatus.isActive()) {
             throw new IllegalStateException("Requester agent is not active: " + requesterId);
         }
 

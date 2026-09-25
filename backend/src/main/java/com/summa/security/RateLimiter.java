@@ -112,16 +112,7 @@ public class RateLimiter {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     Thread.sleep(WINDOW_SECONDS * 1000L);
-                    var keys = new ArrayList<String>(windowStarts.keySet());
-                    Instant now = Instant.now();
-                    for (String key : keys) {
-                        Instant window = windowStarts.get(key);
-                        if (window != null && window.plusSeconds(WINDOW_SECONDS).isBefore(now)) {
-                            attemptCounts.remove(key);
-                            windowStarts.remove(key);
-                            locks.remove(key);
-                        }
-                    }
+                    purgeStaleEntries();
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     break;
@@ -132,5 +123,18 @@ public class RateLimiter {
         }, "summa-rate-limiter-purge");
         t.setDaemon(true);
         t.start();
+    }
+
+    private void purgeStaleEntries() {
+        Instant now = Instant.now();
+        var keys = new ArrayList<String>(windowStarts.keySet());
+        for (String key : keys) {
+            Instant window = windowStarts.get(key);
+            if (window != null && window.plusSeconds(WINDOW_SECONDS).isBefore(now)) {
+                attemptCounts.remove(key);
+                windowStarts.remove(key);
+                locks.remove(key);
+            }
+        }
     }
 }

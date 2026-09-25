@@ -282,7 +282,10 @@ public class AskService {
                 .orElseThrow(() -> new EntityNotFoundException("Ask not found: " + id));
 
         if (!ask.isPending()) {
-            throw new IllegalStateException("Ask is not pending: " + ask.getStatus());
+            // ASK-015: later responses to an already-closed ask are audit-only, not refused
+            auditService.logSystem("AUDIT_ONLY_STALE_RESPONSE", "ask", id,
+                String.format("{\"responder\":\"%s\",\"currentStatus\":\"%s\"}", responder, ask.getStatus()));
+            return ask;
         }
 
         // ASK-040: Check eligibility at the door
@@ -411,7 +414,7 @@ public class AskService {
     /**
      * ASK-012/CFG-140: Derive deadline seconds from SLA tier defaults.
      */
-    private long deriveDeadlineFromTier(String tier) {
+    public long deriveDeadlineFromTier(String tier) {
         if (tier == null) tier = "standard";
         if ("critical".equals(tier)) {
             Object val = governanceService.getSetting("asks-tier-critical-deadline-hours");

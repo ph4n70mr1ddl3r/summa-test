@@ -65,7 +65,10 @@ public class GovernanceController {
             "summa.dna.default-review-sla-days",
             "spend-org-ceiling",
             "spend-critical-floor-percent",
-            "spend-evaluation-window-days"
+            "spend-evaluation-window-days",
+            "node-lease-interval-seconds",
+            "node-heartbeat-timeout-seconds",
+            "spawn-ephemeral-default-ttl-hours"
     );
 
     private static final Set<String> QUOTA_KEYS = Set.of(
@@ -73,7 +76,8 @@ public class GovernanceController {
             "spawn-ephemeral-max-concurrent-per-spawner",
             "spawn-org-wide-max-active-agents",
             "spawn-depth-cap",
-            "spawn-budget-window-days"
+            "spawn-budget-window-days",
+            "node-affinity-starvation-hours"
     );
 
     @PutMapping("/policies")

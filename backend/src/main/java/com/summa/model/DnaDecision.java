@@ -27,17 +27,17 @@ public class DnaDecision {
     @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant decidedAt;
 
-    @Column(name = "refs", columnDefinition = "TEXT")
+    @Column(name = "refs", nullable = false, columnDefinition = "TEXT")
     private String refs;
 
-    @Column(name = "provenance", columnDefinition = "TEXT")
+    @Column(name = "provenance", nullable = false, columnDefinition = "TEXT")
     private String provenance;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false)
     @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant createdAt;
 
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant updatedAt;
 

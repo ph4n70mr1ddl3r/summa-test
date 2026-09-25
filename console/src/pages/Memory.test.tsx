@@ -68,7 +68,7 @@ describe('Memory page', () => {
     vi.mocked(apiModule.api.memory.list).mockResolvedValue([
       { id: 'm-1', tier: 'personal', contentMd: 'Tainted content', provenance: 'test', tainted: true },
     ])
-    vi.mocked(apiModule.api.memory.review).mockImplementation(() => reviewPromise)
+    vi.mocked(apiModule.api.memory.review).mockImplementation(() => reviewPromise as unknown as Promise<apiModule.MemoryItem>)
     const { getByText, container } = render(<Memory />)
     await waitFor(() => {
       expect(getByText('tainted')).toBeInTheDocument()

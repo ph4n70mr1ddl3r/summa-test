@@ -52,10 +52,10 @@ public class Run {
     @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant completedAt;
 
-    @Column(name = "cost_tokens")
+    @Column(name = "cost_tokens", nullable = false)
     private Long costTokens;
 
-    @Column(name = "cost_usd")
+    @Column(name = "cost_usd", nullable = false)
     private Double costUsd;
 
     @Column(name = "created_at", nullable = false)

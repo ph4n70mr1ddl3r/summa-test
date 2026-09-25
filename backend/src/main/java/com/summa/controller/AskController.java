@@ -9,6 +9,7 @@ import com.summa.security.RbacAuthorizationFilter;
 import com.summa.enums.AskKind;
 import com.summa.util.JsonHelpers;
 import com.summa.constants.Defaults;
+import com.summa.service.OffboardingWalkService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
@@ -78,11 +79,19 @@ public class AskController {
             if (to == null || to.isBlank()) {
                 throw new IllegalArgumentException("to is required");
             }
-            if (memberService.findHuman(to).isEmpty() && memberService.findAgent(to).isEmpty()) {
+            if (memberService.findHuman(to).isEmpty() && memberService.findAgent(to).isEmpty()
+                    && !OffboardingWalkService.ADMIN_BROADCAST.equals(to)) {
                 throw new IllegalArgumentException("to does not reference an existing human or agent: " + to);
             }
+            String slaTier = body.get("slaTier");
+            if (slaTier != null && !slaTier.isBlank()) {
+                Set<String> validTiers = Set.of("critical", "standard", "bulk");
+                if (!validTiers.contains(slaTier)) {
+                    throw new IllegalArgumentException("Invalid slaTier: " + slaTier + ". Must be one of: " + String.join(", ", validTiers));
+                }
+            }
             String deadlineStr = body.get("deadlineSeconds");
-            long deadlineSeconds = 86400L;
+            long deadlineSeconds;
             if (deadlineStr != null && !deadlineStr.isBlank()) {
                 try {
                     deadlineSeconds = Long.parseLong(deadlineStr);
@@ -95,15 +104,10 @@ public class AskController {
                 if (deadlineSeconds > Defaults.MAX_DEADLINE_SECONDS) {
                     return ControllerResponses.validation(auditService, "deadlineSeconds must not exceed 365 days");
                 }
+            } else {
+                deadlineSeconds = askService.deriveDeadlineFromTier(slaTier);
             }
             Instant deadline = Instant.now().plusSeconds(deadlineSeconds);
-            String slaTier = body.get("slaTier");
-            if (slaTier != null && !slaTier.isBlank()) {
-                Set<String> validTiers = Set.of("critical", "standard", "bulk");
-                if (!validTiers.contains(slaTier)) {
-                    throw new IllegalArgumentException("Invalid slaTier: " + slaTier + ". Must be one of: " + String.join(", ", validTiers));
-                }
-            }
             Ask ask = askService.create(
                 body.get("kind"),
                 actor,

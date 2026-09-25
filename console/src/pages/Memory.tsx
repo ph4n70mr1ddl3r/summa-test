@@ -19,7 +19,7 @@ export default function Memory() {
     setError(null)
     let aborted = false
     const params: Record<string, string | boolean> = {}
-    if (filter === 'tainted') params.tainted = true
+    if (filter === 'tainted') params.tainted = 'true'
     api.memory.list(params)
       .then((data) => { if (!aborted) { setItems(data); setLoading(false) } })
       .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })

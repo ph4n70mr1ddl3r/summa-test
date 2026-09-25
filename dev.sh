@@ -64,7 +64,7 @@ if [ "${#SUMMA_JWT_SECRET}" -lt 32 ]; then
 fi
 
 # Create data directories
-mkdir -p ~/.summa
+mkdir -p ~/.summa ~/.summa/logs
 SUMMA_DNA_REPO="${SUMMA_DNA_REPO:-$HOME/.summa/dna}"
 SUMMA_DB_PATH="${SUMMA_DB_PATH:-$HOME/.summa/summa.db}"
 mkdir -p "$SUMMA_DNA_REPO" "$(dirname "$SUMMA_DB_PATH")"

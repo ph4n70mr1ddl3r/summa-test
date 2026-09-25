@@ -20,4 +20,11 @@ public enum AgentStatus {
     public boolean isActive() {
         return this == ACTIVE;
     }
+
+    public static AgentStatus fromValue(String value) {
+        for (AgentStatus s : values()) {
+            if (s.value.equals(value)) return s;
+        }
+        return null;
+    }
 }

@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.util.JsonHelpers;
+import com.summa.enums.RbacRole;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -67,8 +68,36 @@ public class InitiativeController {
             if (memberService.findHuman(body.get("sponsor")).isEmpty() && memberService.findAgent(body.get("sponsor")).isEmpty()) {
                 throw new IllegalArgumentException("sponsor does not reference an existing human or agent: " + body.get("sponsor"));
             }
+            Optional<com.summa.model.Human> sponsorHuman = memberService.findHuman(body.get("sponsor"));
+            if (sponsorHuman.isPresent()) {
+                if (RbacRole.VIEWER.getValue().equals(sponsorHuman.get().getRbac())) {
+                    throw new IllegalArgumentException("Viewers cannot sponsor initiatives");
+                }
+                if (sponsorHuman.get().getDeactivatedAt() != null) {
+                    throw new IllegalArgumentException("Deactivated humans cannot sponsor initiatives");
+                }
+            } else {
+                Optional<com.summa.model.Agent> sponsorAgent = memberService.findAgent(body.get("sponsor"));
+                if (sponsorAgent.isPresent() && "ephemeral".equals(sponsorAgent.get().getAgentClass())) {
+                    throw new IllegalArgumentException("Ephemeral agents cannot sponsor initiatives");
+                }
+            }
             if (memberService.findHuman(body.get("lead")).isEmpty() && memberService.findAgent(body.get("lead")).isEmpty()) {
                 throw new IllegalArgumentException("lead does not reference an existing human or agent: " + body.get("lead"));
+            }
+            Optional<com.summa.model.Human> leadHuman = memberService.findHuman(body.get("lead"));
+            if (leadHuman.isPresent()) {
+                if (RbacRole.VIEWER.getValue().equals(leadHuman.get().getRbac())) {
+                    throw new IllegalArgumentException("Viewers cannot lead initiatives");
+                }
+                if (leadHuman.get().getDeactivatedAt() != null) {
+                    throw new IllegalArgumentException("Deactivated humans cannot lead initiatives");
+                }
+            } else {
+                Optional<com.summa.model.Agent> leadAgent = memberService.findAgent(body.get("lead"));
+                if (leadAgent.isPresent() && "ephemeral".equals(leadAgent.get().getAgentClass())) {
+                    throw new IllegalArgumentException("Ephemeral agents cannot lead initiatives");
+                }
             }
             String generatedId = UUID.randomUUID().toString();
             Instant deadline;
