@@ -14,6 +14,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import com.summa.exception.EntityNotFoundException;
+import com.summa.util.ScanUtils;
 
 @Service
 public class MemoryService {
@@ -23,21 +24,25 @@ public class MemoryService {
     private final MemberService memberService;
     private final WorkspaceService workspaceService;
     private final ObjectMapper objectMapper;
+    private final SecretsScanner secretsScanner;
 
     public MemoryService(MemoryItemRepository memoryItemRepository, AuditService auditService,
                            DnaDomainService domainService, MemberService memberService,
-                           WorkspaceService workspaceService, ObjectMapper objectMapper) {
+                           WorkspaceService workspaceService, ObjectMapper objectMapper,
+                           SecretsScanner secretsScanner) {
         this.memoryItemRepository = memoryItemRepository;
         this.auditService = auditService;
         this.domainService = domainService;
         this.memberService = memberService;
         this.workspaceService = workspaceService;
         this.objectMapper = objectMapper;
+        this.secretsScanner = secretsScanner;
     }
 
     @Transactional
-    public MemoryItem create(String tier, String memberId, String workspaceId, 
-                              String contentMd, String provenance, boolean tainted) {
+    public MemoryItem create(String tier, String memberId, String workspaceId,
+                               String contentMd, String provenance, boolean tainted) {
+        ScanUtils.scanForSecrets(contentMd, memberId, "memory_item", null, secretsScanner, auditService);
         MemoryItem item = new MemoryItem();
         item.setId(UUID.randomUUID().toString());
         item.setTier(tier);

@@ -44,6 +44,10 @@ class BoardTaskServiceTest {
         when(initiativeRepository.findById("init-1")).thenReturn(Optional.of(init));
         when(taskRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
+        Human human = new Human();
+        human.setRbac("member");
+        when(memberService.findHuman("member-1")).thenReturn(Optional.of(human));
+
         BoardTask result = boardTaskService.create("task-1", "desc", "user-1", "member-1", "init-1", 1, null);
 
         assertNotNull(result);
@@ -58,6 +62,37 @@ class BoardTaskServiceTest {
 
         assertThrows(IllegalStateException.class, () ->
             boardTaskService.create("task-1", "desc", "user-1", null, "init-1", null, null));
+    }
+
+    @Test
+    void create_throwsForViewerAssignee() {
+        Human human = new Human();
+        human.setRbac("viewer");
+        when(memberService.findHuman("h1")).thenReturn(Optional.of(human));
+        when(memberService.isViewer(human)).thenReturn(true);
+
+        assertThrows(IllegalStateException.class, () ->
+            boardTaskService.create("task-1", "desc", "user-1", "h1", null, null, null));
+    }
+
+    @Test
+    void create_throwsForInactiveAssignee() {
+        Human human = new Human();
+        human.setRbac("member");
+        human.setDeactivatedAt(java.time.Instant.now());
+        when(memberService.findHuman("h1")).thenReturn(Optional.of(human));
+
+        assertThrows(IllegalStateException.class, () ->
+            boardTaskService.create("task-1", "desc", "user-1", "h1", null, null, null));
+    }
+
+    @Test
+    void create_throwsWhenAssigneeNotFound() {
+        when(memberService.findHuman("missing")).thenReturn(Optional.empty());
+        when(memberService.findAgent("missing")).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () ->
+            boardTaskService.create("task-1", "desc", "user-1", "missing", null, null, null));
     }
 
     @Test

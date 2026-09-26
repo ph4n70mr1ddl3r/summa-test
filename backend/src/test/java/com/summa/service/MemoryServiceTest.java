@@ -13,6 +13,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import com.summa.exception.EntityNotFoundException;
+import com.summa.exception.ConflictException;
 
 @ExtendWith(MockitoExtension.class)
 class MemoryServiceTest {
@@ -31,6 +32,9 @@ class MemoryServiceTest {
 
     @Mock
     private WorkspaceService workspaceService;
+
+    @Mock
+    private SecretsScanner secretsScanner;
 
     @InjectMocks
     private MemoryService memoryService;
@@ -123,5 +127,14 @@ class MemoryServiceTest {
         long count = memoryService.countByTier("short");
 
         assertEquals(5, count);
+    }
+
+    @Test
+    void create_throwsWhenSecretsDetected() {
+        when(secretsScanner.hasSecrets("my secret token=abc123")).thenReturn(true);
+        when(secretsScanner.scan("my secret token=abc123")).thenReturn(List.of("token"));
+
+        assertThrows(ConflictException.class, () ->
+            memoryService.create("project", "h1", "ws-1", "my secret token=abc123", "{}", false));
     }
 }

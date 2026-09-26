@@ -217,7 +217,7 @@ public class GovernanceService {
             if ("true".equalsIgnoreCase(value)) return true;
             if ("false".equalsIgnoreCase(value)) return false;
         } catch (NumberFormatException e) {
-            // not a number
+            // not a number — return raw string
         }
         return value;
     }

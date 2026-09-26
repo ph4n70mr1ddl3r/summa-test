@@ -9,6 +9,7 @@ import com.summa.model.Ask;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -42,10 +43,19 @@ class DnaProposalServiceTest {
     private AskService askService;
 
     @Mock
-    private ObjectMapper objectMapper;
+    private GovernanceService governanceService;
 
-    @InjectMocks
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     private DnaProposalService proposalService;
+
+    @BeforeEach
+    void setUp() {
+        proposalService = new DnaProposalService(
+            proposalRepository, ruleRepository, auditService,
+            domainService, memberService, askService, governanceService, objectMapper
+        );
+    }
 
     @Test
     void create_proposalSetsDefaults() {
@@ -136,11 +146,16 @@ class DnaProposalServiceTest {
         proposal.setDomainId("domain-1");
         proposal.setPayload("{\"supersedes_id\":\"rule-old\"}");
         when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
+        JsonNode payload;
         try {
-            JsonNode payload = new com.fasterxml.jackson.databind.ObjectMapper().readTree(proposal.getPayload());
-            when(objectMapper.readTree(proposal.getPayload())).thenReturn(payload);
+            payload = objectMapper.readTree(proposal.getPayload());
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+        try {
+            doReturn(payload).when(objectMapper).readTree(anyString());
+        } catch (Exception ignored) {
+            // readTree throws checked exception; doReturn bypasses invocation
         }
         when(ruleRepository.findBySupersedesId("rule-old")).thenReturn(List.of());
         DnaRule supersedesRule = new DnaRule();

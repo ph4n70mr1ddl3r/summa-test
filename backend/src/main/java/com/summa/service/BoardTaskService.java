@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import com.summa.exception.EntityNotFoundException;
+import com.summa.model.Agent;
 
 @Service
 public class BoardTaskService {
@@ -42,6 +43,28 @@ public class BoardTaskService {
                 if ("closed".equals(init.getStatus())) {
                     throw new IllegalStateException(
                         "Cannot create board task under closed initiative: " + initiativeId);
+                }
+            }
+        }
+
+        // ORG-031: Refuse viewer or non-active members as assignee at creation time
+        if (assigneeMemberId != null && !assigneeMemberId.isBlank()) {
+            Optional<Human> assigneeHuman = memberService.findHuman(assigneeMemberId);
+            if (assigneeHuman.isPresent()) {
+                if (memberService.isViewer(assigneeHuman.get())) {
+                    throw new IllegalStateException("Viewers cannot be assigned board tasks");
+                }
+                if (!assigneeHuman.get().isActive()) {
+                    throw new IllegalStateException("Non-active members cannot be assigned board tasks");
+                }
+            } else {
+                Optional<Agent> assigneeAgent = memberService.findAgent(assigneeMemberId);
+                if (assigneeAgent.isPresent()) {
+                    if (!assigneeAgent.get().isActive()) {
+                        throw new IllegalStateException("Suspended/retired agents cannot be assigned board tasks");
+                    }
+                } else {
+                    throw new EntityNotFoundException("Assignee not found: " + assigneeMemberId);
                 }
             }
         }

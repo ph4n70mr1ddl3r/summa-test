@@ -12,6 +12,7 @@ import com.summa.model.SpawnRequest;
 import com.summa.model.Agent;
 import com.summa.model.Human;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -57,11 +58,18 @@ class SpawnServiceTest {
     @Mock
     private InitiativeRepository initiativeRepository;
 
-    @Mock
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @InjectMocks
     private SpawnService spawnService;
+
+    @BeforeEach
+    void setUp() {
+        spawnService = new SpawnService(
+            spawnRepository, auditService, governanceService, templateRepository,
+            agentRepository, memberService, workspaceRepository, domainRepository,
+            askService, spendLedgerService, initiativeRepository, objectMapper
+        );
+    }
 
     @Test
     void create_requestWithDefaults() {
@@ -154,18 +162,15 @@ class SpawnServiceTest {
         request.setSpawnClass("ephemeral");
         lenient().when(spawnRepository.save(any())).thenReturn(request);
 
-        // Stub ObjectMapper to return proper JsonNodes for scope validation
-        com.fasterxml.jackson.databind.ObjectMapper realMapper = new com.fasterxml.jackson.databind.ObjectMapper();
-        JsonNode parentScopes = null;
-        JsonNode childScopes = null;
+        // Stub ObjectMapper for scope validation
+        JsonNode parentScopes;
+        JsonNode childScopes;
         try {
-            parentScopes = realMapper.readTree("{\"fs\":\"read\",\"shell\":\"none\"}");
-            childScopes = realMapper.readTree("{\"fs\":\"write\"}");
-        } catch (Exception ignored) {}
-        try {
-            org.mockito.Mockito.doReturn(parentScopes).when(objectMapper).readTree("{\"fs\":\"read\",\"shell\":\"none\"}");
-            org.mockito.Mockito.doReturn(childScopes).when(objectMapper).readTree("{\"fs\":\"write\"}");
-        } catch (Exception ignored) {}
+            parentScopes = objectMapper.readTree("{\"fs\":\"read\",\"shell\":\"none\"}");
+            childScopes = objectMapper.readTree("{\"fs\":\"write\"}");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
         // scope ceiling requests fs:write which parent doesn't have — should fail
         assertThrows(IllegalStateException.class, () -> {
@@ -194,18 +199,15 @@ class SpawnServiceTest {
         request.setSpawnClass("ephemeral");
         lenient().when(spawnRepository.save(any())).thenReturn(request);
 
-        // Stub ObjectMapper to return proper JsonNodes for scope validation
-        com.fasterxml.jackson.databind.ObjectMapper realMapper = new com.fasterxml.jackson.databind.ObjectMapper();
-        JsonNode parentScopes = null;
-        JsonNode childScopes = null;
+        // Stub ObjectMapper for scope validation
+        JsonNode parentScopes2;
+        JsonNode childScopes2;
         try {
-            parentScopes = realMapper.readTree("{\"fs\":\"readwrite\",\"shell\":\"exec\"}");
-            childScopes = realMapper.readTree("{\"fs\":\"readwrite\"}");
-        } catch (Exception ignored) {}
-        try {
-            org.mockito.Mockito.doReturn(parentScopes).when(objectMapper).readTree("{\"fs\":\"readwrite\",\"shell\":\"exec\"}");
-            org.mockito.Mockito.doReturn(childScopes).when(objectMapper).readTree("{\"fs\":\"readwrite\"}");
-        } catch (Exception ignored) {}
+            parentScopes2 = objectMapper.readTree("{\"fs\":\"readwrite\",\"shell\":\"exec\"}");
+            childScopes2 = objectMapper.readTree("{\"fs\":\"readwrite\"}");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
         SpawnRequest result = spawnService.create("agent-1", null, null, "ephemeral",
             "Do task", "[]", "{\"fs\":\"readwrite\"}", null, 24, "human-1", "actor");

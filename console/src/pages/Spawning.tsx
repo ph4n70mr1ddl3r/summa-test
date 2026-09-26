@@ -103,7 +103,7 @@ export default function Spawning() {
                     <button
                       type="button"
                       onClick={() => handleAction(req.id, 'approve')}
-                      disabled={actionId !== null}
+                      disabled={actionId !== req.id}
                       className="px-2 py-1 bg-green-700 hover:bg-green-600 disabled:bg-gray-600 rounded text-xs text-white"
                       aria-label={`Approve ${req.purpose || 'request'}`}
                     >
@@ -112,7 +112,7 @@ export default function Spawning() {
                     <button
                       type="button"
                       onClick={() => handleAction(req.id, 'deny')}
-                      disabled={actionId !== null}
+                      disabled={actionId !== req.id}
                       className="px-2 py-1 bg-red-700 hover:bg-red-600 disabled:bg-gray-600 rounded text-xs text-white"
                       aria-label={`Deny ${req.purpose || 'request'}`}
                     >

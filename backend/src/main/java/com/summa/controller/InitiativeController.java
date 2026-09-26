@@ -3,13 +3,11 @@ package com.summa.controller;
 import com.summa.service.InitiativeService;
 import com.summa.model.Initiative;
 import com.summa.service.AuditService;
-import com.summa.service.MemberService;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.util.JsonHelpers;
-import com.summa.enums.RbacRole;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -22,14 +20,11 @@ public class InitiativeController {
     private final InitiativeService initiativeService;
     private final AuditService auditService;
     private final WriteGate writeGate;
-    private final MemberService memberService;
 
-    public InitiativeController(InitiativeService initiativeService, AuditService auditService, WriteGate writeGate,
-                                MemberService memberService) {
+    public InitiativeController(InitiativeService initiativeService, AuditService auditService, WriteGate writeGate) {
         this.initiativeService = initiativeService;
         this.auditService = auditService;
         this.writeGate = writeGate;
-        this.memberService = memberService;
     }
 
     @GetMapping
@@ -69,40 +64,6 @@ public class InitiativeController {
             String sponsorClean = sponsorRaw != null ? sponsorRaw.replaceFirst("^[ha]?:", "") : sponsorRaw;
             String leadRaw = body.get("lead");
             String leadClean = leadRaw != null ? leadRaw.replaceFirst("^[ha]?:", "") : leadRaw;
-            if (memberService.findHuman(sponsorClean).isEmpty() && memberService.findAgent(sponsorClean).isEmpty()) {
-                throw new IllegalArgumentException("sponsor does not reference an existing human or agent: " + sponsorClean);
-            }
-            Optional<com.summa.model.Human> sponsorHuman = memberService.findHuman(sponsorClean);
-            if (sponsorHuman.isPresent()) {
-                if (RbacRole.VIEWER.getValue().equals(sponsorHuman.get().getRbac())) {
-                    throw new IllegalArgumentException("Viewers cannot sponsor initiatives");
-                }
-                if (sponsorHuman.get().getDeactivatedAt() != null) {
-                    throw new IllegalArgumentException("Deactivated humans cannot sponsor initiatives");
-                }
-            } else {
-                Optional<com.summa.model.Agent> sponsorAgent = memberService.findAgent(sponsorClean);
-                if (sponsorAgent.isPresent()) {
-                    throw new IllegalArgumentException("Only humans can sponsor initiatives: " + sponsorClean);
-                }
-            }
-            if (memberService.findHuman(leadClean).isEmpty() && memberService.findAgent(leadClean).isEmpty()) {
-                throw new IllegalArgumentException("lead does not reference an existing human or agent: " + leadClean);
-            }
-            Optional<com.summa.model.Human> leadHuman = memberService.findHuman(leadClean);
-            if (leadHuman.isPresent()) {
-                if (RbacRole.VIEWER.getValue().equals(leadHuman.get().getRbac())) {
-                    throw new IllegalArgumentException("Viewers cannot lead initiatives");
-                }
-                if (leadHuman.get().getDeactivatedAt() != null) {
-                    throw new IllegalArgumentException("Deactivated humans cannot lead initiatives");
-                }
-            } else {
-                Optional<com.summa.model.Agent> leadAgent = memberService.findAgent(leadClean);
-                if (leadAgent.isPresent()) {
-                    throw new IllegalArgumentException("Only humans can lead initiatives: " + leadClean);
-                }
-            }
             String generatedId = UUID.randomUUID().toString();
             Instant deadline;
             try {

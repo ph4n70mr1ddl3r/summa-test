@@ -77,8 +77,12 @@ public class DnaDecision {
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
 
+    /**
+     * DnaDecisions are append-only records without a status lifecycle.
+     * This method exists for API consistency with other DNA models but
+     * always returns true — callers should not rely on it for filtering.
+     */
     public boolean isActive() {
-        // DnaDecisions do not have a status field — they are always considered active once created.
         return true;
     }
 }
