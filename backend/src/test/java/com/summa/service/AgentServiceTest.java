@@ -236,11 +236,12 @@ class AgentServiceTest {
     @Test
     void findFirstHumanUpChain_fallsThroughToSpawner() {
         Agent agent = new Agent();
-        agent.setOwnerHumanId("human-1");
+        agent.setOwnerHumanId(null);
         agent.setSpawnedBy("agent-2");
         when(agentRepository.findById("agent-1")).thenReturn(Optional.of(agent));
 
         Agent agent2 = new Agent();
+        agent2.setOwnerHumanId(null);
         agent2.setSpawnedBy(null);
         when(agentRepository.findById("agent-2")).thenReturn(Optional.of(agent2));
 

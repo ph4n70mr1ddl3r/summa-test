@@ -47,7 +47,8 @@ echo "Using JAR: $JAR_FILE"
 mkdir -p ~/.summa
 SUMMA_DNA_REPO="${SUMMA_DNA_REPO:-$HOME/.summa/dna}"
 SUMMA_DB_PATH="${SUMMA_DB_PATH:-$HOME/.summa/summa.db}"
-mkdir -p "$SUMMA_DNA_REPO" "$(dirname "$SUMMA_DB_PATH")"
+SUMMA_LOG_DIR="${SUMMA_LOG_DIR:-$HOME/.summa/logs}"
+mkdir -p "$SUMMA_DNA_REPO" "$(dirname "$SUMMA_DB_PATH")" "$SUMMA_LOG_DIR"
 
 # Start the backend
 echo "Starting backend on port 8080..."

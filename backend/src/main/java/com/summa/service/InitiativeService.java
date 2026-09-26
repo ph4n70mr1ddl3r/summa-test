@@ -169,20 +169,20 @@ public class InitiativeService {
         for (String depId : currentDeps) {
             if (depId.equals(target)) return true;
             if (visited.contains(depId)) continue;
-            visited.add(depId);
+            Set<String> subtreeVisited = new HashSet<>(visited);
+            subtreeVisited.add(depId);
             Optional<Initiative> depOpt = initiativeRepository.findById(depId);
             if (depOpt.isPresent() && depOpt.get().getDependsOn() != null) {
                 try {
                     List<String> grandchildDeps = objectMapper.readValue(
                         depOpt.get().getDependsOn(),
                         new TypeReference<List<String>>() {});
-                    if (hasPathTo(target, grandchildDeps, visited)) return true;
+                    if (hasPathTo(target, grandchildDeps, subtreeVisited)) return true;
                 } catch (Exception e) {
                     auditService.logSystem("CYCLE_DETECT_FAIL", "initiative", target,
                         String.format("{\"error\":\"%s\"}", e.getMessage()));
                 }
             }
-            // Do not backtrack — visited set must persist for correct cycle detection
         }
         return false;
     }

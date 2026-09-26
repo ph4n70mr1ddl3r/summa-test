@@ -28,9 +28,12 @@ export default function Governance() {
       ]),
     ).then(({ data, error: loadError }) => {
       if (aborted) return
-      const policiesData = data[0] as Record<string, unknown> | null
-      const quotasData = data[1] as Record<string, unknown> | null
-      const spendData = data[2] as SpendSnapshot | null
+      const policiesData = (data[0] != null && typeof data[0] === 'object' && !Array.isArray(data[0]))
+        ? data[0] as Record<string, unknown> : null
+      const quotasData = (data[1] != null && typeof data[1] === 'object' && !Array.isArray(data[1]))
+        ? data[1] as Record<string, unknown> : null
+      const spendData = (data[2] != null && typeof data[2] === 'object' && !Array.isArray(data[2]))
+        ? data[2] as SpendSnapshot : null
       setPolicies(policiesData != null ? policiesData : {})
       setQuotas(quotasData != null ? quotasData : {})
       setSpend(spendData)

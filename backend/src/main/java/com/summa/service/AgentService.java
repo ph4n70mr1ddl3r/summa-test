@@ -236,6 +236,15 @@ public class AgentService {
                 String.format("{\"agentId\":%s,\"reason\":\"agent_retiring\"}", JsonHelpers.jsonString(id)));
         }
 
+        // CLC-030: Cancel in-flight runs — consistent with suspend behavior
+        for (Run run : findRunningRuns(id)) {
+            run.setStatus("cancelled");
+            run.setCompletedAt(Instant.now());
+            runRepository.save(run);
+            auditService.logSystem("RETIRE_CANCEL_RUN", "run", run.getId(),
+                String.format("{\"agentId\":%s,\"reason\":\"agent_retiring\"}", JsonHelpers.jsonString(id)));
+        }
+
         agent.setStatus(AgentStatus.RETIRING.getValue());
         agent.setRetiredAt(Instant.now());
         Agent saved = agentRepository.save(agent);

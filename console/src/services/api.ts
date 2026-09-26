@@ -176,7 +176,7 @@ export async function loadWithFallback<T>(
     const error = hasError
       ? 'Some data could not be loaded: ' + (e instanceof Error ? e.message : (typeof e === 'string' ? e : ''))
       : null
-    return { data: results as T[], error }
+    return { data: results as unknown as T[], error }
   }
 }
 

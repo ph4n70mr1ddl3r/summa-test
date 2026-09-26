@@ -86,7 +86,7 @@ export default function Groups() {
                       className="px-2 py-1 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 rounded text-xs text-gray-400"
                       aria-label={`Archive ${g.name}`}
                     >
-                      {archivingId === g.id ? 'Archiving...' : 'Archive'}
+                      {archivingId === g.id ? 'Archiving...' : archivingId !== null ? 'Please wait' : 'Archive'}
                     </button>
                   )}
                 </div>

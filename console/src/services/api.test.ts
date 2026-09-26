@@ -195,7 +195,7 @@ describe('isAuthenticated nbf and exp edge cases', () => {
 
   it('isAuthenticated respects nbf claim', () => {
     const futureNbf = Math.floor(Date.now() / 1000) + 3600
-    const token = 'eyJhbGciOiJIUz21NiIsInR5cCI6IkpXVCJ9.' +
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
       btoa(JSON.stringify({ exp: futureNbf + 3600, nbf: futureNbf })) +
       '.sig'
     setAuthToken(token)

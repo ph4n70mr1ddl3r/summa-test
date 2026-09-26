@@ -274,9 +274,15 @@ class NodeServiceTest {
         Run run = new Run();
         run.setId("run-1");
         run.setStatus("running");
+        run.setWorkspaceId("ws-1");
+
+        Workspace ws = new Workspace();
+        ws.setId("ws-1");
+        ws.setLeaseExpiresAt(java.time.Instant.now().plusSeconds(30));
 
         when(nodeRepository.findById("node-1")).thenReturn(Optional.of(node));
         when(runRepository.findById("run-1")).thenReturn(Optional.of(run));
+        when(workspaceService.findByNode("node-1")).thenReturn(List.of(ws));
         when(runRepository.save(any())).thenAnswer(i -> i.getArgument(0));
         when(spendLedgerRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
@@ -297,9 +303,15 @@ class NodeServiceTest {
         Run run = new Run();
         run.setId("run-1");
         run.setStatus("running");
+        run.setWorkspaceId("ws-1");
+
+        Workspace ws = new Workspace();
+        ws.setId("ws-1");
+        ws.setLeaseExpiresAt(java.time.Instant.now().plusSeconds(30));
 
         when(nodeRepository.findById("node-1")).thenReturn(Optional.of(node));
         when(runRepository.findById("run-1")).thenReturn(Optional.of(run));
+        when(workspaceService.findByNode("node-1")).thenReturn(List.of(ws));
         when(runRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         nodeService.reportRun("node-1", "run-1", null, null, 0L, 0.0, "agent-1");

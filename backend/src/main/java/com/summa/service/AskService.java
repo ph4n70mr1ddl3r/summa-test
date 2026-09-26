@@ -74,7 +74,7 @@ public class AskService {
     }
 
     /**
-     * Purge expired entries from collapse window and successor depth maps.
+     * Purge expired entries from collapse window, successor depth, and lock maps.
      * Called periodically to prevent unbounded memory growth.
      */
     @Scheduled(fixedRate = 3600000)
@@ -82,6 +82,11 @@ public class AskService {
         long nowSeconds = Instant.now().getEpochSecond();
         collapseWindowTimestamps.entrySet().removeIf(e -> e.getValue().expiryEpochSeconds <= nowSeconds);
         successorDepth.entrySet().removeIf(e -> e.getValue().expiryEpochSeconds <= nowSeconds);
+        // Purge locks whose associated window has expired
+        collapseLocks.keySet().removeIf(key -> {
+            ExpiringEntry<Instant> entry = collapseWindowTimestamps.get(key);
+            return entry == null || entry.expiryEpochSeconds <= nowSeconds;
+        });
     }
 
     @Transactional

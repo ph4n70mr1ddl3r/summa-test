@@ -256,6 +256,17 @@ public class NodeService {
         Run run = runRepository.findById(runId)
                 .orElseThrow(() -> new EntityNotFoundException("Run not found: " + runId));
 
+        // Verify the node holds a live claim on the run's workspace
+        List<Workspace> claimedWorkspaces = workspaceService.findByNode(nodeId).stream()
+                .filter(ws -> ws.getLeaseExpiresAt() != null && ws.getLeaseExpiresAt().isAfter(Instant.now()))
+                .toList();
+        boolean ownsWorkspace = claimedWorkspaces.stream()
+                .anyMatch(ws -> ws.getId().equals(run.getWorkspaceId()));
+        if (!ownsWorkspace) {
+            throw new IllegalStateException(
+                "Node does not hold a live claim on workspace: " + run.getWorkspaceId());
+        }
+
         run.setResult(result);
         run.setArtifacts(artifacts != null ? artifacts : "[]");
         run.setStatus("completed");

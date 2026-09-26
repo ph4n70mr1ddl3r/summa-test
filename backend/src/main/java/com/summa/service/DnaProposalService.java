@@ -11,10 +11,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.ConcurrentModificationException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.summa.util.JsonHelpers;
@@ -33,7 +36,7 @@ public class DnaProposalService {
     private final AskService askService;
     private final ObjectMapper objectMapper;
     private final GovernanceService governanceService;
-    private final Set<String> alreadyEscalated = new HashSet<>();
+    private final Set<String> alreadyEscalated = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     public DnaProposalService(DnaProposalRepository proposalRepository,
                                   DnaRuleRepository ruleRepository,
