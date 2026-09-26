@@ -7,6 +7,7 @@ import com.summa.model.Human;
 import com.summa.repository.InitiativeRepository;
 import com.summa.model.Initiative;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +51,7 @@ public class AskService {
     private final MemberService memberService;
     private final GovernanceService governanceService;
     private final InitiativeRepository initiativeRepository;
+    private final InitiativeService initiativeService;
     private final long stormCollapseWindowSeconds;
 
     // ASK-100: Storm collapse window — tracks recent ask creation by (kind, to, payloadHash)
@@ -62,6 +64,7 @@ public class AskService {
 
     public AskService(AskRepository askRepository, AuditService auditService, MemberService memberService,
                       GovernanceService governanceService, InitiativeRepository initiativeRepository,
+                      @Lazy InitiativeService initiativeService,
                       @Value("${summa.asks.storm-collapse-window-hours:1}") long stormCollapseWindowHours,
                       ObjectMapper objectMapper) {
         this.askRepository = askRepository;
@@ -69,6 +72,7 @@ public class AskService {
         this.memberService = memberService;
         this.governanceService = governanceService;
         this.initiativeRepository = initiativeRepository;
+        this.initiativeService = initiativeService;
         this.stormCollapseWindowSeconds = stormCollapseWindowHours * 3600L;
         this.objectMapper = objectMapper;
     }
@@ -420,9 +424,15 @@ public class AskService {
                 auditService.logSystem("DIRECTION_EXTEND", "ask", ask.getId(),
                     String.format("{\"initiativeId\":\"%s\"}", initiativeId));
             } else if ("close".equals(action)) {
-                // Close the initiative — handled by the caller's close endpoint
-                auditService.logSystem("DIRECTION_CLOSE", "ask", ask.getId(),
-                    String.format("{\"initiativeId\":\"%s\"}", initiativeId));
+                // Close the initiative — INT-051 requires atomic close on quorum reach
+                try {
+                    initiativeService.close(initiativeId, "system");
+                    auditService.logSystem("DIRECTION_CLOSE", "ask", ask.getId(),
+                        String.format("{\"initiativeId\":\"%s\"}", initiativeId));
+                } catch (Exception closeEx) {
+                    auditService.logSystem("DIRECTION_CLOSE_FAIL", "ask", ask.getId(),
+                        String.format("{\"initiativeId\":\"%s\",\"error\":\"%s\"}", initiativeId, closeEx.getMessage()));
+                }
             } else if ("re-base".equals(action) || "rebase".equals(action)) {
                 updateGoalRef(initiativeId, payload, "DIRECTION_REBASE");
             } else if ("re-target".equals(action) || "retarget".equals(action)) {

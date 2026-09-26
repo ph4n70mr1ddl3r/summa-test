@@ -92,7 +92,10 @@ public class SpawnService {
 
         // SPW-021: Class must match — persistent hire needs persistent template,
         // ephemeral needs ephemeral-subagent template
-        String effectiveSpawnClass = spawnClass != null ? spawnClass : "ephemeral";
+        if (spawnClass == null || spawnClass.isBlank()) {
+            throw new IllegalStateException("spawnClass is required");
+        }
+        String effectiveSpawnClass = spawnClass;
 
         // SPW-010: Ephemeral requester refused a persistent-hire request at write
         if (AgentClass.PERSISTENT.getValue().equals(effectiveSpawnClass)) {
@@ -248,9 +251,9 @@ public class SpawnService {
             throw new IllegalStateException("Cannot approve non-requested spawn: " + request.getStatus());
         }
 
-        // SPW-062: Check spend halt — accept under halt is audit-only, return with halted status
+        // SPW-062: Check spend halt — accept under halt is audit-only, the request archives
         if (governanceService.isSpendHaltTripped()) {
-            request.setStatus("halted");
+            request.setStatus("archived");
             request.setApprovedBy(approvedBy);
             request.setApprovedAt(Instant.now());
             SpawnRequest saved = spawnRepository.save(request);

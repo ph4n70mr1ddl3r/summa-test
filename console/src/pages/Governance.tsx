@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, loadWithFallback } from '../services/api'
 import type { SpendSnapshot } from '../types'
-import { escapeHtml } from '../utils/escapeHtml'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Governance() {
@@ -10,6 +9,8 @@ export default function Governance() {
   const [spend, setSpend] = useState<SpendSnapshot | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [saving, setSaving] = useState<string | null>(null)
+  const [editValues, setEditValues] = useState<Record<string, string>>({})
 
   const loadData = () => {
     setLoading(true)
@@ -48,6 +49,79 @@ export default function Governance() {
     return cancel
   }, [])
 
+  const handleSave = async (section: 'policies' | 'quotas', key: string, value: string) => {
+    setSaving(`${section}:${key}`)
+    setError(null)
+    try {
+      const numValue = Number(value)
+      const body = section === 'policies'
+        ? { [key]: isNaN(numValue) ? value : numValue }
+        : { [key]: isNaN(numValue) ? value : numValue }
+      const result = section === 'policies'
+        ? await api.governance.updatePolicies(body)
+        : await api.governance.updateQuotas(body)
+      if (section === 'policies') setPolicies(result as Record<string, unknown>)
+      else setQuotas(result as Record<string, unknown>)
+      setEditValues(prev => { const next = { ...prev }; delete next[key]; return next })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setSaving(null)
+    }
+  }
+
+  const startEdit = (section: 'policies' | 'quotas', key: string, currentValue: unknown) => {
+    setEditValues(prev => ({ ...prev, [key]: String(currentValue ?? '') }))
+  }
+
+  const renderCell = (section: 'policies' | 'quotas', key: string, value: unknown) => {
+    const isEditing = editValues[key] !== undefined
+    const currentValue = isEditing ? editValues[key] : String(value ?? '')
+    return (
+      <div key={key} className="flex items-center justify-between text-sm gap-2">
+        <span className="text-gray-400 flex-shrink-0 w-48 truncate">{key}</span>
+        {isEditing ? (
+          <div className="flex items-center gap-1 flex-1">
+            <input
+              type="text"
+              value={currentValue}
+              onChange={e => setEditValues(prev => ({ ...prev, [key]: e.target.value }))}
+              className="flex-1 bg-gray-700 border border-gray-600 rounded px-2 py-0.5 text-gray-200 text-xs font-mono"
+              aria-label={`Edit ${key}`}
+              autoFocus
+            />
+            <button
+              type="button"
+              onClick={() => handleSave(section, key, currentValue)}
+              disabled={saving === `${section}:${key}`}
+              className="px-2 py-0.5 bg-green-700 hover:bg-green-600 disabled:bg-gray-600 rounded text-xs text-white"
+              aria-label={`Save ${key}`}
+            >
+              {saving === `${section}:${key}` ? '…' : '✓'}
+            </button>
+            <button
+              type="button"
+              onClick={() => { const next = { ...editValues }; delete next[key]; setEditValues(next) }}
+              className="px-2 py-0.5 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-400"
+              aria-label={`Cancel edit ${key}`}
+            >
+              ✗
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => startEdit(section, key, value)}
+            className="flex-1 text-right text-gray-200 font-mono text-xs hover:text-white truncate"
+            aria-label={`Edit ${key}: ${currentValue}`}
+          >
+            {typeof value === 'object' && value !== null ? JSON.stringify(value) : String(value)}
+          </button>
+        )}
+      </div>
+    )
+  }
+
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
   if (error) return <ErrorBanner message={error} onRetry={loadData} />
 
@@ -65,12 +139,7 @@ export default function Governance() {
             <p className="text-gray-500 text-sm">No policies configured.</p>
           ) : (
             <div className="space-y-1">
-              {policyEntries.slice(0, 10).map(([k, v]) => (
-                <div key={k} className="flex justify-between text-sm">
-                  <span className="text-gray-400">{k}</span>
-                  <span className="text-gray-200 font-mono whitespace-pre-wrap break-all">{typeof v === 'object' && v !== null ? escapeHtml(JSON.stringify(v, null, 2)) : escapeHtml(String(v))}</span>
-                </div>
-              ))}
+              {policyEntries.map(([k, v]) => renderCell('policies', k, v))}
             </div>
           )}
         </div>
@@ -81,12 +150,7 @@ export default function Governance() {
             <p className="text-gray-500 text-sm">No quotas configured.</p>
           ) : (
             <div className="space-y-1">
-              {quotaEntries.slice(0, 10).map(([k, v]) => (
-                <div key={k} className="flex justify-between text-sm">
-                  <span className="text-gray-400">{k}</span>
-                  <span className="text-gray-200 font-mono whitespace-pre-wrap break-all">{typeof v === 'object' && v !== null ? escapeHtml(JSON.stringify(v, null, 2)) : escapeHtml(String(v))}</span>
-                </div>
-              ))}
+              {quotaEntries.map(([k, v]) => renderCell('quotas', k, v))}
             </div>
           )}
         </div>

@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import com.summa.util.ScanUtils;
 import com.summa.util.KeyedUnionValidator;
+import com.summa.util.JsonHelpers;
 import com.summa.exception.EntityNotFoundException;
 
 @Service
@@ -49,7 +50,7 @@ public class DnaDecisionService {
 
         DnaDecision saved = decisionRepository.save(decision);
         auditService.log(actor, "CREATE_DECISION", "dna_decision", id,
-            String.format("{\"domainId\":\"%s\",\"decidedBy\":\"%s\"}", domainId, decidedBy));
+            String.format("{\"domainId\":%s,\"decidedBy\":%s}", JsonHelpers.jsonString(domainId), JsonHelpers.jsonString(decidedBy)));
         return saved;
     }
 

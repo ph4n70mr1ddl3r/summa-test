@@ -70,7 +70,7 @@ public class InitiativeController {
             String leadRaw = body.get("lead");
             String leadClean = leadRaw != null ? leadRaw.replaceFirst("^[ha]?:", "") : leadRaw;
             if (memberService.findHuman(sponsorClean).isEmpty() && memberService.findAgent(sponsorClean).isEmpty()) {
-                throw new IllegalArgumentException("sponsor does not reference an existing human or agent: " + sponsorRaw);
+                throw new IllegalArgumentException("sponsor does not reference an existing human or agent: " + sponsorClean);
             }
             Optional<com.summa.model.Human> sponsorHuman = memberService.findHuman(sponsorClean);
             if (sponsorHuman.isPresent()) {
@@ -82,12 +82,12 @@ public class InitiativeController {
                 }
             } else {
                 Optional<com.summa.model.Agent> sponsorAgent = memberService.findAgent(sponsorClean);
-                if (sponsorAgent.isPresent() && sponsorAgent.get().isEphemeral()) {
-                    throw new IllegalArgumentException("Ephemeral agents cannot sponsor initiatives");
+                if (sponsorAgent.isPresent()) {
+                    throw new IllegalArgumentException("Only humans can sponsor initiatives: " + sponsorClean);
                 }
             }
             if (memberService.findHuman(leadClean).isEmpty() && memberService.findAgent(leadClean).isEmpty()) {
-                throw new IllegalArgumentException("lead does not reference an existing human or agent: " + leadRaw);
+                throw new IllegalArgumentException("lead does not reference an existing human or agent: " + leadClean);
             }
             Optional<com.summa.model.Human> leadHuman = memberService.findHuman(leadClean);
             if (leadHuman.isPresent()) {
@@ -99,8 +99,8 @@ public class InitiativeController {
                 }
             } else {
                 Optional<com.summa.model.Agent> leadAgent = memberService.findAgent(leadClean);
-                if (leadAgent.isPresent() && leadAgent.get().isEphemeral()) {
-                    throw new IllegalArgumentException("Ephemeral agents cannot lead initiatives");
+                if (leadAgent.isPresent()) {
+                    throw new IllegalArgumentException("Only humans can lead initiatives: " + leadClean);
                 }
             }
             String generatedId = UUID.randomUUID().toString();

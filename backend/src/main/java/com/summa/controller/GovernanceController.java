@@ -88,7 +88,9 @@ public class GovernanceController {
                 return ControllerResponses.validation(auditService, "Unknown policy key: " + key);
             }
             Object value = body.get(key);
-            if (value instanceof Number) {
+            if (value instanceof Boolean) {
+                // Booleans are accepted as-is for any policy that supports them
+            } else if (value instanceof Number) {
                 // Numbers are accepted as-is
             } else if (value instanceof String) {
                 // Strings must parse as a number (integer or float) — reject freeform text
@@ -101,7 +103,7 @@ public class GovernanceController {
                     return ControllerResponses.validation(auditService, "Policy value for '" + key + "' must be a number, not '" + value + "'");
                 }
             } else {
-                return ControllerResponses.validation(auditService, "Policy value for '" + key + "' must be a number or string, got: " + (value != null ? value.getClass().getSimpleName() : "null"));
+                return ControllerResponses.validation(auditService, "Policy value for '" + key + "' must be a number, boolean, or string, got: " + (value != null ? value.getClass().getSimpleName() : "null"));
             }
         }
         governanceService.setSettingsBulk(body, actor);
@@ -119,7 +121,9 @@ public class GovernanceController {
                 return ControllerResponses.validation(auditService, "Unknown quota key: " + key);
             }
             Object value = body.get(key);
-            if (value instanceof Number) {
+            if (value instanceof Boolean) {
+                // Booleans are accepted as-is
+            } else if (value instanceof Number) {
                 // Numbers are accepted as-is
             } else if (value instanceof String) {
                 try {
@@ -131,7 +135,7 @@ public class GovernanceController {
                     return ControllerResponses.validation(auditService, "Quota value for '" + key + "' must be a number, not '" + value + "'");
                 }
             } else {
-                return ControllerResponses.validation(auditService, "Quota value for '" + key + "' must be a number or string, got: " + (value != null ? value.getClass().getSimpleName() : "null"));
+                return ControllerResponses.validation(auditService, "Quota value for '" + key + "' must be a number, boolean, or string, got: " + (value != null ? value.getClass().getSimpleName() : "null"));
             }
         }
         governanceService.setSettingsBulk(body, actor);

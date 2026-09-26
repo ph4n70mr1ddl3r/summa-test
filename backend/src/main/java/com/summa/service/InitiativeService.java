@@ -240,17 +240,18 @@ public class InitiativeService {
                         id, initiative.getGoalRef());
                     askService.create("question", "system", initiative.getSponsor(),
                         payload, "bulk", "escalate", 1,
-                                       Instant.now().plusSeconds(Defaults.STALL_ASK_DEADLINE_SECONDS), id, null);
+                                       Instant.now().plusSeconds(askService.deriveDeadlineFromTier("bulk")), id, null);
                     return initiative;
                 }
             }
-            // Route activation ask to sponsor
+            // Route activation ask to sponsor (kind=approval, tier=standard, expiry=deny)
             String payload = String.format(
                 "{\"initiativeId\":\"%s\",\"title\":\"%s\",\"createdBy\":\"%s\"}",
                 id, initiative.getTitle(), actor);
+            long activationDeadlineSeconds = askService.deriveDeadlineFromTier("standard");
             askService.create("approval", "system", initiative.getSponsor(),
                 payload, "standard", "deny", 1,
-                Instant.now().plusSeconds(Defaults.STALL_ASK_DEADLINE_SECONDS), id, null);
+                Instant.now().plusSeconds(activationDeadlineSeconds), id, null);
             auditService.logSystem("ACTIVATE_REQUESTED", "initiative", id,
                 String.format("{\"actor\":%s,\"sponsor\":%s}", JsonHelpers.jsonString(actor), JsonHelpers.jsonString(initiative.getSponsor())));
             return initiative;
@@ -415,7 +416,7 @@ public class InitiativeService {
                 id, initiative.getTitle());
             askService.create("question", "system", retrospectiveLead,
                 retroPayload, "bulk", "escalate", 1,
-                Instant.now().plusSeconds(Defaults.STALL_ASK_DEADLINE_SECONDS), null, null);
+                Instant.now().plusSeconds(askService.deriveDeadlineFromTier("bulk")), null, null);
         } catch (Exception e) {
             auditService.logSystem("CLOSE_RETRO_ASK_FAIL", "initiative", id,
                 String.format("{\"error\":\"%s\"}", e.getMessage()));
@@ -430,10 +431,10 @@ public class InitiativeService {
                 String.format("{\"error\":\"%s\"}", e.getMessage()));
         }
 
-        // INT-040/CLC-040: Cancel queued, running, and suspended runs tied to this initiative
+        // INT-040/CLC-040: Cancel queued and suspended runs; running runs complete with artifacts
+        // landing on the closed slice as history per INT-041.
         try {
             List<Run> nonTerminalRuns = runRepository.findByInitiativeIdAndStatus(id, "queued");
-            nonTerminalRuns.addAll(runRepository.findByInitiativeIdAndStatus(id, "running"));
             nonTerminalRuns.addAll(runRepository.findByInitiativeIdAndStatus(id, "suspended"));
             for (Run run : nonTerminalRuns) {
                 run.setStatus("cancelled");
@@ -512,7 +513,7 @@ public class InitiativeService {
                                 askService.create("question", "system", init.getSponsor(),
                                     String.format("{\"initiativeId\":\"%s\",\"reason\":\"%s\"}", init.getId(), stallReason),
                                     "bulk", "escalate", 1,
-                                    Instant.now().plusSeconds(Defaults.STALL_ASK_DEADLINE_SECONDS), null, null);
+                                    Instant.now().plusSeconds(askService.deriveDeadlineFromTier("bulk")), null, null);
                             } catch (Exception ex) {
                                 auditService.logSystem("STALL_ASK_FAIL", "initiative", init.getId(),
                                     JsonHelpers.toJson(Map.of("error", ex.getMessage()), objectMapper));
@@ -535,10 +536,10 @@ public class InitiativeService {
                             // Dedup: skip if a direction ask was filed recently for this initiative
                             if (!hasRecentStallAsk(init.getId(), "direction_" + reason, dedupCutoff)) {
                                 String goalStatus = goalOpt.map(DnaGoal::getStatus).orElse("unknown");
-                                 askService.create("question", "system", init.getSponsor(),
-                                     objectMapper.writeValueAsString(Map.of("initiativeId", init.getId(), "goalRef", init.getGoalRef(), "reason", reason, "goalStatus", goalStatus)),
-                                     "bulk", "escalate", 1,
-                Instant.now().plusSeconds(Defaults.STALL_ASK_DEADLINE_SECONDS), null, null);
+                                  askService.create("question", "system", init.getSponsor(),
+                                      objectMapper.writeValueAsString(Map.of("initiativeId", init.getId(), "goalRef", init.getGoalRef(), "reason", reason, "goalStatus", goalStatus)),
+                                      "bulk", "escalate", 1,
+                 Instant.now().plusSeconds(askService.deriveDeadlineFromTier("bulk")), null, null);
                                  auditService.logSystem("DIRECTION_ASK_CREATED", "initiative", init.getId(),
                                      objectMapper.writeValueAsString(Map.of("goalRef", init.getGoalRef(), "sponsor", init.getSponsor(), "reason", reason)));
                             }
@@ -601,7 +602,7 @@ public class InitiativeService {
                         dep.getId(), closedId);
                     askService.create("question", "system", askTo,
                         payload, "bulk", "escalate", 1,
-                        Instant.now().plusSeconds(Defaults.STALL_ASK_DEADLINE_SECONDS), dep.getId(), null);
+                        Instant.now().plusSeconds(askService.deriveDeadlineFromTier("bulk")), dep.getId(), null);
                     auditService.logSystem("DEPENDENT_CLOSE_ASK", "initiative", dep.getId(),
                         String.format("{\"upstreamClosed\":%s,\"sponsor\":%s}", JsonHelpers.jsonString(closedId), JsonHelpers.jsonString(askTo)));
                 }

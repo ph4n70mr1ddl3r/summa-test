@@ -34,10 +34,13 @@ class AskServiceTest {
     @Mock
     private InitiativeRepository initiativeRepository;
 
+    @Mock
+    private InitiativeService initiativeService;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private AskService buildService() {
-        return new AskService(askRepository, auditService, memberService, governanceService, initiativeRepository, 1L, objectMapper);
+        return new AskService(askRepository, auditService, memberService, governanceService, initiativeRepository, initiativeService, 1L, objectMapper);
     }
 
     @Test

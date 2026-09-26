@@ -128,7 +128,7 @@ public class AskController {
             Ask ask = askService.create(
                 kind,
                 actor,
-                to,
+                toClean,
                 body.get("payload"),
                 slaTier,
                 expiryBehavior,
