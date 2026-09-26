@@ -12,7 +12,7 @@ interface NavItem {
 const adminNavItems: NavItem[] = [
   { to: '/governance', label: 'Governance', end: true },
   { to: '/nodes', label: 'Nodes', end: true },
-  { to: '/role-templates', label: 'Roles', end: true },
+  { to: '/role-templates', label: 'Role Templates', end: true },
 ]
 
 const publicNavItems: NavItem[] = [

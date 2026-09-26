@@ -54,9 +54,7 @@ export default function Governance() {
     setError(null)
     try {
       const numValue = Number(value)
-      const body = section === 'policies'
-        ? { [key]: isNaN(numValue) ? value : numValue }
-        : { [key]: isNaN(numValue) ? value : numValue }
+      const body = { [key]: isNaN(numValue) ? value : numValue }
       const result = section === 'policies'
         ? await api.governance.updatePolicies(body)
         : await api.governance.updateQuotas(body)

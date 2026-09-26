@@ -43,7 +43,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     );
 
     public static boolean isNodePath(String path) {
-        return path != null && path.startsWith("/api/nodes");
+        if (path == null) return false;
+        // Tolerate a trailing slash (e.g. /api/nodes/)
+        String normalizedPath = path.endsWith("/") && path.length() > 1 ? path.substring(0, path.length() - 1) : path;
+        return normalizedPath.startsWith("/api/nodes");
     }
 
     @Override

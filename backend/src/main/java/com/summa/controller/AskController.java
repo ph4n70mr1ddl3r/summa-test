@@ -30,7 +30,12 @@ public class AskController {
     private final MemberService memberService;
 
     private static final Set<String> VALID_ASK_KINDS = EnumSet.allOf(AskKind.class).stream()
-        .map(AskKind::getValue).collect(java.util.stream.Collectors.toSet());
+        .map(AskKind::getValue).collect(Collectors.toSet());
+
+    private static final Set<String> VALID_ASK_TIERS = EnumSet.allOf(AskTier.class).stream()
+        .map(AskTier::getValue).collect(Collectors.toSet());
+
+    private static final Set<String> VALID_EXPIRY_BEHAVIORS = Set.of("deny", "escalate", "reassign");
 
     private static final int MAX_LIST_LIMIT = Defaults.MAX_LIST_LIMIT;
 
@@ -92,13 +97,13 @@ public class AskController {
             String slaTier = body.get("slaTier");
             if (slaTier != null && !slaTier.isBlank()) {
                 if (AskTier.fromValue(slaTier) == null) {
-                    throw new IllegalArgumentException("Invalid slaTier: " + slaTier + ". Must be one of: critical, standard, bulk");
+                    throw new IllegalArgumentException("Invalid slaTier: " + slaTier + ". Must be one of: " + VALID_ASK_TIERS);
                 }
             }
             String expiryBehavior = body.get("expiryBehavior");
             if (expiryBehavior != null && !expiryBehavior.isBlank()) {
-                if (!"deny".equals(expiryBehavior) && !"escalate".equals(expiryBehavior) && !"reassign".equals(expiryBehavior)) {
-                    throw new IllegalArgumentException("Invalid expiryBehavior: " + expiryBehavior + ". Must be one of: deny, escalate, reassign");
+                if (!VALID_EXPIRY_BEHAVIORS.contains(expiryBehavior)) {
+                    throw new IllegalArgumentException("Invalid expiryBehavior: " + expiryBehavior + ". Must be one of: " + VALID_EXPIRY_BEHAVIORS);
                 }
             }
             String deadlineStr = body.get("deadlineSeconds");

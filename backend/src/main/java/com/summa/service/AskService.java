@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Base64;
-import java.util.Objects;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.nio.charset.StandardCharsets;
@@ -177,8 +176,8 @@ public class AskService {
     }
 
     @Transactional(readOnly = true)
-    public List<Ask> findByTo(String to) {
-        return askRepository.findByTo(to);
+    public List<Ask> findByStatus(String status) {
+        return askRepository.findByStatus(status);
     }
 
     @Transactional(readOnly = true)
@@ -192,18 +191,8 @@ public class AskService {
     }
 
     @Transactional(readOnly = true)
-    public List<Ask> findByStatus(String status) {
-        return askRepository.findByStatus(status);
-    }
-
-    @Transactional(readOnly = true)
     public List<Ask> findByStatus(String status, int limit) {
         return askRepository.findByStatusOrdered(status, limit);
-    }
-
-    @Transactional(readOnly = true)
-    public List<Ask> findAllPending() {
-        return askRepository.findByStatus("pending");
     }
 
     @Transactional(readOnly = true)
