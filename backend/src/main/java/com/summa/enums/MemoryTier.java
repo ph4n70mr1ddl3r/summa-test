@@ -21,4 +21,12 @@ public enum MemoryTier {
         }
         return null;
     }
+
+    public static MemoryTier requireFromValue(String value) {
+        MemoryTier t = fromValue(value);
+        if (t == null) {
+            throw new IllegalArgumentException("Unknown MemoryTier: " + value + ". Must be one of: personal, project, proposal");
+        }
+        return t;
+    }
 }

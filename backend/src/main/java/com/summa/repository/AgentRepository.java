@@ -12,6 +12,12 @@ public interface AgentRepository extends JpaRepository<Agent, String> {
     @Query("SELECT a FROM Agent a WHERE a.status = 'active'")
     List<Agent> findAllActive();
 
+    @Query("SELECT a FROM Agent a WHERE a.status = 'active' ORDER BY a.createdAt DESC")
+    List<Agent> findAllActiveOrdered();
+
+    @Query("SELECT a FROM Agent a WHERE a.status = 'active' ORDER BY a.createdAt DESC LIMIT :limit")
+    List<Agent> findAllActiveOrdered(@org.springframework.data.repository.query.Param("limit") int limit);
+
     @Query("SELECT COUNT(a) FROM Agent a WHERE a.status = 'active'")
     long countActiveAgents();
 
@@ -23,8 +29,19 @@ public interface AgentRepository extends JpaRepository<Agent, String> {
     @Query("SELECT a FROM Agent a WHERE a.ownerHumanId = :ownerId")
     List<Agent> findByOwner(String ownerId);
 
+    @Query("SELECT a FROM Agent a WHERE a.ownerHumanId = :ownerId ORDER BY a.createdAt DESC")
+    List<Agent> findByOwnerOrdered();
+
+    @Query("SELECT a FROM Agent a WHERE a.ownerHumanId = :ownerId ORDER BY a.createdAt DESC LIMIT :limit")
+    List<Agent> findByOwnerOrdered(@org.springframework.data.repository.query.Param("ownerId") String ownerId,
+                                   @org.springframework.data.repository.query.Param("limit") int limit);
+
     @Query("SELECT a FROM Agent a WHERE a.status = :status")
     List<Agent> findByStatus(String status);
+
+    @Query("SELECT a FROM Agent a WHERE a.status = :status ORDER BY a.createdAt DESC LIMIT :limit")
+    List<Agent> findByStatusOrdered(@org.springframework.data.repository.query.Param("status") String status,
+                                    @org.springframework.data.repository.query.Param("limit") int limit);
 
     @Query("SELECT a FROM Agent a WHERE a.status = 'active' AND a.ttlAt IS NOT NULL AND a.ttlAt < :now")
     List<Agent> findActiveExpiredBefore(java.time.Instant now);

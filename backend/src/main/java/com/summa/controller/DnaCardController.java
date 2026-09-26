@@ -52,10 +52,14 @@ public class DnaCardController {
             if (body.get("title") == null || body.get("title").isBlank()) {
                 throw new IllegalArgumentException("title is required");
             }
+            String domainId = body.get("domainId");
+            if (domainId == null || domainId.isBlank()) {
+                throw new IllegalArgumentException("domainId is required");
+            }
             String generatedId = UUID.randomUUID().toString();
             DnaCard card = cardService.create(
                 generatedId,
-                body.get("domainId"),
+                domainId,
                 body.get("title"),
                 body.get("definitionMd"),
                 body.get("provenance"),
@@ -78,10 +82,14 @@ public class DnaCardController {
             if (body.get("title") == null || body.get("title").isBlank()) {
                 throw new IllegalArgumentException("title is required");
             }
+            String domainId = body.get("domainId");
+            if (domainId == null || domainId.isBlank()) {
+                throw new IllegalArgumentException("domainId is required");
+            }
             String generatedId = UUID.randomUUID().toString();
             DnaCard card = cardService.createDraft(
                 generatedId,
-                body.get("domainId"),
+                domainId,
                 body.get("title"),
                 body.get("definitionMd"),
                 body.get("provenance"),

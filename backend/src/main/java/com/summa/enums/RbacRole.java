@@ -34,4 +34,12 @@ public enum RbacRole {
         }
         return null;
     }
+
+    public static RbacRole requireFromValue(String value) {
+        RbacRole r = fromValue(value);
+        if (r == null) {
+            throw new IllegalArgumentException("Unknown RbacRole: " + value + ". Must be one of: admin, owner, member, viewer");
+        }
+        return r;
+    }
 }

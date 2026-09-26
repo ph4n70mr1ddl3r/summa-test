@@ -20,4 +20,12 @@ public enum DataHoldKind {
         }
         return null;
     }
+
+    public static DataHoldKind requireFromValue(String value) {
+        DataHoldKind k = fromValue(value);
+        if (k == null) {
+            throw new IllegalArgumentException("Unknown DataHoldKind: " + value + ". Must be one of: member, domain");
+        }
+        return k;
+    }
 }

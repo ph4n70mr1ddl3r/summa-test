@@ -71,12 +71,16 @@ public class SpawnController {
                     + ". Must be one of: persistent, ephemeral, ephemeral-subagent");
             }
             String normalizedClass = effectiveClass;
+            String purpose = body.get("purpose");
+            if (purpose == null || purpose.isBlank()) {
+                throw new IllegalArgumentException("purpose is required");
+            }
             SpawnRequest request = spawnService.create(
                 requesterId,
                 body.get("templateId"),
                 body.get("customRole"),
                 normalizedClass,
-                body.get("purpose"),
+                purpose,
                 body.get("workspaceBindings"),
                 body.get("scopeCeiling"),
                 body.containsKey("budgetCap") ? parseDoubleSafe(body.get("budgetCap")) : null,

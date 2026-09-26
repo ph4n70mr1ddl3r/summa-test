@@ -27,4 +27,12 @@ public enum AgentStatus {
         }
         return null;
     }
+
+    public static AgentStatus requireFromValue(String value) {
+        AgentStatus s = fromValue(value);
+        if (s == null) {
+            throw new IllegalArgumentException("Unknown AgentStatus: " + value + ". Must be one of: requested, active, suspended, retiring, archived");
+        }
+        return s;
+    }
 }

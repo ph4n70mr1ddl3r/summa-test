@@ -50,8 +50,7 @@ public class GovernanceService {
             settings.put(s.getKey(), parseValue(s.getValue()));
         }
         // Apply defaults for any missing keys
-        applyDefaults(settings);
-        return Collections.unmodifiableMap(new LinkedHashMap<>(settings));
+        return Collections.unmodifiableMap(applyDefaults(settings));
     }
 
     @Transactional(readOnly = true)
@@ -188,22 +187,24 @@ public class GovernanceService {
         return result;
     }
 
-    private void applyDefaults(Map<String, Object> settings) {
-        settings.putIfAbsent("spawn-ephemeral-default-ttl-hours", Defaults.DEFAULT_SPAWN_EPHEMERAL_DEFAULT_TTL_HOURS);
-        settings.putIfAbsent("spawn-ephemeral-max-concurrent-per-spawner", Defaults.DEFAULT_SPAWN_EPHEMERAL_MAX_CONCURRENT_PER_SPAWNER);
-        settings.putIfAbsent("spawn-org-wide-max-active-agents", Defaults.DEFAULT_SPAWN_ORG_WIDE_MAX_ACTIVE_AGENTS);
-        settings.putIfAbsent("spawn-depth-cap", Defaults.DEFAULT_SPAWN_DEPTH_CAP);
-        settings.putIfAbsent("spawn-budget-window-days", Defaults.DEFAULT_SPAWN_BUDGET_WINDOW_DAYS);
-        settings.putIfAbsent("asks-tier-critical-deadline-hours", Defaults.DEFAULT_CRITICAL_ASK_DEADLINE_HOURS);
-        settings.putIfAbsent("asks-tier-standard-deadline-hours", Defaults.DEFAULT_STANDARD_ASK_DEADLINE_HOURS);
-        settings.putIfAbsent("asks-tier-bulk-deadline-hours", Defaults.DEFAULT_BULK_ASK_DEADLINE_HOURS);
-        settings.putIfAbsent("asks-storm-collapse-window-hours", Defaults.DEFAULT_ASKS_STORM_COLLAPSE_WINDOW_HOURS);
-        settings.putIfAbsent("asks-rate-limit-per-source-per-hour", Defaults.DEFAULT_ASKS_RATE_LIMIT_PER_SOURCE_PER_HOUR);
-        settings.putIfAbsent("summa.dna.default-review-sla-days", Defaults.DEFAULT_DNA_DEFAULT_REVIEW_SLA_DAYS);
-        settings.putIfAbsent("spend-org-ceiling", spendCeilingOverride > 0 ? spendCeilingOverride : Defaults.DEFAULT_SPEND_CEILING);
-        settings.putIfAbsent("spend-critical-floor-percent", Defaults.DEFAULT_SPEND_CRITICAL_FLOOR_PERCENT);
-        settings.putIfAbsent("spend-evaluation-window-days", Defaults.DEFAULT_EVALUATION_WINDOW_DAYS);
-        settings.putIfAbsent("node-affinity-starvation-hours", Defaults.DEFAULT_NODE_AFFINITY_STARVATION_HOURS);
+    private Map<String, Object> applyDefaults(Map<String, Object> settings) {
+        Map<String, Object> result = new LinkedHashMap<>(settings);
+        result.putIfAbsent("spawn-ephemeral-default-ttl-hours", Defaults.DEFAULT_SPAWN_EPHEMERAL_DEFAULT_TTL_HOURS);
+        result.putIfAbsent("spawn-ephemeral-max-concurrent-per-spawner", Defaults.DEFAULT_SPAWN_EPHEMERAL_MAX_CONCURRENT_PER_SPAWNER);
+        result.putIfAbsent("spawn-org-wide-max-active-agents", Defaults.DEFAULT_SPAWN_ORG_WIDE_MAX_ACTIVE_AGENTS);
+        result.putIfAbsent("spawn-depth-cap", Defaults.DEFAULT_SPAWN_DEPTH_CAP);
+        result.putIfAbsent("spawn-budget-window-days", Defaults.DEFAULT_SPAWN_BUDGET_WINDOW_DAYS);
+        result.putIfAbsent("asks-tier-critical-deadline-hours", Defaults.DEFAULT_CRITICAL_ASK_DEADLINE_HOURS);
+        result.putIfAbsent("asks-tier-standard-deadline-hours", Defaults.DEFAULT_STANDARD_ASK_DEADLINE_HOURS);
+        result.putIfAbsent("asks-tier-bulk-deadline-hours", Defaults.DEFAULT_BULK_ASK_DEADLINE_HOURS);
+        result.putIfAbsent("asks-storm-collapse-window-hours", Defaults.DEFAULT_ASKS_STORM_COLLAPSE_WINDOW_HOURS);
+        result.putIfAbsent("asks-rate-limit-per-source-per-hour", Defaults.DEFAULT_ASKS_RATE_LIMIT_PER_SOURCE_PER_HOUR);
+        result.putIfAbsent("summa.dna.default-review-sla-days", Defaults.DEFAULT_DNA_DEFAULT_REVIEW_SLA_DAYS);
+        result.putIfAbsent("spend-org-ceiling", spendCeilingOverride > 0 ? spendCeilingOverride : Defaults.DEFAULT_SPEND_CEILING);
+        result.putIfAbsent("spend-critical-floor-percent", Defaults.DEFAULT_SPEND_CRITICAL_FLOOR_PERCENT);
+        result.putIfAbsent("spend-evaluation-window-days", Defaults.DEFAULT_EVALUATION_WINDOW_DAYS);
+        result.putIfAbsent("node-affinity-starvation-hours", Defaults.DEFAULT_NODE_AFFINITY_STARVATION_HOURS);
+        return result;
     }
 
     private Object parseValue(String value) {

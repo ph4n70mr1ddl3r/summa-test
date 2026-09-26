@@ -105,6 +105,11 @@ public class AgentService {
         return agentRepository.findAllActive();
     }
 
+    @Transactional(readOnly = true)
+    public List<Agent> findAllActive(int limit) {
+        return agentRepository.findAllActiveOrdered(limit);
+    }
+
     @Transactional
     public Agent suspend(String id, String actor) {
         Agent agent = agentRepository.findById(id)
@@ -278,12 +283,20 @@ public class AgentService {
         return agentRepository.findByOwner(ownerHumanId);
     }
 
+    public List<Agent> findByOwner(String ownerHumanId, int limit) {
+        return agentRepository.findByOwnerOrdered(ownerHumanId, limit);
+    }
+
     public List<Agent> findByOwnerActive(String ownerHumanId) {
         return agentRepository.findActiveByOwner(ownerHumanId);
     }
 
     public List<Agent> findByStatus(String status) {
         return agentRepository.findByStatus(status);
+    }
+
+    public List<Agent> findByStatus(String status, int limit) {
+        return agentRepository.findByStatusOrdered(status, limit);
     }
 
     public int getDepthCap() {

@@ -33,8 +33,10 @@ public class AskController {
         AskKind.PROMOTION.getValue()
     );
 
+    private static final int MAX_LIST_LIMIT = Defaults.MAX_LIST_LIMIT;
+
     public AskController(AskService askService, AuditService auditService, WriteGate writeGate,
-                         MemberService memberService) {
+                          MemberService memberService) {
         this.askService = askService;
         this.auditService = auditService;
         this.writeGate = writeGate;
@@ -44,14 +46,16 @@ public class AskController {
     @GetMapping
     public ResponseEntity<?> listAsks(
             @RequestParam(required = false) String to,
-            @RequestParam(required = false) String status) {
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "50") int limit) {
+        int cappedLimit = Math.min(Math.max(limit, 1), MAX_LIST_LIMIT);
         if (to != null) {
-            return ResponseEntity.ok(askService.findByTo(to));
+            return ResponseEntity.ok(askService.findByTo(to, cappedLimit));
         }
         if (status != null) {
-            return ResponseEntity.ok(askService.findByStatus(status));
+            return ResponseEntity.ok(askService.findByStatus(status, cappedLimit));
         }
-        return ResponseEntity.ok(askService.findAllPending());
+        return ResponseEntity.ok(askService.findAllPending(cappedLimit));
     }
 
     @GetMapping("/{id}")

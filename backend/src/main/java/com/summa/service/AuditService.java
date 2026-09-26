@@ -83,7 +83,7 @@ public class AuditService {
                 Iterator<String> fields = obj.fieldNames();
                 while (fields.hasNext()) {
                     String key = fields.next();
-                    if (key.toLowerCase().matches(".*(password|passwd|pwd|secret|token_hash|api_key|apikey|access_key|auth_token|bearer_token|session_token).*")) {
+                    if (key.toLowerCase().matches(".*(password|passwd|pwd|secret|token_hash|api_key|apikey|access_key|auth_token|bearer_token|session_token|_key).*")) {
                         obj.set(key, objectMapper.valueToTree("[REDACTED]"));
                     }
                 }

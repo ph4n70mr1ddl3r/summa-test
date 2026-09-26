@@ -10,26 +10,19 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const state = location.state
+  const state = location.state as { from?: { pathname: string } } | null
   let from = '/'
-  if (state && typeof state === 'object') {
-    const fromObj = (state as Record<string, unknown>).from
-    if (fromObj && typeof fromObj === 'object' && 'pathname' in fromObj && typeof fromObj.pathname === 'string') {
-      const candidate = fromObj.pathname
-      // Decode percent-encoding, then validate both raw and decoded forms.
-      let decoded = candidate
-      try { decoded = decodeURIComponent(candidate) } catch { /* already raw */ }
-      const isSafe = (s: string) =>
-        typeof s === 'string' &&
-        !s.includes('://') &&
-        !s.toLowerCase().startsWith('data:') &&
-        !s.toLowerCase().startsWith('javascript:') &&
-        (s.startsWith('/') || s.length === 0)
-      // Prefer the decoded form when it is safe; fall back to raw only if decoding
-      // did not change anything or the decoded form is unsafe.
-      const chosen = isSafe(decoded) ? decoded : isSafe(candidate) ? candidate : '/'
-      from = chosen
-    }
+  if (state?.from && typeof state.from === 'object' && 'pathname' in state.from && typeof state.from.pathname === 'string') {
+    const candidate = state.from.pathname
+    let decoded = candidate
+    try { decoded = decodeURIComponent(candidate) } catch { /* already raw */ }
+    const isSafe = (s: string) =>
+      typeof s === 'string' &&
+      !s.includes('://') &&
+      !s.toLowerCase().startsWith('data:') &&
+      !s.toLowerCase().startsWith('javascript:') &&
+      (s.startsWith('/') || s.length === 0)
+    from = isSafe(decoded) ? decoded : isSafe(candidate) ? candidate : '/'
   }
 
   async function handleSubmit(e: React.FormEvent) {

@@ -23,6 +23,7 @@ import java.util.Objects;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.locks.ReentrantLock;
 import com.summa.enums.AskKind;
 import com.summa.enums.AskTier;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -55,6 +56,8 @@ public class AskService {
     // Uses bounded maps with TTL-based eviction to prevent unbounded memory growth.
     private final ConcurrentHashMap<String, ExpiringEntry<Instant>> collapseWindowTimestamps = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, ExpiringEntry<Integer>> successorDepth = new ConcurrentHashMap<>();
+    // Per-key locks to prevent concurrent collapse race conditions
+    private final ConcurrentHashMap<String, ReentrantLock> collapseLocks = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper;
 
     public AskService(AskRepository askRepository, AuditService auditService, MemberService memberService,
@@ -122,17 +125,24 @@ public class AskService {
         // Only collapse if a prior ask already established this window (a new window has no canonical yet).
         if (nowSeconds < slotValue.expiryEpochSeconds) {
             // Collapse: increment collapsed_count on nearest pending canonical.
-            List<Ask> candidates = askRepository.findByToAndStatusPending(to);
-            candidates = candidates.stream()
-                .filter(a -> kind.equals(a.getKind()) && a.isPending())
-                .toList();
-            if (!candidates.isEmpty()) {
-                Ask canonical = candidates.get(0);
-                canonical.setCollapsedCount(canonical.getCollapsedCount() + 1);
-                Ask saved = askRepository.save(canonical);
-                auditService.log(from, "COLLAPSED_ASK", "ask", saved.getId(),
-                    String.format("{\"collapsedCount\":%d}", saved.getCollapsedCount()));
-                return saved;
+            // Use per-key lock to prevent concurrent threads from both finding and mutating the same canonical.
+            ReentrantLock lock = collapseLocks.computeIfAbsent(collapseKey, k -> new ReentrantLock());
+            lock.lock();
+            try {
+                List<Ask> candidates = askRepository.findByToAndStatusPending(to);
+                candidates = candidates.stream()
+                    .filter(a -> kind.equals(a.getKind()) && a.isPending())
+                    .toList();
+                if (!candidates.isEmpty()) {
+                    Ask canonical = candidates.get(0);
+                    canonical.setCollapsedCount(canonical.getCollapsedCount() + 1);
+                    Ask saved = askRepository.save(canonical);
+                    auditService.log(from, "COLLAPSED_ASK", "ask", saved.getId(),
+                        String.format("{\"collapsedCount\":%d}", saved.getCollapsedCount()));
+                    return saved;
+                }
+            } finally {
+                lock.unlock();
             }
         }
 
@@ -163,6 +173,11 @@ public class AskService {
     }
 
     @Transactional(readOnly = true)
+    public List<Ask> findByTo(String to, int limit) {
+        return askRepository.findByToAndStatusPending(to, limit);
+    }
+
+    @Transactional(readOnly = true)
     public List<Ask> findByToAndStatusPending(String to) {
         return askRepository.findByToAndStatusPending(to);
     }
@@ -173,8 +188,18 @@ public class AskService {
     }
 
     @Transactional(readOnly = true)
+    public List<Ask> findByStatus(String status, int limit) {
+        return askRepository.findByStatusOrdered(status, limit);
+    }
+
+    @Transactional(readOnly = true)
     public List<Ask> findAllPending() {
         return askRepository.findByStatus("pending");
+    }
+
+    @Transactional(readOnly = true)
+    public List<Ask> findAllPending(int limit) {
+        return askRepository.findByStatusPendingOrdered(limit);
     }
 
     @Transactional(readOnly = true)

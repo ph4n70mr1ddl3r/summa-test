@@ -11,8 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.summa.util.JsonHelpers;
@@ -31,6 +33,7 @@ public class DnaProposalService {
     private final AskService askService;
     private final ObjectMapper objectMapper;
     private final GovernanceService governanceService;
+    private final Set<String> alreadyEscalated = new HashSet<>();
 
     public DnaProposalService(DnaProposalRepository proposalRepository,
                                   DnaRuleRepository ruleRepository,
@@ -190,12 +193,16 @@ public class DnaProposalService {
         Instant now = Instant.now();
         List<DnaProposal> openProposals = proposalRepository.findAllOpen();
         for (DnaProposal proposal : openProposals) {
+            if (alreadyEscalated.contains(proposal.getId())) {
+                continue;
+            }
+            boolean shouldEscalate = false;
             if (proposal.getDomainId() == null || proposal.getDomainId().isBlank()) {
                 // Org-scoped: check against global default SLA from governance settings
                 Integer defaultSlaDays = governanceService.getSetting("summa.dna.default-review-sla-days", Integer.class);
                 long slaSeconds = (defaultSlaDays != null ? defaultSlaDays : 7) * 86400L;
                 if (proposal.getCreatedAt() != null && now.isAfter(proposal.getCreatedAt().plusSeconds(slaSeconds))) {
-                    escalateToAdmin(proposal);
+                    shouldEscalate = true;
                 }
             } else {
                 Optional<DnaDomain> domainOpt = domainService.findById(proposal.getDomainId());
@@ -204,9 +211,13 @@ public class DnaProposalService {
                     long slaSeconds = (domain.getReviewSlaDays() != null ? domain.getReviewSlaDays() : 7) * 86400L;
                     if (proposal.getCreatedAt() == null) continue;
                     if (now.isAfter(proposal.getCreatedAt().plusSeconds(slaSeconds))) {
-                        escalateToAdmin(proposal);
+                        shouldEscalate = true;
                     }
                 }
+            }
+            if (shouldEscalate) {
+                escalateToAdmin(proposal);
+                alreadyEscalated.add(proposal.getId());
             }
         }
     }

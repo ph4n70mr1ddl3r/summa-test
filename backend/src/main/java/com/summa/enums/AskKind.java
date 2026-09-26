@@ -23,4 +23,12 @@ public enum AskKind {
         }
         return null;
     }
+
+    public static AskKind requireFromValue(String value) {
+        AskKind k = fromValue(value);
+        if (k == null) {
+            throw new IllegalArgumentException("Unknown AskKind: " + value + ". Must be one of: approval, question, assignment, spawn_request, promotion");
+        }
+        return k;
+    }
 }

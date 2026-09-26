@@ -15,6 +15,10 @@ public interface AskRepository extends JpaRepository<Ask, String> {
     @Query("SELECT a FROM Ask a WHERE a.to = :to AND a.status = 'pending' ORDER BY a.deadline ASC")
     List<Ask> findByToAndStatusPending(String to);
 
+    @Query("SELECT a FROM Ask a WHERE a.to = :to AND a.status = 'pending' ORDER BY a.deadline ASC LIMIT :limit")
+    List<Ask> findByToAndStatusPending(@org.springframework.data.repository.query.Param("to") String to,
+                                       @org.springframework.data.repository.query.Param("limit") int limit);
+
     long countByStatus(String status);
 
     @Query("SELECT a FROM Ask a WHERE a.status = 'pending' AND a.deadline < :now")
@@ -28,4 +32,11 @@ public interface AskRepository extends JpaRepository<Ask, String> {
 
     @Query("SELECT a FROM Ask a WHERE a.workspaceId = :workspaceId AND a.status = 'pending'")
     List<Ask> findByWorkspaceIdAndStatusPending(String workspaceId);
+
+    @Query("SELECT a FROM Ask a WHERE a.status = :status ORDER BY a.deadline ASC LIMIT :limit")
+    List<Ask> findByStatusOrdered(@org.springframework.data.repository.query.Param("status") String status,
+                                  @org.springframework.data.repository.query.Param("limit") int limit);
+
+    @Query("SELECT a FROM Ask a WHERE a.status = 'pending' ORDER BY a.deadline ASC LIMIT :limit")
+    List<Ask> findByStatusPendingOrdered(@org.springframework.data.repository.query.Param("limit") int limit);
 }

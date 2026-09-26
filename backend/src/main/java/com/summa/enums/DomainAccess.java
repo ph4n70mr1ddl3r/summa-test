@@ -25,4 +25,12 @@ public enum DomainAccess {
         }
         return null;
     }
+
+    public static DomainAccess requireFromValue(String value) {
+        DomainAccess d = fromValue(value);
+        if (d == null) {
+            throw new IllegalArgumentException("Unknown DomainAccess: " + value + ". Must be one of: public, domain, named");
+        }
+        return d;
+    }
 }

@@ -21,4 +21,12 @@ public enum AskTier {
         }
         return null;
     }
+
+    public static AskTier requireFromValue(String value) {
+        AskTier t = fromValue(value);
+        if (t == null) {
+            throw new IllegalArgumentException("Unknown AskTier: " + value + ". Must be one of: critical, standard, bulk");
+        }
+        return t;
+    }
 }

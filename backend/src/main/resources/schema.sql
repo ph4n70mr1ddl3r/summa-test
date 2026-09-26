@@ -174,6 +174,7 @@ CREATE TABLE IF NOT EXISTS dna_proposals (
 );
 
 CREATE INDEX IF NOT EXISTS idx_dna_proposals_domain ON dna_proposals(domain_id);
+CREATE INDEX IF NOT EXISTS idx_dna_proposals_created ON dna_proposals(created_at);
 CREATE INDEX IF NOT EXISTS idx_agents_status ON agents(status);
 CREATE INDEX IF NOT EXISTS idx_agents_owner ON agents(owner_human_id);
 CREATE INDEX IF NOT EXISTS idx_agents_template ON agents(template_id);
@@ -633,6 +634,140 @@ CREATE TRIGGER IF NOT EXISTS dna_goals_au AFTER UPDATE ON dna_goals BEGIN
         statement_md = new.statement_md,
         domain_id = new.domain_id,
         kind = 'goal',
+        status = new.status
+    WHERE id = old.id;
+END;
+
+-- FTS5 triggers for agents table
+CREATE TRIGGER IF NOT EXISTS agents_ai AFTER INSERT ON agents BEGIN
+    INSERT INTO dna_search_index (id, title, status, domain_id, kind)
+    VALUES (new.id, new.name, new.status, NULL, 'agent');
+END;
+
+CREATE TRIGGER IF NOT EXISTS agents_ad AFTER DELETE ON agents BEGIN
+    DELETE FROM dna_search_index WHERE id = old.id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS agents_au AFTER UPDATE ON agents BEGIN
+    UPDATE dna_search_index SET
+        title = new.name,
+        status = new.status
+    WHERE id = old.id;
+END;
+
+-- FTS5 triggers for asks table
+CREATE TRIGGER IF NOT EXISTS asks_ai AFTER INSERT ON asks BEGIN
+    INSERT INTO dna_search_index (id, title, status, domain_id, kind)
+    VALUES (new.id, 'ask:' || new.kind, new.status, NULL, 'ask');
+END;
+
+CREATE TRIGGER IF NOT EXISTS asks_ad AFTER DELETE ON asks BEGIN
+    DELETE FROM dna_search_index WHERE id = old.id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS asks_au AFTER UPDATE ON asks BEGIN
+    UPDATE dna_search_index SET
+        title = 'ask:' || new.kind,
+        status = new.status
+    WHERE id = old.id;
+END;
+
+-- FTS5 triggers for initiatives table
+CREATE TRIGGER IF NOT EXISTS initiatives_ai AFTER INSERT ON initiatives BEGIN
+    INSERT INTO dna_search_index (id, title, status, domain_id, kind)
+    VALUES (new.id, new.title, new.status, NULL, 'initiative');
+END;
+
+CREATE TRIGGER IF NOT EXISTS initiatives_ad AFTER DELETE ON initiatives BEGIN
+    DELETE FROM dna_search_index WHERE id = old.id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS initiatives_au AFTER UPDATE ON initiatives BEGIN
+    UPDATE dna_search_index SET
+        title = new.title,
+        status = new.status
+    WHERE id = old.id;
+END;
+
+-- FTS5 triggers for board_tasks table
+CREATE TRIGGER IF NOT EXISTS board_tasks_ai AFTER INSERT ON board_tasks BEGIN
+    INSERT INTO dna_search_index (id, title, status, domain_id, kind)
+    VALUES (new.id, new.title, new.status, NULL, 'board_task');
+END;
+
+CREATE TRIGGER IF NOT EXISTS board_tasks_ad AFTER DELETE ON board_tasks BEGIN
+    DELETE FROM dna_search_index WHERE id = old.id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS board_tasks_au AFTER UPDATE ON board_tasks BEGIN
+    UPDATE dna_search_index SET
+        title = new.title,
+        status = new.status
+    WHERE id = old.id;
+END;
+
+-- FTS5 triggers for workspaces table
+CREATE TRIGGER IF NOT EXISTS workspaces_ai AFTER INSERT ON workspaces BEGIN
+    INSERT INTO dna_search_index (id, title, status, domain_id, kind)
+    VALUES (new.id, new.name, 'active', NULL, 'workspace');
+END;
+
+CREATE TRIGGER IF NOT EXISTS workspaces_ad AFTER DELETE ON workspaces BEGIN
+    DELETE FROM dna_search_index WHERE id = old.id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS workspaces_au AFTER UPDATE ON workspaces BEGIN
+    UPDATE dna_search_index SET
+        title = new.name
+    WHERE id = old.id;
+END;
+
+-- FTS5 triggers for triggers table
+CREATE TRIGGER IF NOT EXISTS triggers_ai AFTER INSERT ON triggers BEGIN
+    INSERT INTO dna_search_index (id, title, status, domain_id, kind)
+    VALUES (new.id, new.name, new.status, NULL, 'trigger');
+END;
+
+CREATE TRIGGER IF NOT EXISTS triggers_ad AFTER DELETE ON triggers BEGIN
+    DELETE FROM dna_search_index WHERE id = old.id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS triggers_au AFTER UPDATE ON triggers BEGIN
+    UPDATE dna_search_index SET
+        title = new.name,
+        status = new.status
+    WHERE id = old.id;
+END;
+
+-- FTS5 triggers for memory_items table
+CREATE TRIGGER IF NOT EXISTS memory_items_ai AFTER INSERT ON memory_items BEGIN
+    INSERT INTO dna_search_index (id, content, status, domain_id, kind)
+    VALUES (new.id, new.content_md, 'active', NULL, 'memory');
+END;
+
+CREATE TRIGGER IF NOT EXISTS memory_items_ad AFTER DELETE ON memory_items BEGIN
+    DELETE FROM dna_search_index WHERE id = old.id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS memory_items_au AFTER UPDATE ON memory_items BEGIN
+    UPDATE dna_search_index SET
+        content = new.content_md
+    WHERE id = old.id;
+END;
+
+-- FTS5 triggers for runs table
+CREATE TRIGGER IF NOT EXISTS runs_ai AFTER INSERT ON runs BEGIN
+    INSERT INTO dna_search_index (id, title, status, domain_id, kind)
+    VALUES (new.id, 'run:' || new.id, new.status, NULL, 'run');
+END;
+
+CREATE TRIGGER IF NOT EXISTS runs_ad AFTER DELETE ON runs BEGIN
+    DELETE FROM dna_search_index WHERE id = old.id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS runs_au AFTER UPDATE ON runs BEGIN
+    UPDATE dna_search_index SET
+        title = 'run:' || new.id,
         status = new.status
     WHERE id = old.id;
 END;

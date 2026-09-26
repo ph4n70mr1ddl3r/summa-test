@@ -120,7 +120,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
         message = `Network error: HTTP ${res.status}`;
       }
       const err = new ApiError(message, res.status);
-      if (res.status === 401 || res.status === 403) {
+        if (res.status === 401 || res.status === 403) {
         setAuthToken(null);
         // Prevent duplicate redirects if multiple requests fail simultaneously.
         // Use a closure-guarded flag so a second 401 during the navigation window
@@ -136,6 +136,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
           // Extend the guard to cover the full navigation cycle, not just 1s
           setTimeout(cleanup, 3000);
           window.addEventListener('focus', cleanup, { once: true });
+          // Also clear on auth-change event so re-login resets the guard immediately
+          const onAuthChange = () => cleanup();
+          window.addEventListener('summa-auth-change', onAuthChange);
+          // Clean up listener after timeout to avoid memory leak
+          setTimeout(() => window.removeEventListener('summa-auth-change', onAuthChange), 5000);
         }
         throw err;
       }

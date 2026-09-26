@@ -50,6 +50,9 @@ public class AuthController {
         if (email == null || email.isBlank()) {
             return ControllerResponses.validation(auditService, "email is required");
         }
+        if (!email.matches("^[A-Za-z0-9._%+\\-]+@[A-Za-z0-9.\\-]+\\.[A-Za-z]{2,}$")) {
+            return ControllerResponses.validation(auditService, "email has invalid format: " + email);
+        }
 
         // Rate limit by email+IP to prevent cross-user DoS via email-based keying.
         String clientIp = resolveClientIp(request);
@@ -148,25 +151,26 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Password updated"));
     }
 
-    @Value("${summa.proxy.trusted-ips:10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}")
-    private String trustedProxyRanges;
-
     private boolean isTrustedProxy(String addr) {
         if ("local".equals(addr) || "127.0.0.1".equals(addr) || "0:0:0:0:0:0:0:1".equals(addr)) {
             return false;
         }
         // RFC1918 private ranges: 10.0.0.0/8, 172.16.0.0/12 (172.16-31.x.x), 192.168.0.0/16
-        return addr.startsWith("10.") || addr.startsWith("172.16.") || addr.startsWith("172.17.")
-            || addr.startsWith("172.18.") || addr.startsWith("172.19.") || addr.startsWith("172.2")
-                && !addr.startsWith("172.200") && !addr.startsWith("172.201") && !addr.startsWith("172.202")
-                && !addr.startsWith("172.203") && !addr.startsWith("172.204") && !addr.startsWith("172.205")
-                && !addr.startsWith("172.206") && !addr.startsWith("172.207") && !addr.startsWith("172.208")
-                && !addr.startsWith("172.209") && !addr.startsWith("172.21") && !addr.startsWith("172.22")
-                && !addr.startsWith("172.23") && !addr.startsWith("172.24") && !addr.startsWith("172.25")
-                && !addr.startsWith("172.26") && !addr.startsWith("172.27") && !addr.startsWith("172.28")
-                && !addr.startsWith("172.29")
-            || addr.startsWith("172.3")
-            || addr.startsWith("192.168.");
+        if (addr.startsWith("10.")) return true;
+        if (addr.startsWith("192.168.")) return true;
+        if (addr.startsWith("172.")) {
+            // Extract second octet for 172.16.0.0/12 check
+            int dot1 = addr.indexOf('.', 4);
+            if (dot1 > 4) {
+                try {
+                    int secondOctet = Integer.parseInt(addr.substring(4, dot1));
+                    return secondOctet >= 16 && secondOctet <= 31;
+                } catch (NumberFormatException e) {
+                    return false;
+                }
+            }
+        }
+        return false;
     }
 
     private String resolveClientIp(HttpServletRequest request) {

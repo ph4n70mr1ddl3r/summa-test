@@ -11,6 +11,7 @@ import com.summa.service.OffboardingWalkService;
 import com.summa.model.RoleTemplate;
 import com.summa.repository.RoleTemplateRepository;
 import com.summa.exception.EntityNotFoundException;
+import com.summa.constants.Defaults;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -26,6 +27,7 @@ import java.util.function.Function;
 @RestController
 @RequestMapping("/agents")
 public class AgentController {
+    private static final int MAX_LIST_LIMIT = Defaults.MAX_LIST_LIMIT;
     private final AgentService agentService;
     private final AuditService auditService;
     private final WriteGate writeGate;
@@ -46,14 +48,16 @@ public class AgentController {
     @GetMapping
     public ResponseEntity<List<Agent>> listAgents(
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) String ownerId) {
+            @RequestParam(required = false) String ownerId,
+            @RequestParam(defaultValue = "50") int limit) {
+        int cappedLimit = Math.min(Math.max(limit, 1), MAX_LIST_LIMIT);
         if (status != null) {
-            return ResponseEntity.ok(agentService.findByStatus(status));
+            return ResponseEntity.ok(agentService.findByStatus(status, cappedLimit));
         }
         if (ownerId != null) {
-            return ResponseEntity.ok(agentService.findByOwner(ownerId));
+            return ResponseEntity.ok(agentService.findByOwner(ownerId, cappedLimit));
         }
-        return ResponseEntity.ok(agentService.findAllActive());
+        return ResponseEntity.ok(agentService.findAllActive(cappedLimit));
     }
 
     @GetMapping("/{id}")

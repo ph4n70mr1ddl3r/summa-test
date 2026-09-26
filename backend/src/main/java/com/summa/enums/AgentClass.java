@@ -25,4 +25,12 @@ public enum AgentClass {
         }
         return null;
     }
+
+    public static AgentClass requireFromValue(String value) {
+        AgentClass c = fromValue(value);
+        if (c == null) {
+            throw new IllegalArgumentException("Unknown AgentClass: " + value + ". Must be one of: persistent, ephemeral, ephemeral-subagent");
+        }
+        return c;
+    }
 }
