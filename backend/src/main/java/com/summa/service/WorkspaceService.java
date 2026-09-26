@@ -12,6 +12,8 @@ import com.summa.repository.PlaybookRepository;
 import com.summa.model.Playbook;
 import com.summa.repository.SpawnRequestRepository;
 import com.summa.model.SpawnRequest;
+import com.summa.repository.RunRepository;
+import com.summa.model.Run;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -38,6 +40,7 @@ public class WorkspaceService {
     private final PlaybookRepository playbookRepository;
     private final SpawnRequestRepository spawnRequestRepository;
     private final NodeRepository nodeRepository;
+    private final RunRepository runRepository;
 
     public WorkspaceService(WorkspaceRepository workspaceRepository, DnaDomainRepository domainRepository,
                             AuditService auditService, ObjectMapper objectMapper,
@@ -45,7 +48,8 @@ public class WorkspaceService {
                             TriggerRepository triggerRepository,
                             PlaybookRepository playbookRepository,
                             SpawnRequestRepository spawnRequestRepository,
-                            NodeRepository nodeRepository) {
+                            NodeRepository nodeRepository,
+                            RunRepository runRepository) {
         this.workspaceRepository = workspaceRepository;
         this.domainRepository = domainRepository;
         this.auditService = auditService;
@@ -55,6 +59,7 @@ public class WorkspaceService {
         this.playbookRepository = playbookRepository;
         this.spawnRequestRepository = spawnRequestRepository;
         this.nodeRepository = nodeRepository;
+        this.runRepository = runRepository;
     }
 
     @Transactional
@@ -206,6 +211,16 @@ public class WorkspaceService {
             sr.setStatus("archived");
             spawnRequestRepository.save(sr);
             auditService.log(actor, "ARCHIVE_PENDING_SPAWN", "spawn_request", sr.getId(),
+                String.format("{\"workspaceId\":%s,\"reason\":\"workspace_archived\"}", JsonHelpers.jsonString(id)));
+        }
+
+        // CLC-041: Cancel queued/running runs binding to this workspace
+        List<Run> activeRuns = runRepository.findByWorkspaceIdAndStatusIn(id, List.of("queued", "running"));
+        for (Run run : activeRuns) {
+            run.setStatus("cancelled");
+            run.setCompletedAt(Instant.now());
+            runRepository.save(run);
+            auditService.log(actor, "ARCHIVE_CANCEL_RUN", "run", run.getId(),
                 String.format("{\"workspaceId\":%s,\"reason\":\"workspace_archived\"}", JsonHelpers.jsonString(id)));
         }
 

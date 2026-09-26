@@ -7,6 +7,7 @@ import com.summa.model.DnaProposal;
 import com.summa.model.Agent;
 import com.summa.model.Human;
 import org.springframework.jdbc.core.JdbcTemplate;
+import com.summa.constants.Defaults;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -66,7 +67,7 @@ public class DnaReadService {
         if (query == null || query.isBlank()) {
             throw new IllegalArgumentException("Search query must not be blank");
         }
-        int safeLimit = Math.min(Math.max(limit, 1), 100);
+        int safeLimit = Math.min(Math.max(limit, 1), Defaults.MAX_DNA_SEARCH_LIMIT);
         // FTS5 matches against the table (not a single column) and user input
         // must be quoted — raw input can inject FTS5 operators (e.g. `"`, `*`, `OR`).
         String safeQuery = sanitizeFtsQuery(query);

@@ -186,7 +186,7 @@ public class AgentController {
             }
             askService.create("promotion", actor, OffboardingWalkService.ADMIN_BROADCAST,
                 snapshotPayload, "standard", "deny", 1,
-                Instant.now().plusSeconds(7 * 86400L), null, null);
+                Instant.now().plusSeconds(Defaults.DEFAULT_STANDARD_ASK_DEADLINE_HOURS * 3600L), null, null);
             auditService.log(actor, "PROMOTE_REQUEST", "agent", id, snapshotPayload);
             return ResponseEntity.ok(Map.of("message", "Promotion ask filed", "agentId", id, "placement", placement));
         } catch (IllegalArgumentException e) {

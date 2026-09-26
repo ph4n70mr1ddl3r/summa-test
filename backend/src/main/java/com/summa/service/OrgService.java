@@ -227,7 +227,8 @@ public class OrgService {
 
     @Transactional
     public Human demote(String id, String newRbac, String actor) {
-        Human human = humanRepository.findById(id)
+        // Pessimistic lock to prevent concurrent demotion/offboard interleaving
+        Human human = humanRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new EntityNotFoundException("Human not found: " + id));
 
         // OFB-021: Last-admin guard — demotion joining deactivation under the same transactional check

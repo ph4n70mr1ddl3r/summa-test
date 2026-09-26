@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.EnumSet;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/asks")
@@ -27,11 +29,8 @@ public class AskController {
     private final WriteGate writeGate;
     private final MemberService memberService;
 
-    private static final Set<String> VALID_ASK_KINDS = Set.of(
-        AskKind.APPROVAL.getValue(), AskKind.QUESTION.getValue(),
-        AskKind.ASSIGNMENT.getValue(), AskKind.SPAWN_REQUEST.getValue(),
-        AskKind.PROMOTION.getValue()
-    );
+    private static final Set<String> VALID_ASK_KINDS = EnumSet.allOf(AskKind.class).stream()
+        .map(AskKind::getValue).collect(java.util.stream.Collectors.toSet());
 
     private static final int MAX_LIST_LIMIT = Defaults.MAX_LIST_LIMIT;
 
@@ -84,8 +83,10 @@ public class AskController {
             if (to == null || to.isBlank()) {
                 throw new IllegalArgumentException("to is required");
             }
-            if (memberService.findHuman(to).isEmpty() && memberService.findAgent(to).isEmpty()
-                    && !OffboardingWalkService.ADMIN_BROADCAST.equals(to)) {
+            // Strip keyed-union prefix (h:/a:) for consistency with other controllers
+            String toClean = to.replaceFirst("^[ha]?:", "");
+            if (memberService.findHuman(toClean).isEmpty() && memberService.findAgent(toClean).isEmpty()
+                    && !OffboardingWalkService.ADMIN_BROADCAST.equals(toClean)) {
                 throw new IllegalArgumentException("to does not reference an existing human or agent: " + to);
             }
             String slaTier = body.get("slaTier");

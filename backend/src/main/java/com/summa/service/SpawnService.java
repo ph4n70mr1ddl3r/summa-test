@@ -317,10 +317,11 @@ public class SpawnService {
         if (ownerHumanId != null && !ownerHumanId.isBlank()) {
             Optional<Human> maybeHuman = memberService.findHuman(ownerHumanId);
             if (maybeHuman.isEmpty()) {
-                throw new IllegalStateException("Cannot activate spawn without a human owner: resolved owner '" + ownerHumanId + "' is not a human");
+                throw new IllegalStateException("Cannot activate spawn without a human owner: no approvedBy or requestedByHumanId was set, and requester '"
+                    + ownerHumanId + "' is not a human");
             }
         } else {
-            throw new IllegalStateException("Cannot activate spawn without a human owner: no approvedBy, requestedByHumanId, or requester");
+            throw new IllegalStateException("Cannot activate spawn without a human owner: no approvedBy, requestedByHumanId, or requester configured");
         }
         agent.setOwnerHumanId(ownerHumanId);
         agent.setAgentClass(request.getSpawnClass());

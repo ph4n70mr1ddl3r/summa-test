@@ -13,6 +13,9 @@ public interface RunRepository extends JpaRepository<Run, String> {
     List<Run> findByAgentIdAndStatus(String agentId, String status);
     List<Run> findByWorkspaceId(String workspaceId);
     List<Run> findByWorkspaceIdAndStatus(String workspaceId, String status);
+    @Query("SELECT r FROM Run r WHERE r.workspaceId = :workspaceId AND r.status IN :statuses")
+    List<Run> findByWorkspaceIdAndStatusIn(@org.springframework.data.repository.query.Param("workspaceId") String workspaceId,
+                                            @org.springframework.data.repository.query.Param("statuses") List<String> statuses);
     List<Run> findByStatus(String status);
     @Query("SELECT r FROM Run r WHERE r.agentId = :agentId ORDER BY r.createdAt DESC")
     List<Run> findByAgentIdOrderByCreatedAtDesc(String agentId);

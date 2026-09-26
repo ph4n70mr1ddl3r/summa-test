@@ -26,9 +26,6 @@ public class RoleTemplateController {
 
     @GetMapping
     public ResponseEntity<?> listTemplates() {
-        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
-        if (gate != null) return gate;
         return ResponseEntity.ok(templateService.findAll());
     }
 

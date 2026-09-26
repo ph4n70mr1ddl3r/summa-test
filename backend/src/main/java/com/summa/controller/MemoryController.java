@@ -62,7 +62,8 @@ public class MemoryController {
                 throw new IllegalArgumentException("tier is required");
             }
             try {
-                MemoryTier.valueOf(tier.toUpperCase());
+                MemoryTier parsedTier = MemoryTier.valueOf(tier.toUpperCase());
+                tier = parsedTier.getValue();
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Invalid tier: " + tier + ". Must be one of: personal, project, proposal");
             }

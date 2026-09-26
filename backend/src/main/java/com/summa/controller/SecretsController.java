@@ -4,6 +4,7 @@ import com.summa.security.RbacAuthorizationFilter;
 import com.summa.security.WriteGate;
 import com.summa.service.AuditService;
 import com.summa.service.SecretsScanner;
+import com.summa.service.MemberService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
@@ -16,11 +17,13 @@ public class SecretsController {
     private final SecretsScanner scanner;
     private final AuditService auditService;
     private final WriteGate writeGate;
+    private final MemberService memberService;
 
-    public SecretsController(SecretsScanner scanner, AuditService auditService, WriteGate writeGate) {
+    public SecretsController(SecretsScanner scanner, AuditService auditService, WriteGate writeGate, MemberService memberService) {
         this.scanner = scanner;
         this.auditService = auditService;
         this.writeGate = writeGate;
+        this.memberService = memberService;
     }
 
     @PostMapping("/scan")
@@ -28,6 +31,9 @@ public class SecretsController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Secrets scan requires admin role");
+        }
         String content = body.get("content");
         if (content == null) {
             return ControllerResponses.validation(auditService, "content required");
