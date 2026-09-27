@@ -532,12 +532,12 @@ public class InitiativeService {
                             // Dedup: skip if a direction ask was filed recently for this initiative
                             if (!hasRecentStallAsk(init.getId(), "direction_" + reason, dedupCutoff)) {
                                 String goalStatus = goalOpt.map(DnaGoal::getStatus).orElse("unknown");
-                                  askService.create("question", "system", init.getSponsor(),
-                                      objectMapper.writeValueAsString(Map.of("initiativeId", init.getId(), "goalRef", init.getGoalRef(), "reason", reason, "goalStatus", goalStatus)),
-                                      "bulk", "escalate", 1,
-                 Instant.now().plusSeconds(askService.deriveDeadlineFromTier("bulk")), null, null);
-                                 auditService.logSystem("DIRECTION_ASK_CREATED", "initiative", init.getId(),
-                                     objectMapper.writeValueAsString(Map.of("goalRef", init.getGoalRef(), "sponsor", init.getSponsor(), "reason", reason)));
+                                askService.create("question", "system", init.getSponsor(),
+                                    objectMapper.writeValueAsString(Map.of("initiativeId", init.getId(), "goalRef", init.getGoalRef(), "reason", reason, "goalStatus", goalStatus)),
+                                    "bulk", "escalate", 1,
+                                    Instant.now().plusSeconds(askService.deriveDeadlineFromTier("bulk")), null, null);
+                                auditService.logSystem("DIRECTION_ASK_CREATED", "initiative", init.getId(),
+                                    objectMapper.writeValueAsString(Map.of("goalRef", init.getGoalRef(), "sponsor", init.getSponsor(), "reason", reason)));
                             }
                         }
                     } catch (Exception e) {

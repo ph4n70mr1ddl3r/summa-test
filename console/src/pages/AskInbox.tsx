@@ -179,7 +179,7 @@ export default function AskInbox() {
                   type="button"
                   onClick={() => { setRespondingId(ask.id); setResponseText('') }}
                   className="px-3 py-1 bg-blue-700 hover:bg-blue-600 rounded text-sm text-blue-100"
-                   aria-label={`Respond to ask from ${ask.from}`}
+                  aria-label={`Respond to ask from ${ask.from}`}
                 >
                   Respond
                 </button>
@@ -188,7 +188,7 @@ export default function AskInbox() {
                   onClick={() => handleWithdraw(ask.id)}
                   disabled={currentUser === null || currentUser.userId !== ask.from}
                   className="px-3 py-1 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 rounded text-sm text-gray-300"
-                   aria-label={`Withdraw ask from ${ask.from}`}
+                  aria-label={`Withdraw ask from ${ask.from}`}
                >
                   Withdraw
                 </button>
