@@ -49,4 +49,12 @@ public final class Defaults {
 
     // Node affinity
     public static final long DEFAULT_NODE_AFFINITY_STARVATION_HOURS = 24;
+
+    // Node pubkey validation — must match NodeAuthFilter computeSignature logic
+    public static final String PUBKEY_REGEX =
+        "^[A-Za-z0-9+/]{44}={1,3}$" +
+        "|^[A-Za-z0-9_-]{43}[=_]{1}$" +
+        "|^[A-Za-z0-9+/]{88}={1,3}$" +
+        "|^[A-Za-z0-9_-]{64}$" +
+        "|^[A-Za-z0-9_-]{86}[=_]{1}$";
 }

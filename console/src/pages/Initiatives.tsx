@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api } from '../services/api'
+import { api, loadWithFallback } from '../services/api'
 import type { Initiative } from '../types'
 import { formatDate, initiativeStatusColor } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
@@ -9,35 +9,29 @@ export default function Initiatives() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const loadInitiatives = () => {
+  const loadData = () => {
     setLoading(true)
     setError(null)
     let aborted = false
-    const fetchOnce = () =>
-      api.initiatives.list()
-        .then((data) => { if (!aborted) { setInitiatives(data); setLoading(false) } })
-        .catch((firstErr) => {
-          if (aborted) return
-          // Retry once on failure, surface error if retry also fails
-          api.initiatives.list()
-            .then((data) => { if (!aborted) { setInitiatives(data); setLoading(false) } })
-            .catch((_retryErr) => {
-              if (aborted) return
-              setError(firstErr instanceof Error ? firstErr.message : String(firstErr))
-              setLoading(false)
-            })
-        })
-    fetchOnce()
+    loadWithFallback(
+      () => Promise.all([api.initiatives.list()]),
+      () => Promise.all([api.initiatives.list().catch(() => null)]),
+    ).then(({ data, error: loadError }) => {
+      if (aborted) return
+      setInitiatives(Array.isArray(data[0]) ? data[0] as Initiative[] : [])
+      setError(loadError)
+      setLoading(false)
+    })
     return () => { aborted = true }
   }
 
   useEffect(() => {
-    const cancel = loadInitiatives()
+    const cancel = loadData()
     return cancel
   }, [])
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
-  if (error) return <ErrorBanner message={error} onRetry={loadInitiatives} />
+  if (error) return <ErrorBanner message={error} onRetry={loadData} />
 
   return (
     <div className="space-y-6">

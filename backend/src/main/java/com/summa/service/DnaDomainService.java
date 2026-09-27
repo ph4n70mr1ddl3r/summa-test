@@ -185,10 +185,10 @@ public class DnaDomainService {
         long liveCards = cardRepository.countByDomainIdAndStatusNot(parentId, "retired");
         long liveProposals = proposalRepository.countByDomainIdAndStatus(parentId, "open");
         long liveBindings = workspaceRepository.countByDomainIdsContaining(parentId);
-        if (liveCards - itemIds.size() > 0 || liveProposals - proposalIds.size() > 0 || liveBindings - workspaceIds.size() > 0) {
+        if (Math.max(0, liveCards - itemIds.size()) > 0 || Math.max(0, liveProposals - proposalIds.size()) > 0 || Math.max(0, liveBindings - workspaceIds.size()) > 0) {
             throw new IllegalStateException(
                 String.format("Split mapping is not total: unmapped_cards=%d proposals=%d bindings=%d",
-                    liveCards - itemIds.size(), liveProposals - proposalIds.size(), liveBindings - workspaceIds.size()));
+                    Math.max(0, liveCards - itemIds.size()), Math.max(0, liveProposals - proposalIds.size()), Math.max(0, liveBindings - workspaceIds.size())));
         }
 
         // DGV-011: create child inheriting undeclared parent attrs

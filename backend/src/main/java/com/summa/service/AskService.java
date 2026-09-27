@@ -128,15 +128,15 @@ public class AskService {
         String collapseKey = buildCollapseKey(kind, to, payload);
         Instant now = Instant.now();
         long nowSeconds = now.getEpochSecond();
-        // Use computeIfAbsent to atomically establish the window; DB query runs outside the map lock.
-        ExpiringEntry<Instant> slotValue = collapseWindowTimestamps.computeIfAbsent(collapseKey, k -> new ExpiringEntry<>(now, nowSeconds + stormCollapseWindowSeconds));
-        // Only collapse if a prior ask already established this window (a new window has no canonical yet).
-        if (nowSeconds < slotValue.expiryEpochSeconds) {
-            // Collapse: increment collapsed_count on nearest pending canonical.
-            // Use per-key lock to prevent concurrent threads from both finding and mutating the same canonical.
-            ReentrantLock lock = collapseLocks.computeIfAbsent(collapseKey, k -> new ReentrantLock());
-            lock.lock();
-            try {
+        // Use computeIfAbsent to atomically establish the window.
+        // The expiry check and DB query both run under the per-key lock to prevent
+        // concurrent requests from both passing the expiry check and creating duplicates.
+        ReentrantLock lock = collapseLocks.computeIfAbsent(collapseKey, k -> new ReentrantLock());
+        lock.lock();
+        try {
+            ExpiringEntry<Instant> slotValue = collapseWindowTimestamps.computeIfAbsent(collapseKey, k -> new ExpiringEntry<>(now, nowSeconds + stormCollapseWindowSeconds));
+            if (nowSeconds < slotValue.expiryEpochSeconds) {
+                // Collapse: increment collapsed_count on nearest pending canonical.
                 List<Ask> candidates = askRepository.findByToAndStatusPending(to);
                 candidates = candidates.stream()
                     .filter(a -> kind.equals(a.getKind()) && a.isPending())
@@ -149,9 +149,9 @@ public class AskService {
                         String.format("{\"collapsedCount\":%d}", saved.getCollapsedCount()));
                     return saved;
                 }
-            } finally {
-                lock.unlock();
             }
+        } finally {
+            lock.unlock();
         }
 
         Ask saved = askRepository.save(ask);

@@ -138,7 +138,7 @@ export default function AskInbox() {
                   <span className="text-xl" aria-label={`${ask.kind} ask`}>{kindIcon(ask.kind)}</span>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-gray-200">{KIND_DISPLAY_NAMES[ask.kind] ?? ask.kind.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</span>
+                      <span className="font-medium text-gray-200">{KIND_DISPLAY_NAMES[ask.kind] ?? '[·]'}</span>
                       <span className={`text-xs px-2 py-0.5 rounded border ${tierColor(ask.slaTier)}`}>
                         {ask.slaTier}
                       </span>

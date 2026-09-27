@@ -784,6 +784,8 @@ export const api = {
       }),
     cancel: (id: string) =>
       request<Run>(`/runs/${id}/cancel`, { method: 'POST' }),
+    resume: (id: string) =>
+      request<Run>(`/runs/${id}/resume`, { method: 'POST' }),
     stats: () => request<Record<string, number>>('/runs/stats'),
   },
   auth: {

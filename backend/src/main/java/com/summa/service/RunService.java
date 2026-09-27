@@ -161,6 +161,19 @@ public class RunService {
         return saved;
     }
 
+    @Transactional
+    public Run resume(String id) {
+        Run run = runRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Run not found: " + id));
+        if (!"suspended".equals(run.getStatus())) {
+            throw new IllegalStateException("Cannot resume run with status: " + run.getStatus());
+        }
+        run.setStatus("queued");
+        Run saved = runRepository.save(run);
+        auditService.logSystem("RESUME_RUN", "run", id, null);
+        return saved;
+    }
+
     @Transactional(readOnly = true)
     public List<Run> findByStatus(String status) {
         return runRepository.findByStatus(status);

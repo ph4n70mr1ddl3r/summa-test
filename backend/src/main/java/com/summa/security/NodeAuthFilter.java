@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 
+import com.summa.constants.Defaults;
 import com.summa.util.JsonHelpers;
 
 import javax.crypto.Mac;

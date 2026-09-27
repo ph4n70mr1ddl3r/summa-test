@@ -10,6 +10,7 @@ import com.summa.model.SpawnRequest;
 import com.summa.util.JsonHelpers;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -68,7 +69,8 @@ public class SpawnController {
                 AgentClass.valueOf(effectiveClass.toUpperCase().replace("-", "_"));
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Invalid spawn class: " + effectiveClass
-                    + ". Must be one of: persistent, ephemeral, ephemeral-subagent");
+                    + ". Must be one of: " + EnumSet.allOf(AgentClass.class).stream()
+                        .map(Enum::name).map(n -> n.toLowerCase().replace("_", "-")).toList());
             }
             String normalizedClass = effectiveClass;
             String purpose = body.get("purpose");

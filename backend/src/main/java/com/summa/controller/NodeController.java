@@ -1,5 +1,6 @@
 package com.summa.controller;
 
+import com.summa.constants.Defaults;
 import com.summa.model.Node;
 import com.summa.model.Run;
 import com.summa.security.RbacAuthorizationFilter;
@@ -50,7 +51,7 @@ public class NodeController {
         if (name == null || name.isBlank() || kind == null || kind.isBlank() || pubkey == null || pubkey.isBlank()) {
             return ControllerResponses.validation(auditService, "name, kind, and pubkey are required");
         }
-        if (!pubkey.matches("^[A-Za-z0-9+/]{44}={1,3}$") && !pubkey.matches("^[A-Za-z0-9_-]{43}[=_]{1}$") && !pubkey.matches("^[A-Za-z0-9+/]{88}={1,3}$") && !pubkey.matches("^[A-Za-z0-9_-]{64}$") && !pubkey.matches("^[A-Za-z0-9_-]{86}[=_]{1}$")) {
+        if (!pubkey.matches(Defaults.PUBKEY_REGEX)) {
             return ControllerResponses.validation(auditService, "pubkey must be a valid base64-encoded public key");
         }
         try {

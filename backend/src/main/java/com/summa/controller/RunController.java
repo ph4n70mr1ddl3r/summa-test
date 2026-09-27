@@ -168,6 +168,21 @@ public class RunController {
         }
     }
 
+    @PostMapping("/{id}/resume")
+    public ResponseEntity<?> resumeRun(@PathVariable String id) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
+        try {
+            Run run = runService.resume(id);
+            return ResponseEntity.ok(run);
+        } catch (IllegalArgumentException e) {
+            return ControllerResponses.validation(auditService, e.getMessage());
+        } catch (IllegalStateException e) {
+            return ControllerResponses.gate(auditService, e.getMessage());
+        }
+    }
+
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> stats() {
         return ResponseEntity.ok(Map.of(

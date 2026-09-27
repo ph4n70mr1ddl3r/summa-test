@@ -3,17 +3,35 @@ import { render, waitFor } from '@testing-library/react'
 import Initiatives from './Initiatives'
 import * as apiModule from '../services/api'
 
-vi.mock('../services/api', () => ({
-  api: {
-    initiatives: {
-      list: vi.fn(),
+const originalLoadWithFallback = vi.fn()
+
+vi.mock('../services/api', async (importOriginal) => {
+  const actual = await importOriginal<typeof apiModule>()
+  return {
+    ...actual,
+    api: {
+      ...actual.api,
+      initiatives: {
+        ...actual.api.initiatives,
+        list: vi.fn(),
+      },
     },
-  },
-}))
+    loadWithFallback: (...args: unknown[]) => originalLoadWithFallback(...args),
+  }
+})
 
 describe('Initiatives page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    originalLoadWithFallback.mockImplementation(async (fetchAll, fetchIndividual) => {
+      try {
+        const data = await fetchAll()
+        return { data, error: null }
+      } catch {
+        const data = await fetchIndividual()
+        return { data, error: 'fallback' }
+      }
+    })
   })
 
   it('renders the Initiatives heading', async () => {

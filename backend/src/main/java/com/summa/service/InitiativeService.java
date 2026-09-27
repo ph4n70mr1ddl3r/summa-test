@@ -150,10 +150,11 @@ public class InitiativeService {
     /**
      * INT-070: Detect if adding deps to the new initiative (id) would create a cycle.
      * Walks the dependency graph from each dep; if any path reaches 'id', there's a cycle.
+     * Uses a single shared visited set across all subtrees to avoid exponential recomputation.
      */
     private boolean wouldCreateCycle(String newId, List<String> deps) {
+        Set<String> visited = new HashSet<>();
         for (String depId : deps) {
-            Set<String> visited = new HashSet<>();
             if (hasPathTo(newId, List.of(depId), visited)) {
                 return true;
             }
@@ -165,15 +166,14 @@ public class InitiativeService {
         for (String depId : currentDeps) {
             if (depId.equals(target)) return true;
             if (visited.contains(depId)) continue;
-            Set<String> subtreeVisited = new HashSet<>(visited);
-            subtreeVisited.add(depId);
+            visited.add(depId);
             Optional<Initiative> depOpt = initiativeRepository.findById(depId);
             if (depOpt.isPresent() && depOpt.get().getDependsOn() != null) {
                 try {
                     List<String> grandchildDeps = objectMapper.readValue(
                         depOpt.get().getDependsOn(),
                         new TypeReference<List<String>>() {});
-                    if (hasPathTo(target, grandchildDeps, subtreeVisited)) return true;
+                    if (hasPathTo(target, grandchildDeps, visited)) return true;
                 } catch (Exception e) {
                     auditService.logSystem("CYCLE_DETECT_FAIL", "initiative", target,
                         String.format("{\"error\":\"%s\"}", e.getMessage()));

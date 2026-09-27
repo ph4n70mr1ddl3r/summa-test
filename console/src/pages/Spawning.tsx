@@ -48,6 +48,7 @@ export default function Spawning() {
       await loadData()
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
+      await loadData()
     } finally {
       setActionId(null)
     }

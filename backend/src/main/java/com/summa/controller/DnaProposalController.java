@@ -3,9 +3,11 @@ package com.summa.controller;
 import com.summa.service.DnaProposalService;
 import com.summa.model.DnaProposal;
 import com.summa.service.AuditService;
+import com.summa.service.MemberService;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.summa.enums.RbacRole;
 import com.summa.security.RbacAuthorizationFilter;
 import java.util.List;
 import java.util.Map;
@@ -20,11 +22,14 @@ public class DnaProposalController {
     private final DnaProposalService proposalService;
     private final AuditService auditService;
     private final WriteGate writeGate;
+    private final MemberService memberService;
 
-    public DnaProposalController(DnaProposalService proposalService, AuditService auditService, WriteGate writeGate) {
+    public DnaProposalController(DnaProposalService proposalService, AuditService auditService, WriteGate writeGate,
+                                 MemberService memberService) {
         this.proposalService = proposalService;
         this.auditService = auditService;
         this.writeGate = writeGate;
+        this.memberService = memberService;
     }
 
     @GetMapping
@@ -90,10 +95,22 @@ public class DnaProposalController {
         if (gate != null) return gate;
         // API-022: single review endpoint with action in body
         String action = body.get("action");
+        // Validate reviewedBy — only the actor or an admin may set it; otherwise defaults to actor
         String reviewedBy = body.get("reviewedBy");
+        String effectiveReviewer = actor;
+        if (reviewedBy != null && !reviewedBy.isBlank()) {
+            if (!reviewedBy.equals(actor)) {
+                Optional<com.summa.model.Human> reviewerOpt = memberService.findHuman(reviewedBy.replaceFirst("^[ha]?:", ""));
+                boolean isReviewerAdmin = reviewerOpt.isPresent() && RbacRole.ADMIN.getValue().equals(reviewerOpt.get().getRbac());
+                if (!isReviewerAdmin) {
+                    return ControllerResponses.validation(auditService, "reviewedBy must be the current actor or an admin");
+                }
+            }
+            effectiveReviewer = reviewedBy;
+        }
         if ("publish".equals(action)) {
             try {
-                DnaProposal proposal = proposalService.publish(id, reviewedBy != null && !reviewedBy.isBlank() ? reviewedBy : actor, actor);
+                DnaProposal proposal = proposalService.publish(id, effectiveReviewer, actor);
                 return ResponseEntity.ok(proposal);
             } catch (IllegalArgumentException e) {
                 return ControllerResponses.validation(auditService, e.getMessage());
@@ -102,7 +119,7 @@ public class DnaProposalController {
             }
         } else if ("reject".equals(action)) {
             try {
-                DnaProposal proposal = proposalService.reject(id, reviewedBy != null && !reviewedBy.isBlank() ? reviewedBy : actor, actor);
+                DnaProposal proposal = proposalService.reject(id, effectiveReviewer, actor);
                 return ResponseEntity.ok(proposal);
             } catch (IllegalArgumentException e) {
                 return ControllerResponses.validation(auditService, e.getMessage());
