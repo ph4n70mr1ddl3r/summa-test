@@ -61,6 +61,8 @@ export function getUser(): { userId: string; rbac: RbacRole; name: string } | nu
     if (!raw) return null;
     const user = JSON.parse(raw);
     if (!user?.userId || !user?.rbac || !user?.name) return null;
+    const validRoles = ['admin', 'owner', 'member', 'viewer'] as const;
+    if (!(validRoles as readonly string[]).includes(user.rbac)) return null;
     return user as { userId: string; rbac: RbacRole; name: string };
   } catch {
     return null;
@@ -120,7 +122,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
         message = `Network error: HTTP ${res.status}`;
       }
       const err = new ApiError(message, res.status);
-        if (res.status === 401 || res.status === 403) {
+      if (res.status === 401 || res.status === 403) {
         setAuthToken(null);
         // Prevent duplicate redirects if multiple requests fail simultaneously.
         // Use a closure-guarded flag so a second 401 during the navigation window

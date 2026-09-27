@@ -154,7 +154,7 @@ public class AgentController {
                         break;
                     }
                 } catch (Exception e) {
-                    auditService.logSystem("PROMOTE_PARSE_FAIL", "agent", agentId,
+                    auditService.log(actor, "PROMOTE_PARSE_FAIL", "agent", agentId,
                         String.format("{\"error\":\"%s\"}", e.getMessage()));
                 }
             }

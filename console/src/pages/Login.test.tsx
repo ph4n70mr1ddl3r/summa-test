@@ -117,6 +117,28 @@ describe('Login page', () => {
     })
   })
 
+  it('rejects open redirect via protocol-relative URL', async () => {
+    navigateMock.mockClear()
+    vi.mocked(apiModule.api.auth.login).mockResolvedValue({
+      token: 'fake-token',
+      userId: 'u1',
+      rbac: 'admin',
+      name: 'Test User',
+    })
+    const { getByLabelText, getByText } = render(
+      <MemoryRouter initialEntries={[{ pathname: '/login', state: { from: { pathname: '//evil.com' } } }]}>
+        <Login />
+      </MemoryRouter>
+    )
+    fireEvent.change(getByLabelText(/email/i), { target: { value: 'test@example.com' } })
+    fireEvent.change(getByLabelText(/password/i), { target: { value: 'password123' } })
+    fireEvent.click(getByText('Sign in'))
+    await waitFor(() => {
+      expect(navigateMock).not.toHaveBeenCalledWith('//evil.com', { replace: true })
+      expect(navigateMock).toHaveBeenCalledWith('/', { replace: true })
+    })
+  })
+
   it('displays rate-limit message on 429', async () => {
     const ApiError = (apiModule as unknown as { ApiError: new (m: string, s: number) => { status: number } }).ApiError
     vi.mocked(apiModule.api.auth.login).mockRejectedValue(new ApiError('Too many attempts', 429))

@@ -21,6 +21,7 @@ export default function Login() {
       !s.includes('://') &&
       !s.toLowerCase().startsWith('data:') &&
       !s.toLowerCase().startsWith('javascript:') &&
+      !s.startsWith('//') &&
       (s.startsWith('/') || s.length === 0)
     from = isSafe(decoded) ? decoded : isSafe(candidate) ? candidate : '/'
   }

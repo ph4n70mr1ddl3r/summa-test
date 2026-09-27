@@ -239,9 +239,11 @@ public class AskService {
                             continue;
                         }
                         String successorTo = OffboardingWalkService.ADMIN_BROADCAST;
-                        Optional<Human> target = memberService.findHuman(ask.getTo());
-                        if (target.isPresent() && target.get().getDeputyMemberId() != null) {
-                            successorTo = target.get().getDeputyMemberId();
+                        if (ask.getTo() != null) {
+                            Optional<Human> target = memberService.findHuman(ask.getTo());
+                            if (target.isPresent() && target.get().getDeputyMemberId() != null) {
+                                successorTo = target.get().getDeputyMemberId();
+                            }
                         }
                         // ASK-012/CFG-140: derive deadline from tier defaults
                         long successorDeadlineSeconds = deriveDeadlineFromTier(ask.getSlaTier());

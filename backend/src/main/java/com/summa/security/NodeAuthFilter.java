@@ -28,8 +28,8 @@ public class NodeAuthFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(NodeAuthFilter.class);
 
     private static final List<String> NODE_AUTH_PATHS = List.of(
-        "/api/nodes/",
-        "/api/nodes"
+        "/nodes/",
+        "/nodes"
     );
 
     private final NodeRepository nodeRepository;
@@ -51,7 +51,7 @@ public class NodeAuthFilter extends OncePerRequestFilter {
         }
 
         // Enroll is a public operation — skip signature verification
-        if (path.equals("/api/nodes/enroll") || path.startsWith("/api/nodes/enroll?") || path.equals("/api/nodes/enroll/")) {
+        if (path.equals("/nodes/enroll") || path.startsWith("/nodes/enroll?") || path.equals("/nodes/enroll/")) {
             filterChain.doFilter(wrappedRequest, response);
             return;
         }
@@ -108,11 +108,11 @@ public class NodeAuthFilter extends OncePerRequestFilter {
     }
 
     private String extractNodeId(String path) {
-        // Path format: /api/nodes/<uuid>/... or /api/nodes
+        // Path format: /nodes/<uuid>/... or /nodes
         String[] parts = path.split("/");
-        // /api/nodes/<id>/... => parts[3] is the id
-        if (parts.length >= 4 && parts[0].isEmpty() && "api".equals(parts[1]) && "nodes".equals(parts[2])) {
-            String candidate = parts[3];
+        // /nodes/<id>/... => parts[1] is the id
+        if (parts.length >= 2 && "nodes".equals(parts[1])) {
+            String candidate = parts[2];
             // Validate UUID format
             if (candidate.matches("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")) {
                 return candidate;

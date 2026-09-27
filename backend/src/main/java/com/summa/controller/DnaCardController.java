@@ -4,6 +4,7 @@ import com.summa.service.DnaCardService;
 import com.summa.model.DnaCard;
 import com.summa.service.AuditService;
 import com.summa.security.WriteGate;
+import com.summa.service.DnaDomainService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
@@ -18,11 +19,14 @@ public class DnaCardController {
     private final DnaCardService cardService;
     private final AuditService auditService;
     private final WriteGate writeGate;
+    private final DnaDomainService domainService;
 
-    public DnaCardController(DnaCardService cardService, AuditService auditService, WriteGate writeGate) {
+    public DnaCardController(DnaCardService cardService, AuditService auditService, WriteGate writeGate,
+                             DnaDomainService domainService) {
         this.cardService = cardService;
         this.auditService = auditService;
         this.writeGate = writeGate;
+        this.domainService = domainService;
     }
 
     @GetMapping
@@ -56,6 +60,9 @@ public class DnaCardController {
             if (domainId == null || domainId.isBlank()) {
                 throw new IllegalArgumentException("domainId is required");
             }
+            if (domainService.findById(domainId).isEmpty()) {
+                throw new IllegalArgumentException("Domain not found: " + domainId);
+            }
             String generatedId = UUID.randomUUID().toString();
             DnaCard card = cardService.create(
                 generatedId,
@@ -85,6 +92,9 @@ public class DnaCardController {
             String domainId = body.get("domainId");
             if (domainId == null || domainId.isBlank()) {
                 throw new IllegalArgumentException("domainId is required");
+            }
+            if (domainService.findById(domainId).isEmpty()) {
+                throw new IllegalArgumentException("Domain not found: " + domainId);
             }
             String generatedId = UUID.randomUUID().toString();
             DnaCard card = cardService.createDraft(

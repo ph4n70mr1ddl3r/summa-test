@@ -58,8 +58,10 @@ export default function Governance() {
       const result = section === 'policies'
         ? await api.governance.updatePolicies(body)
         : await api.governance.updateQuotas(body)
-      if (section === 'policies') setPolicies(result as Record<string, unknown>)
-      else setQuotas(result as Record<string, unknown>)
+      if (result != null) {
+        if (section === 'policies') setPolicies(result as Record<string, unknown>)
+        else setQuotas(result as Record<string, unknown>)
+      }
       setEditValues(prev => { const next = { ...prev }; delete next[key]; return next })
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))

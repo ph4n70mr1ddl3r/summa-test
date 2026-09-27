@@ -44,7 +44,8 @@ public class SecretsController {
         var findings = scanner.scan(content);
         return ResponseEntity.ok(Map.of(
             "hasSecrets", !findings.isEmpty(),
-            "count", findings.size()
+            "count", findings.size(),
+            "findings", findings
         ));
     }
 }
