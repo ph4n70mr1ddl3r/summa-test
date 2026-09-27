@@ -68,7 +68,7 @@ export default function Governance() {
     }
   }
 
-  const startEdit = (section: 'policies' | 'quotas', key: string, currentValue: unknown) => {
+  const startEdit = (_section: 'policies' | 'quotas', key: string, currentValue: unknown) => {
     setEditValues(prev => ({ ...prev, [key]: String(currentValue ?? '') }))
   }
 
