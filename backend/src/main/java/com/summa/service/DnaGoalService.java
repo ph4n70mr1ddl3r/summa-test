@@ -4,7 +4,6 @@ import com.summa.repository.DnaGoalRepository;
 import com.summa.repository.DnaDomainRepository;
 import com.summa.model.DnaGoal;
 import com.summa.util.JsonHelpers;
-import com.summa.util.KeyedUnionValidator;
 import com.summa.util.ScanUtils;
 import com.summa.service.SecretsScanner;
 import org.springframework.stereotype.Service;
@@ -44,8 +43,8 @@ public class DnaGoalService {
         goal.setDomainId(domainId);
         goal.setQuarter(quarter);
         goal.setStatementMd(statementMd != null ? statementMd : "");
-        KeyedUnionValidator.validate(owner, "owner");
-        goal.setOwner(owner);
+        String ownerClean = owner != null ? owner.replaceFirst("^[ha]?:", "") : owner;
+        goal.setOwner(ownerClean);
         goal.setInject(inject != null ? inject : "linked");
         goal.setEffectiveFrom(effectiveFrom);
         goal.setEffectiveTo(effectiveTo);

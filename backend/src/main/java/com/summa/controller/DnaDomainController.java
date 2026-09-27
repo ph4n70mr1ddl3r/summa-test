@@ -56,13 +56,15 @@ public class DnaDomainController {
             if (body.get("ownerHumanId") == null || body.get("ownerHumanId").isBlank()) {
                 throw new IllegalArgumentException("ownerHumanId is required");
             }
-            if (memberService.findHuman(body.get("ownerHumanId")).isEmpty()) {
-                throw new IllegalArgumentException("ownerHumanId does not reference an existing human: " + body.get("ownerHumanId"));
+            String ownerHumanIdRaw = body.get("ownerHumanId");
+            String ownerHumanIdClean = ownerHumanIdRaw.replaceFirst("^[ha]?:", "");
+            if (memberService.findHuman(ownerHumanIdClean).isEmpty()) {
+                throw new IllegalArgumentException("ownerHumanId does not reference an existing human: " + ownerHumanIdRaw);
             }
             DnaDomain domain = domainService.create(
                 UUID.randomUUID().toString(),
                 body.get("name"),
-                body.get("ownerHumanId"),
+                ownerHumanIdClean,
                 body.get("access"),
                 body.get("store"),
                 body.containsKey("reviewSlaDays") ? JsonHelpers.parseIntSafe(body.get("reviewSlaDays")) : null,

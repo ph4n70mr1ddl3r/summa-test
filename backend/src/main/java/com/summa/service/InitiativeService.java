@@ -17,7 +17,6 @@ import com.summa.model.DnaGoal;
 import com.summa.model.Workspace;
 import com.summa.model.SpawnRequest;
 import com.summa.util.JsonHelpers;
-import com.summa.util.KeyedUnionValidator;
 import com.summa.constants.Defaults;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -90,9 +89,6 @@ public class InitiativeService {
             dnaDecisionRepository.findById(decisionRef).orElseThrow(
                 () -> new EntityNotFoundException("Decision not found: " + decisionRef));
         }
-        KeyedUnionValidator.validate(sponsor, "sponsor");
-        KeyedUnionValidator.validate(lead, "lead");
-
         // INT-001: Refuse viewer or non-active members as sponsor or lead
         String sponsorClean = sponsor != null ? sponsor.replaceFirst("^[ha]?:", "") : "";
         String leadClean = lead != null ? lead.replaceFirst("^[ha]?:", "") : "";

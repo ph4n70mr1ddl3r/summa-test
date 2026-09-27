@@ -62,11 +62,13 @@ public class DnaDecisionController {
             if (body.get("outcomeMd") == null || body.get("outcomeMd").isBlank()) {
                 throw new IllegalArgumentException("outcomeMd is required");
             }
-            if (body.get("decidedBy") == null || body.get("decidedBy").isBlank()) {
+            String decidedByRaw = body.get("decidedBy");
+            if (decidedByRaw == null || decidedByRaw.isBlank()) {
                 throw new IllegalArgumentException("decidedBy is required");
             }
-            if (memberService.findHuman(body.get("decidedBy")).isEmpty() && memberService.findAgent(body.get("decidedBy")).isEmpty()) {
-                throw new IllegalArgumentException("decidedBy does not reference an existing human or agent: " + body.get("decidedBy"));
+            String decidedByClean = decidedByRaw.replaceFirst("^[ha]?:", "");
+            if (memberService.findHuman(decidedByClean).isEmpty() && memberService.findAgent(decidedByClean).isEmpty()) {
+                throw new IllegalArgumentException("decidedBy does not reference an existing human or agent: " + decidedByRaw);
             }
             String generatedId = UUID.randomUUID().toString();
             DnaDecision decision = decisionService.create(
@@ -74,7 +76,7 @@ public class DnaDecisionController {
                 body.get("domainId"),
                 body.get("contextMd"),
                 body.get("outcomeMd"),
-                body.get("decidedBy"),
+                decidedByClean,
                 body.get("provenance"),
                 actor
             );

@@ -62,11 +62,13 @@ public class DnaGoalController {
             if (body.get("statementMd") == null || body.get("statementMd").isBlank()) {
                 throw new IllegalArgumentException("statementMd is required");
             }
-            if (body.get("owner") == null || body.get("owner").isBlank()) {
+            String ownerRaw = body.get("owner");
+            if (ownerRaw == null || ownerRaw.isBlank()) {
                 throw new IllegalArgumentException("owner is required");
             }
-            if (memberService.findHuman(body.get("owner")).isEmpty() && memberService.findAgent(body.get("owner")).isEmpty()) {
-                throw new IllegalArgumentException("owner does not reference an existing human or agent: " + body.get("owner"));
+            String ownerClean = ownerRaw.replaceFirst("^[ha]?:", "");
+            if (memberService.findHuman(ownerClean).isEmpty() && memberService.findAgent(ownerClean).isEmpty()) {
+                throw new IllegalArgumentException("owner does not reference an existing human or agent: " + ownerRaw);
             }
             // Security: reject client-supplied IDs — always generate server-side
             String generatedId = UUID.randomUUID().toString();
@@ -82,7 +84,7 @@ public class DnaGoalController {
                 body.get("domainId"),
                 body.get("quarter"),
                 body.get("statementMd"),
-                body.get("owner"),
+                ownerClean,
                 body.get("inject"),
                 effectiveFrom,
                 effectiveTo,

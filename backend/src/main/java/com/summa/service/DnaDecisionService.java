@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 import com.summa.util.ScanUtils;
-import com.summa.util.KeyedUnionValidator;
 import com.summa.util.JsonHelpers;
 import com.summa.exception.EntityNotFoundException;
 
@@ -36,7 +35,7 @@ public class DnaDecisionService {
             domainRepository.findById(domainId).orElseThrow(
                 () -> new EntityNotFoundException("Domain not found: " + domainId));
         }
-        KeyedUnionValidator.validate(decidedBy, "decidedBy");
+        String decidedByClean = decidedBy != null ? decidedBy.replaceFirst("^[ha]?:", "") : decidedBy;
         ScanUtils.scanForSecrets(contextMd, actor, "dna_decision", id, secretsScanner, auditService);
         ScanUtils.scanForSecrets(outcomeMd, actor, "dna_decision", id, secretsScanner, auditService);
 
@@ -45,7 +44,7 @@ public class DnaDecisionService {
         decision.setDomainId(domainId);
         decision.setContextMd(contextMd != null ? contextMd : "");
         decision.setOutcomeMd(outcomeMd != null ? outcomeMd : "");
-        decision.setDecidedBy(decidedBy);
+        decision.setDecidedBy(decidedByClean);
         decision.setProvenance(provenance != null ? provenance : "{}");
 
         DnaDecision saved = decisionRepository.save(decision);

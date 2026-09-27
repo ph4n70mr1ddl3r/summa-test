@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import com.summa.exception.EntityNotFoundException;
-import com.summa.model.Agent;
 
 @Service
 public class BoardTaskService {
