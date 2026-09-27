@@ -140,6 +140,7 @@ public class DnaDomainController {
     }
 
     // API-023: topology ops — split and merge
+    @SuppressWarnings("unchecked")
     @PostMapping("/{id}/split")
     public ResponseEntity<?> splitDomain(@PathVariable String id, @RequestBody Map<String, Object> body) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
