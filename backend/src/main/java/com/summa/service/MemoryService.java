@@ -62,20 +62,20 @@ public class MemoryService {
         return memoryItemRepository.findById(id);
     }
 
-    public List<MemoryItem> findByMember(String memberId) {
-        return memoryItemRepository.findByMemberId(memberId);
+    public List<MemoryItem> findByMember(String memberId, int limit) {
+        return memoryItemRepository.findByMemberId(memberId, limit);
     }
 
-    public List<MemoryItem> findByWorkspace(String workspaceId) {
-        return memoryItemRepository.findByWorkspaceId(workspaceId);
+    public List<MemoryItem> findByWorkspace(String workspaceId, int limit) {
+        return memoryItemRepository.findByWorkspaceId(workspaceId, limit);
     }
 
-    public List<MemoryItem> findAll() {
-        return memoryItemRepository.findAll();
+    public List<MemoryItem> findAll(int limit) {
+        return memoryItemRepository.findAll(limit);
     }
 
-    public List<MemoryItem> findTainted() {
-        return memoryItemRepository.findByTaintedTrue();
+    public List<MemoryItem> findTainted(int limit) {
+        return memoryItemRepository.findByTaintedTrue(limit);
     }
 
     @Transactional

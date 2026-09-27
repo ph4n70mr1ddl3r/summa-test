@@ -88,7 +88,7 @@ The suite's structural invariants are machine-checked by `tools/lint_specs.py`, 
 every push: ID uniqueness, one home module per prefix, no dangling citations (ranges
 expanded), no dangling PLAN `§` references (ranges expanded) — checked in the specs and in
 PLAN.md's own body, with §2's principles and §14's decisions addressable by list item
-(`§14.3` = decision three) — agreement of the three version pins (PLAN's version stamp, this
+(`§14.3` = decision three) — agreement of the four version pins (PLAN's version stamp, this
 README's header, TRACEABILITY's header), and TRACEABILITY
 exact in both directions — plus per-row partition: every coverage row cites only IDs homed in
 the modules it names, and no ID belongs to two rows outside the "Intentional cross-listings"

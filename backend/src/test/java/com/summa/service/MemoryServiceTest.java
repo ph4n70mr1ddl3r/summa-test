@@ -89,9 +89,9 @@ class MemoryServiceTest {
     void findByMember() {
         MemoryItem item = new MemoryItem();
         item.setId("mem-1");
-        when(memoryItemRepository.findByMemberId("human-1")).thenReturn(List.of(item));
+        when(memoryItemRepository.findByMemberId("human-1", 50)).thenReturn(List.of(item));
 
-        List<MemoryItem> result = memoryService.findByMember("human-1");
+        List<MemoryItem> result = memoryService.findByMember("human-1", 50);
 
         assertEquals(1, result.size());
     }
@@ -100,9 +100,9 @@ class MemoryServiceTest {
     void findByWorkspace() {
         MemoryItem item = new MemoryItem();
         item.setId("mem-1");
-        when(memoryItemRepository.findByWorkspaceId("ws-1")).thenReturn(List.of(item));
+        when(memoryItemRepository.findByWorkspaceId("ws-1", 50)).thenReturn(List.of(item));
 
-        List<MemoryItem> result = memoryService.findByWorkspace("ws-1");
+        List<MemoryItem> result = memoryService.findByWorkspace("ws-1", 50);
 
         assertEquals(1, result.size());
     }
@@ -112,9 +112,9 @@ class MemoryServiceTest {
         MemoryItem item = new MemoryItem();
         item.setId("mem-1");
         item.setTainted(true);
-        when(memoryItemRepository.findByTaintedTrue()).thenReturn(List.of(item));
+        when(memoryItemRepository.findByTaintedTrue(50)).thenReturn(List.of(item));
 
-        List<MemoryItem> result = memoryService.findTainted();
+        List<MemoryItem> result = memoryService.findTainted(50);
 
         assertEquals(1, result.size());
         assertTrue(result.get(0).isTainted());

@@ -53,7 +53,7 @@ export default function Governance() {
     setSaving(`${section}:${key}`)
     setError(null)
     try {
-      const numValue = Number(value)
+      const numValue = value === '' ? NaN : Number(value)
       const body = { [key]: isNaN(numValue) ? value : numValue }
       const result = section === 'policies'
         ? await api.governance.updatePolicies(body)

@@ -25,7 +25,7 @@ function kindIcon(kind: string): string {
 }
 
 export default function AskInbox() {
-  const currentUser = getUser();
+  const [currentUser, setCurrentUser] = useState(() => getUser())
   const [asks, setAsks] = useState<Ask[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -48,6 +48,15 @@ export default function AskInbox() {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleKeyDown])
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { userId: string; rbac: string; name: string } | null
+      setCurrentUser(detail ? { userId: detail.userId, rbac: detail.rbac as any, name: detail.name } : null)
+    }
+    window.addEventListener('summa-auth-change', handler)
+    return () => window.removeEventListener('summa-auth-change', handler)
+  }, [])
 
   const loadAsks = () => {
     setLoading(true)

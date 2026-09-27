@@ -47,6 +47,9 @@ public class OrgController {
         // Subsequent calls are gated by the WriteGate which requires admin auth.
         boolean alreadyInitialized = orgService.isInitialized();
         if (!alreadyInitialized) {
+            if (body == null) {
+                return ControllerResponses.validation(auditService, "Request body is required");
+            }
             try {
                 Human human = orgService.bootstrap(
                     body.get("name"),
@@ -166,8 +169,7 @@ public class OrgController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        Optional<Human> actorOpt = orgService.findHuman(actor);
-        if (actorOpt.isEmpty() || !RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac())) {
+        if (!memberService.isAdmin(actor)) {
             return ControllerResponses.gate(auditService, actor, "Offboarding requires admin role");
         }
         try {

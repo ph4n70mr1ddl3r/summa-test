@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.enums.MemoryTier;
+import com.summa.constants.Defaults;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,17 +30,19 @@ public class MemoryController {
     public ResponseEntity<?> listMemory(
             @RequestParam(required = false) String memberId,
             @RequestParam(required = false) String workspaceId,
-            @RequestParam(required = false) Boolean tainted) {
+            @RequestParam(required = false) Boolean tainted,
+            @RequestParam(defaultValue = "50") int limit) {
+        int cappedLimit = Math.min(Math.max(limit, 1), Defaults.MAX_LIST_LIMIT);
         if (memberId != null) {
-            return ResponseEntity.ok(memoryService.findByMember(memberId));
+            return ResponseEntity.ok(memoryService.findByMember(memberId, cappedLimit));
         }
         if (workspaceId != null) {
-            return ResponseEntity.ok(memoryService.findByWorkspace(workspaceId));
+            return ResponseEntity.ok(memoryService.findByWorkspace(workspaceId, cappedLimit));
         }
         if (Boolean.TRUE.equals(tainted)) {
-            return ResponseEntity.ok(memoryService.findTainted());
+            return ResponseEntity.ok(memoryService.findTainted(cappedLimit));
         }
-        return ResponseEntity.ok(memoryService.findAll());
+        return ResponseEntity.ok(memoryService.findAll(cappedLimit));
     }
 
     @GetMapping("/{id}")

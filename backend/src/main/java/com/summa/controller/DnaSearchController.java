@@ -3,6 +3,7 @@ package com.summa.controller;
 import com.summa.service.DnaReadService;
 import com.summa.service.AuditService;
 import com.summa.service.OrgService;
+import com.summa.constants.Defaults;
 import com.summa.security.RbacAuthorizationFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,11 +31,12 @@ public class DnaSearchController {
             @RequestParam String q,
             @RequestParam(required = false) String domainId,
             @RequestParam(defaultValue = "20") int limit) {
+        int cappedLimit = Math.min(Math.max(limit, 1), Defaults.MAX_LIST_LIMIT);
         try {
             if (q == null || q.isBlank()) {
                 return ControllerResponses.validation(auditService, "Query parameter 'q' is required");
             }
-            List<Map<String, Object>> results = dnaReadService.search(q, domainId, limit);
+            List<Map<String, Object>> results = dnaReadService.search(q, domainId, cappedLimit);
             return ResponseEntity.ok(Map.of("results", results, "count", results.size()));
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
@@ -51,7 +53,7 @@ public class DnaSearchController {
         var humanOpt = orgService.findHuman(actor);
         if (humanOpt.isEmpty() || !"admin".equals(humanOpt.get().getRbac())) {
             var audit = auditService.logSystem("REFUSAL", "dna_org_snapshot", actor, "Non-admin org snapshot access attempt");
-            return ControllerResponses.gate(auditService, actor, "Admin access required for org snapshot");
+            return ControllerResponses.gate(audit, "Admin access required for org snapshot");
         }
         return ResponseEntity.ok(dnaReadService.getOrgSnapshot());
     }

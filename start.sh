@@ -56,4 +56,5 @@ JAVA_OPTS="${JAVA_OPTS:--Xmx512m -Xms256m -XX:MaxMetaspaceSize=128m}"
 exec java "$JAVA_OPTS" \
     -Dspring.profiles.active=prod \
     -Dsumma.auth.local-auth-enabled=${SUMMA_LOCAL_AUTH_ENABLED:-true} \
+    -Dsumma.log.dir=${SUMMA_LOG_DIR} \
     -jar "$JAR_FILE"
