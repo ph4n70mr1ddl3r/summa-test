@@ -2,6 +2,8 @@ package com.summa.controller;
 
 import com.summa.service.DnaGoalService;
 import com.summa.model.DnaGoal;
+import com.summa.model.Human;
+import com.summa.model.Agent;
 import com.summa.service.AuditService;
 import com.summa.service.MemberService;
 import com.summa.security.WriteGate;
@@ -67,8 +69,16 @@ public class DnaGoalController {
                 throw new IllegalArgumentException("owner is required");
             }
             String ownerClean = ownerRaw.replaceFirst("^[ha]?:", "");
-            if (memberService.findHuman(ownerClean).isEmpty() && memberService.findAgent(ownerClean).isEmpty()) {
+            Optional<Human> ownerHuman = memberService.findHuman(ownerClean);
+            Optional<Agent> ownerAgent = memberService.findAgent(ownerClean);
+            if (ownerHuman.isEmpty() && ownerAgent.isEmpty()) {
                 throw new IllegalArgumentException("owner does not reference an existing human or agent: " + ownerRaw);
+            }
+            if (ownerHuman.isPresent() && !ownerHuman.get().isActive()) {
+                throw new IllegalArgumentException("owner must be an active member: " + ownerRaw);
+            }
+            if (ownerAgent.isPresent() && !ownerAgent.get().isActive()) {
+                throw new IllegalArgumentException("owner must be an active member: " + ownerRaw);
             }
             // Security: reject client-supplied IDs — always generate server-side
             String generatedId = UUID.randomUUID().toString();

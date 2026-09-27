@@ -138,13 +138,21 @@ public class NodeController {
             String costTokensStr = body.get("costTokens");
             long costTokens = 0L;
             if (costTokensStr != null && !costTokensStr.isBlank()) {
-                costTokens = Long.parseLong(costTokensStr.trim());
+                try {
+                    costTokens = Long.parseLong(costTokensStr.trim());
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("Invalid costTokens value: " + costTokensStr);
+                }
                 if (costTokens < 0) throw new IllegalArgumentException("costTokens must be non-negative");
             }
             String costUsdStr = body.get("costUsd");
             double costUsd = 0.0;
             if (costUsdStr != null && !costUsdStr.isBlank()) {
-                costUsd = Double.parseDouble(costUsdStr.trim());
+                try {
+                    costUsd = Double.parseDouble(costUsdStr.trim());
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("Invalid costUsd value: " + costUsdStr);
+                }
                 if (costUsd < 0) throw new IllegalArgumentException("costUsd must be non-negative");
             }
             String memberId = body.get("memberId");

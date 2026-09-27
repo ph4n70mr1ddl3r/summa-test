@@ -2,6 +2,8 @@ package com.summa.controller;
 
 import com.summa.service.DnaDecisionService;
 import com.summa.model.DnaDecision;
+import com.summa.model.Human;
+import com.summa.model.Agent;
 import com.summa.service.AuditService;
 import com.summa.service.MemberService;
 import com.summa.security.WriteGate;
@@ -67,8 +69,16 @@ public class DnaDecisionController {
                 throw new IllegalArgumentException("decidedBy is required");
             }
             String decidedByClean = decidedByRaw.replaceFirst("^[ha]?:", "");
-            if (memberService.findHuman(decidedByClean).isEmpty() && memberService.findAgent(decidedByClean).isEmpty()) {
+            Optional<Human> deciderHuman = memberService.findHuman(decidedByClean);
+            Optional<Agent> deciderAgent = memberService.findAgent(decidedByClean);
+            if (deciderHuman.isEmpty() && deciderAgent.isEmpty()) {
                 throw new IllegalArgumentException("decidedBy does not reference an existing human or agent: " + decidedByRaw);
+            }
+            if (deciderHuman.isPresent() && !deciderHuman.get().isActive()) {
+                throw new IllegalArgumentException("decidedBy must be an active member: " + decidedByRaw);
+            }
+            if (deciderAgent.isPresent() && !deciderAgent.get().isActive()) {
+                throw new IllegalArgumentException("decidedBy must be an active member: " + decidedByRaw);
             }
             String generatedId = UUID.randomUUID().toString();
             DnaDecision decision = decisionService.create(

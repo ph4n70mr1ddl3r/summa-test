@@ -112,18 +112,18 @@ public class AskController {
                 try {
                     deadlineSeconds = Long.parseLong(deadlineStr);
                 } catch (NumberFormatException e) {
-                    return ControllerResponses.validation(auditService, "Invalid deadlineSeconds value");
+                    throw new IllegalArgumentException("Invalid deadlineSeconds value");
                 }
                 if (deadlineSeconds <= 0) {
-                    return ControllerResponses.validation(auditService, "deadlineSeconds must be positive");
+                    throw new IllegalArgumentException("deadlineSeconds must be positive");
                 }
                 if (deadlineSeconds > Defaults.MAX_DEADLINE_SECONDS) {
-                    return ControllerResponses.validation(auditService, "deadlineSeconds must not exceed 365 days");
+                    throw new IllegalArgumentException("deadlineSeconds must not exceed 365 days");
                 }
             } else {
                 deadlineSeconds = askService.deriveDeadlineFromTier(slaTier);
                 if (deadlineSeconds > Defaults.MAX_DEADLINE_SECONDS) {
-                    return ControllerResponses.validation(auditService, "Derived deadline exceeds maximum of 365 days");
+                    throw new IllegalArgumentException("Derived deadline exceeds maximum of 365 days");
                 }
             }
             Integer quorumRequired = null;

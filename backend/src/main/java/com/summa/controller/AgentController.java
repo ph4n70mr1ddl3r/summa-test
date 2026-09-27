@@ -132,15 +132,16 @@ public class AgentController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            Agent agent = agentService.findById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("Agent not found: " + id));
+            String agentId = id.replaceFirst("^[ha]?:", "");
+            Agent agent = agentService.findById(agentId)
+                    .orElseThrow(() -> new EntityNotFoundException("Agent not found: " + agentId));
             // TPL-040: Only customRole hires (template_id null) are eligible for promotion
             if (agent.getTemplateId() != null) {
                 throw new IllegalStateException("Only customRole hires (no template) can be promoted");
             }
             // TPL-046: One live promotion ask per hire — refuse if already pending
             // Check asks TO the agent being promoted, not asks TO the actor
-            List<Ask> pendingPromoAsks = askService.findByToAndStatusPending(id).stream()
+            List<Ask> pendingPromoAsks = askService.findByToAndStatusPending(agentId).stream()
                     .filter(a -> "promotion".equals(a.getKind()))
                     .toList();
             boolean hasPromoForAgent = false;
@@ -148,12 +149,12 @@ public class AgentController {
                 try {
                     JsonNode node = objectMapper.readTree(a.getPayload());
                     JsonNode agentIdNode = node.get("agentId");
-                    if (agentIdNode != null && id.equals(agentIdNode.asText())) {
+                    if (agentIdNode != null && agentId.equals(agentIdNode.asText())) {
                         hasPromoForAgent = true;
                         break;
                     }
                 } catch (Exception e) {
-                    auditService.logSystem("PROMOTE_PARSE_FAIL", "agent", id,
+                    auditService.logSystem("PROMOTE_PARSE_FAIL", "agent", agentId,
                         String.format("{\"error\":\"%s\"}", e.getMessage()));
                 }
             }
@@ -173,7 +174,7 @@ public class AgentController {
             }
             // TPL-040: Snapshot identity files and effective scopes at creation
             Map<String, String> snapshotMap = new HashMap<>();
-            snapshotMap.put("agentId", id);
+            snapshotMap.put("agentId", agentId);
             snapshotMap.put("agentName", agent.getName());
             snapshotMap.put("class", agent.getAgentClass());
             snapshotMap.put("placement", placement);
@@ -187,8 +188,8 @@ public class AgentController {
             askService.create("promotion", actor, OffboardingWalkService.ADMIN_BROADCAST,
                 snapshotPayload, "standard", "deny", 1,
                 Instant.now().plusSeconds(Defaults.DEFAULT_STANDARD_ASK_DEADLINE_HOURS * 3600L), null, null);
-            auditService.log(actor, "PROMOTE_REQUEST", "agent", id, snapshotPayload);
-            return ResponseEntity.ok(Map.of("message", "Promotion ask filed", "agentId", id, "placement", placement));
+            auditService.log(actor, "PROMOTE_REQUEST", "agent", agentId, snapshotPayload);
+            return ResponseEntity.ok(Map.of("message", "Promotion ask filed", "agentId", agentId, "placement", placement));
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {

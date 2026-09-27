@@ -73,8 +73,11 @@ public class BoardTaskController {
                 return ControllerResponses.validation(auditService, e.getMessage());
             }
 
+            if (body.get("title") == null || body.get("title").isBlank()) {
+                throw new IllegalArgumentException("title is required");
+            }
             BoardTask task = taskService.create(
-                body.get("title") != null && !body.get("title").isBlank() ? body.get("title") : null,
+                body.get("title"),
                 body.get("description"),
                 actor,
                 body.get("assigneeMemberId"),

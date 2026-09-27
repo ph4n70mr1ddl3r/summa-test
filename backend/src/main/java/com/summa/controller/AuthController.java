@@ -181,6 +181,6 @@ public class AuthController {
                 return xfwd.split(",")[0].trim();
             }
         }
-        return "local".equals(remoteAddr) ? "127.0.0.1" : remoteAddr;
+        return "local".equals(remoteAddr) || "::1".equals(remoteAddr) ? "127.0.0.1" : remoteAddr;
     }
 }

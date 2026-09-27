@@ -339,7 +339,12 @@ public class AgentService {
         List<Agent> suspendedExpired = agentRepository.findSuspendedExpiredBefore(now);
         for (Agent agent : activeExpired) {
             try {
-                retire(agent.getId(), "system");
+                // Re-fetch to avoid lost-update from concurrent modifications
+                Optional<Agent> fresh = agentRepository.findById(agent.getId());
+                if (fresh.isEmpty()) continue;
+                Agent current = fresh.get();
+                if (!AgentStatus.ACTIVE.getValue().equals(current.getStatus())) continue;
+                retire(current.getId(), "system");
             } catch (Exception e) {
                 auditService.logSystem("TTL_REAP_FAIL", "agent", agent.getId(),
                     String.format("{\"error\":\"%s\"}", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));

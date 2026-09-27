@@ -61,9 +61,9 @@ public class InitiativeController {
                 throw new IllegalArgumentException("lead is required");
             }
             String sponsorRaw = body.get("sponsor");
-            String sponsorClean = sponsorRaw != null ? sponsorRaw.replaceFirst("^[ha]?:", "") : sponsorRaw;
+            String sponsorClean = sponsorRaw.replaceFirst("^[ha]?:", "");
             String leadRaw = body.get("lead");
-            String leadClean = leadRaw != null ? leadRaw.replaceFirst("^[ha]?:", "") : leadRaw;
+            String leadClean = leadRaw.replaceFirst("^[ha]?:", "");
             String generatedId = UUID.randomUUID().toString();
             Instant deadline;
             try {
