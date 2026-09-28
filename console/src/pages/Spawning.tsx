@@ -10,6 +10,7 @@ export default function Spawning() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [actionId, setActionId] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
 
   const loadData = () => {
     setLoading(true)
@@ -43,13 +44,13 @@ export default function Spawning() {
 
   const handleAction = async (id: string, action: 'approve' | 'deny') => {
     setActionId(id)
-    setError(null)
+    setActionError(null)
     try {
       if (action === 'approve') await api.spawn.approve(id)
       else await api.spawn.deny(id)
       await loadData()
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setActionError(err instanceof Error ? err.message : String(err))
       await loadData()
     } finally {
       setActionId(null)
@@ -64,6 +65,11 @@ export default function Spawning() {
 
   return (
     <div className="space-y-6">
+      {actionError && (
+        <div className="rounded-lg p-3 text-sm bg-red-900/30 border border-red-700 text-red-400" role="alert">
+          {actionError}
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Spawning</h2>
         {stats && (
