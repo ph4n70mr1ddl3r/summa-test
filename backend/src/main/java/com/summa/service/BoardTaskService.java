@@ -150,7 +150,11 @@ public class BoardTaskService {
     public BoardTask complete(String id, String actor) {
         BoardTask task = taskRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Task not found: " + id));
-        
+
+        String currentStatus = task.getStatus();
+        if (currentStatus != null && !"open".equals(currentStatus) && !"in_progress".equals(currentStatus)) {
+            throw new IllegalStateException("Only open or in-progress tasks can be completed");
+        }
         task.setStatus("done");
         task.setCompletedAt(Instant.now());
         BoardTask saved = taskRepository.save(task);

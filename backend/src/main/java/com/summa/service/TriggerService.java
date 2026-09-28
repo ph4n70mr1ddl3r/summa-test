@@ -68,6 +68,9 @@ public class TriggerService {
     public Trigger pause(String id, String actor) {
         Trigger trigger = triggerRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Trigger not found: " + id));
+        if (!"active".equals(trigger.getStatus())) {
+            throw new IllegalStateException("Only active triggers can be paused");
+        }
         trigger.setStatus("paused");
         Trigger saved = triggerRepository.save(trigger);
         auditService.log(actor, "PAUSE_TRIGGER", "trigger", id, null);
@@ -78,6 +81,9 @@ public class TriggerService {
     public Trigger resume(String id, String actor) {
         Trigger trigger = triggerRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Trigger not found: " + id));
+        if (!"paused".equals(trigger.getStatus())) {
+            throw new IllegalStateException("Only paused triggers can be resumed");
+        }
         trigger.setStatus("active");
         Trigger saved = triggerRepository.save(trigger);
         auditService.log(actor, "RESUME_TRIGGER", "trigger", id, null);
@@ -88,6 +94,9 @@ public class TriggerService {
     public Trigger archive(String id, String actor) {
         Trigger trigger = triggerRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Trigger not found: " + id));
+        if ("archived".equals(trigger.getStatus())) {
+            throw new IllegalStateException("Trigger is already archived");
+        }
         trigger.setStatus("archived");
         Trigger saved = triggerRepository.save(trigger);
         auditService.log(actor, "ARCHIVE_TRIGGER", "trigger", id, null);

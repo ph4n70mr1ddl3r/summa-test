@@ -353,6 +353,9 @@ public class SpawnService {
         SpawnRequest request = spawnRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Spawn request not found: " + id));
 
+        if (!"requested".equals(request.getStatus())) {
+            throw new IllegalStateException("Only requested spawn requests can be denied");
+        }
         request.setStatus("archived");
         SpawnRequest saved = spawnRepository.save(request);
         auditService.log(actor, "DENY_SPAWN", "spawn_request", id, null);
@@ -364,6 +367,9 @@ public class SpawnService {
         SpawnRequest request = spawnRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Spawn request not found: " + id));
 
+        if ("archived".equals(request.getStatus())) {
+            throw new IllegalStateException("Spawn request is already archived");
+        }
         request.setStatus("archived");
         SpawnRequest saved = spawnRepository.save(request);
         auditService.log(actor, "ARCHIVE_SPAWN", "spawn_request", id, null);

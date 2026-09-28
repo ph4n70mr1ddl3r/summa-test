@@ -257,6 +257,10 @@ public class AgentService {
         Agent agent = agentRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Agent not found: " + id));
 
+        if (!AgentStatus.ACTIVE.getValue().equals(agent.getStatus())
+                && !AgentStatus.SUSPENDED.getValue().equals(agent.getStatus())) {
+            throw new IllegalStateException("Only active or suspended agents can be archived");
+        }
         agent.setStatus(AgentStatus.ARCHIVED.getValue());
         agent.setArchivedAt(Instant.now());
         Agent saved = agentRepository.save(agent);

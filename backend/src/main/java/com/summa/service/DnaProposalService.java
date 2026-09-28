@@ -247,7 +247,10 @@ public class DnaProposalService {
     public DnaProposal reject(String id, String reviewedBy, String actor) {
         DnaProposal proposal = proposalRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Proposal not found: " + id));
-        
+
+        if (!proposal.isOpen()) {
+            throw new IllegalStateException("Only open proposals can be rejected");
+        }
         proposal.setStatus("rejected");
         proposal.setReviewedBy(reviewedBy);
         proposal.setReviewedAt(Instant.now());

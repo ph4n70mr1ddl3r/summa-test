@@ -91,8 +91,8 @@ export default function Runs() {
               <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
                 {run.costTokens != null && <span>Tokens: {run.costTokens}</span>}
                 {run.costUsd != null && Number.isFinite(run.costUsd) && <span>Cost: ${run.costUsd.toFixed(2)}</span>}
-                {run.startedAt && <span>Started: {formatDate(run.startedAt, { dateOnly: true })}</span>}
-                {run.completedAt && <span>Completed: {formatDate(run.completedAt, { dateOnly: true })}</span>}
+                {run.startedAt != null && <span>Started: {formatDate(run.startedAt, { dateOnly: true })}</span>}
+                {run.completedAt != null && <span>Completed: {formatDate(run.completedAt, { dateOnly: true })}</span>}
               </div>
               {run.errorMessage && (
                 <p className="text-xs text-red-400 mt-1">Error: {run.errorMessage}</p>

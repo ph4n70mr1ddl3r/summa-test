@@ -139,6 +139,13 @@ public class OrgController {
         if (newRbac == null || newRbac.isBlank()) {
             return ControllerResponses.validation(auditService, "rbac is required for demote");
         }
+        boolean validRole = false;
+        for (RbacRole role : RbacRole.values()) {
+            if (role.getValue().equals(newRbac)) { validRole = true; break; }
+        }
+        if (!validRole) {
+            return ControllerResponses.validation(auditService, "rbac must be one of: " + java.util.Arrays.toString(RbacRole.values()));
+        }
         try {
             Human human = orgService.demote(id, newRbac, actor);
             return ResponseEntity.ok(human);
