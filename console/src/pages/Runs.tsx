@@ -41,7 +41,7 @@ export default function Runs() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Runs</h2>
-        <div className="flex space-x-2 text-sm">
+        <div className="flex space-x-2 text-sm" role="group" aria-label="Filter runs by status">
           <button
             onClick={() => setFilter('all')}
             className={`px-3 py-1 rounded ${filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400 hover:text-white'}`}

@@ -61,8 +61,8 @@ export default function Governance() {
         ? await api.governance.updatePolicies(body)
         : await api.governance.updateQuotas(body)
       if (result != null) {
-        if (section === 'policies') setPolicies(result as Record<string, unknown>)
-        else setQuotas(result as Record<string, unknown>)
+        if (section === 'policies') setPolicies(prev => ({ ...prev, ...(result as Record<string, unknown>) }))
+        else setQuotas(prev => ({ ...prev, ...(result as Record<string, unknown>) }))
         setEditValues(prev => { const next = { ...prev }; delete next[key]; return next })
       }
     } catch (err) {

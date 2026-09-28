@@ -57,7 +57,7 @@ export default function Memory() {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Memory</h2>
         <div className="flex items-center gap-3">
-          <div className="flex rounded-lg overflow-hidden border border-gray-700">
+          <div className="flex rounded-lg overflow-hidden border border-gray-700" role="group" aria-label="Filter memory items">
             <button
               onClick={() => setFilter('all')}
               className={`px-3 py-1 text-sm ${filter === 'all' ? 'bg-blue-700 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'}`}

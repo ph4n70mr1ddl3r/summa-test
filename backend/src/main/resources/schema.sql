@@ -540,6 +540,16 @@ CREATE INDEX IF NOT EXISTS idx_memory_items_member ON memory_items(member_id);
 CREATE INDEX IF NOT EXISTS idx_board_tasks_assignee ON board_tasks(assignee_member_id);
 CREATE INDEX IF NOT EXISTS idx_workspaces_archived ON workspaces(archived_at);
 CREATE INDEX IF NOT EXISTS idx_data_holds_released ON data_holds(released_at);
+CREATE INDEX IF NOT EXISTS idx_playbooks_status ON playbooks(status);
+CREATE INDEX IF NOT EXISTS idx_playbooks_created_by ON playbooks(created_by);
+CREATE INDEX IF NOT EXISTS idx_agents_spawned_by ON agents(spawned_by);
+CREATE INDEX IF NOT EXISTS idx_humans_rbac ON humans(rbac);
+CREATE INDEX IF NOT EXISTS idx_humans_deactivated ON humans(deactivated_at);
+CREATE INDEX IF NOT EXISTS idx_dna_goals_status_inject ON dna_goals(status, inject);
+CREATE INDEX IF NOT EXISTS idx_dna_goals_effective ON dna_goals(effective_from);
+CREATE INDEX IF NOT EXISTS idx_dna_rules_supersedes ON dna_rules(supersedes_id);
+CREATE INDEX IF NOT EXISTS idx_dna_cards_domain_status ON dna_cards(domain_id, status);
+CREATE INDEX IF NOT EXISTS idx_dna_rules_domain_status ON dna_rules(domain_id, status);
 
 -- FTS5 virtual table for DNA search.
 -- NOTE: source tables use TEXT UUID primary keys, which cannot be stored in
