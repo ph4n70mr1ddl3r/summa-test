@@ -526,6 +526,17 @@ CREATE TABLE IF NOT EXISTS messages (
 
 CREATE INDEX IF NOT EXISTS idx_messages_run ON messages(run_id, timestamp);
 
+CREATE INDEX IF NOT EXISTS idx_dna_cards_domain ON dna_cards(domain_id);
+CREATE INDEX IF NOT EXISTS idx_dna_rules_domain ON dna_rules(domain_id);
+CREATE INDEX IF NOT EXISTS idx_dna_decisions_domain ON dna_decisions(domain_id);
+CREATE INDEX IF NOT EXISTS idx_dna_goals_domain ON dna_goals(domain_id);
+CREATE INDEX IF NOT EXISTS idx_dna_glossary_domain ON dna_glossary(domain_id);
+CREATE INDEX IF NOT EXISTS idx_spawn_requests_template ON spawn_requests(template_id);
+CREATE INDEX IF NOT EXISTS idx_spawn_requests_agent ON spawn_requests(agent_id);
+CREATE INDEX IF NOT EXISTS idx_external_writes_run ON external_writes(run_id);
+CREATE INDEX IF NOT EXISTS idx_runs_initiative ON runs(initiative_id);
+CREATE INDEX IF NOT EXISTS idx_memory_items_member ON memory_items(member_id);
+
 -- FTS5 virtual table for DNA search.
 -- NOTE: source tables use TEXT UUID primary keys, which cannot be stored in
 -- the implicit FTS5 integer rowid. We therefore keep an explicit UNINDEXED
@@ -585,8 +596,8 @@ CREATE TRIGGER IF NOT EXISTS dna_rules_au AFTER UPDATE ON dna_rules BEGIN
 END;
 
 CREATE TRIGGER IF NOT EXISTS dna_decisions_ai AFTER INSERT ON dna_decisions BEGIN
-    INSERT INTO dna_search_index (id, context_md, outcome_md, domain_id, kind, status)
-    VALUES (new.id, new.context_md, new.outcome_md, new.domain_id, 'decision', new.status);
+    INSERT INTO dna_search_index (id, context_md, outcome_md, domain_id, kind)
+    VALUES (new.id, new.context_md, new.outcome_md, new.domain_id, 'decision');
 END;
 
 CREATE TRIGGER IF NOT EXISTS dna_glossary_ai AFTER INSERT ON dna_glossary BEGIN
@@ -608,8 +619,7 @@ CREATE TRIGGER IF NOT EXISTS dna_decisions_au AFTER UPDATE ON dna_decisions BEGI
         context_md = new.context_md,
         outcome_md = new.outcome_md,
         domain_id = new.domain_id,
-        kind = 'decision',
-        status = new.status
+        kind = 'decision'
     WHERE id = old.id;
 END;
 

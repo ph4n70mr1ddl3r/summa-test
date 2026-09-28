@@ -112,7 +112,7 @@ public class NodeAuthFilter extends OncePerRequestFilter {
         // Path format: /nodes/<uuid>/... or /nodes
         String[] parts = path.split("/");
         // /nodes/<id>/... => parts[1] is the id
-        if (parts.length >= 2 && "nodes".equals(parts[1])) {
+        if (parts.length >= 3 && "nodes".equals(parts[1])) {
             String candidate = parts[2];
             // Validate UUID format
             if (candidate.matches("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")) {
@@ -124,7 +124,6 @@ public class NodeAuthFilter extends OncePerRequestFilter {
 
     private String computeSignature(String method, String path, String body, String pubkey) {
         try {
-            String keyBytes;
             // Distinguish base64-encoded pubkeys from raw ASCII keys.
             // ECDSA P-256 public keys are 65 bytes (0x04 prefix + 32x32 coords) → 88 chars base64,
             // or 32 bytes → 44 chars base64url without padding. We accept both formats strictly.
@@ -136,14 +135,14 @@ public class NodeAuthFilter extends OncePerRequestFilter {
             boolean looksLikeBase64 = isStandardBase64;
             // Only treat as base64url if it does NOT contain + or / (which are invalid in base64url)
             boolean looksLikeBase64Url = isBase64Url && !pubkey.contains("+") && !pubkey.contains("/");
+            Mac mac = Mac.getInstance("HmacSHA256");
             if (looksLikeBase64 || looksLikeBase64Url) {
-                keyBytes = new String(Base64.getDecoder().decode(pubkey), StandardCharsets.UTF_8);
+                byte[] decodedBytes = Base64.getDecoder().decode(pubkey);
+                mac.init(new SecretKeySpec(decodedBytes, "HmacSHA256"));
             } else {
-                keyBytes = pubkey;
+                mac.init(new SecretKeySpec(pubkey.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
             }
             String payload = method + ":" + path + ":" + body;
-            Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(new SecretKeySpec(keyBytes.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
             byte[] hash = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
             return bytesToHex(hash);
         } catch (Exception e) {

@@ -239,6 +239,10 @@ public class OrgController {
 
     @GetMapping("/lineage")
     public ResponseEntity<?> lineage(@RequestParam String memberId) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, "admin required");
+        }
         // API-004: full lineage graph from any member
         int depthCap = agentService.getDepthCap();
         List<String> lineage = new ArrayList<>();
@@ -270,6 +274,10 @@ public class OrgController {
             @RequestParam(defaultValue = "100") int limit,
             @RequestParam(required = false) String objectType,
             @RequestParam(required = false) String objectId) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, "admin required");
+        }
         if (limit <= 0 || limit > 1000) {
             return ControllerResponses.validation(auditService, "limit must be between 1 and 1000");
         }

@@ -12,13 +12,13 @@ public interface MemoryItemRepository extends JpaRepository<MemoryItem, String> 
     List<MemoryItem> findByMemberId(String memberId);
     List<MemoryItem> findByWorkspaceId(String workspaceId);
     List<MemoryItem> findByTaintedTrue();
-    @Query("SELECT m FROM MemoryItem m WHERE m.memberId = :memberId ORDER BY m.createdAt DESC")
+    @Query("SELECT m FROM MemoryItem m WHERE m.memberId = :memberId ORDER BY m.createdAt DESC LIMIT :limit")
     List<MemoryItem> findByMemberId(@Param("memberId") String memberId, @Param("limit") int limit);
-    @Query("SELECT m FROM MemoryItem m WHERE m.workspaceId = :workspaceId ORDER BY m.createdAt DESC")
+    @Query("SELECT m FROM MemoryItem m WHERE m.workspaceId = :workspaceId ORDER BY m.createdAt DESC LIMIT :limit")
     List<MemoryItem> findByWorkspaceId(@Param("workspaceId") String workspaceId, @Param("limit") int limit);
-    @Query("SELECT m FROM MemoryItem m WHERE m.tainted = true ORDER BY m.createdAt DESC")
+    @Query("SELECT m FROM MemoryItem m WHERE m.tainted = true ORDER BY m.createdAt DESC LIMIT :limit")
     List<MemoryItem> findByTaintedTrue(@Param("limit") int limit);
-    @Query("SELECT m FROM MemoryItem m ORDER BY m.createdAt DESC")
+    @Query("SELECT m FROM MemoryItem m ORDER BY m.createdAt DESC LIMIT :limit")
     List<MemoryItem> findAll(@Param("limit") int limit);
     long countByTier(String tier);
 }

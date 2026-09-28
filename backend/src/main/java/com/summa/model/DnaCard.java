@@ -48,6 +48,7 @@ public class DnaCard {
         if (refs == null) refs = "[]";
         if (provenance == null) provenance = "{}";
         if (definitionMd == null) definitionMd = "";
+        if (version == null) version = 1;
     }
 
     @PreUpdate

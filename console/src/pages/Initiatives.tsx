@@ -21,6 +21,8 @@ export default function Initiatives() {
       setInitiatives(Array.isArray(data[0]) ? data[0] as Initiative[] : [])
       setError(loadError)
       setLoading(false)
+    }).catch(() => {
+      if (!aborted) { setError('Failed to load'); setLoading(false) }
     })
     return () => { aborted = true }
   }

@@ -101,7 +101,7 @@ public class DnaDomainController {
         if (gate != null) return gate;
         try {
             String newName = body.get("name");
-            if (newName != null && newName.isBlank()) {
+            if (newName == null || newName.isBlank()) {
                 throw new IllegalArgumentException("name must not be blank");
             }
             DnaDomain domain = domainService.rename(id, newName, actor);

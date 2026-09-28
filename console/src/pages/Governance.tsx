@@ -40,6 +40,8 @@ export default function Governance() {
       setSpend(spendData)
       setError(loadError)
       setLoading(false)
+    }).catch(() => {
+      if (!aborted) { setError('Failed to load'); setLoading(false) }
     })
     return () => { aborted = true }
   }

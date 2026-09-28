@@ -33,7 +33,7 @@ public class BoardTask {
     @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant dueAt;
 
-    @Column(name = "created_by", length = 36)
+    @Column(name = "created_by", nullable = false, length = 36)
     private String createdBy;
 
     @Column(name = "created_at", nullable = false)

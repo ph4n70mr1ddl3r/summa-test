@@ -33,6 +33,8 @@ export default function OrgView() {
       setGroups(Array.isArray(data[1]) ? data[1] as Group[] : [])
       setError(loadError)
       setLoading(false)
+    }).catch(() => {
+      if (!aborted) { setError('Failed to load'); setLoading(false) }
     })
     return () => { aborted = true }
   }
