@@ -26,6 +26,27 @@ public class GovernanceController {
     private final WriteGate writeGate;
     private final AuditService auditService;
 
+    private static final Set<String> POLICY_KEYS = Set.of(
+            "asks-tier-critical-deadline-hours",
+            "asks-tier-standard-deadline-hours",
+            "asks-tier-bulk-deadline-hours",
+            "asks-storm-collapse-window-hours",
+            "asks-rate-limit-per-source-per-hour",
+            "summa.dna.default-review-sla-days",
+            "spend-org-ceiling",
+            "spend-critical-floor-percent",
+            "spend-evaluation-window-days"
+    );
+
+    private static final Set<String> QUOTA_KEYS = Set.of(
+            "spawn-ephemeral-default-ttl-hours",
+            "spawn-ephemeral-max-concurrent-per-spawner",
+            "spawn-org-wide-max-active-agents",
+            "spawn-depth-cap",
+            "spawn-budget-window-days",
+            "node-affinity-starvation-hours"
+    );
+
     public GovernanceController(GovernanceService governanceService, SpendLedgerService spendLedgerService,
                                   MemberService memberService, WriteGate writeGate, AuditService auditService) {
         this.governanceService = governanceService;
@@ -56,26 +77,26 @@ public class GovernanceController {
         return ResponseEntity.ok(governanceService.getSpendView());
     }
 
-    private static final Set<String> POLICY_KEYS = Set.of(
-            "asks-tier-critical-deadline-hours",
-            "asks-tier-standard-deadline-hours",
-            "asks-tier-bulk-deadline-hours",
-            "asks-storm-collapse-window-hours",
-            "asks-rate-limit-per-source-per-hour",
-            "summa.dna.default-review-sla-days",
-            "spend-org-ceiling",
-            "spend-critical-floor-percent",
-            "spend-evaluation-window-days"
-    );
-
-    private static final Set<String> QUOTA_KEYS = Set.of(
-            "spawn-ephemeral-default-ttl-hours",
-            "spawn-ephemeral-max-concurrent-per-spawner",
-            "spawn-org-wide-max-active-agents",
-            "spawn-depth-cap",
-            "spawn-budget-window-days",
-            "node-affinity-starvation-hours"
-    );
+    private static ResponseEntity<Map<String, Object>> validateNumberOrBoolean(
+            String key, Object value, String label, AuditService auditService) {
+        if (value instanceof Boolean) {
+            return null;
+        } else if (value instanceof Number) {
+            return null;
+        } else if (value instanceof String) {
+            try {
+                double parsed = Double.parseDouble((String) value);
+                if (Double.isNaN(parsed) || Double.isInfinite(parsed) || parsed < 0) {
+                    return ControllerResponses.validation(auditService, label + " value for '" + key + "' must be a non-negative number, not '" + value + "'");
+                }
+            } catch (NumberFormatException e) {
+                return ControllerResponses.validation(auditService, label + " value for '" + key + "' must be a number, not '" + value + "'");
+            }
+            return null;
+        } else {
+            return ControllerResponses.validation(auditService, label + " value for '" + key + "' must be a number, boolean, or string, got: " + (value != null ? value.getClass().getSimpleName() : "null"));
+        }
+    }
 
     @PutMapping("/policies")
     public ResponseEntity<?> updatePolicy(@RequestBody Map<String, Object> body) {
@@ -87,24 +108,8 @@ public class GovernanceController {
             if (!POLICY_KEYS.contains(key)) {
                 return ControllerResponses.validation(auditService, "Unknown policy key: " + key);
             }
-            Object value = body.get(key);
-            if (value instanceof Boolean) {
-                // Booleans are accepted as-is for any policy that supports them
-            } else if (value instanceof Number) {
-                // Numbers are accepted as-is
-            } else if (value instanceof String) {
-                // Strings must parse as a number (integer or float) — reject freeform text
-                try {
-                    double parsed = Double.parseDouble((String) value);
-                    if (Double.isNaN(parsed) || Double.isInfinite(parsed) || parsed < 0) {
-                        return ControllerResponses.validation(auditService, "Policy value for '" + key + "' must be a non-negative number, not '" + value + "'");
-                    }
-                } catch (NumberFormatException e) {
-                    return ControllerResponses.validation(auditService, "Policy value for '" + key + "' must be a number, not '" + value + "'");
-                }
-            } else {
-                return ControllerResponses.validation(auditService, "Policy value for '" + key + "' must be a number, boolean, or string, got: " + (value != null ? value.getClass().getSimpleName() : "null"));
-            }
+            ResponseEntity<Map<String, Object>> invalid = validateNumberOrBoolean(key, body.get(key), "Policy", auditService);
+            if (invalid != null) return invalid;
         }
         governanceService.setSettingsBulk(body, actor);
         return ResponseEntity.ok(governanceService.getAllSettings());
@@ -120,23 +125,8 @@ public class GovernanceController {
             if (!QUOTA_KEYS.contains(key)) {
                 return ControllerResponses.validation(auditService, "Unknown quota key: " + key);
             }
-            Object value = body.get(key);
-            if (value instanceof Boolean) {
-                // Booleans are accepted as-is
-            } else if (value instanceof Number) {
-                // Numbers are accepted as-is
-            } else if (value instanceof String) {
-                try {
-                    double parsed = Double.parseDouble((String) value);
-                    if (Double.isNaN(parsed) || Double.isInfinite(parsed) || parsed < 0) {
-                        return ControllerResponses.validation(auditService, "Quota value for '" + key + "' must be a non-negative number, not '" + value + "'");
-                    }
-                } catch (NumberFormatException e) {
-                    return ControllerResponses.validation(auditService, "Quota value for '" + key + "' must be a number, not '" + value + "'");
-                }
-            } else {
-                return ControllerResponses.validation(auditService, "Quota value for '" + key + "' must be a number, boolean, or string, got: " + (value != null ? value.getClass().getSimpleName() : "null"));
-            }
+            ResponseEntity<Map<String, Object>> invalid = validateNumberOrBoolean(key, body.get(key), "Quota", auditService);
+            if (invalid != null) return invalid;
         }
         governanceService.setSettingsBulk(body, actor);
         return ResponseEntity.ok(governanceService.getAllSettings());

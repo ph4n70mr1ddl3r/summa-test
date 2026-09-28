@@ -354,6 +354,7 @@ export interface DnaDecision {
   refs?: string;
   provenance?: string;
   createdAt?: number;
+  updatedAt?: number;
 }
 
 export interface DnaProposal {

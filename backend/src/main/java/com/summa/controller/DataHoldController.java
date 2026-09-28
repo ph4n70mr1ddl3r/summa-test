@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.service.MemberService;
+import com.summa.enums.DataHoldKind;
 import java.util.List;
 import java.util.Map;
 
@@ -44,10 +45,8 @@ public class DataHoldController {
             if (kind == null || kind.isBlank()) {
                 throw new IllegalArgumentException("kind is required");
             }
-            // Validate kind against known values
-            if (!"member".equals(kind) && !"domain".equals(kind)) {
-                throw new IllegalArgumentException("kind must be one of: member, domain");
-            }
+            // Validate kind against enum
+            DataHoldKind holdKind = DataHoldKind.requireFromValue(kind);
             String subjectId = body.get("subjectId");
             if (subjectId == null || subjectId.isBlank()) {
                 throw new IllegalArgumentException("subjectId is required");
@@ -57,7 +56,7 @@ public class DataHoldController {
                 throw new IllegalArgumentException("reasonMd is required");
             }
             DataHold hold = holdService.create(
-                kind,
+                holdKind.getValue(),
                 subjectId,
                 reasonMd,
                 actor

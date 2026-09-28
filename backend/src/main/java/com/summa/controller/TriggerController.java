@@ -7,6 +7,8 @@ import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
+import com.summa.service.AgentService;
+import com.summa.service.WorkspaceService;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -17,11 +19,16 @@ public class TriggerController {
     private final TriggerService triggerService;
     private final AuditService auditService;
     private final WriteGate writeGate;
+    private final AgentService agentService;
+    private final WorkspaceService workspaceService;
 
-    public TriggerController(TriggerService triggerService, AuditService auditService, WriteGate writeGate) {
+    public TriggerController(TriggerService triggerService, AuditService auditService, WriteGate writeGate,
+                              AgentService agentService, WorkspaceService workspaceService) {
         this.triggerService = triggerService;
         this.auditService = auditService;
         this.writeGate = writeGate;
+        this.agentService = agentService;
+        this.workspaceService = workspaceService;
     }
 
     @GetMapping
@@ -63,6 +70,13 @@ public class TriggerController {
             String agentId = body.get("agentId");
             if (agentId == null || agentId.isBlank()) {
                 throw new IllegalArgumentException("agentId is required");
+            }
+            if (agentService.findById(agentId).isEmpty()) {
+                throw new IllegalArgumentException("Agent not found: " + agentId);
+            }
+            String workspaceId = body.get("workspaceId");
+            if (workspaceId != null && !workspaceId.isBlank() && workspaceService.findById(workspaceId).isEmpty()) {
+                throw new IllegalArgumentException("Workspace not found: " + workspaceId);
             }
             Trigger trigger = triggerService.create(
                 name,

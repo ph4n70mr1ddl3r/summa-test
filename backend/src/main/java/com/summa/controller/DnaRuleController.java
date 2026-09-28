@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.util.JsonHelpers;
+import com.summa.service.DnaDomainService;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -20,11 +21,14 @@ public class DnaRuleController {
     private final DnaRuleService ruleService;
     private final AuditService auditService;
     private final WriteGate writeGate;
+    private final DnaDomainService domainService;
 
-    public DnaRuleController(DnaRuleService ruleService, AuditService auditService, WriteGate writeGate) {
+    public DnaRuleController(DnaRuleService ruleService, AuditService auditService, WriteGate writeGate,
+                              DnaDomainService domainService) {
         this.ruleService = ruleService;
         this.auditService = auditService;
         this.writeGate = writeGate;
+        this.domainService = domainService;
     }
 
     @GetMapping
@@ -51,6 +55,13 @@ public class DnaRuleController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
+            String domainId = body.get("domainId");
+            if (domainId == null || domainId.isBlank()) {
+                throw new IllegalArgumentException("domainId is required");
+            }
+            if (domainService.findById(domainId).isEmpty()) {
+                throw new IllegalArgumentException("Domain not found: " + domainId);
+            }
             Instant effectiveFrom = body.containsKey("effectiveFrom") && body.get("effectiveFrom") != null && !body.get("effectiveFrom").isBlank() ?
                 JsonHelpers.parseOptionalInstant(body.get("effectiveFrom"), "effectiveFrom") : Instant.now();
             Instant effectiveTo = body.containsKey("effectiveTo") && body.get("effectiveTo") != null && !body.get("effectiveTo").isBlank() ?
