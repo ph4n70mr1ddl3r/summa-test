@@ -16,7 +16,7 @@ export default function DNAProposals() {
     setError(null)
     let aborted = false
     api.dna.proposals(filter !== 'all' ? filter : undefined)
-      .then((data) => { if (!aborted) { setProposals(data); setLoading(false) } })
+       .then((data) => { if (!aborted) { setProposals(Array.isArray(data) ? data : []); setLoading(false) } })
       .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
     return () => { aborted = true }
   }

@@ -63,11 +63,10 @@ export default function Governance() {
       if (result != null) {
         if (section === 'policies') setPolicies(result as Record<string, unknown>)
         else setQuotas(result as Record<string, unknown>)
+        setEditValues(prev => { const next = { ...prev }; delete next[key]; return next })
       }
-      setEditValues(prev => { const next = { ...prev }; delete next[key]; return next })
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
-      setEditValues(prev => { const next = { ...prev }; delete next[key]; return next })
     } finally {
       setSaving(null)
     }

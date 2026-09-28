@@ -30,38 +30,35 @@ public class GlobalExceptionHandler {
         }
     }
 
-    private ResponseEntity<Map<String, Object>> auditAndRespond(String auditAction, String errorCode,
-            String message, HttpStatus status) {
+    private ResponseEntity<Map<String, Object>> auditAndRespond(String auditAction, String objectType,
+            String objectId, String message, HttpStatus status) {
         String actor = currentActor();
-        AuditEvent audit = auditService.log(actor, auditAction, "http_request", errorCode, message);
-        if (audit == null) {
-            return ResponseEntity.status(status).body(Map.of("code", errorCode, "message", message));
+        AuditEvent audit = auditService.log(actor, auditAction, objectType, objectId, message);
+        Map<String, Object> body = Map.of("code", objectType, "message", message);
+        if (audit != null) {
+            body = Map.of("code", objectType, "message", message, "audit_event_id", audit.getId());
         }
-        return ResponseEntity.status(status).body(Map.of(
-            "code", errorCode,
-            "message", message,
-            "audit_event_id", audit.getId()
-        ));
+        return ResponseEntity.status(status).body(body);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException e) {
-        return auditAndRespond("REFUSAL", "validation", e.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
+        return auditAndRespond("REFUSAL", "validation", null, e.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<Map<String, Object>> handleConflict(ConflictException e) {
-        return auditAndRespond("REFUSAL", "conflict", e.getMessage(), HttpStatus.CONFLICT);
+        return auditAndRespond("REFUSAL", "conflict", null, e.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalState(IllegalStateException e) {
-        return auditAndRespond("REFUSAL", "gate", e.getMessage(), HttpStatus.FORBIDDEN);
+        return auditAndRespond("REFUSAL", "gate", null, e.getMessage(), HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(EntityNotFoundException e) {
-        return auditAndRespond("NOT_FOUND", "not_found", e.getMessage(), HttpStatus.NOT_FOUND);
+        return auditAndRespond("NOT_FOUND", "not_found", null, e.getMessage(), HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
@@ -70,12 +67,12 @@ public class GlobalExceptionHandler {
         log.warn("Data integrity conflict: {}", e.getMostSpecificCause() != null
                 ? e.getMostSpecificCause().getMessage() : e.getMessage());
         String message = "Resource conflict: the request violates a uniqueness or integrity constraint";
-        return auditAndRespond("REFUSAL", "resource_conflict", message, HttpStatus.CONFLICT);
+        return auditAndRespond("REFUSAL", "resource_conflict", null, message, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneric(Exception e) {
         log.error("Unhandled exception", e);
-        return auditAndRespond("REFUSAL", "internal_error", "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
+        return auditAndRespond("ERROR", "internal_error", null, "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
