@@ -56,8 +56,8 @@ public class PatController {
             
             List<String> scopes = List.of();
             if (body.containsKey("scopes")) {
-                String scopesRaw = body.get("scopes").trim();
-                if (scopesRaw.isEmpty() || "{}".equals(scopesRaw) || "[]".equals(scopesRaw)) {
+                String scopesRaw = body.get("scopes");
+                if (scopesRaw == null || scopesRaw.trim().isEmpty() || "{}".equals(scopesRaw.trim()) || "[]".equals(scopesRaw.trim())) {
                     scopes = List.of();
                 } else {
                     try {

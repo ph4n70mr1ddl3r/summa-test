@@ -102,7 +102,7 @@ public class AuthController {
         // RbacAuthorizationFilter already ran before this controller and set the actor
         // attribute. Re-parse here only to satisfy the explicit auth header check;
         // in practice the filter chain guarantees a valid actor is available.
-        String actor = RbacAuthorizationFilter.getCurrentActor();
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         if (actor == null || actor.isBlank()) {
             var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Missing token", null);
             return ControllerResponses.gate(audit, "Missing or malformed Authorization header");

@@ -1,5 +1,6 @@
 package com.summa.controller;
 
+import com.summa.enums.RbacRole;
 import com.summa.service.DnaReadService;
 import com.summa.service.AuditService;
 import com.summa.service.OrgService;
@@ -51,7 +52,7 @@ public class DnaSearchController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         // Org snapshot exposes member identities and RBAC — restrict to admins only.
         var humanOpt = orgService.findHuman(actor);
-        if (humanOpt.isEmpty() || !"admin".equals(humanOpt.get().getRbac())) {
+        if (humanOpt.isEmpty() || !RbacRole.ADMIN.getValue().equals(humanOpt.get().getRbac())) {
             var audit = auditService.logSystem("REFUSAL", "dna_org_snapshot", actor, "Non-admin org snapshot access attempt");
             return ControllerResponses.gate(audit, "Admin access required for org snapshot");
         }

@@ -154,6 +154,9 @@ public class OrgController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Admin access required");
+        }
         try {
             Human human = orgService.setDeputy(id, body.get("deputyMemberId"), actor);
             return ResponseEntity.ok(human);

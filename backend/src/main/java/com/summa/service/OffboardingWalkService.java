@@ -1,5 +1,6 @@
 package com.summa.service;
 
+import com.summa.enums.RbacRole;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -365,10 +366,10 @@ public class OffboardingWalkService {
         List<Agent> ownedAgentsDemote = agentService.findByOwner(humanId);
         for (Agent agent : ownedAgentsDemote) {
             // CLC-051: demotion to viewer retires the assistant (mirrored viewer scopes are read-only)
-            if ("viewer".equals(newRbac) && isPersonalAssistant(agent)) {
+            if (RbacRole.VIEWER.getValue().equals(newRbac) && isPersonalAssistant(agent)) {
                 agentService.retire(agent.getId(), actor);
                 agentsRetired++;
-            } else if ("viewer".equals(newRbac)) {
+            } else if (RbacRole.VIEWER.getValue().equals(newRbac)) {
                 // Viewer cannot own staff — retire all agents
                 agentService.retire(agent.getId(), actor);
                 agentsRetired++;
@@ -382,7 +383,7 @@ public class OffboardingWalkService {
         List<DnaProposal> openProposals = proposalService.findAllOpen();
         for (DnaProposal prop : openProposals) {
             if (!humanId.equals(prop.getProposedBy())) continue;
-            boolean canPropose = !"viewer".equals(newRbac);
+            boolean canPropose = !RbacRole.VIEWER.getValue().equals(newRbac);
             if (!canPropose) {
                 prop.setStatus("withdrawn");
                 proposalRepository.save(prop);
@@ -413,12 +414,8 @@ public class OffboardingWalkService {
         // OFB-031: Re-own or retire owned goals (active only)
         for (DnaGoal goal : goalService.findAllActiveWindowed(Instant.now())) {
             if (humanId.equals(goal.getOwner()) && "active".equals(goal.getStatus())) {
-                if ("viewer".equals(newRbac)) {
+                if (RbacRole.VIEWER.getValue().equals(newRbac)) {
                     goal.setStatus("retired");
-                    goalRepository.save(goal);
-                    goalsRetired++;
-                } else {
-                    goal.setOwner(targetOwner);
                     goalRepository.save(goal);
                     goalsRetired++;
                 }
@@ -462,7 +459,7 @@ public class OffboardingWalkService {
 
         // OFB-031: Return board-task assignments to pool or reassign
         for (BoardTask task : boardTaskRepository.findByAssigneeMemberId(humanId)) {
-            if ("viewer".equals(newRbac)) {
+            if (RbacRole.VIEWER.getValue().equals(newRbac)) {
                 task.setAssigneeMemberId(null);
                 task.setStatus("open");
                 boardTaskRepository.save(task);

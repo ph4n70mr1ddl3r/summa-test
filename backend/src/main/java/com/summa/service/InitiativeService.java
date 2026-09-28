@@ -1,5 +1,6 @@
 package com.summa.service;
 
+import com.summa.enums.RbacRole;
 import com.summa.repository.InitiativeRepository;
 import com.summa.repository.BoardTaskRepository;
 import com.summa.repository.AskRepository;
@@ -93,14 +94,14 @@ public class InitiativeService {
         String sponsorClean = sponsor != null ? sponsor.replaceFirst("^[ha]?:", "") : "";
         String leadClean = lead != null ? lead.replaceFirst("^[ha]?:", "") : "";
         Optional<Human> sponsorHuman = memberService.findHuman(sponsorClean);
-        if (sponsorHuman.isPresent() && "viewer".equals(sponsorHuman.get().getRbac())) {
+        if (sponsorHuman.isPresent() && RbacRole.VIEWER.getValue().equals(sponsorHuman.get().getRbac())) {
             throw new IllegalStateException("Sponsor cannot be a viewer: " + sponsor);
         }
         if (sponsorHuman.isPresent() && !sponsorHuman.get().isActive()) {
             throw new IllegalStateException("Sponsor must be an active member: " + sponsor);
         }
         Optional<Human> leadHuman = memberService.findHuman(leadClean);
-        if (leadHuman.isPresent() && "viewer".equals(leadHuman.get().getRbac())) {
+        if (leadHuman.isPresent() && RbacRole.VIEWER.getValue().equals(leadHuman.get().getRbac())) {
             throw new IllegalStateException("Lead cannot be a viewer: " + lead);
         }
         if (leadHuman.isPresent() && !leadHuman.get().isActive()) {
@@ -142,7 +143,7 @@ public class InitiativeService {
         initiative.setDependsOn(dependsOn != null ? dependsOn : "[]");
 
         Initiative saved = initiativeRepository.save(initiative);
-        auditService.log(sponsor, "CREATE", "initiative", id,
+        auditService.log(sponsorClean, "CREATE", "initiative", id,
             String.format("{\"title\":%s,\"lead\":%s}", JsonHelpers.jsonString(title), JsonHelpers.jsonString(lead)));
         return saved;
     }

@@ -1,5 +1,6 @@
 package com.summa.service;
 
+import com.summa.enums.RbacRole;
 import com.summa.constants.Defaults;
 import com.summa.repository.AskRepository;
 import com.summa.model.Ask;
@@ -385,7 +386,7 @@ public class AskService {
         // Direct target match
         if (ask.getTo() != null && ask.getTo().equals(responder)) {
             Optional<Human> target = memberService.findHuman(ask.getTo());
-            return target.isPresent() && !"viewer".equals(target.get().getRbac());
+            return target.isPresent() && !RbacRole.VIEWER.getValue().equals(target.get().getRbac());
         }
         // Admin broadcast: any active admin is a pool principal
         if (ask.getTo() != null && OffboardingWalkService.ADMIN_BROADCAST.equals(ask.getTo())) {
