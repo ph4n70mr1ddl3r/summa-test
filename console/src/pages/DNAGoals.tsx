@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { DnaGoal } from '../types'
 import { formatDate, dnaGoalStatusColor, truncateSnippet } from '../utils/formatting'
-import { escapeHtml } from '../utils/escapeHtml'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function DNAGoals() {
@@ -44,7 +43,7 @@ export default function DNAGoals() {
             <div key={goal.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium text-gray-200">{escapeHtml(truncateSnippet(goal.statementMd, 200))}</p>
+                  <p className="font-medium text-gray-200">{truncateSnippet(goal.statementMd, 200)}</p>
                   <p className="text-sm text-gray-400 mt-1">
                     Owner: {goal.owner} | Inject: {goal.inject}
                     {goal.quarter && <span> | Q{goal.quarter}</span>}

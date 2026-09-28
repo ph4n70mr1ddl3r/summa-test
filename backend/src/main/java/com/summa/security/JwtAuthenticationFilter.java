@@ -55,7 +55,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                       @NonNull FilterChain filterChain) throws ServletException, IOException {
         String path = request.getRequestURI();
 
-        if (isPublicPath(path) || isNodePath(path)) {
+        if (isPublicPath(path)) {
+            // For public paths, parse JWT if present so downstream filters can set up
+            // actor context for authenticated callers (e.g. admin enrolling nodes or
+            // re-bootstrapping). Unauthenticated calls still pass through cleanly.
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                if (authHeader.length() > 7) {
+                    String token = authHeader.substring(7);
+                    Map<String, Object> payload = JwtUtil.parseToken(token, jwtSecret);
+                    if (payload != null) {
+                        String subject = (String) payload.get("sub");
+                        request.setAttribute("actor", subject);
+                    }
+                }
+            }
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        if (isNodePath(path)) {
             filterChain.doFilter(request, response);
             return;
         }

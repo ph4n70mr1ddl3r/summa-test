@@ -57,7 +57,6 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   const authed = useAuthState()
 
   if (!authed) {
-    setAuthToken(null)
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 

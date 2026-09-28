@@ -54,16 +54,39 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                       FilterChain filterChain) throws ServletException, IOException {
-        // Public endpoints (health, login, bootstrap, ...) carry no actor by design.
-        // JwtAuthenticationFilter already let them through — do not 401 them here,
-        // otherwise /api/health breaks and fresh installs can never bootstrap.
         String path = request.getRequestURI();
         String normalized = path != null && path.endsWith("/") && path.length() > 1
                 ? path.substring(0, path.length() - 1) : path;
+
+        // Public endpoints may be called unauthenticated (health, login, enroll, bootstrap).
+        // If an actor is already present (JWT parsed by JwtAuthenticationFilter or
+        // node auth set by NodeAuthFilter), still wire up the context so that the
+        // write-gate and downstream code see the correct identity.
         if (JwtAuthenticationFilter.PUBLIC_PATHS.contains(normalized)) {
+            String actor = (String) request.getAttribute("actor");
+            boolean nodeAuth = Boolean.TRUE.equals(request.getAttribute("nodeAuth"));
+            String effectiveActor = actor != null ? actor : Defaults.SYSTEM_ACTOR;
+            boolean writeAllowed = false;
+            if (nodeAuth) {
+                writeAllowed = true;
+            } else if (actor != null) {
+                Optional<Human> humanOpt = memberService.findHuman(actor);
+                if (humanOpt.isPresent()) {
+                    writeAllowed = memberService.hasWriteSurface(humanOpt.get());
+                } else {
+                    var agentOpt = memberService.findAgent(actor);
+                    if (agentOpt.isPresent()) {
+                        writeAllowed = memberService.hasWriteSurfaceAgent(agentOpt.get());
+                    }
+                }
+            }
+            ACTOR_CONTEXT.set(effectiveActor);
+            WRITES_ALLOWED.set(writeAllowed);
+            NODE_AUTH.set(nodeAuth);
             filterChain.doFilter(request, response);
             return;
         }
+
         String actor = (String) request.getAttribute("actor");
         if (actor == null) {
             // Do not trust X-Actor header from unauthenticated clients.

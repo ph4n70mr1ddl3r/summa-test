@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { DnaRule } from '../types'
 import { formatDate, dnaRuleStatusColor, truncateSnippet } from '../utils/formatting'
-import { escapeHtml } from '../utils/escapeHtml'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function DNARules() {
@@ -52,7 +51,7 @@ export default function DNARules() {
                 </span>
               </div>
               <pre className="mt-2 text-xs text-gray-400 bg-gray-900 rounded p-3 overflow-x-auto whitespace-pre-wrap">
-                {escapeHtml(truncateSnippet(rule.statementMd, 200))}
+                {truncateSnippet(rule.statementMd, 200)}
               </pre>
               <p className="text-xs text-gray-500 mt-2">
                 From: {rule.effectiveFrom != null ? formatDate(rule.effectiveFrom, { dateOnly: true }) : '∞'}

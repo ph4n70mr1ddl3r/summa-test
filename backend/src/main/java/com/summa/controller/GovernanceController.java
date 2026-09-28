@@ -153,7 +153,6 @@ public class GovernanceController {
     }
 
     private boolean requireAdmin(String actor) {
-        if (Boolean.TRUE.equals(RbacAuthorizationFilter.getNodeAuth())) return true;
         Optional<Human> actorOpt = memberService.findHuman(actor);
         return actorOpt.isPresent() && RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac());
     }

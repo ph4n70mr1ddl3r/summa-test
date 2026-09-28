@@ -93,16 +93,6 @@ public class GovernanceService {
         throw new IllegalArgumentException("Cannot cast value to " + type.getName() + " for key: " + key);
     }
 
-    /**
-     * @deprecated Use {@link #getSetting(String, Class)} instead.
-     */
-    @Deprecated
-    @Transactional(readOnly = true)
-    public Object getSetting(String key) {
-        Map<String, Object> settings = getAllSettings();
-        return settings.get(key);
-    }
-
     @Transactional
     public void setSetting(String key, Object value, String editedBy) {
         String serialized = serializeValue(value);

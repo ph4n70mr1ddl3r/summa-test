@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { MemoryItem } from '../types'
 import { truncateSnippet } from '../utils/formatting'
-import { escapeHtml } from '../utils/escapeHtml'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Memory() {
@@ -125,7 +124,7 @@ export default function Memory() {
                 )}
               </div>
               <pre className="mt-2 text-xs text-gray-400 bg-gray-900 rounded p-3 overflow-x-auto whitespace-pre-wrap">
-                {escapeHtml(truncateSnippet(item.contentMd, 300))}
+                {truncateSnippet(item.contentMd, 300)}
               </pre>
               {reviewingId === item.id && (
                 <div className="mt-3 space-y-2">
