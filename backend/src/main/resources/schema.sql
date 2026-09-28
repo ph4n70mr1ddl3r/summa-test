@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS agents (
     suspended_at INTEGER,
     retired_at INTEGER,
     archived_at INTEGER,
-    FOREIGN KEY (owner_human_id) REFERENCES humans(id) ON DELETE SET NULL,
+    FOREIGN KEY (owner_human_id) REFERENCES humans(id) ON DELETE RESTRICT,
     FOREIGN KEY (spawned_by) REFERENCES agents(id) ON DELETE SET NULL,
     FOREIGN KEY (template_id) REFERENCES role_templates(id) ON DELETE SET NULL
 );
@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS dna_domains (
     status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'archived')),
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
-    FOREIGN KEY (owner_human_id) REFERENCES humans(id) ON DELETE SET NULL
+    FOREIGN KEY (owner_human_id) REFERENCES humans(id) ON DELETE RESTRICT
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_dna_domains_name ON dna_domains(name) WHERE status != 'archived';
@@ -292,7 +292,7 @@ CREATE TABLE IF NOT EXISTS playbooks (
     created_by TEXT NOT NULL,
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
-    FOREIGN KEY (created_by) REFERENCES agents(id) ON DELETE SET NULL
+    FOREIGN KEY (created_by) REFERENCES agents(id) ON DELETE RESTRICT
 );
 
 CREATE TABLE IF NOT EXISTS spawn_requests (
@@ -377,7 +377,7 @@ CREATE TABLE IF NOT EXISTS data_holds (
     created_by TEXT NOT NULL,
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     released_at INTEGER,
-    FOREIGN KEY (created_by) REFERENCES humans(id) ON DELETE SET NULL
+    FOREIGN KEY (created_by) REFERENCES humans(id) ON DELETE RESTRICT
 );
 
 CREATE INDEX IF NOT EXISTS idx_data_holds_subject ON data_holds(kind, subject_id);
@@ -448,7 +448,7 @@ CREATE TABLE IF NOT EXISTS governance_settings (
     value TEXT NOT NULL DEFAULT '{}',
     edited_by TEXT NOT NULL,
     edited_at INTEGER NOT NULL DEFAULT (unixepoch()),
-    FOREIGN KEY (edited_by) REFERENCES humans(id) ON DELETE SET NULL
+    FOREIGN KEY (edited_by) REFERENCES humans(id) ON DELETE RESTRICT
 );
 
 CREATE TABLE IF NOT EXISTS memory_items (
@@ -536,6 +536,10 @@ CREATE INDEX IF NOT EXISTS idx_spawn_requests_agent ON spawn_requests(agent_id);
 CREATE INDEX IF NOT EXISTS idx_external_writes_run ON external_writes(run_id);
 CREATE INDEX IF NOT EXISTS idx_runs_initiative ON runs(initiative_id);
 CREATE INDEX IF NOT EXISTS idx_memory_items_member ON memory_items(member_id);
+
+CREATE INDEX IF NOT EXISTS idx_board_tasks_assignee ON board_tasks(assignee_member_id);
+CREATE INDEX IF NOT EXISTS idx_workspaces_archived ON workspaces(archived_at);
+CREATE INDEX IF NOT EXISTS idx_data_holds_released ON data_holds(released_at);
 
 -- FTS5 virtual table for DNA search.
 -- NOTE: source tables use TEXT UUID primary keys, which cannot be stored in
@@ -753,7 +757,7 @@ END;
 
 -- FTS5 triggers for memory_items table
 CREATE TRIGGER IF NOT EXISTS memory_items_ai AFTER INSERT ON memory_items BEGIN
-    INSERT INTO dna_search_index (id, content, status, domain_id, kind)
+    INSERT INTO dna_search_index (id, content_md, status, domain_id, kind)
     VALUES (new.id, new.content_md, 'active', NULL, 'memory');
 END;
 
@@ -763,7 +767,7 @@ END;
 
 CREATE TRIGGER IF NOT EXISTS memory_items_au AFTER UPDATE ON memory_items BEGIN
     UPDATE dna_search_index SET
-        content = new.content_md
+        content_md = new.content_md
     WHERE id = old.id;
 END;
 

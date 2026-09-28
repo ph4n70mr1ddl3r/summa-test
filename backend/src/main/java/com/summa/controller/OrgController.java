@@ -262,11 +262,13 @@ public class OrgController {
                 holder[0] = agentOpt.get().getSpawnedBy();
             } else {
                 // Apply same depth cap to human deputy chain to prevent infinite loops
-                memberService.findHuman(nextId).ifPresent(h -> {
-                    if (lineage.size() < depthCap) {
-                        holder[0] = h.getDeputyMemberId();
-                    }
-                });
+                Optional<Human> humanOpt = memberService.findHuman(nextId);
+                if (humanOpt.isPresent()) {
+                    holder[0] = humanOpt.get().getDeputyMemberId();
+                } else {
+                    // Neither agent nor human found — stop the chain
+                    holder[0] = null;
+                }
                 // If neither agent nor human found, stop the chain
                 if (holder[0] == null) {
                     break;

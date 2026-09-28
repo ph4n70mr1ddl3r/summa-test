@@ -213,7 +213,7 @@ export function countParticipants(participantsJson: string | null | undefined): 
   }
 }
 
-export function truncateSnippet(text: string, maxLen: number): string {
-  if (maxLen <= 0) return ''
+export function truncateSnippet(text: string | null | undefined, maxLen: number): string {
+  if (!text || maxLen <= 0) return ''
   return text.length > maxLen ? text.slice(0, maxLen) + '...' : text
 }
