@@ -31,7 +31,7 @@ public class DnaSearchController {
             @RequestParam String q,
             @RequestParam(required = false) String domainId,
             @RequestParam(defaultValue = "20") int limit) {
-        int cappedLimit = Math.min(Math.max(limit, 1), Defaults.MAX_LIST_LIMIT);
+        int cappedLimit = Math.min(Math.max(limit, 1), Defaults.MAX_DNA_SEARCH_LIMIT);
         try {
             if (q == null || q.isBlank()) {
                 return ControllerResponses.validation(auditService, "Query parameter 'q' is required");

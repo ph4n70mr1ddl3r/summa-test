@@ -99,9 +99,7 @@ public class MemoryService {
             Optional<Workspace> wsOpt = workspaceService.findById(item.getWorkspaceId());
             if (wsOpt.isPresent()) {
                 Workspace ws = wsOpt.get();
-                if (ws.getDomainIds() == null || ws.getDomainIds().isBlank()) {
-                    // No domains means no domain ownership check can pass
-                } else {
+                if (ws.getDomainIds() != null && !ws.getDomainIds().isBlank()) {
                     try {
                         List<String> domainIds = objectMapper.readValue(
                             ws.getDomainIds(),
