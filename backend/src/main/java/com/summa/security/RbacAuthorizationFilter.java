@@ -83,7 +83,13 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
             ACTOR_CONTEXT.set(effectiveActor);
             WRITES_ALLOWED.set(writeAllowed);
             NODE_AUTH.set(nodeAuth);
-            filterChain.doFilter(request, response);
+            try {
+                filterChain.doFilter(request, response);
+            } finally {
+                ACTOR_CONTEXT.remove();
+                WRITES_ALLOWED.remove();
+                NODE_AUTH.remove();
+            }
             return;
         }
 

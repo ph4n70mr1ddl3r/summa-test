@@ -11,6 +11,8 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import jakarta.annotation.PostConstruct;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -92,8 +94,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Map<String, Object> payload = JwtUtil.parseToken(token, jwtSecret);
                 if (payload != null) {
                     String subject = (String) payload.get("sub");
-                    request.setAttribute("authSubject", subject);
                     request.setAttribute("actor", subject);
+                    var auth = new UsernamePasswordAuthenticationToken(subject, null, List.of());
+                    SecurityContextHolder.getContext().setAuthentication(auth);
                     filterChain.doFilter(request, response);
                     return;
                 }

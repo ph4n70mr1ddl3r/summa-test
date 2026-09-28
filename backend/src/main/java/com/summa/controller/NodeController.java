@@ -154,7 +154,7 @@ public class NodeController {
                 } catch (NumberFormatException e) {
                     throw new IllegalArgumentException("Invalid costUsd value: " + costUsdStr);
                 }
-                if (costUsd < 0) throw new IllegalArgumentException("costUsd must be non-negative");
+                if (costUsd < 0 || Double.isInfinite(costUsd) || Double.isNaN(costUsd)) throw new IllegalArgumentException("costUsd must be non-negative and finite");
             }
             String memberId = body.get("memberId");
             Run run = nodeService.reportRun(id, runId, result, artifacts, costTokens, costUsd, memberId);

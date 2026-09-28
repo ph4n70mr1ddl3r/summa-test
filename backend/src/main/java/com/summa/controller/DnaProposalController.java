@@ -105,8 +105,8 @@ public class DnaProposalController {
                 if (!isReviewerAdmin) {
                     return ControllerResponses.validation(auditService, "reviewedBy must be the current actor or an admin");
                 }
+                effectiveReviewer = reviewedBy.replaceFirst("^[ha]?:", "");
             }
-            effectiveReviewer = reviewedBy.replaceFirst("^[ha]?:", "");
         }
         if ("publish".equals(action)) {
             try {
