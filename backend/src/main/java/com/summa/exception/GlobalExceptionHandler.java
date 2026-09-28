@@ -61,7 +61,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(EntityNotFoundException e) {
-        return auditAndRespond("REFUSAL", "not_found", e.getMessage(), HttpStatus.NOT_FOUND);
+        return auditAndRespond("NOT_FOUND", "not_found", e.getMessage(), HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)

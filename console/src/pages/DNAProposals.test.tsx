@@ -45,7 +45,7 @@ describe('DNAProposals page', () => {
     vi.mocked(apiModule.api.dna.proposals).mockRejectedValue(new Error('Network error'))
     render(<DNAProposals />)
     await waitFor(() => {
-      expect(screen.getByText(/error/i)).toBeInTheDocument()
+      expect(screen.getByText('Failed to load: Network error')).toBeInTheDocument()
     })
   })
 })

@@ -54,7 +54,7 @@ describe('Runs page', () => {
     vi.mocked(apiModule.api.runs.list).mockRejectedValue(new Error('Network error'))
     render(<Runs />)
     await waitFor(() => {
-      expect(screen.getByText(/error/i)).toBeInTheDocument()
+      expect(screen.getByText('Failed to load: Network error')).toBeInTheDocument()
     })
   })
 

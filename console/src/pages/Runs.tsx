@@ -2,13 +2,14 @@ import { useEffect, useState, useMemo } from 'react'
 import { api } from '../services/api'
 import type { Run } from '../types'
 import { runStatusColor, formatDate } from '../utils/formatting'
+import type { RunStatus } from '../services/api'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Runs() {
   const [runs, setRuns] = useState<Run[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [filter, setFilter] = useState<Run['status'] | 'all'>('all')
+  const [filter, setFilter] = useState<RunStatus | 'all'>('all')
 
   const loadRuns = () => {
     setLoading(true)
@@ -48,7 +49,7 @@ export default function Runs() {
           >
             All ({runs.length})
           </button>
-          {(['queued', 'running', 'suspended', 'completed', 'failed', 'cancelled'] as const).map(s => (
+          {(['queued', 'running', 'suspended', 'completed', 'failed', 'cancelled'] as RunStatus[]).map(s => (
             statusCounts[s] > 0 && (
               <button
                 key={s}

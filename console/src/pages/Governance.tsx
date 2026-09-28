@@ -65,12 +65,13 @@ export default function Governance() {
       setEditValues(prev => { const next = { ...prev }; delete next[key]; return next })
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
+      setEditValues(prev => { const next = { ...prev }; delete next[key]; return next })
     } finally {
       setSaving(null)
     }
   }
 
-  const startEdit = (_section: 'policies' | 'quotas', key: string, currentValue: unknown) => {
+  const startEdit = (key: string, currentValue: unknown) => {
     setEditValues(prev => ({ ...prev, [key]: String(currentValue ?? '') }))
   }
 
@@ -111,7 +112,7 @@ export default function Governance() {
         ) : (
           <button
             type="button"
-            onClick={() => startEdit(section, key, value)}
+            onClick={() => startEdit(key, value)}
             className="flex-1 text-right text-gray-200 font-mono text-xs hover:text-white truncate"
             aria-label={`Edit ${key}: ${currentValue}`}
           >

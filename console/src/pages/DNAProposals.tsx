@@ -2,13 +2,14 @@ import { useEffect, useState, useMemo } from 'react'
 import { api } from '../services/api'
 import type { DnaProposal } from '../types'
 import { formatDate, proposalKindColor, proposalStatusColor } from '../utils/formatting'
+import type { DnaProposalStatus } from '../services/api'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function DNAProposals() {
   const [proposals, setProposals] = useState<DnaProposal[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [filter, setFilter] = useState<'all' | 'open' | 'published' | 'rejected' | 'withdrawn'>('all')
+  const [filter, setFilter] = useState<'all' | DnaProposalStatus>('all')
 
   const loadProposals = () => {
     setLoading(true)
@@ -46,7 +47,7 @@ export default function DNAProposals() {
           >
             All ({proposals.length})
           </button>
-          {(['open', 'published', 'rejected', 'withdrawn'] as const).map(s => (
+          {(['open', 'published', 'rejected', 'withdrawn'] as DnaProposalStatus[]).map(s => (
             statusCounts[s] > 0 && (
               <button
                 key={s}

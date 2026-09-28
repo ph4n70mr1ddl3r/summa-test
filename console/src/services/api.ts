@@ -168,7 +168,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export async function loadWithFallback<T>(
   fetchAll: () => Promise<T[]>,
   fetchIndividual: () => Promise<(T | null)[]>,
-): Promise<{ data: (T | null)[]; error: string | null }> {
+): Promise<{ data: T[]; error: string | null }> {
   try {
     const data = await fetchAll()
     return { data, error: null }
@@ -178,7 +178,7 @@ export async function loadWithFallback<T>(
     const error = hasError
       ? 'Some data could not be loaded: ' + (e instanceof Error ? e.message : (typeof e === 'string' ? e : ''))
       : null
-    return { data: results.filter(r => r !== null) as T[], error }
+    return { data: results.filter((r): r is T => r !== null), error }
   }
 }
 
@@ -301,6 +301,7 @@ export interface Run {
   costTokens?: number;
   costUsd?: number;
   createdAt?: number;
+  updatedAt?: number;
   prompt?: string;
   artifacts?: string;
   errorMessage?: string;
