@@ -17,7 +17,7 @@ export default function Memory() {
     setLoading(true)
     setError(null)
     let aborted = false
-    const params: Record<string, string | boolean> = {}
+    const params: { memberId?: string; workspaceId?: string; tainted?: string } = {}
     if (filter === 'tainted') params.tainted = 'true'
     api.memory.list(params)
       .then((data) => { if (!aborted) { setItems(data); setLoading(false) } })

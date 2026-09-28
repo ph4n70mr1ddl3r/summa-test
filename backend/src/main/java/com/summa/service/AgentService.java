@@ -367,9 +367,9 @@ public class AgentService {
 
     /**
      * CLC-002: SUSPENDED-002: dependency cleanup for a suspended agent before archival.
-     * Transactional to ensure all cleanup operations succeed or roll back together.
+     * Each repository save auto-commits; the outer reapExpiredAgents caller isolates
+     * per-agent failures with try/catch.
      */
-    @Transactional
     private void cleanupSuspendedAgent(Agent agent) {
         for (Ask ask : askRepository.findByFromAndStatusPending(agent.getId())) {
             ask.setStatus("withdrawn");

@@ -166,7 +166,9 @@ describe('loadWithFallback', () => {
       async () => [{ id: '1' }, null]
     )
     expect(result.error).toBeDefined()
-    expect(result.data).toHaveLength(1)
+    expect(result.data).toHaveLength(2)
+    expect(result.data[0]).toEqual({ id: '1' })
+    expect(result.data[1]).toBeNull()
   })
 
   it('returns null error when all individual fetches succeed', async () => {

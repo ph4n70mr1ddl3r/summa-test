@@ -281,7 +281,7 @@ public class DnaProposalService {
             throw new IllegalStateException("Only open proposals can be amended");
         }
         
-        proposal.setRevision(proposal.getRevision() + 1);
+        proposal.setRevision((proposal.getRevision() != null ? proposal.getRevision() : 0) + 1);
         proposal.setPayload(payload);
         
         DnaProposal saved = proposalRepository.save(proposal);

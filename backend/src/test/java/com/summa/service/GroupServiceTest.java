@@ -33,7 +33,7 @@ class GroupServiceTest {
         when(groupRepository.findByNameAndStatusNot("Engineering", "archived")).thenReturn(Optional.empty());
         when(groupRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        Group result = groupService.create("Engineering", "human-1");
+        Group result = groupService.create("Engineering", "human-1", "actor");
 
         assertNotNull(result);
         assertEquals("Engineering", result.getName());
@@ -48,7 +48,7 @@ class GroupServiceTest {
             .thenReturn(Optional.of(existing));
 
         assertThrows(IllegalArgumentException.class, () -> {
-            groupService.create("Engineering", "human-2");
+            groupService.create("Engineering", "human-2", "actor");
         });
     }
 

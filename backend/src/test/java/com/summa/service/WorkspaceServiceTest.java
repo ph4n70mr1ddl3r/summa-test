@@ -68,7 +68,7 @@ class WorkspaceServiceTest {
         when(workspaceRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         Workspace result = workspaceService.create(
-            "ws-1", "Project Alpha", "project", null, null, null, null
+            "ws-1", "Project Alpha", "project", null, null, null, null, "actor"
         );
 
         assertNotNull(result);
@@ -84,7 +84,7 @@ class WorkspaceServiceTest {
 
         Workspace result = workspaceService.create(
             "ws-2", "Project Beta", "shared",
-            "[\"domain-1\"]", "[\"init-1\"]", "node-1", "[\"user-1\"]"
+            "[\"domain-1\"]", "[\"init-1\"]", "node-1", "[\"user-1\"]", "actor"
         );
 
         assertEquals("[\"domain-1\"]", result.getDomainIds());

@@ -382,6 +382,7 @@ public class DnaDomainService {
         String oldOwner = oldOpt.get().getOwnerHumanId();
         String newOwner = newOpt.get().getOwnerHumanId();
         if (Objects.equals(oldOwner, newOwner)) return;
+        if (oldOwner == null) return;
         // Re-key pending asks addressed to the old owner that are scoped to this domain
         // (by initiative or workspace) so we don't redirect asks belonging to other domains.
         for (Ask ask : askRepository.findByToAndStatusPending(oldOwner)) {

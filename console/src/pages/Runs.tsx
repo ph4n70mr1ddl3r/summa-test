@@ -15,7 +15,7 @@ export default function Runs() {
     setLoading(true)
     setError(null)
     let aborted = false
-    const params: Record<string, string | number> = {}
+    const params: { agentId?: string; workspaceId?: string; status?: string; limit?: number } = {}
     if (filter !== 'all') params.status = filter
     api.runs.list(params)
       .then((data) => { if (!aborted) { setRuns(data); setLoading(false) } })

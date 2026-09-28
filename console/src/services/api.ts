@@ -164,11 +164,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
  * Tries parallel fetches; on any failure, falls back to individual settle calls
  * so that successfully-loaded data is still displayed. Returns an error string
  * when at least one call failed, or null when all succeeded.
+ * The returned data array preserves index alignment with the fetch order,
+ * with null entries for any individual calls that failed.
  */
 export async function loadWithFallback<T>(
   fetchAll: () => Promise<T[]>,
   fetchIndividual: () => Promise<(T | null)[]>,
-): Promise<{ data: T[]; error: string | null }> {
+): Promise<{ data: (T | null)[]; error: string | null }> {
   try {
     const data = await fetchAll()
     return { data, error: null }
@@ -178,7 +180,7 @@ export async function loadWithFallback<T>(
     const error = hasError
       ? 'Some data could not be loaded: ' + (e instanceof Error ? e.message : (typeof e === 'string' ? e : ''))
       : null
-    return { data: results.filter((r): r is T => r !== null), error }
+    return { data: results, error }
   }
 }
 
@@ -195,6 +197,7 @@ export interface Human {
   workingHours?: string;
   updatedAt?: number;
   deactivatedAt?: number;
+  deputyMemberId?: string;
 }
 
 export type AgentClass = 'persistent' | 'ephemeral' | 'ephemeral-subagent';
@@ -236,10 +239,12 @@ export interface Ask {
   collapsedCount?: number;
   initiativeId?: string;
   workspaceId?: string;
+  createdAt?: number;
   updatedAt?: number;
   escalation?: string;
   expiryBehavior?: string;
   respondedAt?: number;
+  responses?: string;
 }
 
 export type AskStatus = 'pending' | 'answered' | 'expired' | 'withdrawn';
@@ -424,6 +429,8 @@ export interface DnaDomain {
   residency?: string;
   namedReaders?: string;
   sod?: string;
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 export type DomainAccess = 'public' | 'domain' | 'named';
@@ -442,6 +449,7 @@ export interface BoardTask {
   createdBy: string;
   createdAt?: number;
   completedAt?: number;
+  updatedAt?: number;
 }
 
 export type BoardTaskStatus = 'open' | 'in_progress' | 'done' | 'cancelled';

@@ -49,7 +49,7 @@ public class GroupController {
             return ControllerResponses.validation(auditService, "name and leaderMemberId are required");
         }
         try {
-            Group group = groupService.create(name, leaderMemberId);
+            Group group = groupService.create(name, leaderMemberId, actor);
             return ResponseEntity.ok(group);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());

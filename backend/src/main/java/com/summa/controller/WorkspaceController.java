@@ -65,7 +65,8 @@ public class WorkspaceController {
                 body.get("domainIds"),
                 body.get("initiativeIds"),
                 body.get("nodeId"),
-                body.get("participants")
+                body.get("participants"),
+                actor
             );
             return ResponseEntity.ok(ws);
         } catch (IllegalArgumentException e) {

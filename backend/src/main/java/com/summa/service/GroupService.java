@@ -27,7 +27,7 @@ public class GroupService {
     }
 
     @Transactional
-    public Group create(String name, String leaderMemberId) {
+    public Group create(String name, String leaderMemberId, String actor) {
         // Check uniqueness
         Optional<Group> existing = groupRepository.findByNameAndStatusNot(name, "archived");
         if (!existing.isEmpty()) {
@@ -40,7 +40,7 @@ public class GroupService {
         group.setLeaderMemberId(leaderMemberId);
 
         Group saved = groupRepository.save(group);
-        auditService.log(Defaults.SYSTEM_ACTOR, "CREATE", "group", group.getId(), 
+        auditService.log(actor, "CREATE", "group", group.getId(),
             String.format("{\"name\":\"%s\"}", name));
         return saved;
     }

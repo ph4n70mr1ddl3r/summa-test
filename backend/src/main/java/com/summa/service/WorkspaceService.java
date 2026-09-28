@@ -64,7 +64,7 @@ public class WorkspaceService {
 
     @Transactional
     public Workspace create(String id, String name, String kind, String domainIds,
-                              String initiativeIds, String nodeId, String participants) {
+                              String initiativeIds, String nodeId, String participants, String actor) {
         // Validate referenced domains exist
         if (domainIds != null && !domainIds.isBlank() && !domainIds.equals("[]")) {
             try {
@@ -88,7 +88,7 @@ public class WorkspaceService {
         ws.setParticipants(participants != null ? participants : "[]");
 
         Workspace saved = workspaceRepository.save(ws);
-        auditService.logSystem("CREATE_WORKSPACE", "workspace", id,
+        auditService.log(actor, "CREATE_WORKSPACE", "workspace", id,
             String.format("{\"name\":%s,\"kind\":%s}", JsonHelpers.jsonString(name), JsonHelpers.jsonString(ws.getKind())));
         return saved;
     }
