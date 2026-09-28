@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.summa.service.PatService;
 import com.summa.model.Pat;
 import com.summa.service.AuditService;
+import com.summa.service.MemberService;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,17 +21,23 @@ public class PatController {
     private final AuditService auditService;
     private final WriteGate writeGate;
     private final ObjectMapper objectMapper;
+    private final MemberService memberService;
 
     public PatController(PatService patService, AuditService auditService, WriteGate writeGate,
-                         ObjectMapper objectMapper) {
+                          ObjectMapper objectMapper, MemberService memberService) {
         this.patService = patService;
         this.auditService = auditService;
         this.writeGate = writeGate;
         this.objectMapper = objectMapper;
+        this.memberService = memberService;
     }
 
     @GetMapping
     public ResponseEntity<?> listPats(@RequestParam String memberId) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Admin access required");
+        }
         return ResponseEntity.ok(patService.findByMember(memberId));
     }
 

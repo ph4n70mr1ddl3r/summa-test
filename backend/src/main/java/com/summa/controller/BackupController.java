@@ -44,7 +44,10 @@ public class BackupController {
             return ControllerResponses.gate(auditService, actor, "Backup requires admin role");
         }
         try {
-            String rawBackupDir = body.getOrDefault("backupDir", System.getProperty("java.io.tmpdir"));
+            String rawBackupDir = body.get("backupDir");
+            if (rawBackupDir == null || rawBackupDir.isBlank()) {
+                rawBackupDir = System.getProperty("java.io.tmpdir");
+            }
             Path tmpdir = Paths.get(System.getProperty("java.io.tmpdir")).normalize();
             Path backupDirPath = validatePathUnder(rawBackupDir, tmpdir, "backupDir");
             String path = backupService.createBackup(backupDirPath.toString());

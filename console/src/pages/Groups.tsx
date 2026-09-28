@@ -16,7 +16,7 @@ export default function Groups() {
     setError(null)
     let aborted = false
     api.groups.list()
-      .then((data) => { if (!aborted) { setGroups(data); setLoading(false) } })
+      .then((data) => { if (!aborted) { setGroups(Array.isArray(data) ? data : []); setLoading(false) } })
       .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
     return () => { aborted = true }
   }

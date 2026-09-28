@@ -14,7 +14,7 @@ export default function DNARules() {
     setError(null)
     let aborted = false
     api.dna.rules()
-      .then((data) => { if (!aborted) { setRules(data); setLoading(false) } })
+      .then((data) => { if (!aborted) { setRules(Array.isArray(data) ? data : []); setLoading(false) } })
       .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
     return () => { aborted = true }
   }

@@ -20,7 +20,7 @@ export default function Memory() {
     const params: { memberId?: string; workspaceId?: string; tainted?: string } = {}
     if (filter === 'tainted') params.tainted = 'true'
     api.memory.list(params)
-      .then((data) => { if (!aborted) { setItems(data); setLoading(false) } })
+      .then((data) => { if (!aborted) { setItems(Array.isArray(data) ? data : []); setLoading(false) } })
       .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
     return () => { aborted = true }
   }

@@ -14,7 +14,7 @@ export default function DNAGoals() {
     setError(null)
     let aborted = false
     api.dna.goals()
-      .then((data) => { if (!aborted) { setGoals(data); setLoading(false) } })
+      .then((data) => { if (!aborted) { setGoals(Array.isArray(data) ? data : []); setLoading(false) } })
       .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
     return () => { aborted = true }
   }

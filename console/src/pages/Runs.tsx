@@ -18,7 +18,7 @@ export default function Runs() {
     const params: { agentId?: string; workspaceId?: string; status?: string; limit?: number } = {}
     if (filter !== 'all') params.status = filter
     api.runs.list(params)
-      .then((data) => { if (!aborted) { setRuns(data); setLoading(false) } })
+      .then((data) => { if (!aborted) { setRuns(Array.isArray(data) ? data : []); setLoading(false) } })
       .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
     return () => { aborted = true }
   }

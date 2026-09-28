@@ -119,7 +119,9 @@ public class DnaDomainController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            DnaDomain domain = domainService.updateOwner(id, body.get("ownerHumanId") != null && !body.get("ownerHumanId").isBlank() ? body.get("ownerHumanId") : null, actor);
+            String rawOwner = body.get("ownerHumanId");
+            String ownerClean = rawOwner != null && !rawOwner.isBlank() ? rawOwner.replaceFirst("^[ha]?:", "") : null;
+            DnaDomain domain = domainService.updateOwner(id, ownerClean, actor);
             return ResponseEntity.ok(domain);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());

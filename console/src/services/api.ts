@@ -153,8 +153,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const json = await res.json();
     return json as T;
   } catch (err) {
-    const networkErr = err instanceof Error ? err : new Error(String(err))
-    throw new ApiError(networkErr.message, 0)
+    // Preserve the original HTTP status for server-origin errors (401, 429, 500, etc.).
+    // Only wrap true network/abort failures with status 0 so callers can still
+    // distinguish between a network error and an actual HTTP error response.
+    const status = err instanceof ApiError ? err.status : 0
+    throw new ApiError(err instanceof Error ? err.message : String(err), status)
   } finally {
     clearTimeout(timeoutId);
   }

@@ -14,7 +14,7 @@ export default function BoardTasks() {
     setError(null)
     let aborted = false
     api.boardTasks.list()
-      .then((data) => { if (!aborted) { setTasks(data); setLoading(false) } })
+      .then((data) => { if (!aborted) { setTasks(Array.isArray(data) ? data : []); setLoading(false) } })
       .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
     return () => { aborted = true }
   }

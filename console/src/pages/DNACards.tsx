@@ -14,7 +14,7 @@ export default function DNACards() {
     setError(null)
     let aborted = false
     api.dna.cards()
-      .then((data) => { if (!aborted) { setCards(data); setLoading(false) } })
+      .then((data) => { if (!aborted) { setCards(Array.isArray(data) ? data : []); setLoading(false) } })
       .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
     return () => { aborted = true }
   }

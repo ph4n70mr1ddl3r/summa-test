@@ -14,7 +14,7 @@ export default function Workspaces() {
     setError(null)
     let aborted = false
     api.workspaces.list()
-      .then((data) => { if (!aborted) { setWorkspaces(data); setLoading(false) } })
+      .then((data) => { if (!aborted) { setWorkspaces(Array.isArray(data) ? data : []); setLoading(false) } })
       .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
     return () => { aborted = true }
   }
