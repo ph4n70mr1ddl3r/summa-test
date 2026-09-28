@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { formatDate, tierColor, spawnStatusColor, triggerStatusColor, triggerCriticalityColor, boardTaskStatusColor, roleTemplateStatusColor, dnaCardStatusColor, dnaGoalStatusColor, dnaRuleStatusColor, nodeStatusColor, groupStatusColor, rbacRoleColor, initiativeStatusColor, runStatusColor, agentStatusColor, askStatusColor, domainAccessColor, proposalStatusColor, proposalKindColor, countParticipants, truncateSnippet } from './formatting'
-import type { AskTier, SpawnStatus, TriggerStatus, BoardTaskStatus, RoleTemplateStatus, DnaCardStatus, DnaGoalStatus, DnaRuleStatus, NodeStatus, GroupStatus, InitiativeStatus, RunStatus, AgentStatus, AskStatus } from '../services/api'
+import { formatDate, tierColor, spawnStatusColor, triggerStatusColor, triggerCriticalityColor, boardTaskStatusColor, roleTemplateStatusColor, dnaCardStatusColor, dnaGoalStatusColor, dnaRuleStatusColor, nodeStatusColor, groupStatusColor, rbacRoleColor, initiativeStatusColor, runStatusColor, agentStatusColor, domainAccessColor, proposalStatusColor, proposalKindColor, countParticipants, truncateSnippet } from './formatting'
+import type { AskTier, SpawnStatus, TriggerStatus, BoardTaskStatus, RoleTemplateStatus, DnaCardStatus, DnaGoalStatus, DnaRuleStatus, NodeStatus, GroupStatus, InitiativeStatus, RunStatus, AgentStatus } from '../services/api'
 import type { RbacRole } from '../services/api'
 
 describe('formatDate', () => {
@@ -265,24 +265,6 @@ describe('agentStatusColor', () => {
 
   it('returns exact classes for archived', () => {
     expect(agentStatusColor('archived' as AgentStatus)).toBe('bg-gray-600 text-gray-400')
-  })
-})
-
-describe('askStatusColor', () => {
-  it('returns exact classes for pending', () => {
-    expect(askStatusColor('pending' as AskStatus)).toBe('bg-yellow-900/50 text-yellow-400')
-  })
-
-  it('returns exact classes for answered', () => {
-    expect(askStatusColor('answered' as AskStatus)).toBe('bg-green-900/50 text-green-400')
-  })
-
-  it('returns exact classes for expired', () => {
-    expect(askStatusColor('expired' as AskStatus)).toBe('bg-red-900/50 text-red-400')
-  })
-
-  it('returns exact classes for withdrawn', () => {
-    expect(askStatusColor('withdrawn' as AskStatus)).toBe('bg-gray-600 text-gray-400')
   })
 })
 

@@ -45,6 +45,11 @@ public class ExternalWrite {
         if (status == null) status = "prepared";
     }
 
+    @PreUpdate
+    public void preUpdate() {
+        // external_writes has no updatedAt column
+    }
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getRunId() { return runId; }

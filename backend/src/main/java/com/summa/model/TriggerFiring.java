@@ -29,6 +29,11 @@ public class TriggerFiring {
         if (firedAt == null) firedAt = Instant.now();
     }
 
+    @PreUpdate
+    public void preUpdate() {
+        // trigger_firings has no updatedAt column
+    }
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getTriggerId() { return triggerId; }

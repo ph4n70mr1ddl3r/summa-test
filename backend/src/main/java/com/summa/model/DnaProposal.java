@@ -29,6 +29,9 @@ public class DnaProposal {
     @Column(name = "status", nullable = false, length = 20)
     private String status;
 
+    @Column(name = "review_by", length = 36)
+    private String reviewBy;
+
     @Column(name = "reviewed_by", length = 36)
     private String reviewedBy;
 
@@ -76,6 +79,8 @@ public class DnaProposal {
     public void setProvenance(String provenance) { this.provenance = provenance; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getReviewBy() { return reviewBy; }
+    public void setReviewBy(String reviewBy) { this.reviewBy = reviewBy; }
     public String getReviewedBy() { return reviewedBy; }
     public void setReviewedBy(String reviewedBy) { this.reviewedBy = reviewedBy; }
     public Instant getCreatedAt() { return createdAt; }

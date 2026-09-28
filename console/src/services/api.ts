@@ -502,7 +502,7 @@ export interface RoleTemplate {
   id: string;
   name: string;
   version: number;
-  class: string;
+  class: AgentClass;
   status: RoleTemplateStatus;
   body?: string;
   defaultScopes?: string;
@@ -683,7 +683,6 @@ export const api = {
       }),
   },
   org: {
-    health: () => request<HealthStatus>('/health'),
     bootstrap: (body?: Record<string, string>) =>
       request<Record<string, unknown>>('/org/bootstrap', { method: 'POST', body: body ? JSON.stringify(body) : undefined }),
     humans: (active?: boolean) =>

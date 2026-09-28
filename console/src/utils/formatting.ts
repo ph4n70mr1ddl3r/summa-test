@@ -1,6 +1,5 @@
 import type {
   AgentStatus,
-  AskStatus,
   AskTier,
   SpawnStatus,
   InitiativeStatus,
@@ -38,16 +37,6 @@ export function agentStatusColor(status: AgentStatus): string {
     case 'suspended': return 'bg-yellow-900/50 text-yellow-400'
     case 'retiring': return 'bg-orange-900/50 text-orange-400'
     case 'archived': return 'bg-gray-600 text-gray-400'
-    default: { const _exhaustive: never = status; void _exhaustive; return 'bg-gray-700 text-gray-300'; }
-  }
-}
-
-export function askStatusColor(status: AskStatus): string {
-  switch (status) {
-    case 'pending': return 'bg-yellow-900/50 text-yellow-400'
-    case 'answered': return 'bg-green-900/50 text-green-400'
-    case 'expired': return 'bg-red-900/50 text-red-400'
-    case 'withdrawn': return 'bg-gray-600 text-gray-400'
     default: { const _exhaustive: never = status; void _exhaustive; return 'bg-gray-700 text-gray-300'; }
   }
 }

@@ -83,7 +83,7 @@ public class AuthController {
         }
 
         String token = JwtUtil.generateToken(human.getId(), jwtSecret, jwtExpiration);
-        auditService.log(human.getId(), "LOGIN", "auth", human.getId(), null);
+        auditService.log(human.getId(), "LOGIN", "human", human.getId(), null);
         // Reset rate limit counter on successful login
         rateLimiter.reset(rateKey);
 
@@ -146,7 +146,7 @@ public class AuthController {
 
         human.setPasswordHash(passwordUtil.hash(newPassword));
         orgService.saveHuman(human);
-        auditService.log(actor, "CHANGE_PASSWORD", "auth", actor, null);
+        auditService.log(actor, "CHANGE_PASSWORD", "human", actor, null);
 
         return ResponseEntity.ok(Map.of("message", "Password updated"));
     }

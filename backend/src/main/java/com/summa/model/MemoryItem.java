@@ -48,6 +48,11 @@ public class MemoryItem {
         if (contentMd == null) contentMd = "";
     }
 
+    @PreUpdate
+    public void preUpdate() {
+        // memory_items has no updatedAt column
+    }
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getTier() { return tier; }

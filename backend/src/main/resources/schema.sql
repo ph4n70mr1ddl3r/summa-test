@@ -163,11 +163,13 @@ CREATE TABLE IF NOT EXISTS dna_proposals (
     proposed_by TEXT NOT NULL,
     provenance TEXT NOT NULL DEFAULT '{}',
     status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'published', 'rejected', 'withdrawn')),
+    review_by TEXT,
     reviewed_by TEXT,
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
     reviewed_at INTEGER,
     domain_id TEXT,
+    FOREIGN KEY (review_by) REFERENCES humans(id) ON DELETE SET NULL,
     FOREIGN KEY (reviewed_by) REFERENCES humans(id) ON DELETE SET NULL,
     FOREIGN KEY (domain_id) REFERENCES dna_domains(id) ON DELETE SET NULL
     -- proposed_by is a keyed union per DAT-120: h:<humans.id> or a:<agents.id>
@@ -197,7 +199,7 @@ CREATE TABLE IF NOT EXISTS asks (
     responded_at INTEGER,
     quorum_required INTEGER NOT NULL DEFAULT 1 CHECK (quorum_required >= 1),
     responses TEXT NOT NULL DEFAULT '[]',
-    collapsed_count INTEGER NOT NULL DEFAULT 0,
+    collapsed_count INTEGER NOT NULL DEFAULT 1,
     updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
     FOREIGN KEY (initiative_id) REFERENCES initiatives(id) ON DELETE SET NULL,
     FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE SET NULL

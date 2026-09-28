@@ -37,6 +37,11 @@ public class DataHold {
         if (reasonMd == null) reasonMd = "";
     }
 
+    @PreUpdate
+    public void preUpdate() {
+        // data_holds has no updatedAt column
+    }
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getKind() { return kind; }

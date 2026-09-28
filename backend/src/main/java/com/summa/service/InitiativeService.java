@@ -358,7 +358,8 @@ public class InitiativeService {
 
         // INT-040: Archive pending spawn requests with template pins drained
         try {
-            List<SpawnRequest> pendingSpawns = spawnRequestRepository.findByStatusAndWorkspaceBindingsContaining("requested", id);
+            List<SpawnRequest> pendingSpawns = spawnRequestRepository.findByStatusAndWorkspaceBindingsContaining(
+                "requested", SpawnRequestRepository.escapeLike(id));
             for (SpawnRequest sr : pendingSpawns) {
                 try {
                     JsonNode bindings = objectMapper.readTree(sr.getWorkspaceBindings());

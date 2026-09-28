@@ -206,7 +206,8 @@ public class WorkspaceService {
         }
 
         // CLC-040: Archive pending spawn requests binding to this workspace
-        List<SpawnRequest> pendingSpawns = spawnRequestRepository.findPendingByWorkspaceBinding(id);
+        List<SpawnRequest> pendingSpawns = spawnRequestRepository.findPendingByWorkspaceBinding(
+            SpawnRequestRepository.escapeLike(id));
         for (SpawnRequest sr : pendingSpawns) {
             sr.setStatus("archived");
             spawnRequestRepository.save(sr);

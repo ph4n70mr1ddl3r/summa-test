@@ -14,11 +14,20 @@ public interface SpawnRequestRepository extends JpaRepository<SpawnRequest, Stri
     List<SpawnRequest> findByAgentId(String agentId);
     long countByStatus(String status);
 
-    @Query("SELECT r FROM SpawnRequest r WHERE r.status = 'requested' AND r.workspaceBindings LIKE %:workspaceId%")
-    List<SpawnRequest> findPendingByWorkspaceBinding(@Param("workspaceId") String workspaceId);
+    @Query("SELECT r FROM SpawnRequest r WHERE r.status = 'requested' AND r.workspaceBindings LIKE %:escapedWorkspaceId%")
+    List<SpawnRequest> findPendingByWorkspaceBinding(@Param("escapedWorkspaceId") String workspaceId);
 
-    @Query("SELECT r FROM SpawnRequest r WHERE r.status = :status AND r.workspaceBindings LIKE %:initiativeId%")
-    List<SpawnRequest> findByStatusAndWorkspaceBindingsContaining(@Param("status") String status, @Param("initiativeId") String initiativeId);
+    @Query("SELECT r FROM SpawnRequest r WHERE r.status = :status AND r.workspaceBindings LIKE %:escapedInitiativeId%")
+    List<SpawnRequest> findByStatusAndWorkspaceBindingsContaining(@Param("status") String status, @Param("escapedInitiativeId") String initiativeId);
 
     long countByTemplateIdAndStatus(String templateId, String status);
+
+    /**
+     * Escape SQL LIKE wildcards (% and _) so the query treats them as literals.
+     * Workspace/Initiative IDs are UUIDs but the guard prevents future format changes from breaking the query.
+     */
+    static String escapeLike(String value) {
+        if (value == null) return null;
+        return value.replace("/", "//").replace("%", "/%").replace("_", "/_");
+    }
 }

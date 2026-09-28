@@ -46,9 +46,9 @@ export default function Workspaces() {
                   <p className="font-medium text-gray-200">{ws.name}</p>
                   <p className="text-sm text-gray-400 mt-1">Kind: {ws.kind} | Epoch: {ws.claimEpoch}</p>
                 </div>
-                  <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300">
-                    {countParticipants(ws.participants)} participants
-                  </span>
+                <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300">
+                  {countParticipants(ws.participants)} participants
+                </span>
               </div>
             </div>
           ))}
