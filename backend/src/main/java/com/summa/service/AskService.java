@@ -374,7 +374,7 @@ public class AskService {
         auditService.log(responder, "RESPOND", "ask", id,
                 String.format("{\"response\":\"%s\",\"quorumProgress\":%d/%d}",
                     response != null && !response.isEmpty() ? response.substring(0, Math.min(100, response.length())) : "",
-                    existingResponses.size(), ask.getQuorumRequired()));
+                    existingResponses.size(), quorum));
         return saved;
     }
 

@@ -158,7 +158,11 @@ public class OrgController {
             return ControllerResponses.gate(auditService, actor, "Admin access required");
         }
         try {
-            Human human = orgService.setDeputy(id, body.get("deputyMemberId"), actor);
+            String deputyId = body.get("deputyMemberId");
+            if (deputyId == null || deputyId.isBlank()) {
+                throw new IllegalArgumentException("deputyMemberId is required");
+            }
+            Human human = orgService.setDeputy(id, deputyId, actor);
             return ResponseEntity.ok(human);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());

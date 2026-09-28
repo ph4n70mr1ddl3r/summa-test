@@ -79,7 +79,11 @@ public class GroupController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            Group group = groupService.setLeader(id, body.get("leaderMemberId"), actor);
+            String leaderId = body.get("leaderMemberId");
+            if (leaderId == null || leaderId.isBlank()) {
+                throw new IllegalArgumentException("leaderMemberId is required");
+            }
+            Group group = groupService.setLeader(id, leaderId, actor);
             return ResponseEntity.ok(group);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());

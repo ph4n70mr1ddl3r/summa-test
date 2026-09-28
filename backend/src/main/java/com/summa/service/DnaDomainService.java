@@ -318,7 +318,9 @@ public class DnaDomainService {
         List<Workspace> allWorkspaces = workspaceRepository.findAll();
         for (Workspace ws : allWorkspaces) {
             try {
-                List<String> domains = objectMapper.readValue(ws.getDomainIds(), new TypeReference<List<String>>() {});
+                String domainIdsStr = ws.getDomainIds();
+                if (domainIdsStr == null || domainIdsStr.isBlank() || domainIdsStr.equals("[]")) continue;
+                List<String> domains = objectMapper.readValue(domainIdsStr, new TypeReference<List<String>>() {});
                 if (domains.contains(sourceId)) {
                     domains.remove(sourceId);
                     domains.add(survivorId);

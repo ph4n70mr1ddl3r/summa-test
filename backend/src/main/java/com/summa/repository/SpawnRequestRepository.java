@@ -14,10 +14,10 @@ public interface SpawnRequestRepository extends JpaRepository<SpawnRequest, Stri
     List<SpawnRequest> findByAgentId(String agentId);
     long countByStatus(String status);
 
-    @Query("SELECT r FROM SpawnRequest r WHERE r.status = 'requested' AND r.workspaceBindings LIKE %:escapedWorkspaceId%")
+    @Query("SELECT r FROM SpawnRequest r WHERE r.status = 'requested' AND r.workspaceBindings LIKE %:escapedWorkspaceId% ESCAPE '/'")
     List<SpawnRequest> findPendingByWorkspaceBinding(@Param("escapedWorkspaceId") String workspaceId);
 
-    @Query("SELECT r FROM SpawnRequest r WHERE r.status = :status AND r.workspaceBindings LIKE %:escapedInitiativeId%")
+    @Query("SELECT r FROM SpawnRequest r WHERE r.status = :status AND r.workspaceBindings LIKE %:escapedInitiativeId% ESCAPE '/'")
     List<SpawnRequest> findByStatusAndWorkspaceBindingsContaining(@Param("status") String status, @Param("escapedInitiativeId") String initiativeId);
 
     long countByTemplateIdAndStatus(String templateId, String status);

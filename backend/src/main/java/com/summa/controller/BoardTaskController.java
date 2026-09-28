@@ -99,7 +99,11 @@ public class BoardTaskController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            BoardTask task = taskService.assign(id, body.get("assigneeMemberId"), actor);
+            String assigneeId = body.get("assigneeMemberId");
+            if (assigneeId == null || assigneeId.isBlank()) {
+                throw new IllegalArgumentException("assigneeMemberId is required");
+            }
+            BoardTask task = taskService.assign(id, assigneeId, actor);
             return ResponseEntity.ok(task);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());

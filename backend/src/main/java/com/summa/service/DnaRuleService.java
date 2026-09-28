@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import com.summa.util.ScanUtils;
 import com.summa.util.JsonHelpers;
@@ -40,7 +41,7 @@ public class DnaRuleService {
         if (supersedesId != null) {
             ruleRepository.findById(supersedesId).ifPresentOrElse(
                 existing -> {
-                    if (!existing.getDomainId().equals(domainId)) {
+                    if (!Objects.equals(existing.getDomainId(), domainId)) {
                         throw new IllegalArgumentException("Supersedes rule must be in the same domain");
                     }
                     if (!"active".equals(existing.getStatus()) && !"superseded".equals(existing.getStatus())) {
