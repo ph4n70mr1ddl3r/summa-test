@@ -6,6 +6,7 @@ import com.summa.model.Human;
 import com.summa.model.Agent;
 import com.summa.service.AuditService;
 import com.summa.service.MemberService;
+import com.summa.service.DnaDomainService;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,13 +23,15 @@ public class DnaDecisionController {
     private final AuditService auditService;
     private final WriteGate writeGate;
     private final MemberService memberService;
+    private final DnaDomainService domainService;
 
     public DnaDecisionController(DnaDecisionService decisionService, AuditService auditService, WriteGate writeGate,
-                                 MemberService memberService) {
+                                 MemberService memberService, DnaDomainService domainService) {
         this.decisionService = decisionService;
         this.auditService = auditService;
         this.writeGate = writeGate;
         this.memberService = memberService;
+        this.domainService = domainService;
     }
 
     @GetMapping
@@ -57,6 +60,9 @@ public class DnaDecisionController {
         try {
             if (body.get("domainId") == null || body.get("domainId").isBlank()) {
                 throw new IllegalArgumentException("domainId is required");
+            }
+            if (domainService.findById(body.get("domainId")).isEmpty()) {
+                throw new IllegalArgumentException("Domain not found: " + body.get("domainId"));
             }
             if (body.get("contextMd") == null || body.get("contextMd").isBlank()) {
                 throw new IllegalArgumentException("contextMd is required");

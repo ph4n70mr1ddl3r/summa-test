@@ -154,7 +154,7 @@ public class NodeAuthFilter extends OncePerRequestFilter {
             return bytesToHex(hash);
         } catch (Exception e) {
             log.error("[SUMMA] signature computation failed: {}", e.getMessage());
-            return "";
+            throw new IllegalStateException("Node signature verification failed: " + e.getMessage(), e);
         }
     }
 

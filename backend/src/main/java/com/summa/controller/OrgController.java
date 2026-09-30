@@ -114,13 +114,6 @@ public class OrgController {
             if (rbacValue == null || rbacValue.isBlank()) {
                 throw new IllegalArgumentException("rbac is required");
             }
-            boolean validRole = false;
-            for (RbacRole role : RbacRole.values()) {
-                if (role.getValue().equals(rbacValue)) { validRole = true; break; }
-            }
-            if (!validRole) {
-                throw new IllegalArgumentException("Invalid rbac: " + rbacValue + ". Must be one of: admin, owner, member, viewer");
-            }
             Human human = orgService.updateRbac(id, rbacValue, actor);
             return ResponseEntity.ok(human);
         } catch (IllegalArgumentException e) {
@@ -139,20 +132,14 @@ public class OrgController {
         if (newRbac == null || newRbac.isBlank()) {
             return ControllerResponses.validation(auditService, "rbac is required for demote");
         }
-        boolean validRole = false;
-        for (RbacRole role : RbacRole.values()) {
-            if (role.getValue().equals(newRbac)) { validRole = true; break; }
-        }
-        if (!validRole) {
-            return ControllerResponses.validation(auditService, "rbac must be one of: " + java.util.Arrays.toString(RbacRole.values()));
-        }
+        RbacRole.requireFromValue(newRbac);
         try {
             Human human = orgService.demote(id, newRbac, actor);
             return ResponseEntity.ok(human);
-        } catch (IllegalStateException e) {
-            return ControllerResponses.gate(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
+        } catch (IllegalStateException e) {
+            return ControllerResponses.gate(auditService, e.getMessage());
         }
     }
 
