@@ -19,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.summa.util.KeyedUnionValidator;
+import com.summa.util.JsonHelpers;
 import com.summa.exception.EntityNotFoundException;
 import com.summa.model.Human;
 import com.summa.service.GovernanceService;
@@ -69,8 +70,8 @@ public class DnaProposalService {
         // left as null here to indicate "not yet reviewed"
         
         DnaProposal saved = proposalRepository.save(proposal);
-        auditService.log(proposedBy, "PROPOSE", "dna_proposal", id, 
-            String.format("{\"kind\":\"%s\",\"domainId\":\"%s\"}", kind, domainId));
+        auditService.log(proposedBy, "PROPOSE", "dna_proposal", id,
+            String.format("{\"kind\":%s,\"domainId\":%s}", JsonHelpers.jsonString(kind), JsonHelpers.jsonString(domainId)));
         return saved;
     }
 
@@ -120,7 +121,7 @@ public class DnaProposalService {
                 if (proposal.getProposedBy() != null && proposal.getProposedBy().equals(reviewedBy)) {
                     // SoD breach: route to admin broadcast instead of self-approval
                     auditService.logSystem("SOD_ROUTE_TO_ADMIN", "dna_proposal", id,
-                        String.format("{\"reason\":\"separation_of_duties\",\"proposer\":\"%s\"}", proposal.getProposedBy()));
+                        String.format("{\"reason\":\"separation_of_duties\",\"proposer\":%s}", JsonHelpers.jsonString(proposal.getProposedBy())));
                     // Find an admin to review instead
                     List<Human> admins = memberService.findAdmins();
                     if (!admins.isEmpty()) {
@@ -137,8 +138,8 @@ public class DnaProposalService {
         proposal.setReviewedAt(Instant.now());
         
         DnaProposal saved = proposalRepository.save(proposal);
-        auditService.log(actor, "PUBLISH", "dna_proposal", id, 
-            String.format("{\"reviewedBy\":\"%s\"}", actualReviewer));
+        auditService.log(actor, "PUBLISH", "dna_proposal", id,
+            String.format("{\"reviewedBy\":%s}", JsonHelpers.jsonString(actualReviewer)));
         return saved;
     }
 
@@ -235,7 +236,7 @@ public class DnaProposalService {
                 payload, "critical", "escalate", 1,
                 Instant.now().plusSeconds(24L * 3600L), null, null);
             auditService.logSystem("PROPOSAL_SLA_BREACH_ESCALATED", "dna_proposal", proposal.getId(),
-                String.format("{\"domainId\":\"%s\",\"breachDays\":%d}", proposal.getDomainId(),
+                String.format("{\"domainId\":%s,\"breachDays\":%d}", JsonHelpers.jsonString(proposal.getDomainId()),
                     Duration.between(proposal.getCreatedAt(), Instant.now()).toDays()));
         } catch (Exception e) {
             auditService.logSystem("PROPOSAL_SLA_BREACH_ESCALATE_FAIL", "dna_proposal", proposal.getId(),

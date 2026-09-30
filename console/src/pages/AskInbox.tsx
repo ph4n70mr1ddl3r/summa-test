@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { api, getUser } from '../services/api'
 import type { Ask } from '../types'
+import type { RbacRole } from '../services/api'
 import { tierColor, formatDate, escapeHtml } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
@@ -50,7 +51,7 @@ export default function AskInbox() {
 
   useEffect(() => {
     const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { userId: string; rbac: string; name: string } | null
+      const detail = (e as CustomEvent).detail as { userId: string; rbac: RbacRole; name: string } | null
       setCurrentUser(detail ? { userId: detail.userId, rbac: detail.rbac, name: detail.name } : null)
     }
     window.addEventListener('summa-auth-change', handler)

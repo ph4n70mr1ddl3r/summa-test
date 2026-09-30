@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.summa.exception.EntityNotFoundException;
+import com.summa.util.JsonHelpers;
 
 @Service
 public class NodeService {
@@ -125,7 +126,7 @@ public class NodeService {
             rebindAsk.setKind("question");
             rebindAsk.setFrom("system");
             rebindAsk.setTo(OffboardingWalkService.ADMIN_BROADCAST);
-            rebindAsk.setPayload(String.format("{\"nodeId\":\"%s\",\"workspaceId\":\"%s\",\"reason\":\"node_revoked\"}", id, ws.getId()));
+            rebindAsk.setPayload(String.format("{\"nodeId\":%s,\"workspaceId\":%s,\"reason\":\"node_revoked\"}", JsonHelpers.jsonString(id), JsonHelpers.jsonString(ws.getId())));
             rebindAsk.setSlaTier("bulk");
             rebindAsk.setExpiryBehavior("escalate");
             rebindAsk.setQuorumRequired(1);
@@ -133,7 +134,7 @@ public class NodeService {
             rebindAsk.setWorkspaceId(ws.getId());
             askRepository.save(rebindAsk);
             auditService.logSystem("REBIND_ASK", "workspace", ws.getId(),
-                String.format("{\"nodeId\":\"%s\",\"reason\":\"node_revoked\"}", id));
+                String.format("{\"nodeId\":%s,\"reason\":\"node_revoked\"}", JsonHelpers.jsonString(id)));
         }
 
         Node saved = nodeRepository.save(node);

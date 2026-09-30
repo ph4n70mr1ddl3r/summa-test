@@ -139,7 +139,7 @@ public class DnaRuleService {
         ruleRepository.save(rule);
         DnaRule saved = ruleRepository.save(predecessor);
         auditService.log(actor, "SUPERSEDE_RULE", "dna_rule", id,
-            String.format("{\"supersedes\":\"%s\"}", supersedesId));
+            String.format("{\"supersedes\":%s}", JsonHelpers.jsonString(supersedesId)));
         return saved;
     }
 }

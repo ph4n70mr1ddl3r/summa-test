@@ -31,6 +31,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.summa.exception.EntityNotFoundException;
+import com.summa.util.JsonHelpers;
 
 /**
  * Bounded map entry with expiry support for storm collapse tracking.
@@ -157,7 +158,7 @@ public class AskService {
 
         Ask saved = askRepository.save(ask);
         auditService.log(from, "CREATE", "ask", ask.getId(),
-            String.format("{\"kind\":\"%s\",\"to\":\"%s\",\"tier\":\"%s\"}", kind, to, ask.getSlaTier()));
+            String.format("{\"kind\":%s,\"to\":%s,\"tier\":%s}", JsonHelpers.jsonString(kind), JsonHelpers.jsonString(to), JsonHelpers.jsonString(ask.getSlaTier())));
         return saved;
     }
 
@@ -316,7 +317,7 @@ public class AskService {
         if (!ask.isPending()) {
             // ASK-015: later responses to an already-closed ask are audit-only, not refused
             auditService.logSystem("AUDIT_ONLY_STALE_RESPONSE", "ask", id,
-                String.format("{\"responder\":\"%s\",\"currentStatus\":\"%s\"}", responder, ask.getStatus()));
+                String.format("{\"responder\":%s,\"currentStatus\":%s}", JsonHelpers.jsonString(responder), JsonHelpers.jsonString(ask.getStatus())));
             return ask;
         }
 
@@ -333,7 +334,7 @@ public class AskService {
             if (!isPoolPrincipal) {
                 // Audit-only: record but don't count toward quorum
                 auditService.logSystem("AUDIT_ONLY_QUORUM_RESPONSE", "ask", id,
-                    String.format("{\"responder\":\"%s\",\"reason\":\"not_pool_principal\"}", responder));
+                    String.format("{\"responder\":%s,\"reason\":\"not_pool_principal\"}", JsonHelpers.jsonString(responder)));
                 return ask;
             }
         }
@@ -345,7 +346,7 @@ public class AskService {
             ask.setStatus("answered");
             Ask saved = askRepository.save(ask);
             auditService.log(responder, "RESPOND", "ask", id,
-                String.format("{\"response\":\"%s\"}", response != null && !response.isEmpty() ? response.substring(0, Math.min(100, response.length())) : ""));
+                String.format("{\"response\":%s}", JsonHelpers.jsonString(response != null && !response.isEmpty() ? response.substring(0, Math.min(100, response.length())) : "")));
             // INT-051: Direction ask response — move linkage atomically
             handleDirectionAskResponse(ask, response);
             return saved;
@@ -356,7 +357,7 @@ public class AskService {
         if (existingResponses.contains(responder)) {
             // Already responded — audit-only duplicate
             auditService.logSystem("AUDIT_ONLY_DUPLICATE_RESPONSE", "ask", id,
-                String.format("{\"responder\":\"%s\"}", responder));
+                String.format("{\"responder\":%s}", JsonHelpers.jsonString(responder)));
             return ask;
         }
 
@@ -372,8 +373,8 @@ public class AskService {
         Ask saved = askRepository.save(ask);
 
         auditService.log(responder, "RESPOND", "ask", id,
-                String.format("{\"response\":\"%s\",\"quorumProgress\":%d/%d}",
-                    response != null && !response.isEmpty() ? response.substring(0, Math.min(100, response.length())) : "",
+                String.format("{\"response\":%s,\"quorumProgress\":%d/%d}",
+                    JsonHelpers.jsonString(response != null && !response.isEmpty() ? response.substring(0, Math.min(100, response.length())) : ""),
                     existingResponses.size(), quorum));
         return saved;
     }
@@ -414,16 +415,16 @@ public class AskService {
             if ("extend".equals(action)) {
                 // Extend re-windows the same goal row — no goal_ref change needed
                 auditService.logSystem("DIRECTION_EXTEND", "ask", ask.getId(),
-                    String.format("{\"initiativeId\":\"%s\"}", initiativeId));
+                    String.format("{\"initiativeId\":%s}", JsonHelpers.jsonString(initiativeId)));
             } else if ("close".equals(action)) {
                 // Close the initiative — INT-051 requires atomic close on quorum reach
                 try {
                     initiativeService.close(initiativeId, "system");
                     auditService.logSystem("DIRECTION_CLOSE", "ask", ask.getId(),
-                        String.format("{\"initiativeId\":\"%s\"}", initiativeId));
+                        String.format("{\"initiativeId\":%s}", JsonHelpers.jsonString(initiativeId)));
                 } catch (Exception closeEx) {
                     auditService.logSystem("DIRECTION_CLOSE_FAIL", "ask", ask.getId(),
-                        String.format("{\"initiativeId\":\"%s\",\"error\":\"%s\"}", initiativeId, closeEx.getMessage()));
+                        String.format("{\"initiativeId\":%s,\"error\":%s}", JsonHelpers.jsonString(initiativeId), JsonHelpers.jsonString(closeEx.getMessage())));
                 }
             } else if ("re-base".equals(action) || "rebase".equals(action)) {
                 updateGoalRef(initiativeId, payload, "DIRECTION_REBASE");
@@ -432,7 +433,7 @@ public class AskService {
             }
         } catch (Exception e) {
             auditService.logSystem("DIRECTION_RESPOND_FAIL", "ask", ask.getId(),
-                String.format("{\"error\":\"%s\"}", e.getMessage()));
+                String.format("{\"error\":%s}", JsonHelpers.jsonString(e.getMessage())));
         }
     }
 
@@ -444,7 +445,7 @@ public class AskService {
                 initOpt.get().setGoalRef(newGoalRef);
                 initiativeRepository.save(initOpt.get());
                 auditService.logSystem(auditAction, "ask", initiativeId,
-                    String.format("{\"initiativeId\":\"%s\",\"newGoalRef\":\"%s\"}", initiativeId, newGoalRef));
+                    String.format("{\"initiativeId\":%s,\"newGoalRef\":%s}", JsonHelpers.jsonString(initiativeId), JsonHelpers.jsonString(newGoalRef)));
             }
         }
     }

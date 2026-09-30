@@ -3,6 +3,7 @@ package com.summa.service;
 import com.summa.repository.DnaGlossaryRepository;
 import com.summa.model.DnaGlossary;
 import com.summa.exception.EntityNotFoundException;
+import com.summa.util.JsonHelpers;
 import com.summa.util.ScanUtils;
 import com.summa.service.SecretsScanner;
 import org.springframework.stereotype.Service;
@@ -45,7 +46,7 @@ public class DnaGlossaryService {
 
         DnaGlossary saved = glossaryRepository.save(entry);
         auditService.log(actor, "CREATE_GLOSSARY", "dna_glossary", id,
-            String.format("{\"term\":\"%s\",\"domainId\":\"%s\"}", term, domainId));
+            String.format("{\"term\":%s,\"domainId\":%s}", JsonHelpers.jsonString(term), JsonHelpers.jsonString(domainId)));
         return saved;
     }
 
