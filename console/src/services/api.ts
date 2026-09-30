@@ -675,12 +675,21 @@ export const api = {
       }),
     reviewQueue: (domainId?: string) =>
       request<DnaProposal[]>(`/dna/proposals/review-queue${buildQuery(domainId ? { domainId } : undefined)}`),
+    search: (q: string, domainId?: string, limit?: number) =>
+      request<{ results: Map<string, unknown>[]; count: number }>(
+        `/dna/search${buildQuery({ q, domainId, limit })}`,
+      ),
   },
   asks: {
     list: () =>
       request<Ask[]>('/asks'),
     listByStatus: (status: AskStatus) =>
       request<Ask[]>(`/asks${buildQuery({ status })}`),
+    create: (body: Record<string, string>) =>
+      request<Ask>('/asks', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
     respond: (id: string, response: string) =>
       request<Ask>(`/asks/${id}/respond`, {
         method: 'POST',

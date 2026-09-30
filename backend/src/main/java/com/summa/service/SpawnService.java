@@ -314,7 +314,8 @@ public class SpawnService {
             }
         }
         if (ownerHumanId == null || ownerHumanId.isBlank()) {
-            ownerHumanId = request.getRequesterId();
+            // Do not fall back to requesterId (which may be an agent ID)
+            throw new IllegalStateException("Cannot activate spawn without a human owner: no approvedBy or requestedByHumanId was set");
         }
         // Validate that the resolved owner is actually a human, not an agent
         if (ownerHumanId != null && !ownerHumanId.isBlank()) {

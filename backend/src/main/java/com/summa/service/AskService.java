@@ -494,25 +494,20 @@ public class AskService {
     }
 
     private String toJsonResponseList(List<String> ids, String response) {
-        try {
-            List<Map<String, String>> list = new ArrayList<>();
-            for (int i = 0; i < ids.size(); i++) {
-                Map<String, String> entry = new HashMap<>();
-                entry.put("responder", ids.get(i));
-                if (i == ids.size() - 1 && response != null) {
-                    entry.put("response", response);
-                }
-                list.add(entry);
+        List<Map<String, String>> list = new ArrayList<>();
+        for (int i = 0; i < ids.size(); i++) {
+            Map<String, String> entry = new HashMap<>();
+            entry.put("responder", ids.get(i));
+            if (i == ids.size() - 1 && response != null) {
+                entry.put("response", response);
             }
+            list.add(entry);
+        }
+        try {
             return objectMapper.writeValueAsString(list);
         } catch (Exception e) {
-            StringBuilder sb = new StringBuilder("[");
-            for (int i = 0; i < ids.size(); i++) {
-                if (i > 0) sb.append(",");
-                sb.append("\"").append(ids.get(i)).append("\"");
-            }
-            sb.append("]");
-            return sb.toString();
+            // Should never happen with standard JSON serialisation of simple maps
+            throw new IllegalStateException("Failed to serialise ask responses: " + e.getMessage(), e);
         }
     }
 

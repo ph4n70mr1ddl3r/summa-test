@@ -735,7 +735,7 @@ END;
 -- FTS5 triggers for workspaces table
 CREATE TRIGGER IF NOT EXISTS workspaces_ai AFTER INSERT ON workspaces BEGIN
     INSERT INTO dna_search_index (id, title, status, domain_id, kind)
-    VALUES (new.id, new.name, 'active', NULL, 'workspace');
+    VALUES (new.id, new.name, new.status, NULL, 'workspace');
 END;
 
 CREATE TRIGGER IF NOT EXISTS workspaces_ad AFTER DELETE ON workspaces BEGIN
@@ -768,7 +768,7 @@ END;
 -- FTS5 triggers for memory_items table
 CREATE TRIGGER IF NOT EXISTS memory_items_ai AFTER INSERT ON memory_items BEGIN
     INSERT INTO dna_search_index (id, content_md, status, domain_id, kind)
-    VALUES (new.id, new.content_md, 'active', NULL, 'memory');
+    VALUES (new.id, new.content_md, new.status, NULL, 'memory');
 END;
 
 CREATE TRIGGER IF NOT EXISTS memory_items_ad AFTER DELETE ON memory_items BEGIN

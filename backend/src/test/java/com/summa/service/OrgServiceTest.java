@@ -93,6 +93,7 @@ class OrgServiceTest {
     @Test
     void setDeputy_detectsSelfDeputy() {
         Human human = createHuman("human-1", "member");
+        when(humanRepository.findByIdForUpdate("human-1")).thenReturn(Optional.of(human));
         when(humanRepository.findById("human-1")).thenReturn(Optional.of(human));
 
         assertThrows(IllegalArgumentException.class, () -> {
@@ -104,7 +105,7 @@ class OrgServiceTest {
     void setDeputy_refusesViewerAsDeputy() {
         Human human = createHuman("human-1", "member");
         Human viewer = createHuman("human-2", "viewer");
-        when(humanRepository.findById("human-1")).thenReturn(Optional.of(human));
+        when(humanRepository.findByIdForUpdate("human-1")).thenReturn(Optional.of(human));
         when(humanRepository.findById("human-2")).thenReturn(Optional.of(viewer));
 
         assertThrows(IllegalArgumentException.class, () -> {
@@ -118,7 +119,7 @@ class OrgServiceTest {
         human1.setDeputyMemberId("human-2");
         Human human2 = createHuman("human-2", "member");
         human2.setDeputyMemberId("human-1");
-        when(humanRepository.findById("human-1")).thenReturn(Optional.of(human1));
+        when(humanRepository.findByIdForUpdate("human-1")).thenReturn(Optional.of(human1));
         when(humanRepository.findById("human-2")).thenReturn(Optional.of(human2));
 
         assertThrows(IllegalStateException.class, () -> {
@@ -130,7 +131,7 @@ class OrgServiceTest {
     void setDeputy_succeedsWhenNoCycle() {
         Human human1 = createHuman("human-1", "member");
         Human human2 = createHuman("human-2", "member");
-        when(humanRepository.findById("human-1")).thenReturn(Optional.of(human1));
+        when(humanRepository.findByIdForUpdate("human-1")).thenReturn(Optional.of(human1));
         when(humanRepository.findById("human-2")).thenReturn(Optional.of(human2));
         when(humanRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 

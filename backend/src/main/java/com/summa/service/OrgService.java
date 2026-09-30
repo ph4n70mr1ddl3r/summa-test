@@ -179,7 +179,8 @@ public class OrgService {
 
     @Transactional
     public Human setDeputy(String id, String deputyId, String actor) {
-        Human human = humanRepository.findById(id)
+        // Pessimistic lock to prevent concurrent deputy assignment interleaving
+        Human human = humanRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new EntityNotFoundException("Human not found: " + id));
 
         // Validate deputy exists and is not a viewer
@@ -262,7 +263,8 @@ public class OrgService {
 
     @Transactional
     public void erasure(String id, String actor) {
-        Human human = humanRepository.findById(id)
+        // Pessimistic lock to prevent concurrent erasure/offboard interleaving
+        Human human = humanRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new EntityNotFoundException("Human not found: " + id));
 
         // Anonymize identity fields per STG-030..034
