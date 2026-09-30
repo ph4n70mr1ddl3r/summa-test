@@ -31,8 +31,6 @@ export default function Spawning() {
       setStats(data[1] != null && typeof data[1] === 'object' && !Array.isArray(data[1]) ? data[1] as SpawnStats : null)
       setError(loadError)
       setLoading(false)
-    }).catch(() => {
-      if (!aborted) { setError('Failed to load'); setLoading(false) }
     })
     return () => { aborted = true }
   }

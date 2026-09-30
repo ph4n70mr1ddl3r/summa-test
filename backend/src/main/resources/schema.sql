@@ -735,7 +735,7 @@ END;
 -- FTS5 triggers for workspaces table
 CREATE TRIGGER IF NOT EXISTS workspaces_ai AFTER INSERT ON workspaces BEGIN
     INSERT INTO dna_search_index (id, title, status, domain_id, kind)
-    VALUES (new.id, new.name, new.status, NULL, 'workspace');
+    VALUES (new.id, new.name, CASE WHEN new.archived_at IS NULL THEN 'active' ELSE 'archived' END, NULL, 'workspace');
 END;
 
 CREATE TRIGGER IF NOT EXISTS workspaces_ad AFTER DELETE ON workspaces BEGIN

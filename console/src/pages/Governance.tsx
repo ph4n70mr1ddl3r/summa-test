@@ -40,8 +40,6 @@ export default function Governance() {
       setSpend(spendData)
       setError(loadError)
       setLoading(false)
-    }).catch(() => {
-      if (!aborted) { setError('Failed to load'); setLoading(false) }
     })
     return () => { aborted = true }
   }
@@ -67,7 +65,7 @@ export default function Governance() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
-      loadData()
+      await loadData()
     } finally {
       setSaving(null)
     }

@@ -676,7 +676,7 @@ export const api = {
     reviewQueue: (domainId?: string) =>
       request<DnaProposal[]>(`/dna/proposals/review-queue${buildQuery(domainId ? { domainId } : undefined)}`),
     search: (q: string, domainId?: string, limit?: number) =>
-      request<{ results: Map<string, unknown>[]; count: number }>(
+      request<{ results: Record<string, unknown>[]; count: number }>(
         `/dna/search${buildQuery({ q, domainId, limit })}`,
       ),
   },

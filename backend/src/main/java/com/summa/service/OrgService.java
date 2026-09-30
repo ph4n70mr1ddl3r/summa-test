@@ -78,11 +78,7 @@ public class OrgService {
         // Validate rbac is one of the recognized roles; default to "member" if null
         String effectiveRbac = "member";
         if (rbac != null && !rbac.isBlank()) {
-            boolean validRole = false;
-            for (com.summa.enums.RbacRole role : com.summa.enums.RbacRole.values()) {
-                if (role.getValue().equals(rbac)) { validRole = true; break; }
-            }
-            if (!validRole) {
+            if (RbacRole.fromValue(rbac) == null) {
                 throw new IllegalArgumentException("Invalid rbac: " + rbac + ". Must be one of: admin, owner, member, viewer");
             }
             effectiveRbac = rbac;

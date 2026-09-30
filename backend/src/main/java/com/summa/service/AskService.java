@@ -292,7 +292,7 @@ public class AskService {
             String payload = String.format(
                 "{\"originalAskId\":\"%s\",\"originalAskKind\":\"%s\",\"originalAskTier\":\"%s\",\"reason\":\"chain_exhausted\"}",
                 originalAsk.getId(), originalAsk.getKind(), originalAsk.getSlaTier());
-            create("question", "system", OffboardingWalkService.ADMIN_BROADCAST,
+            create(AskKind.QUESTION.getValue(), "system", OffboardingWalkService.ADMIN_BROADCAST,
                 payload, "critical", "deny", 1,
                 Instant.now().plusSeconds(Defaults.DEFAULT_CRITICAL_ASK_DEADLINE_HOURS * 3600L),
                 originalAsk.getInitiativeId(), originalAsk.getWorkspaceId());

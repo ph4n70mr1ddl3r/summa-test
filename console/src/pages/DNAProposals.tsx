@@ -1,8 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { api } from '../services/api'
-import type { DnaProposal } from '../types'
+import type { DnaProposal, DnaProposalStatus } from '../types'
 import { formatDate, proposalKindColor, proposalStatusColor } from '../utils/formatting'
-import type { DnaProposalStatus } from '../services/api'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function DNAProposals() {

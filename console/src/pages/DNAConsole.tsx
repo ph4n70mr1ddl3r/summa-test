@@ -38,8 +38,6 @@ export default function DNAConsole() {
       setProposals(Array.isArray(data[3]) ? data[3] as DnaProposal[] : [])
       setError(loadError)
       setLoading(false)
-    }).catch(() => {
-      if (!aborted) { setError('Failed to load'); setLoading(false) }
     })
     return () => { aborted = true }
   }

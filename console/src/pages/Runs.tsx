@@ -1,8 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { api } from '../services/api'
-import type { Run } from '../types'
+import type { Run, RunStatus } from '../types'
 import { runStatusColor, formatDate } from '../utils/formatting'
-import type { RunStatus } from '../services/api'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Runs() {

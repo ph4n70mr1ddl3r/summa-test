@@ -25,7 +25,7 @@ public class DatabaseConfig {
         }
 
         HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("jdbc:sqlite:" + path + "?journal_mode=WAL");
+        config.setJdbcUrl("jdbc:sqlite:" + path + "?journal_mode=WAL&foreign_keys=ON");
         config.setDriverClassName("org.sqlite.JDBC");
         config.setPoolName("SummaHikariPool");
         config.setMaximumPoolSize(1);
