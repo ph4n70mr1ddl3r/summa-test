@@ -67,6 +67,7 @@ export default function Governance() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
+      loadData()
     } finally {
       setSaving(null)
     }

@@ -263,10 +263,6 @@ public class OrgController {
                     // Neither agent nor human found — stop the chain
                     holder[0] = null;
                 }
-                // If neither agent nor human found, stop the chain
-                if (holder[0] == null) {
-                    break;
-                }
             }
         }
         return ResponseEntity.ok(Map.of("memberId", memberId, "lineage", lineage));

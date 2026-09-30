@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { api, getUser } from '../services/api'
 import type { Ask, RbacRole } from '../types'
-import { tierColor, formatDate } from '../utils/formatting'
+import { tierColor, formatDate, escapeHtml } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 const KIND_DISPLAY_NAMES: Record<string, string> = {
@@ -179,7 +179,7 @@ export default function AskInbox() {
                   View payload
                 </summary>
                 <pre className="mt-2 text-xs text-gray-400 bg-gray-900 rounded p-3 overflow-x-auto">
-                  {ask.payload}
+                  {escapeHtml(ask.payload)}
                 </pre>
               </details>
               <div className="mt-3 flex items-center gap-2">
