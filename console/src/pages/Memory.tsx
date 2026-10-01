@@ -12,6 +12,7 @@ export default function Memory() {
   const [reviewingId, setReviewingId] = useState<string | null>(null)
   const [reviewingForId, setReviewingForId] = useState<string | null>(null)
   const [reviewSuccess, setReviewSuccess] = useState(false)
+  const [reviewError, setReviewError] = useState<string | null>(null)
 
   const loadItems = () => {
     setLoading(true)
@@ -32,6 +33,7 @@ export default function Memory() {
 
   const handleReview = async (id: string) => {
     setReviewSuccess(false)
+    setReviewError(null)
     setReviewingForId(id)
     try {
       await api.memory.review(id)
@@ -39,7 +41,8 @@ export default function Memory() {
       setReviewingForId(null)
       setReviewingId(null)
       await loadItems()
-    } catch {
+    } catch (err) {
+      setReviewError(err instanceof Error ? err.message : String(err))
       setReviewSuccess(false)
       setReviewingForId(null)
       setReviewingId(null)
@@ -80,6 +83,12 @@ export default function Memory() {
       {reviewSuccess && (
         <div className="rounded-lg p-3 text-sm bg-green-900/30 border border-green-700 text-green-400" role="alert">
           Item reviewed and taint cleared
+        </div>
+      )}
+      {reviewError && (
+        <div className="rounded-lg p-3 text-sm bg-red-900/30 border border-red-700 text-red-400" role="alert">
+          {reviewError}
+          <button type="button" onClick={() => setReviewError(null)} className="ml-2 text-red-300 hover:text-white" aria-label="Dismiss error">×</button>
         </div>
       )}
 

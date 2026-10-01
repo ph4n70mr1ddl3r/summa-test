@@ -427,6 +427,12 @@ CREATE INDEX IF NOT EXISTS idx_audit_events_actor ON audit_events(actor);
 CREATE INDEX IF NOT EXISTS idx_audit_events_object ON audit_events(object_type, object_id);
 CREATE INDEX IF NOT EXISTS idx_audit_events_actor_at ON audit_events(actor, at);
 CREATE INDEX IF NOT EXISTS idx_audit_events_object_at ON audit_events(object_type, object_id, at);
+CREATE INDEX IF NOT EXISTS idx_audit_events_action ON audit_events(action);
+CREATE INDEX IF NOT EXISTS idx_groups_leader ON groups(leader_member_id);
+CREATE INDEX IF NOT EXISTS idx_groups_status ON groups(status);
+CREATE INDEX IF NOT EXISTS idx_spend_ledger_run ON spend_ledger(run_id);
+CREATE INDEX IF NOT EXISTS idx_spend_ledger_spawn ON spend_ledger(spawn_id);
+CREATE INDEX IF NOT EXISTS idx_trigger_firings_run ON trigger_firings(run_id);
 
 CREATE TABLE IF NOT EXISTS pats (
     id TEXT PRIMARY KEY,

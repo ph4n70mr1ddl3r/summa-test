@@ -1,3 +1,3 @@
 # Hooks
 
-Custom React hooks are placed here. Currently none — logic lives in page components.
+Custom React hooks are placed here.

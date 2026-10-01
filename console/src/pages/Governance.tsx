@@ -58,14 +58,11 @@ export default function Governance() {
       if (currentValue === undefined) return
       const numValue = currentValue === '' ? NaN : Number(currentValue)
       const body = { [key]: isNaN(numValue) ? currentValue : numValue }
-      const result = section === 'policies'
-        ? await api.governance.updatePolicies(body)
-        : await api.governance.updateQuotas(body)
-      if (result != null) {
-        if (section === 'policies') setPolicies(prev => ({ ...prev, ...(result as Record<string, unknown>) }))
-        else setQuotas(prev => ({ ...prev, ...(result as Record<string, unknown>) }))
-        setEditValues(prev => { const next = { ...prev }; delete next[key]; return next })
-      }
+      if (section === 'policies') await api.governance.updatePolicies(body)
+      else await api.governance.updateQuotas(body)
+      if (section === 'policies') setPolicies(prev => ({ ...prev, [key]: isNaN(numValue) ? currentValue : numValue }))
+      else setQuotas(prev => ({ ...prev, [key]: isNaN(numValue) ? currentValue : numValue }))
+      setEditValues(prev => { const next = { ...prev }; delete next[key]; return next })
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err))
       try { await loadData() } catch { /* reload failure is non-blocking */ }
@@ -128,7 +125,6 @@ export default function Governance() {
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
   if (error) return <ErrorBanner message={error} onRetry={loadData} />
-  if (actionError) return <ErrorBanner message={actionError} onRetry={() => setActionError(null)} />
 
   const policyEntries = Object.entries(policies)
   const quotaEntries = Object.entries(quotas)
@@ -136,6 +132,13 @@ export default function Governance() {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Governance</h2>
+
+      {actionError && (
+        <div className="rounded-lg p-3 text-sm bg-red-900/30 border border-red-700 text-red-400" role="alert">
+          {actionError}
+          <button type="button" onClick={() => setActionError(null)} className="ml-2 text-red-300 hover:text-white" aria-label="Dismiss error">×</button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">

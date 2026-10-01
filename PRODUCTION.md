@@ -59,6 +59,24 @@ Kubernetes (prod): decomposed services
 | `SUMMA_OIDC_ISSUER` | *(reserved)* | Keycloak issuer URI — **not yet wired**. Human auth today is email+password via `POST /api/auth/login`. See OIDC note below. |
 | `SUMMA_OIDC_CLIENT_ID` | *(reserved)* | OIDC client ID — not yet wired |
 | `SUMMA_OIDC_CLIENT_SECRET` | *(reserved)* | OIDC client secret — not yet wired |
+| `SUMMA_JWT_EXPIRATION` | `86400000` | JWT token expiration in milliseconds |
+| `SUMMA_JWT_SECRET_MIN_LENGTH` | `32` | Minimum JWT secret length in characters |
+| `SUMMA_LOG_DIR` | `/data/logs` (Docker) · `~/.summa/logs` (local) | Application log directory |
+| `SUMMA_NODE_LEASE_INTERVAL` | `30` | Node lease interval in seconds |
+| `SUMMA_NODE_HEARTBEAT_TIMEOUT` | `90` | Node heartbeat timeout in seconds |
+| `SUMMA_NODE_AFFINITY_STARVATION` | `24` | Node affinity starvation threshold in hours |
+| `SUMMA_SPAWN_EPH_TOKEN_TTL` | `24` | Ephemeral spawn token TTL in hours |
+| `SUMMA_SPAWN_MAX_CONCURRENT` | `3` | Max concurrent spawns per spawner |
+| `SUMMA_SPAWN_MAX_AGENTS` | `100` | Org-wide max active agents |
+| `SUMMA_SPAWN_DEPTH_CAP` | `2` | Spawn depth cap |
+| `SUMMA_SPAWN_BUDGET_WINDOW` | `30` | Spawn budget window in days |
+| `SUMMA_ASKS_CRITICAL_DEADLINE` | `1` | Critical ask deadline in hours |
+| `SUMMA_ASKS_STANDARD_DEADLINE` | `24` | Standard ask deadline in hours |
+| `SUMMA_ASKS_BULK_DEADLINE` | `24` | Bulk ask deadline in hours |
+| `SUMMA_ASKS_STORM_COLLAPSE` | `1` | Ask storm collapse window in hours |
+| `SUMMA_ASKS_RATE_LIMIT` | `60` | Ask rate limit per source per hour |
+| `SUMMA_DNA_REVIEW_SLA` | `7` | Default DNA review SLA in days |
+| `SUMMA_CRITICAL_FLOOR_PERCENT` | `5` | Critical spend floor percentage of ceiling |
 
 > **OIDC note:** `SUMMA_OIDC_*` variables are reserved for a planned Keycloak integration. Human auth today is email + password via `POST /api/auth/login`. Keycloak OIDC was decided per PLAN §14.2 / SEC-001 but not yet implemented — these variables have no effect.
 

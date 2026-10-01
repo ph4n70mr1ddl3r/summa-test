@@ -91,12 +91,13 @@ export function isAuthenticated(): boolean {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+async function request<T>(path: string, init?: RequestInit): Promise<T | undefined> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
     const headers = new Headers(init?.headers);
-    if ((init?.method ?? '').toUpperCase() !== 'GET' && (init?.method ?? '').toUpperCase() !== 'HEAD') {
+    const method = (init?.method ?? '').toUpperCase();
+    if (method !== 'GET' && method !== 'HEAD') {
       headers.set('Content-Type', 'application/json');
     }
     if (authToken) {
@@ -157,7 +158,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     // Only wrap true network/abort failures with status 0 so callers can still
     // distinguish between a network error and an actual HTTP error response.
     const status = err instanceof ApiError ? err.status : 0;
-    throw new ApiError(err instanceof Error ? err.message : String(err), status)
+    throw new ApiError(err instanceof Error ? err.message : String(err), status);
   } finally {
     clearTimeout(timeoutId);
   }
@@ -735,7 +736,7 @@ export const api = {
     members: () => request<{ members: Member[]; total: number }>('/org/members'),
     lineage: async (memberId: string) => {
       const res = await request<{ memberId: string; lineage: string[] }>(`/org/lineage${buildQuery({ memberId })}`);
-      return res.lineage;
+      return res?.lineage ?? [];
     },
     audit: (limit?: number, objectType?: string, objectId?: string) =>
       request<unknown[]>(`/org/audit${buildQuery({ limit, objectType, objectId })}`),

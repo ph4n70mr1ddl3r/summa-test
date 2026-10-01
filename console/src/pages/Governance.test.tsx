@@ -9,6 +9,8 @@ vi.mock('../services/api', () => ({
       policies: vi.fn(),
       quotas: vi.fn(),
       spend: vi.fn(),
+      updatePolicies: vi.fn(),
+      updateQuotas: vi.fn(),
     },
   },
   loadWithFallback: async (fetchAll: () => Promise<unknown[]>, fetchIndividual: () => Promise<unknown[]>) => {

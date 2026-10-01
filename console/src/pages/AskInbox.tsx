@@ -36,6 +36,8 @@ export default function AskInbox() {
   const [respondingForId, setRespondingForId] = useState<string | null>(null)
   const respondingIdRef = useRef<string | null>(null)
   respondingIdRef.current = respondingId
+  const responseTextRef = useRef<string>('')
+  responseTextRef.current = responseText
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape' && respondingIdRef.current !== null) {
@@ -82,7 +84,7 @@ export default function AskInbox() {
     }
     setRespondingForId(id)
     try {
-      await api.asks.respond(id, responseText)
+      await api.asks.respond(id, responseTextRef.current)
       setSubmitSuccess('Response recorded')
       setRespondingId(null)
       setResponseText('')

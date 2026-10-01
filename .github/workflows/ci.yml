@@ -40,6 +40,8 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: console/package-lock.json
+      - name: Install root deps (workspace resolution)
+        run: npm ci
       - name: Install console deps
         run: cd console && npm ci
       - name: Lint console
