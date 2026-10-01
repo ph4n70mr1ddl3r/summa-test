@@ -161,4 +161,114 @@ class MemberServiceTest {
         assertNotNull(result);
         verify(humanRepository).save(h);
     }
+
+    @Test
+    void findAllActiveHumans_returnsAllNonDeactivated() {
+        Human active = new Human();
+        active.setId("h1");
+        Human deactivated = new Human();
+        deactivated.setId("h2");
+        deactivated.setDeactivatedAt(java.time.Instant.now());
+        when(humanRepository.findAllActive()).thenReturn(List.of(active, deactivated));
+
+        List<Human> result = memberService.findAllActiveHumans();
+
+        assertEquals(2, result.size());
+    }
+
+    @Test
+    void findAllActiveAgents_returnsAllActive() {
+        Agent active1 = new Agent();
+        active1.setId("a1");
+        active1.setStatus("active");
+        Agent active2 = new Agent();
+        active2.setId("a2");
+        active2.setStatus("active");
+        when(agentRepository.findAllActive()).thenReturn(List.of(active1, active2));
+
+        List<Agent> result = memberService.findAllActiveAgents();
+
+        assertEquals(2, result.size());
+    }
+
+    @Test
+    void findAdmins_returnsAdminHumans() {
+        Human admin = new Human();
+        admin.setId("h1");
+        admin.setRbac("admin");
+        when(humanRepository.findActiveByRole("admin")).thenReturn(List.of(admin));
+
+        List<Human> result = memberService.findAdmins();
+
+        assertEquals(1, result.size());
+        assertEquals("h1", result.get(0).getId());
+    }
+
+    @Test
+    void findAdmins_returnsEmptyWhenNone() {
+        when(humanRepository.findActiveByRole("admin")).thenReturn(List.of());
+
+        List<Human> result = memberService.findAdmins();
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void findOwnerHumans_returnsOwnerHumans() {
+        Human owner = new Human();
+        owner.setId("h1");
+        owner.setRbac("owner");
+        when(humanRepository.findActiveByRole("owner")).thenReturn(List.of(owner));
+
+        List<Human> result = memberService.findOwnerHumans();
+
+        assertEquals(1, result.size());
+        assertEquals("h1", result.get(0).getId());
+    }
+
+    @Test
+    void countActiveAdmins_returnsCount() {
+        when(humanRepository.countByDeactivatedAtIsNullAndRbac("admin")).thenReturn(3L);
+
+        long count = memberService.countActiveAdmins();
+
+        assertEquals(3, count);
+    }
+
+    @Test
+    void canWrite_returnsTrueForAdmin() {
+        assertTrue(memberService.canWrite("admin"));
+    }
+
+    @Test
+    void canWrite_returnsTrueForOwner() {
+        assertTrue(memberService.canWrite("owner"));
+    }
+
+    @Test
+    void canWrite_returnsFalseForModerator() {
+        assertFalse(memberService.canWrite("moderator"));
+    }
+
+    @Test
+    void canWrite_returnsFalseForViewer() {
+        assertFalse(memberService.canWrite("viewer"));
+    }
+
+    @Test
+    void canWrite_returnsFalseForNull() {
+        assertFalse(memberService.canWrite(null));
+    }
+
+    @Test
+    void canWrite_returnsFalseForUnknown() {
+        assertFalse(memberService.canWrite("unknown"));
+    }
+
+    @Test
+    void isAdmin_returnsFalseWhenHumanNotFound() {
+        when(humanRepository.findById("missing")).thenReturn(Optional.empty());
+
+        assertFalse(memberService.isAdmin("missing"));
+    }
 }

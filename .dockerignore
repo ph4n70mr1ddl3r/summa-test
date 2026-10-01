@@ -26,4 +26,3 @@ opencode.jsonc
 # Python tooling not needed in Docker builds
 tools/
 # Runtime log output
-target/logs/

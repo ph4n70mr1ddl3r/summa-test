@@ -47,4 +47,25 @@ class SpendLedgerServiceTest {
         assertThrows(EntityNotFoundException.class, () ->
             ledgerService.acknowledge("missing", "admin"));
     }
+
+    @Test
+    void findById_returnsPresent() {
+        SpendLedger ledger = new SpendLedger();
+        ledger.setId("sl-1");
+        when(repository.findById("sl-1")).thenReturn(Optional.of(ledger));
+
+        Optional<SpendLedger> result = ledgerService.findById("sl-1");
+
+        assertTrue(result.isPresent());
+        assertEquals("sl-1", result.get().getId());
+    }
+
+    @Test
+    void findById_returnsEmpty() {
+        when(repository.findById("missing")).thenReturn(Optional.empty());
+
+        Optional<SpendLedger> result = ledgerService.findById("missing");
+
+        assertTrue(result.isEmpty());
+    }
 }

@@ -43,7 +43,7 @@ export default function BoardTasks() {
             <div key={task.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium text-gray-200">{task.title}</p>
+                  <p className="font-medium text-gray-200">{escapeHtml(task.title)}</p>
                   {task.description && (
                     <p className="text-sm text-gray-400 mt-1">{escapeHtml(task.description)}</p>
                   )}

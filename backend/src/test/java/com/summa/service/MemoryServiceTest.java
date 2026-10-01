@@ -2,11 +2,16 @@ package com.summa.service;
 
 import com.summa.repository.MemoryItemRepository;
 import com.summa.model.MemoryItem;
+import com.summa.model.Workspace;
+import com.summa.model.DnaDomain;
+import com.summa.model.Human;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,8 +41,13 @@ class MemoryServiceTest {
     @Mock
     private SecretsScanner secretsScanner;
 
-    @InjectMocks
     private MemoryService memoryService;
+
+    @BeforeEach
+    void setUp() {
+        memoryService = new MemoryService(memoryItemRepository, auditService, domainService,
+            memberService, workspaceService, new ObjectMapper(), secretsScanner);
+    }
 
     @Test
     void create_memoryItem() {
@@ -136,5 +146,159 @@ class MemoryServiceTest {
 
         assertThrows(ConflictException.class, () ->
             memoryService.create("project", "h1", "ws-1", "my secret token=abc123", "{}", false));
+    }
+
+    @Test
+    void review_throwsWhenPersonalTierNonOwner() {
+        MemoryItem item = new MemoryItem();
+        item.setId("mem-1");
+        item.setTier("personal");
+        item.setMemberId("human-1");
+        when(memoryItemRepository.findById("mem-1")).thenReturn(Optional.of(item));
+
+        assertThrows(IllegalStateException.class, () -> {
+            memoryService.review("mem-1", "human-2");
+        });
+    }
+
+    @Test
+    void review_allowsPersonalTierOwner() {
+        MemoryItem item = new MemoryItem();
+        item.setId("mem-1");
+        item.setTier("personal");
+        item.setMemberId("human-1");
+        when(memoryItemRepository.findById("mem-1")).thenReturn(Optional.of(item));
+        when(memoryItemRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        MemoryItem result = memoryService.review("mem-1", "human-1");
+
+        assertFalse(result.isTainted());
+        assertEquals("human-1", result.getReviewedBy());
+    }
+
+    @Test
+    void review_throwsWhenProjectTierNoWorkspace() {
+        MemoryItem item = new MemoryItem();
+        item.setId("mem-1");
+        item.setTier("project");
+        item.setWorkspaceId(null);
+        when(memoryItemRepository.findById("mem-1")).thenReturn(Optional.of(item));
+
+        assertThrows(IllegalStateException.class, () -> {
+            memoryService.review("mem-1", "human-1");
+        });
+    }
+
+    @Test
+    void review_throwsWhenProjectTierNonOwnerNonAdmin() {
+        MemoryItem item = new MemoryItem();
+        item.setId("mem-1");
+        item.setTier("project");
+        item.setWorkspaceId("ws-1");
+        when(memoryItemRepository.findById("mem-1")).thenReturn(Optional.of(item));
+
+        Workspace ws = new Workspace();
+        ws.setDomainIds("[\"domain-1\"]");
+        when(workspaceService.findById("ws-1")).thenReturn(Optional.of(ws));
+
+        DnaDomain domain = new DnaDomain();
+        domain.setId("domain-1");
+        domain.setOwnerHumanId("human-owner");
+        when(domainService.findById("domain-1")).thenReturn(Optional.of(domain));
+        when(memberService.findAdmins()).thenReturn(List.of());
+
+        assertThrows(IllegalStateException.class, () -> {
+            memoryService.review("mem-1", "human-2");
+        });
+    }
+
+    @Test
+    void review_allowsProjectTierDomainOwner() {
+        MemoryItem item = new MemoryItem();
+        item.setId("mem-1");
+        item.setTier("project");
+        item.setWorkspaceId("ws-1");
+        when(memoryItemRepository.findById("mem-1")).thenReturn(Optional.of(item));
+
+        Workspace ws = new Workspace();
+        ws.setDomainIds("[\"domain-1\"]");
+        when(workspaceService.findById("ws-1")).thenReturn(Optional.of(ws));
+
+        DnaDomain domain = new DnaDomain();
+        domain.setId("domain-1");
+        domain.setOwnerHumanId("human-1");
+        when(domainService.findById("domain-1")).thenReturn(Optional.of(domain));
+        when(memberService.findAdmins()).thenReturn(List.of());
+        when(memoryItemRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        MemoryItem result = memoryService.review("mem-1", "human-1");
+
+        assertFalse(result.isTainted());
+    }
+
+    @Test
+    void review_allowsProjectTierAdmin() {
+        MemoryItem item = new MemoryItem();
+        item.setId("mem-1");
+        item.setTier("project");
+        item.setWorkspaceId("ws-1");
+        when(memoryItemRepository.findById("mem-1")).thenReturn(Optional.of(item));
+
+        Workspace ws = new Workspace();
+        ws.setDomainIds("[\"domain-1\"]");
+        when(workspaceService.findById("ws-1")).thenReturn(Optional.of(ws));
+
+        DnaDomain domain = new DnaDomain();
+        domain.setId("domain-1");
+        domain.setOwnerHumanId("human-owner");
+        when(domainService.findById("domain-1")).thenReturn(Optional.of(domain));
+
+        Human admin = new Human();
+        admin.setId("admin-1");
+        when(memberService.findAdmins()).thenReturn(List.of(admin));
+        when(memoryItemRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        MemoryItem result = memoryService.review("mem-1", "admin-1");
+
+        assertFalse(result.isTainted());
+    }
+
+    @Test
+    void review_throwsOnInvalidDomainIdsJson() {
+        MemoryItem item = new MemoryItem();
+        item.setId("mem-1");
+        item.setTier("project");
+        item.setWorkspaceId("ws-1");
+        when(memoryItemRepository.findById("mem-1")).thenReturn(Optional.of(item));
+
+        com.summa.model.Workspace ws = new com.summa.model.Workspace();
+        ws.setDomainIds("not-json");
+        when(workspaceService.findById("ws-1")).thenReturn(Optional.of(ws));
+
+        assertThrows(IllegalStateException.class, () -> {
+            memoryService.review("mem-1", "human-1");
+        });
+    }
+
+    @Test
+    void findById_returnsPresent() {
+        MemoryItem item = new MemoryItem();
+        item.setId("mem-1");
+        when(memoryItemRepository.findById("mem-1")).thenReturn(Optional.of(item));
+
+        Optional<MemoryItem> result = memoryService.findById("mem-1");
+
+        assertTrue(result.isPresent());
+    }
+
+    @Test
+    void findAll_returnsList() {
+        MemoryItem item = new MemoryItem();
+        item.setId("mem-1");
+        when(memoryItemRepository.findAll(10)).thenReturn(List.of(item));
+
+        List<MemoryItem> result = memoryService.findAll(10);
+
+        assertEquals(1, result.size());
     }
 }

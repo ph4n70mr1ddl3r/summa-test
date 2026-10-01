@@ -28,7 +28,8 @@ export default function Spawning() {
     ).then(({ data, error: loadError }) => {
       if (aborted) return
       setRequests(Array.isArray(data[0]) ? data[0] as SpawnRequest[] : [])
-      setStats(data[1] != null && typeof data[1] === 'object' && !Array.isArray(data[1]) ? data[1] as SpawnStats : null)
+      setStats(data[1] != null && typeof data[1] === 'object' && !Array.isArray(data[1]) && !('length' in data[1])
+        ? data[1] as SpawnStats : null)
       setError(loadError)
       setLoading(false)
     })
@@ -66,6 +67,7 @@ export default function Spawning() {
       {actionError && (
         <div className="rounded-lg p-3 text-sm bg-red-900/30 border border-red-700 text-red-400" role="alert">
           {actionError}
+          <button type="button" onClick={() => setActionError(null)} className="ml-2 text-red-300 hover:text-white" aria-label="Dismiss error">×</button>
         </div>
       )}
       <div className="flex items-center justify-between">

@@ -1,7 +1,6 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { api, getUser } from '../services/api'
-import type { Ask } from '../types'
-import type { RbacRole } from '../services/api'
+import type { Ask, RbacRole } from '../types'
 import { tierColor, formatDate, escapeHtml } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
@@ -34,17 +33,13 @@ export default function AskInbox() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null)
   const [respondingForId, setRespondingForId] = useState<string | null>(null)
-  const respondingIdRef = useRef<string | null>(null)
-  respondingIdRef.current = respondingId
-  const responseTextRef = useRef<string>('')
-  responseTextRef.current = responseText
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape' && respondingIdRef.current !== null) {
+    if (e.key === 'Escape' && respondingId !== null) {
       setRespondingId(null)
       setResponseText('')
     }
-  }, [])
+  }, [respondingId])
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown)
@@ -84,7 +79,7 @@ export default function AskInbox() {
     }
     setRespondingForId(id)
     try {
-      await api.asks.respond(id, responseTextRef.current)
+      await api.asks.respond(id, responseText)
       setSubmitSuccess('Response recorded')
       setRespondingId(null)
       setResponseText('')
@@ -123,13 +118,15 @@ export default function AskInbox() {
       </div>
 
       {submitError && (
-        <div className="bg-red-900/30 border border-red-700 rounded-lg p-3 text-red-400 text-sm" role="alert">
+        <div className="rounded-lg p-3 text-sm bg-red-900/30 border border-red-700 text-red-400" role="alert">
           {submitError}
+          <button type="button" onClick={() => setSubmitError(null)} className="ml-2 text-red-300 hover:text-white" aria-label="Dismiss error">×</button>
         </div>
       )}
       {submitSuccess && (
-        <div className="bg-green-900/30 border border-green-700 rounded-lg p-3 text-green-400 text-sm" role="alert">
+        <div className="rounded-lg p-3 text-sm bg-green-900/30 border border-green-700 text-green-400" role="status">
           {submitSuccess}
+          <button type="button" onClick={() => setSubmitSuccess(null)} className="ml-2 text-green-300 hover:text-white" aria-label="Dismiss success">×</button>
         </div>
       )}
 

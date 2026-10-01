@@ -75,9 +75,9 @@ export default function Runs() {
                 <div>
                   <p className="font-medium text-gray-200">Run {run.id.slice(0, 8)}</p>
                   <p className="text-sm text-gray-400 mt-1">
-                    Agent: {run.agentId}
-                    {run.workspaceId ? ` · Workspace: ${run.workspaceId}` : ''}
-                    {run.initiativeId ? ` · Initiative: ${run.initiativeId}` : ''}
+                    Agent: {escapeHtml(run.agentId)}
+                    {run.workspaceId ? ` · Workspace: ${escapeHtml(run.workspaceId)}` : ''}
+                    {run.initiativeId ? ` · Initiative: ${escapeHtml(run.initiativeId)}` : ''}
                   </p>
                   {run.prompt && (
                     <p className="text-xs text-gray-500 mt-1 line-clamp-2">{escapeHtml(run.prompt)}</p>

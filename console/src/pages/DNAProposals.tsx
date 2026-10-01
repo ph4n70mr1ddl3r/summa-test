@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { api } from '../services/api'
 import type { DnaProposal, DnaProposalStatus } from '../types'
-import { formatDate, proposalKindColor, proposalStatusColor } from '../utils/formatting'
+import { formatDate, proposalKindColor, proposalStatusColor, escapeHtml } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function DNAProposals() {
@@ -75,7 +75,7 @@ export default function DNAProposals() {
                     <span className={`text-xs px-2 py-0.5 rounded mr-2 ${proposalKindColor(p.kind)}`}>
                       {p.kind}
                     </span>
-                    {p.proposedBy}
+                    {escapeHtml(p.proposedBy)}
                   </p>
                   <p className="text-sm text-gray-400 mt-1">
                     {p.domainId ? `Domain: ${p.domainId}` : 'Organization-wide'}

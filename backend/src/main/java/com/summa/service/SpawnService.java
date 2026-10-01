@@ -261,7 +261,7 @@ public class SpawnService {
             request.setApprovedAt(Instant.now());
             SpawnRequest saved = spawnRepository.save(request);
             auditService.log(actor, "AUDIT_ONLY_SPAWN_APPROVE", "spawn_request", id,
-                "Rejected: spend halt active");
+                String.format("{\"reason\":\"%s\"}", "spend_halt_active"));
             return saved;
         }
 

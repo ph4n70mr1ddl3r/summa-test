@@ -49,7 +49,7 @@ export default function Initiatives() {
             <div key={ini.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium text-gray-200">{ini.title}</p>
+                  <p className="font-medium text-gray-200">{escapeHtml(ini.title)}</p>
                   <p className="text-sm text-gray-400 mt-1">
                     Sponsor: {escapeHtml(ini.sponsor)} | Lead: {escapeHtml(ini.lead)}
                     {ini.goalRef && <span className="ml-2">Goal: {escapeHtml(ini.goalRef)}</span>}

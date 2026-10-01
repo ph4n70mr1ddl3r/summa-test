@@ -55,7 +55,6 @@ export default function Governance() {
     setActionError(null)
     try {
       const currentValue = editValues[key]
-      if (currentValue === undefined) return
       const numValue = currentValue === '' ? NaN : Number(currentValue)
       const body = { [key]: isNaN(numValue) ? currentValue : numValue }
       if (section === 'policies') await api.governance.updatePolicies(body)
