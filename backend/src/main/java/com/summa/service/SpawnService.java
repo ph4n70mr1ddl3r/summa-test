@@ -67,6 +67,9 @@ public class SpawnService {
         this.spendLedgerService = spendLedgerService;
         this.initiativeRepository = initiativeRepository;
         this.objectMapper = objectMapper;
+        // Ensure a minimum depth cap even when constructed outside Spring (e.g., unit tests).
+        // In Spring-managed mode, @Value injects after construction, so this is a no-op for
+        // values >= 2, but guarantees a sensible floor for direct construction.
         this.depthCap = Math.max(2, depthCap);
     }
 

@@ -5,6 +5,9 @@ import com.summa.repository.BoardTaskRepository;
 import com.summa.repository.AskRepository;
 import com.summa.repository.DnaGoalRepository;
 import com.summa.repository.DnaDecisionRepository;
+import com.summa.repository.WorkspaceRepository;
+import com.summa.repository.SpawnRequestRepository;
+import com.summa.repository.RunRepository;
 import com.summa.model.Initiative;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.List;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -48,6 +52,18 @@ class InitiativeServiceTest {
 
     @Mock
     private MemberService memberService;
+
+    @Mock
+    private WorkspaceRepository workspaceRepository;
+
+    @Mock
+    private SpawnRequestRepository spawnRequestRepository;
+
+    @Mock
+    private RunRepository runRepository;
+
+    @Mock
+    private ObjectMapper objectMapper;
 
     @InjectMocks
     private InitiativeService initiativeService;
