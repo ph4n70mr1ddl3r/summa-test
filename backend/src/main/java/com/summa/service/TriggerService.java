@@ -116,38 +116,46 @@ public class TriggerService {
 
         for (Trigger trigger : activeTriggers) {
             if (!"schedule".equals(trigger.getKind())) continue;
-
-            // Simple cron-like check: match every-minute expressions
-            String expr = trigger.getExpression();
-            boolean fireEveryMinute = "*".equals(expr)
-                    || "*/1 * * * *".equals(expr)
-                    || "0 * * * * *".equals(expr)
-                    || "* * * * *".equals(expr);
-            if (fireEveryMinute) {
-                Instant nowTruncated = now.truncatedTo(ChronoUnit.MINUTES);
-                // SUB-052: Idempotency key = trigger_id + scheduled_time
-                String idempotencyKey = trigger.getId() + ":" + nowTruncated;
-                Optional<TriggerFiring> existing = firingRepository
-                        .findByTriggerIdAndIdempotencyKey(trigger.getId(), idempotencyKey);
-                if (existing.isPresent()) {
-                    // Already fired — return original run (SUB-052 replay)
-                    auditService.logSystem("REPLAY_FIRING", "trigger_firing", existing.get().getId(), null);
-                    continue;
-                }
-
-                // Record firing
-                TriggerFiring firing = new TriggerFiring();
-                firing.setId(UUID.randomUUID().toString());
-                firing.setTriggerId(trigger.getId());
-                firing.setIdempotencyKey(idempotencyKey);
-                firing.setFiredAt(now);
-                firingRepository.save(firing);
-
-                trigger.setLastFiredAt(now);
-                triggerRepository.save(trigger);
-                auditService.logSystem("FIRE_TRIGGER", "trigger", trigger.getId(), null);
+            try {
+                checkSingleTrigger(trigger, now);
+            } catch (Exception e) {
+                auditService.logSystem("TRIGGER_CHECK_FAIL", "trigger", trigger.getId(),
+                    String.format("{\"error\":\"%s\"}", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
             }
         }
+    }
+
+    private void checkSingleTrigger(Trigger trigger, Instant now) {
+        // Simple cron-like check: match every-minute expressions
+        String expr = trigger.getExpression();
+        boolean fireEveryMinute = "*".equals(expr)
+                || "*/1 * * * *".equals(expr)
+                || "0 * * * * *".equals(expr)
+                || "* * * * *".equals(expr);
+        if (!fireEveryMinute) return;
+
+        Instant nowTruncated = now.truncatedTo(ChronoUnit.MINUTES);
+        // SUB-052: Idempotency key = trigger_id + scheduled_time
+        String idempotencyKey = trigger.getId() + ":" + nowTruncated;
+        Optional<TriggerFiring> existing = firingRepository
+                .findByTriggerIdAndIdempotencyKey(trigger.getId(), idempotencyKey);
+        if (existing.isPresent()) {
+            // Already fired — return original run (SUB-052 replay)
+            auditService.logSystem("REPLAY_FIRING", "trigger_firing", existing.get().getId(), null);
+            return;
+        }
+
+        // Record firing
+        TriggerFiring firing = new TriggerFiring();
+        firing.setId(UUID.randomUUID().toString());
+        firing.setTriggerId(trigger.getId());
+        firing.setIdempotencyKey(idempotencyKey);
+        firing.setFiredAt(now);
+        firingRepository.save(firing);
+
+        trigger.setLastFiredAt(now);
+        triggerRepository.save(trigger);
+        auditService.logSystem("FIRE_TRIGGER", "trigger", trigger.getId(), null);
     }
 
     public Map<String, Object> getStats() {

@@ -27,19 +27,24 @@ public final class JsonHelpers {
         } catch (Exception e) {
             // Fallback to manual escaping if ObjectMapper fails
             StringBuilder sb = new StringBuilder("\"");
-            for (int i = 0; i < value.length(); i++) {
-                char c = value.charAt(i);
-                switch (c) {
-                    case '"' -> sb.append("\\\"");
-                    case '\\' -> sb.append("\\\\");
-                    case '\n' -> sb.append("\\n");
-                    case '\r' -> sb.append("\\r");
-                    case '\t' -> sb.append("\\t");
-                    default -> {
-                        if (c < 0x20) sb.append(String.format("\\u%04x", (int) c));
-                        else sb.append(c);
-                    }
+            for (int i = 0; i < value.length(); ) {
+                int c = value.codePointAt(i);
+                if (c < 0x20) {
+                    sb.append(String.format("\\u%04x", c));
+                } else if (c == '"') {
+                    sb.append("\\\"");
+                } else if (c == '\\') {
+                    sb.append("\\\\");
+                } else if (c == '\n') {
+                    sb.append("\\n");
+                } else if (c == '\r') {
+                    sb.append("\\r");
+                } else if (c == '\t') {
+                    sb.append("\\t");
+                } else {
+                    sb.appendCodePoint(c);
                 }
+                i += Character.charCount(c);
             }
             return sb.append("\"").toString();
         }

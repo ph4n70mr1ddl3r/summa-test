@@ -43,9 +43,7 @@ public class SpawnService {
     private final SpendLedgerService spendLedgerService;
     private final InitiativeRepository initiativeRepository;
     private final ObjectMapper objectMapper;
-
-    @Value("${summa.spawn.depth-cap:2}")
-    private int depthCap;
+    private final int depthCap;
 
     public SpawnService(SpawnRequestRepository spawnRepository, AuditService auditService,
                           GovernanceService governanceService, RoleTemplateRepository templateRepository,
@@ -54,7 +52,8 @@ public class SpawnService {
                           DnaDomainRepository domainRepository,
                           AskService askService, SpendLedgerService spendLedgerService,
                           InitiativeRepository initiativeRepository,
-                          ObjectMapper objectMapper) {
+                          ObjectMapper objectMapper,
+                          @Value("${summa.spawn.depth-cap:2}") int depthCap) {
         this.spawnRepository = spawnRepository;
         this.auditService = auditService;
         this.governanceService = governanceService;
@@ -67,9 +66,6 @@ public class SpawnService {
         this.spendLedgerService = spendLedgerService;
         this.initiativeRepository = initiativeRepository;
         this.objectMapper = objectMapper;
-        // Ensure a minimum depth cap even when constructed outside Spring (e.g., unit tests).
-        // In Spring-managed mode, @Value injects after construction, so this is a no-op for
-        // values >= 2, but guarantees a sensible floor for direct construction.
         this.depthCap = Math.max(2, depthCap);
     }
 
@@ -301,8 +297,8 @@ public class SpawnService {
             }
         } else if (request.getRequesterId() != null) {
             Optional<Agent> parentOpt = agentRepository.findById(request.getRequesterId());
-            if (parentOpt.isPresent()) {
-                depth = parentOpt.get().getLineageDepth() != null ? parentOpt.get().getLineageDepth() + 1 : 1;
+            if (parentOpt.isPresent() && parentOpt.get().getLineageDepth() != null) {
+                depth = parentOpt.get().getLineageDepth() + 1;
             } else {
                 depth = 1;
             }

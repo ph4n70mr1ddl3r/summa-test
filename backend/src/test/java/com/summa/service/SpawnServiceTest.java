@@ -67,7 +67,7 @@ class SpawnServiceTest {
         spawnService = new SpawnService(
             spawnRepository, auditService, governanceService, templateRepository,
             agentRepository, memberService, workspaceRepository, domainRepository,
-            askService, spendLedgerService, initiativeRepository, objectMapper
+            askService, spendLedgerService, initiativeRepository, objectMapper, 2
         );
     }
 

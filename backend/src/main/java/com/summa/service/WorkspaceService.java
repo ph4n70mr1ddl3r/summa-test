@@ -173,7 +173,29 @@ public class WorkspaceService {
                         }
                         nodeRepository.save(node);
                     } catch (Exception e) {
-                        node.setClaim(null);
+                        // On parse error, remove only this workspace's entry rather than nullifying the entire claim.
+                        // This prevents data loss for other workspaces sharing the same node.
+                        try {
+                            JsonNode fallbackNode = objectMapper.readTree(claim);
+                            if (fallbackNode.isArray()) {
+                                List<String> remaining = new ArrayList<>();
+                                for (JsonNode c : fallbackNode) {
+                                    if (c.isObject() && c.has("workspaceId")) {
+                                        String wsId = c.get("workspaceId").asText();
+                                        if (!wsId.equals(id) && !remaining.contains(wsId)) {
+                                            remaining.add(wsId);
+                                        }
+                                    } else if (c.isTextual() && !c.asText().equals(id)) {
+                                        remaining.add(c.asText());
+                                    }
+                                }
+                                node.setClaim(objectMapper.writeValueAsString(remaining));
+                            } else {
+                                node.setClaim(null);
+                            }
+                        } catch (Exception ignored) {
+                            node.setClaim(null);
+                        }
                         nodeRepository.save(node);
                     }
                 }

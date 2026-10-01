@@ -176,7 +176,15 @@ public class AgentService {
         // ASK-061: Reassign asks TO the retiring agent up the chain
         // (non-active target rule reassigns them to deputy or admin broadcast)
         for (Ask ask : askRepository.findByToAndStatusPending(id)) {
-            Optional<Human> targetHuman = memberService.findHuman(ask.getTo());
+            String targetId = ask.getTo();
+            if (targetId == null || targetId.isBlank()) {
+                ask.setTo(OffboardingWalkService.ADMIN_BROADCAST);
+                askRepository.save(ask);
+                auditService.logSystem("RETIRE_REASSIGN_ASK_TO", "ask", ask.getId(),
+                    String.format("{\"agentId\":%s,\"newTo\":%s,\"reason\":\"agent_retiring\"}", JsonHelpers.jsonString(id), JsonHelpers.jsonString(OffboardingWalkService.ADMIN_BROADCAST)));
+                continue;
+            }
+            Optional<Human> targetHuman = memberService.findHuman(targetId);
             String newTo = OffboardingWalkService.ADMIN_BROADCAST;
             if (targetHuman.isPresent() && targetHuman.get().getDeputyMemberId() != null
                     && memberService.findHuman(targetHuman.get().getDeputyMemberId()).isPresent()) {

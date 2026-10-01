@@ -3,6 +3,7 @@ package com.summa.service;
 import com.summa.repository.PatRepository;
 import com.summa.model.Pat;
 import com.summa.exception.EntityNotFoundException;
+import com.summa.constants.Defaults;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +29,9 @@ public class PatService {
     public PatWithToken create(String memberId, String name, List<String> scopes, int expiryDays) {
         if (expiryDays <= 0) {
             throw new IllegalArgumentException("expiryDays must be positive");
+        }
+        if (expiryDays > Defaults.MAX_PAT_EXPIRY_DAYS) {
+            throw new IllegalArgumentException("expiryDays must not exceed " + Defaults.MAX_PAT_EXPIRY_DAYS);
         }
         String rawToken = generateToken();
         String tokenHash = hashToken(rawToken);

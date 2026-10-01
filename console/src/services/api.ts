@@ -149,7 +149,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T | undefin
       }
     }
     if (res.status === 204) {
-      return undefined as T;
+      return undefined as T | undefined;
     }
     const json = await res.json();
     return json as T;
