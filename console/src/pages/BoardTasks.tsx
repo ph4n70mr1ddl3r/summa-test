@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { BoardTask } from '../types'
-import { boardTaskStatusColor } from '../utils/formatting'
-import { escapeHtml } from '../utils/escapeHtml'
+import { boardTaskStatusColor, escapeHtml } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function BoardTasks() {

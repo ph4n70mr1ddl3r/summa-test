@@ -39,6 +39,7 @@ summa:
     commit-author: summa <summa@local>
   auth:
     jwt-secret: ${SUMMA_JWT_SECRET:?JWT secret is required — set SUMMA_JWT_SECRET environment variable}
+    jwt-secret-min-length: ${SUMMA_JWT_SECRET_MIN_LENGTH:32}
     local-auth-enabled: ${SUMMA_LOCAL_AUTH_ENABLED:true}
     jwt-expiration: ${SUMMA_JWT_EXPIRATION:86400000}
     pat-default-expiry-days: 90

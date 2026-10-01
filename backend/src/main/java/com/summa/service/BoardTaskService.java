@@ -10,9 +10,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import com.summa.exception.EntityNotFoundException;
+import com.summa.util.JsonHelpers;
 
 @Service
 public class BoardTaskService {
@@ -80,7 +82,7 @@ public class BoardTaskService {
 
         BoardTask saved = taskRepository.save(task);
         auditService.log(createdBy, "CREATE", "board_task", task.getId(),
-            String.format("{\"title\":\"%s\"}", title));
+            "{\"title\":" + JsonHelpers.jsonString(title) + "}");
         return saved;
     }
 
@@ -142,7 +144,7 @@ public class BoardTaskService {
         task.setStatus("in_progress");
         BoardTask saved = taskRepository.save(task);
         auditService.log(actor, "ASSIGN", "board_task", id,
-            String.format("{\"assignee\":\"%s\"}", assigneeMemberId));
+            "{\"assignee\":" + JsonHelpers.jsonString(assigneeMemberId) + "}");
         return saved;
     }
 

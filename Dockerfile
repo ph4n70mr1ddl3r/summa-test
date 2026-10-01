@@ -22,7 +22,7 @@ COPY --from=builder /build/backend/target/summa-backend-*.jar /app/app.jar
 
 # Create data directories and non-root user
 RUN addgroup -g 1000 -S summa && adduser -u 1000 -S summa -G summa && \
-    mkdir -p /data/dna /data/db && chown -R 1000:1000 /data
+    mkdir -p /data/dna /data/db /data/logs && chown -R 1000:1000 /data
 
 ENV SUMMA_DB_PATH=/data/db/summa.db \
     SUMMA_DNA_REPO=/data/dna \

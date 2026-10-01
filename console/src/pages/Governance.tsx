@@ -9,6 +9,7 @@ export default function Governance() {
   const [spend, setSpend] = useState<SpendSnapshot | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
   const [saving, setSaving] = useState<string | null>(null)
   const [editValues, setEditValues] = useState<Record<string, string>>({})
 
@@ -51,7 +52,7 @@ export default function Governance() {
 
   const handleSave = async (section: 'policies' | 'quotas', key: string) => {
     setSaving(`${section}:${key}`)
-    setError(null)
+    setActionError(null)
     try {
       const currentValue = editValues[key]
       if (currentValue === undefined) return
@@ -66,7 +67,7 @@ export default function Governance() {
         setEditValues(prev => { const next = { ...prev }; delete next[key]; return next })
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setActionError(err instanceof Error ? err.message : String(err))
       try { await loadData() } catch { /* reload failure is non-blocking */ }
     } finally {
       setSaving(null)
@@ -127,6 +128,7 @@ export default function Governance() {
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
   if (error) return <ErrorBanner message={error} onRetry={loadData} />
+  if (actionError) return <ErrorBanner message={actionError} onRetry={() => setActionError(null)} />
 
   const policyEntries = Object.entries(policies)
   const quotaEntries = Object.entries(quotas)

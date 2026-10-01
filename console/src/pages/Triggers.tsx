@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { Trigger } from '../types'
-import { triggerStatusColor, triggerCriticalityColor } from '../utils/formatting'
-import { escapeHtml } from '../utils/escapeHtml'
+import { triggerStatusColor, triggerCriticalityColor, escapeHtml } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Triggers() {

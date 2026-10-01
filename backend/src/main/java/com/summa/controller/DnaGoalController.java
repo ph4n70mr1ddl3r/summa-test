@@ -10,6 +10,7 @@ import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
+import com.summa.service.DnaDomainService;
 import com.summa.util.JsonHelpers;
 import java.time.Instant;
 import java.util.List;
@@ -24,13 +25,15 @@ public class DnaGoalController {
     private final AuditService auditService;
     private final WriteGate writeGate;
     private final MemberService memberService;
+    private final DnaDomainService domainService;
 
     public DnaGoalController(DnaGoalService goalService, AuditService auditService, WriteGate writeGate,
-                             MemberService memberService) {
+                              MemberService memberService, DnaDomainService domainService) {
         this.goalService = goalService;
         this.auditService = auditService;
         this.writeGate = writeGate;
         this.memberService = memberService;
+        this.domainService = domainService;
     }
 
     @GetMapping
@@ -80,8 +83,12 @@ public class DnaGoalController {
             if (ownerAgent.isPresent() && !ownerAgent.get().isActive()) {
                 throw new IllegalArgumentException("owner must be an active member: " + ownerRaw);
             }
-            // Security: reject client-supplied IDs — always generate server-side
             String generatedId = UUID.randomUUID().toString();
+            if (body.get("domainId") != null && !body.get("domainId").isBlank()) {
+                if (domainService.findById(body.get("domainId")).isEmpty()) {
+                    throw new IllegalArgumentException("Domain not found: " + body.get("domainId"));
+                }
+            }
             Instant effectiveFrom = JsonHelpers.parseOptionalInstant(body.get("effectiveFrom"), "effectiveFrom");
             if (effectiveFrom == null) effectiveFrom = Instant.now();
             Instant effectiveTo = JsonHelpers.parseOptionalInstant(body.get("effectiveTo"), "effectiveTo");

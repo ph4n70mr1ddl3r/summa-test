@@ -84,8 +84,8 @@ public class SpawnController {
                 purpose,
                 body.get("workspaceBindings"),
                 body.get("scopeCeiling"),
-                body.containsKey("budgetCap") ? parseDoubleSafe(body.get("budgetCap")) : null,
-                body.containsKey("ttlHours") ? parseIntSafe(body.get("ttlHours")) : null,
+                body.containsKey("budgetCap") ? parseBudgetCap(body.get("budgetCap")) : null,
+                body.containsKey("ttlHours") ? parseTtlHours(body.get("ttlHours")) : null,
                 body.get("requestedByHumanId"),
                 actor
             );
@@ -134,12 +134,12 @@ public class SpawnController {
         return ResponseEntity.ok(spawnService.getStats());
     }
 
-    private Double parseDoubleSafe(String s) {
+    private Double parseBudgetCap(String s) {
         try { return JsonHelpers.parseDoubleSafe(s); }
         catch (IllegalArgumentException e) { throw new IllegalArgumentException("Invalid budgetCap: " + s); }
     }
 
-    private Integer parseIntSafe(String s) {
+    private Integer parseTtlHours(String s) {
         Integer val = JsonHelpers.parseIntSafe(s);
         if (val != null && (val <= 0 || val > 8760)) {
             throw new IllegalArgumentException("ttlHours must be between 1 and 8760");

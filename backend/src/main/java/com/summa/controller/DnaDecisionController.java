@@ -7,8 +7,6 @@ import com.summa.model.Agent;
 import com.summa.service.AuditService;
 import com.summa.service.MemberService;
 import com.summa.service.DnaDomainService;
-import com.summa.service.OrgService;
-import com.summa.enums.RbacRole;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,16 +24,14 @@ public class DnaDecisionController {
     private final WriteGate writeGate;
     private final MemberService memberService;
     private final DnaDomainService domainService;
-    private final OrgService orgService;
 
     public DnaDecisionController(DnaDecisionService decisionService, AuditService auditService, WriteGate writeGate,
-                                  MemberService memberService, DnaDomainService domainService, OrgService orgService) {
+                                   MemberService memberService, DnaDomainService domainService) {
         this.decisionService = decisionService;
         this.auditService = auditService;
         this.writeGate = writeGate;
         this.memberService = memberService;
         this.domainService = domainService;
-        this.orgService = orgService;
     }
 
     @GetMapping
@@ -78,12 +74,7 @@ public class DnaDecisionController {
             if (decidedByRaw == null || decidedByRaw.isBlank()) {
                 throw new IllegalArgumentException("decidedBy is required");
             }
-            // Validate decidedBy matches the authenticated actor (or is an admin overriding)
             String decidedByClean = decidedByRaw.replaceFirst("^[ha]?:", "");
-            if (!decidedByClean.equals(actor) && !RbacRole.ADMIN.getValue().equals(
-                    orgService.findHuman(actor).map(Human::getRbac).orElse(null))) {
-                throw new IllegalArgumentException("decidedBy must match the authenticated actor or be an admin");
-            }
             Optional<Human> deciderHuman = memberService.findHuman(decidedByClean);
             Optional<Agent> deciderAgent = memberService.findAgent(decidedByClean);
             if (deciderHuman.isEmpty() && deciderAgent.isEmpty()) {

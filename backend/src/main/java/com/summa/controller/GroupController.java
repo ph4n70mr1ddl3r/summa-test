@@ -45,8 +45,8 @@ public class GroupController {
         if (gate != null) return gate;
         String name = body.get("name");
         String leaderMemberId = body.get("leaderMemberId");
-        if (name == null || name.isBlank() || leaderMemberId == null || leaderMemberId.isBlank()) {
-            return ControllerResponses.validation(auditService, "name and leaderMemberId are required");
+        if (name == null || name.isBlank()) {
+            return ControllerResponses.validation(auditService, "name is required");
         }
         try {
             Group group = groupService.create(name, leaderMemberId, actor);

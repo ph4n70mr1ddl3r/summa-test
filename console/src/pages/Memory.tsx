@@ -10,8 +10,8 @@ export default function Memory() {
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | 'tainted'>('all')
   const [reviewingId, setReviewingId] = useState<string | null>(null)
-  const [reviewResult, setReviewResult] = useState<string | null>(null)
   const [reviewingForId, setReviewingForId] = useState<string | null>(null)
+  const [reviewSuccess, setReviewSuccess] = useState(false)
 
   const loadItems = () => {
     setLoading(true)
@@ -31,16 +31,16 @@ export default function Memory() {
   }, [filter])
 
   const handleReview = async (id: string) => {
-    setReviewResult(null)
+    setReviewSuccess(false)
     setReviewingForId(id)
     try {
       await api.memory.review(id)
-      setReviewResult('Item reviewed and taint cleared')
+      setReviewSuccess(true)
       setReviewingForId(null)
       setReviewingId(null)
       await loadItems()
-    } catch (err) {
-      setReviewResult(err instanceof Error ? err.message : String(err))
+    } catch {
+      setReviewSuccess(false)
       setReviewingForId(null)
       setReviewingId(null)
       try { await loadItems() } catch { /* reload failure is non-blocking */ }
@@ -77,13 +77,9 @@ export default function Memory() {
         </div>
       </div>
 
-      {reviewResult && (
-        <div className={`rounded-lg p-3 text-sm ${
-          reviewResult.startsWith('Item reviewed')
-            ? 'bg-green-900/30 border border-green-700 text-green-400'
-            : 'bg-red-900/30 border border-red-700 text-red-400'
-        }`} role="alert">
-          {reviewResult}
+      {reviewSuccess && (
+        <div className="rounded-lg p-3 text-sm bg-green-900/30 border border-green-700 text-green-400" role="alert">
+          Item reviewed and taint cleared
         </div>
       )}
 

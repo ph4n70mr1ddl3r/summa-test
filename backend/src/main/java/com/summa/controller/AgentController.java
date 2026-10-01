@@ -70,7 +70,11 @@ public class AgentController {
     }
 
     @GetMapping("/{id}/lineage")
-    public ResponseEntity<List<String>> getLineage(@PathVariable String id) {
+    public ResponseEntity<?> getLineage(@PathVariable String id) {
+        Optional<Agent> firstOpt = agentService.findById(id);
+        if (firstOpt.isEmpty()) {
+            return ControllerResponses.notFound(auditService, "Agent not found: " + id);
+        }
         List<String> lineage = new ArrayList<>();
         String currentId = id;
         int depthCap = agentService.getDepthCap();

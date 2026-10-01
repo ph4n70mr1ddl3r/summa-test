@@ -62,7 +62,7 @@ export function getUser(): { userId: string; rbac: RbacRole; name: string } | nu
     const user = JSON.parse(raw);
     if (!user?.userId || !user?.rbac || !user?.name) return null;
     const validRoles = ['admin', 'owner', 'member', 'viewer'] as const;
-    if (!(validRoles as readonly string[]).includes(user.rbac)) return null;
+    if (!validRoles.includes(user.rbac)) return null;
     return user as { userId: string; rbac: RbacRole; name: string };
   } catch {
     return null;
@@ -148,7 +148,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       }
     }
     if (res.status === 204) {
-      return undefined as unknown as T;
+      return undefined as T;
     }
     const json = await res.json();
     return json as T;
@@ -156,7 +156,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     // Preserve the original HTTP status for server-origin errors (401, 429, 500, etc.).
     // Only wrap true network/abort failures with status 0 so callers can still
     // distinguish between a network error and an actual HTTP error response.
-    const status = err instanceof ApiError ? err.status : 0
+    const status = err instanceof ApiError ? err.status : 0;
     throw new ApiError(err instanceof Error ? err.message : String(err), status)
   } finally {
     clearTimeout(timeoutId);

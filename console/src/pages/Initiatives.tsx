@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, loadWithFallback } from '../services/api'
 import type { Initiative } from '../types'
-import { formatDate, initiativeStatusColor } from '../utils/formatting'
-import { escapeHtml } from '../utils/escapeHtml'
+import { formatDate, initiativeStatusColor, escapeHtml } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Initiatives() {
