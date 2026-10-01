@@ -284,8 +284,14 @@ public class SpawnService {
 
         Integer depth = 0;
         if (request.getRequestedByHumanId() != null) {
-            // Direct human request: human is root, agent depth = 0
-            depth = 0;
+            // Direct human request: check if the effective requester (via requesterId) is an agent
+            // at depth > 0; otherwise depth stays 0 (human root)
+            if (request.getRequesterId() != null && !request.getRequesterId().isBlank()) {
+                Optional<Agent> parentOpt = agentRepository.findById(request.getRequesterId());
+                if (parentOpt.isPresent() && parentOpt.get().getLineageDepth() != null) {
+                    depth = parentOpt.get().getLineageDepth() + 1;
+                }
+            }
         } else if (request.getRequesterId() != null) {
             Optional<Agent> parentOpt = agentRepository.findById(request.getRequesterId());
             if (parentOpt.isPresent()) {

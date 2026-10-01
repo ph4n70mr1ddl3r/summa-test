@@ -51,6 +51,11 @@ fi
 # Check for Python (required for spec lint tooling)
 if ! command -v python3 &> /dev/null; then
     echo "WARNING: python3 not found. Spec linting will be unavailable."
+else
+    PYTHON_VERSION=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+    if [ "$(printf '%s\n' "3.10" "$PYTHON_VERSION" | sort -V | head -n1)" != "3.10" ]; then
+        echo "WARNING: Python 3.10+ is recommended for spec linting, found $PYTHON_VERSION"
+    fi
 fi
 
 # Check for JWT secret

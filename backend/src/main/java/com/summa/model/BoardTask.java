@@ -55,6 +55,7 @@ public class BoardTask {
         if (status == null) status = "open";
         if (priority == null) priority = 0;
         if (description == null) description = "";
+        if (createdBy == null || createdBy.isBlank()) createdBy = "system";
     }
 
     @PreUpdate

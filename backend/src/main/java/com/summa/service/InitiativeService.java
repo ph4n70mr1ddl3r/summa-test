@@ -79,8 +79,8 @@ public class InitiativeService {
 
     @Transactional
     public Initiative create(String id, String title, String sponsor, String lead,
-                                String goalRef, String decisionRef, Instant deadline,
-                                String dependsOn) {
+                                 String goalRef, String decisionRef, Instant deadline,
+                                 String dependsOn, String actor) {
         // Validate referenced entities exist
         if (goalRef != null && !goalRef.isBlank()) {
             dnaGoalRepository.findById(goalRef).orElseThrow(
@@ -143,7 +143,8 @@ public class InitiativeService {
         initiative.setDependsOn(dependsOn != null ? dependsOn : "[]");
 
         Initiative saved = initiativeRepository.save(initiative);
-        auditService.log(sponsorClean, "CREATE", "initiative", id,
+        String auditActor = actor != null ? actor : sponsorClean;
+        auditService.log(auditActor, "CREATE", "initiative", id,
             String.format("{\"title\":%s,\"lead\":%s}", JsonHelpers.jsonString(title), JsonHelpers.jsonString(lead)));
         return saved;
     }

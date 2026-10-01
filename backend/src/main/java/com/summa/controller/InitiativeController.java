@@ -79,7 +79,8 @@ public class InitiativeController {
                 body.get("goalRef"),
                 body.get("decisionRef"),
                 deadline,
-                body.get("dependsOn")
+                body.get("dependsOn"),
+                actor
             );
             return ResponseEntity.ok(initiative);
         } catch (IllegalArgumentException e) {

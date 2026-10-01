@@ -8,6 +8,7 @@ import com.summa.security.RbacAuthorizationFilter;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.constants.Defaults;
+import com.summa.service.GovernanceService;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -19,11 +20,14 @@ public class RunController {
     private final RunService runService;
     private final AuditService auditService;
     private final WriteGate writeGate;
+    private final GovernanceService governanceService;
 
-    public RunController(RunService runService, AuditService auditService, WriteGate writeGate) {
+    public RunController(RunService runService, AuditService auditService, WriteGate writeGate,
+                          GovernanceService governanceService) {
         this.runService = runService;
         this.auditService = auditService;
         this.writeGate = writeGate;
+        this.governanceService = governanceService;
     }
 
     @GetMapping
@@ -123,7 +127,7 @@ public class RunController {
                     costUsd = Double.parseDouble(body.get("costUsd"));
                     if (costUsd < 0) throw new IllegalArgumentException("costUsd must be non-negative");
                     if (Double.isInfinite(costUsd) || Double.isNaN(costUsd)) throw new IllegalArgumentException("costUsd must be finite");
-                    if (costUsd > Defaults.DEFAULT_SPEND_CEILING) throw new IllegalArgumentException("costUsd exceeds spend ceiling");
+                    if (costUsd > governanceService.resolveSpendCeiling()) throw new IllegalArgumentException("costUsd exceeds spend ceiling");
                 } catch (NumberFormatException e) {
                     throw new IllegalArgumentException("Invalid costUsd: " + body.get("costUsd"));
                 }

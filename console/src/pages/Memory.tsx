@@ -14,6 +14,13 @@ export default function Memory() {
   const [reviewSuccess, setReviewSuccess] = useState(false)
   const [reviewError, setReviewError] = useState<string | null>(null)
 
+  useEffect(() => {
+    if (reviewSuccess) {
+      const timer = setTimeout(() => setReviewSuccess(false), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [reviewSuccess])
+
   const loadItems = () => {
     setLoading(true)
     setError(null)

@@ -38,7 +38,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                 this.props.onRetry?.()
               }}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm"
-              aria-label="Reload page"
+              aria-label="Retry loading the page"
             >
               Try again
             </button>

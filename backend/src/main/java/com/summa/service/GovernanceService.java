@@ -165,7 +165,7 @@ public class GovernanceService {
         return view;
     }
 
-    private double resolveSpendCeiling() {
+    public double resolveSpendCeiling() {
         Double ceiling = getSetting("spend-org-ceiling", Double.class);
         if (ceiling == null || ceiling <= 0) ceiling = spendCeilingOverride > 0 ? spendCeilingOverride : Defaults.DEFAULT_SPEND_CEILING;
         return ceiling;
