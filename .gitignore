@@ -31,3 +31,4 @@ opencode.jsonc
 *.swo
 *~
 Thumbs.db
+__pycache__/
