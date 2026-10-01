@@ -374,6 +374,7 @@ export interface DnaProposal {
   payload: string;
   revision: number;
   proposedBy: string;
+  reviewBy?: string;
   provenance: string;
   status: DnaProposalStatus;
   reviewedBy?: string;
