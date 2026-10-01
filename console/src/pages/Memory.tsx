@@ -43,7 +43,7 @@ export default function Memory() {
       setReviewResult(err instanceof Error ? err.message : String(err))
       setReviewingForId(null)
       setReviewingId(null)
-      await loadItems()
+      try { await loadItems() } catch { /* reload failure is non-blocking */ }
     }
   }
 

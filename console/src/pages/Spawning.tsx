@@ -49,7 +49,7 @@ export default function Spawning() {
       await loadData()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err))
-      await loadData()
+      try { await loadData() } catch { /* reload failure is non-blocking */ }
     } finally {
       setActionId(null)
     }

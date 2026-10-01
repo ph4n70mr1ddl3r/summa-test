@@ -89,7 +89,7 @@ export default function AskInbox() {
       await loadAsks()
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err))
-      await loadAsks()
+      try { await loadAsks() } catch { /* reload failure is non-blocking */ }
     } finally {
       setRespondingForId(null)
     }
@@ -101,7 +101,7 @@ export default function AskInbox() {
       await loadAsks()
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err))
-      await loadAsks()
+      try { await loadAsks() } catch { /* reload failure is non-blocking */ }
     }
   }
 

@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { api } from '../services/api'
 import type { Run, RunStatus } from '../types'
 import { runStatusColor, formatDate } from '../utils/formatting'
+import { escapeHtml } from '../utils/escapeHtml'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Runs() {
@@ -80,7 +81,7 @@ export default function Runs() {
                     {run.initiativeId ? ` · Initiative: ${run.initiativeId}` : ''}
                   </p>
                   {run.prompt && (
-                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">{run.prompt}</p>
+                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">{escapeHtml(run.prompt)}</p>
                   )}
                 </div>
                 <span className={`text-xs px-2 py-1 rounded ${runStatusColor(run.status)}`} aria-label={`Status: ${run.status}`}>
@@ -94,10 +95,10 @@ export default function Runs() {
                 {run.completedAt != null && <span>Completed: {formatDate(run.completedAt, { dateOnly: true })}</span>}
               </div>
               {run.errorMessage && (
-                <p className="text-xs text-red-400 mt-1">Error: {run.errorMessage}</p>
+                <p className="text-xs text-red-400 mt-1">Error: {escapeHtml(run.errorMessage)}</p>
               )}
               {run.result && (
-                <p className="text-xs text-gray-500 mt-1 line-clamp-2">{run.result}</p>
+                <p className="text-xs text-gray-500 mt-1 line-clamp-2">{escapeHtml(run.result)}</p>
               )}
             </div>
           ))}

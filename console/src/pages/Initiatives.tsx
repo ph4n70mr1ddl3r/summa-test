@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api, loadWithFallback } from '../services/api'
 import type { Initiative } from '../types'
 import { formatDate, initiativeStatusColor } from '../utils/formatting'
+import { escapeHtml } from '../utils/escapeHtml'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Initiatives() {
@@ -51,8 +52,8 @@ export default function Initiatives() {
                 <div>
                   <p className="font-medium text-gray-200">{ini.title}</p>
                   <p className="text-sm text-gray-400 mt-1">
-                    Sponsor: {ini.sponsor} | Lead: {ini.lead}
-                    {ini.goalRef && <span className="ml-2">Goal: {ini.goalRef}</span>}
+                    Sponsor: {escapeHtml(ini.sponsor)} | Lead: {escapeHtml(ini.lead)}
+                    {ini.goalRef && <span className="ml-2">Goal: {escapeHtml(ini.goalRef)}</span>}
                     {ini.deadline && (
                       <span className="ml-2 text-xs text-gray-500">
                         Deadline: {formatDate(ini.deadline, { dateOnly: true })}

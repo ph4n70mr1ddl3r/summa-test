@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { Trigger } from '../types'
 import { triggerStatusColor, triggerCriticalityColor } from '../utils/formatting'
+import { escapeHtml } from '../utils/escapeHtml'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Triggers() {
@@ -46,10 +47,10 @@ export default function Triggers() {
                   <p className="font-medium text-gray-200">{t.name}</p>
                   <p className="text-sm text-gray-400 mt-1">Kind: {t.kind} | Agent: {t.agentId}</p>
                   {t.expression && (
-                    <p className="text-xs text-gray-500 mt-1">Expression: {t.expression}</p>
+                    <p className="text-xs text-gray-500 mt-1">Expression: {escapeHtml(t.expression)}</p>
                   )}
                   {t.config && (
-                    <p className="text-xs text-gray-500 mt-1">Config: {t.config}</p>
+                    <p className="text-xs text-gray-500 mt-1">Config: {escapeHtml(t.config)}</p>
                   )}
                 </div>
                 <span className={`text-xs px-2 py-1 rounded ${triggerStatusColor(t.status)}`} aria-label={`Status: ${t.status}`}>{t.status}</span>

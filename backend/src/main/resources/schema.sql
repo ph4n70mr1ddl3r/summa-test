@@ -252,7 +252,7 @@ CREATE INDEX IF NOT EXISTS idx_board_tasks_status ON board_tasks(status);
 CREATE TABLE IF NOT EXISTS workspaces (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
-    kind TEXT NOT NULL CHECK (kind IN ('project', 'personal', 'system')),
+    kind TEXT NOT NULL DEFAULT 'project' CHECK (kind IN ('project', 'personal', 'system')),
     initiative_ids TEXT NOT NULL DEFAULT '[]',
     domain_ids TEXT NOT NULL DEFAULT '[]',
     node_id TEXT,
@@ -268,7 +268,7 @@ CREATE TABLE IF NOT EXISTS workspaces (
 CREATE TABLE IF NOT EXISTS triggers (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
-    kind TEXT NOT NULL CHECK (kind IN ('schedule', 'api', 'event')),
+    kind TEXT NOT NULL DEFAULT 'schedule' CHECK (kind IN ('schedule', 'api', 'event')),
     expression TEXT NOT NULL DEFAULT '',
     agent_id TEXT NOT NULL,
     workspace_id TEXT,
@@ -289,10 +289,10 @@ CREATE TABLE IF NOT EXISTS playbooks (
     body TEXT NOT NULL DEFAULT '{}',
     criticality TEXT NOT NULL DEFAULT 'standard' CHECK (criticality IN ('standard', 'critical')),
     status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('draft', 'active', 'retired')),
-    created_by TEXT NOT NULL,
+    created_by TEXT,
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
-    FOREIGN KEY (created_by) REFERENCES agents(id) ON DELETE RESTRICT
+    FOREIGN KEY (created_by) REFERENCES agents(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS spawn_requests (
@@ -425,6 +425,8 @@ CREATE TABLE IF NOT EXISTS audit_events (
 CREATE INDEX IF NOT EXISTS idx_audit_events_at ON audit_events(at);
 CREATE INDEX IF NOT EXISTS idx_audit_events_actor ON audit_events(actor);
 CREATE INDEX IF NOT EXISTS idx_audit_events_object ON audit_events(object_type, object_id);
+CREATE INDEX IF NOT EXISTS idx_audit_events_actor_at ON audit_events(actor, at);
+CREATE INDEX IF NOT EXISTS idx_audit_events_object_at ON audit_events(object_type, object_id, at);
 
 CREATE TABLE IF NOT EXISTS pats (
     id TEXT PRIMARY KEY,
@@ -442,6 +444,7 @@ CREATE TABLE IF NOT EXISTS pats (
 );
 
 CREATE INDEX IF NOT EXISTS idx_pats_member ON pats(member_id);
+CREATE INDEX IF NOT EXISTS idx_pats_expires ON pats(expires_at);
 
 CREATE TABLE IF NOT EXISTS governance_settings (
     key TEXT PRIMARY KEY,
@@ -521,6 +524,7 @@ CREATE TABLE IF NOT EXISTS messages (
     role TEXT NOT NULL CHECK (role IN ('system', 'user', 'assistant', 'tool')),
     content TEXT NOT NULL DEFAULT '',
     timestamp INTEGER NOT NULL DEFAULT (unixepoch()),
+    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     FOREIGN KEY (run_id) REFERENCES runs(id) ON DELETE CASCADE
 );
 

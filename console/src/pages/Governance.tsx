@@ -49,12 +49,14 @@ export default function Governance() {
     return cancel
   }, [])
 
-  const handleSave = async (section: 'policies' | 'quotas', key: string, value: string) => {
+  const handleSave = async (section: 'policies' | 'quotas', key: string) => {
     setSaving(`${section}:${key}`)
     setError(null)
     try {
-      const numValue = value === '' ? NaN : Number(value)
-      const body = { [key]: isNaN(numValue) ? value : numValue }
+      const currentValue = editValues[key]
+      if (currentValue === undefined) return
+      const numValue = currentValue === '' ? NaN : Number(currentValue)
+      const body = { [key]: isNaN(numValue) ? currentValue : numValue }
       const result = section === 'policies'
         ? await api.governance.updatePolicies(body)
         : await api.governance.updateQuotas(body)
@@ -65,7 +67,7 @@ export default function Governance() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
-      await loadData()
+      try { await loadData() } catch { /* reload failure is non-blocking */ }
     } finally {
       setSaving(null)
     }
@@ -93,7 +95,7 @@ export default function Governance() {
             />
             <button
               type="button"
-              onClick={() => handleSave(section, key, currentValue)}
+              onClick={() => handleSave(section, key)}
               disabled={saving === `${section}:${key}`}
               className="px-2 py-0.5 bg-green-700 hover:bg-green-600 disabled:bg-gray-600 rounded text-xs text-white"
               aria-label={`Save ${key}`}

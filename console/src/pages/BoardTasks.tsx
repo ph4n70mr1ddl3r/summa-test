@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { BoardTask } from '../types'
 import { boardTaskStatusColor } from '../utils/formatting'
+import { escapeHtml } from '../utils/escapeHtml'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function BoardTasks() {
@@ -45,7 +46,7 @@ export default function BoardTasks() {
                 <div>
                   <p className="font-medium text-gray-200">{task.title}</p>
                   {task.description && (
-                    <p className="text-sm text-gray-400 mt-1">{task.description}</p>
+                    <p className="text-sm text-gray-400 mt-1">{escapeHtml(task.description)}</p>
                   )}
                   <p className="text-sm text-gray-400 mt-1">Priority: {task.priority} | Assignee: {task.assigneeMemberId ?? 'unassigned'}</p>
                 </div>
