@@ -152,7 +152,7 @@ public class AuthController {
     }
 
     private boolean isTrustedProxy(String addr) {
-        if ("local".equals(addr) || "127.0.0.1".equals(addr) || "0:0:0:0:0:0:0:1".equals(addr)) {
+        if ("local".equals(addr) || "127.0.0.1".equals(addr) || "0:0:0:0:0:0:0:1".equals(addr) || "::1".equals(addr)) {
             return false;
         }
         // RFC1918 private ranges: 10.0.0.0/8, 172.16.0.0/12 (172.16-31.x.x), 192.168.0.0/16
@@ -170,6 +170,8 @@ public class AuthController {
                 }
             }
         }
+        // RFC4193 unique local IPv6 (fc00::/7) and link-local IPv6 (fe80::/10)
+        if (addr.startsWith("fc") || addr.startsWith("fd") || addr.startsWith("fe80")) return true;
         return false;
     }
 

@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Component
 public class NodeAuthFilter extends OncePerRequestFilter {
@@ -32,6 +33,8 @@ public class NodeAuthFilter extends OncePerRequestFilter {
         "/nodes/",
         "/nodes"
     );
+
+    private static final Pattern PUBKEY_PATTERN = Pattern.compile(Defaults.PUBKEY_REGEX);
 
     private final NodeRepository nodeRepository;
 
@@ -134,16 +137,9 @@ public class NodeAuthFilter extends OncePerRequestFilter {
             // Distinguish base64-encoded pubkeys from raw ASCII keys.
             // ECDSA P-256 public keys are 65 bytes (0x04 prefix + 32x32 coords) → 88 chars base64,
             // or 32 bytes → 44 chars base64url without padding. We accept both formats strictly.
-            boolean isStandardBase64 = pubkey.matches("^[A-Za-z0-9+/]{43}[=]{1,3}$")
-                || pubkey.matches("^[A-Za-z0-9+/]{87}[=]{1,3}$");
-            boolean isBase64Url = pubkey.matches("^[A-Za-z0-9_-]{43}[=_]{1}$")
-                || pubkey.matches("^[A-Za-z0-9_-]{64}$")
-                || pubkey.matches("^[A-Za-z0-9_-]{86}[=_]{1}$");
-            boolean looksLikeBase64 = isStandardBase64;
-            // Only treat as base64url if it does NOT contain + or / (which are invalid in base64url)
-            boolean looksLikeBase64Url = isBase64Url && !pubkey.contains("+") && !pubkey.contains("/");
+            boolean isPubkeyFormat = PUBKEY_PATTERN.matcher(pubkey).matches();
             Mac mac = Mac.getInstance("HmacSHA256");
-            if (looksLikeBase64 || looksLikeBase64Url) {
+            if (isPubkeyFormat) {
                 byte[] decodedBytes = Base64.getDecoder().decode(pubkey);
                 mac.init(new SecretKeySpec(decodedBytes, "HmacSHA256"));
             } else {

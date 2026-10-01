@@ -1,6 +1,7 @@
 package com.summa.service;
 
 import com.summa.enums.RbacRole;
+import com.summa.constants.Defaults;
 import com.summa.repository.HumanRepository;
 import com.summa.repository.AgentRepository;
 import com.summa.model.Human;
@@ -62,7 +63,7 @@ public class MemberService {
     }
 
     public boolean isAdmin(String actorId) {
-        if (actorId == null || com.summa.constants.Defaults.SYSTEM_ACTOR.equals(actorId)) return false;
+        if (actorId == null || Defaults.SYSTEM_ACTOR.equals(actorId)) return false;
         Optional<Human> humanOpt = findHuman(actorId);
         return humanOpt.isPresent() && RbacRole.ADMIN.getValue().equals(humanOpt.get().getRbac());
     }

@@ -226,14 +226,26 @@ public class OffboardingWalkService {
                 ownedDomainIds.add(domain.getId());
             }
         }
+        // Pre-fetch all agent proposers in batch to avoid N+1 lookups
+        Set<String> agentProposerIds = new HashSet<>();
+        for (DnaProposal prop : proposalService.findAllOpen()) {
+            String proposerId = prop.getProposedBy();
+            if (proposerId != null && !humanId.equals(proposerId) && proposerId.startsWith("a:")) {
+                agentProposerIds.add(proposerId.substring(2));
+            }
+        }
+        Map<String, Agent> agentById = new LinkedHashMap<>();
+        if (!agentProposerIds.isEmpty()) {
+            agentRepository.findAllById(agentProposerIds).forEach(a -> agentById.put(a.getId(), a));
+        }
+        // Now process proposals with cached agent data
         for (DnaProposal prop : proposalService.findAllOpen()) {
             String proposerId = prop.getProposedBy();
             boolean isDirectProposer = humanId.equals(proposerId);
             boolean isAgentOfDeparted = false;
             if (!isDirectProposer && proposerId != null && proposerId.startsWith("a:")) {
-                String agentId = proposerId.substring(2);
-                Optional<Agent> agentOpt = agentRepository.findById(agentId);
-                isAgentOfDeparted = agentOpt.isPresent() && humanId.equals(agentOpt.get().getOwnerHumanId());
+                Agent agent = agentById.get(proposerId.substring(2));
+                isAgentOfDeparted = agent != null && humanId.equals(agent.getOwnerHumanId());
             }
             if (!isDirectProposer && !isAgentOfDeparted) continue;
             boolean ownsDomain = prop.getDomainId() != null && ownedDomainIds.contains(prop.getDomainId());

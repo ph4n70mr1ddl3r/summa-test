@@ -285,22 +285,29 @@ public class SpawnService {
         String name = request.getCustomRole() != null ? request.getCustomRole()
             : (request.getPurpose() != null ? request.getPurpose() : "agent-" + agentId.substring(0, 8));
 
-        Integer depth = 0;
+        Integer depth = null;
         if (request.getRequestedByHumanId() != null) {
             // Direct human request: check if the effective requester (via requesterId) is an agent
-            // at depth > 0; otherwise depth stays 0 (human root)
+            // at depth > 0; otherwise depth defaults to 1 (human root spawns depth-1 agents)
             if (request.getRequesterId() != null && !request.getRequesterId().isBlank()) {
                 Optional<Agent> parentOpt = agentRepository.findById(request.getRequesterId());
                 if (parentOpt.isPresent() && parentOpt.get().getLineageDepth() != null) {
                     depth = parentOpt.get().getLineageDepth() + 1;
+                } else {
+                    depth = 1;
                 }
+            } else {
+                depth = 1;
             }
         } else if (request.getRequesterId() != null) {
             Optional<Agent> parentOpt = agentRepository.findById(request.getRequesterId());
             if (parentOpt.isPresent()) {
                 depth = parentOpt.get().getLineageDepth() != null ? parentOpt.get().getLineageDepth() + 1 : 1;
+            } else {
+                depth = 1;
             }
         }
+        if (depth == null) depth = 0;
 
         if (depth >= depthCap) {
             throw new IllegalStateException("Spawn depth cap reached: depth=" + depth + " cap=" + depthCap);

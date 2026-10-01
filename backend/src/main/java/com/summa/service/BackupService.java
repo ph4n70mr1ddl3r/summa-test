@@ -24,8 +24,8 @@ public class BackupService {
     private final JdbcTemplate jdbcTemplate;
 
     public BackupService(
-            @Value("${summa.database.path:~/.summa/summa.db}") String dbPath,
-            @Value("${summa.git.dna-repo-path:~/.summa/dna}") String dnaRepoPath,
+            @Value("${summa.database.path:${user.home}/.summa/summa.db}") String dbPath,
+            @Value("${summa.git.dna-repo-path:${user.home}/.summa/dna}") String dnaRepoPath,
             JdbcTemplate jdbcTemplate) {
         this.dbPath = dbPath;
         this.dnaRepoPath = dnaRepoPath;
