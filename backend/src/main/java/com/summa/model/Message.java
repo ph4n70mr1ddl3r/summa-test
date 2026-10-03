@@ -24,9 +24,14 @@ public class Message {
     @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant timestamp;
 
+    @Column(name = "created_at", nullable = false)
+    @Convert(converter = InstantToUnixEpochConverter.class)
+    private Instant createdAt;
+
     @PrePersist
     public void prePersist() {
         if (timestamp == null) timestamp = Instant.now();
+        if (createdAt == null) createdAt = Instant.now();
         if (content == null) content = "";
     }
 
@@ -45,4 +50,6 @@ public class Message {
     public void setContent(String content) { this.content = content; }
     public Instant getTimestamp() { return timestamp; }
     public void setTimestamp(Instant timestamp) { this.timestamp = timestamp; }
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 }

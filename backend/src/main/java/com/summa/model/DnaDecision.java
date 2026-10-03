@@ -37,23 +37,22 @@ public class DnaDecision {
     @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant createdAt;
 
-    @Column(name = "updated_at", nullable = false)
-    @Convert(converter = InstantToUnixEpochConverter.class)
-    private Instant updatedAt;
-
     @PrePersist
     public void prePersist() {
         if (createdAt == null) createdAt = Instant.now();
         if (decidedAt == null) decidedAt = Instant.now();
-        if (updatedAt == null) updatedAt = Instant.now();
         if (refs == null) refs = "[]";
         if (provenance == null) provenance = "{}";
         if (contextMd == null) contextMd = "";
     }
 
+    /**
+     * DnaDecisions are immutable append-only records per DNC-030.
+     * Any attempt to update a decision is rejected.
+     */
     @PreUpdate
     public void preUpdate() {
-        updatedAt = Instant.now();
+        throw new UnsupportedOperationException("DnaDecision is immutable — updates are not permitted");
     }
 
     public String getId() { return id; }
@@ -74,8 +73,6 @@ public class DnaDecision {
     public void setProvenance(String provenance) { this.provenance = provenance; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
-    public Instant getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
 
     /**
      * DnaDecisions are append-only records without a status lifecycle.

@@ -239,7 +239,7 @@ CREATE TABLE IF NOT EXISTS board_tasks (
     status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'done', 'cancelled')),
     priority INTEGER NOT NULL DEFAULT 0,
     due_at INTEGER,
-    created_by TEXT NOT NULL,
+    created_by TEXT,
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
     completed_at INTEGER,
@@ -313,7 +313,8 @@ CREATE TABLE IF NOT EXISTS spawn_requests (
     approved_at INTEGER,
     agent_id TEXT,
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
-    FOREIGN KEY (requester_id) REFERENCES agents(id) ON DELETE SET NULL,
+    FOREIGN KEY (requester_id) REFERENCES agents(id) ON DELETE SET NULL
+    -- requester_id is a keyed union per DAT-120: h:<humans.id> or a:<agents.id>,
     FOREIGN KEY (template_id) REFERENCES role_templates(id) ON DELETE SET NULL,
     FOREIGN KEY (approved_by) REFERENCES humans(id) ON DELETE SET NULL,
     FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE SET NULL
@@ -338,6 +339,7 @@ CREATE TABLE IF NOT EXISTS spend_ledger (
     at INTEGER NOT NULL DEFAULT (unixepoch()),
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     FOREIGN KEY (member_id) REFERENCES agents(id) ON DELETE CASCADE,
+    -- member_id is a keyed union per DAT-120: h:<humans.id> or a:<agents.id>
     FOREIGN KEY (run_id) REFERENCES runs(id) ON DELETE SET NULL,
     FOREIGN KEY (spawn_id) REFERENCES spawn_requests(id) ON DELETE SET NULL
 );
@@ -472,6 +474,7 @@ CREATE TABLE IF NOT EXISTS memory_items (
     reviewed_by TEXT,
     reviewed_at INTEGER,
     FOREIGN KEY (member_id) REFERENCES agents(id) ON DELETE SET NULL,
+    -- member_id is a keyed union per DAT-120: h:<humans.id> or a:<agents.id>
     FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE SET NULL,
     FOREIGN KEY (reviewed_by) REFERENCES humans(id) ON DELETE SET NULL
 );
@@ -560,6 +563,14 @@ CREATE INDEX IF NOT EXISTS idx_dna_goals_effective ON dna_goals(effective_from);
 CREATE INDEX IF NOT EXISTS idx_dna_rules_supersedes ON dna_rules(supersedes_id);
 CREATE INDEX IF NOT EXISTS idx_dna_cards_domain_status ON dna_cards(domain_id, status);
 CREATE INDEX IF NOT EXISTS idx_dna_rules_domain_status ON dna_rules(domain_id, status);
+
+CREATE INDEX IF NOT EXISTS idx_dna_proposals_review_by ON dna_proposals(review_by);
+CREATE INDEX IF NOT EXISTS idx_agents_ttl_at ON agents(ttl_at);
+CREATE INDEX IF NOT EXISTS idx_agents_archived_at ON agents(archived_at);
+CREATE INDEX IF NOT EXISTS idx_spend_ledger_at ON spend_ledger(at);
+CREATE INDEX IF NOT EXISTS idx_dna_goals_effective_to ON dna_goals(effective_to);
+CREATE INDEX IF NOT EXISTS idx_initiatives_goal_ref ON initiatives(goal_ref);
+CREATE INDEX IF NOT EXISTS idx_initiatives_decision_ref ON initiatives(decision_ref);
 
 -- FTS5 virtual table for DNA search.
 -- NOTE: source tables use TEXT UUID primary keys, which cannot be stored in
@@ -777,8 +788,8 @@ END;
 
 -- FTS5 triggers for memory_items table
 CREATE TRIGGER IF NOT EXISTS memory_items_ai AFTER INSERT ON memory_items BEGIN
-    INSERT INTO dna_search_index (id, content_md, status, domain_id, kind)
-    VALUES (new.id, new.content_md, new.status, NULL, 'memory');
+    INSERT INTO dna_search_index (id, content_md, domain_id, kind)
+    VALUES (new.id, new.content_md, NULL, 'memory');
 END;
 
 CREATE TRIGGER IF NOT EXISTS memory_items_ad AFTER DELETE ON memory_items BEGIN

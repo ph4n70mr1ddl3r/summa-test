@@ -176,14 +176,15 @@ public class AskService {
                     return saved;
                 }
             }
+
+            // Save inside the lock to prevent concurrent duplicates from passing the collapse check
+            Ask saved = askRepository.save(ask);
+            auditService.log(from, "CREATE", "ask", ask.getId(),
+                String.format("{\"kind\":%s,\"to\":%s,\"tier\":%s}", JsonHelpers.jsonString(kind), JsonHelpers.jsonString(to), JsonHelpers.jsonString(ask.getSlaTier())));
+            return saved;
         } finally {
             lock.unlock();
         }
-
-        Ask saved = askRepository.save(ask);
-        auditService.log(from, "CREATE", "ask", ask.getId(),
-            String.format("{\"kind\":%s,\"to\":%s,\"tier\":%s}", JsonHelpers.jsonString(kind), JsonHelpers.jsonString(to), JsonHelpers.jsonString(ask.getSlaTier())));
-        return saved;
     }
 
     private String buildCollapseKey(String kind, String to, String payload) {

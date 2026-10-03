@@ -20,7 +20,7 @@ services:
     volumes:
       - summa-data:/data
     command: >
-      sh -c "mkdir -p /data/logs && exec java $JAVA_OPTS -jar app.jar"
+      sh -c "exec java $JAVA_OPTS -jar app.jar"
     environment:
       - JAVA_OPTS=-Xmx512m -Xms256m -XX:MaxMetaspaceSize=128m
       - SUMMA_DB_PATH=${SUMMA_DB_PATH:-/data/db/summa.db}
@@ -62,6 +62,9 @@ services:
       timeout: 10s
       retries: 3
       start_period: 20s
+    mem_limit: 768M
+    mem_reservation: 256M
+    cpus: '1.0'
     stop_grace_period: 30s
     deploy:
       resources:
@@ -103,6 +106,9 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+    mem_limit: 128M
+    mem_reservation: 64M
+    cpus: '0.5'
     stop_grace_period: 10s
     deploy:
       resources:

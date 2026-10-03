@@ -18,9 +18,9 @@ WORKDIR /app
 # Install curl for healthcheck
 RUN apk add --no-cache curl
 
-# Copy the executable JAR (exclude plain/sources variants)
-RUN JAR=$(ls /build/backend/target/summa-backend-*.jar | grep -v sources | grep -v plain | head -n 1) && \
-    cp "$JAR" /app/app.jar && \
+# Copy the executable JAR from the builder stage
+COPY --from=builder /build/backend/target/summa-backend-*.jar /app/
+RUN ls /app/summa-backend-*.jar | grep -v sources | grep -v plain | head -n 1 | xargs -I{} mv {} /app/app.jar && \
     rm -f /app/*-plain.jar /app/*-sources.jar
 
 # Create data directories and non-root user

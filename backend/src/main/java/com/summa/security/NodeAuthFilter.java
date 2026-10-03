@@ -134,23 +134,25 @@ public class NodeAuthFilter extends OncePerRequestFilter {
 
     private String computeSignature(String method, String path, String body, String pubkey) {
         try {
-            // Distinguish base64-encoded pubkeys from raw ASCII keys.
-            // ECDSA P-256 public keys are 65 bytes (0x04 prefix + 32x32 coords) → 88 chars base64,
-            // or 32 bytes → 44 chars base64url without padding. We accept both formats strictly.
+            // Always hash the pubkey through SHA-256 before using it as the HMAC key.
+            // This ensures uniform key length regardless of whether the pubkey is
+            // a raw ASCII string or a base64-encoded ECDSA public key.
+            java.security.MessageDigest sha256 = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] keyBytes;
             boolean isPubkeyFormat = PUBKEY_PATTERN.matcher(pubkey).matches();
-            Mac mac = Mac.getInstance("HmacSHA256");
             if (isPubkeyFormat) {
-                byte[] decodedBytes = Base64.getDecoder().decode(pubkey);
-                mac.init(new SecretKeySpec(decodedBytes, "HmacSHA256"));
+                keyBytes = sha256.digest(Base64.getDecoder().decode(pubkey));
             } else {
-                mac.init(new SecretKeySpec(pubkey.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+                keyBytes = sha256.digest(pubkey.getBytes(StandardCharsets.UTF_8));
             }
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(keyBytes, "HmacSHA256"));
             String payload = method + ":" + path + ":" + body;
             byte[] hash = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
             return bytesToHex(hash);
         } catch (Exception e) {
             log.error("[SUMMA] signature computation failed: {}", e.getMessage());
-            throw new IllegalStateException("Node signature verification failed: " + e.getMessage(), e);
+            throw new IllegalStateException("Node signature verification failed", e);
         }
     }
 
