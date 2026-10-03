@@ -17,8 +17,6 @@ import type {
   DnaProposalStatus,
 } from '../services/api'
 
-import { escapeHtml } from './escapeHtml'
-
 export function formatDate(epochSeconds: number | undefined | null, options?: { dateOnly?: boolean }): string {
   if (epochSeconds === null || epochSeconds === undefined) return '?'
   const date = new Date(epochSeconds * 1000)
