@@ -190,7 +190,6 @@ public class GovernanceService {
         result.putIfAbsent("asks-storm-collapse-window-hours", Defaults.DEFAULT_ASKS_STORM_COLLAPSE_WINDOW_HOURS);
         result.putIfAbsent("asks-rate-limit-per-source-per-hour", Defaults.DEFAULT_ASKS_RATE_LIMIT_PER_SOURCE_PER_HOUR);
         result.putIfAbsent("summa.dna.default-review-sla-days", Defaults.DEFAULT_DNA_DEFAULT_REVIEW_SLA_DAYS);
-        result.putIfAbsent("spend-org-ceiling", spendCeilingOverride > 0 ? spendCeilingOverride : Defaults.DEFAULT_SPEND_CEILING);
         result.putIfAbsent("spend-critical-floor-percent", Defaults.DEFAULT_SPEND_CRITICAL_FLOOR_PERCENT);
         result.putIfAbsent("spend-evaluation-window-days", Defaults.DEFAULT_EVALUATION_WINDOW_DAYS);
         result.putIfAbsent("node-affinity-starvation-hours", Defaults.DEFAULT_NODE_AFFINITY_STARVATION_HOURS);

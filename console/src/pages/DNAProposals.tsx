@@ -88,6 +88,7 @@ export default function DNAProposals() {
               <p className="text-xs text-gray-500 mt-2">
                 Rev {p.revision} · Created {p.createdAt ? formatDate(p.createdAt, { dateOnly: true }) : '?'}
                 {p.reviewedBy ? ` · Reviewed by ${p.reviewedBy}` : ''}
+                {p.reviewBy && !p.reviewedBy ? ` · Assignee: ${p.reviewBy}` : ''}
               </p>
             </div>
           ))}

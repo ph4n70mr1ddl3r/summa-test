@@ -193,7 +193,9 @@ public class RunController {
             "queued", runService.countByStatus("queued"),
             "running", runService.countByStatus("running"),
             "completed", runService.countByStatus("completed"),
-            "failed", runService.countByStatus("failed")
+            "failed", runService.countByStatus("failed"),
+            "cancelled", runService.countByStatus("cancelled"),
+            "suspended", runService.countByStatus("suspended")
         ));
     }
 }
