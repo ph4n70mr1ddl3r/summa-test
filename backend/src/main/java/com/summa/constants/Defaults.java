@@ -10,7 +10,7 @@ public final class Defaults {
     public static final long DEFAULT_EVALUATION_WINDOW_DAYS = 30;
     public static final long DEFAULT_CRITICAL_ASK_DEADLINE_HOURS = 1;
     public static final long DEFAULT_BULK_ASK_DEADLINE_HOURS = 24;
-    public static final long DEFAULT_STANDARD_ASK_DEADLINE_HOURS = 0; // 0 = no fixed deadline; handled by digest cycle
+    public static final long DEFAULT_STANDARD_ASK_DEADLINE_HOURS = 24;
     public static final int DEFAULT_SPAWN_EPHEMERAL_DEFAULT_TTL_HOURS = 24;
     public static final int DEFAULT_SPAWN_EPHEMERAL_MAX_CONCURRENT_PER_SPAWNER = 3;
     public static final int DEFAULT_SPAWN_ORG_WIDE_MAX_ACTIVE_AGENTS = 100;

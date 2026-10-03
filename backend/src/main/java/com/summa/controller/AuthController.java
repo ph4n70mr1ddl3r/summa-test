@@ -157,27 +157,24 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Password updated"));
     }
 
+    @Value("${summa.proxy.trusted-ips:}")
+    private String trustedProxyIps;
+
     private boolean isTrustedProxy(String addr) {
         if ("local".equals(addr) || "127.0.0.1".equals(addr) || "0:0:0:0:0:0:0:1".equals(addr) || "::1".equals(addr)) {
             return false;
         }
-        // RFC1918 private ranges: 10.0.0.0/8, 172.16.0.0/12 (172.16-31.x.x), 192.168.0.0/16
-        if (addr.startsWith("10.")) return true;
-        if (addr.startsWith("192.168.")) return true;
-        if (addr.startsWith("172.")) {
-            // Extract second octet for 172.16.0.0/12 check
-            int dot1 = addr.indexOf('.', 4);
-            if (dot1 > 4) {
-                try {
-                    int secondOctet = Integer.parseInt(addr.substring(4, dot1));
-                    return secondOctet >= 16 && secondOctet <= 31;
-                } catch (NumberFormatException e) {
-                    return false;
+        // Allowlist-based trusted proxy check — only explicitly configured IPs are trusted
+        if (trustedProxyIps != null && !trustedProxyIps.isBlank()) {
+            String[] allowed = trustedProxyIps.split(",");
+            for (String allowedIp : allowed) {
+                if (addr.trim().equals(allowedIp.trim())) {
+                    return true;
                 }
             }
         }
-        // RFC4193 unique local IPv6 (fc00::/7) and link-local IPv6 (fe80::/10)
-        if (addr.startsWith("fc") || addr.startsWith("fd") || addr.startsWith("fe80")) return true;
+        // When no allowlist is configured, reject all remote addresses as untrusted
+        // (caller must explicitly configure trusted proxies via SUMMA_PROXY_TRUSTED_IPS)
         return false;
     }
 

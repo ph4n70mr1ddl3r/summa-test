@@ -15,6 +15,7 @@ import java.util.UUID;
 import java.util.Map;
 import com.summa.exception.EntityNotFoundException;
 import com.summa.util.JsonHelpers;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.scheduling.support.CronExpression;
 
 @Service
@@ -22,12 +23,14 @@ public class TriggerService {
     private final TriggerRepository triggerRepository;
     private final TriggerFiringRepository firingRepository;
     private final AuditService auditService;
+    private final ObjectMapper objectMapper;
 
     public TriggerService(TriggerRepository triggerRepository, TriggerFiringRepository firingRepository,
-                           AuditService auditService) {
+                          AuditService auditService, ObjectMapper objectMapper) {
         this.triggerRepository = triggerRepository;
         this.firingRepository = firingRepository;
         this.auditService = auditService;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
@@ -121,7 +124,7 @@ public class TriggerService {
                 checkSingleTrigger(trigger, now);
             } catch (Exception e) {
                 auditService.logSystem("TRIGGER_CHECK_FAIL", "trigger", trigger.getId(),
-                    String.format("{\"error\":\"%s\"}", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
+                    JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
             }
         }
     }
@@ -134,7 +137,7 @@ public class TriggerService {
             cron = CronExpression.parse(expr);
         } catch (Exception e) {
             auditService.logSystem("TRIGGER_INVALID_CRON", "trigger", trigger.getId(),
-                String.format("{\"expression\":\"%s\",\"error\":\"%s\"}", expr != null ? expr : "", e.getMessage() != null ? e.getMessage() : "unknown"));
+                JsonHelpers.toJson(Map.of("expression", expr != null ? expr : "", "error", e.getMessage() != null ? e.getMessage() : "unknown"), objectMapper));
             return;
         }
 

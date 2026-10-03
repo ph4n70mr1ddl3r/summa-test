@@ -97,7 +97,29 @@ class WorkspaceServiceTest {
         Workspace ws = new Workspace();
         ws.setId("ws-1");
         when(workspaceRepository.findById("ws-1")).thenReturn(Optional.of(ws));
+        lenient().when(workspaceRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(nodeRepository.findById("node-2")).thenReturn(Optional.empty());
+
+        try {
+            workspaceService.rebind("ws-1", "node-2", "admin");
+            fail("Should throw for missing target node");
+        } catch (EntityNotFoundException e) {
+            // expected
+        }
+    }
+
+    @Test
+    void rebind_workspace_withValidNode() {
+        Workspace ws = new Workspace();
+        ws.setId("ws-1");
+        when(workspaceRepository.findById("ws-1")).thenReturn(Optional.of(ws));
         when(workspaceRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        com.summa.model.Node node = new com.summa.model.Node();
+        node.setId("node-2");
+        node.setStatus("trusted");
+        node.setCapabilities("{\"backup\":true}");
+        when(nodeRepository.findById("node-2")).thenReturn(Optional.of(node));
 
         Workspace result = workspaceService.rebind("ws-1", "node-2", "admin");
 

@@ -178,7 +178,7 @@ public class InitiativeService {
                     if (hasPathTo(target, grandchildDeps, visited)) return true;
                 } catch (Exception e) {
                     auditService.logSystem("CYCLE_DETECT_FAIL", "initiative", target,
-                        String.format("{\"error\":\"%s\"}", e.getMessage()));
+                        JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
                 }
             }
         }
@@ -304,6 +304,14 @@ public class InitiativeService {
             throw new IllegalStateException("Cannot close initiative with status: " + initiative.getStatus());
         }
 
+        // INT-022: Authority check — close belongs to sponsor, lead, or admin
+        boolean isSponsor = initiative.getSponsor() != null && initiative.getSponsor().equals(actor);
+        boolean isLead = initiative.getLead() != null && initiative.getLead().equals(actor);
+        boolean isAdmin = memberService.isAdmin(actor);
+        if (!isSponsor && !isLead && !isAdmin) {
+            throw new IllegalStateException("Only the sponsor, lead, or an admin can close an initiative");
+        }
+
         // INT-040: Dependency check — resolve open work before closing
         List<BoardTask> openTasks = boardTaskRepository.findByInitiativeId(id).stream()
                 .filter(t -> !"done".equals(t.getStatus()))
@@ -353,12 +361,12 @@ public class InitiativeService {
                     }
                 } catch (Exception e) {
                     auditService.logSystem("CLOSE_UNBIND_WORKSPACE_FAIL", "workspace", ws.getId(),
-                        String.format("{\"initiativeId\":\"%s\",\"error\":\"%s\"}", id, e.getMessage()));
+                        JsonHelpers.toJson(Map.of("initiativeId", id, "error", e.getMessage()), objectMapper));
                 }
             }
         } catch (Exception e) {
             auditService.logSystem("CLOSE_UNBIND_WORKSPACE_FAIL", "initiative", id,
-                String.format("{\"error\":\"%s\"}", e.getMessage()));
+                JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
         }
 
         // INT-040: Archive pending spawn requests with template pins drained
@@ -397,12 +405,12 @@ public class InitiativeService {
                     }
                 } catch (Exception e) {
                     auditService.logSystem("CLOSE_ARCHIVE_SPAWN_FAIL", "spawn_request", sr.getId(),
-                        String.format("{\"initiativeId\":\"%s\",\"error\":\"%s\"}", id, e.getMessage()));
+                        JsonHelpers.toJson(Map.of("initiativeId", id, "error", e.getMessage()), objectMapper));
                 }
             }
         } catch (Exception e) {
             auditService.logSystem("CLOSE_ARCHIVE_SPAWN_FAIL", "initiative", id,
-                String.format("{\"error\":\"%s\"}", e.getMessage()));
+                JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
         }
 
         // INT-042: File a retrospective ask (kind question, tier bulk, expiry escalate)
@@ -421,7 +429,7 @@ public class InitiativeService {
                 Instant.now().plusSeconds(askService.deriveDeadlineFromTier("bulk")), null, null);
         } catch (Exception e) {
             auditService.logSystem("CLOSE_RETRO_ASK_FAIL", "initiative", id,
-                String.format("{\"error\":\"%s\"}", e.getMessage()));
+                JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
         }
 
         // INT-071: Closing an upstream initiative with active dependents raises asks to each
@@ -430,7 +438,7 @@ public class InitiativeService {
             raiseDependentCloseAsks(id, actor);
         } catch (Exception e) {
             auditService.logSystem("CLOSE_DEPENDENT_ASKS_FAIL", "initiative", id,
-                String.format("{\"error\":\"%s\"}", e.getMessage()));
+                JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
         }
 
         // INT-040/CLC-040: Cancel queued and suspended runs; running runs complete with artifacts
@@ -447,7 +455,7 @@ public class InitiativeService {
             }
         } catch (Exception e) {
             auditService.logSystem("CLOSE_CANCEL_RUNS_FAIL", "initiative", id,
-                String.format("{\"error\":\"%s\"}", e.getMessage()));
+                JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
         }
 
         initiative.setStatus("closed");
@@ -553,7 +561,7 @@ public class InitiativeService {
                 }
             } catch (Exception e) {
                 auditService.logSystem("STALL_CHECK_FAIL", "initiative", init.getId(),
-                    String.format("{\"error\":\"%s\"}", e.getMessage()));
+                    JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
             }
         }
     }
@@ -574,12 +582,12 @@ public class InitiativeService {
                     }
                 } catch (Exception e) {
                     auditService.logSystem("STALL_DEDUP_FAIL", "initiative", initiativeId,
-                        String.format("{\"error\":\"%s\"}", e.getMessage()));
+                        JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
                 }
             }
         } catch (Exception e) {
             auditService.logSystem("STALL_DEDUP_FAIL", "initiative", initiativeId,
-                String.format("{\"error\":\"%s\"}", e.getMessage()));
+                JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
         }
         return false;
     }
@@ -610,7 +618,7 @@ public class InitiativeService {
                 }
             } catch (Exception e) {
                 auditService.logSystem("DEPENDENT_CLOSE_ASK_FAIL", "initiative", dep.getId(),
-                    String.format("{\"error\":\"%s\"}", e.getMessage()));
+                    JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
             }
         }
     }

@@ -95,6 +95,8 @@ public class GovernanceService {
 
     @Transactional
     public void setSetting(String key, Object value, String editedBy) {
+        // Admin authorization enforced at the controller level (GovernanceController);
+        // this method is only called through controlled paths.
         String serialized = serializeValue(value);
         Optional<GovernanceSetting> existing = settingRepository.findById(key);
         GovernanceSetting setting;

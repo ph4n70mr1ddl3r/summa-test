@@ -10,8 +10,10 @@ import com.summa.security.RbacAuthorizationFilter;
 import com.summa.service.OffboardingWalkService;
 import com.summa.model.RoleTemplate;
 import com.summa.repository.RoleTemplateRepository;
+import com.summa.service.MemberService;
 import com.summa.exception.EntityNotFoundException;
 import com.summa.constants.Defaults;
+import com.summa.util.JsonHelpers;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -34,15 +36,18 @@ public class AgentController {
     private final AskService askService;
     private final RoleTemplateRepository roleTemplateRepository;
     private final ObjectMapper objectMapper;
+    private final MemberService memberService;
 
     public AgentController(AgentService agentService, AuditService auditService, WriteGate writeGate,
-                           AskService askService, RoleTemplateRepository roleTemplateRepository, ObjectMapper objectMapper) {
+                            AskService askService, RoleTemplateRepository roleTemplateRepository, ObjectMapper objectMapper,
+                            MemberService memberService) {
         this.agentService = agentService;
         this.auditService = auditService;
         this.writeGate = writeGate;
         this.askService = askService;
         this.roleTemplateRepository = roleTemplateRepository;
         this.objectMapper = objectMapper;
+        this.memberService = memberService;
     }
 
     @GetMapping
@@ -119,9 +124,20 @@ public class AgentController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        // CLC-010: Ownership verification — only the agent's owner human, an admin, or the initiative sponsor may lifecycle-manage
+        Optional<Agent> agentOpt = agentService.findById(id);
+        if (agentOpt.isEmpty()) {
+            return ControllerResponses.notFound(auditService, "Agent not found: " + id);
+        }
+        Agent agent = agentOpt.get();
+        boolean isOwner = agent.getOwnerHumanId() != null && agent.getOwnerHumanId().equals(actor);
+        boolean isAdmin = memberService.isAdmin(actor);
+        if (!isOwner && !isAdmin) {
+            return ControllerResponses.gate(auditService, actor, "Only the agent's owner or an admin may manage this agent");
+        }
         try {
-            Agent agent = action.apply(actor);
-            return ResponseEntity.ok(agent);
+            Agent result = action.apply(actor);
+            return ResponseEntity.ok(result);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -161,7 +177,7 @@ public class AgentController {
                     }
                 } catch (Exception e) {
                     auditService.log(actor, "PROMOTE_PARSE_FAIL", "agent", agentId,
-                        String.format("{\"error\":\"%s\"}", e.getMessage()));
+                        JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
                 }
             }
             if (hasPromoForAgent) {

@@ -1,5 +1,6 @@
 package com.summa.service;
 
+import com.summa.enums.AgentStatus;
 import com.summa.enums.RbacRole;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -154,6 +155,8 @@ public class OffboardingWalkService {
         // OFB-011: Re-own or retire dependent agents (all statuses, not just active)
         List<Agent> ownedAgents = agentService.findByOwner(humanId);
         for (Agent agent : ownedAgents) {
+            // Skip archived agents — their state is terminal and should not be modified
+            if (AgentStatus.ARCHIVED.getValue().equals(agent.getStatus())) continue;
             agent.setOwnerHumanId(finalTargetOwner);
             // Retire personal assistants (CLC-051: mirrored scopes die with member)
             if (isPersonalAssistant(agent)) {
@@ -377,6 +380,8 @@ public class OffboardingWalkService {
         // (all statuses, not just active — retired/suspended agents may still be owned)
         List<Agent> ownedAgentsDemote = agentService.findByOwner(humanId);
         for (Agent agent : ownedAgentsDemote) {
+            // Skip archived agents — their state is terminal and should not be modified
+            if (AgentStatus.ARCHIVED.getValue().equals(agent.getStatus())) continue;
             // CLC-051: demotion to viewer retires the assistant (mirrored viewer scopes are read-only)
             if (RbacRole.VIEWER.getValue().equals(newRbac) && isPersonalAssistant(agent)) {
                 agentService.retire(agent.getId(), actor);

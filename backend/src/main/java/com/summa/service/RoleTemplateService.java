@@ -8,10 +8,12 @@ import com.summa.repository.SpawnRequestRepository;
 import com.summa.constants.Defaults;
 import com.summa.util.JsonHelpers;
 import com.summa.exception.EntityNotFoundException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,15 +24,17 @@ public class RoleTemplateService {
     private final AgentRepository agentRepository;
     private final SpawnRequestRepository spawnRequestRepository;
     private final AskService askService;
+    private final ObjectMapper objectMapper;
 
     public RoleTemplateService(RoleTemplateRepository templateRepository, AuditService auditService,
                                AgentRepository agentRepository, SpawnRequestRepository spawnRequestRepository,
-                               AskService askService) {
+                               AskService askService, ObjectMapper objectMapper) {
         this.templateRepository = templateRepository;
         this.auditService = auditService;
         this.agentRepository = agentRepository;
         this.spawnRequestRepository = spawnRequestRepository;
         this.askService = askService;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
@@ -99,7 +103,7 @@ public class RoleTemplateService {
                         agent.getId(), agent.getOwnerHumanId(), nextVersion));
             } catch (Exception e) {
                 auditService.logSystem("UPGRADE_ASK_FAIL", "role_template", id,
-                    String.format("{\"agentId\":\"%s\",\"error\":\"%s\"}", agent.getId(), e.getMessage()));
+                    JsonHelpers.toJson(Map.of("agentId", agent.getId(), "error", e.getMessage()), objectMapper));
             }
         }
 

@@ -113,6 +113,23 @@ public class WorkspaceService {
         Workspace ws = workspaceRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Workspace not found: " + id));
 
+        // API-043: refuse a target node lacking required capabilities (ARC-012)
+        if (targetNodeId != null && !targetNodeId.isBlank()) {
+            Optional<Node> nodeOpt = nodeRepository.findById(targetNodeId);
+            if (nodeOpt.isEmpty()) {
+                throw new EntityNotFoundException("Target node not found: " + targetNodeId);
+            }
+            Node targetNode = nodeOpt.get();
+            if (targetNode.isRevoked()) {
+                throw new IllegalStateException("Target node is revoked: " + targetNodeId);
+            }
+            // Verify the node has at least minimal capabilities (non-empty JSON object)
+            if (targetNode.getCapabilities() == null || targetNode.getCapabilities().isBlank()
+                    || targetNode.getCapabilities().equals("{}")) {
+                throw new IllegalStateException("Target node lacks required capabilities (ARC-012): " + targetNodeId);
+            }
+        }
+
         ws.setNodeId(targetNodeId);
         Workspace saved = workspaceRepository.save(ws);
         auditService.log(actor, "REBIND_WORKSPACE", "workspace", id,
@@ -193,7 +210,10 @@ public class WorkspaceService {
                             } else {
                                 node.setClaim(null);
                             }
-                        } catch (Exception ignored) {
+                        } catch (Exception parseError) {
+                            // Log the parse error rather than silently dropping the claim
+                            auditService.logSystem("ARCHIVE_CLEAR_NODE_CLAIM_PARSE_FAIL", "node", previousNodeId,
+                                JsonHelpers.toJson(Map.of("workspaceId", id, "error", parseError.getMessage()), objectMapper));
                             node.setClaim(null);
                         }
                         nodeRepository.save(node);

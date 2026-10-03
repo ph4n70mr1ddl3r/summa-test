@@ -31,7 +31,8 @@ import com.summa.enums.AgentStatus;
 import com.summa.util.JsonHelpers;
 import com.summa.constants.Defaults;
 import com.summa.exception.EntityNotFoundException;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Map;
 @Service
 public class AgentService {
     private final AgentRepository agentRepository;
@@ -45,6 +46,7 @@ public class AgentService {
     private final RunRepository runRepository;
     private final DnaProposalRepository proposalRepository;
     private final int depthCap;
+    private final ObjectMapper objectMapper;
 
     public AgentService(AgentRepository agentRepository, AuditService auditService,
                         MemberService memberService, AskRepository askRepository,
@@ -54,6 +56,7 @@ public class AgentService {
                         SpawnRequestRepository spawnRequestRepository,
                         RunRepository runRepository,
                         DnaProposalRepository proposalRepository,
+                        ObjectMapper objectMapper,
                         @Value("${summa.spawn.depth-cap:2}") int depthCap) {
         this.agentRepository = agentRepository;
         this.auditService = auditService;
@@ -65,6 +68,7 @@ public class AgentService {
         this.spawnRequestRepository = spawnRequestRepository;
         this.runRepository = runRepository;
         this.proposalRepository = proposalRepository;
+        this.objectMapper = objectMapper;
         this.depthCap = Math.max(2, depthCap);
     }
 
@@ -355,7 +359,7 @@ public class AgentService {
                 retire(current.getId(), "system");
             } catch (Exception e) {
                 auditService.logSystem("TTL_REAP_FAIL", "agent", agent.getId(),
-                    String.format("{\"error\":\"%s\"}", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
+                    JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
             }
         }
         for (Agent agent : suspendedExpired) {
@@ -368,7 +372,7 @@ public class AgentService {
                 cleanupSuspendedAgent(current);
             } catch (Exception e) {
                 auditService.logSystem("TTL_REAP_SUSPENDED_FAIL", "agent", agent.getId(),
-                    String.format("{\"error\":\"%s\"}", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
+                    JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
             }
         }
     }

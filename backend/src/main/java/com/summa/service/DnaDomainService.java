@@ -27,6 +27,8 @@ import java.util.Objects;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.Collections;
@@ -218,20 +220,34 @@ public class DnaDomainService {
             });
         }
 
-        // Remap proposals (ids stable per DGV-042)
+        // Remap proposals (ids stable per DGV-042) — validate each belongs to parent domain
         for (String propId : proposalIds) {
             proposalRepository.findById(propId).ifPresent(prop -> {
+                if (!prop.getDomainId().equals(parent.getId())) {
+                    auditService.logSystem("SPLIT_SKIP_PROPOSAL", "dna_proposal", propId,
+                        JsonHelpers.toJson(Map.of("expectedDomain", parent.getId(), "actualDomain", prop.getDomainId()), objectMapper));
+                    return;
+                }
                 prop.setDomainId(savedChild.getId());
                 proposalRepository.save(prop);
             });
         }
 
-        // Remap workspace bindings
+        // Remap workspace bindings — validate each workspace is bound to parent domain
         for (String wsId : workspaceIds) {
             workspaceRepository.findById(wsId).ifPresent(ws -> {
-                if (ws.getDomainIds() == null || ws.getDomainIds().isBlank()) return;
+                if (ws.getDomainIds() == null || ws.getDomainIds().isBlank()) {
+                    auditService.logSystem("SPLIT_SKIP_WS_NO_DOMAINS", "workspace", wsId,
+                        JsonHelpers.toJson(Map.of("expectedParent", parentId), objectMapper));
+                    return;
+                }
                 try {
                     List<String> domains = objectMapper.readValue(ws.getDomainIds(), new TypeReference<List<String>>() {});
+                    if (!domains.contains(parentId)) {
+                        auditService.logSystem("SPLIT_SKIP_WS_NOT_IN_PARENT", "workspace", wsId,
+                            JsonHelpers.toJson(Map.of("expectedParent", parentId, "domains", domains), objectMapper));
+                        return;
+                    }
                     domains.remove(parentId);
                     domains.add(savedChild.getId());
                     ws.setDomainIds(objectMapper.writeValueAsString(domains));
@@ -334,7 +350,7 @@ public class DnaDomainService {
                 }
             } catch (Exception e) {
                 auditService.logSystem("MERGE_SKIP_MALFORMED_WS", "workspace", ws.getId(),
-                    String.format("{\"error\":\"%s\"}", e.getMessage()));
+                    JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
             }
         }
 

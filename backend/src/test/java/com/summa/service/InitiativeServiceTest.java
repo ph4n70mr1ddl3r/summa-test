@@ -112,9 +112,13 @@ class InitiativeServiceTest {
         Initiative init = new Initiative();
         init.setId("i1");
         init.setStatus("active");
+        init.setSponsor("admin");
         init.setClosedAt(null);
         when(initiativeRepository.findById("i1")).thenReturn(Optional.of(init));
         when(initiativeRepository.save(any())).thenReturn(init);
+        when(memberService.isAdmin("admin")).thenReturn(true);
+        when(boardTaskRepository.findByInitiativeId("i1")).thenReturn(List.of());
+        when(askRepository.findByInitiativeIdAndStatusPending("i1")).thenReturn(List.of());
 
         Initiative result = initiativeService.close("i1", "admin");
 
@@ -177,6 +181,7 @@ class InitiativeServiceTest {
         when(boardTaskRepository.findByInitiativeId("i1")).thenReturn(java.util.List.of());
         when(askRepository.findByInitiativeIdAndStatusPending("i1")).thenReturn(java.util.List.of());
         when(memberService.findHuman("h1")).thenReturn(Optional.empty());
+        when(memberService.isAdmin("admin")).thenReturn(true);
         when(memberService.findAgent("h1")).thenReturn(Optional.empty());
         when(askService.create(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(new com.summa.model.Ask());
 
