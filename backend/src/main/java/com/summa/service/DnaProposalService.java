@@ -65,7 +65,19 @@ public class DnaProposalService {
         proposal.setProposedBy(proposedBy);
         proposal.setProvenance(provenance != null ? provenance : "{}");
         proposal.setDomainId(domainId);
-        
+
+        // DWP-020/021/022: Derive review_by from domain owner (or admin broadcast for org-wide)
+        String reviewBy = null;
+        if (domainId != null && !domainId.isBlank()) {
+            Optional<DnaDomain> domainOpt = domainService.findById(domainId);
+            if (domainOpt.isPresent()) {
+                reviewBy = domainOpt.get().getOwnerHumanId();
+            }
+        } else {
+            reviewBy = OffboardingWalkService.ADMIN_BROADCAST;
+        }
+        proposal.setReviewBy(reviewBy);
+
         // reviewedAt is set only when the proposal is actually reviewed (publish/reject);
         // left as null here to indicate "not yet reviewed"
         

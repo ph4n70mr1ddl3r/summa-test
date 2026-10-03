@@ -29,9 +29,7 @@ public final class JsonHelpers {
             StringBuilder sb = new StringBuilder("\"");
             for (int i = 0; i < value.length(); ) {
                 int c = value.codePointAt(i);
-                if (c < 0x20) {
-                    sb.append(String.format("\\u%04x", c));
-                } else if (c == '"') {
+                if (c == '"') {
                     sb.append("\\\"");
                 } else if (c == '\\') {
                     sb.append("\\\\");
@@ -41,6 +39,8 @@ public final class JsonHelpers {
                     sb.append("\\r");
                 } else if (c == '\t') {
                     sb.append("\\t");
+                } else if (c < 0x20) {
+                    sb.append(String.format("\\u%04x", c));
                 } else {
                     sb.appendCodePoint(c);
                 }
