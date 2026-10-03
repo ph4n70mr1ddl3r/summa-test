@@ -157,8 +157,8 @@ export default function AskInbox() {
                       )}
                     </div>
                     <p className="text-sm text-gray-400 mt-1">
-                      From: <span className="text-gray-300">{ask.from}</span>
-                      {` → `}To: <span className="text-gray-300">{ask.to}</span>
+                      From: <span className="text-gray-300">{escapeHtml(ask.from)}</span>
+                      {` → `}To: <span className="text-gray-300">{escapeHtml(ask.to)}</span>
                     </p>
                   </div>
                 </div>

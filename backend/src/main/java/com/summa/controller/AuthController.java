@@ -44,6 +44,10 @@ public class AuthController {
             return ControllerResponses.serviceUnavailable(auditService, "Local authentication is not enabled. Use OIDC/gateway auth instead.");
         }
 
+        if (body == null) {
+            return ControllerResponses.validation(auditService, "Request body is required");
+        }
+
         String email = body.get("email");
         String password = body.get("password");
 

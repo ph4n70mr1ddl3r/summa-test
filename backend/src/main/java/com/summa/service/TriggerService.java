@@ -132,7 +132,11 @@ public class TriggerService {
                 || "*/1 * * * *".equals(expr)
                 || "0 * * * * *".equals(expr)
                 || "* * * * *".equals(expr);
-        if (!fireEveryMinute) return;
+        if (!fireEveryMinute) {
+            auditService.logSystem("TRIGGER_UNRECOGNIZED_EXPR", "trigger", trigger.getId(),
+                String.format("{\"expression\":\"%s\"}", expr != null ? expr : ""));
+            return;
+        }
 
         Instant nowTruncated = now.truncatedTo(ChronoUnit.MINUTES);
         // SUB-052: Idempotency key = trigger_id + scheduled_time

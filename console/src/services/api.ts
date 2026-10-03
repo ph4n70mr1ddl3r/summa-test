@@ -307,7 +307,7 @@ export interface Run {
   workspaceId?: string;
   status: RunStatus;
   result?: string;
-  costTokens?: number;
+  costTokens: number;
   costUsd?: number;
   createdAt?: number;
   updatedAt?: number;

@@ -232,9 +232,12 @@ public class DnaProposalService {
                 "{\"proposalId\":\"%s\",\"proposalKind\":\"%s\",\"domainId\":\"%s\",\"breachDays\":%d}",
                 proposal.getId(), proposal.getKind(), proposal.getDomainId(),
                 Duration.between(proposal.getCreatedAt(), Instant.now()).toDays());
+            // Use critical-tier deadline for escalation to ensure urgency
+            long deadlineSeconds = askService.deriveDeadlineFromTier("critical");
+            if (deadlineSeconds > 24L * 3600L) deadlineSeconds = 24L * 3600L;
             askService.create("question", "system", OffboardingWalkService.ADMIN_BROADCAST,
                 payload, "critical", "escalate", 1,
-                Instant.now().plusSeconds(24L * 3600L), null, null);
+                Instant.now().plusSeconds(deadlineSeconds), null, null);
             auditService.logSystem("PROPOSAL_SLA_BREACH_ESCALATED", "dna_proposal", proposal.getId(),
                 String.format("{\"domainId\":%s,\"breachDays\":%d}", JsonHelpers.jsonString(proposal.getDomainId()),
                     Duration.between(proposal.getCreatedAt(), Instant.now()).toDays()));

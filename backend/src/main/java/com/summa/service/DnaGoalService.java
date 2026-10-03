@@ -52,7 +52,7 @@ public class DnaGoalService {
 
         DnaGoal saved = goalRepository.save(goal);
         auditService.log(actor, "CREATE_GOAL", "dna_goal", id,
-            String.format("{\"owner\":%s,\"inject\":%s}", JsonHelpers.jsonString(owner), JsonHelpers.jsonString(inject)));
+            String.format("{\"owner\":%s,\"inject\":%s}", JsonHelpers.jsonString(ownerClean), JsonHelpers.jsonString(inject)));
         return saved;
     }
 
