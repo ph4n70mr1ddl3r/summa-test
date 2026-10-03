@@ -88,17 +88,33 @@ public class AskService {
         long nowSeconds = Instant.now().getEpochSecond();
         collapseWindowTimestamps.entrySet().removeIf(e -> e.getValue().expiryEpochSeconds <= nowSeconds);
         successorDepth.entrySet().removeIf(e -> e.getValue().expiryEpochSeconds <= nowSeconds);
-        // Purge locks whose associated window has expired
-        collapseLocks.keySet().removeIf(key -> {
+        // Purge locks whose associated window has expired, doing so atomically
+        // to prevent a TOCTOU race where a new entry is added between the check
+        // and the removal.
+        List<String> staleKeys = new ArrayList<>();
+        for (String key : collapseLocks.keySet()) {
             ExpiringEntry<Instant> entry = collapseWindowTimestamps.get(key);
-            return entry == null || entry.expiryEpochSeconds <= nowSeconds;
-        });
+            if (entry == null || entry.expiryEpochSeconds <= nowSeconds) {
+                staleKeys.add(key);
+            }
+        }
+        for (String key : staleKeys) {
+            collapseLocks.remove(key);
+        }
     }
 
     @Transactional
     public Ask create(String kind, String from, String to, String payload, String slaTier,
                       String expiryBehavior, Integer quorumRequired, Instant deadline,
                       String initiativeId, String workspaceId) {
+        return create(kind, from, to, payload, slaTier, expiryBehavior, quorumRequired,
+                deadline, initiativeId, workspaceId, null);
+    }
+
+    @Transactional
+    public Ask create(String kind, String from, String to, String payload, String slaTier,
+                      String expiryBehavior, Integer quorumRequired, Instant deadline,
+                      String initiativeId, String workspaceId, String escalation) {
         // ASK-012: explicit deadline earlier than creation is refused
         if (deadline == null) {
             throw new IllegalArgumentException("Deadline is required");
@@ -114,6 +130,12 @@ public class AskService {
         if (AskTier.fromValue(slaTier) == null) {
             throw new IllegalArgumentException("Invalid SLA tier: " + slaTier);
         }
+        // Cap deadline against org-wide maximum to prevent misconfigured tiers from
+        // producing deadlines beyond MAX_DEADLINE_SECONDS.
+        if (deadline.getEpochSecond() - Instant.now().getEpochSecond() > Defaults.MAX_DEADLINE_SECONDS) {
+            throw new IllegalArgumentException(
+                "Deadline exceeds maximum allowed span of " + Defaults.MAX_DEADLINE_SECONDS + " seconds");
+        }
 
         Ask ask = new Ask();
         ask.setId(UUID.randomUUID().toString());
@@ -127,6 +149,7 @@ public class AskService {
         ask.setDeadline(deadline);
         ask.setInitiativeId(initiativeId);
         ask.setWorkspaceId(workspaceId);
+        ask.setEscalation(escalation);
 
         String collapseKey = buildCollapseKey(kind, to, payload);
         Instant now = Instant.now();
@@ -253,15 +276,11 @@ public class AskService {
                         if (successorDeadlineSeconds > Defaults.MAX_DEADLINE_SECONDS) {
                             successorDeadlineSeconds = Defaults.MAX_DEADLINE_SECONDS;
                         }
-                        Ask successor = create(ask.getKind(), ask.getFrom(), successorTo,
-                            ask.getPayload(), ask.getSlaTier(), ask.getExpiryBehavior(),
-                            ask.getQuorumRequired(),
-                            Instant.now().plusSeconds(successorDeadlineSeconds),
-                            ask.getInitiativeId(), ask.getWorkspaceId());
-                        // Propagate the root ask ID into the successor's escalation field
-                        // so subsequent expiry cycles accumulate depth against the same key.
-                        successor.setEscalation(rootAskId);
-                        askRepository.save(successor);
+                         Ask successor = create(ask.getKind(), ask.getFrom(), successorTo,
+                             ask.getPayload(), ask.getSlaTier(), ask.getExpiryBehavior(),
+                             ask.getQuorumRequired(),
+                             Instant.now().plusSeconds(successorDeadlineSeconds),
+                             ask.getInitiativeId(), ask.getWorkspaceId(), rootAskId);
                         // Store chain root in a stable cache key so subsequent expiry cycles
                         // find the accumulated depth rather than resetting to zero.
                         long expireNowSeconds = Instant.now().getEpochSecond();

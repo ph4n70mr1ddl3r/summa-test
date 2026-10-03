@@ -63,14 +63,24 @@ public class SpawnRequest {
     @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant createdAt;
 
+    @Column(name = "updated_at", nullable = false)
+    @Convert(converter = InstantToUnixEpochConverter.class)
+    private Instant updatedAt;
+
     @PrePersist
     public void prePersist() {
         if (createdAt == null) createdAt = Instant.now();
+        if (updatedAt == null) updatedAt = Instant.now();
         if (status == null) status = "requested";
         if (spawnClass == null) spawnClass = "ephemeral";
         if (workspaceBindings == null) workspaceBindings = "[]";
         if (scopeCeiling == null) scopeCeiling = "{}";
         if (purpose == null) purpose = "";
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = Instant.now();
     }
 
     public String getId() { return id; }
@@ -107,4 +117,6 @@ public class SpawnRequest {
     public void setGateTarget(String gateTarget) { this.gateTarget = gateTarget; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
 }

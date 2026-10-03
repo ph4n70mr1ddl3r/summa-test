@@ -86,17 +86,19 @@ public class AuthController {
             return ControllerResponses.gate(audit, "Invalid credentials");
         }
 
-        String token = JwtUtil.generateToken(human.getId(), jwtSecret, jwtExpiration);
-        auditService.log(human.getId(), "LOGIN", "human", human.getId(), null);
-        // Reset rate limit counter on successful login
-        rateLimiter.reset(rateKey);
-
-        return ResponseEntity.ok(Map.of(
-            "token", token,
-            "userId", human.getId(),
-            "rbac", human.getRbac(),
-            "name", human.getName()
-        ));
+        try {
+            String token = JwtUtil.generateToken(human.getId(), jwtSecret, jwtExpiration);
+            auditService.log(human.getId(), "LOGIN", "human", human.getId(), null);
+            return ResponseEntity.ok(Map.of(
+                "token", token,
+                "userId", human.getId(),
+                "rbac", human.getRbac(),
+                "name", human.getName()
+            ));
+        } finally {
+            // Always reset rate limit on login completion (success or failure during token generation)
+            rateLimiter.reset(rateKey);
+        }
     }
 
     @PutMapping("/change-password")

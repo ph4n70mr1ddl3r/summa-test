@@ -296,8 +296,6 @@ public class SpawnService {
                 depth = 1;
             }
         }
-        if (depth == null) depth = 0;
-
         if (depth >= depthCap) {
             throw new IllegalStateException("Spawn depth cap reached: depth=" + depth + " cap=" + depthCap);
         }

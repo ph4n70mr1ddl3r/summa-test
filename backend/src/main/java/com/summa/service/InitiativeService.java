@@ -247,6 +247,9 @@ public class InitiativeService {
                 "{\"initiativeId\":\"%s\",\"title\":\"%s\",\"createdBy\":\"%s\"}",
                 id, initiative.getTitle(), actor);
             long activationDeadlineSeconds = askService.deriveDeadlineFromTier("standard");
+            if (activationDeadlineSeconds > Defaults.MAX_DEADLINE_SECONDS) {
+                activationDeadlineSeconds = Defaults.MAX_DEADLINE_SECONDS;
+            }
             askService.create("approval", "system", initiative.getSponsor(),
                 payload, "standard", "deny", 1,
                 Instant.now().plusSeconds(activationDeadlineSeconds), id, null);

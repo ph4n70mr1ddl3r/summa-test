@@ -34,11 +34,8 @@ public class GlobalExceptionHandler {
             String objectId, String message, HttpStatus status) {
         String actor = currentActor();
         AuditEvent audit = auditService.log(actor, auditAction, objectType, objectId, message);
-        Map<String, Object> body = Map.of("code", objectType, "message", message);
-        if (audit != null) {
-            body = Map.of("code", objectType, "message", message, "audit_event_id", audit.getId());
-        }
-        return ResponseEntity.status(status).body(body);
+        return ResponseEntity.status(status).body(Map.of(
+            "code", objectType, "message", message, "audit_event_id", audit.getId()));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
