@@ -148,8 +148,8 @@ public class DnaReadService {
             agentMap.put("name", a.getName());
             agentMap.put("class", a.getAgentClass());
             agentMap.put("status", a.getStatus());
-            agentMap.put("suspendedAt", a.getSuspendedAt() != null ? a.getSuspendedAt().toString() : null);
-            agentMap.put("retiredAt", a.getRetiredAt() != null ? a.getRetiredAt().toString() : null);
+            agentMap.put("suspendedAt", a.getSuspendedAt() != null ? a.getSuspendedAt().getEpochSecond() : null);
+            agentMap.put("retiredAt", a.getRetiredAt() != null ? a.getRetiredAt().getEpochSecond() : null);
             return agentMap;
         }).toList());
         snapshot.put("domains", domains.stream().map(d -> Map.of(

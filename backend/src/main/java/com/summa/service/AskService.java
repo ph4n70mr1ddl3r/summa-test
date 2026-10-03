@@ -13,13 +13,14 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.Map;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Base64;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -290,9 +291,12 @@ public class AskService {
      */
     private void broadcastOrgStall(Ask originalAsk) {
         try {
-            String payload = String.format(
-                "{\"originalAskId\":\"%s\",\"originalAskKind\":\"%s\",\"originalAskTier\":\"%s\",\"reason\":\"chain_exhausted\"}",
-                originalAsk.getId(), originalAsk.getKind(), originalAsk.getSlaTier());
+            Map<String, Object> payloadMap = new LinkedHashMap<>();
+            payloadMap.put("originalAskId", originalAsk.getId());
+            payloadMap.put("originalAskKind", originalAsk.getKind());
+            payloadMap.put("originalAskTier", originalAsk.getSlaTier());
+            payloadMap.put("reason", "chain_exhausted");
+            String payload = JsonHelpers.toJson(payloadMap, objectMapper);
             create(AskKind.QUESTION.getValue(), "system", OffboardingWalkService.ADMIN_BROADCAST,
                 payload, "critical", "deny", 1,
                 Instant.now().plusSeconds(Defaults.DEFAULT_CRITICAL_ASK_DEADLINE_HOURS * 3600L),

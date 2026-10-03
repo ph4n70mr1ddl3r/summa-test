@@ -12,7 +12,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -240,10 +242,12 @@ public class DnaProposalService {
      */
     private void escalateToAdmin(DnaProposal proposal) {
         try {
-            String payload = String.format(
-                "{\"proposalId\":\"%s\",\"proposalKind\":\"%s\",\"domainId\":\"%s\",\"breachDays\":%d}",
-                proposal.getId(), proposal.getKind(), proposal.getDomainId(),
-                Duration.between(proposal.getCreatedAt(), Instant.now()).toDays());
+            Map<String, Object> payloadMap = new LinkedHashMap<>();
+            payloadMap.put("proposalId", proposal.getId());
+            payloadMap.put("proposalKind", proposal.getKind());
+            payloadMap.put("domainId", proposal.getDomainId());
+            payloadMap.put("breachDays", Duration.between(proposal.getCreatedAt(), Instant.now()).toDays());
+            String payload = JsonHelpers.toJson(payloadMap, objectMapper);
             // Use critical-tier deadline for escalation to ensure urgency
             long deadlineSeconds = askService.deriveDeadlineFromTier("critical");
             if (deadlineSeconds > 24L * 3600L) deadlineSeconds = 24L * 3600L;
