@@ -33,8 +33,8 @@ describe('Runs page', () => {
 
   it('displays runs with status', async () => {
     vi.mocked(apiModule.api.runs.list).mockResolvedValue([
-      { id: 'r1', agentId: 'a1', status: 'completed' as const },
-      { id: 'r2', agentId: 'a1', status: 'failed' as const },
+      { id: 'r1', agentId: 'a1', status: 'completed' as const, costTokens: 0 },
+      { id: 'r2', agentId: 'a1', status: 'failed' as const, costTokens: 0 },
     ])
     render(<Runs />)
     await waitFor(() => {
@@ -44,7 +44,7 @@ describe('Runs page', () => {
 
   it('filters by status', async () => {
     vi.mocked(apiModule.api.runs.list).mockResolvedValue([
-      { id: 'r1', agentId: 'a1', status: 'running' as const },
+      { id: 'r1', agentId: 'a1', status: 'running' as const, costTokens: 0 },
     ])
     render(<Runs />)
     await waitFor(() => expect(screen.getByText('running (1)')).toBeInTheDocument())
