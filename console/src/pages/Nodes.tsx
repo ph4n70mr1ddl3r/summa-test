@@ -45,7 +45,7 @@ export default function Nodes() {
                 <div>
                   <p className="font-medium text-gray-200">{escapeHtml(n.name)}</p>
                   <p className="text-sm text-gray-400 mt-1">
-                    Kind: {n.kind} | Region: {n.region ?? 'default'}
+                    Kind: {n.kind} | Region: {escapeHtml(n.region ?? 'default')}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
                     Pubkey: {n.pubkey ? n.pubkey.slice(0, 16) : '?'}… | Enrolled: {n.enrolledAt != null ? formatDate(n.enrolledAt, { dateOnly: true }) : '—'}

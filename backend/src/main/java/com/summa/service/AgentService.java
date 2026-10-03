@@ -296,10 +296,6 @@ public class AgentService {
         return saved;
     }
 
-    public long countActiveAgents() {
-        return agentRepository.countActiveAgents();
-    }
-
     public List<Agent> findByOwner(String ownerHumanId) {
         return agentRepository.findByOwner(ownerHumanId);
     }

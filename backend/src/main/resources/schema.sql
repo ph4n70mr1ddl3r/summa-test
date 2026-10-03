@@ -331,7 +331,7 @@ CREATE TABLE IF NOT EXISTS spend_ledger (
     spawn_id TEXT,
     kind TEXT NOT NULL CHECK (kind IN ('reserve', 'settle', 'release')),
     tokens_in REAL NOT NULL DEFAULT 0,
-    tokens_out REAL NOT NULL DEFAULT 0,
+    tokens_out BIGINT NOT NULL DEFAULT 0,
     cost REAL NOT NULL DEFAULT 0,
     pricing_version TEXT NOT NULL DEFAULT 'v1',
     acknowledged INTEGER NOT NULL DEFAULT 0 CHECK (acknowledged IN (0, 1)),
@@ -804,6 +804,24 @@ END;
 CREATE TRIGGER IF NOT EXISTS runs_au AFTER UPDATE ON runs BEGIN
     UPDATE dna_search_index SET
         title = 'run:' || new.id,
+        status = new.status
+    WHERE id = old.id;
+END;
+
+-- FTS5 triggers for playbooks table
+CREATE TRIGGER IF NOT EXISTS playbooks_ai AFTER INSERT ON playbooks BEGIN
+    INSERT INTO dna_search_index (id, title, content, status, kind)
+    VALUES (new.id, new.name, new.body, new.status, 'playbook');
+END;
+
+CREATE TRIGGER IF NOT EXISTS playbooks_ad AFTER DELETE ON playbooks BEGIN
+    DELETE FROM dna_search_index WHERE id = old.id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS playbooks_au AFTER UPDATE ON playbooks BEGIN
+    UPDATE dna_search_index SET
+        title = new.name,
+        content = new.body,
         status = new.status
     WHERE id = old.id;
 END;

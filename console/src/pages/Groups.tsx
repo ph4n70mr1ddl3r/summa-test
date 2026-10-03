@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { Group } from '../types'
-import { groupStatusColor } from '../utils/formatting'
+import { groupStatusColor, escapeHtml } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Groups() {
@@ -69,9 +69,9 @@ export default function Groups() {
             <div key={g.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium text-gray-200">{g.name}</p>
+                  <p className="font-medium text-gray-200">{escapeHtml(g.name)}</p>
                   <p className="text-sm text-gray-400 mt-1">
-                    {g.leaderMemberId ? `Leader: ${g.leaderMemberId}` : 'No leader assigned'}
+                    {g.leaderMemberId ? `Leader: ${escapeHtml(g.leaderMemberId)}` : 'No leader assigned'}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">

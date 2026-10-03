@@ -43,8 +43,8 @@ export default function DNACards() {
             <div key={card.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium text-gray-200">{card.title}</p>
-                  <p className="text-sm text-gray-400 mt-1">Domain: {card.domainId}</p>
+                  <p className="font-medium text-gray-200">{escapeHtml(card.title)}</p>
+                  <p className="text-sm text-gray-400 mt-1">Domain: {escapeHtml(card.domainId)}</p>
                 </div>
                 <span className={`text-xs px-2 py-1 rounded ${dnaCardStatusColor(card.status)}`} aria-label={`Status: ${card.status}`}>
                   {card.status}
@@ -53,7 +53,7 @@ export default function DNACards() {
               <pre className="mt-2 text-xs text-gray-400 bg-gray-900 rounded p-3 overflow-x-auto whitespace-pre-wrap">
                 {escapeHtml(truncateSnippet(card.definitionMd, 200))}
               </pre>
-              <p className="text-xs text-gray-500 mt-2">v{card.version} · Created {card.createdAt ? formatDate(card.createdAt, { dateOnly: true }) : '?'}</p>
+              <p className="text-xs text-gray-500 mt-2">v{card.version} · Created {card.createdAt != null ? formatDate(card.createdAt, { dateOnly: true }) : '?'}</p>
             </div>
           ))}
         </div>

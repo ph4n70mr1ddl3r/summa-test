@@ -5,7 +5,6 @@ import com.summa.model.DnaGlossary;
 import com.summa.exception.EntityNotFoundException;
 import com.summa.util.JsonHelpers;
 import com.summa.util.ScanUtils;
-import com.summa.service.SecretsScanner;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;

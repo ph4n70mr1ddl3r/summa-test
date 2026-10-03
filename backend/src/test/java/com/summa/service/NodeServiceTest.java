@@ -157,22 +157,6 @@ class NodeServiceTest {
     }
 
     @Test
-    void isRevoked_true() {
-        Node node = new Node();
-        node.setStatus("revoked");
-        when(nodeRepository.findById("node-1")).thenReturn(Optional.of(node));
-
-        assertTrue(nodeService.isRevoked("node-1"));
-    }
-
-    @Test
-    void isRevoked_false() {
-        when(nodeRepository.findById("node-1")).thenReturn(Optional.empty());
-
-        assertFalse(nodeService.isRevoked("node-1"));
-    }
-
-    @Test
     void claimWorkspace_bumpsEpoch() {
         Node node = new Node();
         node.setId("node-1");

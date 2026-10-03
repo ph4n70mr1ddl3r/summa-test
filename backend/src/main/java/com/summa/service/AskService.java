@@ -488,10 +488,14 @@ public class AskService {
             if (val != null) return val.longValue() * 3600L;
             return Defaults.DEFAULT_BULK_ASK_DEADLINE_HOURS * 3600L;
         }
-        // standard tier: next digest is not a fixed deadline — use configurable hours (default 24)
+        // standard tier: next digest is not a fixed deadline — use configurable hours (default 0 = indefinite)
         Number val = governanceService.getSetting("asks-tier-standard-deadline-hours", Number.class);
-        if (val != null) return val.longValue() * 3600L;
-        return Defaults.DEFAULT_STANDARD_ASK_DEADLINE_HOURS * 3600L;
+        if (val != null) {
+            long result = val.longValue() * 3600L;
+            return result > 0 ? result : Defaults.MAX_DEADLINE_SECONDS;
+        }
+        long defaultResult = Defaults.DEFAULT_STANDARD_ASK_DEADLINE_HOURS * 3600L;
+        return defaultResult > 0 ? defaultResult : Defaults.MAX_DEADLINE_SECONDS;
     }
 
     private void recordResponse(Ask ask, String responder, String response) {

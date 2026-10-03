@@ -81,7 +81,7 @@ public class BoardTaskService {
 
         BoardTask saved = taskRepository.save(task);
         auditService.log(createdBy, "CREATE", "board_task", task.getId(),
-            "{\"title\":" + JsonHelpers.jsonString(title) + "}");
+            String.format("{\"title\":%s}", JsonHelpers.jsonString(title)));
         return saved;
     }
 
@@ -143,7 +143,7 @@ public class BoardTaskService {
         task.setStatus("in_progress");
         BoardTask saved = taskRepository.save(task);
         auditService.log(actor, "ASSIGN", "board_task", id,
-            "{\"assignee\":" + JsonHelpers.jsonString(assigneeMemberId) + "}");
+            String.format("{\"assignee\":%s}", JsonHelpers.jsonString(assigneeMemberId)));
         return saved;
     }
 

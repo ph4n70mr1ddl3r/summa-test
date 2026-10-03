@@ -175,22 +175,12 @@ public class RunService {
     }
 
     @Transactional(readOnly = true)
-    public List<Run> findByStatus(String status) {
-        return runRepository.findByStatus(status);
+    public boolean agentExists(String agentId) {
+        return agentRepository.existsById(agentId);
     }
 
     @Transactional(readOnly = true)
     public long countByStatus(String status) {
         return runRepository.countByStatus(status);
-    }
-
-    @Transactional(readOnly = true)
-    public long countByAgent(String agentId) {
-        return runRepository.countByAgentId(agentId);
-    }
-
-    @Transactional(readOnly = true)
-    public boolean agentExists(String agentId) {
-        return agentRepository.existsById(agentId);
     }
 }

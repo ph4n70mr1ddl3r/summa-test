@@ -53,7 +53,7 @@ export default function Initiatives() {
                   <p className="text-sm text-gray-400 mt-1">
                     Sponsor: {escapeHtml(ini.sponsor)} | Lead: {escapeHtml(ini.lead)}
                     {ini.goalRef && <span className="ml-2">Goal: {escapeHtml(ini.goalRef)}</span>}
-                    {ini.deadline && (
+                    {ini.deadline != null && (
                       <span className="ml-2 text-xs text-gray-500">
                         Deadline: {formatDate(ini.deadline, { dateOnly: true })}
                       </span>

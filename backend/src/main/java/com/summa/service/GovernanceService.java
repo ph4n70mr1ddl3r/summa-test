@@ -123,8 +123,8 @@ public class GovernanceService {
             double ceiling = resolveSpendCeiling();
             long windowDays = resolveSpendWindowDays();
             Instant window = Instant.now().minus(windowDays, ChronoUnit.DAYS);
-            Double reservedObj = spendLedgerRepository.sumReservedSince(window);
-            // SPW-035: unacknowledged overruns trip the breaker; acknowledged ones do not
+            // SPW-035: only unacknowledged overruns trip the breaker; acknowledged reserves do not
+            Double reservedObj = spendLedgerRepository.sumUnacknowledgedReservedSince(window);
             Double unsettledObj = spendLedgerRepository.sumUnacknowledgedSettleCostSince(window);
             double reserved = reservedObj != null ? reservedObj : 0.0;
             double unsettled = unsettledObj != null ? unsettledObj : 0.0;

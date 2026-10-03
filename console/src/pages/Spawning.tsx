@@ -92,7 +92,7 @@ export default function Spawning() {
                     <p className="font-medium text-gray-200">{req.purpose || 'Untitled request'}</p>
                     <p className="text-sm text-gray-400 mt-1">
                       Class: {req.class} · Requester: {escapeHtml(req.requesterId)}
-                      {req.templateId ? ` · Template: ${req.templateId}` : ''}
+                      {req.templateId ? ` · Template: ${escapeHtml(req.templateId)}` : ''}
                     </p>
                     {req.budgetCap && (
                       <p className="text-xs text-gray-500 mt-1">Budget cap: ${req.budgetCap}</p>
@@ -142,7 +142,7 @@ export default function Spawning() {
                     <p className="font-medium text-gray-200">{req.purpose || 'Untitled request'}</p>
                     <p className="text-sm text-gray-400 mt-1">
                       Class: {req.class} · Requester: {escapeHtml(req.requesterId)}
-                      {req.templateId ? ` · Template: ${req.templateId}` : ''}
+                      {req.templateId ? ` · Template: ${escapeHtml(req.templateId)}` : ''}
                     </p>
                   </div>
                   <span className={`text-xs px-2 py-1 rounded ${spawnStatusColor(req.status)}`} aria-label={`Status: ${req.status}`}>

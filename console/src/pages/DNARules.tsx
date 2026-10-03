@@ -44,7 +44,7 @@ export default function DNARules() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="font-medium text-gray-200">Rule {rule.id.slice(0, 8)}</p>
-                  <p className="text-sm text-gray-400 mt-1">Domain: {rule.domainId}</p>
+                  <p className="text-sm text-gray-400 mt-1">Domain: {escapeHtml(rule.domainId)}</p>
                 </div>
                 <span className={`text-xs px-2 py-1 rounded ${dnaRuleStatusColor(rule.status)}`} aria-label={`Status: ${rule.status}`}>
                   {rule.status}

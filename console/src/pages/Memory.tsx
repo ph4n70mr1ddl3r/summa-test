@@ -120,7 +120,7 @@ export default function Memory() {
                   <p className="text-sm text-gray-400 mt-1">
                     {item.memberId ? `Member: ${escapeHtml(item.memberId)}` : 'System'}
                     {item.workspaceId ? ` · Workspace: ${item.workspaceId}` : ''}
-                    {item.reviewedBy ? ` · Reviewed by: ${item.reviewedBy}` : ''}
+                    {item.reviewedBy ? ` · Reviewed by: ${escapeHtml(item.reviewedBy)}` : ''}
                   </p>
                 </div>
                 {item.tainted && (

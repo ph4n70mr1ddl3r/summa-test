@@ -284,7 +284,7 @@ public class NodeService {
             ledger.setRunId(runId);
             ledger.setKind("settle");
             ledger.setCost(costUsd);
-            ledger.setTokensOut((double) costTokens);
+            ledger.setTokensOut(costTokens);
             spendLedgerRepository.save(ledger);
         }
 

@@ -208,6 +208,11 @@ public class DnaDomainService {
         // Move cards (ids stable per DGV-010)
         for (String cardId : itemIds) {
             cardRepository.findById(cardId).ifPresent(card -> {
+                if (!card.getDomainId().equals(parent.getId())) {
+                    auditService.logSystem("SPLIT_SKIP_CARD", "dna_card", cardId,
+                        String.format("{\"expectedDomain\":%s,\"actualDomain\":%s}", JsonHelpers.jsonString(parent.getId()), JsonHelpers.jsonString(card.getDomainId())));
+                    return;
+                }
                 card.setDomainId(savedChild.getId());
                 cardRepository.save(card);
             });

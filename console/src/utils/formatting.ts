@@ -215,8 +215,9 @@ export function countParticipants(participantsJson: string | null | undefined): 
   }
 }
 
-export { escapeHtml }
 export function truncateSnippet(text: string | null | undefined, maxLen: number): string {
   if (!text || maxLen <= 0) return ''
   return text.length > maxLen ? text.slice(0, maxLen) + '...' : text
 }
+
+export { escapeHtml } from './escapeHtml'

@@ -15,6 +15,7 @@ import java.util.UUID;
 import java.util.Map;
 import com.summa.exception.EntityNotFoundException;
 import com.summa.util.JsonHelpers;
+import org.springframework.scheduling.support.CronExpression;
 
 @Service
 public class TriggerService {
@@ -126,40 +127,49 @@ public class TriggerService {
     }
 
     private void checkSingleTrigger(Trigger trigger, Instant now) {
-        // Simple cron-like check: match every-minute expressions
+        // Parse cron expression using Spring's CronExpression for proper validation
         String expr = trigger.getExpression();
-        boolean fireEveryMinute = "*".equals(expr)
-                || "*/1 * * * *".equals(expr)
-                || "0 * * * * *".equals(expr)
-                || "* * * * *".equals(expr);
-        if (!fireEveryMinute) {
-            auditService.logSystem("TRIGGER_UNRECOGNIZED_EXPR", "trigger", trigger.getId(),
+        CronExpression cron;
+        try {
+            cron = CronExpression.parse(expr);
+        } catch (Exception e) {
+            auditService.logSystem("TRIGGER_INVALID_CRON", "trigger", trigger.getId(),
+                String.format("{\"expression\":\"%s\",\"error\":\"%s\"}", expr != null ? expr : "", e.getMessage() != null ? e.getMessage() : "unknown"));
+            return;
+        }
+
+        // Check if the cron fires at or before the current minute
+        Instant nextFire = cron.next(now);
+        if (nextFire == null) {
+            auditService.logSystem("TRIGGER_CRON_INVALID", "trigger", trigger.getId(),
                 String.format("{\"expression\":\"%s\"}", expr != null ? expr : ""));
             return;
         }
-
+        // Fire if the next scheduled time is within the current minute window
         Instant nowTruncated = now.truncatedTo(ChronoUnit.MINUTES);
-        // SUB-052: Idempotency key = trigger_id + scheduled_time
-        String idempotencyKey = trigger.getId() + ":" + nowTruncated;
-        Optional<TriggerFiring> existing = firingRepository
-                .findByTriggerIdAndIdempotencyKey(trigger.getId(), idempotencyKey);
-        if (existing.isPresent()) {
-            // Already fired — return original run (SUB-052 replay)
-            auditService.logSystem("REPLAY_FIRING", "trigger_firing", existing.get().getId(), null);
-            return;
+        if (nextFire.isBefore(nowTruncated.plusSeconds(60))) {
+            // SUB-052: Idempotency key = trigger_id + scheduled_time
+            String idempotencyKey = trigger.getId() + ":" + nowTruncated;
+            Optional<TriggerFiring> existing = firingRepository
+                    .findByTriggerIdAndIdempotencyKey(trigger.getId(), idempotencyKey);
+            if (existing.isPresent()) {
+                // Already fired — return original run (SUB-052 replay)
+                auditService.logSystem("REPLAY_FIRING", "trigger_firing", existing.get().getId(), null);
+                return;
+            }
+
+            // Record firing
+            TriggerFiring firing = new TriggerFiring();
+            firing.setId(UUID.randomUUID().toString());
+            firing.setTriggerId(trigger.getId());
+            firing.setIdempotencyKey(idempotencyKey);
+            firing.setFiredAt(now);
+            firingRepository.save(firing);
+
+            trigger.setLastFiredAt(now);
+            triggerRepository.save(trigger);
+            auditService.logSystem("FIRE_TRIGGER", "trigger", trigger.getId(), null);
         }
-
-        // Record firing
-        TriggerFiring firing = new TriggerFiring();
-        firing.setId(UUID.randomUUID().toString());
-        firing.setTriggerId(trigger.getId());
-        firing.setIdempotencyKey(idempotencyKey);
-        firing.setFiredAt(now);
-        firingRepository.save(firing);
-
-        trigger.setLastFiredAt(now);
-        triggerRepository.save(trigger);
-        auditService.logSystem("FIRE_TRIGGER", "trigger", trigger.getId(), null);
     }
 
     public Map<String, Object> getStats() {

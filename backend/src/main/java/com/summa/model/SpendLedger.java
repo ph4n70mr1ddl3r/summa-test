@@ -27,7 +27,7 @@ public class SpendLedger {
     private Double tokensIn;
 
     @Column(name = "tokens_out", nullable = false)
-    private Double tokensOut;
+    private Long tokensOut;
 
     @Column(name = "cost", nullable = false)
     private Double cost;
@@ -51,7 +51,7 @@ public class SpendLedger {
         if (at == null) at = Instant.now();
         if (createdAt == null) createdAt = Instant.now();
         if (tokensIn == null) tokensIn = 0.0;
-        if (tokensOut == null) tokensOut = 0.0;
+        if (tokensOut == null) tokensOut = 0L;
         if (cost == null) cost = 0.0;
         if (pricingVersion == null) pricingVersion = "v1";
         if (acknowledged == null) acknowledged = false;
@@ -74,8 +74,8 @@ public class SpendLedger {
     public void setKind(String kind) { this.kind = kind; }
     public Double getTokensIn() { return tokensIn; }
     public void setTokensIn(Double tokensIn) { this.tokensIn = tokensIn; }
-    public Double getTokensOut() { return tokensOut; }
-    public void setTokensOut(Double tokensOut) { this.tokensOut = tokensOut; }
+    public Long getTokensOut() { return tokensOut; }
+    public void setTokensOut(Long tokensOut) { this.tokensOut = tokensOut; }
     public Double getCost() { return cost; }
     public void setCost(Double cost) { this.cost = cost; }
     public String getPricingVersion() { return pricingVersion; }

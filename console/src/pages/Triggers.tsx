@@ -43,8 +43,8 @@ export default function Triggers() {
             <div key={t.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium text-gray-200">{t.name}</p>
-                  <p className="text-sm text-gray-400 mt-1">Kind: {t.kind} | Agent: {t.agentId}</p>
+                  <p className="font-medium text-gray-200">{escapeHtml(t.name)}</p>
+                  <p className="text-sm text-gray-400 mt-1">Kind: {t.kind} | Agent: {escapeHtml(t.agentId)}</p>
                   {t.expression && (
                     <p className="text-xs text-gray-500 mt-1">Expression: {escapeHtml(t.expression)}</p>
                   )}

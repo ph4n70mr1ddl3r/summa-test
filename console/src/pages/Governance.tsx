@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api, loadWithFallback } from '../services/api'
 import type { SpendSnapshot } from '../types'
 import { ErrorBanner } from '../components/ErrorBanner'
+import { escapeHtml } from '../utils/formatting'
 
 export default function Governance() {
   const [policies, setPolicies] = useState<Record<string, unknown>>({})
@@ -115,7 +116,7 @@ export default function Governance() {
             className="flex-1 text-right text-gray-200 font-mono text-xs hover:text-white truncate"
             aria-label={`Edit ${key}: ${currentValue}`}
           >
-            {typeof value === 'object' && value !== null ? JSON.stringify(value) : String(value)}
+            {typeof value === 'object' && value !== null ? escapeHtml(JSON.stringify(value)) : String(value)}
           </button>
         )}
       </div>
