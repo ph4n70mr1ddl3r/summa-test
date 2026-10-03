@@ -11,12 +11,12 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import com.summa.SummaApplication;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -29,13 +29,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Value("${summa.auth.jwt-expiration:86400000}")
     private long jwtExpiration;
 
+    @Value("${summa.auth.jwt-secret-min-length:32}")
+    private int minJwtSecretLength;
+
     @PostConstruct
     public void validateSecret() {
         if (jwtSecret == null || jwtSecret.isBlank()) {
             throw new IllegalStateException("summa.auth.jwt-secret must not be blank");
         }
-        if (jwtSecret.length() < SummaApplication.MIN_JWT_SECRET_LENGTH) {
-            throw new IllegalStateException("summa.auth.jwt-secret must be at least " + SummaApplication.MIN_JWT_SECRET_LENGTH + " characters (256 bits recommended), got " + jwtSecret.length());
+        if (jwtSecret.length() < minJwtSecretLength) {
+            throw new IllegalStateException("summa.auth.jwt-secret must be at least " + minJwtSecretLength + " characters (256 bits recommended), got " + jwtSecret.length());
         }
     }
 

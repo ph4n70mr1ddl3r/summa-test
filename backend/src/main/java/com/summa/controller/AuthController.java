@@ -31,6 +31,9 @@ public class AuthController {
     @Value("${summa.auth.jwt-expiration:86400000}")
     private long jwtExpiration;
 
+    @Value("${summa.auth.jwt-secret-min-length:32}")
+    private int minJwtSecretLength;
+
     public AuthController(OrgService orgService, AuditService auditService, PasswordUtil passwordUtil, RateLimiter rateLimiter) {
         this.orgService = orgService;
         this.auditService = auditService;
@@ -87,7 +90,7 @@ public class AuthController {
         }
 
         try {
-            String token = JwtUtil.generateToken(human.getId(), jwtSecret, jwtExpiration);
+            String token = JwtUtil.generateToken(human.getId(), jwtSecret, jwtExpiration, minJwtSecretLength);
             auditService.log(human.getId(), "LOGIN", "human", human.getId(), null);
             return ResponseEntity.ok(Map.of(
                 "token", token,

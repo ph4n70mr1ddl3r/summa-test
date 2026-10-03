@@ -3,7 +3,6 @@ package com.summa.security;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.summa.util.JsonHelpers;
-import com.summa.SummaApplication;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.Logger;
@@ -22,15 +21,15 @@ public class JwtUtil {
 
     private JwtUtil() {}
 
-    public static String generateToken(String subject, String secret, long expirationMillis) {
+    public static String generateToken(String subject, String secret, long expirationMillis, int minSecretLength) {
         if (subject == null || subject.isBlank()) {
             throw new IllegalArgumentException("JWT subject must not be blank");
         }
         if (secret == null || secret.isBlank()) {
             throw new IllegalArgumentException("JWT secret must not be blank");
         }
-        if (secret.length() < SummaApplication.MIN_JWT_SECRET_LENGTH) {
-            throw new IllegalArgumentException("JWT secret must be at least " + SummaApplication.MIN_JWT_SECRET_LENGTH + " characters (256 bits recommended)");
+        if (secret.length() < minSecretLength) {
+            throw new IllegalArgumentException("JWT secret must be at least " + minSecretLength + " characters (256 bits recommended)");
         }
         long nowMillis = System.currentTimeMillis();
         long expMillis = nowMillis + expirationMillis;

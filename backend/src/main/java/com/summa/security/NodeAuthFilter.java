@@ -60,13 +60,6 @@ public class NodeAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        // If a Bearer token is present, let JwtAuthenticationFilter handle auth instead
-        String authHeader = wrappedRequest.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(wrappedRequest, response);
-            return;
-        }
-
         String signature = wrappedRequest.getHeader("X-Node-Signature");
         if (signature == null || signature.isBlank()) {
             log.warn("[SUMMA] node request without signature: {} from {}", path, wrappedRequest.getRemoteAddr());

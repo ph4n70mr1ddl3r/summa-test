@@ -7,6 +7,7 @@ import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
+import com.summa.service.MemberService;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -17,11 +18,13 @@ public class RoleTemplateController {
     private final RoleTemplateService templateService;
     private final AuditService auditService;
     private final WriteGate writeGate;
+    private final MemberService memberService;
 
-    public RoleTemplateController(RoleTemplateService templateService, AuditService auditService, WriteGate writeGate) {
+    public RoleTemplateController(RoleTemplateService templateService, AuditService auditService, WriteGate writeGate, MemberService memberService) {
         this.templateService = templateService;
         this.auditService = auditService;
         this.writeGate = writeGate;
+        this.memberService = memberService;
     }
 
     @GetMapping
@@ -43,6 +46,9 @@ public class RoleTemplateController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Role template creation requires admin role");
+        }
         try {
             if (body.get("name") == null || body.get("name").isBlank()) {
                 throw new IllegalArgumentException("name is required");
@@ -70,6 +76,9 @@ public class RoleTemplateController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Role template publish requires admin role");
+        }
         try {
             RoleTemplate template = templateService.publish(id, actor);
             return ResponseEntity.ok(template);
@@ -85,6 +94,9 @@ public class RoleTemplateController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Role template retire requires admin role");
+        }
         try {
             RoleTemplate template = templateService.retire(id, actor);
             return ResponseEntity.ok(template);
