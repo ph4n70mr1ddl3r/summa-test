@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.enums.MemoryTier;
 import com.summa.constants.Defaults;
+import com.summa.service.MemberService;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -19,11 +20,13 @@ public class MemoryController {
     private final MemoryService memoryService;
     private final AuditService auditService;
     private final WriteGate writeGate;
+    private final MemberService memberService;
 
-    public MemoryController(MemoryService memoryService, AuditService auditService, WriteGate writeGate) {
+    public MemoryController(MemoryService memoryService, AuditService auditService, WriteGate writeGate, MemberService memberService) {
         this.memoryService = memoryService;
         this.auditService = auditService;
         this.writeGate = writeGate;
+        this.memberService = memberService;
     }
 
     @GetMapping
@@ -32,6 +35,11 @@ public class MemoryController {
             @RequestParam(required = false) String workspaceId,
             @RequestParam(required = false) Boolean tainted,
             @RequestParam(defaultValue = "50") int limit) {
+        // CP6: Require authenticated actor for memory access — prevent unauthenticated enumeration.
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
+            return ControllerResponses.gate(auditService, "Authentication required to list memory");
+        }
         int cappedLimit = Math.min(Math.max(limit, 1), Defaults.MAX_LIST_LIMIT);
         if (memberId != null) {
             return ResponseEntity.ok(memoryService.findByMember(memberId, cappedLimit));

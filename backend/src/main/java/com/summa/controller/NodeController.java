@@ -6,6 +6,7 @@ import com.summa.model.Run;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.security.WriteGate;
 import com.summa.service.AuditService;
+import com.summa.service.MemberService;
 import com.summa.service.NodeService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,11 +20,13 @@ public class NodeController {
     private final NodeService nodeService;
     private final AuditService auditService;
     private final WriteGate writeGate;
+    private final MemberService memberService;
 
-    public NodeController(NodeService nodeService, AuditService auditService, WriteGate writeGate) {
+    public NodeController(NodeService nodeService, AuditService auditService, WriteGate writeGate, MemberService memberService) {
         this.nodeService = nodeService;
         this.auditService = auditService;
         this.writeGate = writeGate;
+        this.memberService = memberService;
     }
 
     @GetMapping
@@ -42,7 +45,15 @@ public class NodeController {
 
     @PostMapping("/enroll")
     public ResponseEntity<?> enroll(@RequestBody Map<String, String> body) {
+        // S1: Require authenticated admin for node enrollment — prevent unauthenticated node creation.
+        // NodeAuthFilter strips signature verification for this path, so we gate on JWT actor instead.
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
+            return ControllerResponses.gate(auditService, "Admin authentication required to enroll nodes");
+        }
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, "Only admins can enroll nodes");
+        }
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         String name = body.get("name");

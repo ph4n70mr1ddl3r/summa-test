@@ -57,7 +57,7 @@ services:
       # Spend config
       - SUMMA_CRITICAL_FLOOR_PERCENT=${SUMMA_CRITICAL_FLOOR_PERCENT:-5}
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:8080/api/health || exit 1"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

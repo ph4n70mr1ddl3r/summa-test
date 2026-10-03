@@ -245,43 +245,49 @@ public class AskService {
         List<Ask> expired = askRepository.findExpiredBefore(Instant.now());
         for (Ask ask : expired) {
             try {
-                if (!ask.isPending()) continue;
-                String behavior = ask.getExpiryBehavior() != null ? ask.getExpiryBehavior() : "deny";
+                // CG1: Re-fetch to detect concurrent processing — skip if already handled.
+                // Without this, two scheduled executions could both find the same ask
+                // and create duplicate successor asks or double-expire.
+                Optional<Ask> freshOpt = askRepository.findById(ask.getId());
+                if (freshOpt.isEmpty()) continue;
+                Ask current = freshOpt.get();
+                if (!current.isPending()) continue;
+                String behavior = current.getExpiryBehavior() != null ? current.getExpiryBehavior() : "deny";
                 if ("deny".equals(behavior)) {
-                    expire(ask.getId());
+                    expire(current.getId());
                 } else if ("escalate".equals(behavior) || "reassign".equals(behavior)) {
                     try {
                         // Depth is keyed by the root ask ID stored in the escalation field.
                         // Successor asks carry the root ID so depth accumulates across the chain.
-                        String rootAskId = ask.getEscalation() != null ? ask.getEscalation() : ask.getId();
+                        String rootAskId = current.getEscalation() != null ? current.getEscalation() : current.getId();
                         ExpiringEntry<Integer> depthEntry = successorDepth.get(rootAskId);
                         int depth = (depthEntry != null ? depthEntry.value : 0) + 1;
                         if (depth >= Defaults.MAX_EXPIRE_SUCCESSOR_DEPTH) {
                             // ASK-057: Chain exhausted — broadcast org-stall alert
-                            broadcastOrgStall(ask);
-                            auditService.logSystem("EXPIRE_CHAIN_EXHAUSTED", "ask", ask.getId(),
+                            broadcastOrgStall(current);
+                            auditService.logSystem("EXPIRE_CHAIN_EXHAUSTED", "ask", current.getId(),
                                 String.format("{\"depth\":%d,\"behavior\":\"%s\"}", depth, behavior));
-                            expire(ask.getId());
+                            expire(current.getId());
                             successorDepth.remove(rootAskId);
                             continue;
                         }
                         String successorTo = OffboardingWalkService.ADMIN_BROADCAST;
-                        if (ask.getTo() != null) {
-                            Optional<Human> target = memberService.findHuman(ask.getTo());
+                        if (current.getTo() != null) {
+                            Optional<Human> target = memberService.findHuman(current.getTo());
                             if (target.isPresent() && target.get().getDeputyMemberId() != null) {
                                 successorTo = target.get().getDeputyMemberId();
                             }
                         }
                         // ASK-012/CFG-140: derive deadline from tier defaults
-                        long successorDeadlineSeconds = deriveDeadlineFromTier(ask.getSlaTier());
+                        long successorDeadlineSeconds = deriveDeadlineFromTier(current.getSlaTier());
                         if (successorDeadlineSeconds > Defaults.MAX_DEADLINE_SECONDS) {
                             successorDeadlineSeconds = Defaults.MAX_DEADLINE_SECONDS;
                         }
-                         Ask successor = create(ask.getKind(), ask.getFrom(), successorTo,
-                             ask.getPayload(), ask.getSlaTier(), ask.getExpiryBehavior(),
-                             ask.getQuorumRequired(),
+                         Ask successor = create(current.getKind(), current.getFrom(), successorTo,
+                             current.getPayload(), current.getSlaTier(), current.getExpiryBehavior(),
+                             current.getQuorumRequired(),
                              Instant.now().plusSeconds(successorDeadlineSeconds),
-                             ask.getInitiativeId(), ask.getWorkspaceId(), rootAskId);
+                             current.getInitiativeId(), current.getWorkspaceId(), rootAskId);
                         // Store chain root in a stable cache key so subsequent expiry cycles
                         // find the accumulated depth rather than resetting to zero.
                         long expireNowSeconds = Instant.now().getEpochSecond();
@@ -289,12 +295,12 @@ public class AskService {
                             int d = (entry != null ? entry.value : 0) + 1;
                             return new ExpiringEntry<>(d, expireNowSeconds + stormCollapseWindowSeconds);
                         });
-                        auditService.logSystem("EXPIRE_SUCCESSOR_CREATED", "ask", ask.getId(),
-                            String.format("{\"originalId\":\"%s\",\"behavior\":\"%s\",\"depth\":%d}", ask.getId(), behavior, depth));
+                        auditService.logSystem("EXPIRE_SUCCESSOR_CREATED", "ask", current.getId(),
+                            String.format("{\"originalId\":\"%s\",\"behavior\":\"%s\",\"depth\":%d}", current.getId(), behavior, depth));
                         // Expire the original ask after scheduling the successor
-                        expire(ask.getId());
+                        expire(current.getId());
                     } catch (Exception ex) {
-                        auditService.logSystem("EXPIRE_SUCCESSOR_FAIL", "ask", ask.getId(),
+                        auditService.logSystem("EXPIRE_SUCCESSOR_FAIL", "ask", current.getId(),
                             JsonHelpers.toJson(Map.of("behavior", behavior, "error", ex.getMessage()), objectMapper));
                     }
                 }

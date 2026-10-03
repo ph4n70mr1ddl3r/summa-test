@@ -313,22 +313,31 @@ public class InitiativeService {
         }
 
         // INT-040: Dependency check — resolve open work before closing
+        List<String> partialFailures = new ArrayList<>();
         List<BoardTask> openTasks = boardTaskRepository.findByInitiativeId(id).stream()
                 .filter(t -> !"done".equals(t.getStatus()))
                 .toList();
         for (BoardTask task : openTasks) {
-            task.setStatus("cancelled");
-            boardTaskRepository.save(task);
-            auditService.logSystem("CLOSE_CANCEL_TASK", "board_task", task.getId(),
-                String.format("{\"initiativeId\":\"%s\",\"reason\":\"initiative_closed\"}", id));
+            try {
+                task.setStatus("cancelled");
+                boardTaskRepository.save(task);
+                auditService.logSystem("CLOSE_CANCEL_TASK", "board_task", task.getId(),
+                    String.format("{\"initiativeId\":\"%s\",\"reason\":\"initiative_closed\"}", id));
+            } catch (Exception e) {
+                partialFailures.add("CANCEL_TASK:" + task.getId() + ":" + e.getMessage());
+            }
         }
 
         List<Ask> openInitiativeAsks = askRepository.findByInitiativeIdAndStatusPending(id);
         for (Ask ask : openInitiativeAsks) {
-            ask.setStatus("withdrawn");
-            askRepository.save(ask);
-            auditService.logSystem("CLOSE_WITHDRAW_ASK", "ask", ask.getId(),
-                String.format("{\"initiativeId\":\"%s\",\"reason\":\"initiative_closed\"}", id));
+            try {
+                ask.setStatus("withdrawn");
+                askRepository.save(ask);
+                auditService.logSystem("CLOSE_WITHDRAW_ASK", "ask", ask.getId(),
+                    String.format("{\"initiativeId\":\"%s\",\"reason\":\"initiative_closed\"}", id));
+            } catch (Exception e) {
+                partialFailures.add("WITHDRAW_ASK:" + ask.getId() + ":" + e.getMessage());
+            }
         }
 
         // INT-022 / INT-040: Unbind workspaces and archive pending spawn requests
@@ -447,15 +456,27 @@ public class InitiativeService {
             List<Run> nonTerminalRuns = runRepository.findByInitiativeIdAndStatus(id, "queued");
             nonTerminalRuns.addAll(runRepository.findByInitiativeIdAndStatus(id, "suspended"));
             for (Run run : nonTerminalRuns) {
-                run.setStatus("cancelled");
-                run.setCompletedAt(Instant.now());
-                runRepository.save(run);
-                auditService.logSystem("CLOSE_CANCEL_RUN", "run", run.getId(),
-                    String.format("{\"initiativeId\":\"%s\",\"reason\":\"initiative_closed\"}", id));
+                try {
+                    run.setStatus("cancelled");
+                    run.setCompletedAt(Instant.now());
+                    runRepository.save(run);
+                    auditService.logSystem("CLOSE_CANCEL_RUN", "run", run.getId(),
+                        String.format("{\"initiativeId\":\"%s\",\"reason\":\"initiative_closed\"}", id));
+                } catch (Exception e) {
+                    partialFailures.add("CANCEL_RUN:" + run.getId() + ":" + e.getMessage());
+                }
             }
         } catch (Exception e) {
             auditService.logSystem("CLOSE_CANCEL_RUNS_FAIL", "initiative", id,
                 JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
+        }
+
+        // Log any partial failures before committing the close — some sub-operations may have
+        // failed while others succeeded; the initiative is still closed but dependent state
+        // may require manual remediation.
+        if (!partialFailures.isEmpty()) {
+            auditService.logSystem("CLOSE_PARTIAL_FAILURE", "initiative", id,
+                JsonHelpers.toJson(Map.of("failures", partialFailures), objectMapper));
         }
 
         initiative.setStatus("closed");
