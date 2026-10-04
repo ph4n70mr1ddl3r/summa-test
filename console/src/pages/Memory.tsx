@@ -57,6 +57,14 @@ export default function Memory() {
     }
   }
 
+  const requestReview = (id: string) => {
+    if (reviewingId === id) {
+      handleReview(id)
+    } else {
+      setReviewingId(id)
+    }
+  }
+
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
   if (error) return <ErrorBanner message={error} onRetry={loadItems} />
 
@@ -126,7 +134,7 @@ export default function Memory() {
                 {item.tainted && (
                     <button
                       type="button"
-                      onClick={() => setReviewingId(item.id)}
+                      onClick={() => requestReview(item.id)}
                       disabled={reviewingForId !== null && reviewingForId !== item.id}
                       className="px-3 py-1 bg-yellow-700 hover:bg-yellow-600 disabled:bg-gray-700 disabled:text-gray-500 rounded text-sm text-yellow-100"
                       aria-label={`Review tainted item ${item.id.slice(0, 8)}`}

@@ -10,6 +10,7 @@ export default function Groups() {
   const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [archivingId, setArchivingId] = useState<string | null>(null)
+  const [confirmArchiveId, setConfirmArchiveId] = useState<string | null>(null)
 
   const loadGroups = () => {
     setLoading(true)
@@ -36,6 +37,7 @@ export default function Groups() {
       setActionError(err instanceof Error ? err.message : String(err))
     } finally {
       setArchivingId(null)
+      setConfirmArchiveId(null)
     }
   }
 
@@ -81,13 +83,34 @@ export default function Groups() {
                   {g.status === 'active' && (
                     <button
                       type="button"
-                      onClick={() => handleArchive(g.id)}
+                      onClick={() => setConfirmArchiveId(g.id)}
                       disabled={archivingId !== null && archivingId !== g.id}
                       className="px-2 py-1 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 rounded text-xs text-gray-400"
                       aria-label={`Archive ${g.name}`}
                     >
                       {archivingId === g.id ? 'Archiving...' : 'Archive'}
                     </button>
+                  )}
+                  {confirmArchiveId === g.id && (
+                    <div className="flex items-center gap-1 ml-2">
+                      <span className="text-xs text-yellow-400">Confirm?</span>
+                      <button
+                        type="button"
+                        onClick={() => handleArchive(g.id)}
+                        className="px-1 py-0.5 bg-green-700 hover:bg-green-600 rounded text-xs text-white"
+                        aria-label={`Confirm archive ${g.name}`}
+                      >
+                        Yes
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmArchiveId(null)}
+                        className="px-1 py-0.5 bg-gray-600 hover:bg-gray-500 rounded text-xs text-gray-300"
+                        aria-label={`Cancel archive ${g.name}`}
+                      >
+                        No
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>

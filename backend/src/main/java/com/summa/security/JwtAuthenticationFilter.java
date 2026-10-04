@@ -11,7 +11,6 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import java.io.IOException;
@@ -43,15 +42,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     public static final List<String> PUBLIC_PATHS = List.of(
-        "/auth/login", "/health", "/info",
-        "/nodes/enroll", "/org/bootstrap"
+        "/api/auth/login", "/api/health", "/api/info",
+        "/api/nodes/enroll", "/api/org/bootstrap"
     );
 
     public static boolean isNodePath(String path) {
         if (path == null) return false;
         // Tolerate a trailing slash (e.g. /api/nodes/)
         String normalizedPath = path.endsWith("/") && path.length() > 1 ? path.substring(0, path.length() - 1) : path;
-        return normalizedPath.startsWith("/nodes");
+        return normalizedPath.startsWith("/api/nodes");
     }
 
     @Override
@@ -100,7 +99,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     request.setAttribute("actor", subject);
                     var auth = new UsernamePasswordAuthenticationToken(subject, null, List.of());
                     SecurityContextHolder.getContext().setAuthentication(auth);
-                    filterChain.doFilter(request, response);
+                    try {
+                        filterChain.doFilter(request, response);
+                    } finally {
+                        SecurityContextHolder.clearContext();
+                    }
                     return;
                 }
                 log.warn("[SUMMA] invalid/expired JWT from {} path={}", request.getRemoteAddr(), path);

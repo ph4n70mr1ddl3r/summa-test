@@ -64,6 +64,13 @@ describe('Groups page', () => {
       archiveBtn.click()
     })
     await waitFor(() => {
+      expect(screen.getByText('Confirm?')).toBeInTheDocument()
+    })
+    const yesBtn = screen.getByRole('button', { name: /confirm archive engineering/i })
+    await act(async () => {
+      yesBtn.click()
+    })
+    await waitFor(() => {
       expect(apiModule.api.groups.archive).toHaveBeenCalledWith('g1')
     })
   })
@@ -82,7 +89,14 @@ describe('Groups page', () => {
       archiveBtn.click()
     })
     await waitFor(() => {
-      expect(screen.getByText('Permission denied')).toBeInTheDocument()
+      expect(screen.getByText('Confirm?')).toBeInTheDocument()
+    })
+    const yesBtn = screen.getByRole('button', { name: /confirm archive engineering/i })
+    await act(async () => {
+      yesBtn.click()
+    })
+    await waitFor(() => {
+      expect(screen.getByText(/permission denied/i)).toBeInTheDocument()
     })
   })
 
@@ -97,6 +111,13 @@ describe('Groups page', () => {
     const archiveBtn = screen.getByText('Archive')
     await act(async () => {
       archiveBtn.click()
+    })
+    await waitFor(() => {
+      expect(screen.getByText('Confirm?')).toBeInTheDocument()
+    })
+    const yesBtn = screen.getByRole('button', { name: /confirm archive engineering/i })
+    await act(async () => {
+      yesBtn.click()
     })
     await waitFor(() => {
       expect(apiModule.api.groups.archive).toHaveBeenCalledWith('g1')

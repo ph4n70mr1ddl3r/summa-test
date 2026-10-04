@@ -51,17 +51,21 @@ export default function Governance() {
     return cancel
   }, [])
 
-  const handleSave = async (section: 'policies' | 'quotas', key: string) => {
+  const handleSave = async (section: 'policies' | 'quotas', key: string, currentValue: string) => {
     setSaving(`${section}:${key}`)
     setActionError(null)
     try {
-      const currentValue = editValues[key]
       const numValue = currentValue === '' ? NaN : Number(currentValue)
-      const body = { [key]: isNaN(numValue) ? currentValue : numValue }
+      const body = currentValue === '' ? {} : { [key]: isNaN(numValue) ? currentValue : numValue }
+      if (Object.keys(body).length === 0) {
+        setEditValues(prev => { const next = { ...prev }; delete next[key]; return next })
+        return
+      }
       if (section === 'policies') await api.governance.updatePolicies(body)
       else await api.governance.updateQuotas(body)
-      if (section === 'policies') setPolicies(prev => ({ ...prev, [key]: isNaN(numValue) ? currentValue : numValue }))
-      else setQuotas(prev => ({ ...prev, [key]: isNaN(numValue) ? currentValue : numValue }))
+      const savedValue = isNaN(numValue) ? currentValue : numValue
+      if (section === 'policies') setPolicies(prev => ({ ...prev, [key]: savedValue }))
+      else setQuotas(prev => ({ ...prev, [key]: savedValue }))
       setEditValues(prev => { const next = { ...prev }; delete next[key]; return next })
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err))
@@ -93,7 +97,7 @@ export default function Governance() {
             />
             <button
               type="button"
-              onClick={() => handleSave(section, key)}
+              onClick={() => handleSave(section, key, currentValue)}
               disabled={saving === `${section}:${key}`}
               className="px-2 py-0.5 bg-green-700 hover:bg-green-600 disabled:bg-gray-600 rounded text-xs text-white"
               aria-label={`Save ${key}`}

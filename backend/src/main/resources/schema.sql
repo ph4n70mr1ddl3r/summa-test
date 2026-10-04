@@ -178,6 +178,7 @@ CREATE TABLE IF NOT EXISTS dna_proposals (
 CREATE INDEX IF NOT EXISTS idx_dna_proposals_domain ON dna_proposals(domain_id);
 CREATE INDEX IF NOT EXISTS idx_dna_proposals_created ON dna_proposals(created_at);
 CREATE INDEX IF NOT EXISTS idx_agents_status ON agents(status);
+CREATE INDEX IF NOT EXISTS idx_agents_class_status ON agents("class", status);
 CREATE INDEX IF NOT EXISTS idx_agents_owner ON agents(owner_human_id);
 CREATE INDEX IF NOT EXISTS idx_agents_template ON agents(template_id);
 CREATE INDEX IF NOT EXISTS idx_humans_deputy ON humans(deputy_member_id);
@@ -248,6 +249,7 @@ CREATE TABLE IF NOT EXISTS board_tasks (
 );
 
 CREATE INDEX IF NOT EXISTS idx_board_tasks_status ON board_tasks(status);
+CREATE INDEX IF NOT EXISTS idx_board_tasks_initiative_status ON board_tasks(initiative_id, status);
 
 CREATE TABLE IF NOT EXISTS workspaces (
     id TEXT PRIMARY KEY,

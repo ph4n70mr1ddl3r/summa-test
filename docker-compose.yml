@@ -57,7 +57,7 @@ services:
       # Spend config
       - SUMMA_CRITICAL_FLOOR_PERCENT=${SUMMA_CRITICAL_FLOOR_PERCENT:-5}
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:8080/health || exit 1"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/api/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -66,6 +66,13 @@ services:
     mem_reservation: 256M
     cpus: '1.0'
     stop_grace_period: 30s
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+      memlock:
+        soft: -1
+        hard: -1
     deploy:
       resources:
         limits:

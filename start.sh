@@ -50,6 +50,14 @@ SUMMA_DB_PATH="${SUMMA_DB_PATH:-$HOME/.summa/summa.db}"
 SUMMA_LOG_DIR="${SUMMA_LOG_DIR:-$HOME/.summa/logs}"
 mkdir -p "$SUMMA_DNA_REPO" "$(dirname "$SUMMA_DB_PATH")" "$SUMMA_LOG_DIR"
 
+# Verify write permissions
+for dir in "$SUMMA_DNA_REPO" "$(dirname "$SUMMA_DB_PATH")" "$SUMMA_LOG_DIR"; do
+  if [ ! -w "$dir" ]; then
+    echo "ERROR: Cannot write to $dir"
+    exit 1
+  fi
+done
+
 # Start the backend
 echo "Starting backend on port 8080..."
 JAVA_OPTS="${JAVA_OPTS:--Xmx512m -Xms256m -XX:MaxMetaspaceSize=128m}"
