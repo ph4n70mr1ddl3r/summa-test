@@ -58,6 +58,12 @@ export default function Governance() {
       const numValue = currentValue === '' ? NaN : Number(currentValue)
       const body = currentValue === '' ? {} : { [key]: isNaN(numValue) ? currentValue : numValue }
       if (Object.keys(body).length === 0) {
+        // Clearing a value: remove from server state and local cache
+        const deleteBody = { [key]: null }
+        if (section === 'policies') await api.governance.updatePolicies(deleteBody)
+        else await api.governance.updateQuotas(deleteBody)
+        if (section === 'policies') setPolicies(prev => { const next = { ...prev }; delete next[key]; return next })
+        else setQuotas(prev => { const next = { ...prev }; delete next[key]; return next })
         setEditValues(prev => { const next = { ...prev }; delete next[key]; return next })
         return
       }
@@ -76,7 +82,10 @@ export default function Governance() {
   }
 
   const startEdit = (key: string, currentValue: unknown) => {
-    setEditValues(prev => ({ ...prev, [key]: String(currentValue ?? '') }))
+    const displayValue = typeof currentValue === 'object' && currentValue !== null
+      ? JSON.stringify(currentValue)
+      : String(currentValue ?? '')
+    setEditValues(prev => ({ ...prev, [key]: displayValue }))
   }
 
   const renderCell = (section: 'policies' | 'quotas', key: string, value: unknown) => {

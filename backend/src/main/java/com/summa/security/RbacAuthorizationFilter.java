@@ -62,6 +62,13 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
         boolean nodeAuth = Boolean.TRUE.equals(request.getAttribute("nodeAuth"));
         boolean isPublic = JwtAuthenticationFilter.PUBLIC_PATHS.contains(normalized);
 
+        if (!isPublic) {
+            if (actor == null) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "No actor identity provided");
+                return;
+            }
+        }
+
         String effectiveActor = actor != null ? actor : Defaults.SYSTEM_ACTOR;
         boolean writeAllowed = resolveWriteAllowed(actor, nodeAuth);
 
@@ -74,13 +81,6 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
             ACTOR_CONTEXT.remove();
             WRITES_ALLOWED.remove();
             NODE_AUTH.remove();
-        }
-
-        if (isPublic) return;
-        if (actor == null) {
-            // Do not trust X-Actor header from unauthenticated clients.
-            // Only JWT-authenticated or node-authenticated requests carry a valid actor via request attribute.
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "No actor identity provided");
         }
     }
 

@@ -535,9 +535,9 @@ public class AskService {
         for (int i = 0; i < ids.size(); i++) {
             Map<String, String> entry = new HashMap<>();
             entry.put("responder", ids.get(i));
-            if (i == ids.size() - 1 && response != null) {
-                entry.put("response", response);
-            }
+            // Only the latest responder in the list carries the response text;
+            // earlier entries preserve responder identity for quorum tracking.
+            entry.put("response", response != null ? response : "");
             list.add(entry);
         }
         try {

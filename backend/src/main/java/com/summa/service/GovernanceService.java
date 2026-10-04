@@ -170,15 +170,13 @@ public class GovernanceService {
     }
 
     /**
-     * Throws an IllegalStateException if the actor is not an active admin.
-     * Used by controllers that require admin authentication for read endpoints.
+     * Throws an IllegalStateException if the actor is null or the system actor.
+     * Used by controllers that require authenticated user identity.
      */
     public void requireAdminOrThrow(String actor) {
         if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
             throw new IllegalStateException("Authentication required");
         }
-        // Admin check is enforced by the caller's WriteGate / RbacAuthorizationFilter;
-        // this is a defensive guard for service-layer callers.
     }
 
     public double resolveSpendCeiling() {
@@ -196,7 +194,6 @@ public class GovernanceService {
     private Map<String, Object> applyDefaults(Map<String, Object> settings) {
         Map<String, Object> result = new LinkedHashMap<>(settings);
         result.putIfAbsent("spawn-ephemeral-default-ttl-hours", Defaults.DEFAULT_SPAWN_EPHEMERAL_DEFAULT_TTL_HOURS);
-        result.putIfAbsent("spawn-ephemeral-max-concurrent-per-spawner", Defaults.DEFAULT_SPAWN_EPHEMERAL_MAX_CONCURRENT_PER_SPAWNER);
         result.putIfAbsent("spawn-org-wide-max-active-agents", Defaults.DEFAULT_SPAWN_ORG_WIDE_MAX_ACTIVE_AGENTS);
         result.putIfAbsent("spawn-depth-cap", Defaults.DEFAULT_SPAWN_DEPTH_CAP);
         result.putIfAbsent("spawn-budget-window-days", Defaults.DEFAULT_SPAWN_BUDGET_WINDOW_DAYS);

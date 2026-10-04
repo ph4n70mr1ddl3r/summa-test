@@ -29,7 +29,7 @@ export default function Spawning() {
     ).then(({ data, error: loadError }) => {
       if (aborted) return
       setRequests(Array.isArray(data[0]) ? data[0] as SpawnRequest[] : [])
-      setStats(data[1] != null && typeof data[1] === 'object' && !Array.isArray(data[1]) && !('length' in data[1])
+      setStats(data[1] != null && typeof data[1] === 'object' && !Array.isArray(data[1])
         ? data[1] as SpawnStats : null)
       setError(loadError)
       setLoading(false)

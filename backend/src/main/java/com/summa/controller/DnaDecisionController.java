@@ -11,6 +11,7 @@ import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
+import com.summa.constants.Defaults;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -35,8 +36,12 @@ public class DnaDecisionController {
     }
 
     @GetMapping
-    public ResponseEntity<List<DnaDecision>> listDecisions(
+    public ResponseEntity<?> listDecisions(
             @RequestParam(required = false) String domainId) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Authentication required");
+        }
         if (domainId != null) {
             return ResponseEntity.ok(decisionService.findByDomain(domainId));
         }
@@ -45,6 +50,10 @@ public class DnaDecisionController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getDecision(@PathVariable String id) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Authentication required");
+        }
         Optional<DnaDecision> entOpt = decisionService.findById(id);
         if (entOpt.isPresent()) {
             return ResponseEntity.ok(entOpt.get());

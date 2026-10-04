@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, loadWithFallback } from '../services/api'
 import type { Group, Member } from '../types'
-import { groupStatusColor, rbacRoleColor, agentStatusColor } from '../utils/formatting'
+import { groupStatusColor, rbacRoleColor, agentStatusColor, escapeHtml } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function OrgView() {
@@ -66,7 +66,7 @@ export default function OrgView() {
             <div className="space-y-2">
               {humans.map((h) => (
                 <div key={h.id} className="flex items-center justify-between bg-gray-700 rounded px-3 py-2">
-                  <span className="text-gray-200 text-sm">{h.name}</span>
+                  <span className="text-gray-200 text-sm">{escapeHtml(h.name)}</span>
                   <span className={`text-xs px-2 py-0.5 rounded ${rbacRoleColor(h.rbac)}`} aria-label={`RBAC role: ${h.rbac}`}>
                     {h.rbac}
                   </span>
@@ -84,7 +84,7 @@ export default function OrgView() {
             <div className="space-y-2">
               {agents.map((a) => (
                 <div key={a.id} className="flex items-center justify-between bg-gray-700 rounded px-3 py-2">
-                  <span className="text-gray-200 text-sm">{a.name}</span>
+                  <span className="text-gray-200 text-sm">{escapeHtml(a.name)}</span>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-500">{a.class}</span>
                     <span className={`text-xs px-2 py-0.5 rounded ${agentStatusColor(a.status)}`} aria-label={`Status: ${a.status}`}>

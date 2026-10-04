@@ -5,6 +5,13 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+# Load .env file if present (for local development convenience)
+if [ -f ".env" ]; then
+    set -a
+    ./.env
+    set +a
+fi
+
 echo "Starting Summa development environment..."
 echo ""
 

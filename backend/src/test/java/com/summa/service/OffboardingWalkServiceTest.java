@@ -86,10 +86,10 @@ class OffboardingWalkServiceTest {
         when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
         when(proposalService.findAllOpen()).thenReturn(java.util.List.of());
         when(groupMembershipRepository.findById_MemberId("h1")).thenReturn(java.util.List.of());
-        when(askRepository.findByStatus("pending")).thenReturn(java.util.List.of());
+        when(askRepository.findByStatusPendingOrdered(anyInt())).thenReturn(java.util.List.of());
         when(boardTaskRepository.findByAssigneeMemberId("h1")).thenReturn(java.util.List.of());
         when(patRepository.findByMemberId("h1")).thenReturn(java.util.List.of());
-        when(groupRepository.findAll()).thenReturn(java.util.List.of());
+        when(groupRepository.findAll(anyInt())).thenReturn(java.util.List.of());
         Human admin = new Human();
         admin.setId("admin1");
         when(memberService.findAdmins()).thenReturn(java.util.List.of(admin));
@@ -135,10 +135,10 @@ class OffboardingWalkServiceTest {
         when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
         when(proposalService.findAllOpen()).thenReturn(java.util.List.of());
         when(groupMembershipRepository.findById_MemberId("h1")).thenReturn(java.util.List.of());
-        when(askRepository.findByStatus("pending")).thenReturn(java.util.List.of());
+        when(askRepository.findByStatusPendingOrdered(anyInt())).thenReturn(java.util.List.of());
         when(boardTaskRepository.findByAssigneeMemberId("h1")).thenReturn(java.util.List.of());
         when(patRepository.findByMemberId("h1")).thenReturn(java.util.List.of());
-        when(groupRepository.findAll()).thenReturn(java.util.List.of());
+        when(groupRepository.findAll(anyInt())).thenReturn(java.util.List.of());
 
         var result = walkService.walkOffboard("h1", "h2", "admin1");
 
@@ -167,10 +167,10 @@ class OffboardingWalkServiceTest {
         when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
         when(proposalService.findAllOpen()).thenReturn(java.util.List.of());
         when(groupMembershipRepository.findById_MemberId("h1")).thenReturn(java.util.List.of());
-        when(askRepository.findByStatus("pending")).thenReturn(java.util.List.of());
+        when(askRepository.findByStatusPendingOrdered(anyInt())).thenReturn(java.util.List.of());
         when(boardTaskRepository.findByAssigneeMemberId("h1")).thenReturn(java.util.List.of());
         when(patRepository.findByMemberId("h1")).thenReturn(java.util.List.of());
-        when(groupRepository.findAll()).thenReturn(java.util.List.of());
+        when(groupRepository.findAll(anyInt())).thenReturn(java.util.List.of());
 
         var result = walkService.walkOffboard("h1", "h2", "admin1");
 
@@ -200,10 +200,10 @@ class OffboardingWalkServiceTest {
         when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
         when(proposalService.findAllOpen()).thenReturn(java.util.List.of());
         when(groupMembershipRepository.findById_MemberId("h1")).thenReturn(java.util.List.of());
-        when(askRepository.findByStatus("pending")).thenReturn(java.util.List.of());
+        when(askRepository.findByStatusPendingOrdered(anyInt())).thenReturn(java.util.List.of());
         when(boardTaskRepository.findByAssigneeMemberId("h1")).thenReturn(java.util.List.of());
         when(patRepository.findByMemberId("h1")).thenReturn(java.util.List.of());
-        when(groupRepository.findAll()).thenReturn(java.util.List.of());
+        when(groupRepository.findAll(anyInt())).thenReturn(java.util.List.of());
 
         var result = walkService.walkOffboard("h1", "h2", "admin1");
 
@@ -240,10 +240,10 @@ class OffboardingWalkServiceTest {
         when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of());
         when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
         when(groupMembershipRepository.findById_MemberId("h1")).thenReturn(java.util.List.of());
-        when(askRepository.findByStatus("pending")).thenReturn(java.util.List.of());
+        when(askRepository.findByStatusPendingOrdered(anyInt())).thenReturn(java.util.List.of());
         when(boardTaskRepository.findByAssigneeMemberId("h1")).thenReturn(java.util.List.of());
         when(patRepository.findByMemberId("h1")).thenReturn(java.util.List.of());
-        when(groupRepository.findAll()).thenReturn(java.util.List.of());
+        when(groupRepository.findAll(anyInt())).thenReturn(java.util.List.of());
 
         var result = walkService.walkOffboard("h1", "h2", "admin1");
 
@@ -279,10 +279,10 @@ class OffboardingWalkServiceTest {
         when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of());
         when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
         when(groupMembershipRepository.findById_MemberId("h1")).thenReturn(java.util.List.of());
-        when(askRepository.findByStatus("pending")).thenReturn(java.util.List.of());
+        when(askRepository.findByStatusPendingOrdered(anyInt())).thenReturn(java.util.List.of());
         when(boardTaskRepository.findByAssigneeMemberId("h1")).thenReturn(java.util.List.of());
         when(patRepository.findByMemberId("h1")).thenReturn(java.util.List.of());
-        when(groupRepository.findAll()).thenReturn(java.util.List.of());
+        when(groupRepository.findAll(anyInt())).thenReturn(java.util.List.of());
 
         var result = walkService.walkOffboard("h1", "h2", "admin1");
 
@@ -312,7 +312,7 @@ class OffboardingWalkServiceTest {
         when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
         when(proposalService.findAllOpen()).thenReturn(java.util.List.of());
         when(groupMembershipRepository.findById_MemberId("h1")).thenReturn(java.util.List.of());
-        when(askRepository.findByStatus("pending")).thenReturn(java.util.List.of());
+        when(askRepository.findByStatusPendingOrdered(anyInt())).thenReturn(java.util.List.of());
         when(boardTaskRepository.findByAssigneeMemberId("h1")).thenReturn(java.util.List.of());
 
         var result = walkService.walkOffboard("h1", "h2", "admin1");
@@ -339,11 +339,11 @@ class OffboardingWalkServiceTest {
         when(initiativeService.findAllActive()).thenReturn(java.util.List.of());
         when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of());
         when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
-        when(askRepository.findByStatus("pending")).thenReturn(java.util.List.of());
+        when(askRepository.findByStatusPendingOrdered(anyInt())).thenReturn(java.util.List.of());
         when(boardTaskRepository.findByAssigneeMemberId("h1")).thenReturn(java.util.List.of());
         when(patRepository.findByMemberId("h1")).thenReturn(java.util.List.of());
-        when(groupRepository.findAll()).thenReturn(java.util.List.of());
-        when(workspaceRepository.findAll()).thenReturn(java.util.List.of());
+        when(groupRepository.findAll(anyInt())).thenReturn(java.util.List.of());
+        when(workspaceRepository.findAll(anyInt())).thenReturn(java.util.List.of());
         Human admin = new Human();
         admin.setId("admin1");
         when(memberService.findAdmins()).thenReturn(java.util.List.of(admin));
@@ -372,11 +372,11 @@ class OffboardingWalkServiceTest {
         when(initiativeService.findAllActive()).thenReturn(java.util.List.of());
         when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of());
         when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
-        when(askRepository.findByStatus("pending")).thenReturn(java.util.List.of());
+        when(askRepository.findByStatusPendingOrdered(anyInt())).thenReturn(java.util.List.of());
         when(boardTaskRepository.findByAssigneeMemberId("h1")).thenReturn(java.util.List.of());
         when(patRepository.findByMemberId("h1")).thenReturn(java.util.List.of());
-        when(groupRepository.findAll()).thenReturn(java.util.List.of());
-        when(workspaceRepository.findAll()).thenReturn(java.util.List.of());
+        when(groupRepository.findAll(anyInt())).thenReturn(java.util.List.of());
+        when(workspaceRepository.findAll(anyInt())).thenReturn(java.util.List.of());
         Human admin = new Human();
         admin.setId("admin1");
         when(memberService.findAdmins()).thenReturn(java.util.List.of(admin));

@@ -240,7 +240,7 @@ CREATE TABLE IF NOT EXISTS board_tasks (
     status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'done', 'cancelled')),
     priority INTEGER NOT NULL DEFAULT 0,
     due_at INTEGER,
-    created_by TEXT,
+    created_by TEXT NOT NULL DEFAULT 'system',
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
     completed_at INTEGER,
@@ -315,6 +315,7 @@ CREATE TABLE IF NOT EXISTS spawn_requests (
     approved_at INTEGER,
     agent_id TEXT,
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
     FOREIGN KEY (requester_id) REFERENCES agents(id) ON DELETE SET NULL
     -- requester_id is a keyed union per DAT-120: h:<humans.id> or a:<agents.id>,
     FOREIGN KEY (template_id) REFERENCES role_templates(id) ON DELETE SET NULL,

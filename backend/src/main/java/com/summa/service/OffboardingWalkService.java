@@ -47,6 +47,10 @@ import java.util.Set;
 public class OffboardingWalkService {
     // Broadcast target for delegation chains when no eligible member is reachable
     public static final String ADMIN_BROADCAST = "admins";
+    // OFB-001: Maximum rows to load per unbounded collection during offboarding/demotion walks.
+    // Large orgs should decompose offboarding into targeted operations rather than relying on
+    // full-table scans.
+    private static final int OFFBOARD_BATCH_LIMIT = 10_000;
 
     private final MemberService memberService;
     private final AgentService agentService;
@@ -208,7 +212,7 @@ public class OffboardingWalkService {
         }
 
         // OFB-017: Transfer group leadership
-        for (Group group : groupRepository.findAll()) {
+        for (Group group : groupRepository.findAll(OFFBOARD_BATCH_LIMIT)) {
             if (humanId.equals(group.getLeaderMemberId()) && group.isActive()) {
                 group.setLeaderMemberId(finalTargetOwner);
                 groupRepository.save(group);
@@ -269,7 +273,8 @@ public class OffboardingWalkService {
         }
 
         // OFB-003: Reassign asks TO the member up the chain; close asks FROM the member with audit note
-        for (Ask ask : askRepository.findByStatus("pending")) {
+        List<Ask> pendingAsks = askRepository.findByStatusPendingOrdered(OFFBOARD_BATCH_LIMIT);
+        for (Ask ask : pendingAsks) {
             if (humanId.equals(ask.getTo())) {
                 // Reassign up the chain to successor first, then deputy, then admin broadcast
                 ask.setTo(finalTargetOwner);
@@ -448,7 +453,7 @@ public class OffboardingWalkService {
         }
 
         // OFB-031: Transfer group leadership posts
-        for (Group group : groupRepository.findAll()) {
+        for (Group group : groupRepository.findAll(OFFBOARD_BATCH_LIMIT)) {
             if (humanId.equals(group.getLeaderMemberId()) && group.isActive()) {
                 group.setLeaderMemberId(targetOwner);
                 groupRepository.save(group);
@@ -459,8 +464,8 @@ public class OffboardingWalkService {
         }
 
         // OFB-031: Close asks to the member up the chain; asks from the member close with audit note
-        List<Ask> pendingAsks = askRepository.findByStatus("pending");
-        for (Ask ask : pendingAsks) {
+        List<Ask> pendingAsksDemote = askRepository.findByStatusPendingOrdered(OFFBOARD_BATCH_LIMIT);
+        for (Ask ask : pendingAsksDemote) {
             if (humanId.equals(ask.getTo())) {
                 ask.setTo(targetOwner);
                 askRepository.save(ask);
@@ -486,7 +491,7 @@ public class OffboardingWalkService {
 
         // OFB-014/OFB-031: Clear workspace participant entries and named domain access
         // Always run cleanup on any role reduction (not just to viewer) to prevent stale access
-        List<Workspace> allWorkspaces = workspaceRepository.findAll();
+        List<Workspace> allWorkspaces = workspaceRepository.findAll(OFFBOARD_BATCH_LIMIT);
         for (Workspace ws : allWorkspaces) {
             boolean changed = false;
             if (ws.getParticipants() != null && !ws.getParticipants().isBlank()

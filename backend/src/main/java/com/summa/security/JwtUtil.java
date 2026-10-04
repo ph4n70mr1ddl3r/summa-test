@@ -96,12 +96,14 @@ public class JwtUtil {
             if (Long.compareUnsigned(expMillis, System.currentTimeMillis()) < 0) {
                 return null;
             }
-            Number nbfNum = (Number) payload.get("nbf");
-            Long nbf = nbfNum != null ? nbfNum.longValue() : null;
-            if (nbf != null && nbf <= 4102444800L) {
-                long nbfMillis = nbf * SECONDS_TO_MILLIS;
-                if (Long.compareUnsigned(nbfMillis, System.currentTimeMillis()) > 0) {
-                    return null;
+            Object nbfObj = payload.get("nbf");
+            if (nbfObj instanceof Number) {
+                long nbf = ((Number) nbfObj).longValue();
+                if (nbf > 0 && nbf <= 4102444800L) {
+                    long nbfMillis = nbf * SECONDS_TO_MILLIS;
+                    if (Long.compareUnsigned(nbfMillis, System.currentTimeMillis()) > 0) {
+                        return null;
+                    }
                 }
             }
             return payload;

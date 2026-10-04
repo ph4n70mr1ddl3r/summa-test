@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.service.AgentService;
 import com.summa.service.WorkspaceService;
+import com.summa.constants.Defaults;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,8 +33,12 @@ public class TriggerController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Trigger>> listTriggers(
+    public ResponseEntity<?> listTriggers(
             @RequestParam(required = false) String agentId) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Authentication required");
+        }
         if (agentId != null) {
             return ResponseEntity.ok(triggerService.findByAgent(agentId));
         }
@@ -42,6 +47,10 @@ public class TriggerController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getTrigger(@PathVariable String id) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Authentication required");
+        }
         Optional<Trigger> entOpt = triggerService.findById(id);
         if (entOpt.isPresent()) {
             return ResponseEntity.ok(entOpt.get());
@@ -143,6 +152,10 @@ public class TriggerController {
 
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> stats() {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Authentication required");
+        }
         return ResponseEntity.ok(triggerService.getStats());
     }
 }
