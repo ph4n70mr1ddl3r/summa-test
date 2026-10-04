@@ -121,6 +121,9 @@ public class SpawnService {
             if (bindings.isArray()) {
                 for (JsonNode binding : bindings) {
                     String wsId = binding.asText();
+                    if (wsId == null || wsId.isBlank()) {
+                        throw new IllegalStateException("Invalid workspace binding: empty or blank entry in bindings array");
+                    }
                     Optional<Workspace> wsOpt = workspaceRepository.findById(wsId);
                     if (wsOpt.isPresent()) {
                         Workspace ws = wsOpt.get();
@@ -148,6 +151,8 @@ public class SpawnService {
                         }
                     }
                 }
+            } else {
+                throw new IllegalStateException("workspaceBindings must be a JSON array");
             }
         }
 

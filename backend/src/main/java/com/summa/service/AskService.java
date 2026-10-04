@@ -169,7 +169,8 @@ public class AskService {
                     .toList();
                 if (!candidates.isEmpty()) {
                     Ask canonical = candidates.get(0);
-                    canonical.setCollapsedCount(canonical.getCollapsedCount() + 1);
+                    int currentCount = canonical.getCollapsedCount() != null ? canonical.getCollapsedCount() : 0;
+                    canonical.setCollapsedCount(currentCount + 1);
                     Ask saved = askRepository.save(canonical);
                     auditService.log(from, "COLLAPSED_ASK", "ask", saved.getId(),
                         String.format("{\"collapsedCount\":%d}", saved.getCollapsedCount()));
@@ -240,6 +241,7 @@ public class AskService {
      * - reassign: closes as expired, files successor to deputy/admin
      * ASK-057: Chain exhaustion — if no active recipient found, broadcasts org-stall alert.
      */
+    @Transactional
     @Scheduled(fixedRate = 60000)
     public void processExpiredAsks() {
         List<Ask> expired = askRepository.findExpiredBefore(Instant.now());

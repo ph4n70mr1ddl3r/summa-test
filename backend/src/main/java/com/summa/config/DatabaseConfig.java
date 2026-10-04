@@ -42,11 +42,6 @@ public class DatabaseConfig {
         return new JdbcTemplate(dataSource);
     }
 
-    @Bean
-    public SchemaInitializer schemaInitializer(JdbcTemplate jdbcTemplate) {
-        return new SchemaInitializer(jdbcTemplate);
-    }
-
     private String expandPath(String path) {
         if (path.startsWith("~")) {
             return System.getProperty("user.home") + path.substring(1);

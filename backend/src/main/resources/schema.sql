@@ -767,7 +767,8 @@ END;
 
 CREATE TRIGGER IF NOT EXISTS workspaces_au AFTER UPDATE ON workspaces BEGIN
     UPDATE dna_search_index SET
-        title = new.name
+        title = new.name,
+        status = CASE WHEN new.archived_at IS NULL THEN 'active' ELSE 'archived' END
     WHERE id = old.id;
 END;
 

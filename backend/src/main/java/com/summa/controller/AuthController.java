@@ -92,15 +92,17 @@ public class AuthController {
         try {
             String token = JwtUtil.generateToken(human.getId(), jwtSecret, jwtExpiration, minJwtSecretLength);
             auditService.log(human.getId(), "LOGIN", "human", human.getId(), null);
+            // Reset rate limit only on successful login so failed attempts accumulate
+            rateLimiter.reset(rateKey);
             return ResponseEntity.ok(Map.of(
                 "token", token,
                 "userId", human.getId(),
                 "rbac", human.getRbac(),
                 "name", human.getName()
             ));
-        } finally {
-            // Always reset rate limit on login completion (success or failure during token generation)
-            rateLimiter.reset(rateKey);
+        } catch (Exception e) {
+            var audit = auditService.logSystem("REFUSAL", "auth_login", email, "Login error: " + e.getMessage());
+            return ControllerResponses.gate(audit, "Authentication error");
         }
     }
 

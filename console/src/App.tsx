@@ -66,7 +66,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 function LogoutButton() {
   const navigate = useNavigate()
   function handleLogout() {
-    setAuthToken(null)
+    setAuthToken(null, null)
     setNavigate(null)
     navigate('/login', { replace: true })
   }

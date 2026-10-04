@@ -55,7 +55,9 @@ public class NodeAuthFilter extends OncePerRequestFilter {
         }
 
         // Enroll is a public operation — skip signature verification
-        if (path.equals("/api/nodes/enroll")) {
+        // Normalize trailing slash so /api/nodes/enroll/ is treated the same as /api/nodes/enroll
+        String normalizedPath = path.endsWith("/") && path.length() > 1 ? path.substring(0, path.length() - 1) : path;
+        if (normalizedPath.equals("/api/nodes/enroll")) {
             filterChain.doFilter(wrappedRequest, response);
             return;
         }
@@ -90,7 +92,14 @@ public class NodeAuthFilter extends OncePerRequestFilter {
 
         // Verify HMAC-SHA256 signature using node pubkey as key
         String body = readRequestBody(wrappedRequest);
-        String expectedSig = computeSignature(wrappedRequest.getMethod(), path, body, node.getPubkey());
+        String expectedSig;
+        try {
+            expectedSig = computeSignature(wrappedRequest.getMethod(), path, body, node.getPubkey());
+        } catch (Exception e) {
+            log.warn("[SUMMA] node signature computation error: {}", e.getMessage());
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Node signature verification failed");
+            return;
+        }
         if (!constantTimeEquals(expectedSig, signature)) {
             log.warn("[SUMMA] node signature mismatch: node={} path={}", nodeId, path);
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid node signature");
@@ -126,10 +135,10 @@ public class NodeAuthFilter extends OncePerRequestFilter {
     }
 
     private String computeSignature(String method, String path, String body, String pubkey) {
+        // Always hash the pubkey through SHA-256 before using it as the HMAC key.
+        // This ensures uniform key length regardless of whether the pubkey is
+        // a raw ASCII string or a base64-encoded ECDSA public key.
         try {
-            // Always hash the pubkey through SHA-256 before using it as the HMAC key.
-            // This ensures uniform key length regardless of whether the pubkey is
-            // a raw ASCII string or a base64-encoded ECDSA public key.
             java.security.MessageDigest sha256 = java.security.MessageDigest.getInstance("SHA-256");
             byte[] keyBytes;
             boolean isPubkeyFormat = PUBKEY_PATTERN.matcher(pubkey).matches();

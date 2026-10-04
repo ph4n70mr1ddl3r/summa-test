@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom'
 import { api, loadWithFallback } from '../services/api'
 import type { DnaDomain, DnaCard, DnaGoal, DnaProposal } from '../types'
 import { ErrorBanner } from '../components/ErrorBanner'
-import { domainAccessColor, proposalStatusColor } from '../utils/formatting'
+import { domainAccessColor, proposalStatusColor, escapeHtml } from '../utils/formatting'
 
 export default function DNAConsole() {
   const [domains, setDomains] = useState<DnaDomain[]>([])
@@ -65,7 +65,7 @@ export default function DNAConsole() {
           <div className="space-y-2">
             {domains.map((d) => (
               <div key={d.id} className="flex items-center justify-between bg-gray-700 rounded px-3 py-2">
-                <span className="text-gray-200 text-sm">{d.name}</span>
+                <span className="text-gray-200 text-sm">{escapeHtml(d.name)}</span>
                 <span className={`text-xs px-2 py-0.5 rounded ${domainAccessColor(d.access)}`}>
                   {d.access}
                 </span>
@@ -87,7 +87,7 @@ export default function DNAConsole() {
             {proposals.slice(0, 5).map((p) => (
               <div key={p.id} className="bg-gray-700 rounded px-3 py-2 text-sm text-gray-300">
                 <span className="font-medium">{p.kind}</span>
-                <span className="text-gray-500 ml-2">{p.proposedBy}</span>
+                <span className="text-gray-500 ml-2">{escapeHtml(p.proposedBy)}</span>
                 <span className={`ml-auto text-xs px-2 py-0.5 rounded ${proposalStatusColor(p.status)}`}>
                   {p.status}
                 </span>
