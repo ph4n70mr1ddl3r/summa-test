@@ -14,6 +14,7 @@ import com.summa.service.MemberService;
 import com.summa.exception.EntityNotFoundException;
 import com.summa.constants.Defaults;
 import com.summa.util.JsonHelpers;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -55,6 +56,15 @@ public class AgentController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String ownerId,
             @RequestParam(defaultValue = "50") int limit) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
+            if (!hasAccess) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
         int cappedLimit = Math.min(Math.max(limit, 1), MAX_LIST_LIMIT);
         if (status != null) {
             return ResponseEntity.ok(agentService.findByStatus(status, cappedLimit));
@@ -67,6 +77,15 @@ public class AgentController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getAgent(@PathVariable String id) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
+            if (!hasAccess) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
         Optional<Agent> entOpt = agentService.findById(id);
         if (entOpt.isEmpty()) {
             return ControllerResponses.notFound(auditService, "Agent not found: " + id);
@@ -76,6 +95,15 @@ public class AgentController {
 
     @GetMapping("/{id}/lineage")
     public ResponseEntity<?> getLineage(@PathVariable String id) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
+            if (!hasAccess) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
         Optional<Agent> firstOpt = agentService.findById(id);
         if (firstOpt.isEmpty()) {
             return ControllerResponses.notFound(auditService, "Agent not found: " + id);

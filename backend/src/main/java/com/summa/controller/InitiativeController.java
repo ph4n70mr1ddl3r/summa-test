@@ -3,7 +3,9 @@ package com.summa.controller;
 import com.summa.service.InitiativeService;
 import com.summa.model.Initiative;
 import com.summa.service.AuditService;
+import com.summa.service.MemberService;
 import com.summa.security.WriteGate;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
@@ -20,16 +22,28 @@ public class InitiativeController {
     private final InitiativeService initiativeService;
     private final AuditService auditService;
     private final WriteGate writeGate;
+    private final MemberService memberService;
 
-    public InitiativeController(InitiativeService initiativeService, AuditService auditService, WriteGate writeGate) {
+    public InitiativeController(InitiativeService initiativeService, AuditService auditService, WriteGate writeGate,
+                                 MemberService memberService) {
         this.initiativeService = initiativeService;
         this.auditService = auditService;
         this.writeGate = writeGate;
+        this.memberService = memberService;
     }
 
     @GetMapping
     public ResponseEntity<List<Initiative>> listInitiatives(
             @RequestParam(required = false) String status) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
+            if (!hasAccess) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
         if (status != null) {
             return ResponseEntity.ok(initiativeService.findByStatus(status));
         }
@@ -38,6 +52,15 @@ public class InitiativeController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getInitiative(@PathVariable String id) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
+            if (!hasAccess) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
         Optional<Initiative> entOpt = initiativeService.findById(id);
         if (entOpt.isPresent()) {
             return ResponseEntity.ok(entOpt.get());
@@ -96,7 +119,8 @@ public class InitiativeController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            Initiative initiative = initiativeService.activate(id, actor);
+            String actorClean = JsonHelpers.stripIdPrefix(actor);
+            Initiative initiative = initiativeService.activate(id, actorClean);
             return ResponseEntity.ok(initiative);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
@@ -111,7 +135,8 @@ public class InitiativeController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            Initiative initiative = initiativeService.pause(id, actor);
+            String actorClean = JsonHelpers.stripIdPrefix(actor);
+            Initiative initiative = initiativeService.pause(id, actorClean);
             return ResponseEntity.ok(initiative);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
@@ -126,7 +151,8 @@ public class InitiativeController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            Initiative initiative = initiativeService.resume(id, actor);
+            String actorClean = JsonHelpers.stripIdPrefix(actor);
+            Initiative initiative = initiativeService.resume(id, actorClean);
             return ResponseEntity.ok(initiative);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
@@ -141,7 +167,8 @@ public class InitiativeController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            Initiative initiative = initiativeService.close(id, actor);
+            String actorClean = JsonHelpers.stripIdPrefix(actor);
+            Initiative initiative = initiativeService.close(id, actorClean);
             return ResponseEntity.ok(initiative);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());

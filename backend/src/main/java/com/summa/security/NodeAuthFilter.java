@@ -43,8 +43,9 @@ public class NodeAuthFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-                                      FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(@org.springframework.lang.NonNull HttpServletRequest request,
+                                       @org.springframework.lang.NonNull HttpServletResponse response,
+                                       @org.springframework.lang.NonNull FilterChain filterChain) throws ServletException, IOException {
         // Wrap request to buffer body so downstream readers (JSON deserializers) can also read it
         HttpServletRequest wrappedRequest = new ContentCachingRequestWrapper(request);
 
@@ -56,7 +57,7 @@ public class NodeAuthFilter extends OncePerRequestFilter {
 
         // Enroll is a public operation — skip signature verification
         // Normalize trailing slash so /api/nodes/enroll/ is treated the same as /api/nodes/enroll
-        String normalizedPath = path.endsWith("/") && path.length() > 1 ? path.substring(0, path.length() - 1) : path;
+        String normalizedPath = com.summa.util.JsonHelpers.normalizeTrailingSlash(path);
         if (normalizedPath.equals("/api/nodes/enroll")) {
             filterChain.doFilter(wrappedRequest, response);
             return;

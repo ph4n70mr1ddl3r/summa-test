@@ -11,6 +11,7 @@ import com.summa.enums.AskTier;
 import com.summa.util.JsonHelpers;
 import com.summa.constants.Defaults;
 import com.summa.service.OffboardingWalkService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
@@ -52,6 +53,15 @@ public class AskController {
             @RequestParam(required = false) String to,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "50") int limit) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
+            if (!hasAccess) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
         int cappedLimit = Math.min(Math.max(limit, 1), MAX_LIST_LIMIT);
         if (to != null) {
             return ResponseEntity.ok(askService.findByTo(to, cappedLimit));
@@ -64,6 +74,15 @@ public class AskController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getAsk(@PathVariable String id) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
+            if (!hasAccess) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
         Optional<Ask> entOpt = askService.findById(id);
         if (entOpt.isPresent()) {
             return ResponseEntity.ok(entOpt.get());
@@ -132,7 +151,7 @@ public class AskController {
             }
             Ask ask = askService.create(
                 kind,
-                actor,
+                JsonHelpers.stripIdPrefix(actor),
                 toClean,
                 body.get("payload"),
                 slaTier,

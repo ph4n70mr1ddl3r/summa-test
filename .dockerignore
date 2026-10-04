@@ -21,8 +21,6 @@ opencode.json
 opencode.jsonc
 **/AGENTS.md
 **/.gitignore
-# Exclude root lockfile — Dockerfile uses Maven only; console build gets its own context.
-/package-lock.json
 # Python tooling not needed in Docker builds
 tools/
 # Runtime log output

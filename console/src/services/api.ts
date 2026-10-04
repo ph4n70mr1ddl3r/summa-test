@@ -124,7 +124,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T | undefin
       }
       const err = new ApiError(message, res.status);
       if (res.status === 401 || res.status === 403) {
-        setAuthToken(null);
+        setAuthToken(null, null);
         // Prevent duplicate redirects if multiple requests fail simultaneously.
         // Use a closure-guarded flag so a second 401 during the navigation window
         // does not trigger another redirect.

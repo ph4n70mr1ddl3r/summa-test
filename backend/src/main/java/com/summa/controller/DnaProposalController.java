@@ -6,6 +6,7 @@ import com.summa.service.AuditService;
 import com.summa.service.MemberService;
 import com.summa.security.WriteGate;
 import com.summa.constants.Defaults;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.enums.RbacRole;
@@ -37,6 +38,15 @@ public class DnaProposalController {
     public ResponseEntity<List<DnaProposal>> listProposals(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String domainId) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
+            if (!hasAccess) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
         if (status != null) {
             return ResponseEntity.ok(proposalService.findByStatus(status));
         }
@@ -48,6 +58,15 @@ public class DnaProposalController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getProposal(@PathVariable String id) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
+            if (!hasAccess) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
         Optional<DnaProposal> entOpt = proposalService.findById(id);
         if (entOpt.isPresent()) {
             return ResponseEntity.ok(entOpt.get());

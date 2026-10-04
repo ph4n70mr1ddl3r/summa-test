@@ -13,7 +13,7 @@ public class PasswordUtil {
     }
 
     public String hash(String password) {
-        if (password == null) return null;
+        if (password == null) throw new IllegalArgumentException("password must not be null");
         return passwordEncoder.encode(password);
     }
 

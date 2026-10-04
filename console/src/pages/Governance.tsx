@@ -69,7 +69,8 @@ export default function Governance() {
       }
       if (section === 'policies') await api.governance.updatePolicies(body)
       else await api.governance.updateQuotas(body)
-      const savedValue = isNaN(numValue) ? currentValue : numValue
+      // Preserve the original type — if it was a number string, store as number; otherwise string
+      const savedValue = currentValue === '' ? null : (isNaN(numValue) ? currentValue : numValue)
       if (section === 'policies') setPolicies(prev => ({ ...prev, [key]: savedValue }))
       else setQuotas(prev => ({ ...prev, [key]: savedValue }))
       setEditValues(prev => { const next = { ...prev }; delete next[key]; return next })

@@ -16,13 +16,6 @@ import java.util.Optional;
 @Component
 public class RbacAuthorizationFilter extends OncePerRequestFilter {
 
-    private static final Map<String, String> WRITE_METHODS = Map.of(
-        "POST", "write",
-        "PUT", "write",
-        "PATCH", "write",
-        "DELETE", "write"
-    );
-
     private static final ThreadLocal<String> ACTOR_CONTEXT = new ThreadLocal<>();
     private static final ThreadLocal<Boolean> WRITES_ALLOWED = new ThreadLocal<>();
     private static final ThreadLocal<Boolean> NODE_AUTH = new ThreadLocal<>();
@@ -41,10 +34,6 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
         return val != null && val;
     }
 
-    public static Boolean getNodeAuth() {
-        return NODE_AUTH.get();
-    }
-
     private final MemberService memberService;
 
     public RbacAuthorizationFilter(MemberService memberService) {
@@ -55,8 +44,7 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                       FilterChain filterChain) throws ServletException, IOException {
         String path = request.getRequestURI();
-        String normalized = path != null && path.endsWith("/") && path.length() > 1
-                ? path.substring(0, path.length() - 1) : path;
+        String normalized = com.summa.util.JsonHelpers.normalizeTrailingSlash(path);
 
         String actor = (String) request.getAttribute("actor");
         boolean nodeAuth = Boolean.TRUE.equals(request.getAttribute("nodeAuth"));

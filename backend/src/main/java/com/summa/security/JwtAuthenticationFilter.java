@@ -49,8 +49,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     public static boolean isNodePath(String path) {
         if (path == null) return false;
         // Tolerate a trailing slash (e.g. /api/nodes/)
-        String normalizedPath = path.endsWith("/") && path.length() > 1 ? path.substring(0, path.length() - 1) : path;
-        return normalizedPath.startsWith("/api/nodes");
+        String normalizedPath = com.summa.util.JsonHelpers.normalizeTrailingSlash(path);
+        return normalizedPath != null && normalizedPath.startsWith("/api/nodes");
     }
 
     @Override
@@ -126,8 +126,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (path == null) return false;
         if (PUBLIC_PATHS.contains(path)) return true;
         // Tolerate a trailing slash (e.g. /api/health/) without opening prefixes.
-        if (path.endsWith("/") && path.length() > 1) {
-            return PUBLIC_PATHS.contains(path.substring(0, path.length() - 1));
+        String normalized = com.summa.util.JsonHelpers.normalizeTrailingSlash(path);
+        if (normalized != null) {
+            return PUBLIC_PATHS.contains(normalized);
         }
         return false;
     }

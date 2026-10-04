@@ -200,7 +200,7 @@ CREATE TABLE IF NOT EXISTS asks (
     responded_at INTEGER,
     quorum_required INTEGER NOT NULL DEFAULT 1 CHECK (quorum_required >= 1),
     responses TEXT NOT NULL DEFAULT '[]',
-    collapsed_count INTEGER NOT NULL DEFAULT 1,
+    collapsed_count INTEGER NOT NULL DEFAULT 0,
     updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
     FOREIGN KEY (initiative_id) REFERENCES initiatives(id) ON DELETE SET NULL,
     FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE SET NULL
@@ -209,6 +209,8 @@ CREATE TABLE IF NOT EXISTS asks (
 CREATE INDEX IF NOT EXISTS idx_asks_deadline ON asks(deadline);
 CREATE INDEX IF NOT EXISTS idx_asks_status ON asks(status);
 CREATE INDEX IF NOT EXISTS idx_asks_to_status ON asks(to, status);
+CREATE INDEX IF NOT EXISTS idx_asks_initiative ON asks(initiative_id);
+CREATE INDEX IF NOT EXISTS idx_asks_workspace ON asks(workspace_id);
 
 CREATE TABLE IF NOT EXISTS initiatives (
     id TEXT PRIMARY KEY,
@@ -512,6 +514,9 @@ CREATE TABLE IF NOT EXISTS runs (
     FOREIGN KEY (parent_run_id) REFERENCES runs(id) ON DELETE SET NULL
 );
 
+CREATE INDEX IF NOT EXISTS idx_runs_playbook ON runs(playbook_id);
+CREATE INDEX IF NOT EXISTS idx_runs_trigger ON runs(trigger_id);
+CREATE INDEX IF NOT EXISTS idx_runs_parent ON runs(parent_run_id);
 CREATE INDEX IF NOT EXISTS idx_runs_agent ON runs(agent_id);
 CREATE INDEX IF NOT EXISTS idx_runs_workspace ON runs(workspace_id);
 CREATE INDEX IF NOT EXISTS idx_runs_status ON runs(status);

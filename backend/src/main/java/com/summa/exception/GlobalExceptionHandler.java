@@ -52,7 +52,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalState(IllegalStateException e) {
-        return auditAndRespond("REFUSAL", "gate", null, e.getMessage(), HttpStatus.FORBIDDEN);
+        // Distinguish authorization refusals (e.g. WriteGate denial) from genuine server errors.
+        // Authorization-specific states are mapped to 403; all others fall through to the generic 500 handler.
+        String msg = e.getMessage();
+        if (msg != null && (msg.contains("write permission") || msg.contains("admin")
+                || msg.contains("auth") || msg.contains("gate") || msg.contains("REFUSAL"))) {
+            return auditAndRespond("REFUSAL", "gate", null, msg, HttpStatus.FORBIDDEN);
+        }
+        throw e;
     }
 
     @ExceptionHandler(EntityNotFoundException.class)

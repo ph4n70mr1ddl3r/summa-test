@@ -82,10 +82,6 @@ public class WorkspaceController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        boolean isNodeAuth = Boolean.TRUE.equals(RbacAuthorizationFilter.getNodeAuth());
-        if (!isNodeAuth && !memberService.isAdmin(actor)) {
-            return ControllerResponses.gate(auditService, actor, "Workspace rebind requires admin role");
-        }
         try {
             Workspace ws = workspaceService.rebind(id, body.get("targetNodeId"), actor);
             return ResponseEntity.ok(ws);
@@ -101,10 +97,6 @@ public class WorkspaceController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        boolean isNodeAuth = Boolean.TRUE.equals(RbacAuthorizationFilter.getNodeAuth());
-        if (!isNodeAuth && !memberService.isAdmin(actor)) {
-            return ControllerResponses.gate(auditService, actor, "Workspace archive requires admin role");
-        }
         try {
             Workspace ws = workspaceService.archive(id, actor);
             return ResponseEntity.ok(ws);

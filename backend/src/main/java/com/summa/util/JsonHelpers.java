@@ -90,6 +90,22 @@ public final class JsonHelpers {
     }
 
     /**
+     * Normalize a URL path by stripping a trailing slash (except for root "/").
+     */
+    public static String normalizeTrailingSlash(String path) {
+        if (path == null) return null;
+        return path.endsWith("/") && path.length() > 1 ? path.substring(0, path.length() - 1) : path;
+    }
+
+    /**
+     * Strip keyed-union prefix (h:/a:) from a member/agent ID.
+     */
+    public static String stripIdPrefix(String id) {
+        if (id == null) return null;
+        return id.replaceFirst("^[ha]?:", "");
+    }
+
+    /**
      * Constant-time string comparison to prevent timing attacks.
      */
     public static boolean constantTimeEquals(String a, String b) {

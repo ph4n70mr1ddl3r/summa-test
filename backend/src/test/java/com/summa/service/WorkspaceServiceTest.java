@@ -4,7 +4,6 @@ import com.summa.repository.WorkspaceRepository;
 import com.summa.repository.DnaDomainRepository;
 import com.summa.repository.InitiativeRepository;
 import com.summa.repository.TriggerRepository;
-import com.summa.repository.PlaybookRepository;
 import com.summa.repository.SpawnRequestRepository;
 import com.summa.repository.NodeRepository;
 import com.summa.repository.RunRepository;
@@ -41,9 +40,6 @@ class WorkspaceServiceTest {
     private TriggerRepository triggerRepository;
 
     @Mock
-    private PlaybookRepository playbookRepository;
-
-    @Mock
     private SpawnRequestRepository spawnRequestRepository;
 
     @Mock
@@ -60,7 +56,7 @@ class WorkspaceServiceTest {
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
         workspaceService = new WorkspaceService(workspaceRepository, domainRepository, auditService, objectMapper,
-            initiativeRepository, triggerRepository, playbookRepository, spawnRequestRepository, nodeRepository, runRepository);
+            initiativeRepository, triggerRepository, spawnRequestRepository, nodeRepository, runRepository);
     }
 
     @Test
@@ -171,42 +167,33 @@ class WorkspaceServiceTest {
 
     @Test
     void archive_noFalsePositivePlaybookMatch() throws Exception {
+        // Playbook scanning was removed as dead code — archive still works without it.
         Workspace ws = new Workspace();
         ws.setId("ws-1");
         when(workspaceRepository.findById("ws-1")).thenReturn(Optional.of(ws));
         when(workspaceRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        // Playbook body contains "ws-1" as a substring of another value but not as a JSON string value
-        String playbookBody = "{\"description\":\"workspace ws-1-example\",\"ids\":[\"ws-99\"]}";
-        com.summa.model.Playbook pb = new com.summa.model.Playbook();
-        pb.setId("pb-1");
-        pb.setBody(playbookBody);
-        when(playbookRepository.findAll()).thenReturn(List.of(pb));
-
         Workspace result = workspaceService.archive("ws-1", "admin");
-
         assertNotNull(result.getArchivedAt());
-        // The playbook should NOT be matched because "ws-1" only appears as substring of "ws-1-example"
-        // and not as a standalone JSON string value equal to "ws-1"
-        verify(playbookRepository, never()).save(any());
     }
 
     @Test
-    void archive_truePlaybookMatch() throws Exception {
+    void archive_withActiveRun() throws Exception {
         Workspace ws = new Workspace();
         ws.setId("ws-1");
         when(workspaceRepository.findById("ws-1")).thenReturn(Optional.of(ws));
         when(workspaceRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        // Playbook body contains "ws-1" as an actual JSON string value
-        String playbookBody = "{\"description\":\"main workspace\",\"ids\":[\"ws-1\",\"ws-99\"]}";
-        com.summa.model.Playbook pb = new com.summa.model.Playbook();
-        pb.setId("pb-1");
-        pb.setBody(playbookBody);
-        when(playbookRepository.findAll()).thenReturn(List.of(pb));
+        com.summa.model.Run run = new com.summa.model.Run();
+        run.setId("run-1");
+        run.setStatus("queued");
+        when(runRepository.findByWorkspaceIdAndStatusIn("ws-1", List.of("queued", "running"))).thenReturn(List.of(run));
+        when(runRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         Workspace result = workspaceService.archive("ws-1", "admin");
 
         assertNotNull(result.getArchivedAt());
+        verify(runRepository).save(run);
+        assertEquals("cancelled", run.getStatus());
     }
 }

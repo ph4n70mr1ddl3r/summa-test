@@ -8,6 +8,7 @@ import com.summa.service.MemberService;
 import com.summa.service.SpawnService;
 import com.summa.model.SpawnRequest;
 import com.summa.util.JsonHelpers;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -34,6 +35,15 @@ public class SpawnController {
     public ResponseEntity<?> listRequests(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String requesterId) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
+            if (!hasAccess) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
         if (status != null) {
             return ResponseEntity.ok(spawnService.findByStatus(status));
         }
@@ -45,6 +55,15 @@ public class SpawnController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getRequest(@PathVariable String id) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
+            if (!hasAccess) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
         Optional<SpawnRequest> entOpt = spawnService.findById(id);
         if (entOpt.isPresent()) {
             return ResponseEntity.ok(entOpt.get());
@@ -103,7 +122,7 @@ public class SpawnController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            SpawnRequest request = spawnService.approve(id, actor, actor);
+            SpawnRequest request = spawnService.approve(id, actor, JsonHelpers.stripIdPrefix(actor));
             return ResponseEntity.ok(request);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
