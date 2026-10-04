@@ -163,7 +163,7 @@ class MemberServiceTest {
     }
 
     @Test
-    void findAllActiveHumans_returnsAllNonDeactivated() {
+    void findAllActiveHumans_delegatesToRepository() {
         Human active = new Human();
         active.setId("h1");
         Human deactivated = new Human();

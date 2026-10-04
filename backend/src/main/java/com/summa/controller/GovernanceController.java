@@ -58,11 +58,15 @@ public class GovernanceController {
 
     @GetMapping("/policies")
     public ResponseEntity<Map<String, Object>> getPolicies() {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        governanceService.requireAdminOrThrow(actor);
         return ResponseEntity.ok(governanceService.getAllSettings());
     }
 
     @GetMapping("/quotas")
     public ResponseEntity<Map<String, Object>> getQuotas() {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        governanceService.requireAdminOrThrow(actor);
         Map<String, Object> all = governanceService.getAllSettings();
         Map<String, Object> quotas = new LinkedHashMap<>();
         for (String key : QUOTA_KEYS) {
@@ -73,6 +77,8 @@ public class GovernanceController {
 
     @GetMapping("/spend")
     public ResponseEntity<Map<String, Object>> getSpend() {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        governanceService.requireAdminOrThrow(actor);
         // Delegate defaults to GovernanceService to avoid divergence
         return ResponseEntity.ok(governanceService.getSpendView());
     }

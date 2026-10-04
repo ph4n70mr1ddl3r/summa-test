@@ -91,17 +91,16 @@ public class JwtUtil {
             if (!(expObj instanceof Number)) return null;
             long exp = ((Number) expObj).longValue();
             if (exp <= 0 || exp > 4102444800L) return null; // reject nonsensical/expired timestamps
-            // Use division to avoid signed long overflow: exp * 1000 overflows when exp > Long.MAX_VALUE/1000
-            // 4102444800s is ~2100, well within safe range, but guard against future-proofing
+            // Guard against absurdly large timestamps; 4102444800s is year ~2100.
             long expMillis = exp * SECONDS_TO_MILLIS;
-            if (expMillis <= 0 || Long.compareUnsigned(expMillis, System.currentTimeMillis()) < 0) {
+            if (Long.compareUnsigned(expMillis, System.currentTimeMillis()) < 0) {
                 return null;
             }
             Number nbfNum = (Number) payload.get("nbf");
             Long nbf = nbfNum != null ? nbfNum.longValue() : null;
-            if (nbf != null && nbf > 0 && nbf <= 4102444800L) {
+            if (nbf != null && nbf <= 4102444800L) {
                 long nbfMillis = nbf * SECONDS_TO_MILLIS;
-                if (nbfMillis > 0 && Long.compareUnsigned(nbfMillis, System.currentTimeMillis()) > 0) {
+                if (Long.compareUnsigned(nbfMillis, System.currentTimeMillis()) > 0) {
                     return null;
                 }
             }

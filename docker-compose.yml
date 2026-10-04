@@ -73,14 +73,6 @@ services:
       memlock:
         soft: -1
         hard: -1
-    deploy:
-      resources:
-        limits:
-          memory: 768M
-          cpus: '1.0'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
 
   console:
     build:
@@ -117,14 +109,6 @@ services:
     mem_reservation: 64M
     cpus: '0.5'
     stop_grace_period: 10s
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-          cpus: '0.5'
-        reservations:
-          memory: 64M
-          cpus: '0.1'
 
 volumes:
   summa-data:

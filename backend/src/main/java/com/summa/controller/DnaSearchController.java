@@ -6,6 +6,7 @@ import com.summa.service.AuditService;
 import com.summa.service.OrgService;
 import com.summa.constants.Defaults;
 import com.summa.security.RbacAuthorizationFilter;
+import com.summa.exception.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -32,11 +33,12 @@ public class DnaSearchController {
             @RequestParam String q,
             @RequestParam(required = false) String domainId,
             @RequestParam(defaultValue = "20") int limit) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
+            return ControllerResponses.gate(auditService, "Authentication required");
+        }
         int cappedLimit = Math.min(Math.max(limit, 1), Defaults.MAX_DNA_SEARCH_LIMIT);
         try {
-            if (q == null || q.isBlank()) {
-                return ControllerResponses.validation(auditService, "Query parameter 'q' is required");
-            }
             List<Map<String, Object>> results = dnaReadService.search(q, domainId, cappedLimit);
             return ResponseEntity.ok(Map.of("results", results, "count", results.size()));
         } catch (IllegalArgumentException e) {
@@ -61,6 +63,10 @@ public class DnaSearchController {
 
     @GetMapping("/domains")
     public ResponseEntity<?> listDomains() {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
+            return ControllerResponses.gate(auditService, "Authentication required");
+        }
         return ResponseEntity.ok(dnaReadService.listDomains());
     }
 }

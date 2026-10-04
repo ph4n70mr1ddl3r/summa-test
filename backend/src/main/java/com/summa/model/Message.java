@@ -35,11 +35,6 @@ public class Message {
         if (content == null) content = "";
     }
 
-    @PreUpdate
-    public void preUpdate() {
-        // messages has no updatedAt column
-    }
-
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getRunId() { return runId; }

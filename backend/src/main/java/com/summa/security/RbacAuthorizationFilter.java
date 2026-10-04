@@ -58,78 +58,40 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
         String normalized = path != null && path.endsWith("/") && path.length() > 1
                 ? path.substring(0, path.length() - 1) : path;
 
-        // Public endpoints may be called unauthenticated (health, login, enroll, bootstrap).
-        // If an actor is already present (JWT parsed by JwtAuthenticationFilter or
-        // node auth set by NodeAuthFilter), still wire up the context so that the
-        // write-gate and downstream code see the correct identity.
-        if (JwtAuthenticationFilter.PUBLIC_PATHS.contains(normalized)) {
-            String actor = (String) request.getAttribute("actor");
-            boolean nodeAuth = Boolean.TRUE.equals(request.getAttribute("nodeAuth"));
-            String effectiveActor = actor != null ? actor : Defaults.SYSTEM_ACTOR;
-            boolean writeAllowed = false;
-            if (nodeAuth) {
-                writeAllowed = true;
-            } else if (actor != null) {
-                Optional<Human> humanOpt = memberService.findHuman(actor);
-                if (humanOpt.isPresent()) {
-                    writeAllowed = memberService.hasWriteSurface(humanOpt.get());
-                } else {
-                    var agentOpt = memberService.findAgent(actor);
-                    if (agentOpt.isPresent()) {
-                        writeAllowed = memberService.hasWriteSurfaceAgent(agentOpt.get());
-                    }
-                }
-            }
-            ACTOR_CONTEXT.set(effectiveActor);
-            WRITES_ALLOWED.set(writeAllowed);
-            NODE_AUTH.set(nodeAuth);
-            try {
-                filterChain.doFilter(request, response);
-            } finally {
-                ACTOR_CONTEXT.remove();
-                WRITES_ALLOWED.remove();
-                NODE_AUTH.remove();
-            }
-            return;
-        }
-
         String actor = (String) request.getAttribute("actor");
-        if (actor == null) {
-            // Do not trust X-Actor header from unauthenticated clients.
-            // Only JWT-authenticated or node-authenticated requests carry a valid actor via request attribute.
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "No actor identity provided");
-            return;
-        }
+        boolean nodeAuth = Boolean.TRUE.equals(request.getAttribute("nodeAuth"));
+        boolean isPublic = JwtAuthenticationFilter.PUBLIC_PATHS.contains(normalized);
 
-        boolean writeAllowed = false;
-        if (WRITE_METHODS.containsKey(request.getMethod())) {
-            // Node-authenticated requests: allow writes from trusted nodes
-            if (Boolean.TRUE.equals(request.getAttribute("nodeAuth"))) {
-                writeAllowed = true;
-            } else {
-                Optional<Human> humanOpt = memberService.findHuman(actor);
-                if (humanOpt.isPresent()) {
-                    writeAllowed = memberService.hasWriteSurface(humanOpt.get());
-                } else {
-                    var agentOpt = memberService.findAgent(actor);
-                    if (agentOpt.isPresent()) {
-                        writeAllowed = memberService.hasWriteSurfaceAgent(agentOpt.get());
-                    } else {
-                        writeAllowed = false;
-                    }
-                }
-            }
-        }
+        String effectiveActor = actor != null ? actor : Defaults.SYSTEM_ACTOR;
+        boolean writeAllowed = resolveWriteAllowed(actor, nodeAuth);
 
+        ACTOR_CONTEXT.set(effectiveActor);
+        WRITES_ALLOWED.set(writeAllowed);
+        NODE_AUTH.set(nodeAuth);
         try {
-            ACTOR_CONTEXT.set(actor);
-            WRITES_ALLOWED.set(writeAllowed);
-            NODE_AUTH.set(Boolean.TRUE.equals(request.getAttribute("nodeAuth")));
             filterChain.doFilter(request, response);
         } finally {
             ACTOR_CONTEXT.remove();
             WRITES_ALLOWED.remove();
             NODE_AUTH.remove();
         }
+
+        if (isPublic) return;
+        if (actor == null) {
+            // Do not trust X-Actor header from unauthenticated clients.
+            // Only JWT-authenticated or node-authenticated requests carry a valid actor via request attribute.
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "No actor identity provided");
+        }
+    }
+
+    private boolean resolveWriteAllowed(String actor, boolean nodeAuth) {
+        if (nodeAuth) return true;
+        if (actor == null) return false;
+        Optional<Human> humanOpt = memberService.findHuman(actor);
+        if (humanOpt.isPresent()) {
+            return memberService.hasWriteSurface(humanOpt.get());
+        }
+        var agentOpt = memberService.findAgent(actor);
+        return agentOpt.isPresent() && memberService.hasWriteSurfaceAgent(agentOpt.get());
     }
 }

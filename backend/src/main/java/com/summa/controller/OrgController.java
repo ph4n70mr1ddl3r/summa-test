@@ -109,6 +109,9 @@ public class OrgController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Admin access required to update RBAC");
+        }
         try {
             String rbacValue = body.get("rbac");
             if (rbacValue == null || rbacValue.isBlank()) {
@@ -128,6 +131,9 @@ public class OrgController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Admin access required to demote");
+        }
         String newRbac = body.get("rbac");
         if (newRbac == null || newRbac.isBlank()) {
             return ControllerResponses.validation(auditService, "rbac is required for demote");

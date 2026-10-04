@@ -71,4 +71,6 @@ public class ExternalWrite {
     public boolean isPrepared() { return "prepared".equals(status); }
     public boolean isCommitted() { return "committed".equals(status); }
     public boolean isFailed() { return "failed".equals(status) || "compensated".equals(status); }
+    public boolean isCompensated() { return "compensated".equals(status); }
+    public boolean isResolved() { return isCommitted() || isFailed(); }
 }

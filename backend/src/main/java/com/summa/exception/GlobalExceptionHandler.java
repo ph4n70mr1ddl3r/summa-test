@@ -33,6 +33,8 @@ public class GlobalExceptionHandler {
     private ResponseEntity<Map<String, Object>> auditAndRespond(String auditAction, String objectType,
             String objectId, String message, HttpStatus status) {
         String actor = currentActor();
+        // Fall back to system actor so audit entries are never created with a null actor
+        if (actor == null) actor = com.summa.constants.Defaults.SYSTEM_ACTOR;
         AuditEvent audit = auditService.log(actor, auditAction, objectType, objectId, message);
         return ResponseEntity.status(status).body(Map.of(
             "code", objectType, "message", message, "audit_event_id", audit.getId()));

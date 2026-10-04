@@ -122,4 +122,8 @@ public class Run {
     public boolean isTerminal() {
         return "completed".equals(status) || "failed".equals(status) || "cancelled".equals(status);
     }
+    public boolean isQueued() { return "queued".equals(status); }
+    public boolean isFailed() { return "failed".equals(status); }
+    public boolean isCancelled() { return "cancelled".equals(status); }
+    public boolean isSuspended() { return "suspended".equals(status); }
 }

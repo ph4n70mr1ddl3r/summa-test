@@ -5,6 +5,7 @@ import com.summa.model.DnaProposal;
 import com.summa.service.AuditService;
 import com.summa.service.MemberService;
 import com.summa.security.WriteGate;
+import com.summa.constants.Defaults;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.enums.RbacRole;
@@ -162,7 +163,11 @@ public class DnaProposalController {
     }
 
     @GetMapping("/review-queue")
-    public ResponseEntity<List<DnaProposal>> reviewQueue(@RequestParam(required = false) String domainId) {
+    public ResponseEntity<?> reviewQueue(@RequestParam(required = false) String domainId) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
+            return ControllerResponses.gate(auditService, "Authentication required");
+        }
         // API-022: GET /dna/proposals/review-queue
         if (domainId != null) {
             return ResponseEntity.ok(proposalService.findOpenByDomain(domainId));

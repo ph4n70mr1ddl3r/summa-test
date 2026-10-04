@@ -91,7 +91,14 @@ public class NodeAuthFilter extends OncePerRequestFilter {
         }
 
         // Verify HMAC-SHA256 signature using node pubkey as key
-        String body = readRequestBody(wrappedRequest);
+        String body;
+        try {
+            body = readRequestBody(wrappedRequest);
+        } catch (IOException e) {
+            log.warn("[SUMMA] node request body read error: {}", e.getMessage());
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Node signature verification failed");
+            return;
+        }
         String expectedSig;
         try {
             expectedSig = computeSignature(wrappedRequest.getMethod(), path, body, node.getPubkey());
@@ -158,13 +165,12 @@ public class NodeAuthFilter extends OncePerRequestFilter {
         }
     }
 
-    private String readRequestBody(HttpServletRequest request) {
-        try {
-            byte[] bytes = ((ContentCachingRequestWrapper) request).getContentAsByteArray();
-            return new String(bytes, StandardCharsets.UTF_8);
-        } catch (Exception e) {
-            return "";
+    private String readRequestBody(HttpServletRequest request) throws IOException {
+        if (!(request instanceof ContentCachingRequestWrapper wrapper)) {
+            throw new IOException("Request is not a ContentCachingRequestWrapper");
         }
+        byte[] bytes = wrapper.getContentAsByteArray();
+        return new String(bytes, StandardCharsets.UTF_8);
     }
 
     private static String bytesToHex(byte[] bytes) {

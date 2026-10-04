@@ -125,7 +125,8 @@ public class AgentController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         // CLC-010: Ownership verification — only the agent's owner human, an admin, or the initiative sponsor may lifecycle-manage
-        Optional<Agent> agentOpt = agentService.findById(id);
+        String agentId = id.replaceFirst("^[ha]?:", "");
+        Optional<Agent> agentOpt = agentService.findById(agentId);
         if (agentOpt.isEmpty()) {
             return ControllerResponses.notFound(auditService, "Agent not found: " + id);
         }

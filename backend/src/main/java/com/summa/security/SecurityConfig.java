@@ -17,7 +17,8 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        // Strength 12 provides ~2^12 work factor, recommended for production
+        return new BCryptPasswordEncoder(12);
     }
 
     @Bean

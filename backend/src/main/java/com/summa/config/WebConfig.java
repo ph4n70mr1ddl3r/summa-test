@@ -2,6 +2,7 @@ package com.summa.config;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
@@ -78,7 +79,9 @@ public class WebConfig implements WebMvcConfigurer {
         public Instant deserialize(JsonParser p, DeserializationContext ctx) throws IOException {
             // Accept epoch seconds (what we write) and ISO-8601 strings
             // (what the console sends, e.g. DnaGoal window endpoints).
-            switch (p.currentToken()) {
+            JsonToken token = p.currentToken();
+            if (token == null) return null;
+            switch (token) {
                 case VALUE_NUMBER_INT:
                     return Instant.ofEpochSecond(p.getLongValue());
                 case VALUE_STRING: {

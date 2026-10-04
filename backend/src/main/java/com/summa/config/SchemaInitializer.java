@@ -36,7 +36,7 @@ public class SchemaInitializer {
 
             for (String statement : statements) {
                 String s = statement.trim();
-                if (!s.isEmpty() && !s.startsWith("--")) {
+                if (!s.isEmpty()) {
                     try {
                         jdbcTemplate.execute(s);
                     } catch (Exception e) {
@@ -147,7 +147,10 @@ public class SchemaInitializer {
                 while (i + 1 < sql.length() && !(sql.charAt(i) == '*' && sql.charAt(i + 1) == '/')) {
                     i++;
                 }
-                if (i + 1 < sql.length()) i++; // skip '/'
+                if (i + 1 >= sql.length()) {
+                    throw new RuntimeException("Unclosed block comment in schema SQL");
+                }
+                i++; // skip '/'
             } else {
                 out.append(c);
             }

@@ -88,4 +88,5 @@ public class BoardTask {
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
     public boolean isDone() { return "done".equals(status); }
+    public boolean isActive() { return !"done".equals(status) && !"cancelled".equals(status); }
 }

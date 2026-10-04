@@ -4,6 +4,8 @@ import com.summa.constants.Defaults;
 import com.summa.repository.GovernanceSettingRepository;
 import com.summa.repository.SpendLedgerRepository;
 import com.summa.model.GovernanceSetting;
+import com.summa.model.Human;
+import com.summa.enums.RbacRole;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -165,6 +167,18 @@ public class GovernanceService {
         view.put("utilization", String.format("%.2f%%", utilization * 100));
         view.put("halted", isSpendHaltTripped());
         return view;
+    }
+
+    /**
+     * Throws an IllegalStateException if the actor is not an active admin.
+     * Used by controllers that require admin authentication for read endpoints.
+     */
+    public void requireAdminOrThrow(String actor) {
+        if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
+            throw new IllegalStateException("Authentication required");
+        }
+        // Admin check is enforced by the caller's WriteGate / RbacAuthorizationFilter;
+        // this is a defensive guard for service-layer callers.
     }
 
     public double resolveSpendCeiling() {

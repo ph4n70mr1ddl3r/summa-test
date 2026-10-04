@@ -34,6 +34,9 @@ public class AuthController {
     @Value("${summa.auth.jwt-secret-min-length:32}")
     private int minJwtSecretLength;
 
+    @Value("${summa.proxy.trusted-ips:}")
+    private String trustedProxyIps;
+
     public AuthController(OrgService orgService, AuditService auditService, PasswordUtil passwordUtil, RateLimiter rateLimiter) {
         this.orgService = orgService;
         this.auditService = auditService;
@@ -45,10 +48,6 @@ public class AuthController {
     public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> body, HttpServletRequest request) {
         if (!localAuthEnabled) {
             return ControllerResponses.serviceUnavailable(auditService, "Local authentication is not enabled. Use OIDC/gateway auth instead.");
-        }
-
-        if (body == null) {
-            return ControllerResponses.validation(auditService, "Request body is required");
         }
 
         String email = body.get("email");
@@ -110,16 +109,7 @@ public class AuthController {
     public ResponseEntity<Map<String, Object>> changePassword(
             @RequestHeader(value = "Authorization") String authHeader,
             @RequestBody Map<String, String> body) {
-        // RbacAuthorizationFilter already ran before this controller and set the actor
-        // attribute. Re-parse here only to satisfy the explicit auth header check;
-        // in practice the filter chain guarantees a valid actor is available.
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (actor == null || actor.isBlank()) {
-            var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Missing token", null);
-            return ControllerResponses.gate(audit, "Missing or malformed Authorization header");
-        }
-
-        // Rate limit by actor to prevent brute-force password changes
         if (!rateLimiter.allow(actor + ":change-password")) {
             long remaining = rateLimiter.getRemainingAttempts(actor + ":change-password");
             var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Rate limited password change for: " + actor, null);
@@ -161,9 +151,6 @@ public class AuthController {
 
         return ResponseEntity.ok(Map.of("message", "Password updated"));
     }
-
-    @Value("${summa.proxy.trusted-ips:}")
-    private String trustedProxyIps;
 
     private boolean isTrustedProxy(String addr) {
         if ("local".equals(addr) || "127.0.0.1".equals(addr) || "0:0:0:0:0:0:0:1".equals(addr) || "::1".equals(addr)) {

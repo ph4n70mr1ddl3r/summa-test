@@ -68,10 +68,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 if (authHeader.length() > 7) {
                     String token = authHeader.substring(7);
                     Map<String, Object> payload = JwtUtil.parseToken(token, jwtSecret);
-                    if (payload != null) {
-                        String subject = (String) payload.get("sub");
+                if (payload != null) {
+                    String subject = payload.get("sub") instanceof String s ? s : null;
+                    if (subject != null && !subject.isBlank()) {
                         request.setAttribute("actor", subject);
                     }
+                }
                 }
             }
             filterChain.doFilter(request, response);
@@ -95,7 +97,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String token = authHeader.substring(7);
                 Map<String, Object> payload = JwtUtil.parseToken(token, jwtSecret);
                 if (payload != null) {
-                    String subject = (String) payload.get("sub");
+                    String subject = payload.get("sub") instanceof String s ? s : null;
+                    if (subject == null || subject.isBlank()) {
+                        log.warn("[SUMMA] JWT missing valid sub claim from {} path={}", request.getRemoteAddr(), path);
+                        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "JWT missing valid subject");
+                        return;
+                    }
                     request.setAttribute("actor", subject);
                     var auth = new UsernamePasswordAuthenticationToken(subject, null, List.of());
                     SecurityContextHolder.getContext().setAuthentication(auth);

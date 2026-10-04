@@ -87,4 +87,5 @@ public class Node {
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
     public boolean isTrusted() { return "trusted".equals(status); }
     public boolean isRevoked() { return "revoked".equals(status); }
+    public boolean isActive() { return isTrusted(); }
 }

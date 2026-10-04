@@ -4,11 +4,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Shared serialization helpers to prevent duplication across services and controllers.
  */
 public final class JsonHelpers {
+    private static final Logger log = LoggerFactory.getLogger(JsonHelpers.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private JsonHelpers() {}
 
@@ -16,6 +19,7 @@ public final class JsonHelpers {
         try {
             return mapper.writeValueAsString(map);
         } catch (Exception e) {
+            log.error("Failed to serialize map to JSON: {}", e.getMessage());
             return "{}";
         }
     }
@@ -90,11 +94,19 @@ public final class JsonHelpers {
      */
     public static boolean constantTimeEquals(String a, String b) {
         if (a == null || b == null) return a == b;
-        if (a.length() != b.length()) return false;
+        int lenA = a.length();
+        int lenB = b.length();
+        // Always iterate the full length of the longer string to prevent timing leaks
+        // on length mismatch. Caller must ensure equal lengths for security use.
         int result = 0;
-        for (int i = 0; i < a.length(); i++) {
-            result |= a.charAt(i) ^ b.charAt(i);
+        int len = Math.max(lenA, lenB);
+        for (int i = 0; i < len; i++) {
+            char ca = i < lenA ? a.charAt(i) : 0;
+            char cb = i < lenB ? b.charAt(i) : 0;
+            result |= ca ^ cb;
         }
+        // Still reject mismatched lengths, but after constant-time iteration
+        if (lenA != lenB) result |= 0xFF;
         return result == 0;
     }
 }

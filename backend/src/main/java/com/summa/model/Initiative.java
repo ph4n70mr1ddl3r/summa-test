@@ -91,4 +91,5 @@ public class Initiative {
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
     public boolean isActive() { return "active".equals(status); }
+    public boolean isClosed() { return "closed".equals(status); }
 }
