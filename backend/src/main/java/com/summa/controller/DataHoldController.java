@@ -11,6 +11,7 @@ import com.summa.service.MemberService;
 import com.summa.enums.DataHoldKind;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/governance/holds")
@@ -28,7 +29,15 @@ public class DataHoldController {
     }
 
     @GetMapping
-    public ResponseEntity<List<DataHold>> listHolds() {
+    public ResponseEntity<?> listHolds() {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+            }
+        }
         return ResponseEntity.ok(holdService.findAllActive());
     }
 

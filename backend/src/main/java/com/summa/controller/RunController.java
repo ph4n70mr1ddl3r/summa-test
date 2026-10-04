@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.constants.Defaults;
 import com.summa.service.GovernanceService;
+import com.summa.service.MemberService;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -21,21 +22,31 @@ public class RunController {
     private final AuditService auditService;
     private final WriteGate writeGate;
     private final GovernanceService governanceService;
+    private final MemberService memberService;
 
     public RunController(RunService runService, AuditService auditService, WriteGate writeGate,
-                          GovernanceService governanceService) {
+                          GovernanceService governanceService, MemberService memberService) {
         this.runService = runService;
         this.auditService = auditService;
         this.writeGate = writeGate;
         this.governanceService = governanceService;
+        this.memberService = memberService;
     }
 
     @GetMapping
-    public ResponseEntity<List<Run>> listRuns(
+    public ResponseEntity<?> listRuns(
             @RequestParam(required = false) String agentId,
             @RequestParam(required = false) String workspaceId,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "50") int limit) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+            }
+        }
         int cappedLimit = Math.min(Math.max(limit, 1), MAX_LIST_LIMIT);
         List<Run> all;
         if (agentId != null) {
@@ -52,6 +63,14 @@ public class RunController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getRun(@PathVariable String id) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+            }
+        }
         Optional<Run> entOpt = runService.findById(id);
         if (entOpt.isPresent()) {
             return ResponseEntity.ok(entOpt.get());
@@ -189,6 +208,14 @@ public class RunController {
 
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> stats() {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+            }
+        }
         return ResponseEntity.ok(Map.of(
             "queued", runService.countByStatus("queued"),
             "running", runService.countByStatus("running"),

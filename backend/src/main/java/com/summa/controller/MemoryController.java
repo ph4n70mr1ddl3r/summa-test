@@ -55,6 +55,14 @@ public class MemoryController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getMemory(@PathVariable String id) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+            }
+        }
         Optional<MemoryItem> entOpt = memoryService.findById(id);
         if (entOpt.isPresent()) {
             return ResponseEntity.ok(entOpt.get());

@@ -39,7 +39,7 @@ public class DnaDecisionController {
     public ResponseEntity<?> listDecisions(
             @RequestParam(required = false) String domainId) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
+        if (actor == null) {
             return ControllerResponses.gate(auditService, actor, "Authentication required");
         }
         if (domainId != null) {
@@ -51,7 +51,7 @@ public class DnaDecisionController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getDecision(@PathVariable String id) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
+        if (actor == null) {
             return ControllerResponses.gate(auditService, actor, "Authentication required");
         }
         Optional<DnaDecision> entOpt = decisionService.findById(id);

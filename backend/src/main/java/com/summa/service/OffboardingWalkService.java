@@ -526,21 +526,29 @@ public class OffboardingWalkService {
                         Optional<DnaDomain> domOpt = domainService.findById(domId);
                         if (domOpt.isPresent() && "named".equals(domOpt.get().getAccess())) {
                             String namedReaders = domOpt.get().getNamedReaders();
-                            if (namedReaders != null && !namedReaders.isBlank()
-                                    && !namedReaders.equals("[]")
-                                    && namedReaders.contains(humanId)) {
-                                JsonNode readers =
-                                    objectMapper.readTree(namedReaders);
-                                ArrayNode filteredReaders = objectMapper.createArrayNode();
-                                for (int i = 0; i < readers.size(); i++) {
-                                    if (!humanId.equals(readers.get(i).asText())) {
-                                        filteredReaders.add(readers.get(i));
-                                    }
-                                }
-                                domOpt.get().setNamedReaders(objectMapper.writeValueAsString(filteredReaders));
-                                domainRepository.save(domOpt.get());
-                                changed = true;
-                            }
+                             if (namedReaders != null && !namedReaders.isBlank()
+                                     && !namedReaders.equals("[]")) {
+                                 try {
+                                     JsonNode readers = objectMapper.readTree(namedReaders);
+                                     boolean contains = false;
+                                     for (JsonNode r : readers) {
+                                         if (humanId.equals(r.asText())) { contains = true; break; }
+                                     }
+                                     if (!contains) continue;
+                                     ArrayNode filteredReaders = objectMapper.createArrayNode();
+                                     for (int i = 0; i < readers.size(); i++) {
+                                         if (!humanId.equals(readers.get(i).asText())) {
+                                             filteredReaders.add(readers.get(i));
+                                         }
+                                     }
+                                     domOpt.get().setNamedReaders(objectMapper.writeValueAsString(filteredReaders));
+                                     domainRepository.save(domOpt.get());
+                                     changed = true;
+                                 } catch (Exception e) {
+                                     auditService.logSystem("DEMOTE_CLEAN_DOMAIN_READERS_FAIL", "dna_domain", "",
+                                         toJson(Map.of("error", e.getMessage()), objectMapper));
+                                 }
+                             }
                         }
                     }
                 } catch (Exception e) {

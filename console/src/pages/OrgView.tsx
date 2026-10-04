@@ -106,7 +106,7 @@ export default function OrgView() {
           <div className="space-y-2">
             {groups.map((g) => (
               <div key={g.id} className="flex items-center justify-between bg-gray-700 rounded px-3 py-2">
-                <span className="text-gray-200 text-sm">{g.name}</span>
+                <span className="text-gray-200 text-sm">{escapeHtml(g.name)}</span>
                 <span className={`text-xs px-2 py-0.5 rounded ${groupStatusColor(g.status)}`} aria-label={`Status: ${g.status}`}>
                   {g.status}
                 </span>

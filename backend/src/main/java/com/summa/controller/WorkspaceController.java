@@ -31,11 +31,27 @@ public class WorkspaceController {
 
     @GetMapping
     public ResponseEntity<List<Workspace>> listWorkspaces() {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+            }
+        }
         return ResponseEntity.ok(workspaceService.findAllActive());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getWorkspace(@PathVariable String id) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+            }
+        }
         Optional<Workspace> entOpt = workspaceService.findById(id);
         if (entOpt.isPresent()) {
             return ResponseEntity.ok(entOpt.get());

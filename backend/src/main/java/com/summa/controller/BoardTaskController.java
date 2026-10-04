@@ -5,7 +5,9 @@ import com.summa.model.BoardTask;
 import com.summa.service.AuditService;
 import com.summa.security.WriteGate;
 import com.summa.security.RbacAuthorizationFilter;
+import com.summa.constants.Defaults;
 import com.summa.util.JsonHelpers;
+import com.summa.service.MemberService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
@@ -19,18 +21,28 @@ public class BoardTaskController {
     private final BoardTaskService taskService;
     private final AuditService auditService;
     private final WriteGate writeGate;
+    private final MemberService memberService;
 
-    public BoardTaskController(BoardTaskService taskService, AuditService auditService, WriteGate writeGate) {
+    public BoardTaskController(BoardTaskService taskService, AuditService auditService, WriteGate writeGate, MemberService memberService) {
         this.taskService = taskService;
         this.auditService = auditService;
         this.writeGate = writeGate;
+        this.memberService = memberService;
     }
 
     @GetMapping
-    public ResponseEntity<List<BoardTask>> listTasks(
+    public ResponseEntity<?> listTasks(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String assigneeId,
             @RequestParam(required = false) String initiativeId) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+            }
+        }
         if (assigneeId != null) {
             return ResponseEntity.ok(taskService.findByAssignee(assigneeId));
         }
@@ -45,6 +57,14 @@ public class BoardTaskController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getTask(@PathVariable String id) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+            }
+        }
         Optional<BoardTask> entOpt = taskService.findById(id);
         if (entOpt.isPresent()) {
             return ResponseEntity.ok(entOpt.get());

@@ -8,6 +8,8 @@ import com.summa.service.DnaDomainService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
+import com.summa.constants.Defaults;
+import com.summa.service.MemberService;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -20,18 +22,28 @@ public class DnaCardController {
     private final AuditService auditService;
     private final WriteGate writeGate;
     private final DnaDomainService domainService;
+    private final MemberService memberService;
 
     public DnaCardController(DnaCardService cardService, AuditService auditService, WriteGate writeGate,
-                             DnaDomainService domainService) {
+                             DnaDomainService domainService, MemberService memberService) {
         this.cardService = cardService;
         this.auditService = auditService;
         this.writeGate = writeGate;
         this.domainService = domainService;
+        this.memberService = memberService;
     }
 
     @GetMapping
-    public ResponseEntity<List<DnaCard>> listCards(
+    public ResponseEntity<?> listCards(
             @RequestParam(required = false) String domainId) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+            }
+        }
         if (domainId != null) {
             return ResponseEntity.ok(cardService.findByDomain(domainId));
         }
@@ -40,6 +52,14 @@ public class DnaCardController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getCard(@PathVariable String id) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+            }
+        }
         Optional<DnaCard> entOpt = cardService.findById(id);
         if (entOpt.isPresent()) {
             return ResponseEntity.ok(entOpt.get());

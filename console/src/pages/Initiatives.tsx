@@ -15,7 +15,7 @@ export default function Initiatives() {
     let aborted = false
     loadWithFallback(
       () => api.initiatives.list().then(d => Array.isArray(d) ? d : []),
-      () => api.initiatives.list().then(d => Array.isArray(d) ? d : []).catch(() => null),
+      () => api.initiatives.list().then(d => Array.isArray(d) ? d : []).catch(() => []),
     ).then(({ data, error: loadError }) => {
       if (aborted) return
       const result = Array.isArray(data) ? data : []

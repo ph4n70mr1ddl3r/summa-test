@@ -52,7 +52,7 @@ asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request'|'pro
                 status 'pending'|'answered'|'expired'|'withdrawn', deadline, created_at, updated_at?,
                 sla_tier 'critical'|'standard'|'bulk', escalation json,
                 expiry_behavior 'deny'|'escalate'|'reassign', responded_at?,
-                quorum_required int default 1, responses json, collapsed_count int default 1)
+                 quorum_required int default 1, responses json, collapsed_count int default 0)
 initiatives    (id, title, goal_ref?, decision_ref?, sponsor member, lead member,
                 status 'proposed'|'active'|'paused'|'closed', business_budget json?,
                 deadline?, closed_at?, depends_on json?, created_at, updated_at?)

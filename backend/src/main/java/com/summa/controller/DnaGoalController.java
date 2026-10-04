@@ -37,9 +37,17 @@ public class DnaGoalController {
     }
 
     @GetMapping
-    public ResponseEntity<List<DnaGoal>> listGoals(
+    public ResponseEntity<?> listGoals(
             @RequestParam(required = false) String domainId,
             @RequestParam(required = false) String inject) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+            }
+        }
         if (inject != null) {
             return ResponseEntity.ok(goalService.findActiveInject(inject, Instant.now()));
         }
@@ -51,6 +59,14 @@ public class DnaGoalController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getGoal(@PathVariable String id) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+            }
+        }
         Optional<DnaGoal> entOpt = goalService.findById(id);
         if (entOpt.isPresent()) {
             return ResponseEntity.ok(entOpt.get());

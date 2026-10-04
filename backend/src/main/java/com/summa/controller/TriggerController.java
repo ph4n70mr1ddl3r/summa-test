@@ -36,7 +36,7 @@ public class TriggerController {
     public ResponseEntity<?> listTriggers(
             @RequestParam(required = false) String agentId) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
+        if (actor == null) {
             return ControllerResponses.gate(auditService, actor, "Authentication required");
         }
         if (agentId != null) {
@@ -48,7 +48,7 @@ public class TriggerController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getTrigger(@PathVariable String id) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
+        if (actor == null) {
             return ControllerResponses.gate(auditService, actor, "Authentication required");
         }
         Optional<Trigger> entOpt = triggerService.findById(id);
@@ -153,7 +153,7 @@ public class TriggerController {
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> stats() {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
+        if (actor == null) {
             return ControllerResponses.gate(auditService, actor, "Authentication required");
         }
         return ResponseEntity.ok(triggerService.getStats());

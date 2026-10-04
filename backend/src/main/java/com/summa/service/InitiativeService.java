@@ -218,11 +218,15 @@ public class InitiativeService {
         // with expiry=deny. The sponsor's own opens go active outright.
         if (actor != null && !actor.equals(initiative.getSponsor())) {
             // Validate sponsor is still active before routing ask to them
-            Optional<Human> sponsorHuman = memberService.findHuman(initiative.getSponsor());
+            String sponsorId = initiative.getSponsor();
+            if (sponsorId == null) {
+                throw new IllegalStateException("Cannot activate: sponsor is not set");
+            }
+            Optional<Human> sponsorHuman = memberService.findHuman(sponsorId);
             if (sponsorHuman.isPresent() && !sponsorHuman.get().isActive()) {
                 throw new IllegalStateException("Cannot activate: sponsor is deactivated");
             }
-            Optional<Agent> sponsorAgent = memberService.findAgent(initiative.getSponsor());
+            Optional<Agent> sponsorAgent = memberService.findAgent(sponsorId);
             if (sponsorAgent.isPresent() && (!sponsorAgent.get().isActive() || sponsorAgent.get().isEphemeral())) {
                 throw new IllegalStateException("Cannot activate: sponsor is inactive or ephemeral");
             }

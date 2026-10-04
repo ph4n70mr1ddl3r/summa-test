@@ -34,7 +34,7 @@ public class DnaSearchController {
             @RequestParam(required = false) String domainId,
             @RequestParam(defaultValue = "20") int limit) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
+        if (actor == null) {
             return ControllerResponses.gate(auditService, "Authentication required");
         }
         int cappedLimit = Math.min(Math.max(limit, 1), Defaults.MAX_DNA_SEARCH_LIMIT);
@@ -64,7 +64,7 @@ public class DnaSearchController {
     @GetMapping("/domains")
     public ResponseEntity<?> listDomains() {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
+        if (actor == null) {
             return ControllerResponses.gate(auditService, "Authentication required");
         }
         return ResponseEntity.ok(dnaReadService.listDomains());
