@@ -65,7 +65,10 @@ public class DnaCardService {
         }
 
         if (title != null) card.setTitle(title);
-        if (definitionMd != null) card.setDefinitionMd(definitionMd);
+        if (definitionMd != null) {
+            ScanUtils.scanForSecrets(definitionMd, actor, "dna_card", id, secretsScanner, auditService);
+            card.setDefinitionMd(definitionMd);
+        }
         if (provenance != null) card.setProvenance(provenance);
 
         DnaCard saved = cardRepository.save(card);

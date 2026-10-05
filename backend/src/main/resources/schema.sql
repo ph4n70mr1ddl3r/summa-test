@@ -312,7 +312,7 @@ CREATE TABLE IF NOT EXISTS spawn_requests (
     ttl_hours INTEGER,
     requested_by_human_id TEXT,
     gate_target TEXT,
-    status TEXT NOT NULL DEFAULT 'requested' CHECK (status IN ('requested', 'approved', 'archived')),
+    status TEXT NOT NULL DEFAULT 'requested' CHECK (status IN ('requested', 'approved', 'halted', 'archived')),
     approved_by TEXT,
     approved_at INTEGER,
     agent_id TEXT,

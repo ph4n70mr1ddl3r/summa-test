@@ -33,6 +33,7 @@ public class DnaGlossaryService {
         }
 
         // SEC-030: scan for secrets before writing
+        ScanUtils.scanForSecrets(term, actor, "dna_glossary", id, secretsScanner, auditService);
         ScanUtils.scanForSecrets(definition, actor, "dna_glossary", id, secretsScanner, auditService);
 
         DnaGlossary entry = new DnaGlossary();
@@ -87,8 +88,14 @@ public class DnaGlossaryService {
             throw new IllegalArgumentException("Cannot update retired entry");
         }
 
-        if (definition != null) entry.setDefinition(definition);
-        if (aliases != null) entry.setAliases(aliases);
+        if (definition != null) {
+            ScanUtils.scanForSecrets(definition, actor, "dna_glossary", id, secretsScanner, auditService);
+            entry.setDefinition(definition);
+        }
+        if (aliases != null) {
+            ScanUtils.scanForSecrets(aliases, actor, "dna_glossary", id, secretsScanner, auditService);
+            entry.setAliases(aliases);
+        }
 
         DnaGlossary saved = glossaryRepository.save(entry);
         auditService.log(actor, "UPDATE_GLOSSARY", "dna_glossary", id, null);

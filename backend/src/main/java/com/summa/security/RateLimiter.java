@@ -69,7 +69,7 @@ public class RateLimiter {
 
     public long getResetSeconds(String identifier) {
         Instant window = windowStarts.get(identifier);
-        if (window == null) return 0;
+        if (window == null) return WINDOW_SECONDS;
         long resetAt = window.getEpochSecond() + WINDOW_SECONDS;
         long now = Instant.now().getEpochSecond();
         return Math.max(0, resetAt - now);

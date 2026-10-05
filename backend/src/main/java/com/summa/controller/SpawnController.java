@@ -81,7 +81,7 @@ public class SpawnController {
             if (requesterId == null || requesterId.isBlank()) {
                 throw new IllegalArgumentException("requesterId is required");
             }
-            requesterId = requesterId.replaceFirst("^[ha]?:", "");
+            requesterId = JsonHelpers.stripIdPrefix(requesterId);
             String rawClass = body.get("class");
             String effectiveClass = rawClass != null && !rawClass.isBlank() ? rawClass : "ephemeral";
             try {
