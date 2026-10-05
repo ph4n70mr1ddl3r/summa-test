@@ -153,7 +153,7 @@ public class AgentController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         // CLC-010: Ownership verification — only the agent's owner human, an admin, or the initiative sponsor may lifecycle-manage
-        String agentId = id.replaceFirst("^[ha]?:", "");
+        String agentId = JsonHelpers.stripIdPrefix(id);
         Optional<Agent> agentOpt = agentService.findById(agentId);
         if (agentOpt.isEmpty()) {
             return ControllerResponses.notFound(auditService, "Agent not found: " + id);
@@ -183,7 +183,7 @@ public class AgentController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            String agentId = id.replaceFirst("^[ha]?:", "");
+            String agentId = JsonHelpers.stripIdPrefix(id);
             Agent agent = agentService.findById(agentId)
                     .orElseThrow(() -> new EntityNotFoundException("Agent not found: " + agentId));
             // TPL-040: Only customRole hires (template_id null) are eligible for promotion

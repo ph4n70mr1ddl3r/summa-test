@@ -31,7 +31,7 @@ export default function DNAConsole() {
         api.dna.reviewQueue().catch(() => null),
       ]),
     ).then(({ data, error: loadError }) => {
-      if (aborted) return
+      if (aborted) { setLoading(false); return }
       setDomains(Array.isArray(data[0]) ? data[0] as DnaDomain[] : [])
       setCards(Array.isArray(data[1]) ? data[1] as DnaCard[] : [])
       setGoals(Array.isArray(data[2]) ? data[2] as DnaGoal[] : [])

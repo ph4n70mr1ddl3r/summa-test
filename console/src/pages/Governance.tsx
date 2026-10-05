@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { api, loadWithFallback } from '../services/api'
 import type { SpendSnapshot } from '../types'
 import { ErrorBanner } from '../components/ErrorBanner'
@@ -30,7 +30,7 @@ export default function Governance() {
         api.governance.spend().catch(() => null),
       ]),
     ).then(({ data, error: loadError }) => {
-      if (aborted) return
+      if (aborted) { setLoading(false); return }
       const policiesData = (data[0] != null && typeof data[0] === 'object' && !Array.isArray(data[0]))
         ? data[0] as Record<string, unknown> : null
       const quotasData = (data[1] != null && typeof data[1] === 'object' && !Array.isArray(data[1]))
@@ -76,7 +76,7 @@ export default function Governance() {
       setEditValues(prev => { const next = { ...prev }; delete next[key]; return next })
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err))
-      try { await loadData() } catch { /* reload failure is non-blocking */ }
+      try { await loadData(); setError(null) } catch { setActionError(err instanceof Error ? err.message : String(err)) }
     } finally {
       setSaving(null)
     }
@@ -89,7 +89,7 @@ export default function Governance() {
     setEditValues(prev => ({ ...prev, [key]: displayValue }))
   }
 
-  const renderCell = (section: 'policies' | 'quotas', key: string, value: unknown) => {
+  const renderCell = useCallback((section: 'policies' | 'quotas', key: string, value: unknown) => {
     const isEditing = editValues[key] !== undefined
     const currentValue = isEditing ? editValues[key] : String(value ?? '')
     return (
@@ -135,7 +135,7 @@ export default function Governance() {
         )}
       </div>
     )
-  }
+  }, [editValues, startEdit, handleSave, saving])
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
   if (error) return <ErrorBanner message={error} onRetry={loadData} />

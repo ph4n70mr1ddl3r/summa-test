@@ -75,12 +75,35 @@ if [ "${#SUMMA_JWT_SECRET}" -lt 32 ]; then
     exit 1
 fi
 
+# Check for curl
+if ! command -v curl &> /dev/null; then
+    echo "WARNING: curl not found. Health checks will be unavailable."
+fi
+
 # Create data directories
 SUMMA_LOG_DIR="${SUMMA_LOG_DIR:-$HOME/.summa/logs}"
 mkdir -p ~/.summa "$SUMMA_LOG_DIR"
 SUMMA_DNA_REPO="${SUMMA_DNA_REPO:-$HOME/.summa/dna}"
 SUMMA_DB_PATH="${SUMMA_DB_PATH:-$HOME/.summa/summa.db}"
 mkdir -p "$SUMMA_DNA_REPO" "$(dirname "$SUMMA_DB_PATH")"
+
+# Validate directories are writable
+for dir in "$SUMMA_LOG_DIR" "$SUMMA_DNA_REPO" "$(dirname "$SUMMA_DB_PATH")"; do
+    if [ ! -w "$dir" ]; then
+        echo "ERROR: Directory is not writable: $dir"
+        exit 1
+    fi
+done
+
+# Validate backend and console directories exist
+if [ ! -d "backend" ]; then
+    echo "ERROR: backend/ directory not found"
+    exit 1
+fi
+if [ ! -d "console" ]; then
+    echo "ERROR: console/ directory not found"
+    exit 1
+fi
 
 # Start backend in background
 echo "[1/2] Starting backend..."

@@ -73,7 +73,7 @@ public class DnaDomainController {
                 throw new IllegalArgumentException("ownerHumanId is required");
             }
             String ownerHumanIdRaw = body.get("ownerHumanId");
-            String ownerHumanIdClean = ownerHumanIdRaw.replaceFirst("^[ha]?:", "");
+            String ownerHumanIdClean = JsonHelpers.stripIdPrefix(ownerHumanIdRaw);
             if (memberService.findHuman(ownerHumanIdClean).isEmpty()) {
                 throw new IllegalArgumentException("ownerHumanId does not reference an existing human: " + ownerHumanIdRaw);
             }

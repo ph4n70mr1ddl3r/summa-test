@@ -27,7 +27,7 @@ export default function Spawning() {
         api.spawn.stats().catch(() => null),
       ]),
     ).then(({ data, error: loadError }) => {
-      if (aborted) return
+      if (aborted) { setLoading(false); return }
       setRequests(Array.isArray(data[0]) ? data[0] as SpawnRequest[] : [])
       setStats(data[1] != null && typeof data[1] === 'object' && !Array.isArray(data[1])
         ? data[1] as SpawnStats : null)
@@ -51,7 +51,7 @@ export default function Spawning() {
       await loadData()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err))
-      try { await loadData() } catch { /* reload failure is non-blocking */ }
+      try { await loadData(); setError(null) } catch { setActionError(err instanceof Error ? err.message : String(err)) }
     } finally {
       setActionId(null)
       setConfirmAction(null)

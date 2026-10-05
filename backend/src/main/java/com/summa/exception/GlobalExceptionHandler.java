@@ -66,13 +66,18 @@ public class GlobalExceptionHandler {
     }
 
     private boolean isAuthRefusal(String msg) {
-        // Match only specific authorization patterns to avoid false positives.
-        // These correspond to messages produced by WriteGate and RbacAuthorizationFilter.
+        // Match authorization refusal patterns produced by WriteGate, controllers, and services.
+        // These correspond to messages thrown as IllegalStateException for permission denials.
         if (msg == null) return false;
-        return "write permission denied".equals(msg)
-                || "admin role required".equals(msg)
-                || "auth gate refused".equals(msg)
-                || msg.contains(": gate refusal");
+        return msg.contains("does not have write permission")
+                || msg.contains("Admin access required")
+                || msg.contains("Authentication required")
+                || msg.contains("admin required")
+                || msg.contains("requires admin role")
+                || msg.contains("requires admin")
+                || msg.contains("Only the agent's owner or an admin")
+                || msg.startsWith("gate refusal")
+                || msg.contains("gate refusal");
     }
 
     @ExceptionHandler(EntityNotFoundException.class)

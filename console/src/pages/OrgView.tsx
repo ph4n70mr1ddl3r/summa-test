@@ -24,7 +24,7 @@ export default function OrgView() {
         api.groups.list().catch(() => null),
       ]),
     ).then(({ data, error: loadError }) => {
-      if (aborted) return
+      if (aborted) { setLoading(false); return }
       const membersResp = data[0]
       const membersList = Array.isArray(membersResp)
         ? membersResp

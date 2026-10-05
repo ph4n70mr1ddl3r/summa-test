@@ -53,7 +53,7 @@ export default function Memory() {
       setReviewSuccess(false)
       setReviewingForId(null)
       setReviewingId(null)
-      try { await loadItems() } catch { /* reload failure is non-blocking */ }
+      try { await loadItems(); setError(null) } catch { setReviewError(err instanceof Error ? err.message : String(err)) }
     }
   }
 
@@ -78,7 +78,7 @@ export default function Memory() {
           <div className="flex rounded-lg overflow-hidden border border-gray-700" role="group" aria-label="Filter memory items">
             <button
               onClick={() => setFilter('all')}
-              className={`px-3 py-1 text-sm ${filter === 'all' ? 'bg-blue-700 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'}`}
+              className={`px-3 py-1 text-sm ${filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'}`}
               aria-pressed={filter === 'all'}
             >
               All

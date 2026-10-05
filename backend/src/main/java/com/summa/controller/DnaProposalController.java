@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.enums.RbacRole;
 import com.summa.security.RbacAuthorizationFilter;
+import com.summa.util.JsonHelpers;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -120,12 +121,12 @@ public class DnaProposalController {
         String effectiveReviewer = actor;
         if (reviewedBy != null && !reviewedBy.isBlank()) {
             if (!reviewedBy.equals(actor)) {
-                Optional<com.summa.model.Human> reviewerOpt = memberService.findHuman(reviewedBy.replaceFirst("^[ha]?:", ""));
+                Optional<com.summa.model.Human> reviewerOpt = memberService.findHuman(JsonHelpers.stripIdPrefix(reviewedBy));
                 boolean isReviewerAdmin = reviewerOpt.isPresent() && RbacRole.ADMIN.getValue().equals(reviewerOpt.get().getRbac());
                 if (!isReviewerAdmin) {
                     return ControllerResponses.validation(auditService, "reviewedBy must be the current actor or an admin");
                 }
-                effectiveReviewer = reviewedBy.replaceFirst("^[ha]?:", "");
+                effectiveReviewer = JsonHelpers.stripIdPrefix(reviewedBy);
             }
         }
         if ("publish".equals(action)) {
@@ -187,7 +188,12 @@ public class DnaProposalController {
         if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
             return ControllerResponses.gate(auditService, "Authentication required");
         }
-        // API-022: GET /dna/proposals/review-queue
+        // API-022: GET /dna/proposals/review-queue — admin or writer access required
+        Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+        boolean isAdmin = humanOpt.isPresent() && RbacRole.ADMIN.getValue().equals(humanOpt.get().getRbac());
+        if (!isAdmin) {
+            return ControllerResponses.gate(auditService, actor, "Admin access required for review queue");
+        }
         if (domainId != null) {
             return ResponseEntity.ok(proposalService.findOpenByDomain(domainId));
         }
