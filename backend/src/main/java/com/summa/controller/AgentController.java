@@ -14,7 +14,6 @@ import com.summa.service.MemberService;
 import com.summa.exception.EntityNotFoundException;
 import com.summa.constants.Defaults;
 import com.summa.util.JsonHelpers;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.fasterxml.jackson.databind.JsonNode;

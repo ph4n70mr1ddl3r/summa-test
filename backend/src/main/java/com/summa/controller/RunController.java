@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 import com.summa.constants.Defaults;
 import com.summa.service.GovernanceService;
 import com.summa.service.MemberService;
-import org.springframework.http.HttpStatus;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;

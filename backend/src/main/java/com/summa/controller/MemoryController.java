@@ -4,14 +4,12 @@ import com.summa.service.MemoryService;
 import com.summa.model.MemoryItem;
 import com.summa.service.AuditService;
 import com.summa.security.WriteGate;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.enums.MemoryTier;
 import com.summa.constants.Defaults;
 import com.summa.service.MemberService;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
