@@ -8,6 +8,7 @@ import com.summa.security.RbacAuthorizationFilter;
 import com.summa.constants.Defaults;
 import com.summa.util.JsonHelpers;
 import com.summa.service.MemberService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
@@ -40,7 +41,7 @@ public class BoardTaskController {
             Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         }
         if (assigneeId != null) {
@@ -62,7 +63,7 @@ public class BoardTaskController {
             Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         }
         Optional<BoardTask> entOpt = taskService.findById(id);

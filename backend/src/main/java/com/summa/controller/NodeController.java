@@ -8,6 +8,7 @@ import com.summa.security.WriteGate;
 import com.summa.service.AuditService;
 import com.summa.service.MemberService;
 import com.summa.service.NodeService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -36,7 +37,7 @@ public class NodeController {
             Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         }
         return ResponseEntity.ok(nodeService.findAll());
@@ -49,7 +50,7 @@ public class NodeController {
             Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         }
         Optional<Node> entOpt = nodeService.findById(id);

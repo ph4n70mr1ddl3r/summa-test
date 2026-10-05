@@ -43,7 +43,7 @@ public class DnaGoalService {
         goal.setDomainId(domainId);
         goal.setQuarter(quarter);
         goal.setStatementMd(statementMd != null ? statementMd : "");
-        String ownerClean = owner != null ? owner.replaceFirst("^[ha]?:", "") : owner;
+        String ownerClean = owner != null ? JsonHelpers.stripIdPrefix(owner) : owner;
         goal.setOwner(ownerClean);
         goal.setInject(inject != null ? inject : "linked");
         goal.setEffectiveFrom(effectiveFrom);

@@ -7,6 +7,7 @@ import com.summa.service.MemberService;
 import com.summa.security.WriteGate;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.util.JsonHelpers;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -37,7 +38,7 @@ public class DnaDomainController {
             Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         }
         return ResponseEntity.ok(domainService.findAll());
@@ -50,7 +51,7 @@ public class DnaDomainController {
             Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         }
         Optional<DnaDomain> entOpt = domainService.findById(id);
@@ -136,7 +137,7 @@ public class DnaDomainController {
         if (gate != null) return gate;
         try {
             String rawOwner = body.get("ownerHumanId");
-            String ownerClean = rawOwner != null && !rawOwner.isBlank() ? rawOwner.replaceFirst("^[ha]?:", "") : null;
+            String ownerClean = rawOwner != null && !rawOwner.isBlank() ? JsonHelpers.stripIdPrefix(rawOwner) : null;
             DnaDomain domain = domainService.updateOwner(id, ownerClean, actor);
             return ResponseEntity.ok(domain);
         } catch (IllegalArgumentException e) {

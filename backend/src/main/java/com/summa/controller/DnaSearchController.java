@@ -10,6 +10,7 @@ import com.summa.security.RbacAuthorizationFilter;
 import com.summa.exception.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -43,7 +44,7 @@ public class DnaSearchController {
             Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         }
         int cappedLimit = Math.min(Math.max(limit, 1), Defaults.MAX_DNA_SEARCH_LIMIT);
@@ -77,7 +78,7 @@ public class DnaSearchController {
             Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         }
         return ResponseEntity.ok(dnaReadService.listDomains());

@@ -7,6 +7,7 @@ import com.summa.model.Agent;
 import com.summa.service.AuditService;
 import com.summa.service.MemberService;
 import com.summa.security.WriteGate;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
@@ -45,7 +46,7 @@ public class DnaGoalController {
             Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         }
         if (inject != null) {
@@ -64,7 +65,7 @@ public class DnaGoalController {
             Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         }
         Optional<DnaGoal> entOpt = goalService.findById(id);
@@ -87,7 +88,7 @@ public class DnaGoalController {
             if (ownerRaw == null || ownerRaw.isBlank()) {
                 throw new IllegalArgumentException("owner is required");
             }
-            String ownerClean = ownerRaw.replaceFirst("^[ha]?:", "");
+            String ownerClean = JsonHelpers.stripIdPrefix(ownerRaw);
             Optional<Human> ownerHuman = memberService.findHuman(ownerClean);
             Optional<Agent> ownerAgent = memberService.findAgent(ownerClean);
             if (ownerHuman.isEmpty() && ownerAgent.isEmpty()) {

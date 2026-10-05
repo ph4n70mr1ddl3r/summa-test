@@ -4,10 +4,10 @@ import com.summa.service.DnaGlossaryService;
 import com.summa.model.DnaGlossary;
 import com.summa.service.AuditService;
 import com.summa.security.WriteGate;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
-import com.summa.constants.Defaults;
 import com.summa.service.MemberService;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +38,7 @@ public class DnaGlossaryController {
             Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         }
         if (scope != null) {
@@ -57,7 +57,7 @@ public class DnaGlossaryController {
             Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         }
         Optional<DnaGlossary> entOpt = glossaryService.findById(id);

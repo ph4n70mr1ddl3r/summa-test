@@ -91,8 +91,8 @@ public class InitiativeService {
                 () -> new EntityNotFoundException("Decision not found: " + decisionRef));
         }
         // INT-001: Refuse viewer or non-active members as sponsor or lead
-        String sponsorClean = sponsor != null ? sponsor.replaceFirst("^[ha]?:", "") : "";
-        String leadClean = lead != null ? lead.replaceFirst("^[ha]?:", "") : "";
+        String sponsorClean = sponsor != null ? JsonHelpers.stripIdPrefix(sponsor) : "";
+        String leadClean = lead != null ? JsonHelpers.stripIdPrefix(lead) : "";
         Optional<Human> sponsorHuman = memberService.findHuman(sponsorClean);
         if (sponsorHuman.isPresent() && RbacRole.VIEWER.getValue().equals(sponsorHuman.get().getRbac())) {
             throw new IllegalStateException("Sponsor cannot be a viewer: " + sponsor);

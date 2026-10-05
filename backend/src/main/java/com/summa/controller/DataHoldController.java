@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.service.MemberService;
 import com.summa.enums.DataHoldKind;
+import org.springframework.http.HttpStatus;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -35,7 +36,7 @@ public class DataHoldController {
             Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         }
         return ResponseEntity.ok(holdService.findAllActive());

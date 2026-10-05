@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import com.summa.constants.Defaults;
 import com.summa.service.GovernanceService;
 import com.summa.service.MemberService;
+import org.springframework.http.HttpStatus;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -44,7 +45,7 @@ public class RunController {
             Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         }
         int cappedLimit = Math.min(Math.max(limit, 1), MAX_LIST_LIMIT);
@@ -68,7 +69,7 @@ public class RunController {
             Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         }
         Optional<Run> entOpt = runService.findById(id);
@@ -213,7 +214,7 @@ public class RunController {
             Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         }
         return ResponseEntity.ok(Map.of(

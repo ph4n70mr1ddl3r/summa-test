@@ -35,7 +35,7 @@ public class DnaDecisionService {
             domainRepository.findById(domainId).orElseThrow(
                 () -> new EntityNotFoundException("Domain not found: " + domainId));
         }
-        String decidedByClean = decidedBy != null ? decidedBy.replaceFirst("^[ha]?:", "") : decidedBy;
+        String decidedByClean = decidedBy != null ? JsonHelpers.stripIdPrefix(decidedBy) : decidedBy;
         ScanUtils.scanForSecrets(contextMd, actor, "dna_decision", id, secretsScanner, auditService);
         ScanUtils.scanForSecrets(outcomeMd, actor, "dna_decision", id, secretsScanner, auditService);
 

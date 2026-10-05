@@ -108,7 +108,7 @@ public class AskController {
                 throw new IllegalArgumentException("to is required");
             }
             // Strip keyed-union prefix (h:/a:) for consistency with other controllers
-            String toClean = to.replaceFirst("^[ha]?:", "");
+            String toClean = JsonHelpers.stripIdPrefix(to);
             if (memberService.findHuman(toClean).isEmpty() && memberService.findAgent(toClean).isEmpty()
                     && !OffboardingWalkService.ADMIN_BROADCAST.equals(toClean)) {
                 throw new IllegalArgumentException("to does not reference an existing human or agent: " + to);

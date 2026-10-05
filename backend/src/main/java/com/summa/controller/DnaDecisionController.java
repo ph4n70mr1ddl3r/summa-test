@@ -8,10 +8,12 @@ import com.summa.service.AuditService;
 import com.summa.service.MemberService;
 import com.summa.service.DnaDomainService;
 import com.summa.security.WriteGate;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.constants.Defaults;
+import com.summa.util.JsonHelpers;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -43,7 +45,7 @@ public class DnaDecisionController {
             Optional<Human> humanOpt = memberService.findHuman(actor);
             Optional<Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         }
         if (domainId != null) {
@@ -59,7 +61,7 @@ public class DnaDecisionController {
             Optional<Human> humanOpt = memberService.findHuman(actor);
             Optional<Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         }
         Optional<DnaDecision> entOpt = decisionService.findById(id);
@@ -91,7 +93,7 @@ public class DnaDecisionController {
             if (decidedByRaw == null || decidedByRaw.isBlank()) {
                 throw new IllegalArgumentException("decidedBy is required");
             }
-            String decidedByClean = decidedByRaw.replaceFirst("^[ha]?:", "");
+            String decidedByClean = JsonHelpers.stripIdPrefix(decidedByRaw);
             Optional<Human> deciderHuman = memberService.findHuman(decidedByClean);
             Optional<Agent> deciderAgent = memberService.findAgent(decidedByClean);
             if (deciderHuman.isEmpty() && deciderAgent.isEmpty()) {
