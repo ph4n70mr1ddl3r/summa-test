@@ -78,7 +78,7 @@ export default function DNAProposals() {
                     {escapeHtml(p.proposedBy)}
                   </p>
                   <p className="text-sm text-gray-400 mt-1">
-                    {p.domainId ? `Domain: ${p.domainId}` : 'Organization-wide'}
+                    {p.domainId ? `Domain: ${escapeHtml(p.domainId)}` : 'Organization-wide'}
                   </p>
                 </div>
                 <span className={`text-xs px-2 py-1 rounded ${proposalStatusColor(p.status)}`} aria-label={`Status: ${p.status}`}>
@@ -87,8 +87,8 @@ export default function DNAProposals() {
               </div>
               <p className="text-xs text-gray-500 mt-2">
                 Rev {p.revision} · Created {p.createdAt ? formatDate(p.createdAt, { dateOnly: true }) : '?'}
-                {p.reviewedBy ? ` · Reviewed by ${p.reviewedBy}` : ''}
-                {p.reviewBy && !p.reviewedBy ? ` · Assignee: ${p.reviewBy}` : ''}
+                {p.reviewedBy ? ` · Reviewed by ${escapeHtml(p.reviewedBy)}` : ''}
+                {p.reviewBy && !p.reviewedBy ? ` · Assignee: ${escapeHtml(p.reviewBy)}` : ''}
               </p>
             </div>
           ))}

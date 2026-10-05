@@ -37,7 +37,7 @@ public class MemoryController {
             @RequestParam(defaultValue = "50") int limit) {
         // CP6: Require authenticated actor for memory access — prevent unauthenticated enumeration.
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
+        if (Defaults.SYSTEM_ACTOR.equals(actor)) {
             return ControllerResponses.gate(auditService, "Authentication required to list memory");
         }
         int cappedLimit = Math.min(Math.max(limit, 1), Defaults.MAX_LIST_LIMIT);

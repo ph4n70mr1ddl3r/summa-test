@@ -121,9 +121,9 @@ CREATE TABLE IF NOT EXISTS dna_decisions (
     refs TEXT NOT NULL DEFAULT '[]',
     provenance TEXT NOT NULL DEFAULT '{}',
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
-    updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
     FOREIGN KEY (domain_id) REFERENCES dna_domains(id) ON DELETE CASCADE
     -- decided_by is a keyed union per DAT-120: h:<humans.id> or a:<agents.id>
+    -- Note: no updated_at — DnaDecision is immutable append-only (PreUpdate throws)
 );
 
 CREATE TABLE IF NOT EXISTS dna_glossary (

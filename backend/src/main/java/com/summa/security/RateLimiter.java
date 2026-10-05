@@ -20,6 +20,7 @@ public class RateLimiter {
     private static final int MAX_ATTEMPTS = 5;
     private static final long WINDOW_SECONDS = 60L;
     private static final int MAX_KEYS = 10_000;
+    private static final int MAX_LOCKS = 16_384;
 
     public boolean allow(String identifier) {
         purgeIfNeeded();
@@ -27,7 +28,13 @@ public class RateLimiter {
         long windowStart = now.getEpochSecond() / WINDOW_SECONDS * WINDOW_SECONDS;
 
         // Use a per-key lock to make the window check + count update atomic.
-        ReentrantLock lock = locks.computeIfAbsent(identifier, k -> new ReentrantLock());
+        // Cap lock map size to prevent unbounded memory growth under DDoS.
+        ReentrantLock lock = locks.computeIfAbsent(identifier, k -> {
+            if (locks.size() >= MAX_LOCKS) {
+                purgeStaleLocks();
+            }
+            return new ReentrantLock();
+        });
         lock.lock();
         try {
             Instant window = windowStarts.get(identifier);
@@ -124,6 +131,19 @@ public class RateLimiter {
                 windowStarts.remove(key);
                 locks.remove(key);
             }
+        }
+    }
+
+    private void purgeStaleLocks() {
+        // Remove locks that have no corresponding rate-limit data
+        var keysToRemove = new ArrayList<String>();
+        for (String key : locks.keySet()) {
+            if (!attemptCounts.containsKey(key) && !windowStarts.containsKey(key)) {
+                keysToRemove.add(key);
+            }
+        }
+        for (String key : keysToRemove) {
+            locks.remove(key);
         }
     }
 }

@@ -94,7 +94,7 @@ export default function Governance() {
     const currentValue = isEditing ? editValues[key] : String(value ?? '')
     return (
       <div key={key} className="flex items-center justify-between text-sm gap-2">
-        <span className="text-gray-400 flex-shrink-0 w-48 truncate">{key}</span>
+        <span className="text-gray-400 flex-shrink-0 w-48 truncate">{escapeHtml(key)}</span>
         {isEditing ? (
           <div className="flex items-center gap-1 flex-1">
             <input

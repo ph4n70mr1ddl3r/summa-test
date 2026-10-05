@@ -68,12 +68,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 if (authHeader.length() > 7) {
                     String token = authHeader.substring(7);
                     Map<String, Object> payload = JwtUtil.parseToken(token, jwtSecret);
-                if (payload != null) {
-                    String subject = payload.get("sub") instanceof String s ? s : null;
-                    if (subject != null && !subject.isBlank()) {
-                        request.setAttribute("actor", subject);
+                    if (payload != null) {
+                        String subject = payload.get("sub") instanceof String s ? s : null;
+                        if (subject != null && !subject.isBlank()) {
+                            request.setAttribute("actor", subject);
+                            var auth = new UsernamePasswordAuthenticationToken(subject, null, List.of());
+                            SecurityContextHolder.getContext().setAuthentication(auth);
+                        }
+                    } else {
+                        log.warn("[SUMMA] invalid/expired JWT on public path from {} path={}", request.getRemoteAddr(), path);
                     }
-                }
                 }
             }
             filterChain.doFilter(request, response);

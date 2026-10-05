@@ -12,6 +12,7 @@ services:
       - ALL
     cap_add:
       - FOWNER
+      - MEMLOCK
     read_only: true
     tmpfs:
       - /tmp
@@ -19,8 +20,6 @@ services:
       - "127.0.0.1:8080:8080"
     volumes:
       - summa-data:/data
-    command: >
-      sh -c "exec java \"$JAVA_OPTS\" -jar app.jar"
     environment:
       - JAVA_OPTS=-Xmx512m -Xms256m -XX:MaxMetaspaceSize=128m
       - SUMMA_DB_PATH=${SUMMA_DB_PATH:-/data/db/summa.db}
@@ -75,9 +74,6 @@ services:
       nofile:
         soft: 65536
         hard: 65536
-      memlock:
-        soft: -1
-        hard: -1
 
   console:
     build:

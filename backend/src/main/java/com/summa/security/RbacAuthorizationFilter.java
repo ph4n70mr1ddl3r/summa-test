@@ -48,7 +48,7 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
 
         String actor = (String) request.getAttribute("actor");
         boolean nodeAuth = Boolean.TRUE.equals(request.getAttribute("nodeAuth"));
-        boolean isPublic = JwtAuthenticationFilter.PUBLIC_PATHS.contains(normalized);
+        boolean isPublic = isPublicPath(normalized);
 
         if (!isPublic) {
             if (actor == null) {
@@ -81,5 +81,9 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
         }
         var agentOpt = memberService.findAgent(actor);
         return agentOpt.isPresent() && memberService.hasWriteSurfaceAgent(agentOpt.get());
+    }
+
+    private boolean isPublicPath(String path) {
+        return JwtAuthenticationFilter.isPublicPath(path);
     }
 }

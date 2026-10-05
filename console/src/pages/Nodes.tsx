@@ -48,7 +48,7 @@ export default function Nodes() {
                     Kind: {n.kind} | Region: {escapeHtml(n.region ?? 'default')}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    Pubkey: {n.pubkey ? n.pubkey.slice(0, 16) : '?'}… | Enrolled: {n.enrolledAt != null ? formatDate(n.enrolledAt, { dateOnly: true }) : '—'}
+                    Pubkey: {n.pubkey ? escapeHtml(n.pubkey.slice(0, 16)) : '?'}… | Enrolled: {n.enrolledAt != null ? formatDate(n.enrolledAt, { dateOnly: true }) : '—'}
                   </p>
                 </div>
                 <span className={`text-xs px-2 py-1 rounded ${nodeStatusColor(n.status)}`} aria-label={`Status: ${n.status}`}>

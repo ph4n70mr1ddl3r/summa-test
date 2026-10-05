@@ -127,7 +127,7 @@ export default function Memory() {
                   </div>
                   <p className="text-sm text-gray-400 mt-1">
                     {item.memberId ? `Member: ${escapeHtml(item.memberId)}` : 'System'}
-                    {item.workspaceId ? ` · Workspace: ${item.workspaceId}` : ''}
+                    {item.workspaceId ? ` · Workspace: ${escapeHtml(item.workspaceId)}` : ''}
                     {item.reviewedBy ? ` · Reviewed by: ${escapeHtml(item.reviewedBy)}` : ''}
                   </p>
                 </div>

@@ -35,9 +35,13 @@ public class GlobalExceptionHandler {
         String actor = currentActor();
         // Fall back to system actor so audit entries are never created with a null actor
         if (actor == null) actor = com.summa.constants.Defaults.SYSTEM_ACTOR;
-        AuditEvent audit = auditService.log(actor, auditAction, objectType, objectId, message);
+        try {
+            auditService.log(actor, auditAction, objectType, objectId, message);
+        } catch (Exception e) {
+            log.warn("Audit log failed, continuing without audit entry: {}", e.getMessage());
+        }
         return ResponseEntity.status(status).body(Map.of(
-            "code", objectType, "message", message, "audit_event_id", audit.getId()));
+            "code", objectType, "message", message, "audit_event_id", "audit_failed"));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -64,10 +68,10 @@ public class GlobalExceptionHandler {
     private boolean isAuthRefusal(String msg) {
         // Match only specific authorization patterns to avoid false positives.
         // These correspond to messages produced by WriteGate and RbacAuthorizationFilter.
-        return msg.startsWith("write permission denied")
-                || msg.startsWith("admin role required")
-                || msg.startsWith("auth gate refused")
-                || msg.startsWith("REFUSAL")
+        if (msg == null) return false;
+        return "write permission denied".equals(msg)
+                || "admin role required".equals(msg)
+                || "auth gate refused".equals(msg)
                 || msg.contains(": gate refusal");
     }
 
