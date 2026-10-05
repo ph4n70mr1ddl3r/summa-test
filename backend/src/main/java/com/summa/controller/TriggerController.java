@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.service.AgentService;
 import com.summa.service.WorkspaceService;
+import com.summa.service.MemberService;
 import com.summa.constants.Defaults;
 import java.util.List;
 import java.util.Map;
@@ -22,22 +23,28 @@ public class TriggerController {
     private final WriteGate writeGate;
     private final AgentService agentService;
     private final WorkspaceService workspaceService;
+    private final MemberService memberService;
 
     public TriggerController(TriggerService triggerService, AuditService auditService, WriteGate writeGate,
-                              AgentService agentService, WorkspaceService workspaceService) {
+                              AgentService agentService, WorkspaceService workspaceService, MemberService memberService) {
         this.triggerService = triggerService;
         this.auditService = auditService;
         this.writeGate = writeGate;
         this.agentService = agentService;
         this.workspaceService = workspaceService;
+        this.memberService = memberService;
     }
 
     @GetMapping
     public ResponseEntity<?> listTriggers(
             @RequestParam(required = false) String agentId) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (actor == null) {
-            return ControllerResponses.gate(auditService, actor, "Authentication required");
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+            }
         }
         if (agentId != null) {
             return ResponseEntity.ok(triggerService.findByAgent(agentId));
@@ -48,8 +55,12 @@ public class TriggerController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getTrigger(@PathVariable String id) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (actor == null) {
-            return ControllerResponses.gate(auditService, actor, "Authentication required");
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+            }
         }
         Optional<Trigger> entOpt = triggerService.findById(id);
         if (entOpt.isPresent()) {
@@ -153,8 +164,12 @@ public class TriggerController {
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> stats() {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (actor == null) {
-            return ControllerResponses.gate(auditService, actor, "Authentication required");
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+            }
         }
         return ResponseEntity.ok(triggerService.getStats());
     }

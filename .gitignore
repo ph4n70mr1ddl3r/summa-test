@@ -20,7 +20,7 @@ backend/target/
 console/dist/
 console/.vite/
 .opencode/
-.summa/
+.summa
 *.keystore
 *.p12
 *.jks

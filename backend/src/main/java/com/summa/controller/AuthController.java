@@ -108,10 +108,12 @@ public class AuthController {
     @PutMapping("/change-password")
     public ResponseEntity<Map<String, Object>> changePassword(
             @RequestHeader(value = "Authorization") String authHeader,
-            @RequestBody Map<String, String> body) {
+            @RequestBody Map<String, String> body, HttpServletRequest request) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (!rateLimiter.allow(actor + ":change-password")) {
-            long remaining = rateLimiter.getRemainingAttempts(actor + ":change-password");
+        String clientIp = resolveClientIp(request);
+        String rateKey = actor + ":" + clientIp + ":change-password";
+        if (!rateLimiter.allow(rateKey)) {
+            long remaining = rateLimiter.getRemainingAttempts(rateKey);
             var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Rate limited password change for: " + actor, null);
             return ControllerResponses.tooManyRequests(audit, "Too many password change attempts. Try again later.", remaining);
         }

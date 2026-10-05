@@ -20,7 +20,7 @@ services:
     volumes:
       - summa-data:/data
     command: >
-      sh -c "exec java $JAVA_OPTS -jar app.jar"
+      sh -c "exec java \"$JAVA_OPTS\" -jar app.jar"
     environment:
       - JAVA_OPTS=-Xmx512m -Xms256m -XX:MaxMetaspaceSize=128m
       - SUMMA_DB_PATH=${SUMMA_DB_PATH:-/data/db/summa.db}
@@ -36,6 +36,7 @@ services:
       - SUMMA_LOG_DIR=${SUMMA_LOG_DIR:-/data/logs}
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
       - SUMMA_JWT_SECRET_MIN_LENGTH=${SUMMA_JWT_SECRET_MIN_LENGTH:-32}
+      - SUMMA_PROXY_TRUSTED_IPS=${SUMMA_PROXY_TRUSTED_IPS:-}
       # Node config
       - SUMMA_NODE_LEASE_INTERVAL=${SUMMA_NODE_LEASE_INTERVAL:-30}
       - SUMMA_NODE_HEARTBEAT_TIMEOUT=${SUMMA_NODE_HEARTBEAT_TIMEOUT:-90}

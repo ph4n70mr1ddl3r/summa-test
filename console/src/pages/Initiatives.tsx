@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api, loadWithFallback } from '../services/api'
+import { api } from '../services/api'
 import type { Initiative } from '../types'
 import { formatDate, initiativeStatusColor, escapeHtml } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
@@ -13,16 +13,19 @@ export default function Initiatives() {
     setLoading(true)
     setError(null)
     let aborted = false
-    loadWithFallback(
-      () => api.initiatives.list().then(d => Array.isArray(d) ? d : []),
-      () => api.initiatives.list().then(d => Array.isArray(d) ? d : []).catch(() => []),
-    ).then(({ data, error: loadError }) => {
-      if (aborted) return
-      const result = Array.isArray(data) ? data : []
-      setInitiatives(result as Initiative[])
-      setError(loadError)
-      setLoading(false)
-    })
+    api.initiatives.list()
+      .then(d => {
+        if (aborted) return
+        const result = Array.isArray(d) ? d : []
+        setInitiatives(result as Initiative[])
+        setError(null)
+        setLoading(false)
+      })
+      .catch(e => {
+        if (aborted) return
+        setError(e instanceof Error ? e.message : String(e))
+        setLoading(false)
+      })
     return () => { aborted = true }
   }
 

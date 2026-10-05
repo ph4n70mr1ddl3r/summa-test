@@ -65,6 +65,9 @@ public class OrgController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        if (body == null) {
+            return ControllerResponses.validation(auditService, "Request body is required");
+        }
         if (!memberService.isAdmin(actor)) {
             return ControllerResponses.gate(auditService, actor, "Bootstrap requires admin role when org is initialized");
         }

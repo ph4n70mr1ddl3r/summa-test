@@ -43,6 +43,8 @@ summa:
     local-auth-enabled: ${SUMMA_LOCAL_AUTH_ENABLED:true}
     jwt-expiration: ${SUMMA_JWT_EXPIRATION:86400000}
     pat-default-expiry-days: 90
+  proxy:
+    trusted-ips: ${SUMMA_PROXY_TRUSTED_IPS:}
   node:
     lease-interval-seconds: ${SUMMA_NODE_LEASE_INTERVAL:30}
     heartbeat-timeout-seconds: ${SUMMA_NODE_HEARTBEAT_TIMEOUT:90}

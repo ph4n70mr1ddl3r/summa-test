@@ -4,6 +4,7 @@ import com.summa.enums.RbacRole;
 import com.summa.service.DnaReadService;
 import com.summa.service.AuditService;
 import com.summa.service.OrgService;
+import com.summa.service.MemberService;
 import com.summa.constants.Defaults;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.exception.EntityNotFoundException;
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/dna/search")
@@ -21,11 +23,14 @@ public class DnaSearchController {
     private final DnaReadService dnaReadService;
     private final AuditService auditService;
     private final OrgService orgService;
+    private final MemberService memberService;
 
-    public DnaSearchController(DnaReadService dnaReadService, AuditService auditService, OrgService orgService) {
+    public DnaSearchController(DnaReadService dnaReadService, AuditService auditService, OrgService orgService,
+                                MemberService memberService) {
         this.dnaReadService = dnaReadService;
         this.auditService = auditService;
         this.orgService = orgService;
+        this.memberService = memberService;
     }
 
     @GetMapping
@@ -34,8 +39,12 @@ public class DnaSearchController {
             @RequestParam(required = false) String domainId,
             @RequestParam(defaultValue = "20") int limit) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (actor == null) {
-            return ControllerResponses.gate(auditService, "Authentication required");
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+            }
         }
         int cappedLimit = Math.min(Math.max(limit, 1), Defaults.MAX_DNA_SEARCH_LIMIT);
         try {
@@ -64,8 +73,12 @@ public class DnaSearchController {
     @GetMapping("/domains")
     public ResponseEntity<?> listDomains() {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (actor == null) {
-            return ControllerResponses.gate(auditService, "Authentication required");
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+            }
         }
         return ResponseEntity.ok(dnaReadService.listDomains());
     }
