@@ -36,7 +36,7 @@ public class DnaProposalController {
     }
 
     @GetMapping
-    public ResponseEntity<List<DnaProposal>> listProposals(
+    public ResponseEntity<?> listProposals(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String domainId) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
@@ -45,7 +45,7 @@ public class DnaProposalController {
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
             if (!hasAccess) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return ControllerResponses.gate(auditService, actor, "Authentication required");
             }
         }
         if (status != null) {
@@ -65,7 +65,7 @@ public class DnaProposalController {
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
             if (!hasAccess) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return ControllerResponses.gate(auditService, actor, "Authentication required");
             }
         }
         Optional<DnaProposal> entOpt = proposalService.findById(id);

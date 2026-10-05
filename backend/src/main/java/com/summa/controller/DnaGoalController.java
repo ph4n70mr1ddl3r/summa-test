@@ -46,7 +46,7 @@ public class DnaGoalController {
             Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return ControllerResponses.gate(auditService, actor, "Authentication required");
             }
         }
         if (inject != null) {
@@ -65,7 +65,7 @@ public class DnaGoalController {
             Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return ControllerResponses.gate(auditService, actor, "Authentication required");
             }
         }
         Optional<DnaGoal> entOpt = goalService.findById(id);

@@ -38,7 +38,7 @@ public class DnaGlossaryController {
             Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return ControllerResponses.gate(auditService, actor, "Authentication required");
             }
         }
         if (scope != null) {
@@ -57,7 +57,7 @@ public class DnaGlossaryController {
             Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return ControllerResponses.gate(auditService, actor, "Authentication required");
             }
         }
         Optional<DnaGlossary> entOpt = glossaryService.findById(id);

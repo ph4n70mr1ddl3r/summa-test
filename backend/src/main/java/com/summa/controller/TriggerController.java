@@ -44,7 +44,7 @@ public class TriggerController {
             Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return ControllerResponses.gate(auditService, actor, "Authentication required");
             }
         }
         if (agentId != null) {
@@ -60,7 +60,7 @@ public class TriggerController {
             Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return ControllerResponses.gate(auditService, actor, "Authentication required");
             }
         }
         Optional<Trigger> entOpt = triggerService.findById(id);
@@ -169,7 +169,7 @@ public class TriggerController {
             Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return ControllerResponses.gate(auditService, actor, "Authentication required");
             }
         }
         return ResponseEntity.ok(triggerService.getStats());

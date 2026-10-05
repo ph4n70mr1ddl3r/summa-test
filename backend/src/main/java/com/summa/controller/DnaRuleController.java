@@ -44,7 +44,7 @@ public class DnaRuleController {
             Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return ControllerResponses.gate(auditService, actor, "Authentication required");
             }
         }
         if (domainId != null) {
@@ -60,7 +60,7 @@ public class DnaRuleController {
             Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return ControllerResponses.gate(auditService, actor, "Authentication required");
             }
         }
         Optional<DnaRule> entOpt = ruleService.findById(id);

@@ -41,7 +41,7 @@ public class SpawnController {
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
             if (!hasAccess) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return ControllerResponses.gate(auditService, actor, "Authentication required");
             }
         }
         if (status != null) {
@@ -61,7 +61,7 @@ public class SpawnController {
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
             if (!hasAccess) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return ControllerResponses.gate(auditService, actor, "Authentication required");
             }
         }
         Optional<SpawnRequest> entOpt = spawnService.findById(id);
@@ -154,7 +154,7 @@ public class SpawnController {
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
             if (!hasAccess) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return ControllerResponses.gate(auditService, actor, "Authentication required");
             }
         }
         return ResponseEntity.ok(spawnService.getStats());

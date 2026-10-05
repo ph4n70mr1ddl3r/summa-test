@@ -12,6 +12,4 @@ public interface BoardTaskRepository extends JpaRepository<BoardTask, String> {
     List<BoardTask> findByAssigneeMemberId(String assigneeMemberId);
     
     List<BoardTask> findByInitiativeId(String initiativeId);
-    
-    List<BoardTask> findByStatusAndPriorityGreaterThanEqual(String status, int priority);
 }

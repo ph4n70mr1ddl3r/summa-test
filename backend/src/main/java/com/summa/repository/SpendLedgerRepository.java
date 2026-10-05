@@ -9,11 +9,6 @@ import java.util.List;
 
 @Repository
 public interface SpendLedgerRepository extends JpaRepository<SpendLedger, String> {
-    List<SpendLedger> findByMemberId(String memberId);
-
-
-    List<SpendLedger> findByKind(String kind);
-
     @Query("SELECT COALESCE(SUM(s.cost), 0.0) FROM SpendLedger s WHERE s.kind = 'settle' AND s.at >= :since")
     double sumSettleCostSince(Instant since);
 

@@ -76,14 +76,18 @@ triggers       (id, name, criticality 'standard'|'critical' default 'standard',
 playbooks      (id, name, criticality 'standard'|'critical' default 'standard',
                 version int default 1, body json default '{}', status 'draft'|'active'|'retired'
                 default 'active', created_by member?, created_at, updated_at?
-spend_ledger   (id, member_id, run_id?, spawn_id?, kind 'reserve'|'settle'|'release',
-                tokens_in/out, cost, pricing_version, at, created_at)
+ spend_ledger   (id, member_id, run_id?, spawn_id?, kind 'reserve'|'settle'|'release',
+                 tokens_in REAL default 0, tokens_out BIGINT default 0, cost, pricing_version, at, created_at)
 trigger_firings (id, trigger_id, idempotency_key, fired_at, run_id?)
 external_writes (id, run_id, connector, op, idempotency_key,
                 status 'prepared'|'committed'|'compensated'|'failed', prepared_at, resolved_at?,
                 created_at)
-data_holds     (id, kind 'member'|'domain', subject_id, reason_md, created_by, released_at?,
-                created_at)
+ data_holds     (id, kind 'member'|'domain', subject_id, reason_md, created_by, released_at?,
+                 created_at)
+ spawn_requests (id, requester_id, template_id?, custom_role, class 'persistent'|'ephemeral'|'ephemeral-subagent',
+                 purpose, workspace_bindings, scope_ceiling, budget_cap, ttl_hours,
+                 requested_by_human_id?, gate_target?, status 'requested'|'approved'|'halted'|'archived' default 'requested',
+                 approved_by?, approved_at?, agent_id?, created_at, updated_at?)
 groups         (id, name, leader_member_id?, status 'active'|'archived' default 'active',
                 created_at, updated_at?)
 group_memberships (group_id, member_id, added_by member, added_at, removed_at?)
@@ -92,9 +96,9 @@ audit_events   (id, at, actor member|'system', action, object_type, object_id, d
 pats           (id, member_id, name, token_hash, scopes json, created_at, expires_at,
                 revoked_at?, last_used_at?, updated_at?)
 governance_settings (key, value json, edited_by member, edited_at)
-memory_items   (id, tier 'personal'|'project'|'proposal', member_id?, workspace_id?,
-                content_md, provenance json, tainted bool default false, created_at, updated_at?,
-                reviewed_by?, reviewed_at?)
+ memory_items   (id, tier 'personal'|'project'|'proposal', member_id?, workspace_id?,
+                 content_md, provenance json, tainted INTEGER default 0, created_at, updated_at?,
+                 reviewed_by?, reviewed_at?)
 ```
 
 ## Representational invariants (DAT)

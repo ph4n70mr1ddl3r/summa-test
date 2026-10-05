@@ -39,7 +39,7 @@ public class DataHold {
 
     @PreUpdate
     public void preUpdate() {
-        // data_holds has no updatedAt column
+        throw new UnsupportedOperationException("data_holds is append-only -- updates are not permitted");
     }
 
     public String getId() { return id; }

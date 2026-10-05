@@ -45,7 +45,7 @@ public class AuditEvent {
 
     @PreUpdate
     public void preUpdate() {
-        // audit_events is append-only per DAT-121
+        throw new UnsupportedOperationException("audit_events is append-only per DAT-121");
     }
 
     @PreRemove

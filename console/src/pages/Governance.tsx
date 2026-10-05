@@ -130,7 +130,7 @@ export default function Governance() {
             className="flex-1 text-right text-gray-200 font-mono text-xs hover:text-white truncate"
             aria-label={`Edit ${key}: ${currentValue}`}
           >
-            {typeof value === 'object' && value !== null ? escapeHtml(JSON.stringify(value)) : String(value)}
+            {typeof value === 'object' && value !== null ? escapeHtml(JSON.stringify(value)) : escapeHtml(String(value))}
           </button>
         )}
       </div>

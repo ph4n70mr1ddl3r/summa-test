@@ -50,7 +50,7 @@ public class MemoryItem {
 
     @PreUpdate
     public void preUpdate() {
-        // memory_items has no updatedAt column
+        throw new UnsupportedOperationException("memory_items is append-only -- updates are not permitted");
     }
 
     public String getId() { return id; }

@@ -33,7 +33,7 @@ public class InitiativeController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Initiative>> listInitiatives(
+    public ResponseEntity<?> listInitiatives(
             @RequestParam(required = false) String status) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         if (!"system".equals(actor)) {
@@ -41,7 +41,7 @@ public class InitiativeController {
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
             if (!hasAccess) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return ControllerResponses.gate(auditService, actor, "Authentication required");
             }
         }
         if (status != null) {
@@ -58,7 +58,7 @@ public class InitiativeController {
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
             if (!hasAccess) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return ControllerResponses.gate(auditService, actor, "Authentication required");
             }
         }
         Optional<Initiative> entOpt = initiativeService.findById(id);

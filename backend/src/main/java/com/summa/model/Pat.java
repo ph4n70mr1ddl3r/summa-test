@@ -1,6 +1,7 @@
 package com.summa.model;
 
 import com.summa.config.InstantToUnixEpochConverter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.Instant;
 
@@ -17,6 +18,7 @@ public class Pat {
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 
+    @JsonIgnore
     @Column(name = "token_hash", nullable = false, length = 64, unique = true)
     private String tokenHash;
 

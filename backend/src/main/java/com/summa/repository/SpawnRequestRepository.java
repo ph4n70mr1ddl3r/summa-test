@@ -11,7 +11,6 @@ import java.util.List;
 public interface SpawnRequestRepository extends JpaRepository<SpawnRequest, String> {
     List<SpawnRequest> findByStatus(String status);
     List<SpawnRequest> findByRequesterId(String requesterId);
-    List<SpawnRequest> findByAgentId(String agentId);
     long countByStatus(String status);
 
     @Query("SELECT r FROM SpawnRequest r WHERE r.status = 'requested' AND r.workspaceBindings LIKE %:escapedWorkspaceId% ESCAPE '/'")

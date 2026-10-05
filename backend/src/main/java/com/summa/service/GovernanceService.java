@@ -95,7 +95,6 @@ public class GovernanceService {
         throw new IllegalArgumentException("Cannot cast value to " + type.getName() + " for key: " + key);
     }
 
-    @Transactional
     public void setSetting(String key, Object value, String editedBy) {
         // Admin authorization enforced at the controller level (GovernanceController);
         // this method is only called through controlled paths.

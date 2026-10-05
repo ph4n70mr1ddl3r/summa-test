@@ -52,7 +52,7 @@ public class AgentController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Agent>> listAgents(
+    public ResponseEntity<?> listAgents(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String ownerId,
             @RequestParam(defaultValue = "50") int limit) {
@@ -62,7 +62,7 @@ public class AgentController {
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
             if (!hasAccess) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return ControllerResponses.gate(auditService, actor, "Authentication required");
             }
         }
         int cappedLimit = Math.min(Math.max(limit, 1), MAX_LIST_LIMIT);
@@ -83,7 +83,7 @@ public class AgentController {
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
             if (!hasAccess) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return ControllerResponses.gate(auditService, actor, "Authentication required");
             }
         }
         Optional<Agent> entOpt = agentService.findById(id);
@@ -101,7 +101,7 @@ public class AgentController {
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
             if (!hasAccess) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return ControllerResponses.gate(auditService, actor, "Authentication required");
             }
         }
         Optional<Agent> firstOpt = agentService.findById(id);

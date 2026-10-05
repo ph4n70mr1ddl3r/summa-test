@@ -45,7 +45,7 @@ public class DnaDecisionController {
             Optional<Human> humanOpt = memberService.findHuman(actor);
             Optional<Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return ControllerResponses.gate(auditService, actor, "Authentication required");
             }
         }
         if (domainId != null) {
@@ -61,7 +61,7 @@ public class DnaDecisionController {
             Optional<Human> humanOpt = memberService.findHuman(actor);
             Optional<Agent> agentOpt = memberService.findAgent(actor);
             if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return ControllerResponses.gate(auditService, actor, "Authentication required");
             }
         }
         Optional<DnaDecision> entOpt = decisionService.findById(id);

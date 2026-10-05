@@ -29,9 +29,6 @@ public interface AgentRepository extends JpaRepository<Agent, String> {
     @Query("SELECT a FROM Agent a WHERE a.ownerHumanId = :ownerId")
     List<Agent> findByOwner(String ownerId);
 
-    @Query("SELECT a FROM Agent a WHERE a.ownerHumanId = :ownerId ORDER BY a.createdAt DESC")
-    List<Agent> findByOwnerOrdered();
-
     @Query("SELECT a FROM Agent a WHERE a.ownerHumanId = :ownerId ORDER BY a.createdAt DESC LIMIT :limit")
     List<Agent> findByOwnerOrdered(@org.springframework.data.repository.query.Param("ownerId") String ownerId,
                                    @org.springframework.data.repository.query.Param("limit") int limit);

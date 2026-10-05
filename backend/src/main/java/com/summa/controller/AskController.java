@@ -59,7 +59,7 @@ public class AskController {
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
             if (!hasAccess) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return ControllerResponses.gate(auditService, actor, "Authentication required");
             }
         }
         int cappedLimit = Math.min(Math.max(limit, 1), MAX_LIST_LIMIT);
@@ -80,7 +80,7 @@ public class AskController {
             Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
             boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
             if (!hasAccess) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return ControllerResponses.gate(auditService, actor, "Authentication required");
             }
         }
         Optional<Ask> entOpt = askService.findById(id);

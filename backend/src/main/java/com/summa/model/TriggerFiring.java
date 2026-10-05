@@ -31,7 +31,7 @@ public class TriggerFiring {
 
     @PreUpdate
     public void preUpdate() {
-        // trigger_firings has no updatedAt column
+        throw new UnsupportedOperationException("trigger_firings is append-only -- updates are not permitted");
     }
 
     public String getId() { return id; }
