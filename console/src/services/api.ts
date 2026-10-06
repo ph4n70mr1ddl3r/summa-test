@@ -280,7 +280,7 @@ export interface SpawnRequest {
   createdAt?: number;
 }
 
-export type SpawnStatus = 'requested' | 'approved' | 'halted' | 'expired' | 'archived';
+export type SpawnStatus = 'requested' | 'approved' | 'halted' | 'archived';
 export interface SpawnStats {
   requested: number;
   approved: number;
@@ -369,7 +369,6 @@ export interface DnaDecision {
   refs?: string;
   provenance?: string;
   createdAt?: number;
-  updatedAt?: number;
 }
 
 export interface DnaProposal {

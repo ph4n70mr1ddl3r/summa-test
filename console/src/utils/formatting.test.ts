@@ -53,10 +53,6 @@ describe('spawnStatusColor', () => {
     expect(spawnStatusColor('halted' as SpawnStatus)).toBe('bg-orange-900/50 text-orange-400')
   })
 
-  it('returns exact classes for expired', () => {
-    expect(spawnStatusColor('expired' as SpawnStatus)).toBe('bg-gray-600 text-gray-400')
-  })
-
   it('returns exact classes for archived', () => {
     expect(spawnStatusColor('archived' as SpawnStatus)).toBe('bg-gray-600 text-gray-400')
   })
