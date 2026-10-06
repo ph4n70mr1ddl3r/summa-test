@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.Map;
+import java.util.UUID;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -41,7 +42,7 @@ public class GlobalExceptionHandler {
             log.warn("Audit log failed, continuing without audit entry: {}", e.getMessage());
         }
         return ResponseEntity.status(status).body(Map.of(
-            "code", objectType, "message", message, "audit_event_id", "audit_failed"));
+            "code", objectType, "message", message, "audit_event_id", UUID.randomUUID().toString()));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

@@ -16,6 +16,9 @@ public final class JsonHelpers {
     private JsonHelpers() {}
 
     public static String toJson(Map<String, Object> map, ObjectMapper mapper) {
+        if (mapper == null) {
+            mapper = MAPPER;
+        }
         try {
             return mapper.writeValueAsString(map);
         } catch (Exception e) {

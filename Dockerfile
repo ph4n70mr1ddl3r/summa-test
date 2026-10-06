@@ -15,8 +15,8 @@ LABEL org.opencontainers.image.source="https://github.com/summa-org/summa"
 
 WORKDIR /app
 
-# Install curl for healthcheck
-RUN apk add --no-cache curl
+# wget is available in alpine by default; use it for the healthcheck to avoid
+# adding the curl package and its transitive dependencies.
 
 # Copy the executable JAR from the builder stage
 COPY --from=builder /build/backend/target/summa-backend-*.jar /app/
@@ -37,5 +37,5 @@ EXPOSE 8080
 
 USER 1000
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=20s \
-  CMD curl -sf http://localhost:8080/api/health || exit 1
+  CMD wget --spider -q http://localhost:8080/api/health || exit 1
 ENTRYPOINT ["sh", "-c", "exec java \"$JAVA_OPTS\" -jar app.jar"]
