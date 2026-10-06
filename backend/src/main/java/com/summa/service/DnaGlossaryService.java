@@ -50,20 +50,24 @@ public class DnaGlossaryService {
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public Optional<DnaGlossary> findById(String id) {
         return glossaryRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<DnaGlossary> findByDomain(String domainId) {
         return glossaryRepository.findByDomainId(domainId);
     }
 
+    @Transactional(readOnly = true)
     public List<DnaGlossary> findAllActive() {
         return glossaryRepository.findAll().stream()
                 .filter(DnaGlossary::isActive)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<DnaGlossary> findByScope(String domainId) {
         return glossaryRepository.findActiveByScope(domainId);
     }

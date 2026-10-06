@@ -59,22 +59,27 @@ public class MemoryService {
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public Optional<MemoryItem> findById(String id) {
         return memoryItemRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<MemoryItem> findByMember(String memberId, int limit) {
         return memoryItemRepository.findByMemberId(memberId, limit);
     }
 
+    @Transactional(readOnly = true)
     public List<MemoryItem> findByWorkspace(String workspaceId, int limit) {
         return memoryItemRepository.findByWorkspaceId(workspaceId, limit);
     }
 
+    @Transactional(readOnly = true)
     public List<MemoryItem> findAll(int limit) {
         return memoryItemRepository.findAll(limit);
     }
 
+    @Transactional(readOnly = true)
     public List<MemoryItem> findTainted(int limit) {
         return memoryItemRepository.findByTaintedTrue(limit);
     }

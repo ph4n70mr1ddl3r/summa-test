@@ -41,14 +41,17 @@ public class DnaCardService {
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public Optional<DnaCard> findById(String id) {
         return cardRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<DnaCard> findByDomain(String domainId) {
         return cardRepository.findActiveByDomain(domainId);
     }
 
+    @Transactional(readOnly = true)
     public List<DnaCard> findAllActive() {
         return cardRepository.findAll().stream()
                 .filter(DnaCard::isActive)

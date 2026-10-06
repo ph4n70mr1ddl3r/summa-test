@@ -89,18 +89,22 @@ public class DnaProposalService {
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public Optional<DnaProposal> findById(String id) {
         return proposalRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<DnaProposal> findByStatus(String status) {
         return proposalRepository.findByStatus(status);
     }
 
+    @Transactional(readOnly = true)
     public List<DnaProposal> findOpenByDomain(String domainId) {
         return proposalRepository.findOpenByDomain(domainId);
     }
 
+    @Transactional(readOnly = true)
     public List<DnaProposal> findAllOpen() {
         return proposalRepository.findAllOpen();
     }

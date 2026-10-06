@@ -53,7 +53,7 @@ export default function Memory() {
       setReviewSuccess(false)
       setReviewingForId(null)
       setReviewingId(null)
-      try { await loadItems(); setError(null) } catch { setReviewError(err instanceof Error ? err.message : String(err)) }
+      try { await loadItems(); setError(null) } catch (reloadErr) { setReviewError(reloadErr instanceof Error ? reloadErr.message : String(reloadErr)) }
     }
   }
 

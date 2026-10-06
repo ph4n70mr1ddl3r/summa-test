@@ -40,7 +40,7 @@ public class BackupController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         Optional<Human> actorOpt = orgService.findHuman(actor);
-        if (actorOpt.isEmpty() || !RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac())) {
+        if (actorOpt.isEmpty() || !actorOpt.get().isActive() || !RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac())) {
             return ControllerResponses.gate(auditService, actor, "Backup requires admin role");
         }
         try {
@@ -66,7 +66,7 @@ public class BackupController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         Optional<Human> actorOpt = orgService.findHuman(actor);
-        if (actorOpt.isEmpty() || !RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac())) {
+        if (actorOpt.isEmpty() || !actorOpt.get().isActive() || !RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac())) {
             return ControllerResponses.gate(auditService, actor, "Restore requires admin role");
         }
         try {

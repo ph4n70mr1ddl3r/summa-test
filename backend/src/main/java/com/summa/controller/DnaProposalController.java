@@ -187,7 +187,7 @@ public class DnaProposalController {
     public ResponseEntity<?> reviewQueue(@RequestParam(required = false) String domainId) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
-            return ControllerResponses.gate(auditService, "Authentication required");
+            return ControllerResponses.gate(auditService, actor, "Authentication required");
         }
         // API-022: GET /dna/proposals/review-queue — admin or domain owner access required
         Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);

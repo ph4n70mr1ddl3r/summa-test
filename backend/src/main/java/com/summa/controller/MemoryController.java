@@ -34,10 +34,14 @@ public class MemoryController {
             @RequestParam(required = false) String workspaceId,
             @RequestParam(required = false) Boolean tainted,
             @RequestParam(defaultValue = "50") int limit) {
-        // CP6: Require authenticated actor for memory access — prevent unauthenticated enumeration.
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (Defaults.SYSTEM_ACTOR.equals(actor)) {
-            return ControllerResponses.gate(auditService, "Authentication required to list memory");
+        if (!"system".equals(actor)) {
+            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
+            if (!hasAccess) {
+                return ControllerResponses.gate(auditService, actor, "Authentication required");
+            }
         }
         int cappedLimit = Math.min(Math.max(limit, 1), Defaults.MAX_LIST_LIMIT);
         if (memberId != null) {

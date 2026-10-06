@@ -79,18 +79,22 @@ public class DnaRuleService {
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public Optional<DnaRule> findById(String id) {
         return ruleRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<DnaRule> findByDomain(String domainId) {
         return ruleRepository.findByDomainId(domainId);
     }
 
+    @Transactional(readOnly = true)
     public List<DnaRule> findActiveWindowed(String domainId, Instant now) {
         return ruleRepository.findActiveWindowed(domainId, now);
     }
 
+    @Transactional(readOnly = true)
     public List<DnaRule> findAllActiveWindowed(Instant now) {
         return ruleRepository.findAllActiveWindowed(now);
     }

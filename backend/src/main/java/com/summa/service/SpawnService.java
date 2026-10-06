@@ -235,14 +235,17 @@ public class SpawnService {
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public Optional<SpawnRequest> findById(String id) {
         return spawnRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<SpawnRequest> findByStatus(String status) {
         return spawnRepository.findByStatus(status);
     }
 
+    @Transactional(readOnly = true)
     public List<SpawnRequest> findByRequester(String requesterId) {
         return spawnRepository.findByRequesterId(requesterId);
     }

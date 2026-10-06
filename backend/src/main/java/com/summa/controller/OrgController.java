@@ -1,7 +1,6 @@
 package com.summa.controller;
 
 import com.summa.model.Agent;
-import com.summa.model.AuditEvent;
 import com.summa.model.DataHold;
 import com.summa.model.Human;
 import com.summa.enums.RbacRole;

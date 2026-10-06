@@ -59,14 +59,18 @@ public class GovernanceController {
     @GetMapping("/policies")
     public ResponseEntity<Map<String, Object>> getPolicies() {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        governanceService.requireAdminOrThrow(actor);
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
+        if (!requireAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to view governance policies");
         return ResponseEntity.ok(governanceService.getAllSettings());
     }
 
     @GetMapping("/quotas")
     public ResponseEntity<Map<String, Object>> getQuotas() {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        governanceService.requireAdminOrThrow(actor);
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
+        if (!requireAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to view governance quotas");
         Map<String, Object> all = governanceService.getAllSettings();
         Map<String, Object> quotas = new LinkedHashMap<>();
         for (String key : QUOTA_KEYS) {
@@ -78,7 +82,9 @@ public class GovernanceController {
     @GetMapping("/spend")
     public ResponseEntity<Map<String, Object>> getSpend() {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        governanceService.requireAdminOrThrow(actor);
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
+        if (!requireAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to view spend data");
         // Delegate defaults to GovernanceService to avoid divergence
         return ResponseEntity.ok(governanceService.getSpendView());
     }
@@ -160,6 +166,6 @@ public class GovernanceController {
 
     private boolean requireAdmin(String actor) {
         Optional<Human> actorOpt = memberService.findHuman(actor);
-        return actorOpt.isPresent() && RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac());
+        return actorOpt.isPresent() && actorOpt.get().isActive() && RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac());
     }
 }

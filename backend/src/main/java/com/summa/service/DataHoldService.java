@@ -35,18 +35,22 @@ public class DataHoldService {
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public Optional<DataHold> findById(String id) {
         return holdRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<DataHold> findAllActive() {
         return holdRepository.findByReleasedAtIsNull();
     }
 
+    @Transactional(readOnly = true)
     public List<DataHold> findBySubject(String kind, String subjectId) {
         return holdRepository.findByKindAndSubjectIdAndReleasedAtIsNull(kind, subjectId);
     }
 
+    @Transactional(readOnly = true)
     public boolean hasActiveHold(String kind, String subjectId) {
         return holdRepository.existsByKindAndSubjectIdAndReleasedAtIsNull(kind, subjectId);
     }

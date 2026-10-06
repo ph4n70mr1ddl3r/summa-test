@@ -51,14 +51,17 @@ public class PatService {
         return new PatWithToken(saved, rawToken);
     }
 
+    @Transactional(readOnly = true)
     public Optional<Pat> findById(String id) {
         return patRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public Optional<Pat> findByHash(String tokenHash) {
         return patRepository.findByTokenHash(tokenHash);
     }
 
+    @Transactional(readOnly = true)
     public List<Pat> findByMember(String memberId) {
         return patRepository.findByMemberId(memberId);
     }

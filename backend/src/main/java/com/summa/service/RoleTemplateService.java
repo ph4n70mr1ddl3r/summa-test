@@ -53,10 +53,12 @@ public class RoleTemplateService {
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public Optional<RoleTemplate> findById(String id) {
         return templateRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<RoleTemplate> findAll() {
         return templateRepository.findAll();
     }

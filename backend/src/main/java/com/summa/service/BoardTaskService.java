@@ -85,22 +85,27 @@ public class BoardTaskService {
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public Optional<BoardTask> findById(String id) {
         return taskRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<BoardTask> findAll() {
         return taskRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public List<BoardTask> findByAssignee(String assigneeMemberId) {
         return taskRepository.findByAssigneeMemberId(assigneeMemberId);
     }
 
+    @Transactional(readOnly = true)
     public List<BoardTask> findByInitiative(String initiativeId) {
         return taskRepository.findByInitiativeId(initiativeId);
     }
 
+    @Transactional(readOnly = true)
     public List<BoardTask> findByStatus(String status) {
         return taskRepository.findByStatus(status);
     }

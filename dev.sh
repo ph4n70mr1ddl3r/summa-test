@@ -137,7 +137,7 @@ echo "[2/2] Starting console..."
 pushd console > /dev/null
 if [ ! -d "node_modules" ]; then
     echo "      Installing console dependencies..."
-    npm ci --prefer-offline || npm install
+    npm ci --prefer-offline
 fi
 npm run dev > ~/.summa/logs/console.log 2>&1 &
 CONSOLE_PID=$!

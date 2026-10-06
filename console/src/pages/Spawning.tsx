@@ -51,7 +51,7 @@ export default function Spawning() {
       await loadData()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err))
-      try { await loadData(); setError(null) } catch { setActionError(err instanceof Error ? err.message : String(err)) }
+      try { await loadData(); setError(null) } catch (reloadErr) { setActionError(reloadErr instanceof Error ? reloadErr.message : String(reloadErr)) }
     } finally {
       setActionId(null)
       setConfirmAction(null)
@@ -110,7 +110,7 @@ export default function Spawning() {
                     <button
                       type="button"
                       onClick={() => setConfirmAction({ id: req.id, action: 'approve' })}
-                      disabled={actionId === req.id || confirmAction !== null}
+                      disabled={actionId === req.id}
                       className="px-2 py-1 bg-green-700 hover:bg-green-600 disabled:bg-gray-600 rounded text-xs text-white"
                       aria-label={`Approve ${req.purpose || 'request'}`}
                     >
@@ -119,7 +119,7 @@ export default function Spawning() {
                     <button
                       type="button"
                       onClick={() => setConfirmAction({ id: req.id, action: 'deny' })}
-                      disabled={actionId === req.id || confirmAction !== null}
+                      disabled={actionId === req.id}
                       className="px-2 py-1 bg-red-700 hover:bg-red-600 disabled:bg-gray-600 rounded text-xs text-white"
                       aria-label={`Deny ${req.purpose || 'request'}`}
                     >

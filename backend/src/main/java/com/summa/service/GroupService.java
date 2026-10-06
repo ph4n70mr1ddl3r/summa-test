@@ -45,10 +45,12 @@ public class GroupService {
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public Optional<Group> findById(String id) {
         return groupRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<Group> findAll() {
         return groupRepository.findAll();
     }

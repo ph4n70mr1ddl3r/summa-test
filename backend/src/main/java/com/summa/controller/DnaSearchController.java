@@ -7,7 +7,6 @@ import com.summa.service.OrgService;
 import com.summa.service.MemberService;
 import com.summa.constants.Defaults;
 import com.summa.security.RbacAuthorizationFilter;
-import com.summa.exception.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;

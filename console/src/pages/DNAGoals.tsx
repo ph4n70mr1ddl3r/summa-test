@@ -31,7 +31,7 @@ export default function DNAGoals() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">DNA Goals</h2>
-        <span className="text-sm text-gray-400">{goals.length} goals</span>
+        <span className="text-sm text-gray-400">{goals.length === 1 ? '1 goal' : `${goals.length} goals`}</span>
       </div>
       {goals.length === 0 ? (
         <div className="bg-gray-800 rounded-lg p-8 border border-gray-700 text-center">

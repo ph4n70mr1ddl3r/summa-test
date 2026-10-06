@@ -53,14 +53,17 @@ public class DnaDecisionService {
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public Optional<DnaDecision> findById(String id) {
         return decisionRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<DnaDecision> findByDomain(String domainId) {
         return decisionRepository.findByDomainId(domainId);
     }
 
+    @Transactional(readOnly = true)
     public List<DnaDecision> findAll() {
         return decisionRepository.findAll();
     }
