@@ -41,10 +41,6 @@ public class MemberService {
         return humanRepository.findActiveByRole(RbacRole.ADMIN.getValue());
     }
 
-    public List<Human> findOwnerHumans() {
-        return humanRepository.findActiveByRole(RbacRole.OWNER.getValue());
-    }
-
     public long countActiveAdmins() {
         return humanRepository.countByDeactivatedAtIsNullAndRbac(RbacRole.ADMIN.getValue());
     }

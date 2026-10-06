@@ -20,7 +20,7 @@ WORKDIR /app
 
 # Copy the executable JAR from the builder stage
 COPY --from=builder /build/backend/target/summa-backend-*.jar /app/
-RUN ls /app/summa-backend-*.jar | grep -v sources | grep -v plain | head -n 1 | xargs -I{} mv {} /app/app.jar && \
+RUN find /app -maxdepth 1 -name 'summa-backend-*.jar' ! -name '*-sources.jar' ! -name '*-plain.jar' -print -quit | xargs -I{} mv {} /app/app.jar && \
     rm -f /app/*-plain.jar /app/*-sources.jar
 
 # Create data directories and non-root user

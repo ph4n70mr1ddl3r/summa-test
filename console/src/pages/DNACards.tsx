@@ -53,7 +53,7 @@ export default function DNACards() {
               <pre className="mt-2 text-xs text-gray-400 bg-gray-900 rounded p-3 overflow-x-auto whitespace-pre-wrap">
                 {escapeHtml(truncateSnippet(card.definitionMd, 200))}
               </pre>
-              <p className="text-xs text-gray-500 mt-2">v{card.version} · Created {card.createdAt != null ? formatDate(card.createdAt, { dateOnly: true }) : '?'}</p>
+              <p className="text-xs text-gray-500 mt-2">v{card.version} · Created {card.createdAt !== null ? formatDate(card.createdAt, { dateOnly: true }) : '?'}</p>
             </div>
           ))}
         </div>

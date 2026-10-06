@@ -58,7 +58,6 @@ public class OffboardingWalkService {
     private final DnaProposalService proposalService;
     private final AuditService auditService;
     private final AskService askService;
-    private final SpawnService spawnService;
     private final DnaDomainService domainService;
     private final DnaGoalService goalService;
     private final GroupMembershipRepository groupMembershipRepository;
@@ -76,10 +75,10 @@ public class OffboardingWalkService {
     private final ObjectMapper objectMapper;
 
     public OffboardingWalkService(MemberService memberService, AgentService agentService,
-                                      InitiativeService initiativeService, BoardTaskService boardTaskService,
-                                      DnaProposalService proposalService, AuditService auditService,
-                                      AskService askService, SpawnService spawnService,
-                                      DnaDomainService domainService, DnaGoalService goalService,
+                                       InitiativeService initiativeService, BoardTaskService boardTaskService,
+                                       DnaProposalService proposalService, AuditService auditService,
+                                       AskService askService,
+                                       DnaDomainService domainService, DnaGoalService goalService,
                                       GroupMembershipRepository groupMembershipRepository,
                                       AgentRepository agentRepository,
                                       InitiativeRepository initiativeRepository,
@@ -100,7 +99,6 @@ public class OffboardingWalkService {
         this.proposalService = proposalService;
         this.auditService = auditService;
         this.askService = askService;
-        this.spawnService = spawnService;
         this.domainService = domainService;
         this.goalService = goalService;
         this.groupMembershipRepository = groupMembershipRepository;

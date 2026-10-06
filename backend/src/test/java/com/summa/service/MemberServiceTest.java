@@ -214,19 +214,6 @@ class MemberServiceTest {
     }
 
     @Test
-    void findOwnerHumans_returnsOwnerHumans() {
-        Human owner = new Human();
-        owner.setId("h1");
-        owner.setRbac("owner");
-        when(humanRepository.findActiveByRole("owner")).thenReturn(List.of(owner));
-
-        List<Human> result = memberService.findOwnerHumans();
-
-        assertEquals(1, result.size());
-        assertEquals("h1", result.get(0).getId());
-    }
-
-    @Test
     void countActiveAdmins_returnsCount() {
         when(humanRepository.countByDeactivatedAtIsNullAndRbac("admin")).thenReturn(3L);
 

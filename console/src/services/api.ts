@@ -63,7 +63,7 @@ export function getUser(): { userId: string; rbac: RbacRole; name?: string } | n
     if (!user?.userId || !user?.rbac) return null;
     const validRoles = ['admin', 'owner', 'member', 'viewer'] as const;
     if (!validRoles.includes(user.rbac)) return null;
-    return user as { userId: string; rbac: RbacRole; name?: string };
+    return { userId: user.userId, rbac: user.rbac, name: user.name };
   } catch {
     return null;
   }

@@ -169,16 +169,6 @@ public class GovernanceService {
         return view;
     }
 
-    /**
-     * Throws an IllegalStateException if the actor is null or the system actor.
-     * Used by controllers that require authenticated user identity.
-     */
-    public void requireAdminOrThrow(String actor) {
-        if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
-            throw new AuthorizationDeniedException("Authentication required");
-        }
-    }
-
     public double resolveSpendCeiling() {
         Double ceiling = getSetting("spend-org-ceiling", Double.class);
         if (ceiling == null || ceiling <= 0) ceiling = spendCeilingOverride > 0 ? spendCeilingOverride : Defaults.DEFAULT_SPEND_CEILING;

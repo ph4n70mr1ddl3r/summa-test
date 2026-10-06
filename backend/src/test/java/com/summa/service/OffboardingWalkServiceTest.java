@@ -42,7 +42,6 @@ class OffboardingWalkServiceTest {
     @Mock private DnaProposalService proposalService;
     @Mock private AuditService auditService;
     @Mock private AskService askService;
-    @Mock private SpawnService spawnService;
     @Mock private DnaDomainService domainService;
     @Mock private DnaGoalService goalService;
     @Mock private GroupMembershipRepository groupMembershipRepository;

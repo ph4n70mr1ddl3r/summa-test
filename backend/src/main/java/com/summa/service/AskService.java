@@ -397,7 +397,7 @@ public class AskService {
         }
 
         existingResponses.add(responder);
-        ask.setResponses(toJsonResponseList(existingResponses, response));
+        ask.setResponses(toJsonResponseList(existingResponses, response, ask.getResponses()));
         boolean quorumReached = existingResponses.size() >= quorum;
         if (quorumReached) {
             ask.setStatus("answered");
@@ -513,7 +513,7 @@ public class AskService {
     private void recordResponse(Ask ask, String responder, String response) {
         List<String> ids = parseResponseIds(ask);
         ids.add(responder);
-        ask.setResponses(toJsonResponseList(ids, response));
+        ask.setResponses(toJsonResponseList(ids, response, ask.getResponses()));
     }
 
     private List<String> parseResponseIds(Ask ask) {
@@ -533,20 +533,33 @@ public class AskService {
         }
     }
 
-    private String toJsonResponseList(List<String> ids, String response) {
+    private String toJsonResponseList(List<String> ids, String latestResponse, String existingJson) {
+        // Preserve prior response texts so that each responder's text is retained.
+        Map<String, String> prior = new HashMap<>();
+        if (existingJson != null && !existingJson.isBlank() && !existingJson.equals("[]")) {
+            try {
+                List<Map<String, String>> entries = objectMapper.readValue(existingJson,
+                        new TypeReference<List<Map<String, String>>>() {});
+                for (Map<String, String> entry : entries) {
+                    String r = entry.get("responder");
+                    String t = entry.get("response");
+                    if (r != null) prior.put(r, t != null ? t : "");
+                }
+            } catch (Exception ignored) {
+                // On parse failure fall back to empty prior map.
+            }
+        }
         List<Map<String, String>> list = new ArrayList<>();
-        for (int i = 0; i < ids.size(); i++) {
+        for (String id : ids) {
             Map<String, String> entry = new HashMap<>();
-            entry.put("responder", ids.get(i));
-            // Only the latest responder in the list carries the response text;
-            // earlier entries preserve responder identity for quorum tracking.
-            entry.put("response", response != null ? response : "");
+            entry.put("responder", id);
+            entry.put("response", prior.containsKey(id) ? prior.get(id)
+                    : (latestResponse != null ? latestResponse : ""));
             list.add(entry);
         }
         try {
             return objectMapper.writeValueAsString(list);
         } catch (Exception e) {
-            // Should never happen with standard JSON serialisation of simple maps
             throw new IllegalStateException("Failed to serialise ask responses: " + e.getMessage(), e);
         }
     }

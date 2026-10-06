@@ -118,16 +118,6 @@ public class DnaReadService {
     }
 
     /**
-     * Get open proposals for a domain (review queue).
-     */
-    public List<DnaProposal> getReviewQueue(String domainId) {
-        if (domainId != null) {
-            return proposalRepository.findOpenByDomain(domainId);
-        }
-        return proposalRepository.findAllOpen();
-    }
-
-    /**
      * Get org snapshot for prompt injection (DRP-001, DRP-002).
      * Returns live members with their states.
      */

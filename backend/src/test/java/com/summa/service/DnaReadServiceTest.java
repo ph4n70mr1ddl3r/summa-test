@@ -77,30 +77,6 @@ class DnaReadServiceTest {
     }
 
     @Test
-    void getReviewQueue_forDomain() {
-        DnaProposal proposal = new DnaProposal();
-        proposal.setId("p1");
-        when(proposalRepository.findOpenByDomain("domain-1")).thenReturn(List.of(proposal));
-
-        List<DnaProposal> result = service.getReviewQueue("domain-1");
-
-        assertEquals(1, result.size());
-        verify(proposalRepository).findOpenByDomain("domain-1");
-    }
-
-    @Test
-    void getReviewQueue_allDomains() {
-        DnaProposal proposal = new DnaProposal();
-        proposal.setId("p1");
-        when(proposalRepository.findAllOpen()).thenReturn(List.of(proposal));
-
-        List<DnaProposal> result = service.getReviewQueue(null);
-
-        assertEquals(1, result.size());
-        verify(proposalRepository).findAllOpen();
-    }
-
-    @Test
     void getOrgSnapshot_returnsStructuredMap() {
         Human human = new Human();
         human.setId("h1");
