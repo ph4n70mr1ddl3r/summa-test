@@ -24,9 +24,10 @@ services:
       - SUMMA_DB_PATH=${SUMMA_DB_PATH:-/data/db/summa.db}
       - SUMMA_DNA_REPO=${SUMMA_DNA_REPO:-/data/dna}
       # JWT secret must be set and at least 32 characters (validated at startup)
-      # If unset, Docker Compose passes empty string which causes a crash loop.
-      # Ensure SUMMA_JWT_SECRET is set in .env before starting.
-      - SUMMA_JWT_SECRET=${SUMMA_JWT_SECRET:-}
+      # Compose passes the raw .env value; if unset, Spring's :? guard in
+      # application.yml crashes the container. Ensure SUMMA_JWT_SECRET is set
+      # in .env before starting — see .env.example for the template.
+      - SUMMA_JWT_SECRET=${SUMMA_JWT_SECRET}
       - SUMMA_JWT_EXPIRATION=${SUMMA_JWT_EXPIRATION:-86400000}
       - SUMMA_CORS_ORIGINS=${SUMMA_CORS_ORIGINS:-}
       - SUMMA_SPEND_CEILING=${SUMMA_SPEND_CEILING:-1000000}

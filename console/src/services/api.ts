@@ -151,8 +151,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T | undefin
     if (res.status === 204) {
       return undefined as T | undefined;
     }
-    const json = await res.json();
-    return json as T;
+    let json: T;
+    try {
+      json = await res.json();
+    } catch (parseErr) {
+      throw new ApiError(`Failed to parse JSON response: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`, res.status);
+    }
+    return json;
   } catch (err) {
     // Preserve the original HTTP status for server-origin errors (401, 429, 500, etc.).
     // Only wrap true network/abort failures with status 0 so callers can still

@@ -14,8 +14,9 @@ Checks (errors exit 1):
      ID is cited by more than one coverage row — the only exemptions being the
      IDs declared in TRACEABILITY.md's own "Intentional cross-listings" table,
      each of which must actually appear in two or more rows (no stale entries);
-  6. the three version pins agree: PLAN.md's `*Version vX.Y*` line, README's
-     "derived from `PLAN.md` (vX.Y)", and TRACEABILITY.md's header;
+   6. the four version pins agree: PLAN.md's `*Version vX.Y*` line, README's
+      "derived from `PLAN.md` (vX.Y)", TRACEABILITY.md's header, and README.md's
+      "Derived from `PLAN.md`" line;
   7. every `§N[.N]` section reference in specs/*.md and in PLAN.md's own body —
      ranges like `§8.1–8.9` expanded — resolves to a numbered heading of
      PLAN.md or, for a section whose body is a numbered list carrying no

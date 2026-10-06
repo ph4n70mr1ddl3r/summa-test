@@ -157,7 +157,8 @@ for i in $(seq 1 20); do
 done
 
 if [ "$CONSOLE_READY" = false ]; then
-    echo "WARNING: Console did not start within 20 seconds. Check ~/.summa/logs/console.log"
+    echo "ERROR: Console did not start within 20 seconds. Check ~/.summa/logs/console.log"
+    exit 1
 fi
 
 echo ""
@@ -167,5 +168,5 @@ echo "  API:     http://localhost:8080/api"
 echo ""
 echo "Press Ctrl+C to stop all services"
 
-trap '[ "${BACKEND_PID:-0}" -ne 0 ] && kill "${BACKEND_PID}" 2>/dev/null; [ "${CONSOLE_PID:-0}" -ne 0 ] && kill "${CONSOLE_PID}" 2>/dev/null; pkill -P "${CONSOLE_PID}" 2>/dev/null; exit 0' INT TERM EXIT
+trap '[ "${BACKEND_PID:-}" != "" ] && kill "${BACKEND_PID}" 2>/dev/null; [ "${CONSOLE_PID:-}" != "" ] && kill "${CONSOLE_PID}" 2>/dev/null; [ "${CONSOLE_PID:-}" != "" ] && pkill -P "${CONSOLE_PID}" 2>/dev/null; exit 0' INT TERM EXIT
 wait

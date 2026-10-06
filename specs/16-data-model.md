@@ -27,7 +27,7 @@ role_templates (id, name, version, class 'persistent'|'ephemeral-subagent', body
                 created_at, updated_at?)
 nodes          (id, name, kind 'local'|'remote', capabilities json, region?, claim json?,
                 last_heartbeat, pubkey, enrolled_at, revoked_at?, status 'trusted'|'revoked',
-                created_at, updated_at?)
+                updated_at?)
 dna_domains    (id, name, owner_human_id, access 'public'|'domain'|'named',
                 named_readers json, store 'git'|'db-only', sod 'off'|'reviewer-distinct',
                 review_sla_days int default 7, residency?, status 'active'|'archived'

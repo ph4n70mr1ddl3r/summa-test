@@ -23,9 +23,11 @@ python3 tools/lint_specs.py
 
 These checks verify:
 - Every REQ ID is unique
-- Every REQ ID is referenced in at least one spec file
-- Required sections exist in each spec module
-- Traceability matrix is consistent
+- Every REQ ID resolves to a definition in exactly one home module
+- No dangling citations (ranges expanded)
+- TRACEABILITY matrix coverage is exact and partitioned
+- Version pins agree across PLAN.md, specs/README.md, TRACEABILITY.md, and README.md
+- SECTION references in specs resolve to numbered PLAN.md headings
 
 You can also run the self-test suite with:
 

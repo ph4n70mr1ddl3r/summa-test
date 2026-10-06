@@ -82,12 +82,12 @@ export default function Governance() {
     }
   }
 
-  const startEdit = (key: string, currentValue: unknown) => {
+  const startEdit = useCallback((key: string, currentValue: unknown) => {
     const displayValue = typeof currentValue === 'object' && currentValue !== null
       ? JSON.stringify(currentValue)
       : String(currentValue ?? '')
     setEditValues(prev => ({ ...prev, [key]: displayValue }))
-  }
+  }, [])
 
   const renderCell = useCallback((section: 'policies' | 'quotas', key: string, value: unknown) => {
     const isEditing = editValues[key] !== undefined
