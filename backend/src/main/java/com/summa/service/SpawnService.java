@@ -27,6 +27,7 @@ import java.util.UUID;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.summa.util.JsonHelpers;
+import com.summa.exception.AuthorizationDeniedException;
 import com.summa.exception.EntityNotFoundException;
 
 @Service

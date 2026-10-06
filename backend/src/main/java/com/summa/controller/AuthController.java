@@ -96,8 +96,7 @@ public class AuthController {
             return ResponseEntity.ok(Map.of(
                 "token", token,
                 "userId", human.getId(),
-                "rbac", human.getRbac(),
-                "name", human.getName()
+                "rbac", human.getRbac()
             ));
         } catch (Exception e) {
             var audit = auditService.logSystem("REFUSAL", "auth_login", email, "Login error: " + e.getMessage());

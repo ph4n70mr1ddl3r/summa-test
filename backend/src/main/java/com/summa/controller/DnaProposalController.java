@@ -4,6 +4,7 @@ import com.summa.service.DnaProposalService;
 import com.summa.model.DnaProposal;
 import com.summa.service.AuditService;
 import com.summa.service.MemberService;
+import com.summa.service.DnaDomainService;
 import com.summa.security.WriteGate;
 import com.summa.constants.Defaults;
 import org.springframework.http.ResponseEntity;
@@ -24,13 +25,15 @@ public class DnaProposalController {
     private final AuditService auditService;
     private final WriteGate writeGate;
     private final MemberService memberService;
+    private final DnaDomainService domainService;
 
     public DnaProposalController(DnaProposalService proposalService, AuditService auditService, WriteGate writeGate,
-                                 MemberService memberService) {
+                                  MemberService memberService, DnaDomainService domainService) {
         this.proposalService = proposalService;
         this.auditService = auditService;
         this.writeGate = writeGate;
         this.memberService = memberService;
+        this.domainService = domainService;
     }
 
     @GetMapping
@@ -186,11 +189,22 @@ public class DnaProposalController {
         if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
             return ControllerResponses.gate(auditService, "Authentication required");
         }
-        // API-022: GET /dna/proposals/review-queue — admin or writer access required
+        // API-022: GET /dna/proposals/review-queue — admin or domain owner access required
         Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
         boolean isAdmin = humanOpt.isPresent() && RbacRole.ADMIN.getValue().equals(humanOpt.get().getRbac());
         if (!isAdmin) {
-            return ControllerResponses.gate(auditService, actor, "Admin access required for review queue");
+            if (domainId == null || domainId.isBlank()) {
+                return ControllerResponses.gate(auditService, actor, "Admin access required for review queue");
+            }
+            // Allow domain owners to see proposals for their domain
+            Optional<com.summa.model.DnaDomain> domainOpt = domainService.findById(domainId);
+            boolean isDomainOwner = domainOpt.isPresent()
+                    && domainOpt.get().getStatus().equals("active")
+                    && domainOpt.get().getOwnerHumanId() != null
+                    && domainOpt.get().getOwnerHumanId().equals(actor);
+            if (!isDomainOwner) {
+                return ControllerResponses.gate(auditService, actor, "Admin access required for review queue");
+            }
         }
         if (domainId != null) {
             return ResponseEntity.ok(proposalService.findOpenByDomain(domainId));

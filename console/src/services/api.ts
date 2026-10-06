@@ -32,7 +32,7 @@ export function setNavigate(fn: ((path: string, options?: { replace?: boolean })
   navigateRef = fn;
 }
 
-export function setAuthToken(token: string | null, user?: { userId: string; rbac: RbacRole; name: string } | null) {
+export function setAuthToken(token: string | null, user?: { userId: string; rbac: RbacRole; name?: string } | null) {
   authToken = token;
   try {
     if (token) {
@@ -55,15 +55,15 @@ export function getAuthToken(): string | null {
   return authToken;
 }
 
-export function getUser(): { userId: string; rbac: RbacRole; name: string } | null {
+export function getUser(): { userId: string; rbac: RbacRole; name?: string } | null {
   try {
     const raw = localStorage.getItem(USER_KEY);
     if (!raw) return null;
     const user = JSON.parse(raw);
-    if (!user?.userId || !user?.rbac || !user?.name) return null;
+    if (!user?.userId || !user?.rbac) return null;
     const validRoles = ['admin', 'owner', 'member', 'viewer'] as const;
     if (!validRoles.includes(user.rbac)) return null;
-    return user as { userId: string; rbac: RbacRole; name: string };
+    return user as { userId: string; rbac: RbacRole; name?: string };
   } catch {
     return null;
   }
@@ -813,7 +813,7 @@ export const api = {
   },
   auth: {
     login: (email: string, password: string) =>
-      request<{ token: string; userId: string; rbac: RbacRole; name: string }>('/auth/login', {
+      request<{ token: string; userId: string; rbac: RbacRole }>('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       }),

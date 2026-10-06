@@ -54,14 +54,13 @@ describe('Login page', () => {
       token: 'fake-token',
       userId: 'u1',
       rbac: 'admin',
-      name: 'Test User',
     })
     const { getByLabelText, getByText } = renderLogin()
     fireEvent.change(getByLabelText(/email/i), { target: { value: 'test@example.com' } })
     fireEvent.change(getByLabelText(/password/i), { target: { value: 'password123' } })
     fireEvent.click(getByText('Sign in'))
     await waitFor(() => {
-      expect(apiModule.setAuthToken).toHaveBeenCalledWith('fake-token', { userId: 'u1', rbac: 'admin', name: 'Test User' })
+      expect(apiModule.setAuthToken).toHaveBeenCalledWith('fake-token', { userId: 'u1', rbac: 'admin', name: '' })
     })
   })
 
@@ -75,8 +74,8 @@ describe('Login page', () => {
   })
 
   it('shows loading state while submitting', async () => {
-    let resolveLogin: (v: { token: string; userId: string; rbac: import('../services/api').RbacRole; name: string }) => void
-    const loginPromise = new Promise<{ token: string; userId: string; rbac: import('../services/api').RbacRole; name: string }>((resolve) => {
+    let resolveLogin: (v: { token: string; userId: string; rbac: import('../services/api').RbacRole }) => void
+    const loginPromise = new Promise<{ token: string; userId: string; rbac: import('../services/api').RbacRole }>((resolve) => {
       resolveLogin = resolve
     })
     vi.mocked(apiModule.api.auth.login).mockImplementation(() => loginPromise)
@@ -90,7 +89,7 @@ describe('Login page', () => {
       expect((btn as HTMLButtonElement).disabled).toBe(true)
     })
     await act(async () => {
-      resolveLogin!({ token: 'fake-token', userId: 'u1', rbac: 'admin', name: 'Test User' })
+      resolveLogin!({ token: 'fake-token', userId: 'u1', rbac: 'admin' })
       await loginPromise
     })
   })
@@ -101,7 +100,6 @@ describe('Login page', () => {
       token: 'fake-token',
       userId: 'u1',
       rbac: 'admin',
-      name: 'Test User',
     })
     const { getByLabelText, getByText } = render(
       <MemoryRouter initialEntries={[{ pathname: '/login', state: { from: { pathname: 'https://evil.com' } } }]}>
@@ -123,7 +121,6 @@ describe('Login page', () => {
       token: 'fake-token',
       userId: 'u1',
       rbac: 'admin',
-      name: 'Test User',
     })
     const { getByLabelText, getByText } = render(
       <MemoryRouter initialEntries={[{ pathname: '/login', state: { from: { pathname: '//evil.com' } } }]}>
@@ -154,7 +151,6 @@ describe('Login page', () => {
       token: 'fake-token',
       userId: 'u1',
       rbac: 'admin',
-      name: 'Test User',
     })
     const { getByLabelText, getByText } = render(
       <MemoryRouter initialEntries={[{ pathname: '/login', state: { from: { pathname: '/orgs/abc' } } }]}>

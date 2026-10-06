@@ -1,6 +1,8 @@
 package com.summa.controller;
 
 import com.summa.enums.AgentClass;
+import com.summa.model.Agent;
+import com.summa.model.Human;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.security.WriteGate;
 import com.summa.service.AuditService;
@@ -35,8 +37,8 @@ public class SpawnController {
             @RequestParam(required = false) String requesterId) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         if (!"system".equals(actor)) {
-            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
-            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            Optional<Human> humanOpt = memberService.findHuman(actor);
+            Optional<Agent> agentOpt = memberService.findAgent(actor);
             boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
             if (!hasAccess) {
                 return ControllerResponses.gate(auditService, actor, "Authentication required");
@@ -55,8 +57,8 @@ public class SpawnController {
     public ResponseEntity<?> getRequest(@PathVariable String id) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         if (!"system".equals(actor)) {
-            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
-            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            Optional<Human> humanOpt = memberService.findHuman(actor);
+            Optional<Agent> agentOpt = memberService.findAgent(actor);
             boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
             if (!hasAccess) {
                 return ControllerResponses.gate(auditService, actor, "Authentication required");
@@ -148,8 +150,8 @@ public class SpawnController {
     public ResponseEntity<Map<String, Object>> stats() {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         if (!"system".equals(actor)) {
-            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
-            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+            Optional<Human> humanOpt = memberService.findHuman(actor);
+            Optional<Agent> agentOpt = memberService.findAgent(actor);
             boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
             if (!hasAccess) {
                 return ControllerResponses.gate(auditService, actor, "Authentication required");

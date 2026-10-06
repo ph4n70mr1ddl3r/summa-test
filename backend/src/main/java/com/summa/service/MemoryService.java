@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import com.summa.exception.AuthorizationDeniedException;
 import com.summa.exception.EntityNotFoundException;
 import com.summa.util.ScanUtils;
 
@@ -87,12 +88,12 @@ public class MemoryService {
         if ("personal".equals(item.getTier())) {
             // Personal-tier: only the spawner's owner (memberId) can clear taint
             if (item.getMemberId() == null || !item.getMemberId().equals(reviewerId)) {
-                throw new IllegalStateException("Only the owner can review personal-tier memory");
+                throw new AuthorizationDeniedException("Only the owner can review personal-tier memory");
             }
         } else if ("project".equals(item.getTier())) {
             // Project-tier: only the domain owner can clear taint
             if (item.getWorkspaceId() == null) {
-                throw new IllegalStateException("Project-tier memory requires a workspace for review");
+                throw new AuthorizationDeniedException("Project-tier memory requires a workspace for review");
             }
             // Find the workspace and check if reviewer owns any of its domains
             boolean isDomainOwner = false;
@@ -121,8 +122,11 @@ public class MemoryService {
             boolean isAdmin = memberService.findAdmins().stream()
                     .anyMatch(h -> h.getId().equals(reviewerId));
             if (!isDomainOwner && !isAdmin) {
-                throw new IllegalStateException("Only the domain owner or an admin can review project-tier memory");
+                throw new AuthorizationDeniedException("Only the domain owner or an admin can review project-tier memory");
             }
+        } else if (!"proposal".equals(item.getTier())) {
+            // Unknown tier: reject to prevent authorization bypass
+            throw new AuthorizationDeniedException("Unknown memory tier: " + item.getTier() + "; must be personal, project, or proposal");
         }
         // proposal-tier: any reviewer with write access can clear (no additional gate)
 

@@ -131,8 +131,8 @@ describe('auth helpers', () => {
   })
 
   it('getUser returns null when user missing required fields', () => {
-    setAuthToken('test-token', { userId: 'u1', rbac: 'member' as RbacRole, name: '' } as { userId: string; rbac: RbacRole; name: string })
-    expect(getUser()).toBe(null)
+    setAuthToken('test-token', { userId: 'u1', rbac: 'member' as RbacRole } as { userId: string; rbac: RbacRole; name?: string })
+    expect(getUser()).toEqual({ userId: 'u1', rbac: 'member' })
   })
 })
 

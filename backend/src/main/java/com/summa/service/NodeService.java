@@ -184,9 +184,11 @@ public class NodeService {
         }
 
         // ARC-024: refuse stale or equal epoch (equal epoch = replay attack)
-        if (ws.getClaimEpoch() != null && ws.getClaimEpoch() >= currentEpoch) {
+        // Null epoch on a fresh workspace is treated as epoch 0, so a replay with epoch=0 is also refused.
+        int wsEpoch = ws.getClaimEpoch() != null ? ws.getClaimEpoch() : 0;
+        if (wsEpoch >= currentEpoch) {
             throw new IllegalStateException(
-                String.format("Stale epoch: workspace epoch=%d, claimed=%d", ws.getClaimEpoch(), currentEpoch));
+                String.format("Stale epoch: workspace epoch=%d, claimed=%d", wsEpoch, currentEpoch));
         }
 
         // Bump epoch and set lease expiry

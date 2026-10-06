@@ -58,6 +58,9 @@ public class AskService {
 
     // ASK-100: Storm collapse window — tracks recent ask creation by (kind, to, payloadHash)
     // Uses bounded maps with TTL-based eviction to prevent unbounded memory growth.
+    // NOTE: These maps are process-local. In a multi-instance deployment, each instance
+    // maintains its own collapse window, which may lead to duplicate asks across instances.
+    // A distributed cache (e.g., Redis) is required for correct storm collapse in multi-instance mode.
     private final ConcurrentHashMap<String, ExpiringEntry<Instant>> collapseWindowTimestamps = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, ExpiringEntry<Integer>> successorDepth = new ConcurrentHashMap<>();
     // Per-key locks to prevent concurrent collapse race conditions

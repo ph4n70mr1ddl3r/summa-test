@@ -128,7 +128,7 @@ export default function App() {
               <ModeLabel />
               {authed && (
                 <span className="text-gray-500 text-xs">
-                  {user?.name ?? 'authenticated'}
+                  {user?.name || 'authenticated'}
                 </span>
               )}
               {authed && <LogoutButton />}

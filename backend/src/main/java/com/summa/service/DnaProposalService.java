@@ -207,6 +207,12 @@ public class DnaProposalService {
     public void checkAndEscalateBreachedProposals() {
         Instant now = Instant.now();
         List<DnaProposal> openProposals = proposalRepository.findAllOpen();
+        // Purge alreadyEscalated of proposals that are no longer open (resolved/withdrawn)
+        // to prevent unbounded set growth and re-escalation of new proposals with same ID pattern.
+        alreadyEscalated.removeIf(id -> {
+            Optional<DnaProposal> p = proposalRepository.findById(id);
+            return p.isEmpty() || !"open".equals(p.get().getStatus());
+        });
         for (DnaProposal proposal : openProposals) {
             if (alreadyEscalated.contains(proposal.getId())) {
                 continue;

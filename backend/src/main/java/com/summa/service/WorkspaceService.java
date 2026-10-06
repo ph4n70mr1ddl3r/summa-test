@@ -201,14 +201,16 @@ public class WorkspaceService {
                                     }
                                 }
                                 node.setClaim(objectMapper.writeValueAsString(remaining));
-                            } else {
+                            } else if (fallbackNode.isObject()) {
+                                // Legacy single-object claim: clear entirely (no other workspaces to preserve)
                                 node.setClaim(null);
                             }
+                            // If neither array nor object, log and skip — do not nullify the claim
                         } catch (Exception parseError) {
                             // Log the parse error rather than silently dropping the claim
                             auditService.logSystem("ARCHIVE_CLEAR_NODE_CLAIM_PARSE_FAIL", "node", previousNodeId,
                                 JsonHelpers.toJson(Map.of("workspaceId", id, "error", parseError.getMessage()), objectMapper));
-                            node.setClaim(null);
+                            // Do NOT nullify — preserving the existing claim is safer than losing it
                         }
                         nodeRepository.save(node);
                     }

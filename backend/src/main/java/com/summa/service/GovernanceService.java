@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.Optional;
+import com.summa.exception.AuthorizationDeniedException;
 
 @Service
 public class GovernanceService {
@@ -64,7 +65,7 @@ public class GovernanceService {
         if (type.isInstance(value)) return type.cast(value);
         if (type.equals(Integer.class) || type.equals(int.class)) {
             if (value instanceof Number) return type.cast(((Number) value).intValue());
-            try { return type.cast((int) Math.round(Double.parseDouble(value.toString()))); }
+            try { return type.cast((int) Double.parseDouble(value.toString())); }
             catch (NumberFormatException e) {
                 log.debug("Cannot cast '{}' to Integer: {}", value, e.getMessage());
             }
@@ -72,7 +73,7 @@ public class GovernanceService {
         }
         if (type.equals(Long.class) || type.equals(long.class)) {
             if (value instanceof Number) return type.cast(((Number) value).longValue());
-            try { return type.cast((long) Math.round(Double.parseDouble(value.toString()))); }
+            try { return type.cast((long) Double.parseDouble(value.toString())); }
             catch (NumberFormatException e) {
                 log.debug("Cannot cast '{}' to Long: {}", value, e.getMessage());
             }
@@ -174,7 +175,7 @@ public class GovernanceService {
      */
     public void requireAdminOrThrow(String actor) {
         if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
-            throw new IllegalStateException("Authentication required");
+            throw new AuthorizationDeniedException("Authentication required");
         }
     }
 

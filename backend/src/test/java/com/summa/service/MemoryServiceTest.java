@@ -75,6 +75,7 @@ class MemoryServiceTest {
     void review_clearsTaint() {
         MemoryItem item = new MemoryItem();
         item.setId("mem-1");
+        item.setTier("proposal");
         item.setTainted(true);
         when(memoryItemRepository.findById("mem-1")).thenReturn(Optional.of(item));
         when(memoryItemRepository.save(any())).thenAnswer(i -> i.getArgument(0));

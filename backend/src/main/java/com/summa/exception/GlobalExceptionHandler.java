@@ -54,30 +54,14 @@ public class GlobalExceptionHandler {
         return auditAndRespond("REFUSAL", "conflict", null, e.getMessage(), HttpStatus.CONFLICT);
     }
 
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<Map<String, Object>> handleIllegalState(IllegalStateException e) {
-        // Distinguish authorization refusals (e.g. WriteGate denial) from genuine server errors.
-        // Use the exception message class hierarchy rather than substring matching for reliability.
-        String msg = e.getMessage();
-        if (msg != null && isAuthRefusal(msg)) {
-            return auditAndRespond("REFUSAL", "gate", null, msg, HttpStatus.FORBIDDEN);
-        }
-        throw e;
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleAuthDenied(AuthorizationDeniedException e) {
+        return auditAndRespond("REFUSAL", "gate", null, e.getMessage(), HttpStatus.FORBIDDEN);
     }
 
-    private boolean isAuthRefusal(String msg) {
-        // Match authorization refusal patterns produced by WriteGate, controllers, and services.
-        // These correspond to messages thrown as IllegalStateException for permission denials.
-        if (msg == null) return false;
-        return msg.contains("does not have write permission")
-                || msg.contains("Admin access required")
-                || msg.contains("Authentication required")
-                || msg.contains("admin required")
-                || msg.contains("requires admin role")
-                || msg.contains("requires admin")
-                || msg.contains("Only the agent's owner or an admin")
-                || msg.startsWith("gate refusal")
-                || msg.contains("gate refusal");
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalState(IllegalStateException e) {
+        throw e;
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
