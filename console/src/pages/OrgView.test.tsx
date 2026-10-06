@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, waitFor } from '@testing-library/react'
+import { render, waitFor, screen } from '@testing-library/react'
 import OrgView from './OrgView'
 import * as apiModule from '../services/api'
 
@@ -35,20 +35,20 @@ describe('OrgView page', () => {
   it('renders the Organization heading', async () => {
     vi.mocked(apiModule.api.org.members).mockResolvedValue({ members: [], total: 0 })
     vi.mocked(apiModule.api.groups.list).mockResolvedValue([])
-    const { container } = render(<OrgView />)
+    render(<OrgView />)
     await waitFor(() => {
-      expect(container.textContent).toContain('Organization')
+      expect(screen.getByText('Organization')).toBeInTheDocument()
     })
   })
 
   it('shows members and groups sections', async () => {
     vi.mocked(apiModule.api.org.members).mockResolvedValue({ members: [], total: 0 })
     vi.mocked(apiModule.api.groups.list).mockResolvedValue([])
-    const { container } = render(<OrgView />)
+    render(<OrgView />)
     await waitFor(() => {
-      expect(container.textContent).toContain('Humans')
-      expect(container.textContent).toContain('Agents')
-      expect(container.textContent).toContain('Groups')
+      expect(screen.getByText(/Humans/)).toBeInTheDocument()
+      expect(screen.getByText(/Agents/)).toBeInTheDocument()
+      expect(screen.getByText(/Groups/)).toBeInTheDocument()
     })
   })
 
@@ -61,10 +61,10 @@ describe('OrgView page', () => {
       total: 2,
     } as unknown as { members: (import('../services/api').Human | import('../services/api').Agent)[]; total: number })
     vi.mocked(apiModule.api.groups.list).mockResolvedValue([])
-    const { container } = render(<OrgView />)
+    render(<OrgView />)
     await waitFor(() => {
-      expect(container.textContent).toContain('admin')
-      expect(container.textContent).toContain('viewer')
+      expect(screen.getByText('admin')).toBeInTheDocument()
+      expect(screen.getByText('viewer')).toBeInTheDocument()
     })
   })
 
@@ -76,31 +76,31 @@ describe('OrgView page', () => {
       total: 1,
     } as unknown as { members: (import('../services/api').Human | import('../services/api').Agent)[]; total: number })
     vi.mocked(apiModule.api.groups.list).mockResolvedValue([])
-    const { container } = render(<OrgView />)
+    render(<OrgView />)
     await waitFor(() => {
-      expect(container.textContent).toContain('Agent-One')
-      expect(container.textContent).toContain('persistent')
-      expect(container.textContent).toContain('active')
+      expect(screen.getByText('Agent-One')).toBeInTheDocument()
+      expect(screen.getByText('persistent')).toBeInTheDocument()
+      expect(screen.getByText('active')).toBeInTheDocument()
     })
   })
 
   it('shows empty state when both APIs return empty', async () => {
     vi.mocked(apiModule.api.org.members).mockResolvedValue({ members: [], total: 0 })
     vi.mocked(apiModule.api.groups.list).mockResolvedValue([])
-    const { container } = render(<OrgView />)
+    render(<OrgView />)
     await waitFor(() => {
-      expect(container.textContent).toContain('No humans yet')
-      expect(container.textContent).toContain('No agents yet')
-      expect(container.textContent).toContain('No groups configured')
+      expect(screen.getByText(/No humans yet/)).toBeInTheDocument()
+      expect(screen.getByText(/No agents yet/)).toBeInTheDocument()
+      expect(screen.getByText(/No groups configured/)).toBeInTheDocument()
     })
   })
 
   it('shows error state on API failure', async () => {
     vi.mocked(apiModule.api.org.members).mockRejectedValue(new Error('Network error'))
     vi.mocked(apiModule.api.groups.list).mockRejectedValue(new Error('Network error'))
-    const { container } = render(<OrgView />)
+    render(<OrgView />)
     await waitFor(() => {
-      expect(container.textContent).toContain('Failed to load')
+      expect(screen.getByText(/Failed to load/)).toBeInTheDocument()
     })
   })
 })

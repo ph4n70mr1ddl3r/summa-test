@@ -87,7 +87,7 @@ Status as of 2026-09-19; normative scope lives in `PLAN.md` and `specs/`
 | 6. Multi-human | RBAC, ask routing, node registration | Complete |
 | 7. Spawning | Ephemeral workers, policy engine | Complete |
 | 8a. Hardening | Security review, backup/restore drills | In Progress |
-| 8b. Delivery & Acceptance | Demos DLV-050…055, cut-over | Pending |
+| 8b. v1.1 Polish | Tauri shell, installers, telemetry | Pending |
 
 ## License
 

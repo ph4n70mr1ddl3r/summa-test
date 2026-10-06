@@ -1,52 +1,43 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, waitFor } from '@testing-library/react'
+import { render, waitFor, screen } from '@testing-library/react'
 import Initiatives from './Initiatives'
 import * as apiModule from '../services/api'
 
-const originalLoadWithFallback = vi.fn()
-
-vi.mock('../services/api', async (importOriginal) => {
-  const actual = await importOriginal<typeof apiModule>()
-  return {
-    ...actual,
-    api: {
-      ...actual.api,
-      initiatives: {
-        ...actual.api.initiatives,
-        list: vi.fn(),
-      },
+vi.mock('../services/api', () => ({
+  api: {
+    initiatives: {
+      list: vi.fn(),
     },
-    loadWithFallback: (...args: unknown[]) => originalLoadWithFallback(...args),
-  }
-})
+  },
+  loadWithFallback: async (fetchAll: () => Promise<unknown[]>, fetchIndividual: () => Promise<unknown[]>) => {
+    try {
+      const data = await fetchAll()
+      return { data, error: null }
+    } catch {
+      const data = await fetchIndividual()
+      return { data, error: 'fallback' }
+    }
+  },
+}))
 
 describe('Initiatives page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    originalLoadWithFallback.mockImplementation(async (fetchAll, fetchIndividual) => {
-      try {
-        const data = await fetchAll()
-        return { data, error: null }
-      } catch {
-        const data = await fetchIndividual()
-        return { data, error: 'fallback' }
-      }
-    })
   })
 
   it('renders the Initiatives heading', async () => {
     vi.mocked(apiModule.api.initiatives.list).mockResolvedValue([])
-    const { container } = render(<Initiatives />)
+    render(<Initiatives />)
     await waitFor(() => {
-      expect(container.textContent).toContain('Initiatives')
+      expect(screen.getByText('Initiatives')).toBeInTheDocument()
     })
   })
 
   it('shows empty state when no initiatives', async () => {
     vi.mocked(apiModule.api.initiatives.list).mockResolvedValue([])
-    const { container } = render(<Initiatives />)
+    render(<Initiatives />)
     await waitFor(() => {
-      expect(container.textContent).toContain('No initiatives yet')
+      expect(screen.getByText(/No initiatives yet/)).toBeInTheDocument()
     })
   })
 
@@ -55,11 +46,11 @@ describe('Initiatives page', () => {
       { id: 'i1', title: 'Launch product', sponsor: 'alice', lead: 'bob', status: 'active' },
       { id: 'i2', title: 'Research phase', sponsor: 'carol', lead: 'dave', status: 'proposed' },
     ])
-    const { container } = render(<Initiatives />)
+    render(<Initiatives />)
     await waitFor(() => {
-      expect(container.textContent).toContain('Launch product')
-      expect(container.textContent).toContain('active')
-      expect(container.textContent).toContain('proposed')
+      expect(screen.getByText('Launch product')).toBeInTheDocument()
+      expect(screen.getByText('active')).toBeInTheDocument()
+      expect(screen.getByText('proposed')).toBeInTheDocument()
     })
   })
 
@@ -67,18 +58,18 @@ describe('Initiatives page', () => {
     vi.mocked(apiModule.api.initiatives.list).mockResolvedValue([
       { id: 'i1', title: 'T1', sponsor: 's1', lead: 'l1', status: 'active' },
     ])
-    const { container } = render(<Initiatives />)
+    render(<Initiatives />)
     await waitFor(() => {
-      expect(container.textContent).toContain('s1')
-      expect(container.textContent).toContain('l1')
+      expect(screen.getByText(/s1/)).toBeInTheDocument()
+      expect(screen.getByText(/l1/)).toBeInTheDocument()
     })
   })
 
   it('shows error state on API failure', async () => {
     vi.mocked(apiModule.api.initiatives.list).mockRejectedValue(new Error('Network error'))
-    const { container } = render(<Initiatives />)
+    render(<Initiatives />)
     await waitFor(() => {
-      expect(container.textContent).toContain('Failed to load')
+      expect(screen.getByText(/Failed to load/)).toBeInTheDocument()
     })
   })
 })

@@ -8,6 +8,7 @@ import com.summa.repository.SpawnRequestRepository;
 import com.summa.repository.NodeRepository;
 import com.summa.repository.RunRepository;
 import com.summa.model.Workspace;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -53,7 +54,7 @@ class WorkspaceServiceTest {
     private WorkspaceService workspaceService;
 
     @SuppressWarnings("unchecked")
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         workspaceService = new WorkspaceService(workspaceRepository, domainRepository, auditService, objectMapper,
             initiativeRepository, triggerRepository, spawnRequestRepository, nodeRepository, runRepository);

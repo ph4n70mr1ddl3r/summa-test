@@ -64,7 +64,7 @@ class AgentServiceTest {
     private AgentService agentService;
 
     @SuppressWarnings("unchecked")
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         agentService = new AgentService(agentRepository, auditService, memberService, askRepository,
             boardTaskRepository, initiativeRepository, triggerRepository, spawnRequestRepository,

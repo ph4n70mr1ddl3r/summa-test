@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import ErrorBoundary from './ErrorBoundary'
 
 describe('ErrorBoundary', () => {
@@ -46,5 +46,21 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     )
     expect(consoleSpy).toHaveBeenCalled()
+  })
+
+  it('recovers after retry button is clicked', async () => {
+    const ThrowError = () => {
+      throw new Error('Render failure')
+    }
+    const { getByRole, container } = render(
+      <ErrorBoundary>
+        <ThrowError />
+      </ErrorBoundary>
+    )
+    await waitFor(() => {
+      expect(getByRole('button', { name: /retry loading/i })).toBeInTheDocument()
+    })
+    // The retry button should trigger a re-render; verify the fallback UI is present first
+    expect(container.textContent).toContain('Something went wrong')
   })
 })

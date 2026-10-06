@@ -90,7 +90,7 @@ Use conventional commits:
 
 ## Security
 
-Summa treats security as a first-class concern. All SEC-* requirements are normative and machine-checked.
+Summa treats security as a first-class concern. All SEC-* requirements are normative; structural checks are enforced by the spec linter.
 
 ### Before You Commit
 

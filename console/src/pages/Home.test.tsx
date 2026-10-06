@@ -42,4 +42,12 @@ describe('Home page', () => {
       expect(container.textContent).toContain('Backend')
     })
   })
+
+  it('shows error state on API health failure', async () => {
+    vi.mocked(apiModule.api.health).mockRejectedValue(new Error('Service unavailable'))
+    const { container } = renderWithRouter(<Home />)
+    await waitFor(() => {
+      expect(container.textContent).toContain('Unreachable')
+    })
+  })
 })

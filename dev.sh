@@ -77,7 +77,8 @@ fi
 
 # Check for curl
 if ! command -v curl &> /dev/null; then
-    echo "WARNING: curl not found. Health checks will be unavailable."
+    echo "ERROR: curl is required for health checks"
+    exit 1
 fi
 
 # Create data directories

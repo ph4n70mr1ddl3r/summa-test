@@ -20,7 +20,7 @@ if ! command -v java &> /dev/null; then
     exit 1
 fi
 
-JAVA_VERSION=$(java -version 2>&1 | grep 'version' | awk -F'"' '{print $2}' | awk -F. '{print $1}')
+JAVA_VERSION=$(java -version 2>&1 | awk -F'"' '/version/ {print $2}' | cut -d. -f1)
 if [ -z "$JAVA_VERSION" ] || [ "$JAVA_VERSION" -lt 21 ]; then
     echo "ERROR: Java 21+ is required"
     exit 1
@@ -43,7 +43,7 @@ if [ ! -d "backend/target" ]; then
     echo "ERROR: backend/target/ not found. Run 'npm run build:backend' (or 'cd backend && mvn package') first."
     exit 1
 fi
-JAR_FILE=$(ls backend/target/summa-backend-*.jar 2>/dev/null | grep -v sources | grep -v plain | head -n 1)
+JAR_FILE=$(find backend/target -maxdepth 1 -name 'summa-backend-*.jar' ! -name '*-sources.jar' ! -name '*-plain.jar' -print -quit)
 if [ -z "$JAR_FILE" ]; then
     echo "ERROR: Backend JAR not found in backend/target/. Run 'npm run build:backend' (or 'cd backend && mvn package') first."
     exit 1

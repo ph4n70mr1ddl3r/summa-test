@@ -41,7 +41,7 @@ class RunServiceTest {
         run.setId("run-1");
         run.setStatus("queued");
         when(runRepository.findById("run-1")).thenReturn(Optional.of(run));
-        when(runRepository.save(any())).thenReturn(run);
+        when(runRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         Run result = runService.start("run-1");
 
@@ -55,7 +55,7 @@ class RunServiceTest {
         run.setId("run-1");
         run.setStatus("running");
         when(runRepository.findById("run-1")).thenReturn(Optional.of(run));
-        when(runRepository.save(any())).thenReturn(run);
+        when(runRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         Run result = runService.complete("run-1", "success", 100L, 0.01);
 
@@ -69,7 +69,7 @@ class RunServiceTest {
         run.setId("run-1");
         run.setStatus("running");
         when(runRepository.findById("run-1")).thenReturn(Optional.of(run));
-        when(runRepository.save(any())).thenReturn(run);
+        when(runRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         Run result = runService.fail("run-1", "Something went wrong");
 
@@ -137,7 +137,7 @@ class RunServiceTest {
         run.setId("run-1");
         run.setStatus("queued");
         when(runRepository.findById("run-1")).thenReturn(Optional.of(run));
-        when(runRepository.save(any())).thenReturn(run);
+        when(runRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         Run result = runService.cancel("run-1");
 
@@ -150,7 +150,7 @@ class RunServiceTest {
         run.setId("run-1");
         run.setStatus("running");
         when(runRepository.findById("run-1")).thenReturn(Optional.of(run));
-        when(runRepository.save(any())).thenReturn(run);
+        when(runRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         Run result = runService.cancel("run-1");
 
@@ -210,7 +210,7 @@ class RunServiceTest {
         Run run = new Run();
         run.setId("run-1");
         run.setStatus("queued");
-        when(runRepository.save(any())).thenReturn(run);
+        when(runRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         Run result = runService.create("agent-1", "ws-1", null, null, "prompt", "actor");
 

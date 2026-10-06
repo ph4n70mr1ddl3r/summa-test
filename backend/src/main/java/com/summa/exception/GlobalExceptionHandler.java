@@ -60,11 +60,6 @@ public class GlobalExceptionHandler {
         return auditAndRespond("REFUSAL", "gate", null, e.getMessage(), HttpStatus.FORBIDDEN);
     }
 
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<Map<String, Object>> handleIllegalState(IllegalStateException e) {
-        throw e;
-    }
-
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(EntityNotFoundException e) {
         return auditAndRespond("NOT_FOUND", "not_found", null, e.getMessage(), HttpStatus.NOT_FOUND);
