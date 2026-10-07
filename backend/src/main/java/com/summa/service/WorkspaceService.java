@@ -98,6 +98,11 @@ public class WorkspaceService {
     }
 
     @Transactional(readOnly = true)
+    public List<Workspace> findAllActive(int limit) {
+        return workspaceRepository.findByArchivedAtIsNullOrdered(limit);
+    }
+
+    @Transactional(readOnly = true)
     public List<Workspace> findByNode(String nodeId) {
         return workspaceRepository.findByNodeId(nodeId);
     }

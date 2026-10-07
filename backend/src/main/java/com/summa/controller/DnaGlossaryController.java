@@ -32,13 +32,8 @@ public class DnaGlossaryController {
             @RequestParam(required = false) String domainId,
             @RequestParam(required = false) String scope) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (!"system".equals(actor)) {
-            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
-            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
-            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ControllerResponses.gate(auditService, actor, "Authentication required");
-            }
-        }
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         if (scope != null) {
             return ResponseEntity.ok(glossaryService.findByScope(scope));
         }
@@ -51,13 +46,8 @@ public class DnaGlossaryController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getEntry(@PathVariable String id) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (!"system".equals(actor)) {
-            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
-            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
-            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ControllerResponses.gate(auditService, actor, "Authentication required");
-            }
-        }
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         Optional<DnaGlossary> entOpt = glossaryService.findById(id);
         if (entOpt.isPresent()) {
             return ResponseEntity.ok(entOpt.get());

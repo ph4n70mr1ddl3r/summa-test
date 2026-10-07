@@ -41,14 +41,8 @@ public class DnaProposalController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String domainId) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (!"system".equals(actor)) {
-            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
-            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
-            boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
-            if (!hasAccess) {
-                return ControllerResponses.gate(auditService, actor, "Authentication required");
-            }
-        }
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         if (status != null) {
             return ResponseEntity.ok(proposalService.findByStatus(status));
         }
@@ -61,14 +55,8 @@ public class DnaProposalController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getProposal(@PathVariable String id) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (!"system".equals(actor)) {
-            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
-            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
-            boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
-            if (!hasAccess) {
-                return ControllerResponses.gate(auditService, actor, "Authentication required");
-            }
-        }
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         Optional<DnaProposal> entOpt = proposalService.findById(id);
         if (entOpt.isPresent()) {
             return ResponseEntity.ok(entOpt.get());
@@ -186,13 +174,8 @@ public class DnaProposalController {
     @GetMapping("/review-queue")
     public ResponseEntity<?> reviewQueue(@RequestParam(required = false) String domainId) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
-            return ControllerResponses.gate(auditService, actor, "Authentication required");
-        }
-        // API-022: GET /dna/proposals/review-queue — admin or domain owner access required
-        Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
-        boolean isAdmin = humanOpt.isPresent() && RbacRole.ADMIN.getValue().equals(humanOpt.get().getRbac());
-        if (!isAdmin) {
+        // System actor allowed for automated DNA pipeline access (consistent with other read endpoints)
+        if (!"system".equals(actor)) {
             if (domainId == null || domainId.isBlank()) {
                 return ControllerResponses.gate(auditService, actor, "Admin access required for review queue");
             }

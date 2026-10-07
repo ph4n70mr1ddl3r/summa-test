@@ -30,26 +30,16 @@ public class GroupController {
     @GetMapping
     public ResponseEntity<?> listGroups() {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (!"system".equals(actor)) {
-            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
-            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
-            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ControllerResponses.gate(auditService, actor, "Authentication required");
-            }
-        }
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         return ResponseEntity.ok(groupService.findAll());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getGroup(@PathVariable String id) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (!"system".equals(actor)) {
-            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
-            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
-            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ControllerResponses.gate(auditService, actor, "Authentication required");
-            }
-        }
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         Optional<Group> entOpt = groupService.findById(id);
         if (entOpt.isPresent()) {
             return ResponseEntity.ok(entOpt.get());

@@ -38,13 +38,8 @@ public class TriggerController {
     public ResponseEntity<?> listTriggers(
             @RequestParam(required = false) String agentId) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (!"system".equals(actor)) {
-            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
-            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
-            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ControllerResponses.gate(auditService, actor, "Authentication required");
-            }
-        }
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         if (agentId != null) {
             return ResponseEntity.ok(triggerService.findByAgent(agentId));
         }
@@ -54,13 +49,8 @@ public class TriggerController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getTrigger(@PathVariable String id) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (!"system".equals(actor)) {
-            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
-            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
-            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ControllerResponses.gate(auditService, actor, "Authentication required");
-            }
-        }
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         Optional<Trigger> entOpt = triggerService.findById(id);
         if (entOpt.isPresent()) {
             return ResponseEntity.ok(entOpt.get());
@@ -161,15 +151,10 @@ public class TriggerController {
     }
 
     @GetMapping("/stats")
-    public ResponseEntity<Map<String, Object>> stats() {
+    public ResponseEntity<?> stats() {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (!"system".equals(actor)) {
-            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
-            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
-            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ControllerResponses.gate(auditService, actor, "Authentication required");
-            }
-        }
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         return ResponseEntity.ok(triggerService.getStats());
     }
 }

@@ -38,13 +38,8 @@ public class DnaSearchController {
             @RequestParam(required = false) String domainId,
             @RequestParam(defaultValue = "20") int limit) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (!"system".equals(actor)) {
-            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
-            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
-            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ControllerResponses.gate(auditService, actor, "Authentication required");
-            }
-        }
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         int cappedLimit = Math.min(Math.max(limit, 1), Defaults.MAX_DNA_SEARCH_LIMIT);
         try {
             List<Map<String, Object>> results = dnaReadService.search(q, domainId, cappedLimit);
@@ -72,13 +67,8 @@ public class DnaSearchController {
     @GetMapping("/domains")
     public ResponseEntity<?> listDomains() {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (!"system".equals(actor)) {
-            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
-            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
-            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ControllerResponses.gate(auditService, actor, "Authentication required");
-            }
-        }
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         return ResponseEntity.ok(dnaReadService.listDomains());
     }
 }

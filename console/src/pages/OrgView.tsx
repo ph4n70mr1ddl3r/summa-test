@@ -27,9 +27,9 @@ export default function OrgView() {
       if (aborted) { setLoading(false); return }
       const membersResp = data[0]
       const membersList = Array.isArray(membersResp)
-        ? (membersResp as unknown as Member[])
-        : (membersResp != null && typeof membersResp === 'object' && !Array.isArray(membersResp)
-          ? ((membersResp as { members?: Member[] }).members ?? [])
+        ? membersResp
+        : (membersResp != null && typeof membersResp === 'object'
+          ? ((membersResp as Record<string, unknown>).members as Member[] ?? [])
           : [])
       setMembers(membersList)
       setGroups(Array.isArray(data[1]) ? data[1] : [])

@@ -39,13 +39,8 @@ public class DnaDecisionController {
     public ResponseEntity<?> listDecisions(
             @RequestParam(required = false) String domainId) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (!"system".equals(actor)) {
-            Optional<Human> humanOpt = memberService.findHuman(actor);
-            Optional<Agent> agentOpt = memberService.findAgent(actor);
-            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ControllerResponses.gate(auditService, actor, "Authentication required");
-            }
-        }
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         if (domainId != null) {
             return ResponseEntity.ok(decisionService.findByDomain(domainId));
         }
@@ -55,13 +50,8 @@ public class DnaDecisionController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getDecision(@PathVariable String id) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (!"system".equals(actor)) {
-            Optional<Human> humanOpt = memberService.findHuman(actor);
-            Optional<Agent> agentOpt = memberService.findAgent(actor);
-            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ControllerResponses.gate(auditService, actor, "Authentication required");
-            }
-        }
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         Optional<DnaDecision> entOpt = decisionService.findById(id);
         if (entOpt.isPresent()) {
             return ResponseEntity.ok(entOpt.get());

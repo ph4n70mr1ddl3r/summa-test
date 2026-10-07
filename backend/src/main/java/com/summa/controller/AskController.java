@@ -52,14 +52,8 @@ public class AskController {
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "50") int limit) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (!"system".equals(actor)) {
-            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
-            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
-            boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
-            if (!hasAccess) {
-                return ControllerResponses.gate(auditService, actor, "Authentication required");
-            }
-        }
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         int cappedLimit = Math.min(Math.max(limit, 1), MAX_LIST_LIMIT);
         if (to != null) {
             return ResponseEntity.ok(askService.findByTo(to, cappedLimit));
@@ -73,14 +67,8 @@ public class AskController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getAsk(@PathVariable String id) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (!"system".equals(actor)) {
-            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
-            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
-            boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
-            if (!hasAccess) {
-                return ControllerResponses.gate(auditService, actor, "Authentication required");
-            }
-        }
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         Optional<Ask> entOpt = askService.findById(id);
         if (entOpt.isPresent()) {
             return ResponseEntity.ok(entOpt.get());

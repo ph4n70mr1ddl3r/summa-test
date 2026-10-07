@@ -2,9 +2,11 @@ package com.summa.controller;
 
 import com.summa.model.AuditEvent;
 import com.summa.service.AuditService;
+import com.summa.service.MemberService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Shared response helpers for all REST controllers.
@@ -13,6 +15,14 @@ import java.util.Map;
  */
 public final class ControllerResponses {
     private ControllerResponses() {}
+
+    public static ResponseEntity<?> requireAuth(AuditService audit, MemberService memberService, String actor) {
+        if ("system".equals(actor)) return null;
+        Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
+        Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
+        boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
+        return hasAccess ? null : gate(audit, actor, "Authentication required");
+    }
 
     public static ResponseEntity<Map<String, Object>> validation(AuditService audit, String message) {
         AuditEvent event = audit.logSystem("REFUSAL", "validation", null, message);

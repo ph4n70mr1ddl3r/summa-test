@@ -313,7 +313,7 @@ export interface Run {
   status: RunStatus;
   result?: string;
   costTokens: number;
-  costUsd?: number;
+  costUsd: number;
   createdAt?: number;
   updatedAt?: number;
   prompt?: string;
@@ -887,6 +887,11 @@ export const api = {
     revoke: (id: string) =>
       request<Record<string, unknown>>(`/nodes/${id}/revoke`, {
         method: 'POST',
+      }),
+    update: (id: string, body: Record<string, string>) =>
+      request<Node>(`/nodes/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(body),
       }),
   },
   governance: {

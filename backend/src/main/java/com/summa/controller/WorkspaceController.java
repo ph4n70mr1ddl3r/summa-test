@@ -6,6 +6,7 @@ import com.summa.service.AuditService;
 import com.summa.service.MemberService;
 import com.summa.service.WorkspaceService;
 import com.summa.model.Workspace;
+import com.summa.constants.Defaults;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
@@ -29,28 +30,20 @@ public class WorkspaceController {
     }
 
     @GetMapping
-    public ResponseEntity<?> listWorkspaces() {
+    public ResponseEntity<?> listWorkspaces(
+            @RequestParam(defaultValue = "50") int limit) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (!"system".equals(actor)) {
-            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
-            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
-            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ControllerResponses.gate(auditService, actor, "Authentication required");
-            }
-        }
-        return ResponseEntity.ok(workspaceService.findAllActive());
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
+        int cappedLimit = Math.min(Math.max(limit, 1), Defaults.MAX_LIST_LIMIT);
+        return ResponseEntity.ok(workspaceService.findAllActive(cappedLimit));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getWorkspace(@PathVariable String id) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (!"system".equals(actor)) {
-            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
-            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
-            if (!(humanOpt.isPresent() || agentOpt.isPresent())) {
-                return ControllerResponses.gate(auditService, actor, "Authentication required");
-            }
-        }
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         Optional<Workspace> entOpt = workspaceService.findById(id);
         if (entOpt.isPresent()) {
             return ResponseEntity.ok(entOpt.get());

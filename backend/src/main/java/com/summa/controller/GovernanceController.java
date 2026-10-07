@@ -166,10 +166,7 @@ public class GovernanceController {
 
     private boolean requireAdmin(String actor) {
         Optional<Human> actorOpt = memberService.findHuman(actor);
-        if (actorOpt.isPresent() && actorOpt.get().isActive() && RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac())) {
-            return true;
-        }
-        Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
-        return agentOpt.isPresent() && agentOpt.get().isActive();
+        return actorOpt.isPresent() && actorOpt.get().isActive()
+                && RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac());
     }
 }

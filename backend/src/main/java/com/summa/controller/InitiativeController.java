@@ -34,14 +34,8 @@ public class InitiativeController {
     public ResponseEntity<?> listInitiatives(
             @RequestParam(required = false) String status) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (!"system".equals(actor)) {
-            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
-            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
-            boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
-            if (!hasAccess) {
-                return ControllerResponses.gate(auditService, actor, "Authentication required");
-            }
-        }
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         if (status != null) {
             return ResponseEntity.ok(initiativeService.findByStatus(status));
         }
@@ -51,14 +45,8 @@ public class InitiativeController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getInitiative(@PathVariable String id) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (!"system".equals(actor)) {
-            Optional<com.summa.model.Human> humanOpt = memberService.findHuman(actor);
-            Optional<com.summa.model.Agent> agentOpt = memberService.findAgent(actor);
-            boolean hasAccess = humanOpt.isPresent() || agentOpt.isPresent();
-            if (!hasAccess) {
-                return ControllerResponses.gate(auditService, actor, "Authentication required");
-            }
-        }
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         Optional<Initiative> entOpt = initiativeService.findById(id);
         if (entOpt.isPresent()) {
             return ResponseEntity.ok(entOpt.get());
