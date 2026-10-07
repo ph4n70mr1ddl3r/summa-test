@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { api } from '../services/api'
 import type { MemoryItem } from '../types'
 import { truncateSnippet, escapeHtml } from '../utils/formatting'
@@ -21,7 +21,7 @@ export default function Memory() {
     }
   }, [reviewSuccess])
 
-  const loadItems = () => {
+  const loadItems = useCallback(() => {
     setLoading(true)
     setError(null)
     let aborted = false
@@ -31,12 +31,12 @@ export default function Memory() {
       .then((data) => { if (!aborted) { setItems(Array.isArray(data) ? data : []); setLoading(false) } })
       .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
     return () => { aborted = true }
-  }
+  }, [filter])
 
   useEffect(() => {
     const cancel = loadItems()
     return cancel
-  }, [filter])
+  }, [filter, loadItems])
 
   const handleReview = async (id: string) => {
     setReviewSuccess(false)

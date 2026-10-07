@@ -14,7 +14,7 @@ export default function Governance() {
   const [saving, setSaving] = useState<string | null>(null)
   const [editValues, setEditValues] = useState<Record<string, string>>({})
 
-  const loadData = () => {
+  const loadData = useCallback(() => {
     setLoading(true)
     setError(null)
     let aborted = false
@@ -44,14 +44,14 @@ export default function Governance() {
       setLoading(false)
     })
     return () => { aborted = true }
-  }
+  }, [])
 
   useEffect(() => {
     const cancel = loadData()
     return cancel
-  }, [])
+  }, [loadData])
 
-  const handleSave = async (section: 'policies' | 'quotas', key: string, currentValue: string) => {
+  const handleSave = useCallback(async (section: 'policies' | 'quotas', key: string, currentValue: string) => {
     setSaving(`${section}:${key}`)
     setActionError(null)
     try {
@@ -80,7 +80,7 @@ export default function Governance() {
     } finally {
       setSaving(null)
     }
-  }
+  }, [loadData])
 
   const startEdit = useCallback((key: string, currentValue: unknown) => {
     const displayValue = typeof currentValue === 'object' && currentValue !== null

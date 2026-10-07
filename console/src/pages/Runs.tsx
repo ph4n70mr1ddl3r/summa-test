@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { api } from '../services/api'
 import type { Run, RunStatus } from '../types'
 import { runStatusColor, formatDate, escapeHtml } from '../utils/formatting'
@@ -10,7 +10,7 @@ export default function Runs() {
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<RunStatus | 'all'>('all')
 
-  const loadRuns = () => {
+  const loadRuns = useCallback(() => {
     setLoading(true)
     setError(null)
     let aborted = false
@@ -20,12 +20,12 @@ export default function Runs() {
       .then((data) => { if (!aborted) { setRuns(Array.isArray(data) ? data : []); setLoading(false) } })
       .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
     return () => { aborted = true }
-  }
+  }, [filter])
 
   useEffect(() => {
     const cancel = loadRuns()
     return cancel
-  }, [filter])
+  }, [filter, loadRuns])
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {}

@@ -219,8 +219,8 @@ public class OrgController {
     public ResponseEntity<?> listMembers() {
         // API-004: combined view of humans + active agents
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
-        if (gate != null) return gate;
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         List<Human> humans = orgService.findAllActiveHumans();
         List<Agent> agents = memberService.findAllActiveAgents();
 

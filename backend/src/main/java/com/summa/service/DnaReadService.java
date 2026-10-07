@@ -142,11 +142,15 @@ public class DnaReadService {
             agentMap.put("retiredAt", a.getRetiredAt() != null ? a.getRetiredAt().getEpochSecond() : null);
             return agentMap;
         }).toList());
-        snapshot.put("domains", domains.stream().map(d -> Map.of(
-            "id", d.getId(),
-            "name", d.getName(),
-            "access", d.getAccess()
-        )).toList());
+        snapshot.put("domains", domains.stream().map(d -> {
+            Map<String, Object> domainMap = new LinkedHashMap<>();
+            domainMap.put("id", d.getId());
+            domainMap.put("name", d.getName());
+            if (d.getAccess() != null) {
+                domainMap.put("access", d.getAccess());
+            }
+            return domainMap;
+        }).toList());
         
         return snapshot;
     }

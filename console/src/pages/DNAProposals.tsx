@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { api } from '../services/api'
 import type { DnaProposal, DnaProposalStatus } from '../types'
 import { formatDate, proposalKindColor, proposalStatusColor, escapeHtml } from '../utils/formatting'
@@ -10,7 +10,7 @@ export default function DNAProposals() {
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | DnaProposalStatus>('all')
 
-  const loadProposals = () => {
+  const loadProposals = useCallback(() => {
     setLoading(true)
     setError(null)
     let aborted = false
@@ -18,12 +18,12 @@ export default function DNAProposals() {
        .then((data) => { if (!aborted) { setProposals(Array.isArray(data) ? data : []); setLoading(false) } })
       .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
     return () => { aborted = true }
-  }
+  }, [filter])
 
   useEffect(() => {
     const cancel = loadProposals()
     return cancel
-  }, [filter])
+  }, [filter, loadProposals])
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {}

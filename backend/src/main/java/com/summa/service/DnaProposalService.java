@@ -324,6 +324,6 @@ public class DnaProposalService {
 
     private boolean proposedByMatches(DnaProposal proposal, String actor) {
         String proposedBy = proposal.getProposedBy();
-        return proposedBy != null && proposedBy.equals(actor);
+        return proposedBy != null && proposedBy.equals(com.summa.util.JsonHelpers.stripIdPrefix(actor));
     }
 }

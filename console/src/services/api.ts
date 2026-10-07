@@ -177,9 +177,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T | undefin
  * with null entries for any individual calls that failed.
  */
 export async function loadWithFallback<T>(
-  fetchAll: () => Promise<T[]>,
-  fetchIndividual: () => Promise<(T | null)[]>,
-): Promise<{ data: (T | null)[]; error: string | null }> {
+  fetchAll: () => Promise<(T | undefined)[]>,
+  fetchIndividual: () => Promise<(T | null | undefined)[]>,
+): Promise<{ data: (T | null | undefined)[]; error: string | null }> {
   try {
     const data = await fetchAll()
     return { data, error: null }

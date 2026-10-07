@@ -31,7 +31,7 @@ export default function OrgView() {
         : (membersResp != null && typeof membersResp === 'object'
           ? ((membersResp as Record<string, unknown>).members as Member[] ?? [])
           : [])
-      setMembers(membersList)
+      setMembers(membersList as Member[])
       setGroups(Array.isArray(data[1]) ? data[1] : [])
       setError(loadError)
       setLoading(false)

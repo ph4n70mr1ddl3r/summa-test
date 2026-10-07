@@ -95,7 +95,7 @@ export default function App() {
   const user = getUser()
   useEffect(() => {
     setNavigate(navigate)
-  }, [])
+  }, [navigate])
   const navItems = getFilteredNavItems(user)
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">

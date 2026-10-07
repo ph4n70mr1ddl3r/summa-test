@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -36,13 +37,17 @@ public class GlobalExceptionHandler {
         String actor = currentActor();
         // Fall back to system actor so audit entries are never created with a null actor
         if (actor == null) actor = com.summa.constants.Defaults.SYSTEM_ACTOR;
+        AuditEvent auditEvent = null;
         try {
-            auditService.log(actor, auditAction, objectType, objectId, message);
+            auditEvent = auditService.log(actor, auditAction, objectType, objectId, message);
         } catch (Exception e) {
             log.warn("Audit log failed, continuing without audit entry: {}", e.getMessage());
         }
-        return ResponseEntity.status(status).body(Map.of(
-            "code", objectType, "message", message, "audit_event_id", UUID.randomUUID().toString()));
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("code", objectType);
+        body.put("message", message);
+        body.put("audit_event_id", auditEvent != null ? auditEvent.getId() : UUID.randomUUID().toString());
+        return ResponseEntity.status(status).body(body);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
