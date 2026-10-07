@@ -54,7 +54,7 @@ public class NodeController {
         // S1: Require authenticated admin for node enrollment — prevent unauthenticated node creation.
         // NodeAuthFilter strips signature verification for this path, so we gate on JWT actor instead.
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (actor == null || Defaults.SYSTEM_ACTOR.equals(actor)) {
+        if (Defaults.SYSTEM_ACTOR.equals(actor)) {
             return ControllerResponses.gate(auditService, "Admin authentication required to enroll nodes");
         }
         if (!memberService.isAdmin(actor)) {

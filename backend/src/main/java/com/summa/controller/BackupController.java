@@ -3,11 +3,9 @@ package com.summa.controller;
 import com.summa.exception.EntityNotFoundException;
 import com.summa.security.WriteGate;
 import com.summa.security.RbacAuthorizationFilter;
-import com.summa.enums.RbacRole;
-import com.summa.model.Human;
 import com.summa.service.AuditService;
 import com.summa.service.BackupService;
-import com.summa.service.OrgService;
+import com.summa.service.MemberService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
@@ -16,21 +14,20 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/admin/backup")
 public class BackupController {
     private final BackupService backupService;
     private final WriteGate writeGate;
-    private final OrgService orgService;
+    private final MemberService memberService;
     private final AuditService auditService;
 
     public BackupController(BackupService backupService, WriteGate writeGate,
-                            OrgService orgService, AuditService auditService) {
+                            MemberService memberService, AuditService auditService) {
         this.backupService = backupService;
         this.writeGate = writeGate;
-        this.orgService = orgService;
+        this.memberService = memberService;
         this.auditService = auditService;
     }
 
@@ -39,10 +36,7 @@ public class BackupController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        Optional<Human> actorOpt = orgService.findHuman(actor);
-        if (actorOpt.isEmpty() || !actorOpt.get().isActive() || !RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac())) {
-            return ControllerResponses.gate(auditService, actor, "Backup requires admin role");
-        }
+        requireAdmin(actor);
         try {
             String rawBackupDir = body.get("backupDir");
             if (rawBackupDir == null || rawBackupDir.isBlank()) {
@@ -65,10 +59,7 @@ public class BackupController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        Optional<Human> actorOpt = orgService.findHuman(actor);
-        if (actorOpt.isEmpty() || !actorOpt.get().isActive() || !RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac())) {
-            return ControllerResponses.gate(auditService, actor, "Restore requires admin role");
-        }
+        requireAdmin(actor);
         try {
             String rawPath = body.get("backupPath");
             if (rawPath == null || rawPath.isBlank()) {
@@ -111,5 +102,11 @@ public class BackupController {
             throw new IllegalArgumentException(paramName + " must be under " + allowedDir);
         }
         return resolved;
+    }
+
+    private void requireAdmin(String actor) {
+        if (!memberService.isAdmin(actor)) {
+            throw new IllegalStateException("Admin access required");
+        }
     }
 }

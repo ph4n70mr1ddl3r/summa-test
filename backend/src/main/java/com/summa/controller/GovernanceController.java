@@ -57,19 +57,19 @@ public class GovernanceController {
     }
 
     @GetMapping("/policies")
-    public ResponseEntity<Map<String, Object>> getPolicies() {
+    public ResponseEntity<?> getPolicies() {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
-        if (gate != null) return gate;
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         if (!requireAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to view governance policies");
         return ResponseEntity.ok(governanceService.getAllSettings());
     }
 
     @GetMapping("/quotas")
-    public ResponseEntity<Map<String, Object>> getQuotas() {
+    public ResponseEntity<?> getQuotas() {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
-        if (gate != null) return gate;
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         if (!requireAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to view governance quotas");
         Map<String, Object> all = governanceService.getAllSettings();
         Map<String, Object> quotas = new LinkedHashMap<>();
@@ -80,10 +80,10 @@ public class GovernanceController {
     }
 
     @GetMapping("/spend")
-    public ResponseEntity<Map<String, Object>> getSpend() {
+    public ResponseEntity<?> getSpend() {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
-        if (gate != null) return gate;
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         if (!requireAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to view spend data");
         // Delegate defaults to GovernanceService to avoid divergence
         return ResponseEntity.ok(governanceService.getSpendView());

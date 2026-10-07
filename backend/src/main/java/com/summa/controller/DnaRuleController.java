@@ -71,6 +71,10 @@ public class DnaRuleController {
             if (domainService.findById(domainId).isEmpty()) {
                 throw new IllegalArgumentException("Domain not found: " + domainId);
             }
+            String statementMd = body.get("statementMd");
+            if (statementMd == null || statementMd.isBlank()) {
+                throw new IllegalArgumentException("statementMd is required");
+            }
             Instant effectiveFrom = body.containsKey("effectiveFrom") && body.get("effectiveFrom") != null && !body.get("effectiveFrom").isBlank() ?
                 JsonHelpers.parseOptionalInstant(body.get("effectiveFrom"), "effectiveFrom") : Instant.now();
             Instant effectiveTo = body.containsKey("effectiveTo") && body.get("effectiveTo") != null && !body.get("effectiveTo").isBlank() ?

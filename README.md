@@ -30,7 +30,7 @@ export SUMMA_JWT_SECRET=$(openssl rand -hex 32)
 - Console: http://localhost:3000 (requires `./dev.sh` or `docker compose up -d`)
 - API: http://localhost:8080/api
 - Health: `GET /api/health` (no auth required)
-- Bootstrap first admin: `POST /api/org/bootstrap` (no auth required, first-run only — always creates an `admin`)
+- Bootstrap first admin: `POST /api/org/bootstrap` (no auth required, first-run only) — request body: `{"name": "string", "email": "string", "password": "string", "rbac": "admin"}`
 
 ### Docker Compose
 

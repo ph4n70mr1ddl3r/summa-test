@@ -10,7 +10,6 @@ import com.summa.security.RbacAuthorizationFilter;
 import com.summa.service.MemberService;
 import com.summa.enums.DataHoldKind;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/governance/holds")
@@ -40,9 +39,6 @@ public class DataHoldController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        if (!memberService.isAdmin(actor)) {
-            return ControllerResponses.gate(auditService, actor, "Data hold creation requires admin role");
-        }
         try {
             String kind = body.get("kind");
             if (kind == null || kind.isBlank()) {
@@ -77,9 +73,6 @@ public class DataHoldController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        if (!memberService.isAdmin(actor)) {
-            return ControllerResponses.gate(auditService, actor, "Data hold release requires admin role");
-        }
         try {
             DataHold hold = holdService.release(id, actor);
             return ResponseEntity.ok(hold);

@@ -35,9 +35,8 @@ public class PatController {
     @GetMapping
     public ResponseEntity<?> listPats(@RequestParam String memberId) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (!memberService.isAdmin(actor)) {
-            return ControllerResponses.gate(auditService, actor, "Admin access required");
-        }
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         return ResponseEntity.ok(patService.findByMember(memberId));
     }
 
