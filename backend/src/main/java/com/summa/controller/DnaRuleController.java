@@ -104,14 +104,20 @@ public class DnaRuleController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        boolean hasStatement = body.containsKey("statementMd") && body.get("statementMd") != null && !body.get("statementMd").isBlank();
+        boolean hasMachineHint = body.containsKey("machineHint") && body.get("machineHint") != null && !body.get("machineHint").isBlank();
+        boolean hasEffectiveTo = body.containsKey("effectiveTo") && body.get("effectiveTo") != null && !body.get("effectiveTo").isBlank();
+        if (!hasStatement && !hasMachineHint && !hasEffectiveTo) {
+            return ControllerResponses.validation(auditService, "At least one of statementMd, machineHint, or effectiveTo must be provided");
+        }
         try {
-            Instant effectiveTo = body.containsKey("effectiveTo") && body.get("effectiveTo") != null && !body.get("effectiveTo").isBlank() ?
+            Instant effectiveTo = hasEffectiveTo ?
                 JsonHelpers.parseOptionalInstant(body.get("effectiveTo"), "effectiveTo") : null;
 
             DnaRule rule = ruleService.update(
                 id,
-                body.get("statementMd"),
-                body.get("machineHint"),
+                hasStatement ? body.get("statementMd") : null,
+                hasMachineHint ? body.get("machineHint") : null,
                 effectiveTo,
                 actor
             );

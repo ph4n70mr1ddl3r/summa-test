@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import com.summa.exception.EntityNotFoundException;
+import com.summa.util.JsonHelpers;
 
 @RestController
 @RequestMapping("/org")
@@ -86,7 +87,8 @@ public class OrgController {
     @GetMapping("/humans")
     public ResponseEntity<?> listHumans(@RequestParam(defaultValue = "true") boolean active) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (!orgService.isInitialized() || !memberService.isAdmin(actor)) {
+        String actorClean = JsonHelpers.stripIdPrefix(actor);
+        if (!orgService.isInitialized() || !memberService.isAdmin(actorClean)) {
             return ControllerResponses.gate(auditService, actor, "Admin access required to list humans");
         }
         List<Human> humans = active ? orgService.findAllActiveHumans() : orgService.findAllHumans();
@@ -96,7 +98,8 @@ public class OrgController {
     @GetMapping("/humans/{id}")
     public ResponseEntity<?> getHuman(@PathVariable String id) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (!memberService.isAdmin(actor)) {
+        String actorClean = JsonHelpers.stripIdPrefix(actor);
+        if (!memberService.isAdmin(actorClean)) {
             return ControllerResponses.gate(auditService, actor, "Admin access required to look up humans");
         }
         Optional<Human> humanOpt = orgService.findHuman(id);
@@ -111,7 +114,8 @@ public class OrgController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        if (!memberService.isAdmin(actor)) {
+        String actorClean = JsonHelpers.stripIdPrefix(actor);
+        if (!memberService.isAdmin(actorClean)) {
             return ControllerResponses.gate(auditService, actor, "Admin access required to update RBAC");
         }
         try {
@@ -133,7 +137,8 @@ public class OrgController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        if (!memberService.isAdmin(actor)) {
+        String actorClean = JsonHelpers.stripIdPrefix(actor);
+        if (!memberService.isAdmin(actorClean)) {
             return ControllerResponses.gate(auditService, actor, "Admin access required to demote");
         }
         String newRbac = body.get("rbac");
@@ -156,7 +161,8 @@ public class OrgController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        if (!memberService.isAdmin(actor)) {
+        String actorClean = JsonHelpers.stripIdPrefix(actor);
+        if (!memberService.isAdmin(actorClean)) {
             return ControllerResponses.gate(auditService, actor, "Admin access required");
         }
         try {
@@ -178,7 +184,8 @@ public class OrgController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        if (!memberService.isAdmin(actor)) {
+        String actorClean = JsonHelpers.stripIdPrefix(actor);
+        if (!memberService.isAdmin(actorClean)) {
             return ControllerResponses.gate(auditService, actor, "Offboarding requires admin role");
         }
         try {
@@ -196,7 +203,8 @@ public class OrgController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        if (!memberService.isAdmin(actor)) {
+        String actorClean = JsonHelpers.stripIdPrefix(actor);
+        if (!memberService.isAdmin(actorClean)) {
             return ControllerResponses.gate(auditService, actor, "Erasure requires admin role");
         }
         // API-005: admin, audited, honors data_holds (STG-030..034)
@@ -249,7 +257,8 @@ public class OrgController {
     @GetMapping("/lineage")
     public ResponseEntity<?> lineage(@RequestParam String memberId) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (!memberService.isAdmin(actor)) {
+        String actorClean = JsonHelpers.stripIdPrefix(actor);
+        if (!memberService.isAdmin(actorClean)) {
             return ControllerResponses.gate(auditService, "admin required");
         }
         // API-004: full lineage graph from any member
@@ -282,7 +291,8 @@ public class OrgController {
             @RequestParam(required = false) String objectType,
             @RequestParam(required = false) String objectId) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        if (!memberService.isAdmin(actor)) {
+        String actorClean = JsonHelpers.stripIdPrefix(actor);
+        if (!memberService.isAdmin(actorClean)) {
             return ControllerResponses.gate(auditService, "admin required");
         }
         if (limit <= 0 || limit > 1000) {

@@ -2,6 +2,9 @@ spring:
   jpa:
     show-sql: false
 
+eclipselink:
+  show-sql: false
+
 logging:
   file:
     path: ${SUMMA_LOG_DIR:/data/logs}

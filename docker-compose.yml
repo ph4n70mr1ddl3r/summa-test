@@ -25,7 +25,7 @@ services:
       # Compose passes the raw .env value; if unset, Spring's :? guard in
       # application.yml crashes the container. Ensure SUMMA_JWT_SECRET is set
       # in .env before starting — see .env.example for the template.
-      - SUMMA_JWT_SECRET=${SUMMA_JWT_SECRET}
+      - SUMMA_JWT_SECRET=${SUMMA_JWT_SECRET:?SUMMA_JWT_SECRET must be set — see .env.example}
       - SUMMA_JWT_EXPIRATION=${SUMMA_JWT_EXPIRATION:-86400000}
       - SUMMA_CORS_ORIGINS=${SUMMA_CORS_ORIGINS:-}
       - SUMMA_SPEND_CEILING=${SUMMA_SPEND_CEILING:-1000000}

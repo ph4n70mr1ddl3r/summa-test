@@ -20,8 +20,8 @@ WORKDIR /app
 
 # Copy the executable JAR from the builder stage
 COPY --from=builder /build/backend/target/summa-backend-*.jar /app/
-RUN find /app -maxdepth 1 -name 'summa-backend-*.jar' ! -name '*-sources.jar' ! -name '*-plain.jar' -print -quit | xargs -I{} mv {} /app/app.jar && \
-    rm -f /app/*-plain.jar /app/*-sources.jar
+RUN set -e && JAR=$(find /app -maxdepth 1 -name 'summa-backend-*.jar' ! -name '*-sources.jar' ! -name '*-plain.jar' -print -quit) && \
+    [ -n "$JAR" ] && mv "$JAR" /app/app.jar && rm -f /app/*-plain.jar /app/*-sources.jar || { echo "ERROR: No matching JAR found in /app" >&2; exit 1; }
 
 # Create data directories and non-root user
 RUN addgroup -g 1000 -S summa && adduser -u 1000 -S summa -G summa && \

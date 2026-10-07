@@ -58,11 +58,11 @@ public class NodeController {
         if (Defaults.SYSTEM_ACTOR.equals(actor)) {
             return ControllerResponses.gate(auditService, "Admin authentication required to enroll nodes");
         }
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         if (!memberService.isAdmin(actor)) {
             return ControllerResponses.gate(auditService, "Only admins can enroll nodes");
         }
-        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
-        if (gate != null) return gate;
         String name = body.get("name");
         String kind = body.get("kind");
         String pubkey = body.get("pubkey");

@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.util.JsonHelpers;
+import com.summa.enums.RbacRole;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
@@ -104,6 +105,9 @@ public class InitiativeController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        if (!memberService.isAdmin(actor) && !isInitiativeOwnerOrLead(id, actor)) {
+            return ControllerResponses.gate(auditService, actor, "Only the sponsor, lead, or an admin can activate this initiative");
+        }
         try {
             String actorClean = JsonHelpers.stripIdPrefix(actor);
             Initiative initiative = initiativeService.activate(id, actorClean);
@@ -120,6 +124,9 @@ public class InitiativeController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        if (!memberService.isAdmin(actor) && !isInitiativeOwnerOrLead(id, actor)) {
+            return ControllerResponses.gate(auditService, actor, "Only the sponsor, lead, or an admin can pause this initiative");
+        }
         try {
             String actorClean = JsonHelpers.stripIdPrefix(actor);
             Initiative initiative = initiativeService.pause(id, actorClean);
@@ -136,6 +143,9 @@ public class InitiativeController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        if (!memberService.isAdmin(actor) && !isInitiativeOwnerOrLead(id, actor)) {
+            return ControllerResponses.gate(auditService, actor, "Only the sponsor, lead, or an admin can resume this initiative");
+        }
         try {
             String actorClean = JsonHelpers.stripIdPrefix(actor);
             Initiative initiative = initiativeService.resume(id, actorClean);
@@ -152,6 +162,9 @@ public class InitiativeController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        if (!memberService.isAdmin(actor) && !isInitiativeOwnerOrLead(id, actor)) {
+            return ControllerResponses.gate(auditService, actor, "Only the sponsor, lead, or an admin can close this initiative");
+        }
         try {
             String actorClean = JsonHelpers.stripIdPrefix(actor);
             Initiative initiative = initiativeService.close(id, actorClean);
@@ -161,5 +174,13 @@ public class InitiativeController {
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         }
+    }
+
+    private boolean isInitiativeOwnerOrLead(String initiativeId, String actor) {
+        Optional<Initiative> opt = initiativeService.findById(initiativeId);
+        if (opt.isEmpty()) return false;
+        Initiative initiative = opt.get();
+        String actorClean = JsonHelpers.stripIdPrefix(actor);
+        return actorClean.equals(initiative.getSponsor()) || actorClean.equals(initiative.getLead());
     }
 }

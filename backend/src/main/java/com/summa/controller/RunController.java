@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import com.summa.constants.Defaults;
 import com.summa.service.GovernanceService;
 import com.summa.service.MemberService;
+import com.summa.util.JsonHelpers;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -77,6 +78,7 @@ public class RunController {
         if (agentId == null || agentId.isBlank()) {
             return ControllerResponses.validation(auditService, "agentId is required");
         }
+        agentId = JsonHelpers.stripIdPrefix(agentId);
         if (!runService.agentExists(agentId)) {
             return ControllerResponses.validation(auditService, "agentId does not exist: " + agentId);
         }

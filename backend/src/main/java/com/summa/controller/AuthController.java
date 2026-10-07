@@ -56,7 +56,7 @@ public class AuthController {
         if (email == null || email.isBlank()) {
             return ControllerResponses.validation(auditService, "email is required");
         }
-        if (!email.matches("^[^@\\s]+@(?:[^@\\s.]\\.)+[^@\\s.]+$")) {
+        if (!email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]{2,}$")) {
             return ControllerResponses.validation(auditService, "email has invalid format: " + email);
         }
 

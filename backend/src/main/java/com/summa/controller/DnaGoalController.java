@@ -126,7 +126,14 @@ public class DnaGoalController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            DnaGoal goal = goalService.updateStatus(id, body.get("status"), actor);
+            String statusValue = body.get("status");
+            if (statusValue == null || statusValue.isBlank()) {
+                throw new IllegalArgumentException("status is required");
+            }
+            if (!"active".equals(statusValue) && !"met".equals(statusValue) && !"missed".equals(statusValue) && !"retired".equals(statusValue)) {
+                throw new IllegalArgumentException("Invalid goal status: " + statusValue + ". Must be one of: active, met, missed, retired");
+            }
+            DnaGoal goal = goalService.updateStatus(id, statusValue, actor);
             return ResponseEntity.ok(goal);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());

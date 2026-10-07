@@ -658,6 +658,20 @@ export const api = {
     },
     glossary: (params?: { domainId?: string; scope?: string }) =>
       request<DnaGlossary[]>(`/dna/glossary${buildQuery(params)}`),
+    createGlossary: (body: Record<string, string>) =>
+      request<DnaGlossary>('/dna/glossary', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    updateGlossary: (id: string, body: Record<string, string>) =>
+      request<DnaGlossary>(`/dna/glossary/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      }),
+    retireGlossary: (id: string) =>
+      request<DnaGlossary>(`/dna/glossary/${id}/retire`, {
+        method: 'POST',
+      }),
     proposals: (status?: string) =>
       request<DnaProposal[]>(`/dna/proposals${buildQuery(status ? { status } : undefined)}`),
     publishProposal: (id: string) =>
@@ -857,6 +871,18 @@ export const api = {
       request<Trigger>('/triggers', {
         method: 'POST',
         body: JSON.stringify(body),
+      }),
+    pause: (id: string) =>
+      request<Trigger>(`/triggers/${id}/pause`, {
+        method: 'POST',
+      }),
+    resume: (id: string) =>
+      request<Trigger>(`/triggers/${id}/resume`, {
+        method: 'POST',
+      }),
+    archive: (id: string) =>
+      request<Trigger>(`/triggers/${id}/archive`, {
+        method: 'POST',
       }),
     stats: () => request<Record<string, number>>('/triggers/stats'),
   },

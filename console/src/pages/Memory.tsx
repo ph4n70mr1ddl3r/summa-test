@@ -150,13 +150,13 @@ export default function Memory() {
                 <div className="mt-3 space-y-2">
                   <p className="text-sm text-yellow-400">Review this item to clear taint?</p>
                   <div className="flex gap-2">
-                     <button
-                       type="button"
-                       onClick={() => handleReview(item.id)}
-                       disabled={reviewingForId === item.id}
-                       className="px-3 py-1 bg-green-700 hover:bg-green-600 disabled:bg-gray-700 disabled:text-gray-500 rounded text-sm text-green-100"
-                        aria-label={reviewingForId === item.id ? 'Reviewing item' : `Confirm review of item ${item.id.slice(0, 8)}`}
-                     >
+                      <button
+                        type="button"
+                        onClick={() => handleReview(item.id)}
+                        disabled={reviewingForId !== null}
+                        className="px-3 py-1 bg-green-700 hover:bg-green-600 disabled:bg-gray-700 disabled:text-gray-500 rounded text-sm text-green-100"
+                         aria-label={reviewingForId === item.id ? 'Reviewing item' : `Confirm review of item ${item.id.slice(0, 8)}`}
+                      >
                        {reviewingForId === item.id ? 'Reviewing...' : 'Confirm Review'}
                      </button>
                      <button

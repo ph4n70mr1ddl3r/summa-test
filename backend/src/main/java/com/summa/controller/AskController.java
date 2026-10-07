@@ -134,6 +134,9 @@ public class AskController {
             Integer quorumRequired = null;
             if (body.containsKey("quorumRequired") && body.get("quorumRequired") != null && !body.get("quorumRequired").isBlank()) {
                 quorumRequired = JsonHelpers.parseIntSafe(body.get("quorumRequired"));
+                if (quorumRequired == null || quorumRequired < 1) {
+                    throw new IllegalArgumentException("quorumRequired must be a positive integer");
+                }
             }
             Ask ask = askService.create(
                 kind,
