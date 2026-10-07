@@ -83,10 +83,10 @@ fi
 
 # Create data directories
 SUMMA_LOG_DIR="${SUMMA_LOG_DIR:-$HOME/.summa/logs}"
-mkdir -p ~/.summa "$SUMMA_LOG_DIR"
 SUMMA_DNA_REPO="${SUMMA_DNA_REPO:-$HOME/.summa/dna}"
 SUMMA_DB_PATH="${SUMMA_DB_PATH:-$HOME/.summa/summa.db}"
-mkdir -p "$SUMMA_DNA_REPO" "$(dirname "$SUMMA_DB_PATH")"
+export SUMMA_LOG_DIR
+mkdir -p ~/.summa "$SUMMA_LOG_DIR" "$SUMMA_DNA_REPO" "$(dirname "$SUMMA_DB_PATH")"
 
 # Validate directories are writable
 for dir in "$SUMMA_LOG_DIR" "$SUMMA_DNA_REPO" "$(dirname "$SUMMA_DB_PATH")"; do
@@ -111,7 +111,7 @@ echo "[1/2] Starting backend..."
 pushd backend > /dev/null
 nohup mvn spring-boot:run -Dspring-boot.run.profiles=dev \
     -Dsumma.auth.local-auth-enabled=${SUMMA_LOCAL_AUTH_ENABLED:-true} \
-    > ~/.summa/logs/backend.log 2>&1 &
+    > "$SUMMA_LOG_DIR/backend.log" 2>&1 &
 BACKEND_PID=$!
 popd > /dev/null
 echo "      Backend PID: $BACKEND_PID"

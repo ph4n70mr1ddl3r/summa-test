@@ -817,7 +817,7 @@ export const api = {
   },
   auth: {
     login: (email: string, password: string) =>
-      request<{ token: string; userId: string; rbac: RbacRole }>('/auth/login', {
+      request<{ token: string; userId: string; rbac: RbacRole; name: string }>('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       }),

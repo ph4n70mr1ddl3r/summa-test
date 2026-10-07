@@ -40,7 +40,7 @@ public class RateLimiter {
             Instant window = windowStarts.get(identifier);
             if (window == null || window.getEpochSecond() != windowStart) {
                 windowStarts.put(identifier, Instant.ofEpochSecond(windowStart));
-                attemptCounts.put(identifier, 0L);
+                attemptCounts.put(identifier, 1L);
                 return true;
             }
             long count = attemptCounts.getOrDefault(identifier, 0L) + 1L;

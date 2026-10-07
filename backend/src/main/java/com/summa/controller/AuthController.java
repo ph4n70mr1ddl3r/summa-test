@@ -96,7 +96,8 @@ public class AuthController {
             return ResponseEntity.ok(Map.of(
                 "token", token,
                 "userId", human.getId(),
-                "rbac", human.getRbac()
+                "rbac", human.getRbac(),
+                "name", human.getName()
             ));
         } catch (Exception e) {
             var audit = auditService.logSystem("REFUSAL", "auth_login", email, "Login error: " + e.getMessage());
@@ -106,7 +107,6 @@ public class AuthController {
 
     @PutMapping("/change-password")
     public ResponseEntity<Map<String, Object>> changePassword(
-            @RequestHeader(value = "Authorization") String authHeader,
             @RequestBody Map<String, String> body, HttpServletRequest request) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         String clientIp = resolveClientIp(request);

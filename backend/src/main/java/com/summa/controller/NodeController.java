@@ -1,5 +1,6 @@
 package com.summa.controller;
 
+import com.summa.exception.EntityNotFoundException;
 import com.summa.constants.Defaults;
 import com.summa.model.Node;
 import com.summa.model.Run;
@@ -94,6 +95,8 @@ public class NodeController {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 
@@ -124,6 +127,8 @@ public class NodeController {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 
@@ -140,6 +145,8 @@ public class NodeController {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 
@@ -180,6 +187,8 @@ public class NodeController {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 
@@ -195,6 +204,8 @@ public class NodeController {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 
@@ -215,6 +226,8 @@ public class NodeController {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 }

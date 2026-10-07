@@ -140,7 +140,7 @@ public class AgentController {
             return ControllerResponses.notFound(auditService, "Agent not found: " + id);
         }
         Agent agent = agentOpt.get();
-        boolean isOwner = agent.getOwnerHumanId() != null && agent.getOwnerHumanId().equals(actor);
+        boolean isOwner = agent.getOwnerHumanId() != null && agent.getOwnerHumanId().equals(JsonHelpers.stripIdPrefix(actor));
         boolean isAdmin = memberService.isAdmin(actor);
         if (!isOwner && !isAdmin) {
             return ControllerResponses.gate(auditService, actor, "Only the agent's owner or an admin may manage this agent");

@@ -34,6 +34,12 @@ public class SecurityConfig {
             .addFilterBefore(rbacFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(request -> JwtAuthenticationFilter.isPublicPath(request.getRequestURI())).permitAll()
+                .requestMatchers("/admin/**").authenticated()
+                .requestMatchers("/org/humans/**").authenticated()
+                .requestMatchers("/org/audit/**").authenticated()
+                .requestMatchers("/governance/policies").authenticated()
+                .requestMatchers("/governance/quotas").authenticated()
+                .requestMatchers("/governance/spend/**").authenticated()
                 .anyRequest().authenticated()
             )
             .headers(headers -> headers

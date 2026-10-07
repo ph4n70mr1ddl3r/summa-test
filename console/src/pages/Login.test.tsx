@@ -54,13 +54,14 @@ describe('Login page', () => {
       token: 'fake-token',
       userId: 'u1',
       rbac: 'admin',
+      name: 'Test User',
     })
     const { getByLabelText, getByText } = renderLogin()
     fireEvent.change(getByLabelText(/email/i), { target: { value: 'test@example.com' } })
     fireEvent.change(getByLabelText(/password/i), { target: { value: 'password123' } })
     fireEvent.click(getByText('Sign in'))
     await waitFor(() => {
-      expect(apiModule.setAuthToken).toHaveBeenCalledWith('fake-token', { userId: 'u1', rbac: 'admin', name: '' })
+      expect(apiModule.setAuthToken).toHaveBeenCalledWith('fake-token', { userId: 'u1', rbac: 'admin', name: 'Test User' })
     })
   })
 
@@ -89,7 +90,7 @@ describe('Login page', () => {
       expect((btn as HTMLButtonElement).disabled).toBe(true)
     })
     await act(async () => {
-      resolveLogin!({ token: 'fake-token', userId: 'u1', rbac: 'admin' })
+      resolveLogin!({ token: 'fake-token', userId: 'u1', rbac: 'admin', name: 'Test User' })
       await loginPromise
     })
   })
@@ -100,6 +101,7 @@ describe('Login page', () => {
       token: 'fake-token',
       userId: 'u1',
       rbac: 'admin',
+      name: 'Test User',
     })
     const { getByLabelText, getByText } = render(
       <MemoryRouter initialEntries={[{ pathname: '/login', state: { from: { pathname: 'https://evil.com' } } }]}>
@@ -121,6 +123,7 @@ describe('Login page', () => {
       token: 'fake-token',
       userId: 'u1',
       rbac: 'admin',
+      name: 'Test User',
     })
     const { getByLabelText, getByText } = render(
       <MemoryRouter initialEntries={[{ pathname: '/login', state: { from: { pathname: '//evil.com' } } }]}>
@@ -151,6 +154,7 @@ describe('Login page', () => {
       token: 'fake-token',
       userId: 'u1',
       rbac: 'admin',
+      name: 'Test User',
     })
     const { getByLabelText, getByText } = render(
       <MemoryRouter initialEntries={[{ pathname: '/login', state: { from: { pathname: '/orgs/abc' } } }]}>

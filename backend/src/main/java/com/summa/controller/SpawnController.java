@@ -2,7 +2,6 @@ package com.summa.controller;
 
 import com.summa.enums.AgentClass;
 import com.summa.model.Agent;
-import com.summa.model.Human;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.security.WriteGate;
 import com.summa.service.AuditService;
@@ -93,7 +92,7 @@ public class SpawnController {
                 body.get("scopeCeiling"),
                 body.containsKey("budgetCap") ? parseBudgetCap(body.get("budgetCap")) : null,
                 body.containsKey("ttlHours") ? parseTtlHours(body.get("ttlHours")) : null,
-                body.get("requestedByHumanId"),
+                body.get("requestedByHumanId") != null ? JsonHelpers.stripIdPrefix(body.get("requestedByHumanId")) : null,
                 actor
             );
             return ResponseEntity.ok(request);
@@ -110,7 +109,7 @@ public class SpawnController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            SpawnRequest request = spawnService.approve(id, actor, JsonHelpers.stripIdPrefix(actor));
+            SpawnRequest request = spawnService.approve(id, JsonHelpers.stripIdPrefix(actor), JsonHelpers.stripIdPrefix(actor));
             return ResponseEntity.ok(request);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());

@@ -49,6 +49,8 @@ public class BackupController {
             return ResponseEntity.ok(Map.of("path", path));
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
+        } catch (IllegalStateException e) {
+            return ControllerResponses.gate(auditService, e.getMessage());
         } catch (IOException e) {
             return ControllerResponses.internalError(auditService, e.getMessage());
         }
@@ -72,6 +74,8 @@ public class BackupController {
             return ResponseEntity.ok(Map.of("status", "restored"));
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
+        } catch (IllegalStateException e) {
+            return ControllerResponses.gate(auditService, e.getMessage());
         } catch (IOException e) {
             return ControllerResponses.internalError(auditService, e.getMessage());
         } catch (EntityNotFoundException e) {

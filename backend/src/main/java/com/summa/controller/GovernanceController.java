@@ -16,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import com.summa.util.JsonHelpers;
 
 @RestController
 @RequestMapping("/governance")
@@ -165,7 +166,7 @@ public class GovernanceController {
     }
 
     private boolean requireAdmin(String actor) {
-        Optional<Human> actorOpt = memberService.findHuman(actor);
+        Optional<Human> actorOpt = memberService.findHuman(JsonHelpers.stripIdPrefix(actor));
         if (actorOpt.isPresent()) {
             return actorOpt.get().isActive()
                     && RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac());
