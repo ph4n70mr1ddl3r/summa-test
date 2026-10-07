@@ -82,16 +82,19 @@ public class DnaDecisionController {
                 throw new IllegalArgumentException("decidedBy is required");
             }
             String decidedByClean = JsonHelpers.stripIdPrefix(decidedByRaw);
-            Optional<Human> deciderHuman = memberService.findHuman(decidedByClean);
-            Optional<Agent> deciderAgent = memberService.findAgent(decidedByClean);
-            if (deciderHuman.isEmpty() && deciderAgent.isEmpty()) {
-                throw new IllegalArgumentException("decidedBy does not reference an existing human or agent: " + decidedByRaw);
-            }
-            if (deciderHuman.isPresent() && !deciderHuman.get().isActive()) {
-                throw new IllegalArgumentException("decidedBy must be an active member: " + decidedByRaw);
-            }
-            if (deciderAgent.isPresent() && !deciderAgent.get().isActive()) {
-                throw new IllegalArgumentException("decidedBy must be an active member: " + decidedByRaw);
+            // System actor is allowed for automated decision creation
+            if (!"system".equals(decidedByClean)) {
+                Optional<Human> deciderHuman = memberService.findHuman(decidedByClean);
+                Optional<Agent> deciderAgent = memberService.findAgent(decidedByClean);
+                if (deciderHuman.isEmpty() && deciderAgent.isEmpty()) {
+                    throw new IllegalArgumentException("decidedBy does not reference an existing human or agent: " + decidedByRaw);
+                }
+                if (deciderHuman.isPresent() && !deciderHuman.get().isActive()) {
+                    throw new IllegalArgumentException("decidedBy must be an active member: " + decidedByRaw);
+                }
+                if (deciderAgent.isPresent() && !deciderAgent.get().isActive()) {
+                    throw new IllegalArgumentException("decidedBy must be an active member: " + decidedByRaw);
+                }
             }
             String generatedId = UUID.randomUUID().toString();
             DnaDecision decision = decisionService.create(

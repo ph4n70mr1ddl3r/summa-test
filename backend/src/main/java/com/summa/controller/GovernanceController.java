@@ -166,7 +166,11 @@ public class GovernanceController {
 
     private boolean requireAdmin(String actor) {
         Optional<Human> actorOpt = memberService.findHuman(actor);
-        return actorOpt.isPresent() && actorOpt.get().isActive()
-                && RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac());
+        if (actorOpt.isPresent()) {
+            return actorOpt.get().isActive()
+                    && RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac());
+        }
+        // Check if actor is an admin agent (agents don't have RBAC, so only humans can be admins)
+        return false;
     }
 }

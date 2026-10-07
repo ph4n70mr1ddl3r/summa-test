@@ -100,9 +100,11 @@ public class NodeAuthFilter extends OncePerRequestFilter {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Node signature verification failed");
             return;
         }
+        // Use normalized path for signature computation to ensure consistency
+        String normalizedSignaturePath = com.summa.util.JsonHelpers.normalizeTrailingSlash(path);
         String expectedSig;
         try {
-            expectedSig = computeSignature(wrappedRequest.getMethod(), path, body, node.getPubkey());
+            expectedSig = computeSignature(wrappedRequest.getMethod(), normalizedSignaturePath != null ? normalizedSignaturePath : path, body, node.getPubkey());
         } catch (Exception e) {
             log.warn("[SUMMA] node signature computation error: {}", e.getMessage());
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Node signature verification failed");
