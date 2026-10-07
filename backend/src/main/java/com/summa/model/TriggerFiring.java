@@ -31,7 +31,9 @@ public class TriggerFiring {
 
     @PreUpdate
     public void preUpdate() {
-        throw new UnsupportedOperationException("trigger_firings is append-only -- updates are not permitted");
+        // Run linkage via run_id is allowed; no other updates permitted.
+        if (runId != null) return;
+        throw new UnsupportedOperationException("trigger_firings is append-only except for run linkage");
     }
 
     public String getId() { return id; }

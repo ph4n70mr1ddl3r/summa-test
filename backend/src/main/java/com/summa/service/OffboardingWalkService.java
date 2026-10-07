@@ -209,7 +209,7 @@ public class OffboardingWalkService {
         }
 
         // OFB-017: Transfer group leadership
-        for (Group group : groupRepository.findAll(OFFBOARD_BATCH_LIMIT)) {
+        for (Group group : groupRepository.findAll().stream().limit(OFFBOARD_BATCH_LIMIT).toList()) {
             if (humanId.equals(group.getLeaderMemberId()) && group.isActive()) {
                 group.setLeaderMemberId(finalTargetOwner);
                 groupRepository.save(group);
@@ -450,7 +450,7 @@ public class OffboardingWalkService {
         }
 
         // OFB-031: Transfer group leadership posts
-        for (Group group : groupRepository.findAll(OFFBOARD_BATCH_LIMIT)) {
+        for (Group group : groupRepository.findAll().stream().limit(OFFBOARD_BATCH_LIMIT).toList()) {
             if (humanId.equals(group.getLeaderMemberId()) && group.isActive()) {
                 group.setLeaderMemberId(targetOwner);
                 groupRepository.save(group);
@@ -488,7 +488,7 @@ public class OffboardingWalkService {
 
         // OFB-014/OFB-031: Clear workspace participant entries and named domain access
         // Always run cleanup on any role reduction (not just to viewer) to prevent stale access
-        List<Workspace> allWorkspaces = workspaceRepository.findAll(OFFBOARD_BATCH_LIMIT);
+        List<Workspace> allWorkspaces = workspaceRepository.findByArchivedAtIsNullOrdered(OFFBOARD_BATCH_LIMIT);
         for (Workspace ws : allWorkspaces) {
             boolean changed = false;
             if (ws.getParticipants() != null && !ws.getParticipants().isBlank()

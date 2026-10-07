@@ -20,7 +20,7 @@ public class Trigger {
     @Column(name = "expression", nullable = false, columnDefinition = "TEXT")
     private String expression;
 
-    @Column(name = "agent_id", nullable = false, length = 36)
+    @Column(name = "agent_id", nullable = false, length = 45)
     private String agentId;
 
     @Column(name = "workspace_id", length = 36)

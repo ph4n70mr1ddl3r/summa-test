@@ -51,7 +51,7 @@ export default function Spawning() {
       await loadData()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err))
-      try { await loadData(); setError(null) } catch (reloadErr) { setActionError(reloadErr instanceof Error ? reloadErr.message : String(reloadErr)) }
+      try { await loadData(); setError(null) } catch { /* keep original action error */ }
     } finally {
       setActionId(null)
       setConfirmAction(null)

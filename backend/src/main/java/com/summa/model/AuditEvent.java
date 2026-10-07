@@ -15,7 +15,7 @@ public class AuditEvent {
     @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant at;
 
-    @Column(name = "actor", nullable = false, length = 36)
+    @Column(name = "actor", nullable = false, length = 45)
     private String actor;
 
     @Column(name = "action", nullable = false, length = 100)

@@ -17,7 +17,7 @@ public class BoardTask {
     @Column(name = "description", nullable = false, columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "assignee_member_id", length = 36)
+    @Column(name = "assignee_member_id", length = 45)
     private String assigneeMemberId;
 
     @Column(name = "initiative_id", length = 36)
@@ -33,7 +33,7 @@ public class BoardTask {
     @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant dueAt;
 
-    @Column(name = "created_by", nullable = false, length = 36)
+    @Column(name = "created_by", length = 45)
     private String createdBy;
 
     @Column(name = "created_at", nullable = false)

@@ -11,7 +11,7 @@ public class SpendLedger {
     @Column(name = "id", length = 36)
     private String id;
 
-    @Column(name = "member_id", nullable = false, length = 36)
+    @Column(name = "member_id", nullable = false, length = 45)
     private String memberId;
 
     @Column(name = "run_id", length = 36)

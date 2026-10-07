@@ -20,7 +20,7 @@ public class DnaGoal {
     @Column(name = "statement_md", nullable = false, columnDefinition = "TEXT")
     private String statementMd;
 
-    @Column(name = "owner", nullable = false, length = 36)
+    @Column(name = "owner", nullable = false, length = 45)
     private String owner;
 
     @Column(name = "status", nullable = false, length = 20)

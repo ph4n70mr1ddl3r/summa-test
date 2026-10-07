@@ -20,10 +20,10 @@ public class Initiative {
     @Column(name = "decision_ref", length = 36)
     private String decisionRef;
 
-    @Column(name = "sponsor", nullable = false, length = 36)
+    @Column(name = "sponsor", length = 45)
     private String sponsor;
 
-    @Column(name = "lead", nullable = false, length = 36)
+    @Column(name = "lead", length = 45)
     private String lead;
 
     @Column(name = "status", nullable = false, length = 20)
@@ -40,7 +40,7 @@ public class Initiative {
     @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant closedAt;
 
-    @Column(name = "depends_on", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "depends_on", columnDefinition = "TEXT")
     private String dependsOn;
 
     @Column(name = "created_at", nullable = false)
@@ -56,7 +56,6 @@ public class Initiative {
         if (createdAt == null) createdAt = Instant.now();
         if (updatedAt == null) updatedAt = Instant.now();
         if (status == null) status = "proposed";
-        if (dependsOn == null) dependsOn = "[]";
     }
 
     @PreUpdate

@@ -11,7 +11,7 @@ public class GroupMembership {
     @EmbeddedId
     private GroupMembershipId id;
 
-    @Column(name = "added_by", nullable = false, length = 36)
+    @Column(name = "added_by", nullable = false, length = 45)
     private String addedBy;
 
     @Column(name = "added_at", nullable = false)
@@ -46,7 +46,7 @@ public class GroupMembership {
     public static class GroupMembershipId implements java.io.Serializable {
         @Column(name = "group_id", length = 36)
         private String groupId;
-        @Column(name = "member_id", length = 36)
+        @Column(name = "member_id", length = 45)
         private String memberId;
 
         public GroupMembershipId() {}

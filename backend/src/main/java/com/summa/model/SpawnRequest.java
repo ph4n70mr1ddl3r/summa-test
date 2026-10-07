@@ -12,7 +12,7 @@ public class SpawnRequest {
     @Column(name = "id", length = 36)
     private String id;
 
-    @Column(name = "requester_id", nullable = false, length = 36)
+    @Column(name = "requester_id", nullable = false, length = 45)
     private String requesterId;
 
     @Column(name = "template_id", length = 36)
@@ -56,7 +56,7 @@ public class SpawnRequest {
     @Column(name = "agent_id", length = 36)
     private String agentId;
 
-    @Column(name = "gate_target", length = 36)
+    @Column(name = "gate_target", length = 45)
     private String gateTarget;
 
     @Column(name = "created_at", nullable = false)

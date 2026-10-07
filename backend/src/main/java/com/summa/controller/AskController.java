@@ -58,10 +58,8 @@ public class AskController {
         if (to != null) {
             return ResponseEntity.ok(askService.findByTo(to, cappedLimit));
         }
-        if (status != null) {
-            return ResponseEntity.ok(askService.findByStatus(status, cappedLimit));
-        }
-        return ResponseEntity.ok(askService.findAllPending(cappedLimit));
+        // Default: show asks to the current actor (inbox), not all pending asks
+        return ResponseEntity.ok(askService.findByTo(JsonHelpers.stripIdPrefix(actor), cappedLimit));
     }
 
     @GetMapping("/{id}")

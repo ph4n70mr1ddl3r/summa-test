@@ -20,7 +20,7 @@ public class DnaProposal {
     @Column(name = "revision", nullable = false)
     private Integer revision;
 
-    @Column(name = "proposed_by", nullable = false, length = 36)
+    @Column(name = "proposed_by", nullable = false, length = 45)
     private String proposedBy;
 
     @Column(name = "provenance", nullable = false, columnDefinition = "TEXT")

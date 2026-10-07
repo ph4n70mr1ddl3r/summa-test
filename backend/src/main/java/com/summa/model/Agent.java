@@ -16,14 +16,14 @@ public class Agent {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "owner_human_id", nullable = false, length = 36)
+    @Column(name = "owner_human_id", nullable = false, length = 45)
     private String ownerHumanId;
 
     @JsonProperty("class")
     @Column(name = "class", nullable = false, length = 20)
     private String agentClass;
 
-    @Column(name = "spawned_by", length = 36)
+    @Column(name = "spawned_by", length = 45)
     private String spawnedBy;
 
     @Column(name = "ttl_at")

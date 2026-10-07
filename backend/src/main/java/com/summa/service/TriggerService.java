@@ -136,6 +136,8 @@ public class TriggerService {
         try {
             cron = CronExpression.parse(expr);
         } catch (Exception e) {
+            trigger.setStatus("error");
+            triggerRepository.save(trigger);
             auditService.logSystem("TRIGGER_INVALID_CRON", "trigger", trigger.getId(),
                 JsonHelpers.toJson(Map.of("expression", expr != null ? expr : "", "error", e.getMessage() != null ? e.getMessage() : "unknown"), objectMapper));
             return;

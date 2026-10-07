@@ -95,17 +95,20 @@ public class NodeService {
     }
 
     @Transactional
-    public Node heartbeat(String id, String capabilities) {
+    public Node heartbeat(String id, String actor, String capabilities) {
         Node node = nodeRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Node not found: " + id));
-        
+        if (!id.equals(actor)) {
+            throw new IllegalStateException("Node can only heartbeat its own record");
+        }
+
         node.setLastHeartbeat(Instant.now());
         if (capabilities != null) {
             node.setCapabilities(capabilities);
         }
-        
+
         Node saved = nodeRepository.save(node);
-        auditService.log(Defaults.SYSTEM_ACTOR, "HEARTBEAT", "node", id,
+        auditService.logWithNode(actor, "HEARTBEAT", "node", id, actor,
             String.format("{\"capabilities\":\"%s\"}", capabilities != null ? capabilities : "{}"));
         return saved;
     }

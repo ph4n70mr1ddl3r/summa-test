@@ -187,7 +187,7 @@ public class AgentController {
                     }
                 } catch (Exception e) {
                     auditService.log(actor, "PROMOTE_PARSE_FAIL", "agent", agentId,
-                        JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
+                        JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : "unknown"), objectMapper));
                 }
             }
             if (hasPromoForAgent) {

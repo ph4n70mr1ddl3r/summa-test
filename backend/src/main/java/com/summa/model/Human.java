@@ -30,7 +30,7 @@ public class Human {
     @Column(name = "password_hash", columnDefinition = "TEXT")
     private String passwordHash;
 
-    @Column(name = "deputy_member_id", length = 36)
+    @Column(name = "deputy_member_id", length = 45)
     private String deputyMemberId;
 
     @Column(name = "timezone", length = 50)

@@ -89,7 +89,7 @@ public class NodeController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            Node node = nodeService.heartbeat(id, body.get("capabilities"));
+            Node node = nodeService.heartbeat(id, actor, body.get("capabilities"));
             return ResponseEntity.ok(node);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());

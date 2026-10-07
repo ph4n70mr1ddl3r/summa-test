@@ -11,7 +11,7 @@ public class Run {
     @Column(name = "id", length = 36)
     private String id;
 
-    @Column(name = "agent_id", nullable = false, length = 36)
+    @Column(name = "agent_id", nullable = false, length = 45)
     private String agentId;
 
     @Column(name = "workspace_id", length = 36)

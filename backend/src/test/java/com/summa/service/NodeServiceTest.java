@@ -87,7 +87,7 @@ class NodeServiceTest {
         when(nodeRepository.findById("node-1")).thenReturn(Optional.of(node));
         when(nodeRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        Node result = nodeService.heartbeat("node-1", "{\"cpu\":4}");
+        Node result = nodeService.heartbeat("node-1", "node-1", "{\"cpu\":4}");
 
         assertEquals("{\"cpu\":4}", result.getCapabilities());
         assertNotNull(result.getLastHeartbeat());
@@ -101,7 +101,7 @@ class NodeServiceTest {
         when(nodeRepository.findById("node-1")).thenReturn(Optional.of(node));
         when(nodeRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        Node result = nodeService.heartbeat("node-1", null);
+        Node result = nodeService.heartbeat("node-1", "node-1", null);
 
         assertEquals("{}", result.getCapabilities());
     }
@@ -111,7 +111,7 @@ class NodeServiceTest {
         when(nodeRepository.findById("missing")).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () -> {
-            nodeService.heartbeat("missing", "{}");
+            nodeService.heartbeat("missing", "missing", "{}");
         });
     }
 

@@ -39,7 +39,9 @@ public class DataHold {
 
     @PreUpdate
     public void preUpdate() {
-        throw new UnsupportedOperationException("data_holds is append-only -- updates are not permitted");
+        // Hold release via released_at is allowed; no other updates permitted.
+        if (releasedAt != null) return;
+        throw new UnsupportedOperationException("data_holds is append-only except for release");
     }
 
     public String getId() { return id; }

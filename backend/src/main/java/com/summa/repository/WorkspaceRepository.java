@@ -15,6 +15,6 @@ public interface WorkspaceRepository extends JpaRepository<Workspace, String> {
     @org.springframework.data.jpa.repository.Query("SELECT COUNT(w) FROM Workspace w WHERE w.archivedAt IS NULL AND w.domainIds LIKE '%' || '\"' || :domainId || '\"' || '%'")
     long countByDomainIdsContaining(@org.springframework.data.repository.query.Param("domainId") String domainId);
     List<Workspace> findByInitiativeIdsContaining(String initiativeId);
-    @Query("SELECT w FROM Workspace w LIMIT :limit")
-    List<Workspace> findAll(@org.springframework.data.repository.query.Param("limit") int limit);
+    // Note: JPQL does not support LIMIT; callers should use Spring Data's Page API or manual truncation.
+    List<Workspace> findAll();
 }

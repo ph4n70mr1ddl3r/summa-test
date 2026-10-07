@@ -14,7 +14,7 @@ public class Group {
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 
-    @Column(name = "leader_member_id", length = 36)
+    @Column(name = "leader_member_id", length = 45)
     private String leaderMemberId;
 
     @Column(name = "status", nullable = false, length = 20)

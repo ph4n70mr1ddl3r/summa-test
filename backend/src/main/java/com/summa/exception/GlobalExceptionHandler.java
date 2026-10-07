@@ -76,12 +76,12 @@ public class GlobalExceptionHandler {
         log.warn("Data integrity conflict: {}", e.getMostSpecificCause() != null
                 ? e.getMostSpecificCause().getMessage() : e.getMessage());
         String message = "Resource conflict: the request violates a uniqueness or integrity constraint";
-        return auditAndRespond("REFUSAL", "resource_conflict", null, message, HttpStatus.CONFLICT);
+        return auditAndRespond("REFUSAL", "conflict", null, message, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneric(Exception e) {
         log.error("Unhandled exception", e);
-        return auditAndRespond("ERROR", "internal_error", null, "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
+        return auditAndRespond("ERROR", "internal", null, "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

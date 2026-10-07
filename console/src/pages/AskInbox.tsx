@@ -86,7 +86,7 @@ export default function AskInbox() {
       await loadAsks()
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err))
-      try { await loadAsks(); setError(null) } catch (reloadErr) { setSubmitError(reloadErr instanceof Error ? reloadErr.message : String(reloadErr)) }
+      try { await loadAsks(); setError(null) } catch { /* keep original submit error */ }
     } finally {
       setRespondingForId(null)
     }

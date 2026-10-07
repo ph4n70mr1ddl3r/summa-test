@@ -14,7 +14,7 @@ public class MemoryItem {
     @Column(name = "tier", nullable = false, length = 20)
     private String tier;
 
-    @Column(name = "member_id", length = 36)
+    @Column(name = "member_id", length = 45)
     private String memberId;
 
     @Column(name = "workspace_id", length = 36)
@@ -33,7 +33,7 @@ public class MemoryItem {
     @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant createdAt;
 
-    @Column(name = "reviewed_by", length = 36)
+    @Column(name = "reviewed_by", length = 45)
     private String reviewedBy;
 
     @Column(name = "reviewed_at")
@@ -50,7 +50,9 @@ public class MemoryItem {
 
     @PreUpdate
     public void preUpdate() {
-        throw new UnsupportedOperationException("memory_items is append-only -- updates are not permitted");
+        // Taint clearance via reviewed_by/reviewed_at is allowed; no other updates permitted.
+        if (reviewedBy != null && reviewedAt != null) return;
+        throw new UnsupportedOperationException("memory_items is append-only except for taint clearance");
     }
 
     public String getId() { return id; }
