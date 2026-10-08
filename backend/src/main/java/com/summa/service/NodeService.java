@@ -60,6 +60,15 @@ public class NodeService {
 
     @Transactional
     public Node enroll(String name, String kind, String pubkey, String actor) {
+        if (pubkey == null || pubkey.isBlank()) {
+            throw new IllegalArgumentException("pubkey is required");
+        }
+        // Prevent duplicate enrollment: reject if a non-revoked node already uses this pubkey
+        Optional<Node> existing = nodeRepository.findByPubkey(pubkey);
+        if (existing.isPresent() && !existing.get().isRevoked()) {
+            throw new IllegalStateException("A non-revoked node already exists with this pubkey");
+        }
+
         Node node = new Node();
         node.setId(UUID.randomUUID().toString());
         node.setName(name);
@@ -105,6 +114,12 @@ public class NodeService {
 
         node.setLastHeartbeat(Instant.now());
         if (capabilities != null) {
+            // Validate capabilities is parseable JSON before storing
+            try {
+                objectMapper.readTree(capabilities);
+            } catch (Exception e) {
+                throw new IllegalArgumentException("capabilities must be valid JSON: " + e.getMessage());
+            }
             node.setCapabilities(capabilities);
         }
 

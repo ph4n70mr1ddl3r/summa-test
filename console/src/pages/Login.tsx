@@ -38,7 +38,7 @@ export default function Login() {
       if (err instanceof ApiError && err.status === 429) {
         setError('Too many login attempts. Please try again shortly.')
       } else {
-        setError(err instanceof Error ? err.message : String(err))
+        setError('Invalid email or password')
       }
     } finally {
       setLoading(false)

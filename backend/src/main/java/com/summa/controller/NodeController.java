@@ -33,16 +33,18 @@ public class NodeController {
     @GetMapping
     public ResponseEntity<?> listNodes() {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
-        if (auth != null) return auth;
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Admin access required to list nodes");
+        }
         return ResponseEntity.ok(nodeService.findAll());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getNode(@PathVariable String id) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
-        if (auth != null) return auth;
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Admin access required to view nodes");
+        }
         Optional<Node> entOpt = nodeService.findById(id);
         if (entOpt.isPresent()) {
             return ResponseEntity.ok(entOpt.get());

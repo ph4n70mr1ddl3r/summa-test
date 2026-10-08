@@ -90,7 +90,7 @@ public class AuthController {
         }
 
         try {
-            String token = JwtUtil.generateToken(human.getId(), jwtSecret, jwtExpiration, minJwtSecretLength);
+            String token = JwtUtil.generateTokenWithSession(human.getId(), jwtSecret, jwtExpiration, minJwtSecretLength, human.getSessionVersion());
             auditService.log(human.getId(), "LOGIN", "human", human.getId(), null);
             // Reset rate limit only on successful login so failed attempts accumulate
             rateLimiter.reset(rateKey);
@@ -151,6 +151,7 @@ public class AuthController {
         }
 
         human.setPasswordHash(passwordUtil.hash(newPassword));
+        human.setSessionVersion(human.getSessionVersion() + 1);
         orgService.saveHuman(human);
         auditService.log(actor, "CHANGE_PASSWORD", "human", actor, null);
 

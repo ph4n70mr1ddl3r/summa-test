@@ -103,7 +103,7 @@ public class OrgService {
     }
 
     public Optional<Human> findHumanByEmail(String email) {
-        return humanRepository.findByEmail(email);
+        return humanRepository.findByEmail(email != null ? email.toLowerCase() : email);
     }
 
     /**

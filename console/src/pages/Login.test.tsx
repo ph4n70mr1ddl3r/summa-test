@@ -71,7 +71,7 @@ describe('Login page', () => {
     fireEvent.change(getByLabelText(/email/i), { target: { value: 'bad@example.com' } })
     fireEvent.change(getByLabelText(/password/i), { target: { value: 'wrong' } })
     fireEvent.click(getByText('Sign in'))
-    await findByText('Invalid credentials')
+    await findByText('Invalid email or password')
   })
 
   it('shows loading state while submitting', async () => {

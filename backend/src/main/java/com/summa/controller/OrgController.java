@@ -45,10 +45,14 @@ public class OrgController {
     public ResponseEntity<?> bootstrap(@RequestBody Map<String, String> body) {
         // First bootstrap is special — it creates the initial admin without auth.
         // Subsequent calls are gated by the WriteGate which requires admin auth.
-        boolean alreadyInitialized = orgService.isInitialized();
-        if (!alreadyInitialized) {
-            if (body == null) {
-                return ControllerResponses.validation(auditService, "Request body is required");
+        // The service method is transactional and checks count atomically, so concurrent
+        // bootstrap attempts are serialized by the DB transaction.
+        if (orgService.isInitialized()) {
+            String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+            ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+            if (gate != null) return gate;
+            if (!memberService.isAdmin(actor)) {
+                return ControllerResponses.gate(auditService, actor, "Bootstrap requires admin role when org is initialized");
             }
             try {
                 Human human = orgService.bootstrap(
@@ -62,14 +66,8 @@ public class OrgController {
                 return ControllerResponses.gate(auditService, e.getMessage());
             }
         }
-        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
-        if (gate != null) return gate;
         if (body == null) {
             return ControllerResponses.validation(auditService, "Request body is required");
-        }
-        if (!memberService.isAdmin(actor)) {
-            return ControllerResponses.gate(auditService, actor, "Bootstrap requires admin role when org is initialized");
         }
         try {
             Human human = orgService.bootstrap(
@@ -81,6 +79,8 @@ public class OrgController {
             return ResponseEntity.ok(Map.of("id", human.getId(), "email", human.getEmail(), "rbac", human.getRbac()));
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ControllerResponses.validation(auditService, e.getMessage());
         }
     }
 

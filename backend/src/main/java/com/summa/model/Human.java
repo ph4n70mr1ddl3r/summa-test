@@ -51,6 +51,9 @@ public class Human {
     @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant deactivatedAt;
 
+    @Column(name = "session_version", nullable = false, columnDefinition = "INTEGER")
+    private int sessionVersion;
+
     @PrePersist
     public void prePersist() {
         if (createdAt == null) {
@@ -59,6 +62,7 @@ public class Human {
         if (updatedAt == null) updatedAt = Instant.now();
         if (rbac == null || rbac.isBlank()) rbac = RbacRole.MEMBER.getValue();
         if (email != null) email = email.toLowerCase();
+        if (sessionVersion <= 0) sessionVersion = 1;
     }
 
     @PreUpdate
@@ -96,4 +100,6 @@ public class Human {
     @JsonIgnore
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
     public boolean isActive() { return deactivatedAt == null; }
+    public int getSessionVersion() { return sessionVersion; }
+    public void setSessionVersion(int sessionVersion) { this.sessionVersion = sessionVersion; }
 }

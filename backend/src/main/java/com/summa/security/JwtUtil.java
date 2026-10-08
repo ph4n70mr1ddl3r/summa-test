@@ -18,10 +18,15 @@ public class JwtUtil {
     private static final String ALGORITHM = "HmacSHA256";
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final long SECONDS_TO_MILLIS = 1000L;
+    private static final long MAX_EXPIRY_SECONDS = 365L * 86400; // 1 year max
 
     private JwtUtil() {}
 
     public static String generateToken(String subject, String secret, long expirationMillis, int minSecretLength) {
+        return generateTokenWithSession(subject, secret, expirationMillis, minSecretLength, 0);
+    }
+
+    public static String generateTokenWithSession(String subject, String secret, long expirationMillis, int minSecretLength, int sessionVersion) {
         if (subject == null || subject.isBlank()) {
             throw new IllegalArgumentException("JWT subject must not be blank");
         }
@@ -32,12 +37,13 @@ public class JwtUtil {
             throw new IllegalArgumentException("JWT secret must be at least " + minSecretLength + " characters (256 bits recommended)");
         }
         long nowMillis = System.currentTimeMillis();
-        long expMillis = nowMillis + expirationMillis;
+        long expMillis = Math.min(nowMillis + expirationMillis, nowMillis + MAX_EXPIRY_SECONDS * 1000L);
 
         Map<String, Object> payload = Map.of(
             "sub", subject,
             "iat", nowMillis / 1000,
-            "exp", expMillis / 1000
+            "exp", expMillis / 1000,
+            "sv", sessionVersion
         );
 
         String header = base64UrlEncode("{\"alg\":\"HS256\",\"typ\":\"JWT\"}".getBytes(StandardCharsets.UTF_8));
@@ -106,6 +112,8 @@ public class JwtUtil {
                     }
                 }
             }
+            Object svObj = payload.get("sv");
+            int sessionVersion = svObj instanceof Number ? ((Number) svObj).intValue() : 0;
             return payload;
         } catch (Exception e) {
             log.warn("JWT parse failure: {}", e.getMessage());

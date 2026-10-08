@@ -86,7 +86,12 @@ public class Agent {
     public String getOwnerHumanId() { return ownerHumanId; }
     public void setOwnerHumanId(String ownerHumanId) { this.ownerHumanId = ownerHumanId; }
     public String getAgentClass() { return agentClass; }
-    public void setAgentClass(String agentClass) { this.agentClass = agentClass; }
+    public void setAgentClass(String agentClass) {
+        if (agentClass != null && AgentClass.fromValue(agentClass) == null) {
+            throw new IllegalArgumentException("Invalid agentClass: " + agentClass + ". Must be one of: persistent, ephemeral, ephemeral-subagent");
+        }
+        this.agentClass = agentClass;
+    }
     public String getSpawnedBy() { return spawnedBy; }
     public void setSpawnedBy(String spawnedBy) { this.spawnedBy = spawnedBy; }
     public Instant getTtlAt() { return ttlAt; }
@@ -100,7 +105,13 @@ public class Agent {
     public String getTemplateVersion() { return templateVersion; }
     public void setTemplateVersion(String templateVersion) { this.templateVersion = templateVersion; }
     public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public void setStatus(String status) {
+        if (status != null && !"active".equals(status) && !"suspended".equals(status)
+                && !"retiring".equals(status) && !"archived".equals(status) && !"requested".equals(status)) {
+            throw new IllegalArgumentException("Invalid status: " + status + ". Must be one of: active, suspended, retiring, archived, requested");
+        }
+        this.status = status;
+    }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     public Instant getSuspendedAt() { return suspendedAt; }

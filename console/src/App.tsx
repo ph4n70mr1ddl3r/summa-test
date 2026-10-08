@@ -36,7 +36,7 @@ const publicNavItems: NavItem[] = [
 ]
 
 function getFilteredNavItems(user: { rbac: RbacRole } | null): NavItem[] {
-  if (user && (user.rbac === 'admin' || user.rbac === 'owner')) {
+  if (user && user.rbac === 'admin') {
     return [...publicNavItems, ...adminNavItems]
   }
   return publicNavItems

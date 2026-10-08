@@ -89,6 +89,11 @@ public class DnaDecisionController {
                 if (deciderHuman.isEmpty() && deciderAgent.isEmpty()) {
                     throw new IllegalArgumentException("decidedBy does not reference an existing human or agent: " + decidedByRaw);
                 }
+                // Prevent client-side impersonation: human actors must decide their own decisions
+                String actorClean = JsonHelpers.stripIdPrefix(actor);
+                if (!actorClean.equals(decidedByClean)) {
+                    throw new IllegalArgumentException("decidedBy must match the authenticated actor");
+                }
             }
             String generatedId = UUID.randomUUID().toString();
             DnaDecision decision = decisionService.create(

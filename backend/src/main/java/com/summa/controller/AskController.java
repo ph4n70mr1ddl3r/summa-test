@@ -6,6 +6,7 @@ import com.summa.service.AuditService;
 import com.summa.service.MemberService;
 import com.summa.security.WriteGate;
 import com.summa.security.RbacAuthorizationFilter;
+import com.summa.security.RateLimiter;
 import com.summa.enums.AskKind;
 import com.summa.enums.AskTier;
 import com.summa.util.JsonHelpers;
@@ -27,6 +28,7 @@ public class AskController {
     private final AuditService auditService;
     private final WriteGate writeGate;
     private final MemberService memberService;
+    private final RateLimiter rateLimiter;
 
     private static final Set<String> VALID_ASK_KINDS = EnumSet.allOf(AskKind.class).stream()
         .map(AskKind::getValue).collect(Collectors.toSet());
@@ -39,11 +41,12 @@ public class AskController {
     private static final int MAX_LIST_LIMIT = Defaults.MAX_LIST_LIMIT;
 
     public AskController(AskService askService, AuditService auditService, WriteGate writeGate,
-                          MemberService memberService) {
+                           MemberService memberService, RateLimiter rateLimiter) {
         this.askService = askService;
         this.auditService = auditService;
         this.writeGate = writeGate;
         this.memberService = memberService;
+        this.rateLimiter = rateLimiter;
     }
 
     @GetMapping
@@ -79,6 +82,12 @@ public class AskController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        // Rate limit ask creation per actor to prevent spam
+        String rateKey = actor + ":create_ask";
+        if (!rateLimiter.allow(rateKey)) {
+            long remaining = rateLimiter.getRemainingAttempts(rateKey);
+            return ControllerResponses.tooManyRequests(auditService.logSystem("REFUSAL", "ask_create", actor, "Rate limited ask creation"), "Too many asks. Try again later.", remaining);
+        }
         try {
             String kind = body.get("kind");
             if (kind == null || kind.isBlank()) {
