@@ -23,14 +23,14 @@ import com.summa.repository.InitiativeRepository;
 import com.summa.model.Initiative;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
-import java.util.Objects;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.Collections;
 import com.summa.exception.EntityNotFoundException;
 import com.summa.util.JsonHelpers;
 

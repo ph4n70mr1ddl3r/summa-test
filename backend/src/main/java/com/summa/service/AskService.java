@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -21,7 +22,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.Base64;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.nio.charset.StandardCharsets;
@@ -169,10 +169,10 @@ public class AskService {
                 // Filter by kind, to, AND payload hash to avoid collapsing unrelated asks
                 // to the same recipient within the storm window.
                 List<Ask> candidates = askRepository.findByToAndStatusPending(to);
-                String targetHash = computePayloadHash(kind, to, payload);
+                String targetHash = buildCollapseKey(kind, to, payload);
                 candidates = candidates.stream()
                     .filter(a -> kind.equals(a.getKind()) && a.isPending())
-                    .filter(a -> targetHash.equals(computePayloadHash(kind, to, a.getPayload())))
+                    .filter(a -> targetHash.equals(buildCollapseKey(kind, to, a.getPayload())))
                     .toList();
                 if (!candidates.isEmpty()) {
                     Ask canonical = candidates.get(0);
@@ -196,16 +196,6 @@ public class AskService {
     }
 
     private String buildCollapseKey(String kind, String to, String payload) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest((kind + "|" + to + "|" + (payload != null ? payload : "")).getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("SHA-256 algorithm not available", e);
-        }
-    }
-
-    private String computePayloadHash(String kind, String to, String payload) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest((kind + "|" + to + "|" + (payload != null ? payload : "")).getBytes(StandardCharsets.UTF_8));
