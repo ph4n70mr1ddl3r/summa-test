@@ -59,7 +59,7 @@ public class NodeService {
     }
 
     @Transactional
-    public Node enroll(String name, String kind, String pubkey) {
+    public Node enroll(String name, String kind, String pubkey, String actor) {
         Node node = new Node();
         node.setId(UUID.randomUUID().toString());
         node.setName(name);
@@ -69,7 +69,8 @@ public class NodeService {
         node.setEnrolledAt(Instant.now());
 
         Node saved = nodeRepository.save(node);
-        auditService.log(Defaults.SYSTEM_ACTOR, "ENROLL", "node", node.getId(),
+        String auditActor = actor != null ? actor : Defaults.SYSTEM_ACTOR;
+        auditService.log(auditActor, "ENROLL", "node", node.getId(),
             String.format("{\"name\":\"%s\",\"kind\":\"%s\",\"token_expires_at\":%d}",
                 name, node.getKind(), Instant.now().getEpochSecond() + Defaults.ENROLLMENT_TOKEN_TTL_SECONDS));
         return saved;

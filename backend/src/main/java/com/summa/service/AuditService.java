@@ -19,8 +19,8 @@ public class AuditService {
     private static final Logger log = LoggerFactory.getLogger(AuditService.class);
     // Patterns to redact sensitive data from audit log details
     private static final Pattern PASSWORD_PATTERN = Pattern.compile(
-        "(?i)(password|passwd|pwd|secret|token_hash)\\s*[:=]\\s*\"[^\"]{3,}\"|" +
-        "(?i)(password|passwd|pwd|secret|token_hash)\\s*[:=]\\s*([^\\s,;}{\"]{3,})"
+        "(?i)(password|passwd|pwd|secret|token_hash|auth_token|access_token|api_key|apikey|bearer_token|session_token|bearer)\\s*[:=]\\s*\"[^\"]{3,}\"|" +
+        "(?i)(password|passwd|pwd|secret|token_hash|auth_token|access_token|api_key|apikey|bearer_token|session_token|bearer)\\s*[:=]\\s*([^\\s,;}{\"]{3,})"
     );
     private static final Pattern EMAIL_PATTERN = Pattern.compile("(?i)(email|mail)\\s*[:=]\\s*[\"']([^\"']+@[^\"]+)[\"']");
 

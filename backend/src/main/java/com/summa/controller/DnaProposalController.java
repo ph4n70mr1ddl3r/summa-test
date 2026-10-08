@@ -184,7 +184,7 @@ public class DnaProposalController {
             boolean isDomainOwner = domainOpt.isPresent()
                     && domainOpt.get().getStatus().equals("active")
                     && domainOpt.get().getOwnerHumanId() != null
-                    && domainOpt.get().getOwnerHumanId().equals(actor);
+                    && domainOpt.get().getOwnerHumanId().equals(JsonHelpers.stripIdPrefix(actor));
             if (!isDomainOwner) {
                 return ControllerResponses.gate(auditService, actor, "Admin access required for review queue");
             }

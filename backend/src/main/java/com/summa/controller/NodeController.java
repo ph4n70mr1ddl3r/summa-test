@@ -73,7 +73,7 @@ public class NodeController {
             return ControllerResponses.validation(auditService, "pubkey must be a valid base64-encoded public key");
         }
         try {
-            Node node = nodeService.enroll(name, kind, pubkey);
+            Node node = nodeService.enroll(name, kind, pubkey, actor);
             return ResponseEntity.ok(Map.of(
                 "id", node.getId(),
                 "enrollmentToken", nodeService.generateEnrollmentToken(node.getId())

@@ -64,7 +64,7 @@ class NodeServiceTest {
         node.setKind("local");
         when(nodeRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        Node result = nodeService.enroll("Dev Box", "local", "pubkey-1");
+        Node result = nodeService.enroll("Dev Box", "local", "pubkey-1", "admin");
 
         assertNotNull(result);
         assertEquals("local", result.getKind());
@@ -75,7 +75,7 @@ class NodeServiceTest {
     void enroll_defaultsKindWhenNull() {
         when(nodeRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        Node result = nodeService.enroll("Remote Box", null, "pubkey-2");
+        Node result = nodeService.enroll("Remote Box", null, "pubkey-2", "admin");
 
         assertEquals("remote", result.getKind());
     }
