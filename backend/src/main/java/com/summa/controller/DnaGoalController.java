@@ -88,12 +88,21 @@ public class DnaGoalController {
             if (ownerAgent.isPresent() && !ownerAgent.get().isActive()) {
                 throw new IllegalArgumentException("owner must be an active member: " + ownerRaw);
             }
-            String generatedId = UUID.randomUUID().toString();
-            if (body.get("domainId") != null && !body.get("domainId").isBlank()) {
-                if (domainService.findById(body.get("domainId")).isEmpty()) {
-                    throw new IllegalArgumentException("Domain not found: " + body.get("domainId"));
+            String rawDomainId = body.get("domainId");
+            if (rawDomainId != null && !rawDomainId.isBlank()) {
+                String domainIdClean = JsonHelpers.stripIdPrefix(rawDomainId);
+                Optional<com.summa.model.DnaDomain> domOpt = domainService.findById(domainIdClean);
+                if (domOpt.isEmpty()) {
+                    throw new IllegalArgumentException("Domain not found: " + rawDomainId);
+                }
+                // SEC-021: Only the domain owner or admin may create goals in a domain
+                boolean isDomainOwner = domOpt.get().getOwnerHumanId() != null
+                        && domOpt.get().getOwnerHumanId().equals(ownerClean);
+                if (!isDomainOwner && !memberService.isAdmin(actor)) {
+                    throw new IllegalStateException("Only the domain owner or an admin may create goals in this domain");
                 }
             }
+            String generatedId = UUID.randomUUID().toString();
             Instant effectiveFrom = JsonHelpers.parseOptionalInstant(body.get("effectiveFrom"), "effectiveFrom");
             if (effectiveFrom == null) effectiveFrom = Instant.now();
             Instant effectiveTo = JsonHelpers.parseOptionalInstant(body.get("effectiveTo"), "effectiveTo");
@@ -103,7 +112,7 @@ public class DnaGoalController {
 
             DnaGoal goal = goalService.create(
                 generatedId,
-                body.get("domainId"),
+                rawDomainId,
                 body.get("quarter"),
                 body.get("statementMd"),
                 ownerClean,
@@ -133,8 +142,18 @@ public class DnaGoalController {
             if (!"active".equals(statusValue) && !"met".equals(statusValue) && !"missed".equals(statusValue) && !"retired".equals(statusValue)) {
                 throw new IllegalArgumentException("Invalid goal status: " + statusValue + ". Must be one of: active, met, missed, retired");
             }
-            DnaGoal goal = goalService.updateStatus(id, statusValue, actor);
-            return ResponseEntity.ok(goal);
+            // SEC-021: Only the goal owner or admin may update goal status
+            Optional<DnaGoal> goalOpt = goalService.findById(id);
+            if (goalOpt.isEmpty()) {
+                return ControllerResponses.notFound(auditService, "Goal not found: " + id);
+            }
+            DnaGoal goal = goalOpt.get();
+            boolean isGoalOwner = goal.getOwner() != null && goal.getOwner().equals(JsonHelpers.stripIdPrefix(actor));
+            if (!isGoalOwner && !memberService.isAdmin(actor)) {
+                return ControllerResponses.gate(auditService, actor, "Only the goal owner or an admin may update goal status");
+            }
+            DnaGoal updated = goalService.updateStatus(id, statusValue, actor);
+            return ResponseEntity.ok(updated);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -158,9 +177,19 @@ public class DnaGoalController {
         if (effectiveFrom == null && effectiveTo == null) {
             return ControllerResponses.validation(auditService, "At least one of effectiveFrom or effectiveTo must be provided");
         }
+        // SEC-021: Only the goal owner or admin may update goal window
+        Optional<DnaGoal> goalOpt = goalService.findById(id);
+        if (goalOpt.isEmpty()) {
+            return ControllerResponses.notFound(auditService, "Goal not found: " + id);
+        }
+        DnaGoal goal = goalOpt.get();
+        boolean isGoalOwner = goal.getOwner() != null && goal.getOwner().equals(JsonHelpers.stripIdPrefix(actor));
+        if (!isGoalOwner && !memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Only the goal owner or an admin may update goal window");
+        }
         try {
-            DnaGoal goal = goalService.updateWindow(id, effectiveFrom, effectiveTo, actor);
-            return ResponseEntity.ok(goal);
+            DnaGoal updated = goalService.updateWindow(id, effectiveFrom, effectiveTo, actor);
+            return ResponseEntity.ok(updated);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {

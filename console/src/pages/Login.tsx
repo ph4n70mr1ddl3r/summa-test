@@ -37,8 +37,10 @@ export default function Login() {
     } catch (err) {
       if (err instanceof ApiError && err.status === 429) {
         setError('Too many login attempts. Please try again shortly.')
-      } else {
+      } else if (err instanceof ApiError && err.status === 401) {
         setError('Invalid email or password')
+      } else {
+        setError('Authentication service error. Please try again later.')
       }
     } finally {
       setLoading(false)

@@ -99,6 +99,7 @@ class SpawnServiceTest {
         request.setStatus("requested");
         request.setRequesterId("agent-1");
         request.setRequestedByHumanId("human-1");
+        request.setGateTarget("human-1");
         when(spawnRepository.findById("spawn-1")).thenReturn(Optional.of(request));
 
         Agent agent = new Agent();
@@ -109,6 +110,7 @@ class SpawnServiceTest {
         Human human = new Human();
         human.setId("human-1");
         when(memberService.findHuman("admin")).thenReturn(Optional.of(human));
+        when(memberService.isAdmin("admin")).thenReturn(true);
 
         SpawnRequest result = spawnService.approve("spawn-1", "admin", "actor");
 
@@ -224,10 +226,13 @@ class SpawnServiceTest {
         request.setRequesterId("agent-1");
         request.setRequestedByHumanId(null);
         request.setApprovedBy("agent-99");
+        // Set gateTarget to match approvedBy so gate-target check passes
+        request.setGateTarget("agent-99");
         when(spawnRepository.findById("spawn-1")).thenReturn(Optional.of(request));
 
-        // approvedBy is "agent-99" which is not a human
+        // approvedBy is "agent-99" which is not a human — human validation should fail
         when(memberService.findHuman("agent-99")).thenReturn(Optional.empty());
+        when(memberService.isAdmin("agent-99")).thenReturn(false);
 
         assertThrows(IllegalStateException.class, () -> {
             spawnService.approve("spawn-1", "agent-99", "actor");

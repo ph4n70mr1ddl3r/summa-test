@@ -21,7 +21,7 @@ describe('AskInbox page', () => {
   })
 
   it('renders the Ask Inbox heading', async () => {
-    vi.mocked(api.asks.listByStatus).mockResolvedValue([])
+    vi.mocked(api.asks.list).mockResolvedValue([])
     const { container } = render(<AskInbox />)
     await waitFor(() => {
       expect(container.textContent).toContain('Ask Inbox')
@@ -29,7 +29,7 @@ describe('AskInbox page', () => {
   })
 
   it('shows ask kinds and SLA tiers after load', async () => {
-    vi.mocked(api.asks.listByStatus).mockResolvedValue([])
+    vi.mocked(api.asks.list).mockResolvedValue([])
     const { container } = render(<AskInbox />)
     await waitFor(() => {
       expect(container.textContent).toContain('approval')
@@ -39,7 +39,7 @@ describe('AskInbox page', () => {
 
   it('calls respond API when submitting a response', async () => {
     const ask = { id: 'ask-1', kind: 'question' as AskKind, slaTier: 'standard' as AskTier, from: 'agent-1', to: 'human-1', payload: '{}', deadline: Math.floor(Date.now() / 1000) + 86400, status: 'pending' as const }
-    vi.mocked(api.asks.listByStatus).mockResolvedValue([ask])
+    vi.mocked(api.asks.list).mockResolvedValue([ask])
     vi.mocked(api.asks.respond).mockResolvedValue(ask)
     const { getByText, getAllByPlaceholderText } = render(<AskInbox />)
     await waitFor(() => {
@@ -56,7 +56,7 @@ describe('AskInbox page', () => {
 
   it('displays submit error when respond fails', async () => {
     const ask = { id: 'ask-1', kind: 'question' as AskKind, slaTier: 'standard' as AskTier, from: 'agent-1', to: 'human-1', payload: '{}', deadline: Math.floor(Date.now() / 1000) + 86400, status: 'pending' as const }
-    vi.mocked(api.asks.listByStatus).mockResolvedValue([ask])
+    vi.mocked(api.asks.list).mockResolvedValue([ask])
     vi.mocked(api.asks.respond).mockRejectedValue(new Error('Not eligible'))
     const { getByText, getAllByPlaceholderText } = render(<AskInbox />)
     await waitFor(() => {
@@ -73,7 +73,7 @@ describe('AskInbox page', () => {
 
   it('displays submit error when withdraw fails', async () => {
     const ask = { id: 'ask-1', kind: 'question' as AskKind, slaTier: 'standard' as AskTier, from: 'agent-1', to: 'human-1', payload: '{}', deadline: Math.floor(Date.now() / 1000) + 86400, status: 'pending' as const }
-    vi.mocked(api.asks.listByStatus).mockResolvedValue([ask])
+    vi.mocked(api.asks.list).mockResolvedValue([ask])
     vi.mocked(api.asks.withdraw).mockRejectedValue(new Error('Not allowed'))
     const { getByText } = render(<AskInbox />)
     await waitFor(() => {
@@ -87,7 +87,7 @@ describe('AskInbox page', () => {
 
   it('reloads asks after successful withdraw', async () => {
     const ask = { id: 'ask-1', kind: 'question' as AskKind, slaTier: 'standard' as AskTier, from: 'agent-1', to: 'human-1', payload: '{}', deadline: Math.floor(Date.now() / 1000) + 86400, status: 'pending' as const }
-    vi.mocked(api.asks.listByStatus).mockResolvedValue([ask])
+    vi.mocked(api.asks.list).mockResolvedValue([ask])
     vi.mocked(api.asks.withdraw).mockResolvedValue(ask)
     const { getByText } = render(<AskInbox />)
     await waitFor(() => {
@@ -96,7 +96,7 @@ describe('AskInbox page', () => {
     fireEvent.click(getByText('Withdraw'))
     await waitFor(() => {
       expect(api.asks.withdraw).toHaveBeenCalledWith('ask-1')
-      expect(api.asks.listByStatus).toHaveBeenCalledTimes(2)
+      expect(api.asks.list).toHaveBeenCalledTimes(2)
     })
   })
 })

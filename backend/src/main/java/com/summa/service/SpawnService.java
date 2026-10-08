@@ -259,6 +259,17 @@ public class SpawnService {
             throw new IllegalStateException("Cannot approve non-requested spawn: " + request.getStatus());
         }
 
+        // SPW-040: Gate-target validation — only the gate target (domain owner or admin broadcast)
+        // or an admin may approve a spawn request
+        String gateTarget = request.getGateTarget();
+        String approvedByClean = approvedBy != null ? JsonHelpers.stripIdPrefix(approvedBy) : "";
+        boolean isGateTarget = gateTarget != null && !gateTarget.isBlank()
+                && gateTarget.equals(approvedByClean);
+        boolean isAdmin = memberService.isAdmin(approvedByClean);
+        if (!isGateTarget && !isAdmin) {
+            throw new IllegalStateException("Only the gate target (" + gateTarget + ") or an admin may approve this spawn request");
+        }
+
         // SPW-062: Check spend halt — accept under halt is audit-only, the request archives
         if (governanceService.isSpendHaltTripped()) {
             request.setStatus("archived");
@@ -305,7 +316,7 @@ public class SpawnService {
                 depth = 1;
             }
         }
-        if (depth >= depthCap) {
+        if (depth > depthCap) {
             throw new IllegalStateException("Spawn depth cap reached: depth=" + depth + " cap=" + depthCap);
         }
 

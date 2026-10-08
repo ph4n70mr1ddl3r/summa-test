@@ -59,7 +59,7 @@ export default function AskInbox() {
     setLoading(true)
     setError(null)
     let aborted = false
-    api.asks.listByStatus('pending')
+    api.asks.list()
       .then((data) => { if (!aborted) { setAsks(Array.isArray(data) ? data : []); setLoading(false) } })
       .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
     return () => { aborted = true }

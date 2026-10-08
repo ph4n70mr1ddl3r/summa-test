@@ -66,7 +66,8 @@ describe('Login page', () => {
   })
 
   it('displays error on login failure', async () => {
-    vi.mocked(apiModule.api.auth.login).mockRejectedValue(new Error('Invalid credentials'))
+    const ApiError = (apiModule as unknown as { ApiError: new (m: string, s: number) => { status: number } }).ApiError
+    vi.mocked(apiModule.api.auth.login).mockRejectedValue(new ApiError('Invalid credentials', 401))
     const { getByLabelText, getByText, findByText } = renderLogin()
     fireEvent.change(getByLabelText(/email/i), { target: { value: 'bad@example.com' } })
     fireEvent.change(getByLabelText(/password/i), { target: { value: 'wrong' } })

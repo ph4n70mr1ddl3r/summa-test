@@ -85,20 +85,22 @@ public class AgentController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
         if (auth != null) return auth;
-        Optional<Agent> firstOpt = agentService.findById(id);
-        if (firstOpt.isEmpty()) {
-            return ControllerResponses.notFound(auditService, "Agent not found: " + id);
-        }
+        // API-004: full lineage graph from any member — follows agent chain then human deputy chain
+        int depthCap = agentService.getDepthCap();
         List<String> lineage = new ArrayList<>();
         String currentId = id;
-        int depthCap = agentService.getDepthCap();
         while (currentId != null && lineage.size() < depthCap) {
             lineage.add(currentId);
             Optional<Agent> agentOpt = agentService.findById(currentId);
             if (agentOpt.isPresent()) {
                 currentId = agentOpt.get().getSpawnedBy();
             } else {
-                currentId = null;
+                Optional<com.summa.model.Human> humanOpt = memberService.findHuman(currentId);
+                if (humanOpt.isPresent()) {
+                    currentId = humanOpt.get().getDeputyMemberId();
+                } else {
+                    currentId = null;
+                }
             }
         }
         return ResponseEntity.ok(lineage);
