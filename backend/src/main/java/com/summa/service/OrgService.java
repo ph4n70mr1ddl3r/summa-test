@@ -98,10 +98,12 @@ public class OrgService {
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public Optional<Human> findHuman(String id) {
         return humanRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public Optional<Human> findHumanByEmail(String email) {
         return humanRepository.findByEmail(email != null ? email.toLowerCase() : email);
     }

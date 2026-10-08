@@ -10,12 +10,12 @@ import com.summa.security.WriteGate;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.enums.RbacRole;
 import com.summa.exception.EntityNotFoundException;
+import com.summa.constants.Defaults;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import com.summa.util.JsonHelpers;
 
 @RestController
@@ -26,27 +26,6 @@ public class GovernanceController {
     private final MemberService memberService;
     private final WriteGate writeGate;
     private final AuditService auditService;
-
-    private static final Set<String> POLICY_KEYS = Set.of(
-            "asks-tier-critical-deadline-hours",
-            "asks-tier-standard-deadline-hours",
-            "asks-tier-bulk-deadline-hours",
-            "asks-storm-collapse-window-hours",
-            "asks-rate-limit-per-source-per-hour",
-            "summa.dna.default-review-sla-days",
-            "spend-org-ceiling",
-            "spend-critical-floor-percent",
-            "spend-evaluation-window-days"
-    );
-
-    private static final Set<String> QUOTA_KEYS = Set.of(
-            "spawn-ephemeral-default-ttl-hours",
-            "spawn-ephemeral-max-concurrent-per-spawner",
-            "spawn-org-wide-max-active-agents",
-            "spawn-depth-cap",
-            "spawn-budget-window-days",
-            "node-affinity-starvation-hours"
-    );
 
     public GovernanceController(GovernanceService governanceService, SpendLedgerService spendLedgerService,
                                   MemberService memberService, WriteGate writeGate, AuditService auditService) {
@@ -74,7 +53,7 @@ public class GovernanceController {
         if (!requireAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to view governance quotas");
         Map<String, Object> all = governanceService.getAllSettings();
         Map<String, Object> quotas = new LinkedHashMap<>();
-        for (String key : QUOTA_KEYS) {
+        for (String key : Defaults.QUOTA_KEYS) {
             quotas.put(key, all.get(key));
         }
         return ResponseEntity.ok(quotas);
@@ -118,7 +97,7 @@ public class GovernanceController {
         if (gate != null) return gate;
         if (!requireAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to update governance policies");
         for (String key : body.keySet()) {
-            if (!POLICY_KEYS.contains(key)) {
+            if (!Defaults.POLICY_KEYS.contains(key)) {
                 return ControllerResponses.validation(auditService, "Unknown policy key: " + key);
             }
             ResponseEntity<Map<String, Object>> invalid = validateNumberOrBoolean(key, body.get(key), "Policy", auditService);
@@ -135,7 +114,7 @@ public class GovernanceController {
         if (gate != null) return gate;
         if (!requireAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to update governance quotas");
         for (String key : body.keySet()) {
-            if (!QUOTA_KEYS.contains(key)) {
+            if (!Defaults.QUOTA_KEYS.contains(key)) {
                 return ControllerResponses.validation(auditService, "Unknown quota key: " + key);
             }
             ResponseEntity<Map<String, Object>> invalid = validateNumberOrBoolean(key, body.get(key), "Quota", auditService);

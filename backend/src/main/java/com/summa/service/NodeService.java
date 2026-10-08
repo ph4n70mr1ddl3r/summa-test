@@ -173,7 +173,7 @@ public class NodeService {
         }
         
         Node saved = nodeRepository.save(node);
-        auditService.log(actor, "UPDATE", "node", id, null);
+        auditService.log(actor, "UPDATE_NODE_METADATA", "node", id, null);
         return saved;
     }
 

@@ -18,7 +18,7 @@ export SUMMA_JWT_SECRET=$(openssl rand -hex 32)
 ```
 Single-Process Mode (./start.sh):
   ┌─────────────────────────────────────────────────────┐
-  │  Spring Boot 3.4 + SQLite (WAL) + FTS5              │
+   │  Spring Boot 3.4.1 + SQLite (WAL) + FTS5              │
   │  Port 8080 (API only; context-path /api)            │
   └─────────────────────────────────────────────────────┘
 

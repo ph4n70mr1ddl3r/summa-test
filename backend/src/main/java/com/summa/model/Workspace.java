@@ -69,7 +69,12 @@ public class Workspace {
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
     public String getKind() { return kind; }
-    public void setKind(String kind) { this.kind = kind; }
+    public void setKind(String kind) {
+        if (kind != null && !"project".equals(kind) && !"personal".equals(kind) && !"system".equals(kind)) {
+            throw new IllegalArgumentException("kind must be 'project', 'personal', or 'system': " + kind);
+        }
+        this.kind = kind;
+    }
     public String getInitiativeIds() { return initiativeIds; }
     public void setInitiativeIds(String initiativeIds) { this.initiativeIds = initiativeIds; }
     public String getDomainIds() { return domainIds; }

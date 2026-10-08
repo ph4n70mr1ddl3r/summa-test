@@ -4,7 +4,7 @@
 
 ```
 summa/
-├── backend/           # Java 21 LTS + Spring Boot 3.4
+├── backend/           # Java 21 LTS + Spring Boot 3.4.1
 │   ├── src/main/java/com/summa/
 │   │   ├── controller/    # REST endpoints (API-001..061)
 │   │   ├── service/       # Business logic
@@ -153,6 +153,6 @@ See `PRODUCTION.md` for full deployment guide.
 - Phase 6 (Multi-human): Complete
 - Phase 7 (Spawning): Complete
 - Phase 8a (Hardening): In Progress
-- Phase 8b (Delivery & Acceptance): Pending
+- Phase 8b (v1.1 Polish): Pending
 
 See `README.md` Phases table and `specs/21-delivery-and-acceptance.md` for full entry/exit criteria.

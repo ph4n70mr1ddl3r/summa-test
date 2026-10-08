@@ -80,7 +80,7 @@ class WorkspaceServiceTest {
         when(domainRepository.findById("domain-1")).thenReturn(Optional.of(new com.summa.model.DnaDomain()));
 
         Workspace result = workspaceService.create(
-            "ws-2", "Project Beta", "shared",
+            "ws-2", "Project Beta", "project",
             "[\"domain-1\"]", "[\"init-1\"]", "node-1", "[\"user-1\"]", "actor"
         );
 

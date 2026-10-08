@@ -76,8 +76,7 @@ public class SpawnController {
             try {
                 AgentClass.requireFromValue(effectiveClass);
             } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Invalid spawn class: " + effectiveClass
-                    + ". Must be one of: persistent, ephemeral, ephemeral-subagent");
+                throw new IllegalArgumentException(e.getMessage());
             }
             String normalizedClass = effectiveClass;
             String purpose = body.get("purpose");

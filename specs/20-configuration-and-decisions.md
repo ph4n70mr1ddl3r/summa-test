@@ -97,7 +97,7 @@ trigger; the mechanism it tunes is already designed (NFR-022). Defaults live beh
   opt-in auto-publish for low-blast-radius domains (audited, retro-reviewable) — revisit
   when proposal volume drowns owners.
 - **CFG-140** — Ask SLA tier defaults: how long each tier runs before breach-and-escalate
-  (defaults: `critical` 1h, `standard` to next digest, `bulk` 24h) — tuned with the first
+  (defaults: `critical` 1h, `standard` 24h, `bulk` 24h) — tuned with the first
   real org; ask deadlines derive from these unless set per ask (ASK-012).
 - **CFG-150** — Model-provider degradation: single provider (default) with manual fallback
   vs. automatic multi-provider routing — decide before the first 24/7 deployment leans on one

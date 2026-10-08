@@ -75,11 +75,18 @@ public class DnaDecision {
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 
     /**
-     * DnaDecisions are append-only records without a status lifecycle.
+     * DnaDecisions are immutable append-only records without a status lifecycle.
      * This method exists for API consistency with other DNA models but
      * always returns true — callers should not rely on it for filtering.
      */
     public boolean isActive() {
+        return true;
+    }
+
+    /**
+     * DnaDecisions are immutable — once created, they cannot be updated or deleted.
+     */
+    public boolean isImmutable() {
         return true;
     }
 }

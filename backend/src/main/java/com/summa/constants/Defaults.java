@@ -1,5 +1,8 @@
 package com.summa.constants;
 
+import java.util.Arrays;
+import java.util.Set;
+
 /**
  * Shared constant definitions to prevent divergence between services.
  */
@@ -43,6 +46,28 @@ public final class Defaults {
     public static final int MAX_AUDIT_LOG_LIMIT = 1000;
     public static final int MAX_DNA_SEARCH_LIMIT = 100;
     public static final int MAX_ASK_EXPIRY_DAYS = 365;
+
+    // Governance key sets — must stay in sync with GovernanceController allowed-key checks
+    public static final Set<String> POLICY_KEYS = new java.util.LinkedHashSet<>(java.util.Arrays.asList(
+            "asks-tier-critical-deadline-hours",
+            "asks-tier-standard-deadline-hours",
+            "asks-tier-bulk-deadline-hours",
+            "asks-storm-collapse-window-hours",
+            "asks-rate-limit-per-source-per-hour",
+            "summa.dna.default-review-sla-days",
+            "spend-org-ceiling",
+            "spend-critical-floor-percent",
+            "spend-evaluation-window-days"
+    ));
+
+    public static final Set<String> QUOTA_KEYS = new java.util.LinkedHashSet<>(java.util.Arrays.asList(
+            "spawn-ephemeral-default-ttl-hours",
+            "spawn-ephemeral-max-concurrent-per-spawner",
+            "spawn-org-wide-max-active-agents",
+            "spawn-depth-cap",
+            "spawn-budget-window-days",
+            "node-affinity-starvation-hours"
+    ));
 
     // PAT limits
     public static final int MAX_PAT_EXPIRY_DAYS = 365;

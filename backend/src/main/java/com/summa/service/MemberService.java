@@ -21,10 +21,12 @@ public class MemberService {
         this.agentRepository = agentRepository;
     }
 
+    @Transactional(readOnly = true)
     public Optional<Human> findHuman(String id) {
         return humanRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public Optional<Agent> findAgent(String id) {
         return agentRepository.findById(id);
     }

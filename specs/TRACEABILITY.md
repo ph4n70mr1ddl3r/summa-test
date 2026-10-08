@@ -58,7 +58,7 @@ two or more rows, so a table entry cannot outlive the cross-listing it explains.
 |---|---|
 | CLC-040 | the workspace-archival walk: homed under §6.3 lineage, named again by §7's data-model row |
 | NFR-001 | §2 restates it as the universal fallback (PRN-009's twin); §13.1 is its residual-risk home |
-| ORG-040…043 | groups & IM specified under §5 (org model), coverage-counted again under §8.8 |
+| ORG-040…043 | groups & IM specified under §5 (org model), coverage-counted again under §8.8 (4 IDs) |
 | SUB-064 | §8.4 names its skills uninstall-check reuse (ref-only); §8.6 is its home |
 | TPL-030 | §8.4 names its skills reference (ref-only); §6.5 is its home |
 

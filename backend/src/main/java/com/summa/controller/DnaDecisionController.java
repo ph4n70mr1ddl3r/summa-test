@@ -82,18 +82,17 @@ public class DnaDecisionController {
                 throw new IllegalArgumentException("decidedBy is required");
             }
             String decidedByClean = JsonHelpers.stripIdPrefix(decidedByRaw);
-            // System actor is allowed for automated decision creation
-            if (!"system".equals(decidedByClean)) {
-                Optional<Human> deciderHuman = memberService.findHuman(decidedByClean);
-                Optional<Agent> deciderAgent = memberService.findAgent(decidedByClean);
-                if (deciderHuman.isEmpty() && deciderAgent.isEmpty()) {
-                    throw new IllegalArgumentException("decidedBy does not reference an existing human or agent: " + decidedByRaw);
-                }
-                // Prevent client-side impersonation: human actors must decide their own decisions
-                String actorClean = JsonHelpers.stripIdPrefix(actor);
-                if (!actorClean.equals(decidedByClean)) {
-                    throw new IllegalArgumentException("decidedBy must match the authenticated actor");
-                }
+            // Validate that decidedBy references an existing human or agent
+            Optional<Human> deciderHuman = memberService.findHuman(decidedByClean);
+            Optional<Agent> deciderAgent = memberService.findAgent(decidedByClean);
+            if (deciderHuman.isEmpty() && deciderAgent.isEmpty()) {
+                throw new IllegalArgumentException("decidedBy does not reference an existing human or agent: " + decidedByRaw);
+            }
+            // Prevent client-side impersonation: the decidedBy must match the authenticated actor
+            // (no special-casing for "system" — system-decided decisions are filed server-side only)
+            String actorClean = JsonHelpers.stripIdPrefix(actor);
+            if (!actorClean.equals(decidedByClean)) {
+                throw new IllegalArgumentException("decidedBy must match the authenticated actor");
             }
             String generatedId = UUID.randomUUID().toString();
             DnaDecision decision = decisionService.create(

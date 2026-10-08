@@ -264,7 +264,7 @@ public class SpawnService {
         String gateTarget = request.getGateTarget();
         String approvedByClean = approvedBy != null ? JsonHelpers.stripIdPrefix(approvedBy) : "";
         boolean isGateTarget = gateTarget != null && !gateTarget.isBlank()
-                && gateTarget.equals(approvedByClean);
+                && JsonHelpers.stripIdPrefix(gateTarget).equals(approvedByClean);
         boolean isAdmin = memberService.isAdmin(approvedByClean);
         if (!isGateTarget && !isAdmin) {
             throw new IllegalStateException("Only the gate target (" + gateTarget + ") or an admin may approve this spawn request");
