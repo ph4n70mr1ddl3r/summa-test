@@ -6,6 +6,9 @@ import com.summa.model.DnaGoal;
 import com.summa.util.JsonHelpers;
 import com.summa.util.ScanUtils;
 import com.summa.service.SecretsScanner;
+import com.summa.service.MemberService;
+import com.summa.model.Human;
+import com.summa.model.Agent;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -19,13 +22,16 @@ public class DnaGoalService {
     private final DnaDomainRepository domainRepository;
     private final AuditService auditService;
     private final SecretsScanner secretsScanner;
+    private final MemberService memberService;
 
     public DnaGoalService(DnaGoalRepository goalRepository, DnaDomainRepository domainRepository,
-                          AuditService auditService, SecretsScanner secretsScanner) {
+                          AuditService auditService, SecretsScanner secretsScanner,
+                          MemberService memberService) {
         this.goalRepository = goalRepository;
         this.domainRepository = domainRepository;
         this.auditService = auditService;
         this.secretsScanner = secretsScanner;
+        this.memberService = memberService;
     }
 
     @Transactional
@@ -35,6 +41,14 @@ public class DnaGoalService {
         if (domainId != null && !domainId.isBlank()) {
             domainRepository.findById(domainId).orElseThrow(
                 () -> new EntityNotFoundException("Domain not found: " + domainId));
+        }
+        // DNC-053: Validate owner exists before writing
+        if (owner != null && !owner.isBlank()) {
+            Optional<Human> ownerHuman = memberService.findHuman(owner);
+            Optional<Agent> ownerAgent = memberService.findAgent(owner);
+            if (ownerHuman.isEmpty() && ownerAgent.isEmpty()) {
+                throw new IllegalArgumentException("Owner does not reference an existing human or agent: " + owner);
+            }
         }
         // SEC-030: scan for secrets before writing
         ScanUtils.scanForSecrets(statementMd, actor, "dna_goal", id, secretsScanner, auditService);

@@ -7,6 +7,7 @@ import com.summa.security.PasswordUtil;
 import com.summa.security.PasswordValidator;
 import com.summa.security.RateLimiter;
 import com.summa.security.RbacAuthorizationFilter;
+import com.summa.constants.Defaults;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -109,6 +110,9 @@ public class AuthController {
     public ResponseEntity<Map<String, Object>> changePassword(
             @RequestBody Map<String, String> body, HttpServletRequest request) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        if (Defaults.SYSTEM_ACTOR.equals(actor)) {
+            return ControllerResponses.gate(auditService, "System actor cannot change password");
+        }
         String clientIp = resolveClientIp(request);
         String rateKey = actor + ":" + clientIp + ":change-password";
         if (!rateLimiter.allow(rateKey)) {

@@ -32,6 +32,9 @@ class DnaGoalServiceTest {
     @Mock
     private SecretsScanner secretsScanner;
 
+    @Mock
+    private MemberService memberService;
+
     @InjectMocks
     private DnaGoalService goalService;
 
@@ -49,9 +52,10 @@ class DnaGoalServiceTest {
         DnaDomain domain = new DnaDomain();
         domain.setId("d1");
         when(domainRepository.findById("d1")).thenReturn(java.util.Optional.of(domain));
+        when(memberService.findHuman("owner-1")).thenReturn(java.util.Optional.of(new com.summa.model.Human()));
         when(goalRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        DnaGoal result = goalService.create("g1", "d1", "Q1", "statement", "h:owner-1", null,
+        DnaGoal result = goalService.create("g1", "d1", "Q1", "statement", "owner-1", null,
             Instant.now(), null, "actor");
 
         assertNotNull(result);

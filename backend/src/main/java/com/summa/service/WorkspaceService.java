@@ -168,8 +168,9 @@ public class WorkspaceService {
             nodeRepository.findById(previousNodeId).ifPresent(node -> {
                 String claim = node.getClaim();
                 if (claim != null && !claim.isBlank()) {
+                    JsonNode claimNode = null;
                     try {
-                        JsonNode claimNode = objectMapper.readTree(claim);
+                        claimNode = objectMapper.readTree(claim);
                         if (claimNode.isArray()) {
                             List<String> remaining = new ArrayList<>();
                             for (JsonNode c : claimNode) {
@@ -191,31 +192,29 @@ public class WorkspaceService {
                     } catch (Exception e) {
                         // On parse error, remove only this workspace's entry rather than nullifying the entire claim.
                         // This prevents data loss for other workspaces sharing the same node.
-                        try {
-                            JsonNode fallbackNode = objectMapper.readTree(claim);
-                            if (fallbackNode.isArray()) {
-                                List<String> remaining = new ArrayList<>();
-                                for (JsonNode c : fallbackNode) {
-                                    if (c.isObject() && c.has("workspaceId")) {
-                                        String wsId = c.get("workspaceId").asText();
-                                        if (!wsId.equals(id) && !remaining.contains(wsId)) {
-                                            remaining.add(wsId);
+                        if (claimNode != null) {
+                            try {
+                                if (claimNode.isArray()) {
+                                    List<String> remaining = new ArrayList<>();
+                                    for (JsonNode c : claimNode) {
+                                        if (c.isObject() && c.has("workspaceId")) {
+                                            String wsId = c.get("workspaceId").asText();
+                                            if (!wsId.equals(id) && !remaining.contains(wsId)) {
+                                                remaining.add(wsId);
+                                            }
+                                        } else if (c.isTextual() && !c.asText().equals(id)) {
+                                            remaining.add(c.asText());
                                         }
-                                    } else if (c.isTextual() && !c.asText().equals(id)) {
-                                        remaining.add(c.asText());
                                     }
+                                    node.setClaim(objectMapper.writeValueAsString(remaining));
+                                } else if (claimNode.isObject()) {
+                                    // Legacy single-object claim format — clear entirely
+                                    node.setClaim(null);
                                 }
-                                node.setClaim(objectMapper.writeValueAsString(remaining));
-                            } else if (fallbackNode.isObject()) {
-                                // Legacy single-object claim: clear entirely (no other workspaces to preserve)
-                                node.setClaim(null);
+                            } catch (Exception parseError) {
+                                auditService.logSystem("ARCHIVE_CLEAR_NODE_CLAIM_PARSE_FAIL", "node", previousNodeId,
+                                    JsonHelpers.toJson(Map.of("workspaceId", id, "error", parseError.getMessage()), objectMapper));
                             }
-                            // If neither array nor object, log and skip — do not nullify the claim
-                        } catch (Exception parseError) {
-                            // Log the parse error rather than silently dropping the claim
-                            auditService.logSystem("ARCHIVE_CLEAR_NODE_CLAIM_PARSE_FAIL", "node", previousNodeId,
-                                JsonHelpers.toJson(Map.of("workspaceId", id, "error", parseError.getMessage()), objectMapper));
-                            // Do NOT nullify — preserving the existing claim is safer than losing it
                         }
                         nodeRepository.save(node);
                     }

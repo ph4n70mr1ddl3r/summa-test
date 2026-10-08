@@ -11,6 +11,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.security.SecureRandom;
+import java.util.Base64;
 
 @Service
 public class PatService {
@@ -86,8 +88,10 @@ public class PatService {
     }
 
     private String generateToken() {
-        return "summa_pat_" + UUID.randomUUID().toString().replace("-", "") +
-               "_" + UUID.randomUUID().toString().replace("-", "");
+        SecureRandom random = new SecureRandom();
+        byte[] bytes = new byte[32];
+        random.nextBytes(bytes);
+        return "summa_pat_" + Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
     private String hashToken(String token) {

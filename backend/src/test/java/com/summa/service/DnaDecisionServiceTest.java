@@ -48,7 +48,7 @@ class DnaDecisionServiceTest {
     }
 
     @Test
-    void create_validDecision_sameAsDomainNotFound() {
+    void create_throwsWhenDomainNotFound_secondCall() {
         when(domainRepository.findById("d1")).thenReturn(java.util.Optional.empty());
         assertThrows(EntityNotFoundException.class, () ->
             decisionService.create("d1", "d1", "ctx", "out", "h:decider", "provenance", "actor"));

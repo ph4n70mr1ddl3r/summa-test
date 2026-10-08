@@ -89,12 +89,6 @@ public class DnaDecisionController {
                 if (deciderHuman.isEmpty() && deciderAgent.isEmpty()) {
                     throw new IllegalArgumentException("decidedBy does not reference an existing human or agent: " + decidedByRaw);
                 }
-                if (deciderHuman.isPresent() && !deciderHuman.get().isActive()) {
-                    throw new IllegalArgumentException("decidedBy must be an active member: " + decidedByRaw);
-                }
-                if (deciderAgent.isPresent() && !deciderAgent.get().isActive()) {
-                    throw new IllegalArgumentException("decidedBy must be an active member: " + decidedByRaw);
-                }
             }
             String generatedId = UUID.randomUUID().toString();
             DnaDecision decision = decisionService.create(

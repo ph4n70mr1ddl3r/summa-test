@@ -38,12 +38,13 @@ public class BoardTaskService {
         // proposed and paused keep task-filing open as planning; closed refuses
         if (initiativeId != null && !initiativeId.isBlank()) {
             Optional<Initiative> initOpt = initiativeRepository.findById(initiativeId);
-            if (initOpt.isPresent()) {
-                Initiative init = initOpt.get();
-                if ("closed".equals(init.getStatus())) {
-                    throw new IllegalStateException(
-                        "Cannot create board task under closed initiative: " + initiativeId);
-                }
+            if (initOpt.isEmpty()) {
+                throw new EntityNotFoundException("Initiative not found: " + initiativeId);
+            }
+            Initiative init = initOpt.get();
+            if ("closed".equals(init.getStatus())) {
+                throw new IllegalStateException(
+                    "Cannot create board task under closed initiative: " + initiativeId);
             }
         }
 
