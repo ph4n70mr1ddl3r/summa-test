@@ -55,6 +55,8 @@ mkdir -p ~/.summa
 SUMMA_DNA_REPO="${SUMMA_DNA_REPO:-$HOME/.summa/dna}"
 SUMMA_DB_PATH="${SUMMA_DB_PATH:-$HOME/.summa/summa.db}"
 SUMMA_LOG_DIR="${SUMMA_LOG_DIR:-$HOME/.summa/logs}"
+export SUMMA_DNA_REPO
+export SUMMA_DB_PATH
 export SUMMA_LOG_DIR
 mkdir -p "$SUMMA_DNA_REPO" "$(dirname "$SUMMA_DB_PATH")" "$SUMMA_LOG_DIR"
 
@@ -69,7 +71,6 @@ done
 # Start the backend
 echo "Starting backend on port 8080..."
 JAVA_OPTS="${JAVA_OPTS:--Xmx512m -Xms256m -XX:MaxMetaspaceSize=128m}"
-export SUMMA_LOG_DIR
 exec java "$JAVA_OPTS" \
     -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-prod} \
     -Dsumma.auth.local-auth-enabled=${SUMMA_AUTH_LOCAL_AUTH_ENABLED:-true} \

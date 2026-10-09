@@ -123,7 +123,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T | undefin
         message = `Network error (connection failed)`;
       }
       const err = new ApiError(message, res.status);
-      if (res.status === 401 || res.status === 403) {
+      if (res.status === 401) {
         setAuthToken(null, null);
         // Prevent duplicate redirects if multiple requests fail simultaneously.
         // Use a closure-guarded flag so a second 401 during the navigation window
@@ -589,12 +589,22 @@ export const api = {
     list: (params?: { status?: string; ownerId?: string }) =>
       request<Agent[]>(`/agents${buildQuery(params)}`),
     get: (id: string) => request<Agent>(`/agents/${id}`),
-    lineage: (id: string) => request<string[]>(`/agents/${id}/lineage`),
+    suspend: (id: string) =>
+      request<Agent>(`/agents/${id}/suspend`, { method: 'POST' }),
+    resume: (id: string) =>
+      request<Agent>(`/agents/${id}/resume`, { method: 'POST' }),
+    retire: (id: string) =>
+      request<Agent>(`/agents/${id}/retire`, { method: 'POST' }),
+    archive: (id: string) =>
+      request<Agent>(`/agents/${id}/archive`, { method: 'POST' }),
+    deny: (id: string) =>
+      request<Agent>(`/agents/${id}/deny`, { method: 'POST' }),
     promote: (id: string, placement: string) =>
       request<Record<string, unknown>>(`/agents/${id}/promote`, {
         method: 'POST',
         body: JSON.stringify({ placement }),
       }),
+    lineage: (id: string) => request<string[]>(`/agents/${id}/lineage`),
   },
   dna: {
     cards: (domainId?: string) =>
@@ -645,7 +655,7 @@ export const api = {
         body: JSON.stringify({ status }),
       }),
     updateGoalWindow: async (id: string, effectiveFrom?: number, effectiveTo?: number) => {
-        if (effectiveFrom == null && effectiveTo == null) {
+        if (effectiveFrom === undefined && effectiveTo === undefined) {
             throw new ApiError('At least one of effectiveFrom or effectiveTo must be provided', 400);
         }
         const body: Record<string, number> = {};
@@ -674,6 +684,11 @@ export const api = {
       }),
     proposals: (status?: string) =>
       request<DnaProposal[]>(`/dna/proposals${buildQuery(status ? { status } : undefined)}`),
+    createProposal: (body: Record<string, string>) =>
+      request<DnaProposal>('/dna/proposals', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
     publishProposal: (id: string) =>
       request<DnaProposal>(`/dna/proposals/${id}/review`, {
         method: 'POST',

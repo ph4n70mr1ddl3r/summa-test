@@ -86,6 +86,8 @@ fi
 SUMMA_LOG_DIR="${SUMMA_LOG_DIR:-$HOME/.summa/logs}"
 SUMMA_DNA_REPO="${SUMMA_DNA_REPO:-$HOME/.summa/dna}"
 SUMMA_DB_PATH="${SUMMA_DB_PATH:-$HOME/.summa/summa.db}"
+export SUMMA_DNA_REPO
+export SUMMA_DB_PATH
 export SUMMA_LOG_DIR
 mkdir -p ~/.summa "$SUMMA_LOG_DIR" "$SUMMA_DNA_REPO" "$(dirname "$SUMMA_DB_PATH")"
 

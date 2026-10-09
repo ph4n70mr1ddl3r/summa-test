@@ -118,6 +118,11 @@ public class DnaGoalService {
         DnaGoal goal = goalRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Goal not found: " + id));
 
+        // Terminal statuses are immutable (same guard as updateStatus)
+        if ("met".equals(goal.getStatus()) || "missed".equals(goal.getStatus()) || "retired".equals(goal.getStatus())) {
+            throw new IllegalArgumentException("Cannot update window of terminal goal: " + goal.getStatus());
+        }
+
         // Schema requires effective_from NOT NULL; rejecting a clear-of-both would violate the constraint.
         if (effectiveFrom == null && effectiveTo == null) {
             throw new IllegalArgumentException("At least one of effectiveFrom or effectiveTo must be provided");

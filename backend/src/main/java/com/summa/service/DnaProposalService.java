@@ -122,6 +122,25 @@ public class DnaProposalService {
             throw new IllegalStateException("Proposal is not open: " + proposal.getStatus());
         }
 
+        // DWP-064: Prevent cross-domain topology smuggling — published payload domain must match proposal domain
+        if (proposal.getDomainId() != null && !proposal.getDomainId().isBlank()) {
+            try {
+                JsonNode payload = objectMapper.readTree(proposal.getPayload());
+                if (payload.has("domain_id") && !payload.get("domain_id").isNull()) {
+                    String payloadDomainId = payload.get("domain_id").asText();
+                    if (!payloadDomainId.equals(proposal.getDomainId())) {
+                        throw new IllegalStateException(
+                            "Domain smuggling blocked: payload domain " + payloadDomainId
+                            + " differs from proposal domain " + proposal.getDomainId());
+                    }
+                }
+            } catch (IllegalStateException e) {
+                throw e;
+            } catch (Exception e) {
+                // Non-fatal: payload may not be JSON or may lack domain_id
+            }
+        }
+
         // DWP-042: Contradiction detection — re-check against current state
         List<String> contradictions = detectContradictions(proposal);
         if (!contradictions.isEmpty()) {

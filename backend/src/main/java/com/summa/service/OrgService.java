@@ -2,8 +2,16 @@ package com.summa.service;
 
 import com.summa.repository.HumanRepository;
 import com.summa.repository.AuditEventRepository;
+import com.summa.repository.AskRepository;
+import com.summa.repository.BoardTaskRepository;
+import com.summa.repository.DnaProposalRepository;
+import com.summa.repository.MemoryItemRepository;
 import com.summa.model.Human;
 import com.summa.model.AuditEvent;
+import com.summa.model.Ask;
+import com.summa.model.BoardTask;
+import com.summa.model.DnaProposal;
+import com.summa.model.MemoryItem;
 import com.summa.security.PasswordUtil;
 import com.summa.security.PasswordValidator;
 import com.summa.util.JsonHelpers;
@@ -25,16 +33,31 @@ public class OrgService {
     private final AuditEventRepository auditEventRepository;
     private final OffboardingWalkService offboardingWalkService;
     private final PasswordUtil passwordUtil;
+    private final MemberService memberService;
+    private final AskRepository askRepository;
+    private final BoardTaskRepository boardTaskRepository;
+    private final DnaProposalRepository proposalRepository;
+    private final MemoryItemRepository memoryItemRepository;
 
     public OrgService(HumanRepository humanRepository, AuditService auditService,
                       AuditEventRepository auditEventRepository,
                       OffboardingWalkService offboardingWalkService,
-                      PasswordUtil passwordUtil) {
+                      PasswordUtil passwordUtil,
+                      MemberService memberService,
+                      AskRepository askRepository,
+                      BoardTaskRepository boardTaskRepository,
+                      DnaProposalRepository proposalRepository,
+                      MemoryItemRepository memoryItemRepository) {
         this.humanRepository = humanRepository;
         this.auditService = auditService;
         this.auditEventRepository = auditEventRepository;
         this.offboardingWalkService = offboardingWalkService;
         this.passwordUtil = passwordUtil;
+        this.memberService = memberService;
+        this.askRepository = askRepository;
+        this.boardTaskRepository = boardTaskRepository;
+        this.proposalRepository = proposalRepository;
+        this.memoryItemRepository = memoryItemRepository;
     }
 
     @Transactional
@@ -168,6 +191,13 @@ public class OrgService {
             throw new IllegalStateException("Cannot update rbac: would leave the org with zero admins");
         }
 
+        // OFB-030: Run demotion walk when the new role strips write surfaces
+        // (viewer cannot own domains, agents, initiatives, goals, proposals, or groups)
+        boolean stripsWriteSurface = !memberService.canWrite(newRbac) && memberService.canWrite(human.getRbac());
+        if (stripsWriteSurface) {
+            offboardingWalkService.walkDemote(id, newRbac, actor);
+        }
+
         human.setRbac(newRbac);
         Human saved = humanRepository.save(human);
         auditService.log(actor, "UPDATE_RBAC", "human", id,
@@ -273,6 +303,38 @@ public class OrgService {
         human.setDeputyMemberId(null);
         human.setDeactivatedAt(Instant.now());
         humanRepository.save(human);
+
+        // STG-031: Sweep DNA proposal attribution
+        for (DnaProposal prop : proposalRepository.findByProposedBy(id)) {
+            prop.setProposedBy(OffboardingWalkService.ADMIN_BROADCAST);
+            proposalRepository.save(prop);
+        }
+
+        // STG-032: Sweep ask from/to attribution
+        for (Ask ask : askRepository.findAll()) {
+            if (id.equals(ask.getFrom())) {
+                ask.setFrom(OffboardingWalkService.ADMIN_BROADCAST);
+                askRepository.save(ask);
+            }
+            if (id.equals(ask.getTo())) {
+                ask.setTo(OffboardingWalkService.ADMIN_BROADCAST);
+                askRepository.save(ask);
+            }
+        }
+
+        // STG-033: Sweep board task assignment attribution
+        for (BoardTask task : boardTaskRepository.findAll()) {
+            if (id.equals(task.getAssigneeMemberId())) {
+                task.setAssigneeMemberId(null);
+                boardTaskRepository.save(task);
+            }
+        }
+
+        // STG-034: Sweep memory item attribution
+        for (MemoryItem mem : memoryItemRepository.findByMemberId(id)) {
+            mem.setMemberId(OffboardingWalkService.ADMIN_BROADCAST);
+            memoryItemRepository.save(mem);
+        }
 
         auditService.log(actor, "ERASURE", "human", id, null);
     }

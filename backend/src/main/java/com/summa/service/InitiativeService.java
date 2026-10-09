@@ -107,6 +107,14 @@ public class InitiativeService {
         if (leadHuman.isPresent() && !leadHuman.get().isActive()) {
             throw new IllegalStateException("Lead must be an active member: " + lead);
         }
+        // INT-001: Persistent agents (not ephemeral) may serve as leads
+        Optional<Agent> leadAgent = memberService.findAgent(leadClean);
+        if (leadAgent.isPresent() && leadAgent.get().isEphemeral()) {
+            throw new IllegalStateException("Lead cannot be an ephemeral agent: " + lead);
+        }
+        if (leadAgent.isPresent() && !leadAgent.get().isActive()) {
+            throw new IllegalStateException("Lead must be an active agent: " + lead);
+        }
 
         // INT-070: Cycle detection in depends_on — edges name non-closed rows only
         if (dependsOn != null && !dependsOn.isBlank() && !dependsOn.equals("[]")) {
