@@ -37,4 +37,10 @@ public interface AskRepository extends JpaRepository<Ask, String> {
 
     @Query("SELECT a FROM Ask a WHERE a.status = 'pending' ORDER BY a.deadline ASC LIMIT :limit")
     List<Ask> findByStatusPendingOrdered(@org.springframework.data.repository.query.Param("limit") int limit);
+
+    @Query("SELECT a FROM Ask a WHERE a.from = :from")
+    List<Ask> findByFrom(String from);
+
+    @Query("SELECT a FROM Ask a WHERE a.to = :to")
+    List<Ask> findByTo(String to);
 }

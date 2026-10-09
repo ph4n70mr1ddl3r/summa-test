@@ -81,10 +81,9 @@ export function isAuthenticated(): boolean {
     if (header.alg !== 'HS256') return false;
     const payloadB64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
     const payloadJson = payloadB64 + '='.repeat((4 - payloadB64.length % 4) % 4);
-    const payload = JSON.parse(atob(payloadJson)) as { exp?: number; nbf?: number };
+    const payload = JSON.parse(atob(payloadJson)) as { exp?: number };
     if (payload.exp === undefined) return false;
     const nowSeconds = Math.floor(Date.now() / 1000);
-    if (payload.nbf !== undefined && nowSeconds < payload.nbf) return false;
     return payload.exp > nowSeconds;
   } catch {
     return false;

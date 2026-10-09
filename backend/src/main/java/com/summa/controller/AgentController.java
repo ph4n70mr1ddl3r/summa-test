@@ -88,8 +88,13 @@ public class AgentController {
         // API-004: full lineage graph from any member — follows agent chain then human deputy chain
         int depthCap = agentService.getDepthCap();
         List<String> lineage = new ArrayList<>();
+        java.util.Set<String> visited = new java.util.HashSet<>();
         String currentId = id;
         while (currentId != null && lineage.size() < depthCap) {
+            if (!visited.add(currentId)) {
+                // Cycle detected — stop to prevent infinite loop
+                break;
+            }
             lineage.add(currentId);
             Optional<Agent> agentOpt = agentService.findById(currentId);
             if (agentOpt.isPresent()) {

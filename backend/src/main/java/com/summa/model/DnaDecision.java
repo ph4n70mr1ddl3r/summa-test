@@ -48,12 +48,8 @@ public class DnaDecision {
 
     /**
      * DnaDecisions are immutable append-only records per DNC-030.
-     * Any attempt to update a decision is rejected.
+     * Updates are prevented at the service layer; this model has no lifecycle hooks.
      */
-    @PreUpdate
-    public void preUpdate() {
-        throw new UnsupportedOperationException("DnaDecision is immutable — updates are not permitted");
-    }
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }

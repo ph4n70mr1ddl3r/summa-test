@@ -310,20 +310,18 @@ public class OrgService {
             proposalRepository.save(prop);
         }
 
-        // STG-032: Sweep ask from/to attribution
-        for (Ask ask : askRepository.findAll()) {
-            if (id.equals(ask.getFrom())) {
-                ask.setFrom(OffboardingWalkService.ADMIN_BROADCAST);
-                askRepository.save(ask);
-            }
-            if (id.equals(ask.getTo())) {
-                ask.setTo(OffboardingWalkService.ADMIN_BROADCAST);
-                askRepository.save(ask);
-            }
+        // STG-032: Sweep ask from/to attribution using targeted queries
+        for (Ask ask : askRepository.findByFrom(id)) {
+            ask.setFrom(OffboardingWalkService.ADMIN_BROADCAST);
+            askRepository.save(ask);
+        }
+        for (Ask ask : askRepository.findByTo(id)) {
+            ask.setTo(OffboardingWalkService.ADMIN_BROADCAST);
+            askRepository.save(ask);
         }
 
-        // STG-033: Sweep board task assignment attribution
-        for (BoardTask task : boardTaskRepository.findAll()) {
+        // STG-033: Sweep board task assignment attribution using targeted query
+        for (BoardTask task : boardTaskRepository.findByAssigneeMemberId(id)) {
             if (id.equals(task.getAssigneeMemberId())) {
                 task.setAssigneeMemberId(null);
                 boardTaskRepository.save(task);

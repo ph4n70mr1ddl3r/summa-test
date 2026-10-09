@@ -62,6 +62,9 @@ public class AskService {
     // maintains its own collapse window, which may lead to duplicate asks across instances.
     // A distributed cache (e.g., Redis) is required for correct storm collapse in multi-instance mode.
     private final ConcurrentHashMap<String, ExpiringEntry<Instant>> collapseWindowTimestamps = new ConcurrentHashMap<>();
+    // ASK-057: Successor depth tracking uses a much longer TTL than the storm collapse window
+    // so chain depth is preserved across the full lifetime of an escalation chain.
+    private static final long SUCCESSOR_DEPTH_TTL_SECONDS = Defaults.SECONDS_PER_YEAR;
     private final ConcurrentHashMap<String, ExpiringEntry<Integer>> successorDepth = new ConcurrentHashMap<>();
     // Per-key locks to prevent concurrent collapse race conditions
     private final ConcurrentHashMap<String, ReentrantLock> collapseLocks = new ConcurrentHashMap<>();
@@ -305,7 +308,7 @@ public class AskService {
                         long expireNowSeconds = Instant.now().getEpochSecond();
                         successorDepth.compute(rootAskId, (k, entry) -> {
                             int d = (entry != null ? entry.value : 0) + 1;
-                            return new ExpiringEntry<>(d, expireNowSeconds + stormCollapseWindowSeconds);
+                            return new ExpiringEntry<>(d, expireNowSeconds + SUCCESSOR_DEPTH_TTL_SECONDS);
                         });
                         auditService.logSystem("EXPIRE_SUCCESSOR_CREATED", "ask", current.getId(),
                             String.format("{\"originalId\":\"%s\",\"behavior\":\"%s\",\"depth\":%d}", current.getId(), behavior, depth));

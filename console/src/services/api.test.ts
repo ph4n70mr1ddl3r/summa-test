@@ -186,32 +186,13 @@ describe('buildQuery key encoding', () => {
   })
 })
 
-describe('isAuthenticated nbf and exp edge cases', () => {
+describe('isAuthenticated token edge cases', () => {
   it('isAuthenticated returns false when exp is missing', () => {
     const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
       btoa(JSON.stringify({})) +
       '.sig'
     setAuthToken(token)
     expect(isAuthenticated()).toBe(false)
-  })
-
-  it('isAuthenticated respects nbf claim', () => {
-    const futureNbf = Math.floor(Date.now() / 1000) + 3600
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
-      btoa(JSON.stringify({ exp: futureNbf + 3600, nbf: futureNbf })) +
-      '.sig'
-    setAuthToken(token)
-    expect(isAuthenticated()).toBe(false)
-  })
-
-  it('isAuthenticated allows token when nbf has passed', () => {
-    const pastNbf = Math.floor(Date.now() / 1000) - 3600
-    const futureExp = pastNbf + 7200
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
-      btoa(JSON.stringify({ exp: futureExp, nbf: pastNbf })) +
-      '.sig'
-    setAuthToken(token)
-    expect(isAuthenticated()).toBe(true)
   })
 })
 

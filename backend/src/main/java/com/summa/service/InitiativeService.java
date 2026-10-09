@@ -224,7 +224,8 @@ public class InitiativeService {
 
         // INT-020: If actor is not the sponsor, route an activation ask to the sponsor
         // with expiry=deny. The sponsor's own opens go active outright.
-        if (actor != null && !actor.equals(initiative.getSponsor())) {
+        String actorClean = actor != null ? JsonHelpers.stripIdPrefix(actor) : "";
+        if (actorClean != null && !actorClean.equals(initiative.getSponsor())) {
             // Validate sponsor is still active before routing ask to them
             String sponsorId = initiative.getSponsor();
             if (sponsorId == null) {
