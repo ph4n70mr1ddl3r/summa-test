@@ -55,10 +55,10 @@ public class GroupController {
         String name = body.get("name");
         String leaderMemberId = body.get("leaderMemberId");
         if (name == null || name.isBlank()) {
-            return ControllerResponses.validation(auditService, "name is required");
+            throw new IllegalArgumentException("name is required");
         }
         if (leaderMemberId == null || leaderMemberId.isBlank()) {
-            return ControllerResponses.validation(auditService, "leaderMemberId is required");
+            throw new IllegalArgumentException("leaderMemberId is required");
         }
         try {
             Group group = groupService.create(name, leaderMemberId, actor);

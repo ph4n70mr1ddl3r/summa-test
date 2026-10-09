@@ -47,6 +47,9 @@ public class OrgController {
         // Subsequent calls are gated by the WriteGate which requires admin auth.
         // The service method is transactional and checks count atomically, so concurrent
         // bootstrap attempts are serialized by the DB transaction.
+        if (body == null) {
+            return ControllerResponses.validation(auditService, "Request body is required");
+        }
         if (orgService.isInitialized()) {
             String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
             ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
@@ -65,9 +68,6 @@ public class OrgController {
             } catch (IllegalStateException e) {
                 return ControllerResponses.gate(auditService, e.getMessage());
             }
-        }
-        if (body == null) {
-            return ControllerResponses.validation(auditService, "Request body is required");
         }
         try {
             Human human = orgService.bootstrap(

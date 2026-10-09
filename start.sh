@@ -70,7 +70,7 @@ done
 echo "Starting backend on port 8080..."
 JAVA_OPTS="${JAVA_OPTS:--Xmx512m -Xms256m -XX:MaxMetaspaceSize=128m}"
 export SUMMA_LOG_DIR
-exec java "$JAVA_OPTS" \
+exec java $JAVA_OPTS \
     -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-prod} \
     -Dsumma.auth.local-auth-enabled=${SUMMA_AUTH_LOCAL_AUTH_ENABLED:-true} \
     -jar "$JAR_FILE"

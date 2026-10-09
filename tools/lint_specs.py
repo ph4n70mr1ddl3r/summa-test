@@ -41,7 +41,7 @@ DEFAULT_ROOT = Path(__file__).resolve().parent.parent
 
 DEF_RE = re.compile(r"^- \*\*([A-Z]{3})-(\d{3})\*\*")
 TOKEN_RE = re.compile(r"\b([A-Z]{3})-(\d{3})\b")
-RANGE_RE = re.compile(r"\b([A-Z]{3})-(\d{3})\s*(?:…|\.\.)\s*(?:([A-Z]{3})-)?(\d{3})\b")
+RANGE_RE = re.compile(r"\b([A-Z]{3})-(\d{3})\s*(?:…|\.\.|\.\.\.)\s*(?:([A-Z]{3})-)?(\d{3})\b")
 KEYWORD_RE = re.compile(
     r"\b(shall|should|may|must|never|refus[ea]?|forbid|denied?|carries|derives|evaluates)\b",
     re.IGNORECASE,

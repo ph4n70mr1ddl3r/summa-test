@@ -82,6 +82,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneric(Exception e) {
         log.error("Unhandled exception", e);
-        return auditAndRespond("ERROR", "internal", null, "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
+        return auditAndRespond("ERROR", "internal_error", null, "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

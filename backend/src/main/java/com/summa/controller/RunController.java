@@ -128,7 +128,7 @@ public class RunController {
                 try {
                     costTokens = Long.parseLong(body.get("costTokens"));
                     if (costTokens < 0) throw new IllegalArgumentException("costTokens must be non-negative");
-                    if (costTokens > 1_000_000_000L) throw new IllegalArgumentException("costTokens exceeds maximum");
+                    if (costTokens > Defaults.MAX_COST_TOKENS) throw new IllegalArgumentException("costTokens exceeds maximum");
                 } catch (NumberFormatException e) {
                     throw new IllegalArgumentException("Invalid costTokens: " + body.get("costTokens"));
                 }

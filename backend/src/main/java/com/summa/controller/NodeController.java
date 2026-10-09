@@ -72,10 +72,10 @@ public class NodeController {
         String kind = body.get("kind");
         String pubkey = body.get("pubkey");
         if (name == null || name.isBlank() || kind == null || kind.isBlank() || pubkey == null || pubkey.isBlank()) {
-            return ControllerResponses.validation(auditService, "name, kind, and pubkey are required");
+            throw new IllegalArgumentException("name, kind, and pubkey are required");
         }
         if (!pubkey.matches(Defaults.PUBKEY_REGEX)) {
-            return ControllerResponses.validation(auditService, "pubkey must be a valid base64-encoded public key");
+            throw new IllegalArgumentException("pubkey must be a valid base64-encoded public key");
         }
         try {
             Node node = nodeService.enroll(name, kind, pubkey, actor);

@@ -226,6 +226,7 @@ def run_lint(root: Path) -> subprocess.CompletedProcess[str]:
         [sys.executable, str(TOOLS / "lint_specs.py"), str(root)],
         capture_output=True,
         text=True,
+        timeout=30,
     )
 
 
@@ -243,6 +244,10 @@ def apply(root: Path, sc: Scenario) -> None:
 
 def main() -> int:
     failures: list[str] = []
+
+    if not CLEAN.exists():
+        print(f"ERROR: clean fixture corpus not found at {CLEAN}", file=sys.stderr)
+        return 1
 
     result = run_lint(CLEAN)
     if result.returncode != 0 or "lint: OK" not in result.stdout:

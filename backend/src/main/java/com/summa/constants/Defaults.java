@@ -72,6 +72,9 @@ public final class Defaults {
     // PAT limits
     public static final int MAX_PAT_EXPIRY_DAYS = 365;
 
+    // Cost limits
+    public static final long MAX_COST_TOKENS = 1_000_000_000L;
+
     // Node affinity
     public static final long DEFAULT_NODE_AFFINITY_STARVATION_HOURS = 24;
 
