@@ -54,4 +54,4 @@ export type {
   HealthStatus,
   DomainAccess,
 } from '../services/api'
-export { ApiError } from '../services/api'
+

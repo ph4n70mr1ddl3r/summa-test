@@ -40,6 +40,8 @@ cp .env.example .env
 docker compose up -d
 ```
 
+> **Note:** Ports are bound to `127.0.0.1` by default for security. To expose externally, change the port mappings in `docker-compose.yml` (e.g., `"8080:8080"`).
+
 ## Architecture
 
 ```

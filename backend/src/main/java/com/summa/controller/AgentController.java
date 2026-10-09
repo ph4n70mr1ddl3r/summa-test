@@ -11,7 +11,6 @@ import com.summa.service.OffboardingWalkService;
 import com.summa.model.RoleTemplate;
 import com.summa.repository.RoleTemplateRepository;
 import com.summa.service.MemberService;
-import com.summa.exception.EntityNotFoundException;
 import com.summa.constants.Defaults;
 import com.summa.util.JsonHelpers;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import com.summa.exception.EntityNotFoundException;
 
 @RestController
 @RequestMapping("/agents")
@@ -154,8 +154,6 @@ public class AgentController {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
-        } catch (EntityNotFoundException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 

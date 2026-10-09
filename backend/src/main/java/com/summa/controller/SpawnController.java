@@ -35,6 +35,8 @@ public class SpawnController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String requesterId) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         if (!memberService.isAdmin(actor)) {
             return ControllerResponses.gate(auditService, actor, "Admin access required to list spawn requests");
         }
@@ -50,6 +52,8 @@ public class SpawnController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getRequest(@PathVariable String id) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         if (!memberService.isAdmin(actor)) {
             return ControllerResponses.gate(auditService, actor, "Admin access required to view spawn requests");
         }

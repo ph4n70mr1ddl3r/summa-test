@@ -1,6 +1,5 @@
 package com.summa.controller;
 
-import com.summa.exception.EntityNotFoundException;
 import com.summa.constants.Defaults;
 import com.summa.model.Node;
 import com.summa.model.Run;
@@ -33,6 +32,8 @@ public class NodeController {
     @GetMapping
     public ResponseEntity<?> listNodes() {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         if (!memberService.isAdmin(actor)) {
             return ControllerResponses.gate(auditService, actor, "Admin access required to list nodes");
         }
@@ -42,6 +43,8 @@ public class NodeController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getNode(@PathVariable String id) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         if (!memberService.isAdmin(actor)) {
             return ControllerResponses.gate(auditService, actor, "Admin access required to view nodes");
         }
@@ -97,8 +100,6 @@ public class NodeController {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
-        } catch (EntityNotFoundException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 
@@ -129,8 +130,6 @@ public class NodeController {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
-        } catch (EntityNotFoundException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 
@@ -147,8 +146,6 @@ public class NodeController {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
-        } catch (EntityNotFoundException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 
@@ -189,8 +186,6 @@ public class NodeController {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
-        } catch (EntityNotFoundException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 
@@ -206,8 +201,6 @@ public class NodeController {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
-        } catch (EntityNotFoundException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 
@@ -228,8 +221,6 @@ public class NodeController {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
-        } catch (EntityNotFoundException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 }

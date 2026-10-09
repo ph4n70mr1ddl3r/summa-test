@@ -1,9 +1,9 @@
 spring:
   jpa:
     show-sql: false
-
-eclipselink:
-  show-sql: false
+    properties:
+      eclipselink:
+        show-sql: false
 
 logging:
   file:

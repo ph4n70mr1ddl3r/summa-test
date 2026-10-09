@@ -1,6 +1,5 @@
 package com.summa.controller;
 
-import com.summa.exception.EntityNotFoundException;
 import com.summa.security.WriteGate;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.service.AuditService;
@@ -78,8 +77,6 @@ public class BackupController {
             return ControllerResponses.gate(auditService, e.getMessage());
         } catch (IOException e) {
             return ControllerResponses.internalError(auditService, e.getMessage());
-        } catch (EntityNotFoundException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 

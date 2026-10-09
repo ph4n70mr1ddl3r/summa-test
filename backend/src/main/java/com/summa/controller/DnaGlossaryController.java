@@ -3,6 +3,7 @@ package com.summa.controller;
 import com.summa.service.DnaGlossaryService;
 import com.summa.model.DnaGlossary;
 import com.summa.service.AuditService;
+import com.summa.service.DnaDomainService;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,12 +20,14 @@ public class DnaGlossaryController {
     private final AuditService auditService;
     private final WriteGate writeGate;
     private final MemberService memberService;
+    private final DnaDomainService domainService;
 
-    public DnaGlossaryController(DnaGlossaryService glossaryService, AuditService auditService, WriteGate writeGate, MemberService memberService) {
+    public DnaGlossaryController(DnaGlossaryService glossaryService, AuditService auditService, WriteGate writeGate, MemberService memberService, DnaDomainService domainService) {
         this.glossaryService = glossaryService;
         this.auditService = auditService;
         this.writeGate = writeGate;
         this.memberService = memberService;
+        this.domainService = domainService;
     }
 
     @GetMapping
@@ -63,6 +66,12 @@ public class DnaGlossaryController {
         try {
             if (body.get("term") == null || body.get("term").isBlank()) {
                 throw new IllegalArgumentException("term is required");
+            }
+            if (body.get("domainId") == null || body.get("domainId").isBlank()) {
+                throw new IllegalArgumentException("domainId is required");
+            }
+            if (domainService.findById(body.get("domainId")).isEmpty()) {
+                throw new IllegalArgumentException("Domain not found: " + body.get("domainId"));
             }
             // Security: reject client-supplied IDs — always generate server-side
             String generatedId = UUID.randomUUID().toString();

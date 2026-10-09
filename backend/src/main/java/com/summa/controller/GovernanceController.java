@@ -5,10 +5,8 @@ import com.summa.service.SpendLedgerService;
 import com.summa.service.MemberService;
 import com.summa.service.AuditService;
 import com.summa.model.SpendLedger;
-import com.summa.model.Human;
 import com.summa.security.WriteGate;
 import com.summa.security.RbacAuthorizationFilter;
-import com.summa.enums.RbacRole;
 import com.summa.exception.EntityNotFoundException;
 import com.summa.constants.Defaults;
 import org.springframework.http.ResponseEntity;
@@ -41,7 +39,7 @@ public class GovernanceController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
         if (auth != null) return auth;
-        if (!requireAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to view governance policies");
+        if (!memberService.isAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to view governance policies");
         return ResponseEntity.ok(governanceService.getAllSettings());
     }
 
@@ -50,7 +48,7 @@ public class GovernanceController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
         if (auth != null) return auth;
-        if (!requireAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to view governance quotas");
+        if (!memberService.isAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to view governance quotas");
         Map<String, Object> all = governanceService.getAllSettings();
         Map<String, Object> quotas = new LinkedHashMap<>();
         for (String key : Defaults.QUOTA_KEYS) {
@@ -64,7 +62,7 @@ public class GovernanceController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
         if (auth != null) return auth;
-        if (!requireAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to view spend data");
+        if (!memberService.isAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to view spend data");
         // Delegate defaults to GovernanceService to avoid divergence
         return ResponseEntity.ok(governanceService.getSpendView());
     }
@@ -95,7 +93,7 @@ public class GovernanceController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        if (!requireAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to update governance policies");
+        if (!memberService.isAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to update governance policies");
         for (String key : body.keySet()) {
             if (!Defaults.POLICY_KEYS.contains(key)) {
                 return ControllerResponses.validation(auditService, "Unknown policy key: " + key);
@@ -112,7 +110,7 @@ public class GovernanceController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        if (!requireAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to update governance quotas");
+        if (!memberService.isAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to update governance quotas");
         for (String key : body.keySet()) {
             if (!Defaults.QUOTA_KEYS.contains(key)) {
                 return ControllerResponses.validation(auditService, "Unknown quota key: " + key);
@@ -130,33 +128,19 @@ public class GovernanceController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        if (!requireAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to acknowledge spend overruns");
-        try {
-            SpendLedger ledger = spendLedgerService.findById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("Spend ledger row not found: " + id));
-            // Verify the acknowledging admin is related to this spend entry (member or admin)
-            String cleanActor = JsonHelpers.stripIdPrefix(actor);
-            boolean isRelated = cleanActor.equals(ledger.getMemberId()) || requireAdmin(actor);
-            if (!isRelated) {
-                return ControllerResponses.gate(auditService, actor, "Admin must be related to this spend entry to acknowledge");
-            }
-            if (!Boolean.TRUE.equals(ledger.getAcknowledged())) {
-                spendLedgerService.acknowledge(id, actor);
-            }
-            return ResponseEntity.ok(Map.of("status", "overrun_acknowledged", "rowId", id,
-                    "haltTripped", governanceService.isSpendHaltTripped()));
-        } catch (EntityNotFoundException e) {
-            return ControllerResponses.notFound(auditService, e.getMessage());
+        if (!memberService.isAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to acknowledge spend overruns");
+        SpendLedger ledger = spendLedgerService.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Spend ledger row not found: " + id));
+        // Verify the acknowledging admin is related to this spend entry (member or admin)
+        String cleanActor = JsonHelpers.stripIdPrefix(actor);
+        boolean isRelated = cleanActor.equals(ledger.getMemberId()) || memberService.isAdmin(actor);
+        if (!isRelated) {
+            return ControllerResponses.gate(auditService, actor, "Admin must be related to this spend entry to acknowledge");
         }
-    }
-
-    private boolean requireAdmin(String actor) {
-        Optional<Human> actorOpt = memberService.findHuman(JsonHelpers.stripIdPrefix(actor));
-        if (actorOpt.isPresent()) {
-            return actorOpt.get().isActive()
-                    && RbacRole.ADMIN.getValue().equals(actorOpt.get().getRbac());
+        if (!Boolean.TRUE.equals(ledger.getAcknowledged())) {
+            spendLedgerService.acknowledge(id, actor);
         }
-        // Check if actor is an admin agent (agents don't have RBAC, so only humans can be admins)
-        return false;
+        return ResponseEntity.ok(Map.of("status", "overrun_acknowledged", "rowId", id,
+                "haltTripped", governanceService.isSpendHaltTripped()));
     }
 }

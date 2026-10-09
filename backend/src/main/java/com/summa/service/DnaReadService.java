@@ -9,6 +9,7 @@ import com.summa.model.Human;
 import org.springframework.jdbc.core.JdbcTemplate;
 import com.summa.constants.Defaults;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -63,6 +64,7 @@ public class DnaReadService {
      * Search DNA using FTS5 full-text search.
      * Implements DRP-030: search serves living corpus (active items only).
      */
+    @Transactional(readOnly = true)
     public List<Map<String, Object>> search(String query, String domainId, int limit) {
         if (query == null || query.isBlank()) {
             throw new IllegalArgumentException("Search query must not be blank");
@@ -113,6 +115,7 @@ public class DnaReadService {
     /**
      * Get all active domains with their reader sets.
      */
+    @Transactional(readOnly = true)
     public List<DnaDomain> listDomains() {
         return domainRepository.findAllActive();
     }
@@ -121,6 +124,7 @@ public class DnaReadService {
      * Get org snapshot for prompt injection (DRP-001, DRP-002).
      * Returns live members with their states.
      */
+    @Transactional(readOnly = true)
     public Map<String, Object> getOrgSnapshot() {
         List<Human> activeHumans = memberService.findAllActiveHumans();
         List<Agent> activeAgents = memberService.findAllActiveAgents();

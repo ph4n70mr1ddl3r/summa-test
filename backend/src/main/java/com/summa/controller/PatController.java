@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.constants.Defaults;
+import com.summa.util.JsonHelpers;
 import java.util.List;
 import java.util.Map;
 
@@ -111,10 +112,19 @@ public class PatController {
             return ControllerResponses.validation(auditService, "Invalid PAT ID: must be a valid UUID");
         }
         try {
-            Pat pat = patService.revoke(id, actor);
-            return ResponseEntity.ok(pat);
+            com.summa.model.Pat pat = patService.findById(id)
+                    .orElseThrow(() -> new com.summa.exception.EntityNotFoundException("PAT not found: " + id));
+            String cleanActor = JsonHelpers.stripIdPrefix(actor);
+            boolean isOwner = pat.getMemberId() != null && pat.getMemberId().equals(cleanActor);
+            if (!isOwner && !memberService.isAdmin(actor)) {
+                return ControllerResponses.gate(auditService, actor, "Only the PAT owner or an admin may revoke");
+            }
+            com.summa.model.Pat revoked = patService.revoke(id, actor);
+            return ResponseEntity.ok(revoked);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
+        } catch (com.summa.exception.EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         }

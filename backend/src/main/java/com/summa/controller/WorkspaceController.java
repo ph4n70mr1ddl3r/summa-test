@@ -33,6 +33,8 @@ public class WorkspaceController {
     public ResponseEntity<?> listWorkspaces(
             @RequestParam(defaultValue = "50") int limit) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         if (!memberService.isAdmin(actor)) {
             return ControllerResponses.gate(auditService, actor, "Admin access required to list workspaces");
         }
@@ -43,6 +45,8 @@ public class WorkspaceController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getWorkspace(@PathVariable String id) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
+        if (auth != null) return auth;
         if (!memberService.isAdmin(actor)) {
             return ControllerResponses.gate(auditService, actor, "Admin access required to view workspace details");
         }

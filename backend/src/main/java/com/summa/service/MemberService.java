@@ -31,18 +31,22 @@ public class MemberService {
         return agentRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<Human> findAllActiveHumans() {
         return humanRepository.findAllActive();
     }
 
+    @Transactional(readOnly = true)
     public List<Agent> findAllActiveAgents() {
         return agentRepository.findAllActive();
     }
 
+    @Transactional(readOnly = true)
     public List<Human> findAdmins() {
         return humanRepository.findActiveByRole(RbacRole.ADMIN.getValue());
     }
 
+    @Transactional(readOnly = true)
     public long countActiveAdmins() {
         return humanRepository.countByDeactivatedAtIsNullAndRbac(RbacRole.ADMIN.getValue());
     }

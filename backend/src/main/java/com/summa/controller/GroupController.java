@@ -57,6 +57,9 @@ public class GroupController {
         if (name == null || name.isBlank()) {
             return ControllerResponses.validation(auditService, "name is required");
         }
+        if (leaderMemberId == null || leaderMemberId.isBlank()) {
+            return ControllerResponses.validation(auditService, "leaderMemberId is required");
+        }
         try {
             Group group = groupService.create(name, leaderMemberId, actor);
             return ResponseEntity.ok(group);

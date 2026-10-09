@@ -85,10 +85,12 @@ public class NodeService {
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public Optional<Node> findById(String id) {
         return nodeRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public Optional<Node> findByPubkey(String pubkey) {
         return nodeRepository.findByPubkey(pubkey);
     }
@@ -100,6 +102,7 @@ public class NodeService {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
+    @Transactional(readOnly = true)
     public List<Node> findAll() {
         return nodeRepository.findAll();
     }
