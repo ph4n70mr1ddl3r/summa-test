@@ -61,12 +61,12 @@ public class NodeController {
         // NodeAuthFilter strips signature verification for this path, so we gate on JWT actor instead.
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         if (Defaults.SYSTEM_ACTOR.equals(actor)) {
-            return ControllerResponses.gate(auditService, "Admin authentication required to enroll nodes");
+            return ControllerResponses.gate(auditService, actor, "Admin authentication required to enroll nodes");
         }
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         if (!memberService.isAdmin(actor)) {
-            return ControllerResponses.gate(auditService, "Only admins can enroll nodes");
+            return ControllerResponses.gate(auditService, actor, "Only admins can enroll nodes");
         }
         String name = body.get("name");
         String kind = body.get("kind");

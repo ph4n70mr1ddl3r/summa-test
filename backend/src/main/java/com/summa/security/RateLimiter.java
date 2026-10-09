@@ -22,6 +22,8 @@ public class RateLimiter {
     private static final int MAX_KEYS = 10_000;
     private static final int MAX_LOCKS = 16_384;
 
+    private volatile Thread purgeThread;
+
     public boolean allow(String identifier) {
         purgeIfNeeded();
         Instant now = Instant.now();
@@ -117,8 +119,16 @@ public class RateLimiter {
                 }
             }
         }, "summa-rate-limiter-purge");
+        purgeThread = t;
         t.setDaemon(true);
         t.start();
+    }
+
+    @jakarta.annotation.PreDestroy
+    public void stopPeriodicPurge() {
+        if (purgeThread != null) {
+            purgeThread.interrupt();
+        }
     }
 
     private void purgeStaleEntries() {

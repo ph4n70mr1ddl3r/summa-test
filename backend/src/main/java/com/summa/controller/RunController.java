@@ -203,6 +203,9 @@ public class RunController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
         if (auth != null) return auth;
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Admin access required to view run stats");
+        }
         return ResponseEntity.ok(Map.of(
             "queued", runService.countByStatus("queued"),
             "running", runService.countByStatus("running"),

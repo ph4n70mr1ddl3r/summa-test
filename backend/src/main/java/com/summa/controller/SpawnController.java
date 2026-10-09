@@ -143,6 +143,9 @@ public class SpawnController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
         if (auth != null) return auth;
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Admin access required to view spawn stats");
+        }
         return ResponseEntity.ok(spawnService.getStats());
     }
 

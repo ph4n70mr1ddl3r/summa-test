@@ -11,6 +11,7 @@ import com.summa.constants.Defaults;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 
@@ -37,6 +38,16 @@ public class AuthController {
 
     @Value("${summa.proxy.trusted-ips:}")
     private String trustedProxyIps;
+
+    @PostConstruct
+    public void validateSecret() {
+        if (jwtSecret == null || jwtSecret.isBlank()) {
+            throw new IllegalStateException("summa.auth.jwt-secret must not be blank");
+        }
+        if (jwtSecret.length() < minJwtSecretLength) {
+            throw new IllegalStateException("summa.auth.jwt-secret must be at least " + minJwtSecretLength + " characters (256 bits recommended), got " + jwtSecret.length());
+        }
+    }
 
     public AuthController(OrgService orgService, AuditService auditService, PasswordUtil passwordUtil, RateLimiter rateLimiter) {
         this.orgService = orgService;
@@ -111,7 +122,7 @@ public class AuthController {
             @RequestBody Map<String, String> body, HttpServletRequest request) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         if (Defaults.SYSTEM_ACTOR.equals(actor)) {
-            return ControllerResponses.gate(auditService, "System actor cannot change password");
+            return ControllerResponses.gate(auditService, actor, "System actor cannot change password");
         }
         String clientIp = resolveClientIp(request);
         String rateKey = actor + ":" + clientIp + ":change-password";

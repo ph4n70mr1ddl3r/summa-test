@@ -949,10 +949,6 @@ export const api = {
       }),
   },
   admin: {
-    scan: (content: string) => request<Record<string, unknown>>('/admin/secrets/scan', {
-      method: 'POST',
-      body: JSON.stringify({ content }),
-    }),
     createBackup: (body?: Record<string, string>) =>
       request<Record<string, unknown>>('/admin/backup', {
         method: 'POST',

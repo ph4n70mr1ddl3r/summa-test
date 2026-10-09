@@ -259,7 +259,7 @@ public class OrgController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         String actorClean = JsonHelpers.stripIdPrefix(actor);
         if (!memberService.isAdmin(actorClean)) {
-            return ControllerResponses.gate(auditService, "admin required");
+            return ControllerResponses.gate(auditService, actor, "admin required");
         }
         // API-004: full lineage graph from any member
         int depthCap = agentService.getDepthCap();
@@ -293,7 +293,7 @@ public class OrgController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         String actorClean = JsonHelpers.stripIdPrefix(actor);
         if (!memberService.isAdmin(actorClean)) {
-            return ControllerResponses.gate(auditService, "admin required");
+            return ControllerResponses.gate(auditService, actor, "admin required");
         }
         if (limit <= 0 || limit > 1000) {
             return ControllerResponses.validation(auditService, "limit must be between 1 and 1000");

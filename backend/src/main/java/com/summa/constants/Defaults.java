@@ -34,7 +34,8 @@ public final class Defaults {
     public static final long STALL_ASK_DEDUP_WINDOW_SECONDS = 3600L;
     public static final long ENROLLMENT_TOKEN_TTL_SECONDS = 3600L;
     public static final long REBIND_ASK_DEADLINE_SECONDS = 7L * 86400;
-    public static final long MAX_DEADLINE_SECONDS = 365L * 86400;
+    public static final long SECONDS_PER_YEAR = 365L * 86400;
+    public static final long MAX_DEADLINE_SECONDS = SECONDS_PER_YEAR;
 
     // Algorithmic bounds
     public static final int MAX_EXPIRE_SUCCESSOR_DEPTH = 5;

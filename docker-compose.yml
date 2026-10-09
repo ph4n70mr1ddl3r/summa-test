@@ -23,17 +23,17 @@ services:
       - SUMMA_DNA_REPO=${SUMMA_DNA_REPO:-/data/dna}
       # JWT secret must be set and at least 32 characters (validated at startup)
       # Spring's :? guard in application.yml crashes the container if unset;
-      # ensure SUMMA_JWT_SECRET is set in .env before starting — see .env.example.
-      - SUMMA_JWT_SECRET=${SUMMA_JWT_SECRET:-}
-      - SUMMA_JWT_EXPIRATION=${SUMMA_JWT_EXPIRATION:-86400000}
+      # ensure SUMMA_AUTH_JWT_SECRET is set in .env before starting — see .env.example.
+      - SUMMA_AUTH_JWT_SECRET=${SUMMA_AUTH_JWT_SECRET:-}
+      - SUMMA_AUTH_JWT_EXPIRATION=${SUMMA_AUTH_JWT_EXPIRATION:-86400000}
       - SUMMA_CORS_ORIGINS=${SUMMA_CORS_ORIGINS:-}
       - SUMMA_SPEND_CEILING=${SUMMA_SPEND_CEILING:-1000000}
       - SUMMA_GIT_BRANCH=${SUMMA_GIT_BRANCH:-main}
-      - SUMMA_LOCAL_AUTH_ENABLED=${SUMMA_LOCAL_AUTH_ENABLED:-true}
+      - SUMMA_AUTH_LOCAL_AUTH_ENABLED=${SUMMA_AUTH_LOCAL_AUTH_ENABLED:-true}
       - SUMMA_MODE=${SUMMA_MODE:-single-process}
       - SUMMA_LOG_DIR=${SUMMA_LOG_DIR:-/data/logs}
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
-      - SUMMA_JWT_SECRET_MIN_LENGTH=${SUMMA_JWT_SECRET_MIN_LENGTH:-32}
+      - SUMMA_AUTH_JWT_SECRET_MIN_LENGTH=${SUMMA_AUTH_JWT_SECRET_MIN_LENGTH:-32}
       - SUMMA_PROXY_TRUSTED_IPS=${SUMMA_PROXY_TRUSTED_IPS:-}
       # Node config
       - SUMMA_NODE_LEASE_INTERVAL=${SUMMA_NODE_LEASE_INTERVAL:-30}

@@ -2,6 +2,7 @@ package com.summa.security;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.summa.constants.Defaults;
 import com.summa.util.JsonHelpers;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -18,8 +19,7 @@ public class JwtUtil {
     private static final String ALGORITHM = "HmacSHA256";
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final long SECONDS_TO_MILLIS = 1000L;
-    private static final long MAX_EXPIRY_SECONDS = 365L * 86400; // 1 year max
-
+    private static final long MAX_EXPIRY_SECONDS = Defaults.SECONDS_PER_YEAR; // 1 year max
     private JwtUtil() {}
 
     public static String generateToken(String subject, String secret, long expirationMillis, int minSecretLength) {
@@ -37,7 +37,7 @@ public class JwtUtil {
             throw new IllegalArgumentException("JWT secret must be at least " + minSecretLength + " characters (256 bits recommended)");
         }
         long nowMillis = System.currentTimeMillis();
-        long expMillis = Math.min(nowMillis + expirationMillis, nowMillis + MAX_EXPIRY_SECONDS * 1000L);
+        long expMillis = Math.min(nowMillis + expirationMillis, nowMillis + Defaults.SECONDS_PER_YEAR * 1000L);
 
         Map<String, Object> payload = Map.of(
             "sub", subject,
