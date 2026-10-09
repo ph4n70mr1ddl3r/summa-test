@@ -38,8 +38,6 @@ public class AskController {
 
     private static final Set<String> VALID_EXPIRY_BEHAVIORS = Set.of("deny", "escalate", "reassign");
 
-    private static final int MAX_LIST_LIMIT = Defaults.MAX_LIST_LIMIT;
-
     public AskController(AskService askService, AuditService auditService, WriteGate writeGate,
                            MemberService memberService, RateLimiter rateLimiter) {
         this.askService = askService;
@@ -57,7 +55,7 @@ public class AskController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
         if (auth != null) return auth;
-        int cappedLimit = Math.min(Math.max(limit, 1), MAX_LIST_LIMIT);
+        int cappedLimit = Math.min(Math.max(limit, 1), Defaults.MAX_LIST_LIMIT);
         if (to != null) {
             return ResponseEntity.ok(askService.findByTo(to, cappedLimit));
         }

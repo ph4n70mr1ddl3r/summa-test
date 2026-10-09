@@ -44,15 +44,15 @@ public class SummaApplication {
     private static void validateStartupConfig(Environment env) {
         String jwtSecret = env.getProperty("summa.auth.jwt-secret");
         if (jwtSecret == null || jwtSecret.isBlank()) {
-            log.error("FATAL: summa.auth.jwt-secret is not configured. Set SUMMA_JWT_SECRET environment variable.");
-            throw new IllegalStateException("SUMMA_JWT_SECRET environment variable is required");
+            log.error("FATAL: summa.auth.jwt-secret is not configured. Set SUMMA_AUTH_JWT_SECRET environment variable.");
+            throw new IllegalStateException("SUMMA_AUTH_JWT_SECRET environment variable is required");
         }
         int minLen = env.getProperty("summa.auth.jwt-secret-min-length", int.class, DEFAULT_MIN_JWT_SECRET_LENGTH);
         if (jwtSecret.length() < minLen) {
             log.error("FATAL: summa.auth.jwt-secret must be at least {} characters ({} bits recommended). Found {} characters.",
                     minLen, minLen * 8, jwtSecret.length());
             throw new IllegalStateException(
-                "SUMMA_JWT_SECRET must be at least " + minLen + " characters ("
+                "SUMMA_AUTH_JWT_SECRET must be at least " + minLen + " characters ("
                 + minLen * 8 + " bits). Generate with: openssl rand -hex " + minLen);
         }
         log.info("JWT secret validated: {} characters (min: {})", jwtSecret.length(), minLen);

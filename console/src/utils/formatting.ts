@@ -27,7 +27,7 @@ export function formatDate(epochSeconds: number | undefined | null, options?: { 
     ...(options?.dateOnly ? {} : { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
   })
   const base = fmt.format(date)
-  return options?.dateOnly ? base : `${base} UTC`
+  return `${base} UTC`
 }
 
 export function agentStatusColor(status: AgentStatus): string {

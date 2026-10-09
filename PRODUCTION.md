@@ -6,7 +6,7 @@
 # Single-process mode (development/small team).
 # The script runs the packaged JAR, so build it first:
 npm run build:backend
-export SUMMA_JWT_SECRET=$(openssl rand -hex 32)
+export SUMMA_AUTH_JWT_SECRET=$(openssl rand -hex 32)
 ./start.sh
 
 # Dev mode (backend + console hot-reload)
@@ -48,10 +48,10 @@ Kubernetes (prod): decomposed services
 |----------|---------|-------------|
 | `SUMMA_DB_PATH` | `~/.summa/summa.db` (local) · `/data/db/summa.db` (Docker/prod) | SQLite database path (`~` is not expanded in containers — use absolute paths) |
 | `SUMMA_DNA_REPO` | `~/.summa/dna` (local) · `/data/dna` (Docker/prod) | DNA git repository path |
-| `SUMMA_JWT_SECRET` | *(required)* | JWT signing secret (256+ bits; generate with `openssl rand -hex 32`) |
+| `SUMMA_AUTH_JWT_SECRET` | *(required)* | JWT signing secret (256+ bits; generate with `openssl rand -hex 32`) |
 | `SUMMA_SPEND_CEILING` | `1000000` | Org spend ceiling |
 | `SUMMA_CORS_ORIGINS` | *(empty = localhost + 127.0.0.1 only)* | Extra CORS origins, comma-separated (e.g. `https://app.example.com`) |
-| `SUMMA_LOCAL_AUTH_ENABLED` | `true` | Enable local email/password auth (set `false` when using OIDC/gateway auth) |
+| `SUMMA_AUTH_LOCAL_AUTH_ENABLED` | `true` | Enable local email/password auth (set `false` when using OIDC/gateway auth) |
 | `SUMMA_GIT_BRANCH` | `main` | DNA repo branch to track |
 | `SPRING_PROFILES_ACTIVE` | `prod` (Dockerfile, docker-compose, start.sh) · `dev` (dev.sh, hot-reload) | Spring profile |
 | `VITE_API_URL` | `/api` | API base URL baked into the console bundle at build time |
@@ -59,8 +59,8 @@ Kubernetes (prod): decomposed services
 | `SUMMA_OIDC_ISSUER` | *(reserved)* | Keycloak issuer URI — **not yet wired**. Human auth today is email+password via `POST /api/auth/login`. See OIDC note below. |
 | `SUMMA_OIDC_CLIENT_ID` | *(reserved)* | OIDC client ID — not yet wired |
 | `SUMMA_OIDC_CLIENT_SECRET` | *(reserved)* | OIDC client secret — not yet wired |
-| `SUMMA_JWT_EXPIRATION` | `86400000` | JWT token expiration in milliseconds |
-| `SUMMA_JWT_SECRET_MIN_LENGTH` | `32` | Minimum JWT secret length in characters |
+| `SUMMA_AUTH_JWT_EXPIRATION` | `86400000` | JWT token expiration in milliseconds |
+| `SUMMA_AUTH_JWT_SECRET_MIN_LENGTH` | `32` | Minimum JWT secret length in characters |
 | `SUMMA_LOG_DIR` | `/data/logs` (Docker) · `~/.summa/logs` (local) | Application log directory |
 | `SUMMA_NODE_LEASE_INTERVAL` | `30` | Node lease interval in seconds |
 | `SUMMA_NODE_HEARTBEAT_TIMEOUT` | `90` | Node heartbeat timeout in seconds |
@@ -219,7 +219,7 @@ Abridged — the full surface with REQ IDs lives in `specs/17-api-surface.md`
 docker run -d \
   -p 8080:8080 \
   -v summa-data:/data \
-  -e SUMMA_JWT_SECRET=<your-secret> \
+  -e SUMMA_AUTH_JWT_SECRET=<your-secret> \
   summa:latest
 ```
 > This image serves the API on `:8080` only. The console is available via `./dev.sh` (:3000) or the `docker compose up -d` console service.
@@ -227,14 +227,14 @@ docker run -d \
 ### Docker Compose
 ```bash
 # Either: set in your environment
-export SUMMA_JWT_SECRET=$(openssl rand -hex 32)
+export SUMMA_AUTH_JWT_SECRET=$(openssl rand -hex 32)
 # Or: copy .env.example and fill in the secret
 cp .env.example .env
-# (then edit .env to set SUMMA_JWT_SECRET)
+# (then edit .env to set SUMMA_AUTH_JWT_SECRET)
 
 docker compose up -d --build
 ```
-> `application.yml` uses `${SUMMA_JWT_SECRET:?JWT secret is required}` which fails fast if the variable is unset. Docker Compose passes the raw `.env` value (no default), so an unset variable propagates as empty and triggers the same guard. Compose auto-loads `.env` from the current directory.
+> `application.yml` uses `${SUMMA_AUTH_JWT_SECRET:?JWT secret is required}` which fails fast if the variable is unset. Docker Compose passes the raw `.env` value (no default), so an unset variable propagates as empty and triggers the same guard. Compose auto-loads `.env` from the current directory.
 
 ### OCI Images (Podman)
 ```bash
@@ -242,7 +242,7 @@ podman build -t summa .
 podman run -d \
   -p 8080:8080 \
   -v summa-data:/data \
-  -e SUMMA_JWT_SECRET=$(openssl rand -hex 32) \
+  -e SUMMA_AUTH_JWT_SECRET=$(openssl rand -hex 32) \
   summa
 ```
 
@@ -263,13 +263,13 @@ curl -X POST http://localhost:8080/api/admin/backup/restore \
 
 ## Security Checklist
 
-- [ ] Set `SUMMA_JWT_SECRET` to a 256-bit random value (`openssl rand -hex 32`) — required at startup, rejected if <32 chars
+- [ ] Set `SUMMA_AUTH_JWT_SECRET` to a 256-bit random value (`openssl rand -hex 32`) — required at startup, rejected if <32 chars
 - [ ] Enable TLS behind reverse proxy
 - [ ] Set protected branches on DNA repo
 - [ ] Configure firewall for ports 8080 (API, always) and 3000 (console, dev.sh / compose only)
-- [ ] Rotate JWT secret annually; update `SUMMA_JWT_SECRET` and redeploy
+- [ ] Rotate JWT secret annually; update `SUMMA_AUTH_JWT_SECRET` and redeploy
 - [ ] Back up database and DNA repo daily; backups must reside under `java.io.tmpdir`
-- [ ] Set `SUMMA_LOCAL_AUTH_ENABLED=false` in production when using OIDC/gateway auth
+- [ ] Set `SUMMA_AUTH_LOCAL_AUTH_ENABLED=false` in production when using OIDC/gateway auth
 - [ ] Set `SUMMA_SPEND_CEILING` to a realistic org limit
 - [ ] Review `GET /api/org/audit` periodically for anomalous activity
 - [ ] Rotate node keypairs when a node is compromised (`POST /api/nodes/{id}/revoke` then re-enroll)

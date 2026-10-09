@@ -301,7 +301,7 @@ public class SpawnService {
         String name = request.getCustomRole() != null ? request.getCustomRole()
             : (request.getPurpose() != null ? request.getPurpose() : "agent-" + agentId.substring(0, 8));
 
-        Integer depth = null;
+        int depth = 1;
         if (request.getRequestedByHumanId() != null || request.getRequesterId() != null) {
             // Check if the effective requester (via requesterId) is an agent
             // at depth > 0; otherwise depth defaults to 1 (human root spawns depth-1 agents)

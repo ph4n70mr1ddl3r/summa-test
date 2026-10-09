@@ -120,7 +120,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T | undefin
           message = text || `HTTP ${res.status}`;
         }
       } catch {
-        message = `Network error: HTTP ${res.status}`;
+        message = `Network error (connection failed)`;
       }
       const err = new ApiError(message, res.status);
       if (res.status === 401 || res.status === 403) {

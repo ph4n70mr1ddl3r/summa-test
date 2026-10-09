@@ -29,7 +29,7 @@ import com.summa.exception.EntityNotFoundException;
 @RestController
 @RequestMapping("/agents")
 public class AgentController {
-    private static final int MAX_LIST_LIMIT = Defaults.MAX_LIST_LIMIT;
+
     private final AgentService agentService;
     private final AuditService auditService;
     private final WriteGate writeGate;
@@ -58,7 +58,7 @@ public class AgentController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
         if (auth != null) return auth;
-        int cappedLimit = Math.min(Math.max(limit, 1), MAX_LIST_LIMIT);
+        int cappedLimit = Math.min(Math.max(limit, 1), Defaults.MAX_LIST_LIMIT);
         if (status != null) {
             return ResponseEntity.ok(agentService.findByStatus(status, cappedLimit));
         }

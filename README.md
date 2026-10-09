@@ -16,7 +16,7 @@ A self-hosted platform where human employees and AI agents work as one organizat
 ```bash
 # Build the backend JAR first (./start.sh runs the packaged JAR)
 npm run build:backend
-export SUMMA_JWT_SECRET=$(openssl rand -hex 32)
+export SUMMA_AUTH_JWT_SECRET=$(openssl rand -hex 32)
 ./start.sh
 ```
 
@@ -36,7 +36,7 @@ export SUMMA_JWT_SECRET=$(openssl rand -hex 32)
 
 ```bash
 cp .env.example .env
-# Edit .env and set SUMMA_JWT_SECRET
+# Edit .env and set SUMMA_AUTH_JWT_SECRET
 docker compose up -d
 ```
 
