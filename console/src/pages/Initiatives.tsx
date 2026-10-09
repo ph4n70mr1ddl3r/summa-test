@@ -14,16 +14,16 @@ export default function Initiatives() {
     setError(null)
     let aborted = false
     api.initiatives.list()
-      .then(d => {
+      .then((data) => {
         if (aborted) return
-        const result = Array.isArray(d) ? d : []
-        setInitiatives(result as Initiative[])
+        const result = Array.isArray(data) ? data : []
+        setInitiatives(result)
         setError(null)
         setLoading(false)
       })
-      .catch(e => {
+      .catch((err) => {
         if (aborted) return
-        setError(e instanceof Error ? e.message : String(e))
+        setError(err instanceof Error ? err.message : String(err))
         setLoading(false)
       })
     return () => { aborted = true }

@@ -72,6 +72,8 @@ services:
         reservations:
           memory: 256M
     stop_grace_period: 30s
+    memlimit: 768M
+    cpus: '1.0'
     ulimits:
       nofile:
         soft: 65536
@@ -118,6 +120,8 @@ services:
         reservations:
           memory: 64M
     stop_grace_period: 10s
+    memlimit: 256M
+    cpus: '0.5'
 
 volumes:
   summa-data:

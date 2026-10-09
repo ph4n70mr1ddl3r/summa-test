@@ -46,6 +46,22 @@ describe('App', () => {
     expect(screen.getByText('Sign out')).toBeInTheDocument()
   })
 
+  it('shows admin nav items for admin user', () => {
+    vi.mocked(apiModule.getUser).mockReturnValue({ userId: 'u1', rbac: 'admin', name: 'Admin' })
+    render(wrapper(<App />))
+    expect(screen.getByText('Governance')).toBeInTheDocument()
+    expect(screen.getByText('Nodes')).toBeInTheDocument()
+    expect(screen.getByText('Role Templates')).toBeInTheDocument()
+  })
+
+  it('hides admin nav items for non-admin user', () => {
+    vi.mocked(apiModule.getUser).mockReturnValue({ userId: 'u1', rbac: 'member', name: 'Member' })
+    render(wrapper(<App />))
+    expect(screen.queryByText('Governance')).not.toBeInTheDocument()
+    expect(screen.queryByText('Nodes')).not.toBeInTheDocument()
+    expect(screen.queryByText('Role Templates')).not.toBeInTheDocument()
+  })
+
   it('redirects to login when not authenticated', () => {
     vi.mocked(apiModule.isAuthenticated).mockReturnValue(false)
     const { getByText } = render(wrapper(<App />))

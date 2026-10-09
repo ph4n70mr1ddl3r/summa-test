@@ -49,18 +49,24 @@ describe('ErrorBoundary', () => {
   })
 
   it('recovers after retry button is clicked', async () => {
+    let shouldThrow = true
     const ThrowError = () => {
-      throw new Error('Render failure')
+      if (shouldThrow) throw new Error('Render failure')
+      return <div data-testid="recovered">Recovered</div>
     }
-    const { getByRole, container } = render(
+    const { getByRole, getByTestId, container } = render(
       <ErrorBoundary>
         <ThrowError />
       </ErrorBoundary>
     )
+    expect(container.querySelector('[role="alert"]')).toBeInTheDocument()
+    expect(screen.getByText('Something went wrong')).toBeInTheDocument()
+    const btn = getByRole('button', { name: /retry loading the page/i })
+    expect(btn).toBeInTheDocument()
+    shouldThrow = false
+    btn.click()
     await waitFor(() => {
-      expect(getByRole('button', { name: /retry loading/i })).toBeInTheDocument()
+      expect(getByTestId('recovered')).toBeInTheDocument()
     })
-    // The retry button should trigger a re-render; verify the fallback UI is present first
-    expect(container.textContent).toContain('Something went wrong')
   })
 })

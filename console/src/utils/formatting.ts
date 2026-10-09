@@ -15,7 +15,7 @@ import type {
   RbacRole,
   DnaProposalKind,
   DnaProposalStatus,
-} from '../services/api'
+} from '../types'
 
 export function formatDate(epochSeconds: number | undefined | null, options?: { dateOnly?: boolean }): string {
   if (epochSeconds === null || epochSeconds === undefined) return '?'
