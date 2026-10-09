@@ -96,10 +96,10 @@ export default function Spawning() {
                       Class: {req.class} · Requester: {escapeHtml(req.requesterId)}
                       {req.templateId ? ` · Template: ${escapeHtml(req.templateId)}` : ''}
                     </p>
-                    {req.budgetCap && (
+                    {req.budgetCap != null && (
                       <p className="text-xs text-gray-500 mt-1">Budget cap: ${req.budgetCap}</p>
                     )}
-                    {req.ttlHours && (
+                    {req.ttlHours != null && (
                       <p className="text-xs text-gray-500">TTL: {req.ttlHours}h</p>
                     )}
                   </div>

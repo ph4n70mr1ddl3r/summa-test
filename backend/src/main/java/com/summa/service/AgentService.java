@@ -191,9 +191,11 @@ public class AgentService {
             }
             Optional<Human> targetHuman = memberService.findHuman(targetId);
             String newTo = OffboardingWalkService.ADMIN_BROADCAST;
-            if (targetHuman.isPresent() && targetHuman.get().getDeputyMemberId() != null
-                    && memberService.findHuman(targetHuman.get().getDeputyMemberId()).isPresent()) {
-                newTo = targetHuman.get().getDeputyMemberId();
+            if (targetHuman.isPresent() && targetHuman.get().getDeputyMemberId() != null) {
+                Optional<Human> deputyOpt = memberService.findHuman(targetHuman.get().getDeputyMemberId());
+                if (deputyOpt.isPresent() && deputyOpt.get().isActive() && !"viewer".equals(deputyOpt.get().getRbac())) {
+                    newTo = deputyOpt.get().getId();
+                }
             }
             ask.setTo(newTo);
             askRepository.save(ask);
@@ -301,22 +303,27 @@ public class AgentService {
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public List<Agent> findByOwner(String ownerHumanId) {
         return agentRepository.findByOwner(ownerHumanId);
     }
 
+    @Transactional(readOnly = true)
     public List<Agent> findByOwner(String ownerHumanId, int limit) {
         return agentRepository.findByOwnerOrdered(ownerHumanId, limit);
     }
 
+    @Transactional(readOnly = true)
     public List<Agent> findByOwnerActive(String ownerHumanId) {
         return agentRepository.findActiveByOwner(ownerHumanId);
     }
 
+    @Transactional(readOnly = true)
     public List<Agent> findByStatus(String status) {
         return agentRepository.findByStatus(status);
     }
 
+    @Transactional(readOnly = true)
     public List<Agent> findByStatus(String status, int limit) {
         return agentRepository.findByStatusOrdered(status, limit);
     }

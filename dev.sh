@@ -171,6 +171,6 @@ echo "  API:     http://localhost:8080/api"
 echo ""
 echo "Press Ctrl+C to stop all services"
 
-trap 'cd "${ORIG_DIR:-$(pwd)}"' EXIT
+trap '[ "${ORIG_DIR:-}" != "" ] && [ -d "${ORIG_DIR:-}" ] && cd "${ORIG_DIR}" || true' EXIT
 trap '[ "${BACKEND_PID:-}" != "" ] && kill "${BACKEND_PID}" 2>/dev/null; [ "${BACKEND_PID:-}" != "" ] && pkill -P "${BACKEND_PID}" 2>/dev/null; [ "${CONSOLE_PID:-}" != "" ] && kill "${CONSOLE_PID}" 2>/dev/null; [ "${CONSOLE_PID:-}" != "" ] && pkill -P "${CONSOLE_PID}" 2>/dev/null; exit 0' INT TERM
 wait

@@ -285,7 +285,7 @@ public class AskService {
                             Optional<Human> target = memberService.findHuman(current.getTo());
                             if (target.isPresent() && target.get().isActive() && target.get().getDeputyMemberId() != null) {
                                 Optional<Human> deputyOpt = memberService.findHuman(target.get().getDeputyMemberId());
-                                if (deputyOpt.isPresent() && deputyOpt.get().isActive()) {
+                                if (deputyOpt.isPresent() && deputyOpt.get().isActive() && !"viewer".equals(deputyOpt.get().getRbac())) {
                                     successorTo = deputyOpt.get().getId();
                                 }
                             }

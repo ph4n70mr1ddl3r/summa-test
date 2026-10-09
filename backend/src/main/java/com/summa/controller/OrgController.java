@@ -264,7 +264,7 @@ public class OrgController {
         // API-004: full lineage graph from any member
         int depthCap = agentService.getDepthCap();
         List<String> lineage = new ArrayList<>();
-        String[] holder = new String[]{memberId};
+        String[] holder = new String[]{JsonHelpers.stripIdPrefix(memberId)};
         while (holder[0] != null && lineage.size() < depthCap) {
             lineage.add(holder[0]);
             final String nextId = holder[0];

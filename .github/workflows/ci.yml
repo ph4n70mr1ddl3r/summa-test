@@ -30,6 +30,8 @@ jobs:
           cache: maven
       - name: Build and test backend
         run: cd backend && mvn -B test -Dspring.profiles.active=test
+      - name: Check backend dependencies
+        run: cd backend && mvn -B dependency:check
 
   console-build:
     runs-on: ubuntu-latest
@@ -44,6 +46,8 @@ jobs:
         run: npm ci
       - name: Install console deps
         run: cd console && npm ci
+      - name: Audit console dependencies
+        run: cd console && npm audit --production
       - name: Lint console
         run: cd console && npm run lint
       - name: Build console

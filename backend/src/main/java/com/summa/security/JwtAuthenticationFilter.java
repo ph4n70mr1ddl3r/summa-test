@@ -25,9 +25,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Value("${summa.auth.jwt-secret}")
     private String jwtSecret;
 
-    @Value("${summa.auth.jwt-expiration:86400000}")
-    private long jwtExpiration;
-
     @Value("${summa.auth.jwt-secret-min-length:32}")
     private int minJwtSecretLength;
 

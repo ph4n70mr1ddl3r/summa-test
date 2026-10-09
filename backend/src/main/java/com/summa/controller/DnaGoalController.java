@@ -98,7 +98,7 @@ public class DnaGoalController {
                 // SEC-021: Only the domain owner or admin may create goals in a domain
                 boolean isDomainOwner = domOpt.get().getOwnerHumanId() != null
                         && domOpt.get().getOwnerHumanId().equals(ownerClean);
-                if (!isDomainOwner && !memberService.isAdmin(actor)) {
+                if (!isDomainOwner && !memberService.isAdmin(ownerClean)) {
                     throw new IllegalStateException("Only the domain owner or an admin may create goals in this domain");
                 }
             }
@@ -149,7 +149,7 @@ public class DnaGoalController {
             }
             DnaGoal goal = goalOpt.get();
             boolean isGoalOwner = goal.getOwner() != null && goal.getOwner().equals(JsonHelpers.stripIdPrefix(actor));
-            if (!isGoalOwner && !memberService.isAdmin(actor)) {
+            if (!isGoalOwner && !memberService.isAdmin(JsonHelpers.stripIdPrefix(actor))) {
                 return ControllerResponses.gate(auditService, actor, "Only the goal owner or an admin may update goal status");
             }
             DnaGoal updated = goalService.updateStatus(id, statusValue, actor);
@@ -184,7 +184,7 @@ public class DnaGoalController {
         }
         DnaGoal goal = goalOpt.get();
         boolean isGoalOwner = goal.getOwner() != null && goal.getOwner().equals(JsonHelpers.stripIdPrefix(actor));
-        if (!isGoalOwner && !memberService.isAdmin(actor)) {
+        if (!isGoalOwner && !memberService.isAdmin(JsonHelpers.stripIdPrefix(actor))) {
             return ControllerResponses.gate(auditService, actor, "Only the goal owner or an admin may update goal window");
         }
         try {

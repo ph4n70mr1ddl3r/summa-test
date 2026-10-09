@@ -76,6 +76,11 @@ services:
       nofile:
         soft: 65536
         hard: 65536
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
 
   console:
     build:
@@ -120,6 +125,11 @@ services:
     stop_grace_period: 10s
     memlimit: 256M
     cpus: '0.5'
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
 
 volumes:
   summa-data:

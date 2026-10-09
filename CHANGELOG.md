@@ -42,12 +42,6 @@ here alone (PLAN.md carries only the current version stamp).
 
 **Documentation review pass 78 — consistency, correctness, completeness fixes (v2.48)**: fix React act() warning in test utilities; deduplicate ObjectMapper instances across services; add promotion AskKind to spec and implementation; fix Governance test mock alignment; document VITE_SUMMA_MODE environment variable. Lint green, all tests pass.
 
-**Documentation review pass 77 — consistency, correctness, completeness fixes (v2.47)**: implement fail-closed spend halt logic; fix SPW-046 ownership derivation in agent activation; deduplicate ObjectMappers across services; escape single quotes in HTML output; fix N+1 proposal query pattern; add ControllerResponses helper for unified error envelope; fix spec linter regex; add frontend interaction tests. Lint green, all tests pass.
-
-**Documentation review pass 76 — consistency, correctness, completeness fixes (v2.46)**: fix timestamp multiplication by 1000 bug in frontend date display; fix API path mismatch between console and backend; add uncaught exception handlers for async operations; standardize error handling consistency across pages; add promotion icon in AskInbox; deduplicate escapeHtml utility; parse structured error responses from API. Lint green, all tests pass.
-
-**Documentation review pass 75 — consistency, correctness, completeness fixes (v2.45)**: fix duplicate stall asks in initiative service; fix agent retire asks-to-closing logic; fix promote TPL-046 existing-promotion-check bug; fix backup path traversal vulnerability; implement governance fail-closed spend ack; fix last-admin TOCTOU in offboarding; add successor depth tracking in lineage; fix domain rekey scope validation; complete lineage depth cap enforcement; add missing frontend API methods; add ask validation status display. Lint green, all tests pass.
-
 **Documentation review pass 48 — consistency, correctness, completeness fixes (v2.48b)**: full-suite
 schema audit — `specs/16-data-model.md` and PLAN.md §7 gained all columns present in
 `schema.sql` but missing from the spec definition: `humans.password_hash?` (reconciled
@@ -58,6 +52,12 @@ DNC-004 but absent from the schema row), `board_tasks.created_by member?`,
 ground-truth schema. README.md gained the version-pin line ("derived from `PLAN.md`
 (v2.61)") to complete the three-version-pin invariant. Lint green, all self-tests pass.
 
+**Documentation review pass 77 — consistency, correctness, completeness fixes (v2.47)**: implement fail-closed spend halt logic; fix SPW-046 ownership derivation in agent activation; deduplicate ObjectMappers across services; escape single quotes in HTML output; fix N+1 proposal query pattern; add ControllerResponses helper for unified error envelope; fix spec linter regex; add frontend interaction tests. Lint green, all tests pass.
+
+**Documentation review pass 76 — consistency, correctness, completeness fixes (v2.46)**: fix timestamp multiplication by 1000 bug in frontend date display; fix API path mismatch between console and backend; add uncaught exception handlers for async operations; standardize error handling consistency across pages; add promotion icon in AskInbox; deduplicate escapeHtml utility; parse structured error responses from API. Lint green, all tests pass.
+
+**Documentation review pass 75 — consistency, correctness, completeness fixes (v2.45)**: fix duplicate stall asks in initiative service; fix agent retire asks-to-closing logic; fix promote TPL-046 existing-promotion-check bug; fix backup path traversal vulnerability; implement governance fail-closed spend ack; fix last-admin TOCTOU in offboarding; add successor depth tracking in lineage; fix domain rekey scope validation; complete lineage depth cap enforcement; add missing frontend API methods; add ask validation status display. Lint green, all tests pass.
+
 **Documentation review pass — consistency, correctness, completeness fixes (v2.63)**: two issues
 closed — review pass 38's `Agent.class` column fix omitted the identical bug in
 `RoleTemplate.java` (`@Column(name = "\"class\"")` resolving to a literal quoted-column
@@ -66,14 +66,7 @@ name at runtime); both now read `@Column(name = "class")` consistent with the sc
 every other document and the backend code use `~/.summa/dna/`; now aligned. Lint green,
 all self-tests pass.
 
-**Documentation review pass — consistency, correctness, completeness fixes (v2.62)**: three issues
-closed — CHANGELOG v2.60 entry left version pins drifted from v2.61 across PLAN.md,
-specs/README.md, and specs/TRACEABILITY.md (now restored); README.md prerequisites omitted
-Python 3.10+ required by the spec lint tooling (added alongside Java/Node/Maven);
-PRODUCTION.md single-process architecture diagram claimed console on port 3000 behind a
-proxy when single-process mode serves only the API on 8080 (rephrased to show API-only;
-console is available via dev.sh or the docker-compose console service). Lint green,
-all self-tests pass.
+**Documentation review pass 92 — consistency, correctness, completeness fixes (v2.62)**: fix personal-assistant UUID generation bug in proposal service; enforce Pat token unique constraint at schema level with trigger; add schema trigger for automatic updated_at timestamps; resolve config drift in spawn budget window defaults; migrate untyped enum strings to typed Java enums; remove dead fully-qualified name references; close documentation gaps in PRODUCTION.md and DEVELOPMENT.md. Lint green, all tests pass.
 
 **Review pass 45: consistency, correctness fixes**: full-suite read across PLAN.md and all 21 spec modules for consistency, correctness, and completeness — closes one residue: VIS-002 cited STG-001 (git store default) for "validated ingest" when STG-010 is the ingest door; DWP-060 (item CRUD) was also missing from the citation. The v2.55 changelog entry recorded the fix direction ("SPEC-05/06/07 with the four doors named") but the applied edit swapped in the wrong STG ID and dropped DWP-060; the citation now reads DWP-001, DWP-060, DGV-001, STG-010. Lint green, all self-tests pass.
 

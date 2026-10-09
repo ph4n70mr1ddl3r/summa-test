@@ -222,7 +222,7 @@ public class OffboardingWalkService {
                 groupRepository.save(group);
                 groupsLeadershipTransferred++;
                 auditService.log(actor, "OFFBOARD_TRANSFER_GROUP_LEADER", "group", group.getId(),
-                    toJson(Map.of("newLeader", finalTargetOwner, "reason", "member_departed"), objectMapper));
+                    JsonHelpers.toJson(Map.of("newLeader", finalTargetOwner, "reason", "member_departed"), objectMapper));
             }
         }
 
@@ -265,7 +265,7 @@ public class OffboardingWalkService {
                 proposalRepository.save(prop);
                 proposalsTransferred++;
                 auditService.logSystem("OFFBOARD_TRANSFER_PROPOSAL", "dna_proposal", prop.getId(),
-                    toJson(Map.of("domainId", prop.getDomainId(), "newProposer", finalTargetOwner), objectMapper));
+                    JsonHelpers.toJson(Map.of("domainId", prop.getDomainId(), "newProposer", finalTargetOwner), objectMapper));
             } else {
                 // Member-scoped proposal: auto-withdraw with audit note
                 prop.setStatus("withdrawn");
@@ -285,7 +285,7 @@ public class OffboardingWalkService {
                 askRepository.save(ask);
                 asksReassigned++;
                 auditService.logSystem("OFFBOARD_REASSIGN_ASK_TO", "ask", ask.getId(),
-                    toJson(Map.of("newTo", ask.getTo(), "reason", "member_departed"), objectMapper));
+                    JsonHelpers.toJson(Map.of("newTo", ask.getTo(), "reason", "member_departed"), objectMapper));
             } else if (humanId.equals(ask.getFrom())) {
                 // Close asks from the departing member with audit note
                 ask.setStatus("withdrawn");
@@ -302,7 +302,7 @@ public class OffboardingWalkService {
             boardTaskRepository.save(task);
             tasksReassigned++;
             auditService.logSystem("OFFBOARD_REASSIGN_TASK", "board_task", task.getId(),
-                toJson(Map.of("newAssignee", finalTargetOwner, "reason", "member_departed"), objectMapper));
+                JsonHelpers.toJson(Map.of("newAssignee", finalTargetOwner, "reason", "member_departed"), objectMapper));
         }
 
         // OFB-015: Revoke PATs and terminate sessions
@@ -336,7 +336,7 @@ public class OffboardingWalkService {
         result.put("groupsLeadershipTransferred", groupsLeadershipTransferred);
 
         auditService.log(actor, "OFFBOARD_WALK", "human", humanId,
-            toJson(Map.of("successorId", finalTargetOwner, "result", result), objectMapper));
+            JsonHelpers.toJson(Map.of("successorId", finalTargetOwner, "result", result), objectMapper));
 
         return result;
     }
@@ -415,7 +415,7 @@ public class OffboardingWalkService {
                 proposalRepository.save(prop);
                 proposalsWithdrawn++;
                 auditService.logSystem("DEMOTE_WITHDRAW_PROPOSAL", "dna_proposal", prop.getId(),
-                    toJson(Map.of("humanId", humanId, "newRbac", newRbac), objectMapper));
+                    JsonHelpers.toJson(Map.of("humanId", humanId, "newRbac", newRbac), objectMapper));
             }
         }
 
@@ -468,7 +468,7 @@ public class OffboardingWalkService {
                 groupRepository.save(group);
                 groupLeadershipsTransferred++;
                 auditService.log(actor, "DEMOTE_TRANSFER_GROUP_LEADER", "group", group.getId(),
-                    toJson(Map.of("newLeader", targetOwner, "reason", "member_demoted"), objectMapper));
+                    JsonHelpers.toJson(Map.of("newLeader", targetOwner, "reason", "member_demoted"), objectMapper));
             }
         }
 
@@ -484,7 +484,7 @@ public class OffboardingWalkService {
                 askRepository.save(ask);
                 asksClosed++;
                 auditService.logSystem("DEMOTE_CLOSE_ASK_FROM", "ask", ask.getId(),
-                    toJson(Map.of("humanId", humanId, "newRbac", newRbac), objectMapper));
+                    JsonHelpers.toJson(Map.of("humanId", humanId, "newRbac", newRbac), objectMapper));
             }
         }
 
@@ -521,7 +521,7 @@ public class OffboardingWalkService {
                     }
                 } catch (Exception e) {
                     auditService.logSystem("DEMOTE_CLEAN_WORKSPACE_FAIL", "workspace", ws.getId(),
-                        toJson(Map.of("error", e.getMessage()), objectMapper));
+                        JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
                 }
             }
             // Clear named readers that reference this human
@@ -555,14 +555,14 @@ public class OffboardingWalkService {
                                      changed = true;
                                  } catch (Exception e) {
                                      auditService.logSystem("DEMOTE_CLEAN_DOMAIN_READERS_FAIL", "dna_domain", "",
-                                         toJson(Map.of("error", e.getMessage()), objectMapper));
+                        JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
                                  }
                              }
                         }
                     }
                 } catch (Exception e) {
-                    auditService.logSystem("DEMOTE_CLEAN_DOMAIN_READERS_FAIL", "dna_domain", "",
-                        toJson(Map.of("error", e.getMessage()), objectMapper));
+                        auditService.logSystem("DEMOTE_CLEAN_DOMAIN_READERS_FAIL", "dna_domain", "",
+                        JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
                 }
             }
             if (changed) {
@@ -599,13 +599,9 @@ public class OffboardingWalkService {
         result.put("changed", true);
 
         auditService.log(actor, "DEMOTE_WALK", "human", humanId,
-            toJson(Map.of("oldRbac", currentRbac, "newRbac", newRbac, "result", result), objectMapper));
+            JsonHelpers.toJson(Map.of("oldRbac", currentRbac, "newRbac", newRbac, "result", result), objectMapper));
 
         return result;
-    }
-
-    private static String toJson(Map<String, Object> map, ObjectMapper mapper) {
-        return JsonHelpers.toJson(map, mapper);
     }
 
     private boolean isPersonalAssistant(Agent agent) {
