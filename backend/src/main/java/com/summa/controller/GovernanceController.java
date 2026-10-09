@@ -134,6 +134,12 @@ public class GovernanceController {
         try {
             SpendLedger ledger = spendLedgerService.findById(id)
                     .orElseThrow(() -> new EntityNotFoundException("Spend ledger row not found: " + id));
+            // Verify the acknowledging admin is related to this spend entry (member or admin)
+            String cleanActor = JsonHelpers.stripIdPrefix(actor);
+            boolean isRelated = cleanActor.equals(ledger.getMemberId()) || requireAdmin(actor);
+            if (!isRelated) {
+                return ControllerResponses.gate(auditService, actor, "Admin must be related to this spend entry to acknowledge");
+            }
             if (!Boolean.TRUE.equals(ledger.getAcknowledged())) {
                 spendLedgerService.acknowledge(id, actor);
             }

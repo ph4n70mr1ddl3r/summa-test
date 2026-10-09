@@ -45,7 +45,6 @@ public final class Defaults {
     public static final int MAX_LIST_LIMIT = 200;
     public static final int MAX_AUDIT_LOG_LIMIT = 1000;
     public static final int MAX_DNA_SEARCH_LIMIT = 100;
-    public static final int MAX_ASK_EXPIRY_DAYS = 365;
 
     // Governance key sets — must stay in sync with GovernanceController allowed-key checks
     public static final Set<String> POLICY_KEYS = new java.util.LinkedHashSet<>(java.util.Arrays.asList(

@@ -115,7 +115,7 @@ export default function AskInbox() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Ask Inbox</h2>
-        <span className="text-sm text-gray-400">{asks.length} pending asks</span>
+        <span className="text-sm text-gray-400">{asks.length} ask{asks.length !== 1 ? 's' : ''}</span>
       </div>
 
       {submitError && (

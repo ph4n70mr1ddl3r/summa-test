@@ -194,7 +194,7 @@ public class OffboardingWalkService {
             }
         }
 
-        // OFB-014: Clear deputy references and group memberships
+        // OFB-014: Clear deputy references — clear references TO the departing member from others
         for (Human h : memberService.findAllActiveHumans()) {
             if (humanId.equals(h.getDeputyMemberId())) {
                 h.setDeputyMemberId(null);
@@ -202,6 +202,13 @@ public class OffboardingWalkService {
                 membershipsCleared++;
             }
         }
+        // OFB-014: Clear the departing member's own deputy pointer so ask routing stops following it
+        humanOpt.ifPresent(h -> {
+            if (h.getDeputyMemberId() != null) {
+                h.setDeputyMemberId(null);
+                memberService.saveHuman(h);
+            }
+        });
         for (GroupMembership m : groupMembershipRepository.findById_MemberId(humanId)) {
             m.setRemovedAt(Instant.now());
             groupMembershipRepository.save(m);
@@ -447,6 +454,11 @@ public class OffboardingWalkService {
                 h.setDeputyMemberId(null);
                 memberService.saveHuman(h);
             }
+        }
+        // OFB-031: Clear the departing member's own deputy pointer on role reduction
+        if (human.getDeputyMemberId() != null) {
+            human.setDeputyMemberId(null);
+            memberService.saveHuman(human);
         }
 
         // OFB-031: Transfer group leadership posts

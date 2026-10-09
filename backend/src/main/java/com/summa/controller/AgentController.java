@@ -169,6 +169,11 @@ public class AgentController {
             String agentId = JsonHelpers.stripIdPrefix(id);
             Agent agent = agentService.findById(agentId)
                     .orElseThrow(() -> new EntityNotFoundException("Agent not found: " + agentId));
+            // CLC-010: Ownership verification — only the agent's owner human or an admin may promote
+            boolean isOwner = agent.getOwnerHumanId() != null && agent.getOwnerHumanId().equals(JsonHelpers.stripIdPrefix(actor));
+            if (!isOwner && !memberService.isAdmin(actor)) {
+                return ControllerResponses.gate(auditService, actor, "Only the agent's owner or an admin may promote");
+            }
             // TPL-040: Only customRole hires (template_id null) are eligible for promotion
             if (agent.getTemplateId() != null) {
                 throw new IllegalStateException("Only customRole hires (no template) can be promoted");
