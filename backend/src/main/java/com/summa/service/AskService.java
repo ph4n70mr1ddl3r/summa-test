@@ -125,7 +125,8 @@ public class AskService {
         if (deadline == null) {
             throw new IllegalArgumentException("Deadline is required");
         }
-        if (deadline.isBefore(Instant.now())) {
+        Instant currentInstant = Instant.now();
+        if (deadline.isBefore(currentInstant)) {
             throw new IllegalArgumentException("Deadline must be in the future");
         }
 
@@ -138,7 +139,7 @@ public class AskService {
         }
         // Cap deadline against org-wide maximum to prevent misconfigured tiers from
         // producing deadlines beyond MAX_DEADLINE_SECONDS.
-        if (deadline.getEpochSecond() - Instant.now().getEpochSecond() > Defaults.MAX_DEADLINE_SECONDS) {
+        if (deadline.getEpochSecond() - currentInstant.getEpochSecond() > Defaults.MAX_DEADLINE_SECONDS) {
             throw new IllegalArgumentException(
                 "Deadline exceeds maximum allowed span of " + Defaults.MAX_DEADLINE_SECONDS + " seconds");
         }

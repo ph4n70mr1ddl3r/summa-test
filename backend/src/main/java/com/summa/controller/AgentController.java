@@ -2,6 +2,7 @@ package com.summa.controller;
 
 import com.summa.service.AgentService;
 import com.summa.model.Agent;
+import com.summa.model.Human;
 import com.summa.service.AuditService;
 import com.summa.service.AskService;
 import com.summa.model.Ask;
@@ -100,7 +101,7 @@ public class AgentController {
             if (agentOpt.isPresent()) {
                 currentId = agentOpt.get().getSpawnedBy();
             } else {
-                Optional<com.summa.model.Human> humanOpt = memberService.findHuman(currentId);
+                Optional<Human> humanOpt = memberService.findHuman(currentId);
                 if (humanOpt.isPresent()) {
                     currentId = humanOpt.get().getDeputyMemberId();
                 } else {

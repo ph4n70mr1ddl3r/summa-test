@@ -4,6 +4,8 @@ import type { DnaProposal, DnaProposalStatus } from '../types'
 import { formatDate, proposalKindColor, proposalStatusColor, escapeHtml } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
+const PROPOSAL_STATUSES: DnaProposalStatus[] = ['open', 'published', 'rejected', 'withdrawn']
+
 export default function DNAProposals() {
   const [proposals, setProposals] = useState<DnaProposal[]>([])
   const [loading, setLoading] = useState(true)
@@ -46,7 +48,7 @@ export default function DNAProposals() {
           >
             All ({proposals.length})
           </button>
-          {(['open', 'published', 'rejected', 'withdrawn'] as DnaProposalStatus[]).map(s => (
+          {PROPOSAL_STATUSES.map(s => (
             statusCounts[s] > 0 && (
               <button
                 key={s}

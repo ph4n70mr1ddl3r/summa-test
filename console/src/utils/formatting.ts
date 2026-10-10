@@ -1,5 +1,6 @@
 import type {
   AgentStatus,
+  AskKind,
   AskTier,
   SpawnStatus,
   InitiativeStatus,
@@ -216,6 +217,17 @@ export function countParticipants(participantsJson: string | null | undefined): 
 export function truncateSnippet(text: string | null | undefined, maxLen: number): string {
   if (!text || maxLen <= 0) return ''
   return text.length > maxLen ? text.slice(0, maxLen) + '...' : text
+}
+
+export function askKindIcon(kind: AskKind): string {
+  switch (kind) {
+    case 'approval': return '[!]'
+    case 'question': return '[?]'
+    case 'assignment': return '[→]'
+    case 'spawn_request': return '[+]'
+    case 'promotion': return '[↑]'
+    default: return '[·]'
+  }
 }
 
 export { escapeHtml } from './escapeHtml'

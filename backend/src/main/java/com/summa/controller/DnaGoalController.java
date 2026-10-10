@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import com.summa.enums.GoalStatus;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.service.DnaDomainService;
+import com.summa.model.DnaDomain;
 import com.summa.util.JsonHelpers;
 import java.time.Instant;
 import java.util.Map;
@@ -93,7 +94,7 @@ public class DnaGoalController {
             String domainIdClean = null;
             if (rawDomainId != null && !rawDomainId.isBlank()) {
                 domainIdClean = JsonHelpers.stripIdPrefix(rawDomainId);
-                Optional<com.summa.model.DnaDomain> domOpt = domainService.findById(domainIdClean);
+                Optional<DnaDomain> domOpt = domainService.findById(domainIdClean);
                 if (domOpt.isEmpty()) {
                     throw new IllegalArgumentException("Domain not found: " + rawDomainId);
                 }
@@ -141,7 +142,7 @@ public class DnaGoalController {
             if (statusValue == null || statusValue.isBlank()) {
                 throw new IllegalArgumentException("status is required");
             }
-            GoalStatus.fromValue(statusValue);
+            GoalStatus statusEnum = GoalStatus.requireFromValue(statusValue);
             // ORG-020: Only the goal owner or admin may update goal status
             Optional<DnaGoal> goalOpt = goalService.findById(id);
             if (goalOpt.isEmpty()) {
@@ -152,7 +153,7 @@ public class DnaGoalController {
             if (!isGoalOwner && !memberService.isAdmin(JsonHelpers.stripIdPrefix(actor))) {
                 return ControllerResponses.gate(auditService, actor, "Only the goal owner or an admin may update goal status");
             }
-            DnaGoal updated = goalService.updateStatus(id, statusValue, actor);
+            DnaGoal updated = goalService.updateStatus(id, statusEnum.getValue(), actor);
             return ResponseEntity.ok(updated);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());

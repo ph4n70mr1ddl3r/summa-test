@@ -4,6 +4,8 @@ import type { Run, RunStatus, RunListParams } from '../types'
 import { runStatusColor, formatDate, escapeHtml } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
+const RUN_STATUSES: RunStatus[] = ['queued', 'running', 'suspended', 'completed', 'failed', 'cancelled']
+
 export default function Runs() {
   const [runs, setRuns] = useState<Run[]>([])
   const [loading, setLoading] = useState(true)
@@ -48,7 +50,7 @@ export default function Runs() {
           >
             All ({runs.length})
           </button>
-          {(['queued', 'running', 'suspended', 'completed', 'failed', 'cancelled'] as RunStatus[]).map(s => (
+          {RUN_STATUSES.map(s => (
             statusCounts[s] > 0 && (
               <button
                 key={s}

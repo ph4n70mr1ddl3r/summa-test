@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { api, getUser } from '../services/api'
 import type { Ask, AskKind, RbacRole } from '../types'
-import { tierColor, formatDate, escapeHtml } from '../utils/formatting'
+import { tierColor, formatDate, escapeHtml, askKindIcon } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 const KIND_DISPLAY_NAMES: Record<AskKind, string> = {
@@ -10,17 +10,6 @@ const KIND_DISPLAY_NAMES: Record<AskKind, string> = {
   assignment: 'Assignment',
   spawn_request: 'Spawn Request',
   promotion: 'Promotion',
-}
-
-function kindIcon(kind: AskKind): string {
-  switch (kind) {
-    case 'approval': return '[!]'
-    case 'question': return '[?]'
-    case 'assignment': return '[→]'
-    case 'spawn_request': return '[+]'
-    case 'promotion': return '[↑]'
-    default: return '[·]'
-  }
 }
 
 export default function AskInbox() {
@@ -144,7 +133,7 @@ export default function AskInbox() {
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <span className="text-xl" aria-label={`${ask.kind} ask`}>{kindIcon(ask.kind)}</span>
+                  <span className="text-xl" aria-label={`${ask.kind} ask`}>{askKindIcon(ask.kind)}</span>
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-gray-200">{KIND_DISPLAY_NAMES[ask.kind] ?? '[·]'}</span>

@@ -109,11 +109,13 @@ if [ ! -d "console" ]; then
     exit 1
 fi
 
+JAVA_OPTS="${JAVA_OPTS:--Xmx512m -Xms256m -XX:MaxMetaspaceSize=128m}"
+
 # Start backend in background
 echo "[1/2] Starting backend..."
 pushd backend > /dev/null
 nohup mvn spring-boot:run -Dspring-boot.run.profiles=dev \
-    -Dspring-boot.run.jvmArguments="-Xmx512m -Xms256m -XX:MaxMetaspaceSize=128m" \
+    -Dspring-boot.run.jvmArguments="$JAVA_OPTS" \
     -Dsumma.auth.local-auth-enabled=${SUMMA_AUTH_LOCAL_AUTH_ENABLED:-true} \
     > "$SUMMA_LOG_DIR/backend.log" 2>&1 &
 BACKEND_PID=$!
@@ -173,6 +175,6 @@ echo "  API:     http://localhost:8080/api"
 echo ""
 echo "Press Ctrl+C to stop all services"
 
-trap '[ "${BACKEND_PID:-}" != "" ] && kill "${BACKEND_PID}" 2>/dev/null; [ "${BACKEND_PID:-}" != "" ] && pkill -P "${BACKEND_PID}" 2>/dev/null; [ "${CONSOLE_PID:-}" != "" ] && kill "${CONSOLE_PID}" 2>/dev/null; [ "${CONSOLE_PID:-}" != "" ] && pkill -P "${CONSOLE_PID}" 2>/dev/null; exit 0' INT TERM
+trap '[ "${BACKEND_PID:-}" != "" ] && kill "${BACKEND_PID}" 2>/dev/null; [ "${BACKEND_PID:-}" != "" ] && pkill -P "${BACKEND_PID}" 2>/dev/null; [ "${CONSOLE_PID:-}" != "" ] && kill "${CONSOLE_PID}" 2>/dev/null; [ "${CONSOLE_PID:-}" != "" ] && pkill -P "${CONSOLE_PID}" 2>/dev/null; exit 0' INT TERM HUP
 trap '[ "${ORIG_DIR:-}" != "" ] && [ -d "${ORIG_DIR:-}" ] && cd "${ORIG_DIR}" || true' EXIT
 wait

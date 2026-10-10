@@ -55,7 +55,7 @@ export default function DNARules() {
               </pre>
               <p className="text-xs text-gray-500 mt-2">
                 From: {rule.effectiveFrom !== null ? formatDate(rule.effectiveFrom, { dateOnly: true }) : '∞'}
-                {rule.effectiveTo != null ? ` — To: ${formatDate(rule.effectiveTo, { dateOnly: true })}` : ''}
+                {rule.effectiveTo !== null ? ` — To: ${formatDate(rule.effectiveTo, { dateOnly: true })}` : ''}
               </p>
             </div>
           ))}

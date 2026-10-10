@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.util.JsonHelpers;
-import com.summa.enums.RbacRole;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;

@@ -148,8 +148,7 @@ describe('setNavigate', () => {
     const nav = vi.fn()
     setNavigate(nav)
     setNavigate(null)
-    // After clearing, navigateRef is null — verify by attempting navigation
-    // (navigateRef would be null, so no call should occur)
+    // setNavigate(null) should not throw and should clear the stored function
   })
 })
 

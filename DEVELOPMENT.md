@@ -43,7 +43,7 @@ summa/
 # Start everything (recommended — sets dev profile, polls health gate)
 ./dev.sh
 
-# Or just backend (uses the dev profile explicitly; for hot-reload use dev.sh instead)
+# Or just backend (uses the dev profile explicitly)
 cd backend && mvn spring-boot:run -Dspring-boot.run.profiles=dev
 
 # Or just console
