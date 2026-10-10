@@ -6,6 +6,7 @@ import com.summa.service.AuditService;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.summa.exception.EntityNotFoundException;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.util.JsonHelpers;
 import com.summa.service.DnaDomainService;
@@ -68,7 +69,7 @@ public class DnaRuleController {
                 throw new IllegalArgumentException("domainId is required");
             }
             if (domainService.findById(domainId).isEmpty()) {
-                throw new IllegalArgumentException("Domain not found: " + domainId);
+                throw new EntityNotFoundException("Domain not found: " + domainId);
             }
             String statementMd = body.get("statementMd");
             if (statementMd == null || statementMd.isBlank()) {

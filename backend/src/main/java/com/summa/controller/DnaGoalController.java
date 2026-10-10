@@ -9,6 +9,7 @@ import com.summa.service.MemberService;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.summa.enums.GoalStatus;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.service.DnaDomainService;
 import com.summa.util.JsonHelpers;
@@ -140,9 +141,7 @@ public class DnaGoalController {
             if (statusValue == null || statusValue.isBlank()) {
                 throw new IllegalArgumentException("status is required");
             }
-            if (!"active".equals(statusValue) && !"met".equals(statusValue) && !"missed".equals(statusValue) && !"retired".equals(statusValue)) {
-                throw new IllegalArgumentException("Invalid goal status: " + statusValue + ". Must be one of: active, met, missed, retired");
-            }
+            GoalStatus.fromValue(statusValue);
             // ORG-020: Only the goal owner or admin may update goal status
             Optional<DnaGoal> goalOpt = goalService.findById(id);
             if (goalOpt.isEmpty()) {

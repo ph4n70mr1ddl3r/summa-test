@@ -44,7 +44,7 @@ here alone (PLAN.md carries only the current version stamp).
 
 **Documentation review pass 78 — consistency, correctness, completeness fixes (v2.48)**: fix React act() warning in test utilities; deduplicate ObjectMapper instances across services; add promotion AskKind to spec and implementation; fix Governance test mock alignment; document VITE_SUMMA_MODE environment variable. Lint green, all tests pass.
 
-**Documentation review pass 48 — consistency, correctness, completeness fixes (v2.48)**: full-suite
+**Documentation review pass 48 — consistency, correctness, completeness fixes (v2.18)**: full-suite
 schema audit — `specs/16-data-model.md` and PLAN.md §7 gained all columns present in
 `schema.sql` but missing from the spec definition: `humans.password_hash?` (reconciled
 with SEC-001's OIDC-only default; local-account auth is a deployment choice),

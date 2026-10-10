@@ -27,13 +27,13 @@ const publicNavItems: NavItem[] = [
   { to: '/groups', label: 'Groups', end: true },
   { to: '/asks', label: 'Asks', end: true },
   { to: '/board-tasks', label: 'Board', end: true },
-  { to: '/triggers', label: 'Triggers' },
-  { to: '/workspaces', label: 'Workspaces' },
-  { to: '/spawn', label: 'Spawn' },
-  { to: '/runs', label: 'Runs' },
-  { to: '/memory', label: 'Memory' },
-  { to: '/initiatives', label: 'Initiatives' },
-  { to: '/data-holds', label: 'Data Holds' },
+  { to: '/triggers', label: 'Triggers', end: true },
+  { to: '/workspaces', label: 'Workspaces', end: true },
+  { to: '/spawn', label: 'Spawn', end: true },
+  { to: '/runs', label: 'Runs', end: true },
+  { to: '/memory', label: 'Memory', end: true },
+  { to: '/initiatives', label: 'Initiatives', end: true },
+  { to: '/data-holds', label: 'Data Holds', end: true },
 ]
 
 function getFilteredNavItems(user: { rbac: RbacRole } | null): NavItem[] {

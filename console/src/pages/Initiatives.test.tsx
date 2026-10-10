@@ -9,15 +9,6 @@ vi.mock('../services/api', () => ({
       list: vi.fn(),
     },
   },
-  loadWithFallback: async (fetchAll: () => Promise<unknown[]>, fetchIndividual: () => Promise<unknown[]>) => {
-    try {
-      const data = await fetchAll()
-      return { data, error: null }
-    } catch {
-      const data = await fetchIndividual()
-      return { data, error: 'fallback' }
-    }
-  },
 }))
 
 describe('Initiatives page', () => {

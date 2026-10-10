@@ -4,6 +4,7 @@ import com.summa.service.DnaCardService;
 import com.summa.model.DnaCard;
 import com.summa.service.AuditService;
 import com.summa.security.WriteGate;
+import com.summa.exception.EntityNotFoundException;
 import com.summa.service.DnaDomainService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -69,7 +70,7 @@ public class DnaCardController {
                 throw new IllegalArgumentException("domainId is required");
             }
             if (domainService.findById(domainId).isEmpty()) {
-                throw new IllegalArgumentException("Domain not found: " + domainId);
+                throw new EntityNotFoundException("Domain not found: " + domainId);
             }
             String generatedId = UUID.randomUUID().toString();
             DnaCard card = cardService.create(
@@ -102,7 +103,7 @@ public class DnaCardController {
                 throw new IllegalArgumentException("domainId is required");
             }
             if (domainService.findById(domainId).isEmpty()) {
-                throw new IllegalArgumentException("Domain not found: " + domainId);
+                throw new EntityNotFoundException("Domain not found: " + domainId);
             }
             String generatedId = UUID.randomUUID().toString();
             DnaCard card = cardService.createDraft(

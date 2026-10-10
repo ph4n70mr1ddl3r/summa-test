@@ -3,6 +3,7 @@ package com.summa.controller;
 import com.summa.service.DnaGlossaryService;
 import com.summa.model.DnaGlossary;
 import com.summa.service.AuditService;
+import com.summa.exception.EntityNotFoundException;
 import com.summa.service.DnaDomainService;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
@@ -71,7 +72,7 @@ public class DnaGlossaryController {
                 throw new IllegalArgumentException("domainId is required");
             }
             if (domainService.findById(body.get("domainId")).isEmpty()) {
-                throw new IllegalArgumentException("Domain not found: " + body.get("domainId"));
+                throw new EntityNotFoundException("Domain not found: " + body.get("domainId"));
             }
             // Security: reject client-supplied IDs — always generate server-side
             String generatedId = UUID.randomUUID().toString();

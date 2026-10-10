@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import com.summa.constants.Defaults;
 import com.summa.service.GovernanceService;
 import com.summa.service.MemberService;
+import com.summa.service.WorkspaceService;
 import com.summa.util.JsonHelpers;
 import java.util.List;
 import java.util.Map;
@@ -24,14 +25,17 @@ public class RunController {
     private final WriteGate writeGate;
     private final GovernanceService governanceService;
     private final MemberService memberService;
+    private final WorkspaceService workspaceService;
 
     public RunController(RunService runService, AuditService auditService, WriteGate writeGate,
-                          GovernanceService governanceService, MemberService memberService) {
+                           GovernanceService governanceService, MemberService memberService,
+                           WorkspaceService workspaceService) {
         this.runService = runService;
         this.auditService = auditService;
         this.writeGate = writeGate;
         this.governanceService = governanceService;
         this.memberService = memberService;
+        this.workspaceService = workspaceService;
     }
 
     @GetMapping
@@ -83,6 +87,12 @@ public class RunController {
             return ControllerResponses.validation(auditService, "agentId does not exist: " + agentId);
         }
         String workspaceId = body.get("workspaceId");
+        if (workspaceId != null && !workspaceId.isBlank()) {
+            workspaceId = JsonHelpers.stripIdPrefix(workspaceId);
+            if (workspaceService.findById(workspaceId).isEmpty()) {
+                return ControllerResponses.validation(auditService, "workspaceId does not exist: " + workspaceId);
+            }
+        }
         try {
             Run run = runService.create(
                 agentId,
