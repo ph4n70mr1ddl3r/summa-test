@@ -34,11 +34,11 @@ ENV SUMMA_DB_PATH=/data/db/summa.db \
     SUMMA_DNA_REPO=/data/dna \
     SUMMA_LOG_DIR=/data/logs \
     SPRING_PROFILES_ACTIVE=prod \
-    JAVA_OPTS="-Xmx512m -Xms256m -XX:MaxMetaspaceSize=128m"
+    JAVA_OPTS=-Xmx512m -Xms256m -XX:MaxMetaspaceSize=128m
 
 EXPOSE 8080
 
 USER 1000
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=20s \
   CMD wget --no-verbose --tries=1 --spider http://localhost:8080/api/health || exit 1
-ENTRYPOINT ["sh", "-c", "exec java \"$JAVA_OPTS\" -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar"]

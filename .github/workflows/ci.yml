@@ -30,8 +30,8 @@ jobs:
           cache: maven
       - name: Build and test backend
         run: cd backend && mvn -B test -Dspring.profiles.active=test
-      - name: Check backend dependencies
-        run: cd backend && mvn -B dependency:check
+      - name: Analyze backend dependencies
+        run: cd backend && mvn -B dependency:analyze
 
   console-build:
     runs-on: ubuntu-latest
