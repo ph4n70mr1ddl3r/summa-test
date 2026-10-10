@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { api } from '../services/api'
 import type { MemoryItem } from '../types'
-import { truncateSnippet, escapeHtml } from '../utils/formatting'
+import { truncateSnippet, escapeHtml, formatDate } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Memory() {
@@ -130,6 +130,12 @@ export default function Memory() {
                     {item.workspaceId ? ` · Workspace: ${escapeHtml(item.workspaceId)}` : ''}
                     {item.reviewedBy ? ` · Reviewed by: ${escapeHtml(item.reviewedBy)}` : ''}
                   </p>
+                  {item.createdAt != null && (
+                    <p className="text-xs text-gray-500 mt-1">Created: {formatDate(item.createdAt)}</p>
+                  )}
+                  {item.reviewedAt != null && (
+                    <p className="text-xs text-gray-500">Reviewed: {formatDate(item.reviewedAt)}</p>
+                  )}
                 </div>
                 {item.tainted && (
                     <button

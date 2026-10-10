@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { Trigger } from '../types'
-import { triggerStatusColor, triggerCriticalityColor, escapeHtml } from '../utils/formatting'
+import { triggerStatusColor, triggerCriticalityColor, escapeHtml, formatDate } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Triggers() {
@@ -70,6 +70,9 @@ export default function Triggers() {
                   )}
                   {t.config && (
                     <p className="text-xs text-gray-500 mt-1">Config: {escapeHtml(t.config)}</p>
+                  )}
+                  {t.lastFiredAt != null && (
+                    <p className="text-xs text-gray-500">Last fired: {formatDate(t.lastFiredAt)}</p>
                   )}
                 </div>
                 <div className="flex items-center gap-2">

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, loadWithFallback } from '../services/api'
 import type { SpawnRequest, SpawnStats } from '../types'
-import { spawnStatusColor, escapeHtml } from '../utils/formatting'
+import { spawnStatusColor, escapeHtml, formatDate } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Spawning() {
@@ -101,6 +101,9 @@ export default function Spawning() {
                     )}
                     {req.ttlHours != null && (
                       <p className="text-xs text-gray-500">TTL: {req.ttlHours}h</p>
+                    )}
+                    {req.createdAt != null && (
+                      <p className="text-xs text-gray-500">Created: {formatDate(req.createdAt)}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-2 ml-4">

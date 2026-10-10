@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { BoardTask } from '../types'
-import { boardTaskStatusColor, escapeHtml } from '../utils/formatting'
+import { boardTaskStatusColor, escapeHtml, formatDate } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function BoardTasks() {
@@ -48,6 +48,12 @@ export default function BoardTasks() {
                     <p className="text-sm text-gray-400 mt-1">{escapeHtml(task.description)}</p>
                   )}
                   <p className="text-sm text-gray-400 mt-1">Priority: {task.priority} | Assignee: {escapeHtml(task.assigneeMemberId ?? 'unassigned')}</p>
+                  {task.dueAt != null && (
+                    <p className="text-xs text-gray-500 mt-1">Due: {formatDate(task.dueAt)}</p>
+                  )}
+                  {task.completedAt != null && (
+                    <p className="text-xs text-gray-500">Completed: {formatDate(task.completedAt)}</p>
+                  )}
                 </div>
                 <span className={`text-xs px-2 py-1 rounded ${boardTaskStatusColor(task.status)}`} aria-label={`Status: ${task.status}`}>{task.status}</span>
               </div>

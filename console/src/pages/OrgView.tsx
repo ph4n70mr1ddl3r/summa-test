@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, loadWithFallback } from '../services/api'
 import type { Group, Member } from '../types'
-import { groupStatusColor, rbacRoleColor, agentStatusColor, escapeHtml } from '../utils/formatting'
+import { groupStatusColor, rbacRoleColor, agentStatusColor, escapeHtml, formatDate } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function OrgView() {
@@ -67,9 +67,14 @@ export default function OrgView() {
               {humans.map((h) => (
                 <div key={h.id} className="flex items-center justify-between bg-gray-700 rounded px-3 py-2">
                   <span className="text-gray-200 text-sm">{escapeHtml(h.name)}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded ${rbacRoleColor(h.rbac)}`} aria-label={`RBAC role: ${h.rbac}`}>
-                    {h.rbac}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs px-2 py-0.5 rounded ${rbacRoleColor(h.rbac)}`} aria-label={`RBAC role: ${h.rbac}`}>
+                      {h.rbac}
+                    </span>
+                    {h.createdAt != null && (
+                      <span className="text-xs text-gray-500">Joined: {formatDate(h.createdAt)}</span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -90,6 +95,9 @@ export default function OrgView() {
                     <span className={`text-xs px-2 py-0.5 rounded ${agentStatusColor(a.status)}`} aria-label={`Status: ${a.status}`}>
                       {a.status}
                     </span>
+                    {a.createdAt != null && (
+                      <span className="text-xs text-gray-500">Created: {formatDate(a.createdAt)}</span>
+                    )}
                   </div>
                 </div>
               ))}
@@ -107,9 +115,14 @@ export default function OrgView() {
             {groups.map((g) => (
               <div key={g.id} className="flex items-center justify-between bg-gray-700 rounded px-3 py-2">
                 <span className="text-gray-200 text-sm">{escapeHtml(g.name)}</span>
-                <span className={`text-xs px-2 py-0.5 rounded ${groupStatusColor(g.status)}`} aria-label={`Status: ${g.status}`}>
-                  {g.status}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs px-2 py-0.5 rounded ${groupStatusColor(g.status)}`} aria-label={`Status: ${g.status}`}>
+                    {g.status}
+                  </span>
+                  {g.createdAt != null && (
+                    <span className="text-xs text-gray-500">Created: {formatDate(g.createdAt)}</span>
+                  )}
+                </div>
               </div>
             ))}
           </div>
