@@ -48,7 +48,7 @@ public class DnaDecision {
 
     /**
      * DnaDecisions are immutable append-only records per DNC-030.
-     * Updates are prevented at the service layer; this model has no lifecycle hooks.
+     * Updates are prevented at the service layer; @PrePersist sets defaults on creation only.
      */
 
     public String getId() { return id; }

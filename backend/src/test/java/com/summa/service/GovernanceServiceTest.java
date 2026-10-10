@@ -76,4 +76,25 @@ class GovernanceServiceTest {
         var settings = governanceService.getAllSettings();
         assertEquals(48L, settings.get("spawn-ephemeral-default-ttl-hours"));
     }
+
+    @Test
+    void applyDefaults_includesAllDefaultValues() {
+        when(settingRepository.findAll()).thenReturn(java.util.List.of());
+
+        var settings = governanceService.getAllSettings();
+        assertEquals(24, ((Number) settings.get("spawn-ephemeral-default-ttl-hours")).intValue());
+        assertEquals(3, ((Number) settings.get("spawn-ephemeral-max-concurrent-per-spawner")).intValue());
+        assertEquals(100, ((Number) settings.get("spawn-org-wide-max-active-agents")).intValue());
+        assertEquals(2, ((Number) settings.get("spawn-depth-cap")).intValue());
+        assertEquals(30, ((Number) settings.get("spawn-budget-window-days")).intValue());
+        assertEquals(1, ((Number) settings.get("asks-tier-critical-deadline-hours")).intValue());
+        assertEquals(24, ((Number) settings.get("asks-tier-standard-deadline-hours")).intValue());
+        assertEquals(24, ((Number) settings.get("asks-tier-bulk-deadline-hours")).intValue());
+        assertEquals(1, ((Number) settings.get("asks-storm-collapse-window-hours")).intValue());
+        assertEquals(60, ((Number) settings.get("asks-rate-limit-per-source-per-hour")).intValue());
+        assertEquals(7, ((Number) settings.get("summa.dna.default-review-sla-days")).intValue());
+        assertEquals(5.0, ((Number) settings.get("spend-critical-floor-percent")).doubleValue());
+        assertEquals(30, ((Number) settings.get("spend-evaluation-window-days")).intValue());
+        assertEquals(24, ((Number) settings.get("node-affinity-starvation-hours")).intValue());
+    }
 }

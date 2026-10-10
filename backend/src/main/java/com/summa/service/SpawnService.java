@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.summa.util.JsonHelpers;
 import com.summa.exception.AuthorizationDeniedException;
 import com.summa.exception.EntityNotFoundException;
+import com.summa.constants.Defaults;
 
 @Service
 public class SpawnService {
@@ -352,6 +353,13 @@ public class SpawnService {
         agent.setTemplateId(request.getTemplateId());
         agent.setTemplateVersion(resolveTemplateVersion(request.getTemplateId()));
         agent.setBudgetCap(request.getBudgetCap());
+        // SPW-030: Set TTL for ephemeral agents so the reaper can clean them up
+        if (AgentClass.EPHEMERAL.getValue().equals(request.getSpawnClass()) || AgentClass.EPHEMERAL_SUBAGENT.getValue().equals(request.getSpawnClass())) {
+            Integer ttlHours = request.getTtlHours() != null ? request.getTtlHours()
+                : governanceService.getSetting("spawn-ephemeral-default-ttl-hours", Integer.class);
+            if (ttlHours == null) ttlHours = Defaults.DEFAULT_SPAWN_EPHEMERAL_DEFAULT_TTL_HOURS;
+            agent.setTtlAt(Instant.now().plusSeconds(ttlHours * 3600L));
+        }
         agent.setStatus("active");
 
         Agent saved = agentRepository.save(agent);

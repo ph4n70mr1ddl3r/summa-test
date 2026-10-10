@@ -185,6 +185,7 @@ public class GovernanceService {
     private Map<String, Object> applyDefaults(Map<String, Object> settings) {
         Map<String, Object> result = new LinkedHashMap<>(settings);
         result.putIfAbsent("spawn-ephemeral-default-ttl-hours", Defaults.DEFAULT_SPAWN_EPHEMERAL_DEFAULT_TTL_HOURS);
+        result.putIfAbsent("spawn-ephemeral-max-concurrent-per-spawner", Defaults.DEFAULT_SPAWN_EPHEMERAL_MAX_CONCURRENT_PER_SPAWNER);
         result.putIfAbsent("spawn-org-wide-max-active-agents", Defaults.DEFAULT_SPAWN_ORG_WIDE_MAX_ACTIVE_AGENTS);
         result.putIfAbsent("spawn-depth-cap", Defaults.DEFAULT_SPAWN_DEPTH_CAP);
         result.putIfAbsent("spawn-budget-window-days", Defaults.DEFAULT_SPAWN_BUDGET_WINDOW_DAYS);
