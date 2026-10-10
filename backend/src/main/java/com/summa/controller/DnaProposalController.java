@@ -111,13 +111,15 @@ public class DnaProposalController {
         String reviewedBy = body.get("reviewedBy");
         String effectiveReviewer = actor;
         if (reviewedBy != null && !reviewedBy.isBlank()) {
-            if (!reviewedBy.equals(actor)) {
-                Optional<Human> reviewerOpt = memberService.findHuman(JsonHelpers.stripIdPrefix(reviewedBy));
+            String reviewedByClean = JsonHelpers.stripIdPrefix(reviewedBy);
+            String actorClean = JsonHelpers.stripIdPrefix(actor);
+            if (!reviewedByClean.equals(actorClean)) {
+                Optional<Human> reviewerOpt = memberService.findHuman(reviewedByClean);
                 boolean isReviewerAdmin = reviewerOpt.isPresent() && RbacRole.ADMIN.getValue().equals(reviewerOpt.get().getRbac());
                 if (!isReviewerAdmin) {
                     return ControllerResponses.validation(auditService, "reviewedBy must be the current actor or an admin");
                 }
-                effectiveReviewer = JsonHelpers.stripIdPrefix(reviewedBy);
+                effectiveReviewer = reviewedByClean;
             }
         }
         if ("publish".equals(action)) {

@@ -48,6 +48,8 @@ export type {
   Workspace,
   WorkspaceKind,
   Member,
+  DnaGlossary,
+  DnaGlossaryStatus,
   DnaRule,
   DnaRuleStatus,
   HealthStatus,
