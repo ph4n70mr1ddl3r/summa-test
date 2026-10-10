@@ -179,15 +179,15 @@ export async function loadWithFallback<T>(
   fetchIndividual: () => Promise<(T | null | undefined)[]>,
 ): Promise<{ data: (T | null | undefined)[]; error: string | null }> {
   try {
-    const data = await fetchAll()
-    return { data, error: null }
+    const data = await fetchAll();
+    return { data, error: null };
   } catch (e) {
-    const results = await fetchIndividual()
-    const hasError = results.some(r => r === null)
+    const results = await fetchIndividual();
+    const hasError = results.some(r => r === null);
     const error = hasError
       ? 'Some data could not be loaded: ' + (e instanceof Error ? e.message : (typeof e === 'string' ? e : ''))
-      : null
-    return { data: results, error }
+      : null;
+    return { data: results, error };
   }
 }
 

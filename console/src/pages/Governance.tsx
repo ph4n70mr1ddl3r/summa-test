@@ -71,7 +71,7 @@ export default function Governance() {
       if (section === 'policies') await api.governance.updatePolicies(body)
       else await api.governance.updateQuotas(body)
       // Preserve the original type — if it was a number string, store as number; otherwise string
-       const savedValue = trimmed === '' ? null : (Number.isNaN(numValue) ? trimmed : numValue)
+      const savedValue = trimmed === '' ? null : (Number.isNaN(numValue) ? trimmed : numValue)
       if (section === 'policies') setPolicies(prev => ({ ...prev, [key]: savedValue }))
       else setQuotas(prev => ({ ...prev, [key]: savedValue }))
       setEditValues(prev => { const next = { ...prev }; delete next[key]; return next })
@@ -120,7 +120,7 @@ export default function Governance() {
               className="px-2 py-0.5 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-400"
               aria-label={`Cancel edit ${key}`}
             >
-              ✗
+              ×
             </button>
           </div>
         ) : (

@@ -69,7 +69,9 @@ public class GovernanceController {
 
     private static ResponseEntity<Map<String, Object>> validateNumberOrBoolean(
             String key, Object value, String label, AuditService auditService) {
-        if (value instanceof Boolean) {
+        if (value == null) {
+            return null;
+        } else if (value instanceof Boolean) {
             return null;
         } else if (value instanceof Number) {
             return null;
