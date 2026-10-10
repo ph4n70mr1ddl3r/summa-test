@@ -25,6 +25,7 @@ import Groups from './pages/Groups.tsx'
 import NotFound from './pages/NotFound.tsx'
 import Login from './pages/Login.tsx'
 import Initiatives from './pages/Initiatives.tsx'
+import DataHolds from './pages/DataHolds.tsx'
 import ErrorBoundary from './components/ErrorBoundary.tsx'
 
 document.title = 'Summa'
@@ -56,6 +57,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="role-templates" element={<RoleTemplates />} />
             <Route path="memory" element={<Memory />} />
             <Route path="initiatives" element={<Initiatives />} />
+            <Route path="data-holds" element={<DataHolds />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>

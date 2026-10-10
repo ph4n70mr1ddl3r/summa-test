@@ -33,10 +33,12 @@ public class InitiativeController {
 
     @GetMapping
     public ResponseEntity<?> listInitiatives(
-            @RequestParam(required = false) String status) {
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "50") int limit) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
         if (auth != null) return auth;
+        int cappedLimit = Math.min(Math.max(limit, 1), com.summa.constants.Defaults.MAX_LIST_LIMIT);
         if (status != null) {
             return ResponseEntity.ok(initiativeService.findByStatus(status));
         }

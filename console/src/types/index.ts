@@ -41,6 +41,7 @@ export type {
   SpawnStatus,
   SpawnStats,
   SpendSnapshot,
+  DataHold,
   Trigger,
   TriggerKind,
   TriggerCriticality,

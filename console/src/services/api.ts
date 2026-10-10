@@ -564,6 +564,16 @@ export interface SpendSnapshot {
   halted: boolean;
 }
 
+export interface DataHold {
+  id: string;
+  kind: string;
+  subjectId: string;
+  reasonMd: string;
+  createdBy: string;
+  createdAt: number;
+  releasedAt?: number;
+}
+
 export function buildQuery(params?: Record<string, string | number | boolean | undefined>): string {
   const entries = Object.entries(params ?? {}).filter(([, v]) => v !== undefined && v !== null && v !== '');
   if (entries.length === 0) return '';
@@ -933,6 +943,7 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(body),
       }),
+    listHolds: () => request<DataHold[]>('/governance/holds'),
     releaseHold: (id: string) =>
       request<Record<string, unknown>>(`/governance/holds/${id}/release`, {
         method: 'POST',

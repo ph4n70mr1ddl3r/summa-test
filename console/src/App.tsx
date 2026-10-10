@@ -33,6 +33,7 @@ const publicNavItems: NavItem[] = [
   { to: '/runs', label: 'Runs' },
   { to: '/memory', label: 'Memory' },
   { to: '/initiatives', label: 'Initiatives' },
+  { to: '/data-holds', label: 'Data Holds' },
 ]
 
 function getFilteredNavItems(user: { rbac: RbacRole } | null): NavItem[] {

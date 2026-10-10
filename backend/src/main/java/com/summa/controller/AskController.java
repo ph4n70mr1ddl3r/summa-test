@@ -57,7 +57,7 @@ public class AskController {
         if (auth != null) return auth;
         int cappedLimit = Math.min(Math.max(limit, 1), Defaults.MAX_LIST_LIMIT);
         if (to != null) {
-            return ResponseEntity.ok(askService.findByTo(to, cappedLimit));
+            return ResponseEntity.ok(askService.findByTo(JsonHelpers.stripIdPrefix(to), cappedLimit));
         }
         // Default: show asks to the current actor (inbox), not all pending asks
         return ResponseEntity.ok(askService.findByTo(JsonHelpers.stripIdPrefix(actor), cappedLimit));

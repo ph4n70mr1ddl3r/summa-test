@@ -89,7 +89,7 @@ public class AgentController {
         int depthCap = agentService.getDepthCap();
         List<String> lineage = new ArrayList<>();
         java.util.Set<String> visited = new java.util.HashSet<>();
-        String currentId = id;
+        String currentId = JsonHelpers.stripIdPrefix(id);
         while (currentId != null && lineage.size() < depthCap) {
             if (!visited.add(currentId)) {
                 // Cycle detected — stop to prevent infinite loop
@@ -227,7 +227,7 @@ public class AgentController {
             } catch (Exception e) {
                 throw new IllegalStateException("Failed to serialize promotion snapshot: " + e.getMessage());
             }
-            askService.create("promotion", actor, OffboardingWalkService.ADMIN_BROADCAST,
+            askService.create("promotion", JsonHelpers.stripIdPrefix(actor), OffboardingWalkService.ADMIN_BROADCAST,
                 snapshotPayload, "standard", "deny", 1,
                 Instant.now().plusSeconds(Defaults.DEFAULT_STANDARD_ASK_DEADLINE_HOURS * 3600L), null, null);
             auditService.log(actor, "PROMOTE_REQUEST", "agent", agentId, snapshotPayload);

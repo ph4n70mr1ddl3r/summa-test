@@ -255,6 +255,11 @@ public class InitiativeService {
                     return initiative;
                 }
             }
+            // INT-020: Deduplicate — refuse if an activation ask already exists for this initiative
+            List<Ask> pendingActivationAsks = askRepository.findByInitiativeIdAndKindApprovalPending(id);
+            if (!pendingActivationAsks.isEmpty()) {
+                throw new IllegalStateException("An activation ask already exists for this initiative");
+            }
             // Route activation ask to sponsor (kind=approval, tier=standard, expiry=deny)
             String payload = String.format(
                 "{\"initiativeId\":\"%s\",\"title\":\"%s\",\"createdBy\":\"%s\"}",
