@@ -73,7 +73,7 @@ export default function DataHolds() {
                   </div>
                   <p className="text-sm text-gray-400 mt-1 whitespace-pre-wrap">{escapeHtml(hold.reasonMd)}</p>
                   <p className="text-xs text-gray-500 mt-1">
-                    Created by {escapeHtml(hold.createdBy)} · {formatDate(hold.createdAt)}
+                    Created by {escapeHtml(hold.createdBy)} · {formatDate(hold.createdAt, { dateOnly: true })}
                   </p>
                 </div>
                 <button

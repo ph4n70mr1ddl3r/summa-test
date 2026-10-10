@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import DataHolds from './DataHolds'
 import * as apiModule from '../services/api'
 
@@ -59,7 +59,7 @@ describe('DataHolds page', () => {
     render(<DataHolds />)
     await waitFor(() => expect(screen.getByText('Release')).toBeInTheDocument())
     const releaseBtn = await screen.findByText('Release')
-    releaseBtn.click()
+    fireEvent.click(releaseBtn)
     await waitFor(() => expect(apiModule.api.governance.releaseHold).toHaveBeenCalledWith('h1'))
   })
 })

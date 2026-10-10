@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback } from 'react'
 import { api, getUser } from '../services/api'
-import type { Ask, RbacRole } from '../types'
+import type { Ask, AskKind, RbacRole } from '../types'
 import { tierColor, formatDate, escapeHtml } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
-const KIND_DISPLAY_NAMES: Record<string, string> = {
+const KIND_DISPLAY_NAMES: Record<AskKind, string> = {
   approval: 'Approval',
   question: 'Question',
   assignment: 'Assignment',
@@ -12,7 +12,7 @@ const KIND_DISPLAY_NAMES: Record<string, string> = {
   promotion: 'Promotion',
 }
 
-function kindIcon(kind: string): string {
+function kindIcon(kind: AskKind): string {
   switch (kind) {
     case 'approval': return '[!]'
     case 'question': return '[?]'
@@ -166,7 +166,7 @@ export default function AskInbox() {
                 <div className="text-right shrink-0">
                   <p className="text-xs text-gray-500">Deadline</p>
                   <p className="text-sm text-gray-300">
-                    {formatDate(ask.deadline, { dateOnly: false })}
+                    {formatDate(ask.deadline)}
                   </p>
                   {ask.quorumRequired && ask.quorumRequired > 1 && (
                     <p className="text-xs text-gray-500 mt-1">
