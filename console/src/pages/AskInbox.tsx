@@ -155,7 +155,7 @@ export default function AskInbox() {
                 <div className="text-right shrink-0">
                   <p className="text-xs text-gray-500">Deadline</p>
                   <p className="text-sm text-gray-300">
-                    {formatDate(ask.deadline)}
+                    {formatDate(ask.deadline, { dateOnly: true })}
                   </p>
                   {ask.quorumRequired && ask.quorumRequired > 1 && (
                     <p className="text-xs text-gray-500 mt-1">
@@ -164,7 +164,7 @@ export default function AskInbox() {
                   )}
                 </div>
               </div>
-              <details className="mt-3">
+              <details className="mt-3" aria-label="Ask details">
                 <summary className="text-sm text-blue-400 cursor-pointer hover:text-blue-300">
                   View payload
                 </summary>

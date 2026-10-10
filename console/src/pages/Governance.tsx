@@ -103,7 +103,6 @@ export default function Governance() {
               onChange={(e) => setEditValues(prev => ({ ...prev, [key]: e.target.value }))}
               className="flex-1 bg-gray-700 border border-gray-600 rounded px-2 py-0.5 text-gray-200 text-xs font-mono"
               aria-label={`Edit ${key}`}
-              autoFocus
             />
             <button
               type="button"

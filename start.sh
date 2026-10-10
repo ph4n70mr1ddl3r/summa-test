@@ -6,10 +6,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 # Load .env file if present (for local development convenience)
+# Parse line-by-line to avoid executing arbitrary shell commands.
 if [ -f ".env" ]; then
-    set -a
-    ./.env
-    set +a
+    while IFS='=' read -r key value || [ -n "$key" ]; do
+        [[ -z "$key" || "$key" =~ ^[[:space:]]*# ]] && continue
+        key=$(echo "$key" | xargs)
+        value=$(echo "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"\(.*)"$/\1/' -e "s/^'\(.*\)'$/\1/")
+        export "$key"="$value"
+    done < ".env"
 fi
 
 echo "Starting Summa (single-process mode)..."
@@ -71,7 +75,8 @@ done
 # Start the backend
 echo "Starting backend on port 8080..."
 JAVA_OPTS="${JAVA_OPTS:--Xmx512m -Xms256m -XX:MaxMetaspaceSize=128m}"
-exec java $JAVA_OPTS \
+read -ra JAVA_OPTS_ARR <<< "$JAVA_OPTS"
+exec java "${JAVA_OPTS_ARR[@]}" \
     -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-prod} \
     -Dsumma.auth.local-auth-enabled=${SUMMA_AUTH_LOCAL_AUTH_ENABLED:-true} \
     -jar "$JAR_FILE"

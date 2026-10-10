@@ -14,8 +14,6 @@ export type {
   DnaDecision,
   DnaGoal,
   DnaGoalStatus,
-  DnaGlossary,
-  DnaGlossaryStatus,
   DnaProposal,
   DnaProposalKind,
   DnaProposalStatus,

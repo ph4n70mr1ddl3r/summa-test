@@ -7,10 +7,17 @@ ORIG_DIR="$(pwd)"
 cd "$SCRIPT_DIR"
 
 # Load .env file if present (for local development convenience)
+# Parse line-by-line to avoid executing arbitrary shell commands.
 if [ -f ".env" ]; then
-    set -a
-    ./.env
-    set +a
+    while IFS='=' read -r key value || [ -n "$key" ]; do
+        # Skip comments and blank lines
+        [[ -z "$key" || "$key" =~ ^[[:space:]]*# ]] && continue
+        # Strip leading/trailing whitespace from key
+        key=$(echo "$key" | xargs)
+        # Remove surrounding quotes from value
+        value=$(echo "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"\(.*)"$/\1/' -e "s/^'\(.*\)'$/\1/")
+        export "$key"="$value"
+    done < ".env"
 fi
 
 echo "Starting Summa development environment..."

@@ -1,5 +1,6 @@
 package com.summa.controller;
 
+import com.summa.enums.DomainAccess;
 import com.summa.service.DnaDomainService;
 import com.summa.model.DnaDomain;
 import com.summa.service.AuditService;
@@ -61,6 +62,9 @@ public class DnaDomainController {
             }
             if (body.get("ownerHumanId") == null || body.get("ownerHumanId").isBlank()) {
                 throw new IllegalArgumentException("ownerHumanId is required");
+            }
+            if (body.get("access") != null && !body.get("access").isBlank()) {
+                DomainAccess.requireFromValue(body.get("access"));
             }
             String ownerHumanIdRaw = body.get("ownerHumanId");
             String ownerHumanIdClean = JsonHelpers.stripIdPrefix(ownerHumanIdRaw);
@@ -142,7 +146,11 @@ public class DnaDomainController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            DnaDomain domain = domainService.updateAccess(id, body.get("access"), actor);
+            String rawAccess = body.get("access");
+            if (rawAccess != null && !rawAccess.isBlank()) {
+                DomainAccess.requireFromValue(rawAccess);
+            }
+            DnaDomain domain = domainService.updateAccess(id, rawAccess, actor);
             return ResponseEntity.ok(domain);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
