@@ -545,18 +545,6 @@ export interface MemoryItem {
 
 export type MemoryTier = 'personal' | 'project' | 'proposal';
 
-export interface Pat {
-  id: string;
-  memberId: string;
-  name: string;
-  scopes: string;
-  createdAt: number;
-  expiresAt: number;
-  revokedAt?: number;
-  lastUsedAt?: number;
-  updatedAt?: number;
-}
-
 export interface Group {
   id: string;
   name: string;
@@ -709,10 +697,6 @@ export const api = {
       }),
     reviewQueue: (domainId?: string) =>
       request<DnaProposal[]>(`/dna/proposals/review-queue${buildQuery(domainId ? { domainId } : undefined)}`),
-    search: (q: string, domainId?: string, limit?: number) =>
-      request<{ results: Record<string, unknown>[]; count: number }>(
-        `/dna/search${buildQuery({ q, domainId, limit })}`,
-      ),
   },
   asks: {
     list: () =>
@@ -739,8 +723,6 @@ export const api = {
       }),
   },
   org: {
-    bootstrap: (body?: Record<string, string>) =>
-      request<Record<string, unknown>>('/org/bootstrap', { method: 'POST', body: body ? JSON.stringify(body) : undefined }),
     humans: (active?: boolean) =>
       request<Human[]>(`/org/humans${buildQuery(active !== undefined ? { active: String(active) } : undefined)}`),
     updateRbac: (id: string, rbac: string) =>
@@ -771,8 +753,6 @@ export const api = {
       const res = await request<{ memberId: string; lineage: string[] }>(`/org/lineage${buildQuery({ memberId })}`);
       return res?.lineage ?? [];
     },
-    audit: (limit?: number, objectType?: string, objectId?: string) =>
-      request<unknown[]>(`/org/audit${buildQuery({ limit, objectType, objectId })}`),
   },
   spawn: {
     list: (status?: string, requesterId?: string) =>
@@ -962,18 +942,6 @@ export const api = {
         method: 'POST',
       }),
   },
-  admin: {
-    createBackup: (body?: Record<string, string>) =>
-      request<Record<string, unknown>>('/admin/backup', {
-        method: 'POST',
-        body: body ? JSON.stringify(body) : undefined,
-      }),
-    restoreBackup: (body: Record<string, string>) =>
-      request<Record<string, unknown>>('/admin/backup/restore', {
-        method: 'POST',
-        body: JSON.stringify(body),
-      }),
-  },
   roleTemplates: {
     list: () => request<RoleTemplate[]>('/role-templates'),
     create: (body: Record<string, string>) =>
@@ -1000,19 +968,6 @@ export const api = {
       }),
     review: (id: string) =>
       request<MemoryItem>(`/memory/${id}/review`, {
-        method: 'POST',
-      }),
-  },
-  authPats: {
-    list: (memberId: string) =>
-      request<Pat[]>(`/auth/pats${buildQuery({ memberId })}`),
-    create: (body: Record<string, string>) =>
-      request<Pat>('/auth/pats', {
-        method: 'POST',
-        body: JSON.stringify(body),
-      }),
-    revoke: (id: string) =>
-      request<Record<string, unknown>>(`/auth/pats/${id}/revoke`, {
         method: 'POST',
       }),
   },

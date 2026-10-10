@@ -1,6 +1,6 @@
 #!/bin/bash
 # Development startup - starts both backend and console
-set -e
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ORIG_DIR="$(pwd)"
@@ -89,7 +89,7 @@ SUMMA_DB_PATH="${SUMMA_DB_PATH:-$HOME/.summa/summa.db}"
 export SUMMA_DNA_REPO
 export SUMMA_DB_PATH
 export SUMMA_LOG_DIR
-mkdir -p ~/.summa "$SUMMA_LOG_DIR" "$SUMMA_DNA_REPO" "$(dirname "$SUMMA_DB_PATH")"
+mkdir -p "$HOME/.summa" "$SUMMA_LOG_DIR" "$SUMMA_DNA_REPO" "$(dirname "$SUMMA_DB_PATH")"
 
 # Validate directories are writable
 for dir in "$SUMMA_LOG_DIR" "$SUMMA_DNA_REPO" "$(dirname "$SUMMA_DB_PATH")"; do
@@ -144,7 +144,7 @@ if [ ! -d "node_modules" ]; then
     echo "      Installing console dependencies..."
     npm ci --prefer-offline
 fi
-npm run dev > ~/.summa/logs/console.log 2>&1 &
+npm run dev > "$SUMMA_LOG_DIR/console.log" 2>&1 &
 CONSOLE_PID=$!
 echo "      Console PID: $CONSOLE_PID"
 popd > /dev/null
@@ -173,6 +173,6 @@ echo "  API:     http://localhost:8080/api"
 echo ""
 echo "Press Ctrl+C to stop all services"
 
-trap '[ "${ORIG_DIR:-}" != "" ] && [ -d "${ORIG_DIR:-}" ] && cd "${ORIG_DIR}" || true' EXIT
 trap '[ "${BACKEND_PID:-}" != "" ] && kill "${BACKEND_PID}" 2>/dev/null; [ "${BACKEND_PID:-}" != "" ] && pkill -P "${BACKEND_PID}" 2>/dev/null; [ "${CONSOLE_PID:-}" != "" ] && kill "${CONSOLE_PID}" 2>/dev/null; [ "${CONSOLE_PID:-}" != "" ] && pkill -P "${CONSOLE_PID}" 2>/dev/null; exit 0' INT TERM
+trap '[ "${ORIG_DIR:-}" != "" ] && [ -d "${ORIG_DIR:-}" ] && cd "${ORIG_DIR}" || true' EXIT
 wait

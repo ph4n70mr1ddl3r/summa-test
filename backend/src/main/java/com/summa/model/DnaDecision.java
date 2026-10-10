@@ -50,6 +50,10 @@ public class DnaDecision {
      * DnaDecisions are immutable append-only records per DNC-030.
      * Updates are prevented at the service layer; @PrePersist sets defaults on creation only.
      */
+    @PreUpdate
+    public void preUpdate() {
+        throw new UnsupportedOperationException("DnaDecision is immutable — use a new decision instead");
+    }
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }

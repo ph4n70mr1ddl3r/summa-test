@@ -357,4 +357,20 @@ describe('truncateSnippet', () => {
   it('truncates and appends ellipsis when over limit', () => {
     expect(truncateSnippet('hello world', 5)).toBe('hello...')
   })
+
+  it('returns original text when length equals maxLen', () => {
+    expect(truncateSnippet('hello', 5)).toBe('hello')
+  })
+
+  it('truncates at exact boundary', () => {
+    expect(truncateSnippet('hello', 4)).toBe('hell...')
+  })
+
+  it('returns empty string for null input', () => {
+    expect(truncateSnippet(null, 10)).toBe('')
+  })
+
+  it('returns empty string for undefined input', () => {
+    expect(truncateSnippet(undefined, 10)).toBe('')
+  })
 })

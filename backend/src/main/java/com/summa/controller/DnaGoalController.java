@@ -95,7 +95,7 @@ public class DnaGoalController {
                 if (domOpt.isEmpty()) {
                     throw new IllegalArgumentException("Domain not found: " + rawDomainId);
                 }
-                // SEC-021: Only the domain owner or admin may create goals in a domain
+                // ORG-020: Only the domain owner or admin may create goals in a domain
                 boolean isDomainOwner = domOpt.get().getOwnerHumanId() != null
                         && domOpt.get().getOwnerHumanId().equals(ownerClean);
                 if (!isDomainOwner && !memberService.isAdmin(ownerClean)) {
@@ -142,7 +142,7 @@ public class DnaGoalController {
             if (!"active".equals(statusValue) && !"met".equals(statusValue) && !"missed".equals(statusValue) && !"retired".equals(statusValue)) {
                 throw new IllegalArgumentException("Invalid goal status: " + statusValue + ". Must be one of: active, met, missed, retired");
             }
-            // SEC-021: Only the goal owner or admin may update goal status
+            // ORG-020: Only the goal owner or admin may update goal status
             Optional<DnaGoal> goalOpt = goalService.findById(id);
             if (goalOpt.isEmpty()) {
                 return ControllerResponses.notFound(auditService, "Goal not found: " + id);
@@ -177,7 +177,7 @@ public class DnaGoalController {
         if (effectiveFrom == null && effectiveTo == null) {
             return ControllerResponses.validation(auditService, "At least one of effectiveFrom or effectiveTo must be provided");
         }
-        // SEC-021: Only the goal owner or admin may update goal window
+        // ORG-020: Only the goal owner or admin may update goal window
         Optional<DnaGoal> goalOpt = goalService.findById(id);
         if (goalOpt.isEmpty()) {
             return ControllerResponses.notFound(auditService, "Goal not found: " + id);

@@ -47,4 +47,13 @@ describe('escapeHtml', () => {
   it('returns empty string for undefined', () => {
     expect(escapeHtml(undefined)).toBe('')
   })
+
+  it('escapes backticks', () => {
+    expect(escapeHtml('`code`')).toBe('&#96;code&#96;')
+  })
+
+  it('strips control characters', () => {
+    expect(escapeHtml('hello\x00world')).toBe('helloworld')
+    expect(escapeHtml('line\x01\x02\x03')).toBe('line')
+  })
 })

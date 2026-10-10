@@ -23,10 +23,6 @@ public class Human {
     private String rbac;
 
     @JsonIgnore
-    @Column(name = "auth", nullable = false, columnDefinition = "TEXT")
-    private String auth;
-
-    @JsonIgnore
     @Column(name = "password_hash", columnDefinition = "TEXT")
     private String passwordHash;
 
@@ -79,10 +75,6 @@ public class Human {
     public void setEmail(String email) { this.email = email; }
     public String getRbac() { return rbac; }
     public void setRbac(String rbac) { this.rbac = rbac; }
-    @JsonIgnore
-    public String getAuth() { return auth; }
-    @JsonIgnore
-    public void setAuth(String auth) { this.auth = auth; }
     public String getDeputyMemberId() { return deputyMemberId; }
     public void setDeputyMemberId(String deputyMemberId) { this.deputyMemberId = deputyMemberId; }
     public String getTimezone() { return timezone; }

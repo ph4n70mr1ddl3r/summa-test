@@ -15,6 +15,7 @@ import type {
   RbacRole,
   DnaProposalKind,
   DnaProposalStatus,
+  DomainAccess,
 } from '../types'
 
 export function formatDate(epochSeconds: number | undefined | null, options?: { dateOnly?: boolean }): string {
@@ -154,7 +155,7 @@ export function groupStatusColor(status: GroupStatus): string {
   }
 }
 
-export function domainAccessColor(access: 'public' | 'domain' | 'named'): string {
+export function domainAccessColor(access: DomainAccess): string {
   switch (access) {
     case 'public': return 'bg-green-900/50 text-green-400'
     case 'domain': return 'bg-blue-900/50 text-blue-400'

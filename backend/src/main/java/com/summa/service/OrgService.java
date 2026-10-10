@@ -85,7 +85,6 @@ public class OrgService {
         human.setName(name);
         human.setEmail(email);
         human.setRbac(effectiveRbac);
-        human.setAuth("{}");
         human.setPasswordHash(passwordUtil.hash(password));
 
         Human saved = humanRepository.save(human);
@@ -95,7 +94,7 @@ public class OrgService {
     }
 
     @Transactional
-    public Human createHuman(String name, String email, String rbac, String auth, String password) {
+    public Human createHuman(String name, String email, String rbac, String password) {
         PasswordValidator.validate(password);
 
         // Validate rbac is one of the recognized roles; default to "member" if null
@@ -112,7 +111,6 @@ public class OrgService {
         human.setName(name);
         human.setEmail(email);
         human.setRbac(effectiveRbac);
-        human.setAuth(auth != null ? auth : "{}");
         human.setPasswordHash(passwordUtil.hash(password));
 
         Human saved = humanRepository.save(human);
@@ -299,7 +297,6 @@ public class OrgService {
         human.setName("[ERASED]");
         human.setEmail("[ERASED]");
         human.setPasswordHash(null);
-        human.setAuth("{}");
         human.setDeputyMemberId(null);
         human.setDeactivatedAt(Instant.now());
         humanRepository.save(human);

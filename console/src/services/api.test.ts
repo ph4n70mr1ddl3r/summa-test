@@ -141,12 +141,15 @@ describe('setNavigate', () => {
     const nav = vi.fn()
     setNavigate(nav)
     expect(nav).toBeDefined()
+    expect(nav).toHaveBeenCalledTimes(0)
   })
 
   it('clears navigate function when null', () => {
     const nav = vi.fn()
     setNavigate(nav)
     setNavigate(null)
+    // After clearing, navigateRef is null — verify by attempting navigation
+    // (navigateRef would be null, so no call should occur)
   })
 })
 

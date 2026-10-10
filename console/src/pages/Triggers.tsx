@@ -27,6 +27,7 @@ export default function Triggers() {
   }, [])
 
   const handleLifecycle = async (id: string, action: 'pause' | 'resume' | 'archive') => {
+    setActionError(null)
     try {
       if (action === 'pause') await api.triggers.pause(id)
       else if (action === 'resume') await api.triggers.resume(id)
