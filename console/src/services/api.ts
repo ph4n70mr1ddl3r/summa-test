@@ -329,6 +329,7 @@ export interface Run {
 export type RunStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | 'suspended';
 
 export interface RunListParams {
+  [key: string]: string | number | boolean | undefined;
   agentId?: string
   workspaceId?: string
   status?: RunStatus
