@@ -62,7 +62,7 @@ docker compose up -d
 
 - **Backend**: Java 21 LTS + Spring Boot 3.4.1, SQLite (WAL)
 - **Console**: React 19 + TypeScript + Vite + Tailwind CSS
-- **Deployment**: OCI images, rootless Podman, Kubernetes-ready
+- **Deployment**: OCI images, rootless Podman
 
 ## Spec Suite
 

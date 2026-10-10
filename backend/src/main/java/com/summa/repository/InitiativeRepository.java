@@ -15,8 +15,6 @@ public interface InitiativeRepository extends JpaRepository<Initiative, String> 
 
     List<Initiative> findByLead(String lead);
 
-    List<Initiative> findAll();
-
     /**
      * Find non-closed initiatives whose depends_on JSON array contains the given id.
      * Avoids a full-table scan followed in-memory filtering.

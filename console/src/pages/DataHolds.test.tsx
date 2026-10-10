@@ -34,7 +34,7 @@ describe('DataHolds page', () => {
 
   it('displays holds', async () => {
     vi.mocked(apiModule.api.governance.listHolds).mockResolvedValue([
-      { id: 'h1', kind: 'legal', subjectId: 'user-123', reasonMd: 'Pending litigation', createdBy: 'admin-1', createdAt: 1700000000000 },
+      { id: 'h1', kind: 'legal', subjectId: 'user-123', reasonMd: 'Pending litigation', createdBy: 'admin-1', createdAt: 1700000000 },
     ])
     render(<DataHolds />)
     await waitFor(() => {
@@ -53,7 +53,7 @@ describe('DataHolds page', () => {
 
   it('releases a hold on click', async () => {
     vi.mocked(apiModule.api.governance.listHolds).mockResolvedValue([
-      { id: 'h1', kind: 'legal', subjectId: 'user-123', reasonMd: 'Pending litigation', createdBy: 'admin-1', createdAt: 1700000000000 },
+      { id: 'h1', kind: 'legal', subjectId: 'user-123', reasonMd: 'Pending litigation', createdBy: 'admin-1', createdAt: 1700000000 },
     ])
     vi.mocked(apiModule.api.governance.releaseHold).mockResolvedValue({})
     render(<DataHolds />)

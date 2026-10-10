@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS humans (
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
     deactivated_at INTEGER,
+    session_version INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY (deputy_member_id) REFERENCES humans(id) ON DELETE SET NULL
 );
 

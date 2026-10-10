@@ -10,6 +10,8 @@ here alone (PLAN.md carries only the current version stamp).
 
 **Documentation review pass 95 — consistency, correctness, completeness fixes (v2.65)**: unify controller error handling across all REST endpoints using ControllerResponses helpers; fix CI node version pin in setup-node action; deduplicate spring.main.allow-bean-definition-overriding from dev config; clean unused test dependencies. Lint green, all tests pass.
 
+**Documentation review pass — consistency, correctness, completeness fixes (v2.63)**: two issues closed — review pass 38's `Agent.class` column fix omitted the identical bug in `RoleTemplate.java` (`@Column(name = "\"class\"")` resolving to a literal quoted-column name at runtime); both now read `@Column(name = "class")` consistent with the schema and `SpawnRequest`'s own mapping · PLAN.md §4.5's DNA tree path read `~/.agent/dna/` while every other document and the backend code use `~/.summa/dna/`; now aligned. Lint green, all self-tests pass.
+
 **Documentation review pass 94 — consistency, correctness, completeness fixes (v2.64)**: fix null-safety gaps in NodeController.enroll and GroupController.createGroup; close enum drift in SpawnService by using AgentClass enum instead of string literals; fill CI test gaps with explicit backend/console matrix; fix frontend TS2345 type mismatch in OrgView.tsx Member union; fix config drift between application.yml and application-prod.yml by removing duplicated summa block; correct inconsistent audit event categories to match spec taxonomy; replace inline fully-qualified class names with imports; add missing Initiatives page test coverage for error and loading states. Lint green, all tests pass.
 
 **Documentation review pass 92 — consistency, correctness, completeness fixes (v2.62)**: fix personal-assistant UUID generation bug in proposal service; enforce Pat token unique constraint at schema level with trigger; add schema trigger for automatic updated_at timestamps; resolve config drift in spawn budget window defaults; migrate untyped enum strings to typed Java enums; remove dead fully-qualified name references; close documentation gaps in PRODUCTION.md and DEVELOPMENT.md. Lint green, all tests pass.
@@ -42,7 +44,7 @@ here alone (PLAN.md carries only the current version stamp).
 
 **Documentation review pass 78 — consistency, correctness, completeness fixes (v2.48)**: fix React act() warning in test utilities; deduplicate ObjectMapper instances across services; add promotion AskKind to spec and implementation; fix Governance test mock alignment; document VITE_SUMMA_MODE environment variable. Lint green, all tests pass.
 
-**Documentation review pass 48 — consistency, correctness, completeness fixes (v2.48b)**: full-suite
+**Documentation review pass 48 — consistency, correctness, completeness fixes (v2.48)**: full-suite
 schema audit — `specs/16-data-model.md` and PLAN.md §7 gained all columns present in
 `schema.sql` but missing from the spec definition: `humans.password_hash?` (reconciled
 with SEC-001's OIDC-only default; local-account auth is a deployment choice),
@@ -57,16 +59,6 @@ ground-truth schema. README.md gained the version-pin line ("derived from `PLAN.
 **Documentation review pass 76 — consistency, correctness, completeness fixes (v2.46)**: fix timestamp multiplication by 1000 bug in frontend date display; fix API path mismatch between console and backend; add uncaught exception handlers for async operations; standardize error handling consistency across pages; add promotion icon in AskInbox; deduplicate escapeHtml utility; parse structured error responses from API. Lint green, all tests pass.
 
 **Documentation review pass 75 — consistency, correctness, completeness fixes (v2.45)**: fix duplicate stall asks in initiative service; fix agent retire asks-to-closing logic; fix promote TPL-046 existing-promotion-check bug; fix backup path traversal vulnerability; implement governance fail-closed spend ack; fix last-admin TOCTOU in offboarding; add successor depth tracking in lineage; fix domain rekey scope validation; complete lineage depth cap enforcement; add missing frontend API methods; add ask validation status display. Lint green, all tests pass.
-
-**Documentation review pass — consistency, correctness, completeness fixes (v2.63)**: two issues
-closed — review pass 38's `Agent.class` column fix omitted the identical bug in
-`RoleTemplate.java` (`@Column(name = "\"class\"")` resolving to a literal quoted-column
-name at runtime); both now read `@Column(name = "class")` consistent with the schema and
-`SpawnRequest`'s own mapping · PLAN.md §4.5's DNA tree path read `~/.agent/dna/` while
-every other document and the backend code use `~/.summa/dna/`; now aligned. Lint green,
-all self-tests pass.
-
-**Documentation review pass 92 — consistency, correctness, completeness fixes (v2.62)**: fix personal-assistant UUID generation bug in proposal service; enforce Pat token unique constraint at schema level with trigger; add schema trigger for automatic updated_at timestamps; resolve config drift in spawn budget window defaults; migrate untyped enum strings to typed Java enums; remove dead fully-qualified name references; close documentation gaps in PRODUCTION.md and DEVELOPMENT.md. Lint green, all tests pass.
 
 **Review pass 45: consistency, correctness fixes**: full-suite read across PLAN.md and all 21 spec modules for consistency, correctness, and completeness — closes one residue: VIS-002 cited STG-001 (git store default) for "validated ingest" when STG-010 is the ingest door; DWP-060 (item CRUD) was also missing from the citation. The v2.55 changelog entry recorded the fix direction ("SPEC-05/06/07 with the four doors named") but the applied edit swapped in the wrong STG ID and dropped DWP-060; the citation now reads DWP-001, DWP-060, DGV-001, STG-010. Lint green, all self-tests pass.
 

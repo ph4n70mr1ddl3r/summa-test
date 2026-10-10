@@ -89,8 +89,9 @@ public class DnaGoalController {
                 throw new IllegalArgumentException("owner must be an active member: " + ownerRaw);
             }
             String rawDomainId = body.get("domainId");
+            String domainIdClean = null;
             if (rawDomainId != null && !rawDomainId.isBlank()) {
-                String domainIdClean = JsonHelpers.stripIdPrefix(rawDomainId);
+                domainIdClean = JsonHelpers.stripIdPrefix(rawDomainId);
                 Optional<com.summa.model.DnaDomain> domOpt = domainService.findById(domainIdClean);
                 if (domOpt.isEmpty()) {
                     throw new IllegalArgumentException("Domain not found: " + rawDomainId);
@@ -112,7 +113,7 @@ public class DnaGoalController {
 
             DnaGoal goal = goalService.create(
                 generatedId,
-                rawDomainId,
+                domainIdClean,
                 body.get("quarter"),
                 body.get("statementMd"),
                 ownerClean,
