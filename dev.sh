@@ -8,10 +8,17 @@ cd "$SCRIPT_DIR"
 
 # Load .env file if present (for local development convenience)
 # Parse line-by-line to avoid executing arbitrary shell commands.
+# Use parameter expansion to split on first '=' only, preserving '=' in values.
 if [ -f ".env" ]; then
-    while IFS='=' read -r key value || [ -n "$key" ]; do
+    while IFS= read -r line || [ -n "$line" ]; do
         # Skip comments and blank lines
-        [[ -z "$key" || "$key" =~ ^[[:space:]]*# ]] && continue
+        [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+        # Strip leading/trailing whitespace
+        line=$(echo "$line" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+        [[ -z "$line" ]] && continue
+        # Split on first '=' only
+        key="${line%%=*}"
+        value="${line#*=}"
         # Strip leading/trailing whitespace from key
         key=$(echo "$key" | xargs)
         # Remove surrounding quotes from value
@@ -132,7 +139,7 @@ echo "      Backend PID: $BACKEND_PID"
 # Wait for backend to start
 echo "      Waiting for backend on :8080..."
 BACKEND_READY=false
-for i in $(seq 1 30); do
+for i in {1..30}; do
     if curl -sf http://localhost:8080/api/health > /dev/null 2>&1; then
         echo "      Backend ready!"
         BACKEND_READY=true
@@ -161,7 +168,7 @@ popd > /dev/null
 # Wait for console to start
 echo "      Waiting for console on :3000..."
 CONSOLE_READY=false
-for i in $(seq 1 20); do
+for i in {1..20}; do
     if curl -sf http://localhost:3000 > /dev/null 2>&1; then
         echo "      Console ready!"
         CONSOLE_READY=true

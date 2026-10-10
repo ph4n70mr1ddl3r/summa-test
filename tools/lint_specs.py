@@ -43,7 +43,7 @@ DEF_RE = re.compile(r"^- \*\*([A-Z]{3})-(\d{3})\*\*")
 TOKEN_RE = re.compile(r"\b([A-Z]{3})-(\d{3})\b")
 RANGE_RE = re.compile(r"\b([A-Z]{3})-(\d{3})\s*(?:…|\.\.|\.\.\.)\s*(?:([A-Z]{3})-)?(\d{3})\b")
 KEYWORD_RE = re.compile(
-    r"\b(shall|should|may|must|never|refus[ea]?|forbid|denied?|carries|derives|evaluates)\b",
+    r"\b(shall|should|may|must|never|refus[ea]?|forbid|denied?)\b",
     re.IGNORECASE,
 )
 PLAN_SEC_RE = re.compile(r"^#{2,4}\s+(\d+(?:\.\d+)*)\.?\s", re.M)
@@ -127,7 +127,10 @@ def sections_in(text: str, where: str, errors: list[str]) -> set[str]:
 
 
 def module_number(path: Path) -> int:
-    return int(re.match(r"(\d+)-", path.name).group(1))
+    m = re.match(r"(\d+)-", path.name)
+    if m is None:
+        raise ValueError(f"unexpected spec filename format: {path.name!r}")
+    return int(m.group(1))
 
 
 def cross_listed_ids(trace: str, errors: list[str]) -> set[str]:

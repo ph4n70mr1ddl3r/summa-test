@@ -23,7 +23,7 @@ COPY --from=builder /build/backend/target/summa-backend-*.jar /app/
 RUN set -e && \
     JAR_COUNT=$(find /app -maxdepth 1 -name 'summa-backend-*.jar' ! -name '*-sources.jar' ! -name '*-plain.jar' | wc -l) && \
     [ "$JAR_COUNT" -eq 1 ] || { echo "ERROR: Expected 1 JAR, found $JAR_COUNT" >&2; exit 1; } && \
-    JAR=$(find /app -maxdepth 1 -name 'summa-backend-*.jar' ! -name '*-sources.jar' ! -name '*-plain.jar' -print -quit) && \
+    JAR=$(find /app -maxdepth 1 -name 'summa-backend-*.jar' ! -name '*-sources.jar' ! -name '*-plain.jar' | head -n 1) && \
     mv "$JAR" /app/app.jar && rm -f /app/*-plain.jar /app/*-sources.jar
 
 # Create data directories and non-root user
@@ -39,6 +39,4 @@ ENV SUMMA_DB_PATH=/data/db/summa.db \
 EXPOSE 8080
 
 USER 1000
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=20s \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/api/health || exit 1
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar"]

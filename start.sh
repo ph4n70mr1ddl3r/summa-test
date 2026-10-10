@@ -7,10 +7,20 @@ cd "$SCRIPT_DIR"
 
 # Load .env file if present (for local development convenience)
 # Parse line-by-line to avoid executing arbitrary shell commands.
+# Use parameter expansion to split on first '=' only, preserving '=' in values.
 if [ -f ".env" ]; then
-    while IFS='=' read -r key value || [ -n "$key" ]; do
-        [[ -z "$key" || "$key" =~ ^[[:space:]]*# ]] && continue
+    while IFS= read -r line || [ -n "$line" ]; do
+        # Skip comments and blank lines
+        [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+        # Strip leading/trailing whitespace
+        line=$(echo "$line" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+        [[ -z "$line" ]] && continue
+        # Split on first '=' only
+        key="${line%%=*}"
+        value="${line#*=}"
+        # Strip leading/trailing whitespace from key
         key=$(echo "$key" | xargs)
+        # Remove surrounding quotes from value
         value=$(echo "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"\(.*)"$/\1/' -e "s/^'\(.*\)'$/\1/")
         export "$key"="$value"
     done < ".env"
@@ -47,7 +57,7 @@ if [ ! -d "backend/target" ]; then
     echo "ERROR: backend/target/ not found. Run 'npm run build:backend' (or 'cd backend && mvn package') first."
     exit 1
 fi
-JAR_FILE=$(find backend/target -maxdepth 1 -name 'summa-backend-*.jar' ! -name '*-sources.jar' ! -name '*-plain.jar' -print -quit)
+JAR_FILE=$(find backend/target -maxdepth 1 -name 'summa-backend-*.jar' ! -name '*-sources.jar' ! -name '*-plain.jar' | head -n 1)
 if [ -z "$JAR_FILE" ]; then
     echo "ERROR: Backend JAR not found in backend/target/. Run 'npm run build:backend' (or 'cd backend && mvn package') first."
     exit 1

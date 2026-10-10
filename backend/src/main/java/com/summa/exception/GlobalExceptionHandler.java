@@ -1,5 +1,6 @@
 package com.summa.exception;
 
+import com.summa.constants.Defaults;
 import com.summa.model.AuditEvent;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.service.AuditService;
@@ -36,7 +37,7 @@ public class GlobalExceptionHandler {
             String objectId, String message, HttpStatus status) {
         String actor = currentActor();
         // Fall back to system actor so audit entries are never created with a null actor
-        if (actor == null) actor = com.summa.constants.Defaults.SYSTEM_ACTOR;
+        if (actor == null) actor = Defaults.SYSTEM_ACTOR;
         AuditEvent auditEvent = null;
         try {
             auditEvent = auditService.log(actor, auditAction, objectType, objectId, message);
