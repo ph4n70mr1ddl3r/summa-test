@@ -305,7 +305,8 @@ public class OrgService {
         humanRepository.save(human);
 
         // STG-031: Sweep DNA proposal attribution
-        for (DnaProposal prop : proposalRepository.findByProposedBy(id)) {
+        String cleanId = JsonHelpers.stripIdPrefix(id);
+        for (DnaProposal prop : proposalRepository.findByProposedBy(cleanId)) {
             prop.setProposedBy(OffboardingWalkService.ADMIN_BROADCAST);
             proposalRepository.save(prop);
         }

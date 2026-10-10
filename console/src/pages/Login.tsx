@@ -14,8 +14,6 @@ export default function Login() {
   let from = '/'
   if (state?.from && typeof state.from === 'object' && 'pathname' in state.from && typeof state.from.pathname === 'string') {
     const candidate = state.from.pathname
-    let decoded = candidate
-    try { decoded = decodeURIComponent(candidate) } catch { /* already raw */ }
     const isSafe = (s: string) =>
       typeof s === 'string' &&
       !s.includes('://') &&
@@ -23,6 +21,9 @@ export default function Login() {
       !s.toLowerCase().startsWith('javascript:') &&
       !s.startsWith('//') &&
       (s.startsWith('/') || s.length === 0)
+    // Decode once to catch percent-encoded protocol attacks (e.g. %2F%2Fevil.com)
+    let decoded = candidate
+    try { decoded = decodeURIComponent(candidate) } catch { /* already raw */ }
     from = isSafe(decoded) ? decoded : isSafe(candidate) ? candidate : '/'
   }
 

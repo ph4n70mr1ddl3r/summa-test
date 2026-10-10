@@ -78,30 +78,20 @@ public class DnaDecisionController {
             if (body.get("outcomeMd") == null || body.get("outcomeMd").isBlank()) {
                 throw new IllegalArgumentException("outcomeMd is required");
             }
-            String decidedByRaw = body.get("decidedBy");
-            if (decidedByRaw == null || decidedByRaw.isBlank()) {
-                throw new IllegalArgumentException("decidedBy is required");
-            }
-            String decidedByClean = JsonHelpers.stripIdPrefix(decidedByRaw);
-            // Validate that decidedBy references an existing human or agent
-            Optional<Human> deciderHuman = memberService.findHuman(decidedByClean);
-            Optional<Agent> deciderAgent = memberService.findAgent(decidedByClean);
-            if (deciderHuman.isEmpty() && deciderAgent.isEmpty()) {
-                throw new IllegalArgumentException("decidedBy does not reference an existing human or agent: " + decidedByRaw);
-            }
-            // Prevent client-side impersonation: the decidedBy must match the authenticated actor
-            // (no special-casing for "system" — system-decided decisions are filed server-side only)
-            String actorClean = JsonHelpers.stripIdPrefix(actor);
-            if (!actorClean.equals(decidedByClean)) {
-                throw new IllegalArgumentException("decidedBy must match the authenticated actor");
-            }
             String generatedId = UUID.randomUUID().toString();
+            String actorClean = JsonHelpers.stripIdPrefix(actor);
+            // Validate that the authenticated actor references an existing human or agent
+            Optional<Human> deciderHuman = memberService.findHuman(actorClean);
+            Optional<Agent> deciderAgent = memberService.findAgent(actorClean);
+            if (deciderHuman.isEmpty() && deciderAgent.isEmpty()) {
+                throw new IllegalArgumentException("Authenticated actor is not a valid human or agent: " + actorClean);
+            }
             DnaDecision decision = decisionService.create(
                 generatedId,
                 body.get("domainId"),
                 body.get("contextMd"),
                 body.get("outcomeMd"),
-                decidedByClean,
+                actorClean,
                 body.get("provenance"),
                 actor
             );

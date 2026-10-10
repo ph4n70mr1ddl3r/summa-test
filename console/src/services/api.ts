@@ -199,7 +199,6 @@ export interface Human {
   active: boolean;
   kind: 'human';
   createdAt?: number;
-  auth?: string;
   timezone?: string;
   workingHours?: string;
   updatedAt?: number;
@@ -310,8 +309,8 @@ export interface Run {
   workspaceId?: string;
   status: RunStatus;
   result?: string;
-  costTokens: number;
-  costUsd: number;
+  costTokens?: number;
+  costUsd?: number;
   createdAt?: number;
   updatedAt?: number;
   prompt?: string;

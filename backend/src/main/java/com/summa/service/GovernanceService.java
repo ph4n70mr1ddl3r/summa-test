@@ -203,7 +203,7 @@ public class GovernanceService {
     private Object parseValue(String value) {
         if (value == null) return null;
         try {
-            if (value.matches("-?\\d+(\\.\\d+)?")) {
+            if (value.matches("^-?\\d+(\\.\\d+)?$")) {
                 if (value.contains(".")) return Double.parseDouble(value);
                 return Long.parseLong(value);
             }
