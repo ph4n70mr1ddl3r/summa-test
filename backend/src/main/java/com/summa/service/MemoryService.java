@@ -16,6 +16,7 @@ import java.util.UUID;
 import com.summa.exception.AuthorizationDeniedException;
 import com.summa.exception.EntityNotFoundException;
 import com.summa.util.ScanUtils;
+import com.summa.util.JsonHelpers;
 
 @Service
 public class MemoryService {
@@ -54,8 +55,8 @@ public class MemoryService {
         item.setTainted(tainted);
 
         MemoryItem saved = memoryItemRepository.save(item);
-        auditService.log(memberId != null ? memberId : "system", "CREATE_MEMORY", "memory_item", 
-            saved.getId(), String.format("{\"tier\":\"%s\",\"tainted\":%b}", tier, tainted));
+        auditService.log(memberId != null ? memberId : "system", "CREATE_MEMORY", "memory_item",
+            saved.getId(), String.format("{\"tier\":%s,\"tainted\":%b}", JsonHelpers.jsonString(tier), tainted));
         return saved;
     }
 

@@ -1,7 +1,9 @@
 package com.summa.service;
 
 import com.summa.repository.DnaCardRepository;
+import com.summa.repository.DnaDomainRepository;
 import com.summa.model.DnaCard;
+import com.summa.model.DnaDomain;
 import com.summa.exception.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +23,9 @@ class DnaCardServiceTest {
     private DnaCardRepository cardRepository;
 
     @Mock
+    private DnaDomainRepository domainRepository;
+
+    @Mock
     private AuditService auditService;
 
     @Mock
@@ -33,6 +38,7 @@ class DnaCardServiceTest {
     void create_setsDefaults() {
         when(cardRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.of(new DnaDomain()));
 
         DnaCard result = cardService.create("card-1", "domain-1", "Title", "Definition", null, "admin");
 
@@ -47,6 +53,7 @@ class DnaCardServiceTest {
     void create_usesProvidedProvenance() {
         when(cardRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.of(new DnaDomain()));
 
         DnaCard result = cardService.create("card-1", "domain-1", "Title", "Definition", "my-prov", "admin");
 
@@ -179,6 +186,7 @@ class DnaCardServiceTest {
     void createDraft_setsDraftStatus() {
         when(cardRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.of(new DnaDomain()));
 
         DnaCard result = cardService.createDraft("card-draft", "domain-1", "Draft Title", "Def", "prov", "admin");
 

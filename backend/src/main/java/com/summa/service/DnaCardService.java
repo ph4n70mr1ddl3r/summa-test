@@ -1,6 +1,7 @@
 package com.summa.service;
 
 import com.summa.repository.DnaCardRepository;
+import com.summa.repository.DnaDomainRepository;
 import com.summa.model.DnaCard;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,12 +14,14 @@ import com.summa.exception.EntityNotFoundException;
 @Service
 public class DnaCardService {
     private final DnaCardRepository cardRepository;
+    private final DnaDomainRepository domainRepository;
     private final AuditService auditService;
     private final SecretsScanner secretsScanner;
 
-    public DnaCardService(DnaCardRepository cardRepository, AuditService auditService,
-                           SecretsScanner secretsScanner) {
+    public DnaCardService(DnaCardRepository cardRepository, DnaDomainRepository domainRepository,
+                          AuditService auditService, SecretsScanner secretsScanner) {
         this.cardRepository = cardRepository;
+        this.domainRepository = domainRepository;
         this.auditService = auditService;
         this.secretsScanner = secretsScanner;
     }
@@ -26,6 +29,10 @@ public class DnaCardService {
     @Transactional
     public DnaCard create(String id, String domainId, String title, String definitionMd,
                           String provenance, String actor) {
+        if (domainId != null && !domainId.isBlank()) {
+            domainRepository.findById(domainId).orElseThrow(
+                () -> new EntityNotFoundException("Domain not found: " + domainId));
+        }
         ScanUtils.scanForSecrets(definitionMd, actor, "dna_card", id, secretsScanner, auditService);
         DnaCard card = new DnaCard();
         card.setId(id);
@@ -92,7 +99,11 @@ public class DnaCardService {
 
     @Transactional
     public DnaCard createDraft(String id, String domainId, String title, String definitionMd,
-                                 String provenance, String actor) {
+                                  String provenance, String actor) {
+        if (domainId != null && !domainId.isBlank()) {
+            domainRepository.findById(domainId).orElseThrow(
+                () -> new EntityNotFoundException("Domain not found: " + domainId));
+        }
         ScanUtils.scanForSecrets(definitionMd, actor, "dna_card", id, secretsScanner, auditService);
         DnaCard card = new DnaCard();
         card.setId(id);

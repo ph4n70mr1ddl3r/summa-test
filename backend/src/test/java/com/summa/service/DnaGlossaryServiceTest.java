@@ -1,7 +1,9 @@
 package com.summa.service;
 
 import com.summa.repository.DnaGlossaryRepository;
+import com.summa.repository.DnaDomainRepository;
 import com.summa.model.DnaGlossary;
+import com.summa.model.DnaDomain;
 import com.summa.exception.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +23,9 @@ class DnaGlossaryServiceTest {
     private DnaGlossaryRepository glossaryRepository;
 
     @Mock
+    private DnaDomainRepository domainRepository;
+
+    @Mock
     private AuditService auditService;
 
     @Mock
@@ -33,6 +38,7 @@ class DnaGlossaryServiceTest {
     void create_setsDefaults() {
         when(glossaryRepository.findByTermAndDomainId("term", "domain-1")).thenReturn(Optional.empty());
         when(glossaryRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.of(new DnaDomain()));
 
         DnaGlossary result = glossaryService.create("gloss-1", "domain-1", "term", "Definition", "alias1,alias2", "admin");
 
@@ -48,6 +54,7 @@ class DnaGlossaryServiceTest {
         DnaGlossary existing = new DnaGlossary();
         existing.setTerm("term");
         existing.setStatus("active");
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.of(new DnaDomain()));
         when(glossaryRepository.findByTermAndDomainId("term", "domain-1")).thenReturn(Optional.of(existing));
 
         assertThrows(IllegalArgumentException.class, () ->
@@ -60,6 +67,7 @@ class DnaGlossaryServiceTest {
         DnaGlossary existing = new DnaGlossary();
         existing.setTerm("term");
         existing.setStatus("retired");
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.of(new DnaDomain()));
         when(glossaryRepository.findByTermAndDomainId("term", "domain-1")).thenReturn(Optional.of(existing));
         when(glossaryRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -73,6 +81,7 @@ class DnaGlossaryServiceTest {
     void create_passesSecretScan() {
         when(glossaryRepository.findByTermAndDomainId("term", "domain-1")).thenReturn(Optional.empty());
         when(glossaryRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.of(new DnaDomain()));
         doReturn(false).when(secretsScanner).hasSecrets(anyString());
 
         glossaryService.create("gloss-1", "domain-1", "term", "def", null, "admin");

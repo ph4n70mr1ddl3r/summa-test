@@ -7,6 +7,7 @@ import com.summa.model.Agent;
 import com.summa.service.MemberService;
 import com.summa.constants.Defaults;
 import com.summa.exception.EntityNotFoundException;
+import com.summa.util.JsonHelpers;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -41,7 +42,7 @@ public class GroupService {
 
         Group saved = groupRepository.save(group);
         auditService.log(actor, "CREATE", "group", group.getId(),
-            String.format("{\"name\":\"%s\"}", name));
+            String.format("{\"name\":%s}", JsonHelpers.jsonString(name)));
         return saved;
     }
 

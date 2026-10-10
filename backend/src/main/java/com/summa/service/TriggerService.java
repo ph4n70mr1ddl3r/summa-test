@@ -36,6 +36,9 @@ public class TriggerService {
     @Transactional
     public Trigger create(String name, String kind, String expression, String agentId,
                            String workspaceId, String criticality, String config, String actor) {
+        // Validate cron expression before persisting
+        CronExpression.parse(expression);
+
         Trigger trigger = new Trigger();
         trigger.setId(UUID.randomUUID().toString());
         trigger.setName(name);

@@ -1,6 +1,7 @@
 package com.summa.service;
 
 import com.summa.repository.DnaGlossaryRepository;
+import com.summa.repository.DnaDomainRepository;
 import com.summa.model.DnaGlossary;
 import com.summa.exception.EntityNotFoundException;
 import com.summa.util.JsonHelpers;
@@ -13,12 +14,14 @@ import java.util.Optional;
 @Service
 public class DnaGlossaryService {
     private final DnaGlossaryRepository glossaryRepository;
+    private final DnaDomainRepository domainRepository;
     private final AuditService auditService;
     private final SecretsScanner secretsScanner;
 
-    public DnaGlossaryService(DnaGlossaryRepository glossaryRepository, AuditService auditService,
-                              SecretsScanner secretsScanner) {
+    public DnaGlossaryService(DnaGlossaryRepository glossaryRepository, DnaDomainRepository domainRepository,
+                              AuditService auditService, SecretsScanner secretsScanner) {
         this.glossaryRepository = glossaryRepository;
+        this.domainRepository = domainRepository;
         this.auditService = auditService;
         this.secretsScanner = secretsScanner;
     }
@@ -26,6 +29,10 @@ public class DnaGlossaryService {
     @Transactional
     public DnaGlossary create(String id, String domainId, String term, String definition,
                                String aliases, String actor) {
+        if (domainId != null && !domainId.isBlank()) {
+            domainRepository.findById(domainId).orElseThrow(
+                () -> new EntityNotFoundException("Domain not found: " + domainId));
+        }
         // Check for duplicate term
         Optional<DnaGlossary> existing = glossaryRepository.findByTermAndDomainId(term, domainId);
         if (existing.isPresent() && !"retired".equals(existing.get().getStatus())) {

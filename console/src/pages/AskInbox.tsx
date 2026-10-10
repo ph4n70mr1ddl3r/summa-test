@@ -184,7 +184,7 @@ export default function AskInbox() {
                 <button
                   type="button"
                   onClick={() => handleWithdraw(ask.id)}
-                  disabled={currentUser === null || currentUser.userId !== ask.from}
+                  disabled={currentUser === null || currentUser.userId.replace(/^[ha]:/, '') !== ask.from}
                   className="px-3 py-1 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 rounded text-sm text-gray-300"
                   aria-label={`Withdraw ask from ${escapeHtml(ask.from)}`}
                 >

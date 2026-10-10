@@ -3,6 +3,7 @@ package com.summa.service;
 import com.summa.repository.TriggerRepository;
 import com.summa.repository.TriggerFiringRepository;
 import com.summa.model.Trigger;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,6 +29,9 @@ class TriggerServiceTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private ObjectMapper objectMapper;
+
     @InjectMocks
     private TriggerService triggerService;
 
@@ -37,7 +41,7 @@ class TriggerServiceTest {
         trigger.setId("t1");
         when(triggerRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        Trigger result = triggerService.create("t1", "schedule", "* * * * *", "agent-1", null, null, null, "actor");
+        Trigger result = triggerService.create("t1", "schedule", "0 * * * * *", "agent-1", null, null, null, "actor");
 
         assertNotNull(result);
         assertEquals("standard", result.getCriticality());
