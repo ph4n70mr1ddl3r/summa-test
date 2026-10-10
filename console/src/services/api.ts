@@ -602,7 +602,7 @@ export const api = {
       request<Agent>(`/agents/${id}/archive`, { method: 'POST' }),
     deny: (id: string) =>
       request<Agent>(`/agents/${id}/deny`, { method: 'POST' }),
-    promote: (id: string, placement: RbacRole) =>
+    promote: (id: string, placement: string) =>
       request<Record<string, unknown>>(`/agents/${id}/promote`, {
         method: 'POST',
         body: JSON.stringify({ placement }),

@@ -81,7 +81,12 @@ public class DnaReadService {
         // Single quotes must also be escaped — unescaped quotes break the FTS5
         // quoted-phrase boundary and allow operator injection.
         String escaped = safeQuery.replace("\\", "\\\\").replace("\"", "\\\"").replace("'", "''");
-        String match = "\"" + escaped + "\"*";
+        // Split on whitespace so multi-term queries match individual terms
+        // (FTS5 implicit AND) rather than the exact phrase.
+        String match = String.join(" ", java.util.Arrays.stream(escaped.split("\\s+"))
+                .filter(t -> !t.isEmpty())
+                .map(t -> "\"" + t + "\"*")
+                .toArray(String[]::new));
         String sql = "SELECT id, title, definition_md, statement_md, context_md, outcome_md, " +
                      "term, definition, content_md, domain_id, kind, status " +
                      "FROM dna_search_index " +

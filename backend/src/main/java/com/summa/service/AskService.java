@@ -584,7 +584,7 @@ public class AskService {
             throw new IllegalStateException("Can only withdraw pending asks, current status: " + ask.getStatus());
         }
 
-        if (originator == null || !originator.equals(ask.getFrom())) {
+        if (JsonHelpers.stripIdPrefix(originator) == null || !JsonHelpers.stripIdPrefix(originator).equals(ask.getFrom())) {
             throw new IllegalArgumentException("Only the originator can withdraw");
         }
 

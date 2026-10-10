@@ -238,7 +238,11 @@ def apply(root: Path, sc: Scenario) -> None:
             path.write_text(new, encoding="utf-8")
             continue
         text = path.read_text(encoding="utf-8")
-        assert old in text, f"{sc.name}: pattern {old!r} not found in {rel}"
+        try:
+            assert old in text, f"{sc.name}: pattern {old!r} not found in {rel}"
+        except AssertionError as e:
+            failures.append(str(e))
+            return
         path.write_text(text.replace(old, new, 1), encoding="utf-8")
 
 

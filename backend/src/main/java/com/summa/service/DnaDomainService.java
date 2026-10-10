@@ -138,7 +138,7 @@ public class DnaDomainService {
 
         domain.setName(newName);
         DnaDomain saved = domainRepository.save(domain);
-        auditService.logWithNode(actor, "RENAME", "dna_domain", id, null,
+        auditService.log(actor, "RENAME", "dna_domain", id,
             String.format("{\"newName\":%s}", JsonHelpers.jsonString(newName)));
         return saved;
     }

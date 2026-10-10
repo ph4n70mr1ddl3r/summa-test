@@ -109,12 +109,12 @@ public class BackupService {
         }
         Path normalizedResolved = resolved.toAbsolutePath().normalize();
         String tmpDirStr = tmpDir.toString();
-        String dataDirPrefix = dataDirStr + java.io.File.separator;
-        String tmpDirPrefix = tmpDirStr + java.io.File.separator;
-        if (!normalizedResolved.toString().equals(dataDirStr)
-                && !normalizedResolved.toString().startsWith(dataDirPrefix)
-                && !normalizedResolved.toString().equals(tmpDirStr)
-                && !normalizedResolved.toString().startsWith(tmpDirPrefix)) {
+        Path dataDirPath = Paths.get(dataDirStr);
+        Path tmpDirPath = Paths.get(tmpDirStr);
+        if (!normalizedResolved.equals(dataDirPath)
+                && !normalizedResolved.startsWith(dataDirPath)
+                && !normalizedResolved.equals(tmpDirPath)
+                && !normalizedResolved.startsWith(tmpDirPath)) {
             throw new IllegalArgumentException("Backup path must be under tmpdir or data directory");
         }
 
