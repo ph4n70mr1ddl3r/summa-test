@@ -107,7 +107,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T | undefin
       headers,
       signal: controller.signal,
     });
-    clearTimeout(timeoutId);
     if (!res.ok) {
       let message: string;
       try {

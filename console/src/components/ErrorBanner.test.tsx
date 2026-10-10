@@ -30,7 +30,7 @@ describe('ErrorBanner', () => {
   it('escapes special characters in message', () => {
     render(<ErrorBanner message="<script>alert(1)</script>" />)
     const alert = screen.getByRole('alert')
-    expect(alert.innerHTML).toContain('&lt;script&gt;alert(1)&lt;/script&gt;')
+    expect(alert.textContent).toBe('Failed to load: <script>alert(1)</script>')
   })
 
   it('has role=alert for accessibility', () => {

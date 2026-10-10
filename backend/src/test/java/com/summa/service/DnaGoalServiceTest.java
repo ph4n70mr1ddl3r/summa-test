@@ -3,19 +3,20 @@ package com.summa.service;
 import com.summa.repository.DnaGoalRepository;
 import com.summa.repository.DnaDomainRepository;
 import com.summa.model.DnaGoal;
-import com.summa.model.DnaDomain;
+import com.summa.model.Human;
+import com.summa.model.Agent;
+import com.summa.exception.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import com.summa.exception.EntityNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 class DnaGoalServiceTest {
@@ -39,92 +40,201 @@ class DnaGoalServiceTest {
     private DnaGoalService goalService;
 
     @Test
-    void create_throwsWhenDomainNotFound() {
-        when(domainRepository.findById("d1")).thenReturn(java.util.Optional.empty());
+    void create_setsDefaults() {
+        when(domainRepository.findById("domain-1")).thenReturn(java.util.Optional.of(new com.summa.model.DnaDomain()));
+        when(goalRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
+        Human human = new Human();
+        human.setId("human-1");
+        when(memberService.findHuman("h:human-1")).thenReturn(Optional.of(human));
 
-        assertThrows(EntityNotFoundException.class, () ->
-            goalService.create("g1", "d1", "Q1", "statement", "h:owner-1", null,
-                Instant.now(), null, "actor"));
-    }
-
-    @Test
-    void create_validGoal_returnsGoal() {
-        DnaDomain domain = new DnaDomain();
-        domain.setId("d1");
-        when(domainRepository.findById("d1")).thenReturn(java.util.Optional.of(domain));
-        when(memberService.findHuman("owner-1")).thenReturn(java.util.Optional.of(new com.summa.model.Human()));
-        when(goalRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-
-        DnaGoal result = goalService.create("g1", "d1", "Q1", "statement", "owner-1", null,
-            Instant.now(), null, "actor");
+        DnaGoal result = goalService.create("goal-1", "domain-1", "Q1", "Statement", "h:human-1", null, null, null, "admin");
 
         assertNotNull(result);
-        assertEquals("g1", result.getId());
+        assertEquals("goal-1", result.getId());
+        assertEquals("domain-1", result.getDomainId());
+        assertEquals("active", result.getStatus());
+        assertEquals("linked", result.getInject());
     }
 
     @Test
-    void updateStatus_validTransition() {
-        DnaGoal goal = new DnaGoal();
-        goal.setId("g1");
-        goal.setStatus("active");
-        when(goalRepository.findById("g1")).thenReturn(Optional.of(goal));
-        when(goalRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+    void create_validatesDomainExists() {
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.empty());
 
-        DnaGoal result = goalService.updateStatus("g1", "met", "admin");
+        assertThrows(EntityNotFoundException.class, () ->
+            goalService.create("goal-1", "domain-1", "Q1", "stmt", "h:human-1", null, null, null, "admin")
+        );
+    }
+
+    @Test
+    void create_skipsDomainValidationWhenBlank() {
+        when(goalRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
+        Human human = new Human();
+        human.setId("human-1");
+        when(memberService.findHuman("h:human-1")).thenReturn(Optional.of(human));
+
+        DnaGoal result = goalService.create("goal-1", "", "Q1", "stmt", "h:human-1", null, null, null, "admin");
+
+        assertNotNull(result);
+    }
+
+    @Test
+    void create_validatesOwnerExists() {
+        when(memberService.findHuman("h:human-1")).thenReturn(Optional.empty());
+        when(memberService.findAgent("h:human-1")).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () ->
+            goalService.create("goal-1", null, "Q1", "stmt", "h:human-1", null, null, null, "admin")
+        );
+    }
+
+    @Test
+    void create_succeedsWhenOwnerIsHuman() {
+        Human human = new Human();
+        human.setId("human-1");
+        when(memberService.findHuman("h:human-1")).thenReturn(Optional.of(human));
+        when(goalRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
+
+        DnaGoal result = goalService.create("goal-1", null, "Q1", "stmt", "h:human-1", null, null, null, "admin");
+
+        assertEquals("human-1", result.getOwner());
+    }
+
+    @Test
+    void create_succeedsWhenOwnerIsAgent() {
+        Agent agent = new Agent();
+        agent.setId("agent-1");
+        when(memberService.findAgent("a:agent-1")).thenReturn(Optional.of(agent));
+        when(goalRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
+
+        DnaGoal result = goalService.create("goal-1", null, "Q1", "stmt", "a:agent-1", null, null, null, "admin");
+
+        assertEquals("agent-1", result.getOwner());
+    }
+
+    @Test
+    void updateStatus_allowsActiveToMet() {
+        DnaGoal goal = new DnaGoal();
+        goal.setId("goal-1");
+        goal.setStatus("active");
+        when(goalRepository.findById("goal-1")).thenReturn(Optional.of(goal));
+        when(goalRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        DnaGoal result = goalService.updateStatus("goal-1", "met", "admin");
 
         assertEquals("met", result.getStatus());
     }
 
     @Test
-    void updateStatus_throwsForTerminalGoal() {
+    void updateStatus_rejectsTerminalStatusTransition() {
         DnaGoal goal = new DnaGoal();
-        goal.setId("g1");
+        goal.setId("goal-1");
         goal.setStatus("met");
-        when(goalRepository.findById("g1")).thenReturn(Optional.of(goal));
+        when(goalRepository.findById("goal-1")).thenReturn(Optional.of(goal));
 
         assertThrows(IllegalArgumentException.class, () ->
-            goalService.updateStatus("g1", "active", "admin"));
+            goalService.updateStatus("goal-1", "active", "admin")
+        );
     }
 
     @Test
-    void updateStatus_throwsForInvalidStatus() {
+    void updateStatus_rejectsInvalidStatus() {
         DnaGoal goal = new DnaGoal();
-        goal.setId("g1");
+        goal.setId("goal-1");
         goal.setStatus("active");
-        when(goalRepository.findById("g1")).thenReturn(Optional.of(goal));
+        when(goalRepository.findById("goal-1")).thenReturn(Optional.of(goal));
 
         assertThrows(IllegalArgumentException.class, () ->
-            goalService.updateStatus("g1", "invalid", "admin"));
+            goalService.updateStatus("goal-1", "invalid", "admin")
+        );
     }
 
     @Test
     void updateStatus_throwsWhenNotFound() {
-        when(goalRepository.findById("missing")).thenReturn(Optional.empty());
+        when(goalRepository.findById("goal-1")).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () ->
-            goalService.updateStatus("missing", "met", "admin"));
+            goalService.updateStatus("goal-1", "met", "admin")
+        );
     }
 
     @Test
-    void updateWindow_providesFromOnly() {
+    void updateWindow_allowsPartialUpdate() {
+        Instant now = Instant.now();
         DnaGoal goal = new DnaGoal();
-        goal.setId("g1");
-        when(goalRepository.findById("g1")).thenReturn(Optional.of(goal));
-        when(goalRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        goal.setId("goal-1");
+        goal.setStatus("active");
+        goal.setEffectiveFrom(now.minusSeconds(86400));
+        when(goalRepository.findById("goal-1")).thenReturn(Optional.of(goal));
+        when(goalRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Instant newFrom = Instant.now().plusSeconds(86400);
-        DnaGoal result = goalService.updateWindow("g1", newFrom, null, "admin");
+        DnaGoal result = goalService.updateWindow("goal-1", null, now.plusSeconds(86400), "admin");
 
-        assertEquals(newFrom, result.getEffectiveFrom());
+        // effectiveFrom is preserved since null was not provided
+        assertNotNull(result.getEffectiveFrom());
+        assertNotNull(result.getEffectiveTo());
     }
 
     @Test
-    void updateWindow_throwsWhenBothNull() {
+    void updateWindow_rejectsBothNull() {
         DnaGoal goal = new DnaGoal();
-        goal.setId("g1");
-        when(goalRepository.findById("g1")).thenReturn(Optional.of(goal));
+        goal.setId("goal-1");
+        goal.setStatus("active");
+        when(goalRepository.findById("goal-1")).thenReturn(Optional.of(goal));
 
         assertThrows(IllegalArgumentException.class, () ->
-            goalService.updateWindow("g1", null, null, "admin"));
+            goalService.updateWindow("goal-1", null, null, "admin")
+        );
+    }
+
+    @Test
+    void updateWindow_rejectsToBeforeFrom() {
+        DnaGoal goal = new DnaGoal();
+        goal.setId("goal-1");
+        goal.setStatus("active");
+        when(goalRepository.findById("goal-1")).thenReturn(Optional.of(goal));
+
+        Instant from = Instant.now();
+        Instant to = Instant.now().minusSeconds(86400);
+        assertThrows(IllegalArgumentException.class, () ->
+            goalService.updateWindow("goal-1", from, to, "admin")
+        );
+    }
+
+    @Test
+    void updateWindow_rejectsTerminalGoal() {
+        DnaGoal goal = new DnaGoal();
+        goal.setId("goal-1");
+        goal.setStatus("retired");
+        when(goalRepository.findById("goal-1")).thenReturn(Optional.of(goal));
+
+        assertThrows(IllegalArgumentException.class, () ->
+            goalService.updateWindow("goal-1", Instant.now(), Instant.now().plusSeconds(86400), "admin")
+        );
+    }
+
+    @Test
+    void findActiveInject_returnsMatchingGoals() {
+        Instant now = Instant.now();
+        when(goalRepository.findActiveInject("linked", now)).thenReturn(List.of());
+
+        List<DnaGoal> results = goalService.findActiveInject("linked", now);
+
+        assertNotNull(results);
+        verify(goalRepository).findActiveInject("linked", now);
+    }
+
+    @Test
+    void findAllActiveWindowed_returnsWindowedGoals() {
+        Instant now = Instant.now();
+        when(goalRepository.findAllActiveWindowed(now)).thenReturn(List.of());
+
+        List<DnaGoal> results = goalService.findAllActiveWindowed(now);
+
+        assertNotNull(results);
+        verify(goalRepository).findAllActiveWindowed(now);
     }
 }

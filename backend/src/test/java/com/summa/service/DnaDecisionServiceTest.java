@@ -3,7 +3,8 @@ package com.summa.service;
 import com.summa.repository.DnaDecisionRepository;
 import com.summa.repository.DnaDomainRepository;
 import com.summa.model.DnaDecision;
-import com.summa.model.DnaDomain;
+import com.summa.model.Human;
+import com.summa.exception.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -13,9 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import com.summa.exception.EntityNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 class DnaDecisionServiceTest {
@@ -39,55 +38,100 @@ class DnaDecisionServiceTest {
     private DnaDecisionService decisionService;
 
     @Test
-    void create_throwsWhenDomainNotFound() {
-        when(domainRepository.findById("domain-1")).thenReturn(java.util.Optional.empty());
+    void create_setsDefaults() {
+        when(domainRepository.findById("domain-1")).thenReturn(java.util.Optional.of(new com.summa.model.DnaDomain()));
+        when(decisionRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
 
-        assertThrows(EntityNotFoundException.class, () ->
-            decisionService.create("d1", "domain-1", "context", "outcome",
-                "h:decider", "provenance", "actor"));
-    }
-
-    @Test
-    void create_throwsWhenDomainNotFound_secondCall() {
-        when(domainRepository.findById("d1")).thenReturn(java.util.Optional.empty());
-        assertThrows(EntityNotFoundException.class, () ->
-            decisionService.create("d1", "d1", "ctx", "out", "h:decider", "provenance", "actor"));
-    }
-
-    @Test
-    void create_validDecision_defaultsProvenance() {
-        DnaDomain domain = new DnaDomain();
-        domain.setId("d1");
-        when(domainRepository.findById("d1")).thenReturn(java.util.Optional.of(domain));
-        when(decisionRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-
-        DnaDecision result = decisionService.create("d1", "d1", "ctx", "out",
-            "h:decider", null, "actor");
+        DnaDecision result = decisionService.create("dec-1", "domain-1", "Context", "Outcome", "h:human-1", null, "admin");
 
         assertNotNull(result);
-        assertEquals("d1", result.getDomainId());
+        assertEquals("dec-1", result.getId());
+        assertEquals("domain-1", result.getDomainId());
         assertEquals("{}", result.getProvenance());
     }
 
     @Test
-    void findById_returnsPresent() {
-        DnaDecision decision = new DnaDecision();
-        decision.setId("d1");
-        when(decisionRepository.findById("d1")).thenReturn(Optional.of(decision));
+    void create_usesProvidedProvenance() {
+        when(domainRepository.findById("domain-1")).thenReturn(java.util.Optional.of(new com.summa.model.DnaDomain()));
+        when(decisionRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
 
-        Optional<DnaDecision> result = decisionService.findById("d1");
+        DnaDecision result = decisionService.create("dec-1", "domain-1", "ctx", "out", "h:human-1", "my-prov", "admin");
 
-        assertTrue(result.isPresent());
+        assertEquals("my-prov", result.getProvenance());
     }
 
     @Test
-    void findByDomain_returnsList() {
-        DnaDecision d = new DnaDecision();
-        d.setId("d1");
-        when(decisionRepository.findByDomainId("domain-1")).thenReturn(List.of(d));
+    void create_validatesDomainExists() {
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.empty());
 
-        List<DnaDecision> result = decisionService.findByDomain("domain-1");
+        assertThrows(EntityNotFoundException.class, () ->
+            decisionService.create("dec-1", "domain-1", "ctx", "out", "h:human-1", "prov", "admin")
+        );
+    }
 
-        assertEquals(1, result.size());
+    @Test
+    void create_skipsDomainValidationWhenBlank() {
+        when(decisionRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
+
+        DnaDecision result = decisionService.create("dec-1", "", "ctx", "out", "h:human-1", "prov", "admin");
+
+        assertNotNull(result);
+    }
+
+    @Test
+    void create_stripsIdPrefixFromDecidedBy() {
+        when(decisionRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
+
+        DnaDecision result = decisionService.create("dec-1", null, "ctx", "out", "h:human-1", "prov", "admin");
+
+        assertEquals("human-1", result.getDecidedBy());
+    }
+
+    @Test
+    void findById_returnsPresent() {
+        DnaDecision dec = new DnaDecision();
+        dec.setId("dec-1");
+        when(decisionRepository.findById("dec-1")).thenReturn(Optional.of(dec));
+
+        Optional<DnaDecision> result = decisionService.findById("dec-1");
+
+        assertTrue(result.isPresent());
+        assertEquals("dec-1", result.get().getId());
+    }
+
+    @Test
+    void findById_returnsEmptyWhenNotFound() {
+        when(decisionRepository.findById("dec-1")).thenReturn(Optional.empty());
+
+        Optional<DnaDecision> result = decisionService.findById("dec-1");
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void findByDomain_returnsDecisions() {
+        DnaDecision dec = new DnaDecision();
+        dec.setId("dec-1");
+        when(decisionRepository.findByDomainId("domain-1")).thenReturn(List.of(dec));
+
+        List<DnaDecision> results = decisionService.findByDomain("domain-1");
+
+        assertEquals(1, results.size());
+        assertEquals("dec-1", results.get(0).getId());
+    }
+
+    @Test
+    void findAll_returnsAll() {
+        DnaDecision dec = new DnaDecision();
+        dec.setId("dec-1");
+        when(decisionRepository.findAll()).thenReturn(List.of(dec));
+
+        List<DnaDecision> results = decisionService.findAll();
+
+        assertEquals(1, results.size());
     }
 }

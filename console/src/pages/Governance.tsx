@@ -55,8 +55,9 @@ export default function Governance() {
     setSaving(`${section}:${key}`)
     setActionError(null)
     try {
-      const numValue = currentValue === '' ? NaN : Number(currentValue)
-      const body = currentValue === '' ? {} : { [key]: Number.isNaN(numValue) ? currentValue : numValue }
+      const trimmed = currentValue.trim()
+      const numValue = trimmed === '' ? NaN : Number(trimmed)
+      const body = trimmed === '' ? {} : { [key]: Number.isNaN(numValue) ? trimmed : numValue }
       if (Object.keys(body).length === 0) {
         // Clearing a value: remove from server state and local cache
         const deleteBody = { [key]: null }
@@ -70,7 +71,7 @@ export default function Governance() {
       if (section === 'policies') await api.governance.updatePolicies(body)
       else await api.governance.updateQuotas(body)
       // Preserve the original type — if it was a number string, store as number; otherwise string
-       const savedValue = currentValue === '' ? null : (Number.isNaN(numValue) ? currentValue : numValue)
+       const savedValue = trimmed === '' ? null : (Number.isNaN(numValue) ? trimmed : numValue)
       if (section === 'policies') setPolicies(prev => ({ ...prev, [key]: savedValue }))
       else setQuotas(prev => ({ ...prev, [key]: savedValue }))
       setEditValues(prev => { const next = { ...prev }; delete next[key]; return next })

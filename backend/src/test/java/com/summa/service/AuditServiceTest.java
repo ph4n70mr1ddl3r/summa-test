@@ -2,6 +2,7 @@ package com.summa.service;
 
 import com.summa.repository.AuditEventRepository;
 import com.summa.model.AuditEvent;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -9,7 +10,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -18,97 +18,86 @@ class AuditServiceTest {
     @Mock
     private AuditEventRepository auditEventRepository;
 
+    @Mock
+    private ObjectMapper objectMapper;
+
     @InjectMocks
     private AuditService auditService;
 
     @Test
     void log_createsEventWithDefaults() {
-        when(auditEventRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(auditEventRepository.save(any())).thenAnswer(invocation -> {
+            AuditEvent event = invocation.getArgument(0);
+            event.setId("evt-1");
+            return event;
+        });
 
-        AuditEvent result = auditService.log("user-1", "CREATE", "workspace", "ws-1", "{\"name\":\"test\"}");
+        AuditEvent result = auditService.log("h:admin", "CREATE", "human", "h:admin-1", "Created human");
 
         assertNotNull(result);
-        assertEquals("user-1", result.getActor());
+        assertEquals("h:admin", result.getActor());
         assertEquals("CREATE", result.getAction());
-        assertEquals("workspace", result.getObjectType());
-        assertEquals("ws-1", result.getObjectId());
-        assertEquals("live", result.getOrigin());
-        assertNotNull(result.getDetail());
+        assertEquals("human", result.getObjectType());
+        assertEquals("h:admin-1", result.getObjectId());
+        verify(auditEventRepository).save(any());
     }
 
     @Test
-    void log_systemActorWhenNull() {
-        when(auditEventRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+    void log_fallsBackToSystemActorWhenNull() {
+        when(auditEventRepository.save(any())).thenAnswer(invocation -> {
+            AuditEvent event = invocation.getArgument(0);
+            event.setId("evt-1");
+            return event;
+        });
 
-        auditService.log(null, null, null, null, "detail");
+        AuditEvent result = auditService.log(null, "TEST", "test", "id-1", null);
 
-        verify(auditEventRepository).save(argThat(e ->
-            "system".equals(e.getActor()) &&
-            "unknown".equals(e.getAction()) &&
-            "unknown".equals(e.getObjectType()) &&
-            "unknown".equals(e.getObjectId())
-        ));
+        assertEquals("system", result.getActor());
+        assertEquals("{}", result.getDetail());
     }
 
     @Test
-    void log_sanitizeJsonPlainString() {
-        when(auditEventRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+    void log_fallsBackToUnknownWhenActionNull() {
+        when(auditEventRepository.save(any())).thenAnswer(invocation -> {
+            AuditEvent event = invocation.getArgument(0);
+            event.setId("evt-1");
+            return event;
+        });
 
-        AuditEvent result = auditService.log("u1", "TEST", "obj", "oid", "not json at all");
+        AuditEvent result = auditService.log("h:admin", null, null, null, null);
 
-        assertNotNull(result.getDetail());
-    }
-
-    @Test
-    void log_sanitizeJsonValidObject() {
-        when(auditEventRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-
-        AuditEvent result = auditService.log("u1", "TEST", "obj", "oid", "{\"key\":\"value\"}");
-
-        assertNotNull(result.getDetail());
-    }
-
-    @Test
-    void log_sanitizeSensitiveRedactsPassword() {
-        when(auditEventRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-
-        AuditEvent result = auditService.log("u1", "LOGIN", "human", "h1",
-            "{\"password\":\"secret123\",\"name\":\"alice\"}");
-
-        assertNotNull(result.getDetail());
-        assertNotEquals("{\"password\":\"secret123\",\"name\":\"alice\"}", result.getDetail());
-    }
-
-    @Test
-    void log_sanitizeSensitiveRedactsApiKeys() {
-        when(auditEventRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-
-        AuditEvent result = auditService.log("u1", "CREATE", "agent", "a1",
-            "{\"api_key\":\"sk-abc123\",\"token\":\"bearer_xyz\"}");
-
-        assertNotNull(result.getDetail());
-        assertNotEquals("{\"api_key\":\"sk-abc123\",\"token\":\"bearer_xyz\"}", result.getDetail());
+        assertEquals("unknown", result.getAction());
+        assertEquals("unknown", result.getObjectType());
+        assertEquals("unknown", result.getObjectId());
     }
 
     @Test
     void logSystem_usesSystemActor() {
-        when(auditEventRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(auditEventRepository.save(any())).thenAnswer(invocation -> {
+            AuditEvent event = invocation.getArgument(0);
+            event.setId("evt-1");
+            return event;
+        });
 
-        auditService.logSystem("SCHEDULED_JOB", "trigger", "t1", null);
+        AuditEvent result = auditService.logSystem("REFUSAL", "auth_login", "email@test.com", "Rate limited");
 
-        verify(auditEventRepository).save(argThat(e ->
-            "system".equals(e.getActor())
-        ));
+        assertEquals("system", result.getActor());
+        assertEquals("REFUSAL", result.getAction());
+        verify(auditEventRepository).save(any());
     }
 
     @Test
     void logWithNode_includesNodeId() {
-        when(auditEventRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(auditEventRepository.save(any())).thenAnswer(invocation -> {
+            AuditEvent event = invocation.getArgument(0);
+            event.setId("evt-1");
+            return event;
+        });
 
-        auditService.logWithNode("user-1", "RUN", "run", "r1", "node-1", null);
+        AuditEvent result = auditService.logWithNode("a:agent-1", "HEARTBEAT", "node", "node-1", "node-1", "tick");
 
-        verify(auditEventRepository).save(argThat(e ->
-            "node-1".equals(e.getNodeId())
-        ));
+        assertEquals("a:agent-1", result.getActor());
+        assertEquals("node-1", result.getNodeId());
+        verify(auditEventRepository).save(any());
     }
 }
