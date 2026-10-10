@@ -7,12 +7,12 @@ this surface is the PRN-009 form — refuse, audit, ask where a human decision i
 ## Auth & org
 
 - **API-001** — `POST /auth/login` (human sessions — local email+password auth with JWT
-  session tokens; the OIDC token exchange against the deployment's Keycloak, CFG-020, is
-  deferred and will extend this endpoint); PATs for agents/services.
+  session tokens; Keycloak over OIDC per CFG-020 is planned but not yet wired); PATs for
+  agents/services.
 - **API-002** — `POST /auth/pats` · `POST /auth/pats/:id/revoke` — scoped create, expiry +
   rotation + last-used stamps (SEC-004).
-- **API-003** — `POST /org/bootstrap` — first-run create company + first admin (the seed
-  admin provisioned in the deployment's Keycloak, CFG-020); refused once any human exists
+- **API-003** — `POST /org/bootstrap` — first-run create company + first admin (local seed
+  admin via email+password); refused once any human exists
   (transactional singleton guard, not check-then-act).
 - **API-004** — `CRUD /org/humans` · `/org/members` · `GET /org/lineage`.
 - **API-005** — `POST /org/humans/:id/erasure` — admin, audited, honors `data_holds`

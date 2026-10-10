@@ -77,13 +77,13 @@ playbooks      (id, name, criticality 'standard'|'critical' default 'standard',
                 version int default 1, body json default '{}', status 'draft'|'active'|'retired'
                 default 'active', created_by member?, created_at, updated_at?
  spend_ledger   (id, member_id, run_id?, spawn_id?, kind 'reserve'|'settle'|'release',
-                 tokens_in REAL default 0, tokens_out BIGINT default 0, cost, pricing_version, at, created_at)
-trigger_firings (id, trigger_id, idempotency_key, fired_at, run_id?)
-external_writes (id, run_id, connector, op, idempotency_key,
-                status 'prepared'|'committed'|'compensated'|'failed', prepared_at, resolved_at?,
-                created_at)
- data_holds     (id, kind 'member'|'domain', subject_id, reason_md, created_by, released_at?,
+                  tokens_in REAL default 0, tokens_out BIGINT default 0, cost, pricing_version, at, created_at)
+ trigger_firings(id, trigger_id, idempotency_key, fired_at, run_id?)
+ external_writes(id, run_id, connector, op, idempotency_key,
+                 status 'prepared'|'committed'|'compensated'|'failed', prepared_at, resolved_at?,
                  created_at)
+ data_holds     (id, kind 'member'|'domain', subject_id, reason_md, created_by, released_at?,
+                  created_at)
  spawn_requests (id, requester_id, template_id?, custom_role, class 'persistent'|'ephemeral'|'ephemeral-subagent',
                  purpose, workspace_bindings, scope_ceiling, budget_cap, ttl_hours,
                  requested_by_human_id?, gate_target?, status 'requested'|'approved'|'halted'|'archived' default 'requested',

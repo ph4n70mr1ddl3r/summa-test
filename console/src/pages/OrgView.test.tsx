@@ -59,7 +59,7 @@ describe('OrgView page', () => {
         { id: 'h2', kind: 'human', name: 'Bob', email: 'bob@example.com', rbac: 'viewer', active: true },
       ],
       total: 2,
-    } as unknown as { members: (import('../services/api').Human | import('../services/api').Agent)[]; total: number })
+    } as { members: (import('../services/api').Human | import('../services/api').Agent)[]; total: number })
     vi.mocked(apiModule.api.groups.list).mockResolvedValue([])
     render(<OrgView />)
     await waitFor(() => {
@@ -74,7 +74,7 @@ describe('OrgView page', () => {
         { id: 'a1', kind: 'agent', name: 'Agent-One', ownerHumanId: 'h1', class: 'persistent', status: 'active' },
       ],
       total: 1,
-    } as unknown as { members: (import('../services/api').Human | import('../services/api').Agent)[]; total: number })
+    } as { members: (import('../services/api').Human | import('../services/api').Agent)[]; total: number })
     vi.mocked(apiModule.api.groups.list).mockResolvedValue([])
     render(<OrgView />)
     await waitFor(() => {

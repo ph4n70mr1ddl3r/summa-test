@@ -39,7 +39,7 @@ describe('BoardTasks page', () => {
     const { container } = render(<BoardTasks />)
     await waitFor(() => {
       expect(container.textContent).toContain('Fix login bug')
-      expect(container.textContent).toContain('open')
+      expect(container.textContent).toContain('Open')
       expect(container.textContent).toContain('Priority: 1')
     })
   })

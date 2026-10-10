@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatDate, tierColor, spawnStatusColor, triggerStatusColor, triggerCriticalityColor, boardTaskStatusColor, roleTemplateStatusColor, dnaCardStatusColor, dnaGoalStatusColor, dnaRuleStatusColor, nodeStatusColor, groupStatusColor, rbacRoleColor, initiativeStatusColor, runStatusColor, agentStatusColor, domainAccessColor, proposalStatusColor, proposalKindColor, countParticipants, truncateSnippet } from './formatting'
+import { formatDate, tierColor, spawnStatusColor, triggerStatusColor, triggerCriticalityColor, boardTaskStatusColor, BOARD_TASK_STATUS_DISPLAY, roleTemplateStatusColor, dnaCardStatusColor, dnaGoalStatusColor, dnaRuleStatusColor, nodeStatusColor, groupStatusColor, rbacRoleColor, initiativeStatusColor, runStatusColor, agentStatusColor, domainAccessColor, proposalStatusColor, proposalKindColor, countParticipants, truncateSnippet } from './formatting'
 import type { AskTier, SpawnStatus, TriggerStatus, BoardTaskStatus, RoleTemplateStatus, DnaCardStatus, DnaGoalStatus, DnaRuleStatus, NodeStatus, GroupStatus, InitiativeStatus, RunStatus, AgentStatus } from '../types'
 import type { RbacRole } from '../types'
 
@@ -97,6 +97,15 @@ describe('boardTaskStatusColor', () => {
 
   it('returns exact classes for open', () => {
     expect(boardTaskStatusColor('open' as BoardTaskStatus)).toBe('bg-yellow-900/50 text-yellow-400')
+  })
+})
+
+describe('BOARD_TASK_STATUS_DISPLAY', () => {
+  it('maps all BoardTaskStatus values to human-readable strings', () => {
+    expect(BOARD_TASK_STATUS_DISPLAY['open']).toBe('Open')
+    expect(BOARD_TASK_STATUS_DISPLAY['in_progress']).toBe('In Progress')
+    expect(BOARD_TASK_STATUS_DISPLAY['done']).toBe('Done')
+    expect(BOARD_TASK_STATUS_DISPLAY['cancelled']).toBe('Cancelled')
   })
 })
 

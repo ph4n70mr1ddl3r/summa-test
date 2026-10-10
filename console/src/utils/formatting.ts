@@ -103,6 +103,13 @@ export function boardTaskStatusColor(status: BoardTaskStatus): string {
   }
 }
 
+export const BOARD_TASK_STATUS_DISPLAY: Record<BoardTaskStatus, string> = {
+  open: 'Open',
+  in_progress: 'In Progress',
+  done: 'Done',
+  cancelled: 'Cancelled',
+}
+
 export function roleTemplateStatusColor(status: RoleTemplateStatus): string {
   switch (status) {
     case 'active': return 'bg-green-900/50 text-green-400'

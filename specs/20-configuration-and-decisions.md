@@ -44,13 +44,14 @@ trigger; the mechanism it tunes is already designed (NFR-022). Defaults live beh
 - **CFG-019** — Injection layer token budgets: org snapshot ~1k, glossary ~2k, rules ~4k,
   goal slice ~1k (defaults) — soft budgets; overflow demotes per the DRP-007 order rather
   than truncating (DRP-004).
-- **CFG-020** — Human auth v1: [DEFERRED] the deployment's own Keycloak over OIDC — decided (v2.58):
+- **CFG-020** — Human auth v1: the deployment's own Keycloak over OIDC — decided (v2.58):
   Summa stores no human credentials (SEC-001) — `humans.auth` carries the Keycloak subject
   link, never credential material — "local accounts" are Keycloak realm accounts, and company
   SSO is Keycloak brokering the company's IdP: the same OIDC surface to Summa either way,
   which is why the original local-vs-SSO either/or collapsed. RBAC, PATs, and sessions stay
   Summa's own (SEC-004/005); lockout recovery rides Keycloak's realm-admin paths (SEC-002).
-  Current implementation: local email+password auth with JWT session tokens.
+  Current implementation: local email+password auth with JWT session tokens; Keycloak wiring
+  pending per SEC-001.
 - **CFG-021** — PAT default lifetime: default 90 days — the expiry SEC-004 names when a
   create sets none; per-token expiry, rotation, and revocation stay row-level (DAT-124).
 - **CFG-022** — External-write grace window & reconciliation cadence: both default 5 minutes

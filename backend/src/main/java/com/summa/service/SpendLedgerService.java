@@ -18,6 +18,7 @@ public class SpendLedgerService {
         this.auditService = auditService;
     }
 
+    @Transactional(readOnly = true)
     public Optional<SpendLedger> findById(String id) {
         return repository.findById(id);
     }

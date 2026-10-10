@@ -137,14 +137,17 @@ public class OrgService {
         return humanRepository.findByIdForUpdate(id);
     }
 
+    @Transactional(readOnly = true)
     public List<Human> findAllHumans() {
         return humanRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public boolean isInitialized() {
         return humanRepository.count() > 0;
     }
 
+    @Transactional(readOnly = true)
     public List<Human> findAllActiveHumans() {
         return humanRepository.findAllActive();
     }

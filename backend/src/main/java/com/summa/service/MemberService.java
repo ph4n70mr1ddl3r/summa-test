@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 import java.util.List;
+import com.summa.util.JsonHelpers;
 
 @Service
 public class MemberService {
@@ -66,7 +67,8 @@ public class MemberService {
 
     public boolean isAdmin(String actorId) {
         if (actorId == null || Defaults.SYSTEM_ACTOR.equals(actorId)) return false;
-        Optional<Human> humanOpt = findHuman(actorId);
+        String cleanId = JsonHelpers.stripIdPrefix(actorId);
+        Optional<Human> humanOpt = findHuman(cleanId);
         return humanOpt.isPresent() && RbacRole.ADMIN.getValue().equals(humanOpt.get().getRbac());
     }
 

@@ -22,7 +22,7 @@ services:
       - SUMMA_DNA_REPO=${SUMMA_DNA_REPO:-/data/dna}
       # JWT secret must be set and at least 32 characters (validated at startup by JwtAuthenticationFilter.validateSecret)
       # Ensure SUMMA_AUTH_JWT_SECRET is set in .env before starting — see .env.example.
-      - SUMMA_AUTH_JWT_SECRET=${SUMMA_AUTH_JWT_SECRET:-}
+      - SUMMA_AUTH_JWT_SECRET=${SUMMA_AUTH_JWT_SECRET}
       - SUMMA_AUTH_JWT_EXPIRATION=${SUMMA_AUTH_JWT_EXPIRATION:-86400000}
       - SUMMA_CORS_ORIGINS=${SUMMA_CORS_ORIGINS:-}
       - SUMMA_SPEND_CEILING=${SUMMA_SPEND_CEILING:-1000000}

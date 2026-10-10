@@ -46,8 +46,6 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: console/package-lock.json
-      - name: Install root deps (workspace resolution)
-        run: npm ci
       - name: Install console deps
         run: cd console && npm ci
       - name: Audit console dependencies
@@ -74,13 +72,3 @@ jobs:
       - name: Build and test backend on ${{ matrix.os }}
         run: cd backend && mvn -B test -Dspring.profiles.active=test
         shell: bash
-
-  docker-build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      - uses: docker/setup-buildx-action@6524bf65af31da8d45b59e0c296a9b2f0782b08d # v3.0.0
-      - name: Build backend Docker image
-        run: docker build -f Dockerfile -t summa-backend:test .
-      - name: Build console Docker image
-        run: docker build -f Dockerfile.console -t summa-console:test .

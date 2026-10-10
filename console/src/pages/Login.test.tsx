@@ -19,6 +19,7 @@ vi.mock('../services/api', () => ({
       this.status = status
     }
   },
+  isAuthenticated: vi.fn(),
 }))
 
 const navigateMock = vi.fn()
@@ -66,8 +67,7 @@ describe('Login page', () => {
   })
 
   it('displays error on login failure', async () => {
-    const ApiError = (apiModule as unknown as { ApiError: new (m: string, s: number) => { status: number } }).ApiError
-    vi.mocked(apiModule.api.auth.login).mockRejectedValue(new ApiError('Invalid credentials', 401))
+    vi.mocked(apiModule.api.auth.login).mockRejectedValue(new apiModule.ApiError('Invalid credentials', 401))
     const { getByLabelText, getByText, findByText } = renderLogin()
     fireEvent.change(getByLabelText(/email/i), { target: { value: 'bad@example.com' } })
     fireEvent.change(getByLabelText(/password/i), { target: { value: 'wrong' } })
@@ -141,8 +141,7 @@ describe('Login page', () => {
   })
 
   it('displays rate-limit message on 429', async () => {
-    const ApiError = (apiModule as unknown as { ApiError: new (m: string, s: number) => { status: number } }).ApiError
-    vi.mocked(apiModule.api.auth.login).mockRejectedValue(new ApiError('Too many attempts', 429))
+    vi.mocked(apiModule.api.auth.login).mockRejectedValue(new apiModule.ApiError('Too many attempts', 429))
     const { getByLabelText, getByText, findByText } = renderLogin()
     fireEvent.change(getByLabelText(/email/i), { target: { value: 'test@example.com' } })
     fireEvent.change(getByLabelText(/password/i), { target: { value: 'password123' } })

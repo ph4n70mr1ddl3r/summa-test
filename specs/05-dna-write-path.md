@@ -18,7 +18,7 @@ Source: PLAN.md §4.3.
 
 ## Review queue and SLA
 
-- **DWP-020** — Proposals carry `reviewedBy` derived from the domain's `review_sla_days`
+- **DWP-020** — Proposals carry `review_by` derived from the domain's `review_sla_days`
   (default 7); a breach escalates to the admin and a stale queue surfaces in the owner's
   digest.
 - **DWP-021** — The queue belongs to the domain, not the owner's inbox: it renders to whoever

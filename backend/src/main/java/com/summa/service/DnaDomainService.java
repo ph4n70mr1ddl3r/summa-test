@@ -90,18 +90,22 @@ public class DnaDomainService {
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public Optional<DnaDomain> findById(String id) {
         return domainRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public Optional<DnaDomain> findByName(String name) {
         return domainRepository.findByNameNotArchived(name);
     }
 
+    @Transactional(readOnly = true)
     public List<DnaDomain> findAll() {
         return domainRepository.findAllActive();
     }
 
+    @Transactional(readOnly = true)
     public List<DnaDomain> findAllIncludingArchived() {
         return domainRepository.findAll();
     }

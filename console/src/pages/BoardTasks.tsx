@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { BoardTask } from '../types'
-import { boardTaskStatusColor, escapeHtml, formatDate } from '../utils/formatting'
+import { boardTaskStatusColor, BOARD_TASK_STATUS_DISPLAY, escapeHtml, formatDate } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function BoardTasks() {
@@ -55,7 +55,7 @@ export default function BoardTasks() {
                     <p className="text-xs text-gray-500">Completed: {formatDate(task.completedAt)}</p>
                   )}
                 </div>
-                <span className={`text-xs px-2 py-1 rounded ${boardTaskStatusColor(task.status)}`} aria-label={`Status: ${task.status}`}>{task.status}</span>
+                <span className={`text-xs px-2 py-1 rounded ${boardTaskStatusColor(task.status)}`} aria-label={`Status: ${BOARD_TASK_STATUS_DISPLAY[task.status]}`}>{BOARD_TASK_STATUS_DISPLAY[task.status]}</span>
               </div>
             </div>
           ))}

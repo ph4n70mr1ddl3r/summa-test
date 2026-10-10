@@ -234,7 +234,7 @@ cp .env.example .env
 
 docker compose up -d --build
 ```
-> `application.yml` uses `${SUMMA_AUTH_JWT_SECRET:?JWT secret is required}` which fails fast if the variable is unset. Docker Compose passes the raw `.env` value (no default), so an unset variable propagates as empty and triggers the same guard. Compose auto-loads `.env` from the current directory.
+> `application.yml` resolves `${SUMMA_AUTH_JWT_SECRET}` without a default; an unset variable propagates as empty and triggers startup validation in `JwtAuthenticationFilter.validateSecret`. Docker Compose passes the raw `.env` value (no default), so an unset variable reaches the app as empty. Compose auto-loads `.env` from the current directory.
 
 ### OCI Images (Podman)
 ```bash

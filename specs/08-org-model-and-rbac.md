@@ -9,7 +9,7 @@ Source: PLAN.md §5.
 - **ORG-002** — Human RBAC roles: `admin` (everything), `owner` (one or more DNA domains +
   their agents), `member` (work, propose DNA, spawn within policy), `viewer` (read-only in
   full). Human authn is local email+password with JWT sessions (SEC-001); Keycloak over OIDC
-  (CFG-020) is deferred. RBAC is Summa's own.
+  (CFG-020) is planned but not yet wired. RBAC is Summa's own.
 - **ORG-020** — **Viewer total no-write surface**: a viewer is never an ask target, assignee,
   deputy, sponsor, lead, owner, group Leader, or originator — proposing or amending DNA,
   filing asks, creating board tasks or initiatives, and spawning are all refused at write;
