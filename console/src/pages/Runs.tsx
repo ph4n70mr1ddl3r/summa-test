@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { api } from '../services/api'
-import type { Run, RunStatus } from '../types'
+import type { Run, RunStatus, RunListParams } from '../types'
 import { runStatusColor, formatDate, escapeHtml } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
@@ -14,7 +14,7 @@ export default function Runs() {
     setLoading(true)
     setError(null)
     let aborted = false
-    const params: { agentId?: string; workspaceId?: string; status?: string; limit?: number } = {}
+    const params: RunListParams = {}
     if (filter !== 'all') params.status = filter
     api.runs.list(params)
       .then((data) => { if (!aborted) { setRuns(Array.isArray(data) ? data : []); setLoading(false) } })

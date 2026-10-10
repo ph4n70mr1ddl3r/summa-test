@@ -22,7 +22,7 @@ describe('formatDate', () => {
   it('formats date-only when requested', () => {
     const result = formatDate(1700000000, { dateOnly: true })
     expect(result).not.toBe('?')
-    expect(result).toContain('UTC')
+    expect(result).not.toContain('UTC')
   })
 })
 

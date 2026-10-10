@@ -27,9 +27,10 @@ describe('ErrorBanner', () => {
     expect(handleRetry).toHaveBeenCalledTimes(1)
   })
 
-  it('renders special characters in message safely', () => {
+  it('escapes special characters in message', () => {
     render(<ErrorBanner message="<script>alert(1)</script>" />)
-    expect(screen.getByText(/<script>alert\(1\)<\/script>/)).toBeInTheDocument()
+    const alert = screen.getByRole('alert')
+    expect(alert.innerHTML).toContain('&lt;script&gt;alert(1)&lt;/script&gt;')
   })
 
   it('has role=alert for accessibility', () => {

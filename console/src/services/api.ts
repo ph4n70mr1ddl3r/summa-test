@@ -147,8 +147,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T | undefin
         throw err;
       }
     }
-    if (res.status === 204) {
-      return undefined as T | undefined;
+     if (res.status === 204) {
+      return undefined;
     }
     let json: T;
     try {
@@ -327,6 +327,13 @@ export interface Run {
 }
 
 export type RunStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | 'suspended';
+
+export interface RunListParams {
+  agentId?: string
+  workspaceId?: string
+  status?: RunStatus
+  limit?: number
+}
 
 export interface DnaCard {
   id: string;
@@ -583,7 +590,7 @@ export function buildQuery(params?: Record<string, string | number | boolean | u
 
 export const api = {
   agents: {
-    list: (params?: { status?: string; ownerId?: string }) =>
+    list: (params?: { status?: AgentStatus; ownerId?: string }) =>
       request<Agent[]>(`/agents${buildQuery(params)}`),
     get: (id: string) => request<Agent>(`/agents/${id}`),
     suspend: (id: string) =>
@@ -596,7 +603,7 @@ export const api = {
       request<Agent>(`/agents/${id}/archive`, { method: 'POST' }),
     deny: (id: string) =>
       request<Agent>(`/agents/${id}/deny`, { method: 'POST' }),
-    promote: (id: string, placement: string) =>
+    promote: (id: string, placement: RbacRole) =>
       request<Record<string, unknown>>(`/agents/${id}/promote`, {
         method: 'POST',
         body: JSON.stringify({ placement }),
@@ -644,7 +651,7 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ sourceId, ...(access ? { access } : {}), ...(namedReaders ? { namedReaders } : {}) }),
       }),
-    goals: (params?: { domainId?: string; inject?: string }) =>
+    goals: (params?: { domainId?: string; inject?: InjectMode }) =>
       request<DnaGoal[]>(`/dna/goals${buildQuery(params)}`),
     updateGoalStatus: (id: string, status: DnaGoalStatus) =>
       request<DnaGoal>(`/dna/goals/${id}/status`, {
@@ -679,7 +686,7 @@ export const api = {
       request<DnaGlossary>(`/dna/glossary/${id}/retire`, {
         method: 'POST',
       }),
-    proposals: (status?: string) =>
+    proposals: (status?: DnaProposalStatus) =>
       request<DnaProposal[]>(`/dna/proposals${buildQuery(status ? { status } : undefined)}`),
     createProposal: (body: Record<string, string>) =>
       request<DnaProposal>('/dna/proposals', {
@@ -735,12 +742,12 @@ export const api = {
   org: {
     humans: (active?: boolean) =>
       request<Human[]>(`/org/humans${buildQuery(active !== undefined ? { active: String(active) } : undefined)}`),
-    updateRbac: (id: string, rbac: string) =>
+    updateRbac: (id: string, rbac: RbacRole) =>
       request<Human>(`/org/humans/${id}/rbac`, {
         method: 'PUT',
         body: JSON.stringify({ rbac }),
       }),
-    demote: (id: string, rbac: string) =>
+    demote: (id: string, rbac: RbacRole) =>
       request<Human>(`/org/humans/${id}/demote`, {
         method: 'PUT',
         body: JSON.stringify({ rbac }),
@@ -765,7 +772,7 @@ export const api = {
     },
   },
   spawn: {
-    list: (status?: string, requesterId?: string) =>
+    list: (status?: SpawnStatus, requesterId?: string) =>
       request<SpawnRequest[]>(`/spawn${buildQuery({ status, requesterId })}`),
     create: (body: Record<string, string>) =>
       request<SpawnRequest>('/spawn', {
@@ -783,7 +790,7 @@ export const api = {
     stats: () => request<SpawnStats>('/spawn/stats'),
   },
   initiatives: {
-    list: (status?: string) =>
+    list: (status?: InitiativeStatus) =>
       request<Initiative[]>(`/initiatives${buildQuery(status ? { status } : undefined)}`),
     create: (body: Record<string, string>) =>
       request<Initiative>('/initiatives', {
@@ -808,7 +815,7 @@ export const api = {
       }),
   },
   runs: {
-    list: (params?: { agentId?: string; workspaceId?: string; status?: string; limit?: number }) =>
+    list: (params?: RunListParams) =>
       request<Run[]>(`/runs${buildQuery(params)}`),
     create: (body: Record<string, string>) =>
       request<Run>('/runs', {
@@ -847,7 +854,7 @@ export const api = {
   },
   health: () => request<HealthStatus>('/health'),
   boardTasks: {
-    list: (params?: { status?: string; assigneeId?: string; initiativeId?: string }) =>
+    list: (params?: { status?: BoardTaskStatus; assigneeId?: string; initiativeId?: string }) =>
       request<BoardTask[]>(`/board-tasks${buildQuery(params)}`),
     create: (body: Record<string, string>) =>
       request<BoardTask>('/board-tasks', {

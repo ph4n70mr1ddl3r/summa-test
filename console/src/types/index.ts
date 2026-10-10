@@ -37,6 +37,7 @@ export type {
   RoleTemplateStatus,
   Run,
   RunStatus,
+  RunListParams,
   SpawnRequest,
   SpawnStatus,
   SpawnStats,
