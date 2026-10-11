@@ -333,7 +333,7 @@ public class AgentService {
     public Optional<Human> findFirstHumanUpChain(String agentId) {
         String currentId = agentId;
         int depth = 0;
-        while (depth < depthCap) {
+        while (depth < Defaults.MAX_LINEAGE_CHAIN_DEPTH) {
             Optional<Agent> agent = agentRepository.findById(currentId);
             if (agent.isEmpty()) break;
             Optional<Human> owner = memberService.findHuman(agent.get().getOwnerHumanId());

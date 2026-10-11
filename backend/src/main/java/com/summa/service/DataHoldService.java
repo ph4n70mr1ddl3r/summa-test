@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import com.summa.exception.EntityNotFoundException;
+import com.summa.enums.DataHoldKind;
 
 @Service
 public class DataHoldService {
@@ -22,6 +23,9 @@ public class DataHoldService {
 
     @Transactional
     public DataHold create(String kind, String subjectId, String reasonMd, String createdBy) {
+        if (DataHoldKind.fromValue(kind) == null) {
+            throw new IllegalArgumentException("Invalid data hold kind: " + kind + ". Must be one of: member, domain");
+        }
         DataHold hold = new DataHold();
         hold.setId(UUID.randomUUID().toString());
         hold.setKind(kind);

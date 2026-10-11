@@ -142,7 +142,11 @@ public class SpawnService {
                                 for (JsonNode initIdNode : initIds) {
                                     String initId = initIdNode.asText();
                                     Optional<Initiative> initOpt = initiativeRepository.findById(initId);
-                                    if (initOpt.isPresent() && !"active".equals(initOpt.get().getStatus())) {
+                                    if (initOpt.isEmpty()) {
+                                        throw new IllegalStateException(
+                                            "Workspace binds to non-existent initiative: " + initId);
+                                    }
+                                    if (!"active".equals(initOpt.get().getStatus())) {
                                         throw new IllegalStateException(
                                             "Workspace binds to non-active initiative: " + initId
                                                 + " (status: " + initOpt.get().getStatus() + ")");

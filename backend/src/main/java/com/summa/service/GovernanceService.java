@@ -64,18 +64,10 @@ public class GovernanceService {
         if (type.isInstance(value)) return type.cast(value);
         if (type.equals(Integer.class) || type.equals(int.class)) {
             if (value instanceof Number) return type.cast(((Number) value).intValue());
-            try { return type.cast((int) Double.parseDouble(value.toString())); }
-            catch (NumberFormatException e) {
-                log.debug("Cannot cast '{}' to Integer: {}", value, e.getMessage());
-            }
             return null;
         }
         if (type.equals(Long.class) || type.equals(long.class)) {
             if (value instanceof Number) return type.cast(((Number) value).longValue());
-            try { return type.cast((long) Double.parseDouble(value.toString())); }
-            catch (NumberFormatException e) {
-                log.debug("Cannot cast '{}' to Long: {}", value, e.getMessage());
-            }
             return null;
         }
         if (type.equals(Float.class) || type.equals(float.class)) {

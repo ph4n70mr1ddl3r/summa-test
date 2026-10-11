@@ -175,7 +175,6 @@ public class AskService {
                 List<Ask> candidates = askRepository.findByToAndStatusPending(to);
                 String targetHash = buildCollapseKey(kind, to, payload);
                 candidates = candidates.stream()
-                    .filter(a -> kind.equals(a.getKind()) && a.isPending())
                     .filter(a -> targetHash.equals(buildCollapseKey(kind, to, a.getPayload())))
                     .toList();
                 if (!candidates.isEmpty()) {
