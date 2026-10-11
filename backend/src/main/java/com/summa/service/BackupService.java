@@ -82,18 +82,12 @@ public class BackupService {
             throw new EntityNotFoundException("Backup file not found: " + backupPath);
         }
 
-        // Prevent path traversal: resolve symlinks fully and verify within allowed dirs.
-        // We follow symlinks intentionally here to detect where the path actually points.
-        Path resolved;
+        // Prevent path traversal: resolve symlinks and verify within allowed dirs.
+        Path resolved = backupFile.toAbsolutePath().normalize();
         try {
-            resolved = backupFile.toRealPath(java.nio.file.LinkOption.NOFOLLOW_LINKS);
+            resolved = backupFile.toRealPath();
         } catch (java.io.IOException e) {
-            // toRealPath without NOFOLLOW_LINKS follows symlinks; use it as the canonical path.
-            try {
-                resolved = backupFile.toRealPath();
-            } catch (java.io.IOException e2) {
-                resolved = backupFile.toAbsolutePath().normalize();
-            }
+            // Fallback if symlink resolution fails (e.g. broken symlink)
         }
         Path tmpDir;
         try {

@@ -1,12 +1,10 @@
 package com.summa.service;
 
 import com.summa.repository.NodeRepository;
-import com.summa.repository.AskRepository;
 import com.summa.repository.RunRepository;
 import com.summa.repository.SpendLedgerRepository;
 import com.summa.repository.WorkspaceRepository;
 import com.summa.model.Node;
-import com.summa.model.Ask;
 import com.summa.model.Workspace;
 import com.summa.model.Run;
 import com.summa.model.SpendLedger;
@@ -36,14 +34,14 @@ public class NodeService {
     private final NodeRepository nodeRepository;
     private final AuditService auditService;
     private final WorkspaceService workspaceService;
-    private final AskRepository askRepository;
+    private final AskService askService;
     private final RunRepository runRepository;
     private final SpendLedgerRepository spendLedgerRepository;
     private final WorkspaceRepository workspaceRepository;
     private final ObjectMapper objectMapper;
 
     public NodeService(NodeRepository nodeRepository, AuditService auditService,
-                        WorkspaceService workspaceService, AskRepository askRepository,
+                        WorkspaceService workspaceService, AskService askService,
                         RunRepository runRepository,
                         SpendLedgerRepository spendLedgerRepository,
                         WorkspaceRepository workspaceRepository,
@@ -51,7 +49,7 @@ public class NodeService {
         this.nodeRepository = nodeRepository;
         this.auditService = auditService;
         this.workspaceService = workspaceService;
-        this.askRepository = askRepository;
+        this.askService = askService;
         this.runRepository = runRepository;
         this.spendLedgerRepository = spendLedgerRepository;
         this.workspaceRepository = workspaceRepository;
@@ -142,18 +140,12 @@ public class NodeService {
 
         // ARC-016(b): surface rebind asks for every workspace still bound to the revoked node
         for (Workspace ws : workspaceService.findByNode(id)) {
-            Ask rebindAsk = new Ask();
-            rebindAsk.setId(UUID.randomUUID().toString());
-            rebindAsk.setKind("question");
-            rebindAsk.setFrom("system");
-            rebindAsk.setTo(OffboardingWalkService.ADMIN_BROADCAST);
-            rebindAsk.setPayload(String.format("{\"nodeId\":%s,\"workspaceId\":%s,\"reason\":\"node_revoked\"}", JsonHelpers.jsonString(id), JsonHelpers.jsonString(ws.getId())));
-            rebindAsk.setSlaTier("bulk");
-            rebindAsk.setExpiryBehavior("escalate");
-            rebindAsk.setQuorumRequired(1);
-            rebindAsk.setDeadline(Instant.now().plusSeconds(Defaults.REBIND_ASK_DEADLINE_SECONDS));
-            rebindAsk.setWorkspaceId(ws.getId());
-            askRepository.save(rebindAsk);
+            long deadlineSeconds = askService.deriveDeadlineFromTier("bulk");
+            if (deadlineSeconds > Defaults.MAX_DEADLINE_SECONDS) deadlineSeconds = Defaults.MAX_DEADLINE_SECONDS;
+            askService.create("question", "system", OffboardingWalkService.ADMIN_BROADCAST,
+                String.format("{\"nodeId\":%s,\"workspaceId\":%s,\"reason\":\"node_revoked\"}", JsonHelpers.jsonString(id), JsonHelpers.jsonString(ws.getId())),
+                "bulk", "escalate", 1,
+                Instant.now().plusSeconds(deadlineSeconds), null, ws.getId());
             auditService.logSystem("REBIND_ASK", "workspace", ws.getId(),
                 String.format("{\"nodeId\":%s,\"reason\":\"node_revoked\"}", JsonHelpers.jsonString(id)));
         }

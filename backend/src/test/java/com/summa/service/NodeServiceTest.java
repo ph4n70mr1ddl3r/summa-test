@@ -1,7 +1,6 @@
 package com.summa.service;
 
 import com.summa.repository.NodeRepository;
-import com.summa.repository.AskRepository;
 import com.summa.repository.RunRepository;
 import com.summa.repository.SpendLedgerRepository;
 import com.summa.repository.WorkspaceRepository;
@@ -35,7 +34,7 @@ class NodeServiceTest {
     private WorkspaceService workspaceService;
 
     @Mock
-    private AskRepository askRepository;
+    private AskService askService;
 
     @Mock
     private RunRepository runRepository;
@@ -50,7 +49,7 @@ class NodeServiceTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        nodeService = new NodeService(nodeRepository, auditService, workspaceService, askRepository,
+        nodeService = new NodeService(nodeRepository, auditService, workspaceService, askService,
             runRepository, spendLedgerRepository, workspaceRepository, new ObjectMapper());
         java.lang.reflect.Field f = NodeService.class.getDeclaredField("leaseIntervalSeconds");
         f.setAccessible(true);

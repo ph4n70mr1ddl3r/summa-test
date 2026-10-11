@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, act } from '@testing-library/react'
 import Spawning from './Spawning'
 import * as apiModule from '../services/api'
 
@@ -87,7 +87,9 @@ describe('Spawning page', () => {
     // Click Approve on first request
     const approveButtons = screen.getAllByText('Approve')
     expect(approveButtons).toHaveLength(2)
-    approveButtons[0].click()
+    await act(async () => {
+      approveButtons[0].click()
+    })
 
     // Confirm dialog should appear for first request only
     await waitFor(() => {

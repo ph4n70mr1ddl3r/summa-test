@@ -11,8 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -35,7 +35,7 @@ public class DnaProposalService {
     private final AskService askService;
     private final ObjectMapper objectMapper;
     private final GovernanceService governanceService;
-    private final Set<String> alreadyEscalated = Collections.synchronizedSet(new java.util.HashSet<>());
+    private final Set<String> alreadyEscalated = ConcurrentHashMap.newKeySet();
 
     public DnaProposalService(DnaProposalRepository proposalRepository,
                                   DnaRuleRepository ruleRepository,

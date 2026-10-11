@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -213,14 +214,68 @@ public class DnaDomainService {
         child.setStatus("active");
         DnaDomain savedChild = domainRepository.save(child);
 
+        // Validate all referenced IDs exist and belong to the parent domain before mutating anything.
+        // This prevents partial splits where items are silently left behind.
+        List<String> missingCards = new ArrayList<>();
+        for (String cardId : itemIds) {
+            Optional<DnaCard> cardOpt = cardRepository.findById(cardId);
+            if (cardOpt.isEmpty()) {
+                missingCards.add(cardId);
+                continue;
+            }
+            DnaCard card = cardOpt.get();
+            if (card.getDomainId() == null || !card.getDomainId().equals(parent.getId())) {
+                missingCards.add(cardId + "(wrong_domain:" + card.getDomainId() + ")");
+            }
+        }
+        List<String> missingProposals = new ArrayList<>();
+        for (String propId : proposalIds) {
+            Optional<DnaProposal> propOpt = proposalRepository.findById(propId);
+            if (propOpt.isEmpty()) {
+                missingProposals.add(propId);
+                continue;
+            }
+            DnaProposal prop = propOpt.get();
+            if (prop.getDomainId() == null || !prop.getDomainId().equals(parent.getId())) {
+                missingProposals.add(propId + "(wrong_domain:" + prop.getDomainId() + ")");
+            }
+        }
+        List<String> missingWorkspaces = new ArrayList<>();
+        for (String wsId : workspaceIds) {
+            Optional<Workspace> wsOpt = workspaceRepository.findById(wsId);
+            if (wsOpt.isEmpty()) {
+                missingWorkspaces.add(wsId);
+                continue;
+            }
+            Workspace ws = wsOpt.get();
+            if (ws.getDomainIds() == null || ws.getDomainIds().isBlank() || ws.getDomainIds().equals("[]")) {
+                missingWorkspaces.add(wsId + "(no_domains)");
+                continue;
+            }
+            try {
+                List<String> domains = objectMapper.readValue(ws.getDomainIds(), new TypeReference<List<String>>() {});
+                if (!domains.contains(parent.getId())) {
+                    missingWorkspaces.add(wsId + "(wrong_domain:" + domains + ")");
+                }
+            } catch (Exception e) {
+                missingWorkspaces.add(wsId + "(parse_error)");
+            }
+        }
+        List<String> allErrors = new ArrayList<>();
+        if (!missingCards.isEmpty()) allErrors.add("missing_or_misplaced_cards=" + String.join(",", missingCards));
+        if (!missingProposals.isEmpty()) allErrors.add("missing_or_misplaced_proposals=" + String.join(",", missingProposals));
+        if (!missingWorkspaces.isEmpty()) allErrors.add("missing_or_misplaced_workspaces=" + String.join(",", missingWorkspaces));
+        if (!allErrors.isEmpty()) {
+            // Roll back the child domain we just created
+            child.setStatus("archived");
+            domainRepository.save(child);
+            throw new IllegalStateException(
+                "Split mapping validation failed: " + String.join("; ", allErrors));
+        }
+
         // Move cards (ids stable per DGV-010)
         for (String cardId : itemIds) {
             cardRepository.findById(cardId).ifPresent(card -> {
-                if (card.getDomainId() == null || !card.getDomainId().equals(parent.getId())) {
-                    auditService.logSystem("SPLIT_SKIP_CARD", "dna_card", cardId,
-                        String.format("{\"expectedDomain\":%s,\"actualDomain\":%s}", JsonHelpers.jsonString(parent.getId()), JsonHelpers.jsonString(card.getDomainId())));
-                    return;
-                }
                 card.setDomainId(savedChild.getId());
                 cardRepository.save(card);
             });
@@ -229,11 +284,6 @@ public class DnaDomainService {
         // Remap proposals (ids stable per DGV-042) — validate each belongs to parent domain
         for (String propId : proposalIds) {
             proposalRepository.findById(propId).ifPresent(prop -> {
-                if (!prop.getDomainId().equals(parent.getId())) {
-                    auditService.logSystem("SPLIT_SKIP_PROPOSAL", "dna_proposal", propId,
-                        JsonHelpers.toJson(Map.of("expectedDomain", parent.getId(), "actualDomain", prop.getDomainId()), objectMapper));
-                    return;
-                }
                 prop.setDomainId(savedChild.getId());
                 proposalRepository.save(prop);
             });
@@ -242,19 +292,9 @@ public class DnaDomainService {
         // Remap workspace bindings — validate each workspace is bound to parent domain
         for (String wsId : workspaceIds) {
             workspaceRepository.findById(wsId).ifPresent(ws -> {
-                if (ws.getDomainIds() == null || ws.getDomainIds().isBlank()) {
-                    auditService.logSystem("SPLIT_SKIP_WS_NO_DOMAINS", "workspace", wsId,
-                        JsonHelpers.toJson(Map.of("expectedParent", parentId), objectMapper));
-                    return;
-                }
                 try {
                     List<String> domains = objectMapper.readValue(ws.getDomainIds(), new TypeReference<List<String>>() {});
-                    if (!domains.contains(parentId)) {
-                        auditService.logSystem("SPLIT_SKIP_WS_NOT_IN_PARENT", "workspace", wsId,
-                            JsonHelpers.toJson(Map.of("expectedParent", parentId, "domains", domains), objectMapper));
-                        return;
-                    }
-                    domains.remove(parentId);
+                    domains.remove(parent.getId());
                     domains.add(savedChild.getId());
                     ws.setDomainIds(objectMapper.writeValueAsString(domains));
                     workspaceRepository.save(ws);

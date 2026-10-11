@@ -307,12 +307,23 @@ public class SpawnService {
             // at depth > 0; otherwise depth defaults to 1 (human root spawns depth-1 agents)
             if (request.getRequesterId() != null && !request.getRequesterId().isBlank()) {
                 Optional<Agent> parentOpt = agentRepository.findById(request.getRequesterId());
-                if (parentOpt.isPresent() && parentOpt.get().getLineageDepth() != null) {
-                    int parentDepth = parentOpt.get().getLineageDepth();
-                    if (parentDepth >= Integer.MAX_VALUE - 1) {
-                        depth = depthCap + 1; // force rejection at cap
+                if (parentOpt.isPresent()) {
+                    Integer parentDepth = parentOpt.get().getLineageDepth();
+                    if (parentDepth != null) {
+                        if (parentDepth >= Integer.MAX_VALUE - 1) {
+                            depth = depthCap + 1; // force rejection at cap
+                        } else {
+                            depth = parentDepth + 1;
+                        }
                     } else {
-                        depth = parentDepth + 1;
+                        // Corrupted data: parent has null depth — walk up the lineage chain
+                        // to compute depth from the chain root.
+                        int computedDepth = computeDepthFromChain(request.getRequesterId(), agentRepository);
+                        if (computedDepth >= Integer.MAX_VALUE - 1) {
+                            depth = depthCap + 1;
+                        } else {
+                            depth = computedDepth + 1;
+                        }
                     }
                 } else {
                     depth = 1;
@@ -377,6 +388,18 @@ public class SpawnService {
         return templateRepository.findById(templateId)
             .map(t -> t.getVersion() != null ? "v" + t.getVersion() : "v1")
             .orElse("v1");
+    }
+
+    private int computeDepthFromChain(String agentId, AgentRepository repo) {
+        int depth = 1;
+        String currentId = agentId;
+        for (int i = 0; i < 100; i++) {
+            Optional<Agent> parentOpt = repo.findById(currentId);
+            if (parentOpt.isEmpty() || parentOpt.get().getSpawnedBy() == null) break;
+            currentId = parentOpt.get().getSpawnedBy();
+            depth++;
+        }
+        return depth;
     }
 
     @Transactional

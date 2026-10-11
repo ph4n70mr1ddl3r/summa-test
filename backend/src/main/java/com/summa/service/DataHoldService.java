@@ -47,7 +47,10 @@ public class DataHoldService {
 
     @Transactional(readOnly = true)
     public List<DataHold> findAllActive(int limit) {
-        return holdRepository.findByReleasedAtIsNull();
+        if (limit <= 0) {
+            return holdRepository.findByReleasedAtIsNull();
+        }
+        return holdRepository.findByReleasedAtIsNullOrderByCreatedAtDesc(limit, 0);
     }
 
     @Transactional(readOnly = true)
