@@ -17,8 +17,8 @@ public final class PasswordValidator {
         if (password == null || password.length() < 12) {
             throw new IllegalArgumentException("Password must be at least 12 characters");
         }
-        if (password.length() > 72) {
-            throw new IllegalArgumentException("Password must not exceed 72 characters (BCrypt limit)");
+        if (password.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
+            throw new IllegalArgumentException("Password must not exceed 72 bytes (BCrypt limit)");
         }
         if (!UPPER.matcher(password).find()) {
             throw new IllegalArgumentException("Password must contain at least one uppercase letter");

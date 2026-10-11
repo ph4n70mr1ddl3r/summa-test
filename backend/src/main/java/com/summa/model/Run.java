@@ -97,7 +97,15 @@ public class Run {
     public String getParentRunId() { return parentRunId; }
     public void setParentRunId(String parentRunId) { this.parentRunId = parentRunId; }
     public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public void setStatus(String status) {
+        if (status == null) throw new IllegalArgumentException("Run status must not be null");
+        if (!"queued".equals(status) && !"running".equals(status) &&
+            !"completed".equals(status) && !"failed".equals(status) &&
+            !"cancelled".equals(status) && !"suspended".equals(status)) {
+            throw new IllegalArgumentException("Invalid run status: " + status);
+        }
+        this.status = status;
+    }
     public String getPrompt() { return prompt; }
     public void setPrompt(String prompt) { this.prompt = prompt; }
     public String getResult() { return result; }

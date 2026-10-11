@@ -9,5 +9,6 @@ import java.util.List;
 public interface DataHoldRepository extends JpaRepository<DataHold, String> {
     List<DataHold> findByKindAndSubjectIdAndReleasedAtIsNull(String kind, String subjectId);
     List<DataHold> findByReleasedAtIsNull();
+    List<DataHold> findByReleasedAtIsNullOrderByCreatedAtDesc(int limit, int offset);
     boolean existsByKindAndSubjectIdAndReleasedAtIsNull(String kind, String subjectId);
 }

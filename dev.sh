@@ -7,21 +7,14 @@ ORIG_DIR="$(pwd)"
 cd "$SCRIPT_DIR"
 
 # Load .env file if present (for local development convenience)
-# Parse line-by-line to avoid executing arbitrary shell commands.
-# Use parameter expansion to split on first '=' only, preserving '=' in values.
 if [ -f ".env" ]; then
     while IFS= read -r line || [ -n "$line" ]; do
-        # Skip comments and blank lines
         [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
-        # Strip leading/trailing whitespace
         line=$(echo "$line" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
         [[ -z "$line" ]] && continue
-        # Split on first '=' only
         key="${line%%=*}"
         value="${line#*=}"
-        # Strip leading/trailing whitespace from key
         key=$(echo "$key" | xargs)
-        # Remove surrounding quotes from value
         value=$(echo "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"\(.*)"$/\1/' -e "s/^'\(.*\)'$/\1/")
         export "$key"="$value"
     done < ".env"
@@ -123,7 +116,7 @@ if [ ! -d "console" ]; then
     exit 1
 fi
 
-JAVA_OPTS="${JAVA_OPTS:--Xmx512m -Xms256m -XX:MaxMetaspaceSize=128m}"
+JAVA_OPTS="${JAVA_OPTS:--Xmx384m -Xms256m -XX:MaxMetaspaceSize=128m}"
 
 # Start backend in background
 echo "[1/2] Starting backend..."

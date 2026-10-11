@@ -220,7 +220,8 @@ class AskServiceTest {
         Human human1 = new Human();
         human1.setId("human-1");
         human1.setDeputyMemberId("human-2");
-        when(memberService.findHuman("human-1")).thenReturn(Optional.of(human1));
+        lenient().when(memberService.findHuman("human-1")).thenReturn(Optional.of(human1));
+        when(memberService.resolveDeputyTarget("human-1")).thenReturn(Optional.of("human-2"));
 
         Ask successor = new Ask();
         successor.setId("ask-2");

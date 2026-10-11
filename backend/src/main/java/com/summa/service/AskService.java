@@ -184,7 +184,7 @@ public class AskService {
                     canonical.setCollapsedCount(currentCount + 1);
                     Ask saved = askRepository.save(canonical);
                     auditService.log(from, "COLLAPSED_ASK", "ask", saved.getId(),
-                        String.format("{\"collapsedCount\":%d}", saved.getCollapsedCount()));
+                        String.format("{\"collapsedCount\":%d}", saved.getCollapsedCount() != null ? saved.getCollapsedCount() : 0));
                     return saved;
                 }
             }
@@ -285,14 +285,9 @@ public class AskService {
                             continue;
                         }
                         String successorTo = OffboardingWalkService.ADMIN_BROADCAST;
-                        if (current.getTo() != null) {
-                            Optional<Human> target = memberService.findHuman(current.getTo());
-                            if (target.isPresent() && target.get().isActive() && target.get().getDeputyMemberId() != null) {
-                                Optional<Human> deputyOpt = memberService.findHuman(target.get().getDeputyMemberId());
-                                if (deputyOpt.isPresent() && deputyOpt.get().isActive() && !"viewer".equals(deputyOpt.get().getRbac())) {
-                                    successorTo = deputyOpt.get().getId();
-                                }
-                            }
+                        Optional<String> deputy = memberService.resolveDeputyTarget(current.getTo());
+                        if (deputy.isPresent()) {
+                            successorTo = deputy.get();
                         }
                         // ASK-012/CFG-140: derive deadline from tier defaults
                         long successorDeadlineSeconds = deriveDeadlineFromTier(current.getSlaTier());

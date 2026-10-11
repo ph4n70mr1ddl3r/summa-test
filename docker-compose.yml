@@ -63,7 +63,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 768M
+          memory: 1024M
           cpus: '1.0'
     ulimits:
       nofile:

@@ -6,21 +6,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 # Load .env file if present (for local development convenience)
-# Parse line-by-line to avoid executing arbitrary shell commands.
-# Use parameter expansion to split on first '=' only, preserving '=' in values.
 if [ -f ".env" ]; then
     while IFS= read -r line || [ -n "$line" ]; do
-        # Skip comments and blank lines
         [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
-        # Strip leading/trailing whitespace
         line=$(echo "$line" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
         [[ -z "$line" ]] && continue
-        # Split on first '=' only
         key="${line%%=*}"
         value="${line#*=}"
-        # Strip leading/trailing whitespace from key
         key=$(echo "$key" | xargs)
-        # Remove surrounding quotes from value
         value=$(echo "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"\(.*)"$/\1/' -e "s/^'\(.*\)'$/\1/")
         export "$key"="$value"
     done < ".env"
@@ -84,9 +77,9 @@ done
 
 # Start the backend
 echo "Starting backend on port 8080..."
-JAVA_OPTS="${JAVA_OPTS:--Xmx512m -Xms256m -XX:MaxMetaspaceSize=128m}"
-read -ra JAVA_OPTS_ARR <<< "$JAVA_OPTS"
-exec java "${JAVA_OPTS_ARR[@]}" \
+JAVA_OPTS="${JAVA_OPTS:--Xmx384m -Xms256m -XX:MaxMetaspaceSize=128m}"
+eval "set -- $JAVA_OPTS"
+exec java "$@" \
     -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-prod} \
     -Dsumma.auth.local-auth-enabled=${SUMMA_AUTH_LOCAL_AUTH_ENABLED:-true} \
     -jar "$JAR_FILE"

@@ -81,6 +81,25 @@ public class MemberService {
         }
     }
 
+    /**
+     * Resolve the effective successor for delegation: deputy if eligible, otherwise returns null.
+     * A deputy is eligible when active and not a viewer.
+     */
+    @Transactional(readOnly = true)
+    public Optional<String> resolveDeputyTarget(String memberId) {
+        if (memberId == null || memberId.isBlank()) return Optional.empty();
+        Optional<Human> humanOpt = findHuman(memberId);
+        if (!humanOpt.isPresent() || !humanOpt.get().isActive() || humanOpt.get().getDeputyMemberId() == null) {
+            return Optional.empty();
+        }
+        String deputyId = humanOpt.get().getDeputyMemberId();
+        Optional<Human> deputyOpt = findHuman(deputyId);
+        if (deputyOpt.isPresent() && deputyOpt.get().isActive() && !"viewer".equals(deputyOpt.get().getRbac())) {
+            return Optional.of(deputyOpt.get().getId());
+        }
+        return Optional.empty();
+    }
+
     @Transactional
     public Human saveHuman(Human human) {
         return humanRepository.save(human);

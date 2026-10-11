@@ -4,11 +4,13 @@ import com.summa.repository.HumanRepository;
 import com.summa.repository.AgentRepository;
 import com.summa.model.Human;
 import com.summa.model.Agent;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -257,5 +259,74 @@ class MemberServiceTest {
         when(humanRepository.findById("missing")).thenReturn(Optional.empty());
 
         assertFalse(memberService.isAdmin("missing"));
+    }
+
+    @Test
+    void resolveDeputyTarget_returnsEmptyWhenHumanNotFound() {
+        when(humanRepository.findById("missing")).thenReturn(Optional.empty());
+
+        assertTrue(memberService.resolveDeputyTarget("missing").isEmpty());
+    }
+
+    @Test
+    void resolveDeputyTarget_returnsEmptyWhenNoDeputy() {
+        Human human = new Human();
+        human.setId("h1");
+        human.setRbac("member");
+        human.setDeactivatedAt(null);
+        when(humanRepository.findById("h1")).thenReturn(Optional.of(human));
+
+        assertTrue(memberService.resolveDeputyTarget("h1").isEmpty());
+    }
+
+    @Test
+    void resolveDeputyTarget_returnsDeputyIdWhenEligible() {
+        Human human = new Human();
+        human.setId("h1");
+        human.setRbac("member");
+        human.setDeputyMemberId("h2");
+        human.setDeactivatedAt(null);
+        Human deputy = new Human();
+        deputy.setId("h2");
+        deputy.setRbac("admin");
+        deputy.setDeactivatedAt(null);
+        when(humanRepository.findById("h1")).thenReturn(Optional.of(human));
+        when(humanRepository.findById("h2")).thenReturn(Optional.of(deputy));
+
+        assertEquals("h2", memberService.resolveDeputyTarget("h1").orElse(null));
+    }
+
+    @Test
+    void resolveDeputyTarget_skipsInactiveDeputy() {
+        Human human = new Human();
+        human.setId("h1");
+        human.setRbac("member");
+        human.setDeputyMemberId("h2");
+        human.setDeactivatedAt(null);
+        Human deputy = new Human();
+        deputy.setId("h2");
+        deputy.setRbac("admin");
+        deputy.setDeactivatedAt(Instant.now());
+        when(humanRepository.findById("h1")).thenReturn(Optional.of(human));
+        when(humanRepository.findById("h2")).thenReturn(Optional.of(deputy));
+
+        assertTrue(memberService.resolveDeputyTarget("h1").isEmpty());
+    }
+
+    @Test
+    void resolveDeputyTarget_skipsViewerDeputy() {
+        Human human = new Human();
+        human.setId("h1");
+        human.setRbac("member");
+        human.setDeputyMemberId("h2");
+        human.setDeactivatedAt(null);
+        Human deputy = new Human();
+        deputy.setId("h2");
+        deputy.setRbac("viewer");
+        deputy.setDeactivatedAt(null);
+        when(humanRepository.findById("h1")).thenReturn(Optional.of(human));
+        when(humanRepository.findById("h2")).thenReturn(Optional.of(deputy));
+
+        assertTrue(memberService.resolveDeputyTarget("h1").isEmpty());
     }
 }

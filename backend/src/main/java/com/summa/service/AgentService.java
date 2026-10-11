@@ -191,11 +191,9 @@ public class AgentService {
             }
             Optional<Human> targetHuman = memberService.findHuman(targetId);
             String newTo = OffboardingWalkService.ADMIN_BROADCAST;
-            if (targetHuman.isPresent() && targetHuman.get().getDeputyMemberId() != null) {
-                Optional<Human> deputyOpt = memberService.findHuman(targetHuman.get().getDeputyMemberId());
-                if (deputyOpt.isPresent() && deputyOpt.get().isActive() && !"viewer".equals(deputyOpt.get().getRbac())) {
-                    newTo = deputyOpt.get().getId();
-                }
+            Optional<String> deputy = memberService.resolveDeputyTarget(targetId);
+            if (deputy.isPresent()) {
+                newTo = deputy.get();
             }
             ask.setTo(newTo);
             askRepository.save(ask);

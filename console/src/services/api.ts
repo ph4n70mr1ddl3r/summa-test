@@ -814,7 +814,7 @@ export const api = {
   },
   runs: {
     list: (params?: RunListParams) =>
-      request<Run[]>(`/runs${buildQuery(params)}`),
+      request<Run[]>(`/runs${buildQuery(params as Record<string, string | number | boolean | undefined>)}`),
     create: (body: Record<string, string>) =>
       request<Run>('/runs', {
         method: 'POST',
