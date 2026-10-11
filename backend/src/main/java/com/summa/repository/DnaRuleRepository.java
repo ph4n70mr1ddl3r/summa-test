@@ -19,4 +19,5 @@ public interface DnaRuleRepository extends JpaRepository<DnaRule, String> {
     
     List<DnaRule> findBySupersedesId(String supersedesId);
     long countByDomainIdAndStatus(String domainId, String status);
+    long countByDomainIdAndStatusNot(String domainId, String status);
 }

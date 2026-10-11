@@ -93,12 +93,25 @@ public class InitiativeService {
         // INT-001: Refuse viewer or non-active members as sponsor or lead
         String sponsorClean = sponsor != null ? JsonHelpers.stripIdPrefix(sponsor) : "";
         String leadClean = lead != null ? JsonHelpers.stripIdPrefix(lead) : "";
+        if (sponsorClean.isBlank()) {
+            throw new IllegalArgumentException("Sponsor is required");
+        }
         Optional<Human> sponsorHuman = memberService.findHuman(sponsorClean);
+        Optional<Agent> sponsorAgent = memberService.findAgent(sponsorClean);
+        if (sponsorHuman.isEmpty() && sponsorAgent.isEmpty()) {
+            throw new EntityNotFoundException("Sponsor not found: " + sponsor);
+        }
         if (sponsorHuman.isPresent() && RbacRole.VIEWER.getValue().equals(sponsorHuman.get().getRbac())) {
             throw new IllegalStateException("Sponsor cannot be a viewer: " + sponsor);
         }
         if (sponsorHuman.isPresent() && !sponsorHuman.get().isActive()) {
             throw new IllegalStateException("Sponsor must be an active member: " + sponsor);
+        }
+        if (sponsorAgent.isPresent() && sponsorAgent.get().isEphemeral()) {
+            throw new IllegalStateException("Sponsor cannot be an ephemeral agent: " + sponsor);
+        }
+        if (sponsorAgent.isPresent() && !sponsorAgent.get().isActive()) {
+            throw new IllegalStateException("Sponsor must be an active agent: " + sponsor);
         }
         Optional<Human> leadHuman = memberService.findHuman(leadClean);
         if (leadHuman.isPresent() && RbacRole.VIEWER.getValue().equals(leadHuman.get().getRbac())) {

@@ -18,6 +18,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import com.summa.exception.EntityNotFoundException;
+import com.summa.exception.AuthorizationDeniedException;
 import com.summa.exception.ConflictException;
 
 @ExtendWith(MockitoExtension.class)
@@ -157,7 +158,7 @@ class MemoryServiceTest {
         item.setMemberId("human-1");
         when(memoryItemRepository.findById("mem-1")).thenReturn(Optional.of(item));
 
-        assertThrows(IllegalStateException.class, () -> {
+        assertThrows(AuthorizationDeniedException.class, () -> {
             memoryService.review("mem-1", "human-2");
         });
     }
@@ -185,7 +186,7 @@ class MemoryServiceTest {
         item.setWorkspaceId(null);
         when(memoryItemRepository.findById("mem-1")).thenReturn(Optional.of(item));
 
-        assertThrows(IllegalStateException.class, () -> {
+        assertThrows(AuthorizationDeniedException.class, () -> {
             memoryService.review("mem-1", "human-1");
         });
     }
@@ -208,7 +209,7 @@ class MemoryServiceTest {
         when(domainService.findById("domain-1")).thenReturn(Optional.of(domain));
         when(memberService.findAdmins()).thenReturn(List.of());
 
-        assertThrows(IllegalStateException.class, () -> {
+        assertThrows(AuthorizationDeniedException.class, () -> {
             memoryService.review("mem-1", "human-2");
         });
     }

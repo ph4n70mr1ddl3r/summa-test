@@ -7,7 +7,7 @@ describe('escapeHtml', () => {
   })
 
   it('escapes angle brackets', () => {
-    expect(escapeHtml('<script>alert(1)</script>')).toBe('&lt;script&gt;alert(1)&lt;/script&gt;')
+    expect(escapeHtml('<script>alert(1)</script>')).toBe('&lt;script&gt;alert(1)&lt;&#x2F;script&gt;')
   })
 
   it('escapes double quotes', () => {
@@ -36,7 +36,7 @@ describe('escapeHtml', () => {
 
   it('escapes all special characters together', () => {
     expect(escapeHtml('<a href="x" onclick="alert(1)">click</a>')).toBe(
-      '&lt;a href=&quot;x&quot; onclick=&quot;alert(1)&quot;&gt;click&lt;/a&gt;'
+      '&lt;a href=&quot;x&quot; onclick=&quot;alert(1)&quot;&gt;click&lt;&#x2F;a&gt;'
     )
   })
 
@@ -50,6 +50,10 @@ describe('escapeHtml', () => {
 
   it('escapes backticks', () => {
     expect(escapeHtml('`code`')).toBe('&#96;code&#96;')
+  })
+
+  it('escapes forward slashes', () => {
+    expect(escapeHtml('http://example.com')).toBe('http:&#x2F;&#x2F;example.com')
   })
 
   it('strips control characters', () => {

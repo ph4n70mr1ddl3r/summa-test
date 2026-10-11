@@ -132,6 +132,8 @@ class DnaDomainServiceTest {
         when(cardRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(0L);
         when(proposalRepository.countByDomainIdAndStatus("domain-1", "open")).thenReturn(0L);
         when(workspaceRepository.countByDomainIdsContaining("domain-1")).thenReturn(0L);
+        when(goalRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(0L);
+        when(ruleRepository.countByDomainIdAndStatusNot("domain-1", "superseded")).thenReturn(0L);
         when(domainRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         DnaDomain result = domainService.archive("domain-1", "admin");
@@ -146,6 +148,8 @@ class DnaDomainServiceTest {
         domain.setStatus("active");
         when(domainRepository.findById("domain-1")).thenReturn(Optional.of(domain));
         when(cardRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(1L);
+        when(goalRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(0L);
+        when(ruleRepository.countByDomainIdAndStatusNot("domain-1", "superseded")).thenReturn(0L);
 
         assertThrows(IllegalStateException.class, () ->
             domainService.archive("domain-1", "admin")
@@ -160,6 +164,8 @@ class DnaDomainServiceTest {
         when(domainRepository.findById("domain-1")).thenReturn(Optional.of(domain));
         when(cardRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(0L);
         when(proposalRepository.countByDomainIdAndStatus("domain-1", "open")).thenReturn(1L);
+        when(goalRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(0L);
+        when(ruleRepository.countByDomainIdAndStatusNot("domain-1", "superseded")).thenReturn(0L);
 
         assertThrows(IllegalStateException.class, () ->
             domainService.archive("domain-1", "admin")
@@ -175,6 +181,42 @@ class DnaDomainServiceTest {
         when(cardRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(0L);
         when(proposalRepository.countByDomainIdAndStatus("domain-1", "open")).thenReturn(0L);
         when(workspaceRepository.countByDomainIdsContaining("domain-1")).thenReturn(1L);
+        when(goalRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(0L);
+        when(ruleRepository.countByDomainIdAndStatusNot("domain-1", "superseded")).thenReturn(0L);
+
+        assertThrows(IllegalStateException.class, () ->
+            domainService.archive("domain-1", "admin")
+        );
+    }
+
+    @Test
+    void archive_refusesWhenActiveGoalsExist() {
+        DnaDomain domain = new DnaDomain();
+        domain.setId("domain-1");
+        domain.setStatus("active");
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.of(domain));
+        when(cardRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(0L);
+        when(proposalRepository.countByDomainIdAndStatus("domain-1", "open")).thenReturn(0L);
+        when(workspaceRepository.countByDomainIdsContaining("domain-1")).thenReturn(0L);
+        when(goalRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(1L);
+        when(ruleRepository.countByDomainIdAndStatusNot("domain-1", "superseded")).thenReturn(0L);
+
+        assertThrows(IllegalStateException.class, () ->
+            domainService.archive("domain-1", "admin")
+        );
+    }
+
+    @Test
+    void archive_refusesWhenActiveRulesExist() {
+        DnaDomain domain = new DnaDomain();
+        domain.setId("domain-1");
+        domain.setStatus("active");
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.of(domain));
+        when(cardRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(0L);
+        when(proposalRepository.countByDomainIdAndStatus("domain-1", "open")).thenReturn(0L);
+        when(workspaceRepository.countByDomainIdsContaining("domain-1")).thenReturn(0L);
+        when(goalRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(0L);
+        when(ruleRepository.countByDomainIdAndStatusNot("domain-1", "superseded")).thenReturn(1L);
 
         assertThrows(IllegalStateException.class, () ->
             domainService.archive("domain-1", "admin")

@@ -96,6 +96,9 @@ public class GovernanceController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         if (!memberService.isAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to update governance policies");
+        if (body == null || body.isEmpty()) {
+            return ControllerResponses.validation(auditService, "Policy update body must not be empty");
+        }
         for (String key : body.keySet()) {
             if (!Defaults.POLICY_KEYS.contains(key)) {
                 return ControllerResponses.validation(auditService, "Unknown policy key: " + key);
@@ -113,6 +116,9 @@ public class GovernanceController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         if (!memberService.isAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to update governance quotas");
+        if (body == null || body.isEmpty()) {
+            return ControllerResponses.validation(auditService, "Quota update body must not be empty");
+        }
         for (String key : body.keySet()) {
             if (!Defaults.QUOTA_KEYS.contains(key)) {
                 return ControllerResponses.validation(auditService, "Unknown quota key: " + key);

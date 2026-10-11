@@ -7,7 +7,7 @@ package com.summa.exception;
  * Thrown by WriteGate, controllers, and services when an actor lacks
  * the required permissions for an operation.
  */
-public class AuthorizationDeniedException extends IllegalStateException {
+public class AuthorizationDeniedException extends RuntimeException {
     public AuthorizationDeniedException(String message) {
         super(message);
     }

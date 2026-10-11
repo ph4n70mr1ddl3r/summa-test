@@ -123,10 +123,12 @@ public class DnaDomainService {
         long liveCards = cardRepository.countByDomainIdAndStatusNot(id, "retired");
         long openProposals = proposalRepository.countByDomainIdAndStatus(id, "open");
         long liveBindings = workspaceRepository.countByDomainIdsContaining(id);
-        if (liveCards > 0 || openProposals > 0 || liveBindings > 0) {
+        long activeGoals = goalRepository.countByDomainIdAndStatusNot(id, "retired");
+        long activeRules = ruleRepository.countByDomainIdAndStatusNot(id, "superseded");
+        if (liveCards > 0 || openProposals > 0 || liveBindings > 0 || activeGoals > 0 || activeRules > 0) {
             throw new IllegalStateException(
-                String.format("Domain holds live state: cards=%d proposals=%d bindings=%d",
-                    liveCards, openProposals, liveBindings));
+                String.format("Domain holds live state: cards=%d proposals=%d bindings=%d goals=%d rules=%d",
+                    liveCards, openProposals, liveBindings, activeGoals, activeRules));
         }
 
         domain.setStatus("archived");

@@ -75,6 +75,11 @@ class InitiativeServiceTest {
         init.setTitle("Launch product");
         init.setStatus("proposed");
         when(initiativeRepository.save(any())).thenReturn(init);
+        com.summa.model.Human sponsorHuman = new com.summa.model.Human();
+        sponsorHuman.setId("h1");
+        sponsorHuman.setRbac("admin");
+        when(memberService.findHuman("h1")).thenReturn(Optional.of(sponsorHuman));
+        when(memberService.findAgent("h1")).thenReturn(Optional.empty());
 
         Initiative result = initiativeService.create("i1", "Launch product", "h:h1", "h:h1", null, null,
             Instant.now().plusSeconds(86400), "[]", "h:h1");
@@ -210,5 +215,24 @@ class InitiativeServiceTest {
         initiativeService.checkStallsAndDirections();
 
         verify(askService).create(eq("question"), eq("system"), eq("h1"), any(), eq("bulk"), eq("escalate"), anyInt(), any(), isNull(), isNull());
+    }
+
+    @Test
+    void create_throwsWhenSponsorNotFound() {
+        when(memberService.findHuman("missing")).thenReturn(Optional.empty());
+        when(memberService.findAgent("missing")).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () ->
+            initiativeService.create("i1", "Test", "h:missing", "h:h1", null, null,
+                Instant.now().plusSeconds(86400), "[]", "h:h1")
+        );
+    }
+
+    @Test
+    void create_throwsWhenSponsorEmpty() {
+        assertThrows(IllegalArgumentException.class, () ->
+            initiativeService.create("i1", "Test", "", "h:h1", null, null,
+                Instant.now().plusSeconds(86400), "[]", "h:h1")
+        );
     }
 }

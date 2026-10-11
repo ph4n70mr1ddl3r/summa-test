@@ -5,6 +5,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import com.summa.repository.HumanRepository;
+import com.summa.model.Human;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +18,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -28,6 +31,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Value("${summa.auth.jwt-secret-min-length:32}")
     private int minJwtSecretLength;
 
+    private final HumanRepository humanRepository;
+
     @PostConstruct
     public void validateSecret() {
         if (jwtSecret == null || jwtSecret.isBlank()) {
@@ -36,6 +41,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (jwtSecret.length() < minJwtSecretLength) {
             throw new IllegalStateException("summa.auth.jwt-secret must be at least " + minJwtSecretLength + " characters (256 bits recommended), got " + jwtSecret.length());
         }
+    }
+
+    public JwtAuthenticationFilter(HumanRepository humanRepository) {
+        this.humanRepository = humanRepository;
     }
 
     public static final List<String> PUBLIC_PATHS = List.of(
@@ -117,6 +126,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "JWT missing valid subject");
                         return;
                     }
+                    // SEC-010: Verify session version matches current human record
+                    // This invalidates tokens after password changes or session resets
+                    if (!checkSessionVersion(subject, payload)) {
+                        log.warn("[SUMMA] Stale session version for {} on path={}", subject, path);
+                        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Session invalidated — please sign in again");
+                        return;
+                    }
                     request.setAttribute("actor", subject);
                     var auth = new UsernamePasswordAuthenticationToken(subject, null, List.of());
                     SecurityContextHolder.getContext().setAuthentication(auth);
@@ -134,6 +150,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // Reject requests without valid JWT
         response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing or invalid authentication");
         return;
+    }
+
+    /** SEC-010: Verify the JWT session version matches the human's current session version. */
+    private boolean checkSessionVersion(String subject, Map<String, Object> payload) {
+        Object svObj = payload.get("sv");
+        int tokenSv = svObj instanceof Number ? ((Number) svObj).intValue() : 0;
+        try {
+            Optional<Human> humanOpt = humanRepository.findById(subject);
+            if (humanOpt.isEmpty()) return false;
+            return tokenSv == humanOpt.get().getSessionVersion();
+        } catch (Exception e) {
+            log.warn("[SUMMA] Session version check failed for {}: {}", subject, e.getMessage());
+            return false;
+        }
     }
 
     static boolean isPublicPath(String path) {

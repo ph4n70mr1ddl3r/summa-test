@@ -6,18 +6,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 # Load .env file if present (for local development convenience)
-if [ -f ".env" ]; then
-    while IFS= read -r line || [ -n "$line" ]; do
-        [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
-        line=$(echo "$line" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
-        [[ -z "$line" ]] && continue
-        key="${line%%=*}"
-        value="${line#*=}"
-        key=$(echo "$key" | xargs)
-        value=$(echo "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"\(.*)"$/\1/' -e "s/^'\(.*\)'$/\1/")
-        export "$key"="$value"
-    done < ".env"
-fi
+source "$SCRIPT_DIR/env.sh"
+load_env
 
 echo "Starting Summa (single-process mode)..."
 

@@ -82,13 +82,27 @@ public class BackupService {
             throw new EntityNotFoundException("Backup file not found: " + backupPath);
         }
 
-        // Prevent path traversal: resolve symlinks and verify within allowed dirs.
-        Path resolved = backupFile.toAbsolutePath().normalize();
+        // Prevent path traversal: resolve all symlinks and verify within allowed dirs.
+        // toRealPath() resolves symlinks but throws on broken symlinks;
+        // we fall back to toAbsolutePath().normalize() only for the boundary check.
+        Path resolved;
         try {
             resolved = backupFile.toRealPath();
         } catch (java.io.IOException e) {
-            // Fallback if symlink resolution fails (e.g. broken symlink)
+            resolved = backupFile.toAbsolutePath().normalize();
         }
+        Path normalizedResolved = resolved.toAbsolutePath().normalize();
+
+        // Explicitly reject paths that contain symlink components which could escape
+        // the allowed directories. Walk each parent and check for symlinks.
+        Path checkPath = normalizedResolved;
+        while (checkPath != null && !checkPath.equals(checkPath.getParent())) {
+            if (Files.isSymbolicLink(checkPath)) {
+                throw new IllegalArgumentException("Backup path contains a symlink, which is not allowed for security");
+            }
+            checkPath = checkPath.getParent();
+        }
+
         Path tmpDir;
         try {
             tmpDir = Paths.get(System.getProperty("java.io.tmpdir")).toRealPath();
@@ -101,10 +115,8 @@ public class BackupService {
         } catch (java.io.IOException e) {
             dataDirStr = Paths.get(expandPath(dbPath)).getParent().toAbsolutePath().normalize().toString();
         }
-        Path normalizedResolved = resolved.toAbsolutePath().normalize();
-        String tmpDirStr = tmpDir.toString();
         Path dataDirPath = Paths.get(dataDirStr);
-        Path tmpDirPath = Paths.get(tmpDirStr);
+        Path tmpDirPath = tmpDir.toAbsolutePath().normalize();
         if (!normalizedResolved.equals(dataDirPath)
                 && !normalizedResolved.startsWith(dataDirPath)
                 && !normalizedResolved.equals(tmpDirPath)

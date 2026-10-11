@@ -88,6 +88,9 @@ public class AgentController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
         if (auth != null) return auth;
+        if (id == null || id.isBlank()) {
+            return ControllerResponses.validation(auditService, "Agent ID must not be blank");
+        }
         // API-004: full lineage graph from any member — follows agent chain then human deputy chain
         int depthCap = agentService.getDepthCap();
         List<String> lineage = new ArrayList<>();
