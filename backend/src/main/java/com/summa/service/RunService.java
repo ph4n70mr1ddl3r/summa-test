@@ -5,7 +5,6 @@ import com.summa.model.Run;
 import com.summa.repository.InitiativeRepository;
 import com.summa.model.Initiative;
 import com.summa.repository.AgentRepository;
-import com.summa.model.Agent;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;

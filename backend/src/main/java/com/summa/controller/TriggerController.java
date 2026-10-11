@@ -10,7 +10,6 @@ import com.summa.security.RbacAuthorizationFilter;
 import com.summa.service.AgentService;
 import com.summa.service.WorkspaceService;
 import com.summa.service.MemberService;
-import com.summa.constants.Defaults;
 import java.util.Map;
 import java.util.Optional;
 

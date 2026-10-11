@@ -1,7 +1,6 @@
 package com.summa.controller;
 
 import com.summa.enums.AgentClass;
-import com.summa.model.Agent;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.security.WriteGate;
 import com.summa.service.AuditService;

@@ -4,7 +4,6 @@ import com.summa.repository.SpendLedgerRepository;
 import com.summa.model.SpendLedger;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.time.Instant;
 import java.util.Optional;
 import com.summa.exception.EntityNotFoundException;
 

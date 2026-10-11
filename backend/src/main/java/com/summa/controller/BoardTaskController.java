@@ -5,7 +5,6 @@ import com.summa.model.BoardTask;
 import com.summa.service.AuditService;
 import com.summa.security.WriteGate;
 import com.summa.security.RbacAuthorizationFilter;
-import com.summa.constants.Defaults;
 import com.summa.util.JsonHelpers;
 import com.summa.service.MemberService;
 import org.springframework.http.ResponseEntity;

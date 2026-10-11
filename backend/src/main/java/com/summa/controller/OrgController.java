@@ -263,25 +263,7 @@ public class OrgController {
         }
         // API-004: full lineage graph from any member
         int depthCap = agentService.getDepthCap();
-        List<String> lineage = new ArrayList<>();
-        String[] holder = new String[]{JsonHelpers.stripIdPrefix(memberId)};
-        while (holder[0] != null && lineage.size() < depthCap) {
-            lineage.add(holder[0]);
-            final String nextId = holder[0];
-            Optional<Agent> agentOpt = memberService.findAgent(nextId);
-            if (agentOpt.isPresent()) {
-                holder[0] = agentOpt.get().getSpawnedBy();
-            } else {
-                // Apply same depth cap to human deputy chain to prevent infinite loops
-                Optional<Human> humanOpt = memberService.findHuman(nextId);
-                if (humanOpt.isPresent()) {
-                    holder[0] = humanOpt.get().getDeputyMemberId();
-                } else {
-                    // Neither agent nor human found — stop the chain
-                    holder[0] = null;
-                }
-            }
-        }
+        List<String> lineage = memberService.walkLineage(memberId, depthCap);
         return ResponseEntity.ok(Map.of("memberId", memberId, "lineage", lineage));
     }
 

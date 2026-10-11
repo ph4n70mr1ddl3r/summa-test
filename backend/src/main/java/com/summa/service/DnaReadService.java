@@ -3,7 +3,6 @@ package com.summa.service;
 import com.summa.repository.DnaDomainRepository;
 import com.summa.repository.DnaProposalRepository;
 import com.summa.model.DnaDomain;
-import com.summa.model.DnaProposal;
 import com.summa.model.Agent;
 import com.summa.model.Human;
 import org.springframework.jdbc.core.JdbcTemplate;

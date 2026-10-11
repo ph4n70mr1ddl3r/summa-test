@@ -4,8 +4,6 @@ import com.summa.constants.Defaults;
 import com.summa.repository.GovernanceSettingRepository;
 import com.summa.repository.SpendLedgerRepository;
 import com.summa.model.GovernanceSetting;
-import com.summa.model.Human;
-import com.summa.enums.RbacRole;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

@@ -8,8 +8,11 @@ import com.summa.model.Human;
 import com.summa.model.Agent;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import com.summa.util.JsonHelpers;
 
 @Service
@@ -103,5 +106,35 @@ public class MemberService {
     @Transactional
     public Human saveHuman(Human human) {
         return humanRepository.save(human);
+    }
+
+    /**
+     * Walk the lineage chain from a member ID, following agent spawned-by links
+     * and human deputy links, up to the configured depth cap. Returns the chain
+     * of member IDs from the starting point to the root. Stops on cycles.
+     */
+    @Transactional(readOnly = true)
+    public List<String> walkLineage(String memberId, int depthCap) {
+        List<String> lineage = new ArrayList<>();
+        Set<String> visited = new HashSet<>();
+        String currentId = JsonHelpers.stripIdPrefix(memberId);
+        while (currentId != null && lineage.size() < depthCap) {
+            if (!visited.add(currentId)) {
+                break;
+            }
+            lineage.add(currentId);
+            Optional<Agent> agentOpt = findAgent(currentId);
+            if (agentOpt.isPresent()) {
+                currentId = agentOpt.get().getSpawnedBy();
+            } else {
+                Optional<Human> humanOpt = findHuman(currentId);
+                if (humanOpt.isPresent()) {
+                    currentId = humanOpt.get().getDeputyMemberId();
+                } else {
+                    currentId = null;
+                }
+            }
+        }
+        return lineage;
     }
 }

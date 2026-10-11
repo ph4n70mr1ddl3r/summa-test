@@ -2,7 +2,6 @@ package com.summa.controller;
 
 import com.summa.service.AgentService;
 import com.summa.model.Agent;
-import com.summa.model.Human;
 import com.summa.service.AuditService;
 import com.summa.service.AskService;
 import com.summa.model.Ask;
@@ -19,13 +18,10 @@ import org.springframework.web.bind.annotation.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.HashSet;
 import java.util.function.Function;
 import com.summa.exception.EntityNotFoundException;
 
@@ -93,27 +89,7 @@ public class AgentController {
         }
         // API-004: full lineage graph from any member — follows agent chain then human deputy chain
         int depthCap = agentService.getDepthCap();
-        List<String> lineage = new ArrayList<>();
-        Set<String> visited = new HashSet<>();
-        String currentId = JsonHelpers.stripIdPrefix(id);
-        while (currentId != null && lineage.size() < depthCap) {
-            if (!visited.add(currentId)) {
-                // Cycle detected — stop to prevent infinite loop
-                break;
-            }
-            lineage.add(currentId);
-            Optional<Agent> agentOpt = agentService.findById(currentId);
-            if (agentOpt.isPresent()) {
-                currentId = agentOpt.get().getSpawnedBy();
-            } else {
-                Optional<Human> humanOpt = memberService.findHuman(currentId);
-                if (humanOpt.isPresent()) {
-                    currentId = humanOpt.get().getDeputyMemberId();
-                } else {
-                    currentId = null;
-                }
-            }
-        }
+        List<String> lineage = memberService.walkLineage(id, depthCap);
         return ResponseEntity.ok(lineage);
     }
 

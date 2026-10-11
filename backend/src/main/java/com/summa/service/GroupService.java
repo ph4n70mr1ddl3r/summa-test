@@ -5,7 +5,6 @@ import com.summa.model.Group;
 import com.summa.model.Human;
 import com.summa.model.Agent;
 import com.summa.service.MemberService;
-import com.summa.constants.Defaults;
 import com.summa.exception.EntityNotFoundException;
 import com.summa.util.JsonHelpers;
 import org.springframework.stereotype.Service;

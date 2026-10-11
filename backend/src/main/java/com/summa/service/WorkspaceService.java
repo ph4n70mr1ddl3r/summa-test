@@ -22,7 +22,6 @@ import java.util.Optional;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.summa.constants.Defaults;
 import com.summa.exception.EntityNotFoundException;
 import com.summa.util.JsonHelpers;
 
