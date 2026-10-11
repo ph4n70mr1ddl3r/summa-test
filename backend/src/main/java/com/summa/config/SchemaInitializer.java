@@ -89,13 +89,13 @@ public class SchemaInitializer {
             } else if (!inSingleQuote && isWordBoundaryMatch(withoutComments, i, "BEGIN")) {
                 current.append("BEGIN");
                 triggerDepth++;
-                i += 4; // skip past "BEGIN" (B is current, GINI are 4 more)
+                i += 4; // skip past "EGIN" (B is at i, GINI are the next 4 chars)
             } else if (!inSingleQuote && isWordBoundaryMatch(withoutComments, i, "END")) {
                 if (triggerDepth > 0) {
                     triggerDepth--;
                 }
                 current.append("END");
-                i += 2; // skip past "END" (E is current, ND are 2 more)
+                i += 2; // skip past "ND" (E is at i, ND are the next 2 chars)
             } else if (c == ';' && triggerDepth == 0) {
                 String stmt = current.toString().trim();
                 if (!stmt.isEmpty()) {

@@ -5,6 +5,7 @@ import com.summa.repository.AskRepository;
 import com.summa.repository.InitiativeRepository;
 import com.summa.model.Ask;
 import com.summa.model.Human;
+import com.summa.model.Initiative;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -231,5 +232,118 @@ class AskServiceTest {
 
         assertEquals("expired", ask.getStatus());
         verify(askRepository, atLeastOnce()).save(any());
+    }
+
+    @Test
+    void handleDirectionAskResponse_extend_noOpOnGoalRef() {
+        Ask ask = new Ask();
+        ask.setId("ask-dir-1");
+        ask.setKind("question");
+        ask.setSlaTier("bulk");
+        ask.setInitiativeId("init-1");
+        ask.setPayload("{\"goalId\":\"goal-1\"}");
+
+        InitiativeService initSvc = mock(InitiativeService.class);
+        AskService svc = new AskService(askRepository, auditService, memberService, governanceService,
+            initiativeRepository, initSvc, 1L, objectMapper);
+
+        svc.handleDirectionAskResponse(ask, "extend");
+
+        verify(initSvc, never()).close(anyString(), anyString());
+        verify(auditService, atLeastOnce()).logSystem(eq("DIRECTION_EXTEND"), eq("ask"), eq("ask-dir-1"), anyString());
+    }
+
+    @Test
+    void handleDirectionAskResponse_close_callsInitiativeClose() {
+        Ask ask = new Ask();
+        ask.setId("ask-dir-2");
+        ask.setKind("question");
+        ask.setSlaTier("bulk");
+        ask.setInitiativeId("init-2");
+        ask.setPayload("{}");
+
+        Initiative closeInit = new Initiative();
+        closeInit.setId("init-2");
+        lenient().when(initiativeRepository.findById("init-2")).thenReturn(Optional.of(closeInit));
+
+        InitiativeService initSvc = mock(InitiativeService.class);
+        AskService svc = new AskService(askRepository, auditService, memberService, governanceService,
+            initiativeRepository, initSvc, 1L, objectMapper);
+
+        svc.handleDirectionAskResponse(ask, "close");
+
+        verify(initSvc).close("init-2", "system");
+        verify(auditService, atLeastOnce()).logSystem(eq("DIRECTION_CLOSE"), eq("ask"), eq("ask-dir-2"), anyString());
+    }
+
+    @Test
+    void handleDirectionAskResponse_rebase_updatesGoalRef() {
+        Ask ask = new Ask();
+        ask.setId("ask-dir-3");
+        ask.setKind("question");
+        ask.setSlaTier("bulk");
+        ask.setInitiativeId("init-3");
+        ask.setPayload("{\"newGoalRef\":\"goal-new-1\"}");
+
+        Initiative init = new Initiative();
+        init.setId("init-3");
+        when(initiativeRepository.findById("init-3")).thenReturn(Optional.of(init));
+
+        AskService svc = buildService();
+
+        svc.handleDirectionAskResponse(ask, "re-base");
+
+        assertEquals("goal-new-1", init.getGoalRef());
+        verify(initiativeRepository).save(init);
+        verify(auditService, atLeastOnce()).logSystem(eq("DIRECTION_REBASE"), eq("ask"), eq("init-3"), anyString());
+    }
+
+    @Test
+    void handleDirectionAskResponse_noInitiativeId_returnsEarly() {
+        Ask ask = new Ask();
+        ask.setId("ask-dir-4");
+        ask.setKind("question");
+        ask.setSlaTier("bulk");
+        ask.setInitiativeId(null);
+        ask.setPayload("{}");
+
+        AskService svc = buildService();
+
+        svc.handleDirectionAskResponse(ask, "re-base");
+
+        verify(initiativeRepository, never()).findById(anyString());
+        verify(auditService, never()).logSystem(anyString(), anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void handleDirectionAskResponse_wrongKind_returnsEarly() {
+        Ask ask = new Ask();
+        ask.setId("ask-dir-5");
+        ask.setKind("approval");
+        ask.setSlaTier("bulk");
+        ask.setInitiativeId("init-5");
+        ask.setPayload("{}");
+
+        AskService svc = buildService();
+
+        svc.handleDirectionAskResponse(ask, "re-base");
+
+        verify(initiativeRepository, never()).findById(anyString());
+    }
+
+    @Test
+    void handleDirectionAskResponse_nonDirectionTier_returnsEarly() {
+        Ask ask = new Ask();
+        ask.setId("ask-dir-6");
+        ask.setKind("question");
+        ask.setSlaTier("standard");
+        ask.setInitiativeId("init-6");
+        ask.setPayload("{}");
+
+        AskService svc = buildService();
+
+        svc.handleDirectionAskResponse(ask, "re-base");
+
+        verify(initiativeRepository, never()).findById(anyString());
     }
 }

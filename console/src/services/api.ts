@@ -1,7 +1,7 @@
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 const TOKEN_KEY = 'summa_auth_token';
 const USER_KEY = 'summa_user';
-const REQUEST_TIMEOUT_MS = 30000;
+const REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_REQUEST_TIMEOUT_MS) || 30000;
 declare global {
   interface Window {
     __summaRedirecting?: boolean;

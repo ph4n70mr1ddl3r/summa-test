@@ -13,6 +13,7 @@ carry over and are out of scope here.
 ```
 humans         (id, name, email, rbac 'admin'|'owner'|'member'|'viewer', auth json,
                 password_hash?, deputy_member_id?, timezone?, working_hours json?,
+                session_version int default 0,
                 created_at, updated_at?, deactivated_at?)
                 -- password_hash: reserved for local-account auth (a deployment choice, not the
                 -- default — SEC-001's OIDC path leaves it null); when set, /auth/login accepts
@@ -56,9 +57,9 @@ asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request'|'pro
 initiatives    (id, title, goal_ref?, decision_ref?, sponsor member, lead member,
                 status 'proposed'|'active'|'paused'|'closed', business_budget json?,
                 deadline?, closed_at?, depends_on json?, created_at, updated_at?)
-board_tasks    (id, title, description, assignee_member_id?, initiative_id?, created_by member?, created_at,
-                updated_at?, status 'open'|'in_progress'|'done'|'cancelled' default 'open',
-                priority int default 0, due_at?, completed_at?)
+ board_tasks    (id, title, description, assignee_member_id?, initiative_id?, created_by member default 'system', created_at,
+                 updated_at?, status 'open'|'in_progress'|'done'|'cancelled' default 'open',
+                 priority int default 0, due_at?, completed_at?)
 runs           (id, agent_id member, workspace_id?, initiative_id?, trigger_id?, playbook_id?, parent_run_id?,
                 status 'queued'|'running'|'completed'|'failed'|'cancelled'|'suspended' default 'queued',
                 prompt text default '', result?, artifacts json default '[]', error_message?,
@@ -77,7 +78,8 @@ playbooks      (id, name, criticality 'standard'|'critical' default 'standard',
                 version int default 1, body json default '{}', status 'draft'|'active'|'retired'
                 default 'active', created_by member?, created_at, updated_at?
  spend_ledger   (id, member_id, run_id?, spawn_id?, kind 'reserve'|'settle'|'release',
-                  tokens_in REAL default 0, tokens_out BIGINT default 0, cost, pricing_version, at, created_at)
+                   tokens_in REAL default 0, tokens_out BIGINT default 0, cost, pricing_version,
+                   acknowledged int default 0, at, created_at)
  trigger_firings(id, trigger_id, idempotency_key, fired_at, run_id?)
  external_writes(id, run_id, connector, op, idempotency_key,
                  status 'prepared'|'committed'|'compensated'|'failed', prepared_at, resolved_at?,
@@ -150,8 +152,7 @@ governance_settings (key, value json, edited_by member, edited_at)
   (DGV-003, OFB-014).
 - **DAT-100** — `spend_ledger` kinds reserve|settle|release meter caps as reserved + settled
   (SPW-033/034).
-- **DAT-101** — `trigger_firings` unique on (trigger_id, idempotency_key) within the dedupe
-  window (default 7d, CFG-013); replays return the original run (SUB-052).
+- **DAT-101** — `trigger_firings` unique on (trigger_id, idempotency_key) globally (permanent dedupe); replays return the original run (SUB-052).
 - **DAT-102** — `external_writes` staged lifecycle per SUB-020/022.
 - **DAT-110** — `data_holds`: kind `member` freezes erasure; kind `domain` freezes
   history-rewrite remediation and db-only export/deletion at the removal-adjacent doors

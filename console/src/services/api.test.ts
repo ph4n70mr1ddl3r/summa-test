@@ -212,3 +212,22 @@ describe('network errors wrap in ApiError', () => {
     }
   })
 })
+
+describe('loadWithFallback error message formatting', () => {
+  it('includes the parallel failure message in the error string', async () => {
+    const result = await loadWithFallback(
+      async () => { throw new Error('timeout'); },
+      async () => [null, null]
+    )
+    expect(result.error).toContain('timeout')
+  })
+
+  it('handles non-Error throw values gracefully', async () => {
+    const result = await loadWithFallback(
+      async () => { throw 'string error'; },
+      async () => [{ id: '1' }]
+    )
+    // When individual fetches succeed, error is null even if parallel failed
+    expect(result.data).toHaveLength(1)
+  })
+})
