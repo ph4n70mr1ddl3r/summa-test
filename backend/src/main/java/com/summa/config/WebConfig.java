@@ -1,22 +1,14 @@
 package com.summa.config;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import com.summa.util.InstantSerializers;
 
-import java.io.IOException;
-import java.time.DateTimeException;
 import java.time.Instant;
 
 @Configuration
@@ -57,52 +49,9 @@ public class WebConfig implements WebMvcConfigurer {
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
         SimpleModule module = new SimpleModule("InstantAsEpochSeconds");
-        module.addSerializer(Instant.class, new InstantEpochSecondSerializer());
-        module.addDeserializer(Instant.class, new InstantEpochSecondDeserializer());
+        module.addSerializer(Instant.class, new InstantSerializers.InstantEpochSecondSerializer());
+        module.addDeserializer(Instant.class, new InstantSerializers.InstantEpochSecondDeserializer());
         mapper.registerModule(module);
         return mapper;
-    }
-
-    static class InstantEpochSecondSerializer extends JsonSerializer<Instant> {
-        @Override
-        public void serialize(Instant value, JsonGenerator gen, SerializerProvider provider) throws IOException {
-            if (value == null) {
-                gen.writeNull();
-            } else {
-                gen.writeNumber(value.getEpochSecond());
-            }
-        }
-    }
-
-    static class InstantEpochSecondDeserializer extends JsonDeserializer<Instant> {
-        @Override
-        public Instant deserialize(JsonParser p, DeserializationContext ctx) throws IOException {
-            // Accept epoch seconds (what we write) and ISO-8601 strings
-            // (what the console sends, e.g. DnaGoal window endpoints).
-            JsonToken token = p.currentToken();
-            if (token == null) return null;
-            switch (token) {
-                case VALUE_NUMBER_INT:
-                    return Instant.ofEpochSecond(p.getLongValue());
-                case VALUE_STRING: {
-                    String text = p.getText();
-                    if (text == null || text.isBlank()) return null;
-                    String t = text.trim();
-                    try {
-                        return Instant.parse(t);
-                    } catch (DateTimeException e) {
-                        try {
-                            return Instant.ofEpochSecond(Long.parseLong(t));
-                        } catch (NumberFormatException nfe) {
-                            throw new IOException("Invalid Instant value: " + text, e);
-                        }
-                    }
-                }
-                case VALUE_NULL:
-                    return null;
-                default:
-                    throw new IOException("Expected epoch-second number or ISO-8601 string for Instant, got " + p.currentToken());
-            }
-        }
     }
 }

@@ -571,7 +571,7 @@ export interface SpendSnapshot {
 
 export interface DataHold {
   id: string;
-  kind: string;
+  kind: 'member' | 'domain';
   subjectId: string;
   reasonMd: string;
   createdBy: string;

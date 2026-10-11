@@ -33,10 +33,10 @@ class DataHoldServiceTest {
         hold.setId("dh-1");
         when(holdRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        DataHold result = dataHoldService.create("legal", "subject-1", "reason", "admin");
+        DataHold result = dataHoldService.create("member", "subject-1", "reason", "admin");
 
         assertNotNull(result);
-        assertEquals("legal", result.getKind());
+        assertEquals("member", result.getKind());
         assertEquals("subject-1", result.getSubjectId());
     }
 
@@ -53,18 +53,18 @@ class DataHoldServiceTest {
 
     @Test
     void hasActiveHold_returnsTrue() {
-        when(holdRepository.existsByKindAndSubjectIdAndReleasedAtIsNull("legal", "subject-1"))
+        when(holdRepository.existsByKindAndSubjectIdAndReleasedAtIsNull("member", "subject-1"))
             .thenReturn(true);
 
-        assertTrue(dataHoldService.hasActiveHold("legal", "subject-1"));
+        assertTrue(dataHoldService.hasActiveHold("member", "subject-1"));
     }
 
     @Test
     void hasActiveHold_returnsFalse() {
-        when(holdRepository.existsByKindAndSubjectIdAndReleasedAtIsNull("legal", "subject-1"))
+        when(holdRepository.existsByKindAndSubjectIdAndReleasedAtIsNull("member", "subject-1"))
             .thenReturn(false);
 
-        assertFalse(dataHoldService.hasActiveHold("legal", "subject-1"));
+        assertFalse(dataHoldService.hasActiveHold("member", "subject-1"));
     }
 
     @Test
