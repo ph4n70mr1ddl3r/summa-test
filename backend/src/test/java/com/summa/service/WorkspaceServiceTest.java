@@ -90,19 +90,16 @@ class WorkspaceServiceTest {
     }
 
     @Test
-    void rebind_workspace() {
+    void rebind_throwsWhenMissingTargetNode() {
         Workspace ws = new Workspace();
         ws.setId("ws-1");
         when(workspaceRepository.findById("ws-1")).thenReturn(Optional.of(ws));
         lenient().when(workspaceRepository.save(any())).thenAnswer(i -> i.getArgument(0));
         when(nodeRepository.findById("node-2")).thenReturn(Optional.empty());
 
-        try {
+        assertThrows(EntityNotFoundException.class, () -> {
             workspaceService.rebind("ws-1", "node-2", "admin");
-            fail("Should throw for missing target node");
-        } catch (EntityNotFoundException e) {
-            // expected
-        }
+        });
     }
 
     @Test

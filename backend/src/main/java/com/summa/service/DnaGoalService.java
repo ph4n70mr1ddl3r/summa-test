@@ -49,6 +49,12 @@ public class DnaGoalService {
             if (ownerHuman.isEmpty() && ownerAgent.isEmpty()) {
                 throw new IllegalArgumentException("Owner does not reference an existing human or agent: " + owner);
             }
+            if (ownerHuman.isPresent() && memberService.isViewer(ownerHuman.get())) {
+                throw new IllegalArgumentException("viewer humans cannot own goals: " + owner);
+            }
+            if (ownerAgent.isPresent() && ownerAgent.get().isEphemeral()) {
+                throw new IllegalArgumentException("ephemeral workers cannot own goals: " + owner);
+            }
         }
         // SEC-030: scan for secrets before writing
         ScanUtils.scanForSecrets(statementMd, actor, "dna_goal", id, secretsScanner, auditService);

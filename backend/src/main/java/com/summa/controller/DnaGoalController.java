@@ -87,6 +87,12 @@ public class DnaGoalController {
             if (ownerHuman.isPresent() && !ownerHuman.get().isActive()) {
                 throw new IllegalArgumentException("owner must be an active member: " + ownerRaw);
             }
+            if (ownerHuman.isPresent() && memberService.isViewer(ownerHuman.get())) {
+                throw new IllegalArgumentException("viewer humans cannot own goals: " + ownerRaw);
+            }
+            if (ownerAgent.isPresent() && ownerAgent.get().isEphemeral()) {
+                throw new IllegalArgumentException("ephemeral workers cannot own goals: " + ownerRaw);
+            }
             if (ownerAgent.isPresent() && !ownerAgent.get().isActive()) {
                 throw new IllegalArgumentException("owner must be an active member: " + ownerRaw);
             }

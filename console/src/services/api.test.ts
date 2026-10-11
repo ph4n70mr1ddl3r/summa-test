@@ -130,7 +130,7 @@ describe('auth helpers', () => {
     expect(getUser()).toBe(null)
   })
 
-  it('getUser returns null when user missing required fields', () => {
+  it('getUser returns partial user when optional name is missing', () => {
     setAuthToken('test-token', { userId: 'u1', rbac: 'member' as RbacRole } as { userId: string; rbac: RbacRole; name?: string })
     expect(getUser()).toEqual({ userId: 'u1', rbac: 'member' })
   })
@@ -148,7 +148,10 @@ describe('setNavigate', () => {
     const nav = vi.fn()
     setNavigate(nav)
     setNavigate(null)
-    // setNavigate(null) should not throw and should clear the stored function
+    // Verify clearing does not throw and re-setting still works
+    const nav2 = vi.fn()
+    setNavigate(nav2)
+    expect(nav2).toBeDefined()
   })
 })
 

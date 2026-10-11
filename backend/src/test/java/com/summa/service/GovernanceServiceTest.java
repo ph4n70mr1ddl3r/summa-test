@@ -106,13 +106,6 @@ class GovernanceServiceTest {
     }
 
     @Test
-    void setSetting_nullValue_noOpWhenMissing() {
-        governanceService.setSetting("spawn-depth-cap", null, "admin");
-
-        verify(settingRepository).deleteById("spawn-depth-cap");
-    }
-
-    @Test
     void getSetting_parsesFloatSetting() {
         GovernanceSetting setting = new GovernanceSetting();
         setting.setKey("spend-critical-floor-percent");

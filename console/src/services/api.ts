@@ -96,7 +96,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T | undefin
   try {
     const headers = new Headers(init?.headers);
     const method = (init?.method ?? '').toUpperCase();
-    if (method !== 'GET' && method !== 'HEAD') {
+    if (method !== 'GET' && method !== 'HEAD' && !headers.has('Content-Type')) {
       headers.set('Content-Type', 'application/json');
     }
     if (authToken) {
@@ -814,7 +814,7 @@ export const api = {
   },
   runs: {
     list: (params?: RunListParams) =>
-      request<Run[]>(`/runs${buildQuery(params as Record<string, string | number | boolean | undefined>)}`),
+      request<Run[]>(`/runs${buildQuery(params)}`),
     create: (body: Record<string, string>) =>
       request<Run>('/runs', {
         method: 'POST',

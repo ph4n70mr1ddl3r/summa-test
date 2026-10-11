@@ -48,12 +48,10 @@ export default function DNAGoals() {
                     Owner: {escapeHtml(goal.owner)} | Inject: {escapeHtml(goal.inject)}
                     {goal.quarter != null && <span> | Q{escapeHtml(goal.quarter)}</span>}
                   </p>
-                  {goal.effectiveFrom !== null && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Effective: {formatDate(goal.effectiveFrom, { dateOnly: true })}
-                      {goal.effectiveTo !== null && ` — ${formatDate(goal.effectiveTo, { dateOnly: true })}`}
-                    </p>
-                  )}
+                  <p className="text-xs text-gray-500 mt-1">
+                    Effective: {formatDate(goal.effectiveFrom, { dateOnly: true })}
+                    {goal.effectiveTo != null && ` — ${formatDate(goal.effectiveTo, { dateOnly: true })}`}
+                  </p>
                 </div>
                 <span className={`text-xs px-2 py-1 rounded ${dnaGoalStatusColor(goal.status)}`} aria-label={`Status: ${goal.status}`}>{goal.status}</span>
               </div>
