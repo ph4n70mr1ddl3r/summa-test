@@ -40,6 +40,7 @@ public final class Defaults {
     // Algorithmic bounds
     public static final int MAX_EXPIRE_SUCCESSOR_DEPTH = 5;
     public static final int DEFAULT_CYCLE_DETECTION_MAX_STEPS = 50;
+    public static final int MAX_LINEAGE_CHAIN_DEPTH = 100;
 
     // List limits
     public static final int DEFAULT_LIST_LIMIT = 50;

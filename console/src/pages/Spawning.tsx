@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { api, loadWithFallback } from '../services/api'
 import type { SpawnRequest, SpawnStats } from '../types'
 import { spawnStatusColor, escapeHtml, formatDate } from '../utils/formatting'
@@ -12,6 +12,17 @@ export default function Spawning() {
   const [actionId, setActionId] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [confirmAction, setConfirmAction] = useState<Record<string, 'approve' | 'deny'>>({})
+
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      setConfirmAction({})
+    }
+  }, [])
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleKeyDown])
 
   const loadData = () => {
     setLoading(true)

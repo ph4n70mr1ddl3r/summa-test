@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { api } from '../services/api'
 import type { DataHold } from '../types'
 import { formatDate, escapeHtml } from '../utils/formatting'
@@ -11,6 +11,17 @@ export default function DataHolds() {
   const [actionId, setActionId] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [confirmReleaseId, setConfirmReleaseId] = useState<string | null>(null)
+
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      setConfirmReleaseId(null)
+    }
+  }, [])
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleKeyDown])
 
   const loadHolds = () => {
     setLoading(true)

@@ -393,7 +393,7 @@ public class SpawnService {
     private int computeDepthFromChain(String agentId, AgentRepository repo) {
         int depth = 1;
         String currentId = agentId;
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < Defaults.MAX_LINEAGE_CHAIN_DEPTH; i++) {
             Optional<Agent> parentOpt = repo.findById(currentId);
             if (parentOpt.isEmpty() || parentOpt.get().getSpawnedBy() == null) break;
             currentId = parentOpt.get().getSpawnedBy();

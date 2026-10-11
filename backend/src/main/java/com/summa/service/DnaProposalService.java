@@ -24,6 +24,7 @@ import com.summa.util.JsonHelpers;
 import com.summa.exception.EntityNotFoundException;
 import com.summa.model.Human;
 import com.summa.service.GovernanceService;
+import com.summa.constants.Defaults;
 
 @Service
 public class DnaProposalService {
@@ -278,7 +279,7 @@ public class DnaProposalService {
             String payload = JsonHelpers.toJson(payloadMap, objectMapper);
             // Use critical-tier deadline for escalation to ensure urgency
             long deadlineSeconds = askService.deriveDeadlineFromTier("critical");
-            if (deadlineSeconds > 24L * 3600L) deadlineSeconds = 24L * 3600L;
+            if (deadlineSeconds > Defaults.MAX_DEADLINE_SECONDS) deadlineSeconds = Defaults.MAX_DEADLINE_SECONDS;
             askService.create("question", "system", OffboardingWalkService.ADMIN_BROADCAST,
                 payload, "critical", "escalate", 1,
                 Instant.now().plusSeconds(deadlineSeconds), null, null);
