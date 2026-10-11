@@ -95,7 +95,7 @@ Summa treats security as a first-class concern. All SEC-* requirements are norma
 ### Before You Commit
 
 - **Never commit secrets**: JWT secrets, passwords, API keys, or private keys must not appear in source code or tests. Use environment variables (`SUMMA_AUTH_JWT_SECRET`, etc.).
-- **Run the secrets scanner**: `curl -X POST http://localhost:8080/api/admin/secrets/scan -H 'Content-Type: application/json' -d '{"content": "<your text>"}'` before adding any sensitive strings.
+- **Run the secrets scanner**: `curl -X POST http://localhost:8080/api/admin/secrets/scan -H 'Content-Type: application/json' -H 'Authorization: Bearer <jwt>' -d '{"content": "<your text>"}'` before adding any sensitive strings.
 - **Validate auth gates**: Every write endpoint must pass the write gate (`WriteGate`). Admin-only endpoints must explicitly check `RbacRole.ADMIN`.
 - **Sanitize all user input**: FTS5 queries, file paths, and SQL parameters must be parameterized. Path traversal guards use `toRealPath()` before `startsWith()`.
 - **Prefer `EntityNotFoundException` over `IllegalArgumentException`** for not-found cases — the global handler maps them to 404. Use `IllegalStateException` for gate/refusal logic (mapped to 403/409).

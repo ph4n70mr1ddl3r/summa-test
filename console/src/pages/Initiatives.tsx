@@ -18,7 +18,6 @@ export default function Initiatives() {
         if (aborted) return
         const result = Array.isArray(data) ? data : []
         setInitiatives(result)
-        setError(null)
         setLoading(false)
       })
       .catch((err) => {

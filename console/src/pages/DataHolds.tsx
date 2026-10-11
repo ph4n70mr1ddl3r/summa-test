@@ -10,6 +10,7 @@ export default function DataHolds() {
   const [error, setError] = useState<string | null>(null)
   const [actionId, setActionId] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [confirmReleaseId, setConfirmReleaseId] = useState<string | null>(null)
 
   const loadHolds = () => {
     setLoading(true)
@@ -37,17 +38,12 @@ export default function DataHolds() {
       try { await loadHolds(); setError(null) } catch { /* keep original action error */ }
     } finally {
       setActionId(null)
-    }
-  }
-
-  const confirmRelease = (hold: DataHold) => {
-    if (window.confirm(`Release data hold "${hold.subjectId}"? This is a destructive action.`)) {
-      handleRelease(hold.id)
+      setConfirmReleaseId(null)
     }
   }
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
-  if (error) return <ErrorBanner message={error} onRetry={loadHolds} />
+  if (error) return <ErrorBanner message={error} onRetry={loadHolds} onDismiss={() => setError(null)} />
 
   return (
     <div className="space-y-6">
@@ -82,15 +78,38 @@ export default function DataHolds() {
                     Created by {escapeHtml(hold.createdBy)} · {formatDate(hold.createdAt, { dateOnly: true })}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => confirmRelease(hold)}
-                  disabled={actionId === hold.id}
-                  className="ml-4 px-3 py-1 bg-red-700 hover:bg-red-600 disabled:bg-gray-600 rounded text-xs text-white"
-                  aria-label={`Release hold ${hold.id}`}
-                >
-                  {actionId === hold.id ? '…' : 'Release'}
-                </button>
+                <div className="flex items-center gap-2 ml-4">
+                  <button
+                    type="button"
+                    onClick={() => setConfirmReleaseId(hold.id)}
+                    disabled={actionId === hold.id}
+                    className="px-2 py-1 bg-red-700 hover:bg-red-600 disabled:bg-gray-600 disabled:text-gray-800 rounded text-xs text-white"
+                    aria-label={`Release hold ${hold.id}`}
+                  >
+                    {actionId === hold.id ? '…' : 'Release'}
+                  </button>
+                  {confirmReleaseId === hold.id && (
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-yellow-400">Confirm?</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRelease(hold.id)}
+                        className="px-1 py-0.5 bg-green-700 hover:bg-green-600 rounded text-xs text-white"
+                        aria-label={`Confirm release hold ${hold.id}`}
+                      >
+                        Yes
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmReleaseId(null)}
+                        className="px-1 py-0.5 bg-gray-600 hover:bg-gray-500 rounded text-xs text-gray-300"
+                        aria-label={`Cancel release hold ${hold.id}`}
+                      >
+                        No
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ))}

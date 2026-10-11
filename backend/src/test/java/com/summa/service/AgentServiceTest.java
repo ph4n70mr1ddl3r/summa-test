@@ -19,6 +19,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -252,5 +253,85 @@ class AgentServiceTest {
         Optional<Human> result = agentService.findFirstHumanUpChain("agent-1");
 
         assertFalse(result.isPresent());
+    }
+
+    @Test
+    void reapExpiredAgents_activeAgentRetired() {
+        Agent expiredAgent = new Agent();
+        expiredAgent.setId("agent-expired");
+        expiredAgent.setStatus("active");
+        expiredAgent.setTtlAt(Instant.now().minusSeconds(3600));
+        when(agentRepository.findActiveExpiredBefore(any())).thenReturn(List.of(expiredAgent));
+        when(agentRepository.findSuspendedExpiredBefore(any())).thenReturn(List.of());
+
+        // findById must return an ACTIVE agent for retire() to proceed
+        Agent freshAgent = new Agent();
+        freshAgent.setId("agent-expired");
+        freshAgent.setStatus("active");
+        when(agentRepository.findById("agent-expired")).thenReturn(Optional.of(freshAgent));
+
+        Ask ask = new Ask();
+        ask.setStatus("pending");
+        lenient().when(askRepository.findByFromAndStatusPending("agent-expired")).thenReturn(List.of(ask));
+        lenient().when(askRepository.findByToAndStatusPending("agent-expired")).thenReturn(List.of());
+        lenient().when(boardTaskRepository.findByAssigneeMemberId("agent-expired")).thenReturn(List.of());
+        lenient().when(spawnRequestRepository.findByRequesterId("agent-expired")).thenReturn(List.of());
+        lenient().when(triggerRepository.findByAgentId("agent-expired")).thenReturn(List.of());
+        lenient().when(initiativeRepository.findByLead("agent-expired")).thenReturn(List.of());
+        lenient().when(proposalRepository.findByProposedByAndStatus("agent-expired", "open")).thenReturn(List.of());
+        lenient().when(runRepository.findByAgentIdAndStatus("agent-expired", "running")).thenReturn(List.of());
+
+        agentService.reapExpiredAgents();
+
+        assertEquals("retiring", freshAgent.getStatus());
+        assertNotNull(freshAgent.getRetiredAt());
+    }
+
+    @Test
+    void reapExpiredAgents_skipsAlreadyRetired() {
+        Agent expiredAgent = new Agent();
+        expiredAgent.setId("agent-expired");
+        expiredAgent.setStatus("active");
+        expiredAgent.setTtlAt(Instant.now().minusSeconds(3600));
+        when(agentRepository.findActiveExpiredBefore(any())).thenReturn(List.of(expiredAgent));
+        when(agentRepository.findSuspendedExpiredBefore(any())).thenReturn(List.of());
+
+        // Re-fetched agent is no longer active
+        Agent freshAgent = new Agent();
+        freshAgent.setId("agent-expired");
+        freshAgent.setStatus("retiring");
+        when(agentRepository.findById("agent-expired")).thenReturn(Optional.of(freshAgent));
+
+        agentService.reapExpiredAgents();
+
+        assertEquals("retiring", freshAgent.getStatus());
+    }
+
+    @Test
+    void reapExpiredAgents_suspendedAgentArchived() {
+        Agent expiredAgent = new Agent();
+        expiredAgent.setId("agent-suspended-expired");
+        expiredAgent.setStatus("suspended");
+        expiredAgent.setTtlAt(Instant.now().minusSeconds(3600));
+        when(agentRepository.findActiveExpiredBefore(any())).thenReturn(List.of());
+        when(agentRepository.findSuspendedExpiredBefore(any())).thenReturn(List.of(expiredAgent));
+
+        // findById must return a SUSPENDED agent for cleanupSuspendedAgent to proceed
+        Agent freshAgent = new Agent();
+        freshAgent.setId("agent-suspended-expired");
+        freshAgent.setStatus("suspended");
+        when(agentRepository.findById("agent-suspended-expired")).thenReturn(Optional.of(freshAgent));
+
+        lenient().when(askRepository.findByFromAndStatusPending("agent-suspended-expired")).thenReturn(List.of());
+        lenient().when(askRepository.findByToAndStatusPending("agent-suspended-expired")).thenReturn(List.of());
+        lenient().when(spawnRequestRepository.findByRequesterId("agent-suspended-expired")).thenReturn(List.of());
+        lenient().when(initiativeRepository.findBySponsor("agent-suspended-expired")).thenReturn(List.of());
+        lenient().when(initiativeRepository.findByLead("agent-suspended-expired")).thenReturn(List.of());
+        lenient().when(triggerRepository.findByAgentId("agent-suspended-expired")).thenReturn(List.of());
+
+        agentService.reapExpiredAgents();
+
+        assertEquals("archived", freshAgent.getStatus());
+        assertNotNull(freshAgent.getArchivedAt());
     }
 }

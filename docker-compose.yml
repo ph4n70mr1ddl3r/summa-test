@@ -84,6 +84,7 @@ services:
         # Baked into the Vite bundle at build time — override for non-default setups.
         VITE_API_URL: ${VITE_API_URL:-/api}
         VITE_SUMMA_MODE: ${VITE_SUMMA_MODE:-single-process}
+        VITE_REQUEST_TIMEOUT_MS: ${VITE_REQUEST_TIMEOUT_MS:-30000}
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true

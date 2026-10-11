@@ -44,7 +44,7 @@ public class GlobalExceptionHandler {
             log.warn("Audit log failed, continuing without audit entry: {}", e.getMessage());
         }
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("code", objectType);
+        body.put("code", objectType != null ? objectType : "unknown");
         body.put("message", message);
         if (auditEvent != null) {
             body.put("audit_event_id", auditEvent.getId());

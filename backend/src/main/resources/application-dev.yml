@@ -10,3 +10,4 @@ logging:
     com.summa: DEBUG
     org.springframework.security: DEBUG
     org.eclipse.persistence: DEBUG
+

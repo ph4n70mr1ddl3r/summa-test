@@ -345,4 +345,43 @@ class AskServiceTest {
 
         verify(initiativeRepository, never()).findById(anyString());
     }
+
+    @Test
+    void processExpiredAsks_deny_expiresAsk() {
+        Ask ask = new Ask();
+        ask.setId("ask-expire-1");
+        ask.setStatus("pending");
+        ask.setExpiryBehavior("deny");
+        ask.setSlaTier("standard");
+        ask.setDeadline(Instant.now().minusSeconds(3600));
+
+        when(askRepository.findExpiredBefore(any())).thenReturn(List.of(ask));
+        when(askRepository.findById("ask-expire-1")).thenReturn(Optional.of(ask));
+        when(askRepository.save(any())).thenReturn(ask);
+
+        AskService svc = buildService();
+        svc.processExpiredAsks();
+
+        assertEquals("expired", ask.getStatus());
+        verify(auditService).logSystem(eq("EXPIRE"), eq("ask"), eq("ask-expire-1"), isNull());
+    }
+
+    @Test
+    void processExpiredAsks_skipsAlreadyNonPending() {
+        Ask ask = new Ask();
+        ask.setId("ask-already-done");
+        ask.setStatus("answered");
+        ask.setDeadline(Instant.now().minusSeconds(3600));
+
+        when(askRepository.findExpiredBefore(any())).thenReturn(List.of(ask));
+        Ask fresh = new Ask();
+        fresh.setId("ask-already-done");
+        fresh.setStatus("answered");
+        when(askRepository.findById("ask-already-done")).thenReturn(Optional.of(fresh));
+
+        AskService svc = buildService();
+        svc.processExpiredAsks();
+
+        verify(askRepository, never()).save(any());
+    }
 }
