@@ -37,6 +37,8 @@ public class SpawnController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
         if (auth != null) return auth;
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
         if (!memberService.isAdmin(actor)) {
             return ControllerResponses.gate(auditService, actor, "Admin access required to list spawn requests");
         }

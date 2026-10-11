@@ -142,6 +142,8 @@ public class RateLimiter {
                 locks.remove(key);
             }
         }
+        // Also purge locks that have no corresponding rate-limit data (orphaned locks)
+        purgeStaleLocks();
     }
 
     private void purgeStaleLocks() {

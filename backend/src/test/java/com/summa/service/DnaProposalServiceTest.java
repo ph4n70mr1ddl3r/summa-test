@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
 import java.util.List;
@@ -45,7 +46,8 @@ class DnaProposalServiceTest {
     @Mock
     private GovernanceService governanceService;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    @Spy
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     private DnaProposalService proposalService;
 
@@ -148,7 +150,7 @@ class DnaProposalServiceTest {
         when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
         JsonNode payload;
         try {
-            payload = objectMapper.readTree(proposal.getPayload());
+            payload = new com.fasterxml.jackson.databind.ObjectMapper().readTree("{\"supersedes_id\":\"rule-old\"}");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

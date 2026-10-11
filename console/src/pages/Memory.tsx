@@ -58,7 +58,7 @@ export default function Memory() {
   }
 
   const requestReview = (id: string) => {
-    if (reviewingId === id) {
+    if (reviewingId === id || reviewingForId === id) {
       handleReview(id)
     } else {
       setReviewingId(id)

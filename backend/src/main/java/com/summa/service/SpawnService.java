@@ -308,7 +308,12 @@ public class SpawnService {
             if (request.getRequesterId() != null && !request.getRequesterId().isBlank()) {
                 Optional<Agent> parentOpt = agentRepository.findById(request.getRequesterId());
                 if (parentOpt.isPresent() && parentOpt.get().getLineageDepth() != null) {
-                    depth = parentOpt.get().getLineageDepth() + 1;
+                    int parentDepth = parentOpt.get().getLineageDepth();
+                    if (parentDepth >= Integer.MAX_VALUE - 1) {
+                        depth = depthCap + 1; // force rejection at cap
+                    } else {
+                        depth = parentDepth + 1;
+                    }
                 } else {
                     depth = 1;
                 }

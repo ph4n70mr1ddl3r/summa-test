@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { api } from '../services/api'
+import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Home() {
   return (
@@ -63,21 +64,26 @@ export default function Home() {
 
 function ApiStatusCheck() {
   const [status, setStatus] = useState<'ok' | 'error' | 'loading'>('loading')
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   useEffect(() => {
     let aborted = false
     const check = async () => {
       try {
         await api.health()
-        if (!aborted) setStatus('ok')
-      } catch {
-        if (!aborted) setStatus('error')
+        if (!aborted) { setStatus('ok'); setErrorMsg(null) }
+      } catch (err) {
+        if (!aborted) { setStatus('error'); setErrorMsg(err instanceof Error ? err.message : 'Backend unreachable') }
       }
     }
     check()
     const interval = setInterval(check, 30000)
     return () => { aborted = true; clearInterval(interval) }
   }, [])
+
+  if (status === 'error' && errorMsg) {
+    return <ErrorBanner message={errorMsg} onRetry={() => { setStatus('loading'); setErrorMsg(null) }} />
+  }
 
   return (
     <div className="flex items-center space-x-2 text-sm">

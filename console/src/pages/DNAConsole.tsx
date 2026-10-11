@@ -32,10 +32,10 @@ export default function DNAConsole() {
       ]),
     ).then(({ data, error: loadError }) => {
       if (aborted) { setLoading(false); return }
-      setDomains(Array.isArray(data[0]) ? data[0].filter((d): d is DnaDomain => typeof d === 'object' && d != null && 'name' in d) : [])
-      setCards(Array.isArray(data[1]) ? data[1].filter((c): c is DnaCard => typeof c === 'object' && c != null && 'title' in c) : [])
-      setGoals(Array.isArray(data[2]) ? data[2].filter((g): g is DnaGoal => typeof g === 'object' && g != null && 'title' in g) : [])
-      setProposals(Array.isArray(data[3]) ? data[3].filter((p): p is DnaProposal => typeof p === 'object' && p != null && 'kind' in p) : [])
+      setDomains(Array.isArray(data[0]) ? data[0].filter((d): d is DnaDomain => typeof d === 'object' && d != null && 'id' in d && 'name' in d) : [])
+      setCards(Array.isArray(data[1]) ? data[1].filter((c): c is DnaCard => typeof c === 'object' && c != null && 'id' in c && 'title' in c) : [])
+      setGoals(Array.isArray(data[2]) ? data[2].filter((g): g is DnaGoal => typeof g === 'object' && g != null && 'id' in g && 'title' in g) : [])
+      setProposals(Array.isArray(data[3]) ? data[3].filter((p): p is DnaProposal => typeof p === 'object' && p != null && 'id' in p && 'kind' in p) : [])
       setError(loadError)
       setLoading(false)
     })

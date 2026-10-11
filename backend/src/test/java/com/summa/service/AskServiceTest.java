@@ -250,7 +250,7 @@ class AskServiceTest {
 
         svc.handleDirectionAskResponse(ask, "extend");
 
-        verify(initSvc, never()).close(anyString(), anyString());
+        verify(initiativeService, never()).close(anyString(), anyString());
         verify(auditService, atLeastOnce()).logSystem(eq("DIRECTION_EXTEND"), eq("ask"), eq("ask-dir-1"), anyString());
     }
 
@@ -267,13 +267,11 @@ class AskServiceTest {
         closeInit.setId("init-2");
         lenient().when(initiativeRepository.findById("init-2")).thenReturn(Optional.of(closeInit));
 
-        InitiativeService initSvc = mock(InitiativeService.class);
-        AskService svc = new AskService(askRepository, auditService, memberService, governanceService,
-            initiativeRepository, initSvc, 1L, objectMapper);
+        AskService svc = buildService();
 
         svc.handleDirectionAskResponse(ask, "close");
 
-        verify(initSvc).close("init-2", "system");
+        verify(initiativeService).close("init-2", "system");
         verify(auditService, atLeastOnce()).logSystem(eq("DIRECTION_CLOSE"), eq("ask"), eq("ask-dir-2"), anyString());
     }
 

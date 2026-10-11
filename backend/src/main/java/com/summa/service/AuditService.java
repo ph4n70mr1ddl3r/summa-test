@@ -94,6 +94,12 @@ public class AuditService {
             log.trace("Detail is not valid JSON, using regex redaction: {}", e.getMessage());
         }
         String sanitized = PASSWORD_PATTERN.matcher(detail).replaceAll("\"$1\":\"[REDACTED]\"");
+        // Second pass: catch unquoted values matched by the second alt of PASSWORD_PATTERN
+        // The first pass only handles quoted values; unquoted key=value needs separate handling
+        sanitized = sanitized.replaceAll(
+            "(?i)((?:password|passwd|pwd|secret|token_hash|auth_token|access_token|api_key|apikey|bearer_token|session_token|bearer)\\s*[:=]\\s*)([^\\s,;}{\"']{3,})",
+            "\"$1\":\"[REDACTED]\""
+        );
         sanitized = EMAIL_PATTERN.matcher(sanitized).replaceAll("\"$1\":\"[REDACTED]\"");
         return sanitized;
     }

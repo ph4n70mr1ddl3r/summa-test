@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.UUID;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -47,7 +46,9 @@ public class GlobalExceptionHandler {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("code", objectType);
         body.put("message", message);
-        body.put("audit_event_id", auditEvent != null ? auditEvent.getId() : UUID.randomUUID().toString());
+        if (auditEvent != null) {
+            body.put("audit_event_id", auditEvent.getId());
+        }
         return ResponseEntity.status(status).body(body);
     }
 

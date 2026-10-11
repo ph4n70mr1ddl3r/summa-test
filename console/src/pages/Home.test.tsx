@@ -47,7 +47,7 @@ describe('Home page', () => {
     vi.mocked(apiModule.api.health).mockRejectedValue(new Error('Service unavailable'))
     const { container } = renderWithRouter(<Home />)
     await waitFor(() => {
-      expect(container.textContent).toContain('Unreachable')
+      expect(container.textContent).toContain('Failed to load')
     })
   })
 })

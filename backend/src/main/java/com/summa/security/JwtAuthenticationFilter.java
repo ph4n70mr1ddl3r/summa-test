@@ -96,7 +96,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // If node auth already authenticated this request, skip JWT check
         if (Boolean.TRUE.equals(request.getAttribute("nodeAuth"))) {
-            filterChain.doFilter(request, response);
+            try {
+                SecurityContextHolder.clearContext();
+                filterChain.doFilter(request, response);
+            } finally {
+                SecurityContextHolder.clearContext();
+            }
             return;
         }
 

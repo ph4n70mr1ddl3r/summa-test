@@ -32,10 +32,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import com.summa.exception.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.summa.util.JsonHelpers;
 
 @Service
 public class DnaDomainService {
+    private static final Logger log = LoggerFactory.getLogger(DnaDomainService.class);
     private final DnaDomainRepository domainRepository;
     private final DnaCardRepository cardRepository;
     private final DnaProposalRepository proposalRepository;
@@ -436,7 +439,7 @@ public class DnaDomainService {
                     }
                 }
             } catch (Exception e) {
-                // Fall through to workspace check
+                log.warn("Failed to resolve initiative scope for ask {}, falling through to workspace check: {}", ask.getId(), e.getMessage());
             }
         }
         if (ask.getWorkspaceId() != null && !ask.getWorkspaceId().isBlank()) {

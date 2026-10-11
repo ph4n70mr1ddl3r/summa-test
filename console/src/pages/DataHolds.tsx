@@ -40,6 +40,12 @@ export default function DataHolds() {
     }
   }
 
+  const confirmRelease = (hold: DataHold) => {
+    if (window.confirm(`Release data hold "${hold.subjectId}"? This is a destructive action.`)) {
+      handleRelease(hold.id)
+    }
+  }
+
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
   if (error) return <ErrorBanner message={error} onRetry={loadHolds} />
 
@@ -78,7 +84,7 @@ export default function DataHolds() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => handleRelease(hold.id)}
+                  onClick={() => confirmRelease(hold)}
                   disabled={actionId === hold.id}
                   className="ml-4 px-3 py-1 bg-red-700 hover:bg-red-600 disabled:bg-gray-600 rounded text-xs text-white"
                   aria-label={`Release hold ${hold.id}`}

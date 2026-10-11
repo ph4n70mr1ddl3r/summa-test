@@ -31,6 +31,8 @@ import com.summa.model.Pat;
 import com.summa.model.RoleTemplate;
 import com.summa.model.Workspace;
 import com.summa.util.JsonHelpers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -44,6 +46,7 @@ import java.util.Set;
 
 @Service
 public class OffboardingWalkService {
+    private static final Logger log = LoggerFactory.getLogger(OffboardingWalkService.class);
     // Broadcast target for delegation chains when no eligible member is reachable
     public static final String ADMIN_BROADCAST = "admins";
     // OFB-001: Maximum rows to load per unbounded collection during offboarding/demotion walks.
@@ -256,6 +259,9 @@ public class OffboardingWalkService {
             boolean isAgentOfDeparted = false;
             if (!isDirectProposer && proposerId != null && proposerId.startsWith("a:")) {
                 Agent agent = agentById.get(proposerId.substring(2));
+                if (agent == null) {
+                    log.warn("Offboarding {}: agent proposer {} not found in cache, treating as non-agent proposal", humanId, proposerId);
+                }
                 isAgentOfDeparted = agent != null && humanId.equals(agent.getOwnerHumanId());
             }
             if (!isDirectProposer && !isAgentOfDeparted) continue;

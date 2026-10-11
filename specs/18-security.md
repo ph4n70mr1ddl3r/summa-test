@@ -29,9 +29,7 @@ Source: PLAN.md §10.
   egress CIDR guard); every call audited; append-only audit log.
 - **SEC-010** — The scope delegation invariant at spawn: child ⊆ parent, enforced by the
   policy engine (SPW-030).
-- **SEC-011** — Spawn safety per the SPW-001 policy engine (SPW-070): quotas, depth cap
-  (default 2, CFG-018), TTL reaper, spend circuit-breaker, approval gates on persistent
-  hires; ephemeral workers get connector-sandboxed, task-scoped workspaces only.
+- **SEC-011** — See SPW-070 for spawn safety policy (quotas, depth cap, TTL reaper, spend circuit-breaker, approval gates).
 - **SEC-012** — Node trust: enrollment via one-time tokens + keypair identity, revocation
   from the console, node id stamped on every audit event where one exists (DAT-121);
   for remote nodes, egress

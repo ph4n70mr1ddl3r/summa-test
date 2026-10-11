@@ -9,6 +9,7 @@ export default function Triggers() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [actionId, setActionId] = useState<string | null>(null)
 
   const loadTriggers = () => {
     setLoading(true)
@@ -27,6 +28,7 @@ export default function Triggers() {
   }, [])
 
   const handleLifecycle = async (id: string, action: 'pause' | 'resume' | 'archive') => {
+    setActionId(id)
     setActionError(null)
     try {
       if (action === 'pause') await api.triggers.pause(id)
@@ -35,6 +37,8 @@ export default function Triggers() {
       await loadTriggers()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setActionId(null)
     }
   }
 
@@ -84,30 +88,33 @@ export default function Triggers() {
                     <button
                       type="button"
                       onClick={() => handleLifecycle(t.id, 'pause')}
-                      className="ml-2 px-2 py-1 text-xs bg-yellow-700 hover:bg-yellow-600 rounded text-yellow-100"
+                      disabled={actionId === t.id}
+                      className="ml-2 px-2 py-1 text-xs bg-yellow-700 hover:bg-yellow-600 disabled:bg-gray-600 rounded text-yellow-100"
                       aria-label={`Pause trigger ${t.name}`}
                     >
-                      Pause
+                      {actionId === t.id ? '…' : 'Pause'}
                     </button>
                   )}
                   {t.status === 'paused' && (
                     <button
                       type="button"
                       onClick={() => handleLifecycle(t.id, 'resume')}
-                      className="ml-2 px-2 py-1 text-xs bg-green-700 hover:bg-green-600 rounded text-green-100"
+                      disabled={actionId === t.id}
+                      className="ml-2 px-2 py-1 text-xs bg-green-700 hover:bg-green-600 disabled:bg-gray-600 rounded text-green-100"
                       aria-label={`Resume trigger ${t.name}`}
                     >
-                      Resume
+                      {actionId === t.id ? '…' : 'Resume'}
                     </button>
                   )}
                   {t.status !== 'archived' && (
                     <button
                       type="button"
                       onClick={() => handleLifecycle(t.id, 'archive')}
-                      className="ml-2 px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded text-gray-300"
+                      disabled={actionId === t.id}
+                      className="ml-2 px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 disabled:bg-gray-600 rounded text-gray-300"
                       aria-label={`Archive trigger ${t.name}`}
                     >
-                      Archive
+                      {actionId === t.id ? '…' : 'Archive'}
                     </button>
                   )}
                 </div>
