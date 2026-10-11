@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { api, loadWithFallback } from '../services/api'
 import type { SpendSnapshot } from '../types'
 import { ErrorBanner } from '../components/ErrorBanner'
@@ -13,6 +13,10 @@ export default function Governance() {
   const [actionError, setActionError] = useState<string | null>(null)
   const [saving, setSaving] = useState<string | null>(null)
   const [editValues, setEditValues] = useState<Record<string, string>>({})
+  const editValuesRef = useRef(editValues)
+  editValuesRef.current = editValues
+  const savingRef = useRef(saving)
+  savingRef.current = saving
 
   const loadData = useCallback(() => {
     setLoading(true)
@@ -92,8 +96,10 @@ export default function Governance() {
   }, [])
 
   const renderCell = useCallback((section: 'policies' | 'quotas', key: string, value: unknown) => {
-    const isEditing = editValues[key] !== undefined
-    const currentValue = isEditing ? editValues[key] : String(value ?? '')
+    const ev = editValuesRef.current
+    const isEditing = ev[key] !== undefined
+    const currentValue = isEditing ? ev[key] : String(value ?? '')
+    const sv = savingRef.current
     return (
       <div key={key} className="flex items-center justify-between text-sm gap-2">
         <span className="text-gray-400 flex-shrink-0 w-48 truncate">{escapeHtml(key)}</span>
@@ -108,16 +114,16 @@ export default function Governance() {
             />
             <button
               type="button"
-              onClick={() => handleSave(section, key, editValues[key] ?? '')}
-              disabled={saving === `${section}:${key}`}
+              onClick={() => handleSave(section, key, ev[key] ?? '')}
+              disabled={sv === `${section}:${key}`}
               className="px-2 py-0.5 bg-green-700 hover:bg-green-600 disabled:bg-gray-600 rounded text-xs text-white"
               aria-label={`Save ${key}`}
             >
-              {saving === `${section}:${key}` ? '…' : '✓'}
+              {sv === `${section}:${key}` ? '…' : '✓'}
             </button>
             <button
               type="button"
-              onClick={() => { const next = { ...editValues }; delete next[key]; setEditValues(next) }}
+              onClick={() => { const next = { ...ev }; delete next[key]; setEditValues(next) }}
               className="px-2 py-0.5 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-400"
               aria-label={`Cancel edit ${key}`}
             >
@@ -136,7 +142,7 @@ export default function Governance() {
         )}
       </div>
     )
-  }, [editValues, startEdit, handleSave, saving])
+  }, [startEdit, handleSave])
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
   if (error) return <ErrorBanner message={error} onRetry={loadData} />

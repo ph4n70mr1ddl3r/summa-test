@@ -72,7 +72,13 @@ public class DnaDomain {
     public String getAccess() { return access; }
     public void setAccess(String access) { this.access = access; }
     public String getNamedReaders() { return namedReaders; }
-    public void setNamedReaders(String namedReaders) { this.namedReaders = namedReaders; }
+    public void setNamedReaders(String namedReaders) {
+        if (namedReaders == null) {
+            this.namedReaders = "[]";
+        } else {
+            this.namedReaders = namedReaders;
+        }
+    }
     public String getStore() { return store; }
     public void setStore(String store) { this.store = store; }
     public String getSod() { return sod; }

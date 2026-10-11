@@ -245,12 +245,14 @@ public class OrgService {
     private boolean wouldCreateDeputyCycle(String humanId, String deputyId) {
         String current = deputyId;
         int maxSteps = Defaults.DEFAULT_CYCLE_DETECTION_MAX_STEPS;
+        java.util.Set<String> visited = new java.util.HashSet<>();
         for (int i = 0; i < maxSteps; i++) {
             Optional<Human> h = humanRepository.findById(current);
             if (h.isEmpty()) return false;
             String deputy = h.get().getDeputyMemberId();
             if (deputy == null) return false;
             if (deputy.equals(humanId)) return true;
+            if (!visited.add(current)) return true; // pre-existing cycle
             current = deputy;
         }
         return true; // Exceeded max steps — treat as cycle

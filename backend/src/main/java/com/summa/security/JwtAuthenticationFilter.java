@@ -86,7 +86,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         if (isNodePath(path)) {
-            filterChain.doFilter(request, response);
+            try {
+                filterChain.doFilter(request, response);
+            } finally {
+                SecurityContextHolder.clearContext();
+            }
             return;
         }
 

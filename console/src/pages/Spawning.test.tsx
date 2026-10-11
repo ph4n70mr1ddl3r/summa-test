@@ -8,6 +8,8 @@ vi.mock('../services/api', () => ({
     spawn: {
       list: vi.fn(),
       stats: vi.fn(),
+      approve: vi.fn(),
+      deny: vi.fn(),
     },
   },
   loadWithFallback: async (fetchAll: () => Promise<unknown[]>, fetchIndividual: () => Promise<unknown[]>) => {
@@ -70,6 +72,26 @@ describe('Spawning page', () => {
     render(<Spawning />)
     await waitFor(() => {
       expect(screen.getByText(/error/i)).toBeInTheDocument()
+    })
+  })
+
+  it('shows confirm dialog per request when multiple pending exist', async () => {
+    vi.mocked(apiModule.api.spawn.list).mockResolvedValue([
+      { id: 's1', requesterId: 'a1', class: 'ephemeral', purpose: 'Task 1', status: 'requested' as const },
+      { id: 's2', requesterId: 'a2', class: 'ephemeral', purpose: 'Task 2', status: 'requested' as const },
+    ])
+    vi.mocked(apiModule.api.spawn.stats).mockResolvedValue({ requested: 2, approved: 0, archived: 0 })
+    render(<Spawning />)
+    await waitFor(() => expect(screen.getByText('Requested: 2')).toBeInTheDocument())
+
+    // Click Approve on first request
+    const approveButtons = screen.getAllByText('Approve')
+    expect(approveButtons).toHaveLength(2)
+    approveButtons[0].click()
+
+    // Confirm dialog should appear for first request only
+    await waitFor(() => {
+      expect(screen.getByText('Confirm?')).toBeInTheDocument()
     })
   })
 })

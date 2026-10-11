@@ -64,6 +64,7 @@ public class Human {
     @PreUpdate
     public void preUpdate() {
         updatedAt = Instant.now();
+        if (email != null) email = email.toLowerCase();
     }
 
     // Getters and setters

@@ -34,6 +34,17 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
         return val != null && val;
     }
 
+    /** Package-private helpers for unit testing. */
+    static void clearThreadLocals() {
+        ACTOR_CONTEXT.remove();
+        WRITES_ALLOWED.remove();
+        NODE_AUTH.remove();
+    }
+
+    static void setNodeAuthForTest(boolean value) {
+        NODE_AUTH.set(value);
+    }
+
     private final MemberService memberService;
 
     public RbacAuthorizationFilter(MemberService memberService) {

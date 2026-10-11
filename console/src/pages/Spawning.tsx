@@ -11,7 +11,7 @@ export default function Spawning() {
   const [error, setError] = useState<string | null>(null)
   const [actionId, setActionId] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
-  const [confirmAction, setConfirmAction] = useState<{ id: string; action: 'approve' | 'deny' } | null>(null)
+  const [confirmAction, setConfirmAction] = useState<Record<string, 'approve' | 'deny'>>({})
 
   const loadData = () => {
     setLoading(true)
@@ -54,7 +54,7 @@ export default function Spawning() {
       try { await loadData(); setError(null) } catch { /* keep original action error */ }
     } finally {
       setActionId(null)
-      setConfirmAction(null)
+      setConfirmAction(prev => { const next = { ...prev }; delete next[id]; return next })
     }
   }
 
@@ -112,7 +112,7 @@ export default function Spawning() {
                     </span>
                     <button
                       type="button"
-                      onClick={() => setConfirmAction({ id: req.id, action: 'approve' })}
+                      onClick={() => setConfirmAction(prev => ({ ...prev, [req.id]: 'approve' }))}
                       disabled={actionId === req.id}
                       className="px-2 py-1 bg-green-700 hover:bg-green-600 disabled:bg-gray-600 rounded text-xs text-white"
                       aria-label={`Approve ${req.purpose || 'request'}`}
@@ -121,27 +121,27 @@ export default function Spawning() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setConfirmAction({ id: req.id, action: 'deny' })}
+                      onClick={() => setConfirmAction(prev => ({ ...prev, [req.id]: 'deny' }))}
                       disabled={actionId === req.id}
                       className="px-2 py-1 bg-red-700 hover:bg-red-600 disabled:bg-gray-600 rounded text-xs text-white"
                       aria-label={`Deny ${req.purpose || 'request'}`}
                     >
                       Deny
                     </button>
-                    {confirmAction?.id === req.id && (
+                    {confirmAction[req.id] && (
                       <div className="flex items-center gap-1 ml-2">
                         <span className="text-xs text-yellow-400">Confirm?</span>
                         <button
                           type="button"
-                          onClick={() => handleAction(req.id, confirmAction.action)}
+                          onClick={() => handleAction(req.id, confirmAction[req.id])}
                           className="px-1 py-0.5 bg-green-700 hover:bg-green-600 rounded text-xs text-white"
-                          aria-label={`Confirm ${confirmAction.action} ${req.purpose || 'request'}`}
+                          aria-label={`Confirm ${confirmAction[req.id]} ${req.purpose || 'request'}`}
                         >
                           Yes
                         </button>
                         <button
                           type="button"
-                          onClick={() => setConfirmAction(null)}
+                          onClick={() => setConfirmAction(prev => { const next = { ...prev }; delete next[req.id]; return next })}
                           className="px-1 py-0.5 bg-gray-600 hover:bg-gray-500 rounded text-xs text-gray-300"
                           aria-label="Cancel action"
                         >
