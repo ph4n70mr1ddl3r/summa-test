@@ -1,8 +1,8 @@
 package com.summa.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -45,13 +45,19 @@ public class WebConfig implements WebMvcConfigurer {
         }
     }
 
+    /**
+     * Customizes Spring Boot's auto-configured ObjectMapper to register
+     * the shared Instant serializers/deserializers, avoiding the creation
+     * of a second ObjectMapper instance (which would duplicate the module
+     * already present in JsonHelpers' static fallback mapper).
+     */
     @Bean
-    public ObjectMapper objectMapper() {
-        ObjectMapper mapper = new ObjectMapper();
-        SimpleModule module = new SimpleModule("InstantAsEpochSeconds");
-        module.addSerializer(Instant.class, new InstantSerializers.InstantEpochSecondSerializer());
-        module.addDeserializer(Instant.class, new InstantSerializers.InstantEpochSecondDeserializer());
-        mapper.registerModule(module);
-        return mapper;
+    public Jackson2ObjectMapperBuilderCustomizer instantEpochSecondsCustomizer() {
+        return builder -> {
+            SimpleModule module = new SimpleModule("InstantAsEpochSeconds");
+            module.addSerializer(Instant.class, new InstantSerializers.InstantEpochSecondSerializer());
+            module.addDeserializer(Instant.class, new InstantSerializers.InstantEpochSecondDeserializer());
+            builder.modules(module);
+        };
     }
 }
