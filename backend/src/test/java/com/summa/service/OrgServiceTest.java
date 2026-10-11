@@ -53,7 +53,7 @@ class OrgServiceTest {
     void bootstrap_refusesAfterFirstHuman() {
         when(humanRepository.count()).thenReturn(1L);
 
-        assertThrows(IllegalStateException.class, () -> {
+        assertThrows(com.summa.exception.ConflictException.class, () -> {
             orgService.bootstrap("Another Admin", "other@test.com", "admin", null);
         });
     }

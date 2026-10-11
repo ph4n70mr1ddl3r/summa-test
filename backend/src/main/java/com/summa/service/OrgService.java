@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import com.summa.exception.EntityNotFoundException;
+import com.summa.exception.ConflictException;
 import com.summa.enums.RbacRole;
 
 @Service
@@ -65,7 +66,7 @@ public class OrgService {
         // Check if any human exists
         long count = humanRepository.count();
         if (count > 0) {
-            throw new IllegalStateException("Company already bootstrapped");
+            throw new ConflictException("Company already bootstrapped");
         }
 
         if (name == null || name.isBlank()) {

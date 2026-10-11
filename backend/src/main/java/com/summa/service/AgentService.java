@@ -390,6 +390,7 @@ public class AgentService {
      * Each repository save auto-commits; the outer reapExpiredAgents caller isolates
      * per-agent failures with try/catch.
      */
+    @Transactional
     private void cleanupSuspendedAgent(Agent agent) {
         for (Ask ask : askRepository.findByFromAndStatusPending(agent.getId())) {
             ask.setStatus("withdrawn");

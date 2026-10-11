@@ -74,7 +74,7 @@ export function isAuthenticated(): boolean {
   try {
     const parts = authToken.split('.');
     if (parts.length !== 3) return false;
-    // Reject alg=none and any non-HS256 algorithm (security: frontend validates token structure)
+    // Validate token structure only (HS256 algorithm, future expiry); signature verified server-side.
     const headerB64 = parts[0].replace(/-/g, '+').replace(/_/g, '/');
     const headerJson = headerB64 + '='.repeat((4 - headerB64.length % 4) % 4);
     const header = JSON.parse(atob(headerJson)) as { alg?: string };
@@ -185,7 +185,7 @@ export async function loadWithFallback<T>(
     const results = await fetchIndividual();
     const hasError = results.some(r => r === null);
     const error = hasError
-      ? 'Some data could not be loaded: ' + (e instanceof Error ? e.message : (typeof e === 'string' ? e : ''))
+      ? 'Some data could not be loaded: ' + (e instanceof Error ? e.message : (typeof e === 'string' ? e : String(e)))
       : null;
     return { data: results, error };
   }

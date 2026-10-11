@@ -171,46 +171,14 @@ public class WorkspaceService {
                     JsonNode claimNode = null;
                     try {
                         claimNode = objectMapper.readTree(claim);
-                        if (claimNode.isArray()) {
-                            List<String> remaining = new ArrayList<>();
-                            for (JsonNode c : claimNode) {
-                                if (c.isObject() && c.has("workspaceId")) {
-                                    String wsId = c.get("workspaceId").asText();
-                                    if (!wsId.equals(id) && !remaining.contains(wsId)) {
-                                        remaining.add(wsId);
-                                    }
-                                } else if (c.isTextual() && !c.asText().equals(id)) {
-                                    remaining.add(c.asText());
-                                }
-                            }
-                            node.setClaim(objectMapper.writeValueAsString(remaining));
-                        } else if (claimNode.isObject()) {
-                            // Legacy single-object claim format — clear entirely
-                            node.setClaim(null);
-                        }
+                        applyFilteredClaim(node, claimNode, id);
                         nodeRepository.save(node);
                     } catch (Exception e) {
                         // On parse error, remove only this workspace's entry rather than nullifying the entire claim.
                         // This prevents data loss for other workspaces sharing the same node.
                         if (claimNode != null) {
                             try {
-                                if (claimNode.isArray()) {
-                                    List<String> remaining = new ArrayList<>();
-                                    for (JsonNode c : claimNode) {
-                                        if (c.isObject() && c.has("workspaceId")) {
-                                            String wsId = c.get("workspaceId").asText();
-                                            if (!wsId.equals(id) && !remaining.contains(wsId)) {
-                                                remaining.add(wsId);
-                                            }
-                                        } else if (c.isTextual() && !c.asText().equals(id)) {
-                                            remaining.add(c.asText());
-                                        }
-                                    }
-                                    node.setClaim(objectMapper.writeValueAsString(remaining));
-                                } else if (claimNode.isObject()) {
-                                    // Legacy single-object claim format — clear entirely
-                                    node.setClaim(null);
-                                }
+                                applyFilteredClaim(node, claimNode, id);
                             } catch (Exception parseError) {
                                 auditService.logSystem("ARCHIVE_CLEAR_NODE_CLAIM_PARSE_FAIL", "node", previousNodeId,
                                     JsonHelpers.toJson(Map.of("workspaceId", id, "error", parseError.getMessage()), objectMapper));
@@ -259,5 +227,25 @@ public class WorkspaceService {
         Workspace saved = workspaceRepository.save(ws);
         auditService.log(actor, "ARCHIVE_WORKSPACE", "workspace", id, null);
         return saved;
+    }
+
+    private void applyFilteredClaim(Node node, JsonNode claimNode, String workspaceId) throws Exception {
+        if (claimNode.isArray()) {
+            List<String> remaining = new ArrayList<>();
+            for (JsonNode c : claimNode) {
+                if (c.isObject() && c.has("workspaceId")) {
+                    String wsId = c.get("workspaceId").asText();
+                    if (!wsId.equals(workspaceId) && !remaining.contains(wsId)) {
+                        remaining.add(wsId);
+                    }
+                } else if (c.isTextual() && !c.asText().equals(workspaceId)) {
+                    remaining.add(c.asText());
+                }
+            }
+            node.setClaim(objectMapper.writeValueAsString(remaining));
+        } else if (claimNode.isObject()) {
+            // Legacy single-object claim format — clear entirely
+            node.setClaim(null);
+        }
     }
 }
