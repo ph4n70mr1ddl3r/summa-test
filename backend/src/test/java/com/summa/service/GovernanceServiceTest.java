@@ -97,4 +97,29 @@ class GovernanceServiceTest {
         assertEquals(30, ((Number) settings.get("spend-evaluation-window-days")).intValue());
         assertEquals(24, ((Number) settings.get("node-affinity-starvation-hours")).intValue());
     }
+
+    @Test
+    void setSetting_nullValue_deletesExistingSetting() {
+        governanceService.setSetting("spawn-depth-cap", null, "admin");
+
+        verify(settingRepository).deleteById("spawn-depth-cap");
+    }
+
+    @Test
+    void setSetting_nullValue_noOpWhenMissing() {
+        governanceService.setSetting("spawn-depth-cap", null, "admin");
+
+        verify(settingRepository).deleteById("spawn-depth-cap");
+    }
+
+    @Test
+    void getSetting_parsesFloatSetting() {
+        GovernanceSetting setting = new GovernanceSetting();
+        setting.setKey("spend-critical-floor-percent");
+        setting.setValue("5.5");
+        when(settingRepository.findAll()).thenReturn(java.util.List.of(setting));
+
+        Float result = governanceService.getSetting("spend-critical-floor-percent", Float.class);
+        assertEquals(5.5f, result, 0.001f);
+    }
 }

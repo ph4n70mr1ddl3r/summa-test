@@ -78,6 +78,14 @@ public class GovernanceService {
             }
             return null;
         }
+        if (type.equals(Float.class) || type.equals(float.class)) {
+            if (value instanceof Number) return type.cast(((Number) value).floatValue());
+            try { return type.cast((float) Double.parseDouble(value.toString())); }
+            catch (NumberFormatException e) {
+                log.debug("Cannot cast '{}' to Float: {}", value, e.getMessage());
+            }
+            return null;
+        }
         if (type.equals(Double.class) || type.equals(double.class)) {
             if (value instanceof Number) return type.cast(((Number) value).doubleValue());
             try { return type.cast(Double.parseDouble(value.toString())); }
@@ -99,6 +107,10 @@ public class GovernanceService {
     public void setSetting(String key, Object value, String editedBy) {
         // Admin authorization enforced at the controller level (GovernanceController);
         // this method is only called through controlled paths.
+        if (value == null) {
+            deleteSetting(key);
+            return;
+        }
         String serialized = serializeValue(value);
         Optional<GovernanceSetting> existing = settingRepository.findById(key);
         GovernanceSetting setting;
@@ -113,6 +125,11 @@ public class GovernanceService {
         setting.setEditedBy(editedBy);
         setting.setEditedAt(Instant.now());
         settingRepository.save(setting);
+    }
+
+    @Transactional
+    public void deleteSetting(String key) {
+        settingRepository.deleteById(key);
     }
 
     /**
