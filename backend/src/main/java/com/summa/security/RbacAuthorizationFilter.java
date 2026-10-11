@@ -61,6 +61,12 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
         boolean nodeAuth = Boolean.TRUE.equals(request.getAttribute("nodeAuth"));
         boolean isPublic = isPublicPath(normalized);
 
+        // Always ensure ThreadLocals are cleared at the start of each request
+        // to prevent leakage from a previous request that failed to clean up.
+        ACTOR_CONTEXT.remove();
+        WRITES_ALLOWED.remove();
+        NODE_AUTH.remove();
+
         if (!isPublic) {
             if (actor == null) {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "No actor identity provided");

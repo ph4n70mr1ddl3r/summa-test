@@ -174,20 +174,18 @@ public class InitiativeService {
      * INT-070: Detect if adding deps to the new initiative (id) would create a cycle.
      * Walks the dependency graph from each dep; if any path reaches 'id', there's a cycle.
      * Uses a single shared visited set across all subtrees to avoid exponential recomputation.
+     * Bounds recursion depth to DEFAULT_CYCLE_DETECTION_MAX_STEPS to prevent stack overflow.
      */
     private boolean wouldCreateCycle(String newId, List<String> deps) {
-        Set<String> visited = new HashSet<>();
-        for (String depId : deps) {
-            if (hasPathTo(newId, List.of(depId), visited)) {
-                return true;
-            }
-        }
-        return false;
+        return wouldCreateCycle(newId, deps, new HashSet<>(), 0);
     }
 
-    private boolean hasPathTo(String target, List<String> currentDeps, Set<String> visited) {
-        for (String depId : currentDeps) {
-            if (depId.equals(target)) return true;
+    private boolean wouldCreateCycle(String newId, List<String> deps, Set<String> visited, int depth) {
+        if (depth > Defaults.DEFAULT_CYCLE_DETECTION_MAX_STEPS) {
+            return false; // bail out to prevent stack overflow on deep graphs
+        }
+        for (String depId : deps) {
+            if (depId.equals(newId)) return true;
             if (visited.contains(depId)) continue;
             visited.add(depId);
             Optional<Initiative> depOpt = initiativeRepository.findById(depId);
@@ -196,9 +194,9 @@ public class InitiativeService {
                     List<String> grandchildDeps = objectMapper.readValue(
                         depOpt.get().getDependsOn(),
                         new TypeReference<List<String>>() {});
-                    if (hasPathTo(target, grandchildDeps, visited)) return true;
+                    if (wouldCreateCycle(newId, grandchildDeps, visited, depth + 1)) return true;
                 } catch (Exception e) {
-                    auditService.logSystem("CYCLE_DETECT_FAIL", "initiative", target,
+                    auditService.logSystem("CYCLE_DETECT_FAIL", "initiative", newId,
                         JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
                 }
             }

@@ -1,8 +1,9 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { api, getUser } from '../services/api'
 import type { Ask, AskKind, RbacRole } from '../types'
 import { tierColor, formatDate, escapeHtml, askKindIcon } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
+import { useEscapeKey } from '../hooks/useEscapeKey'
 
 const KIND_DISPLAY_NAMES: Record<AskKind, string> = {
   approval: 'Approval',
@@ -23,17 +24,10 @@ export default function AskInbox() {
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null)
   const [respondingForId, setRespondingForId] = useState<string | null>(null)
 
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape' && respondingId !== null) {
-      setRespondingId(null)
-      setResponseText('')
-    }
-  }, [respondingId])
-
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleKeyDown])
+  useEscapeKey(() => {
+    setRespondingId(null)
+    setResponseText('')
+  })
 
   useEffect(() => {
     const handler = (e: Event) => {

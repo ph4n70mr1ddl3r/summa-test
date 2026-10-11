@@ -167,19 +167,12 @@ public class DnaDomainController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            List<String> itemIds = body.get("itemIds") instanceof List ? (List<String>) body.get("itemIds") : List.of();
-            List<String> workspaceIds = body.get("workspaceIds") instanceof List ? (List<String>) body.get("workspaceIds") : List.of();
-            List<String> proposalIds = body.get("proposalIds") instanceof List ? (List<String>) body.get("proposalIds") : List.of();
-
-            if (!itemIds.isEmpty() && itemIds.stream().anyMatch(itemId -> !(itemId instanceof String))) {
-                throw new IllegalArgumentException("itemIds must contain only strings");
-            }
-            if (!workspaceIds.isEmpty() && workspaceIds.stream().anyMatch(workspaceId -> !(workspaceId instanceof String))) {
-                throw new IllegalArgumentException("workspaceIds must contain only strings");
-            }
-            if (!proposalIds.isEmpty() && proposalIds.stream().anyMatch(proposalId -> !(proposalId instanceof String))) {
-                throw new IllegalArgumentException("proposalIds must contain only strings");
-            }
+            List<?> rawItemIds = body.get("itemIds") instanceof List ? (List<?>) body.get("itemIds") : List.of();
+            List<String> itemIds = rawItemIds.stream().filter(o -> o instanceof String).map(o -> (String) o).toList();
+            List<?> rawWorkspaceIds = body.get("workspaceIds") instanceof List ? (List<?>) body.get("workspaceIds") : List.of();
+            List<String> workspaceIds = rawWorkspaceIds.stream().filter(o -> o instanceof String).map(o -> (String) o).toList();
+            List<?> rawProposalIds = body.get("proposalIds") instanceof List ? (List<?>) body.get("proposalIds") : List.of();
+            List<String> proposalIds = rawProposalIds.stream().filter(o -> o instanceof String).map(o -> (String) o).toList();
 
             String ownerHumanId = body.get("ownerHumanId") instanceof String ? (String) body.get("ownerHumanId") : null;
             String access = body.get("access") instanceof String ? (String) body.get("access") : null;

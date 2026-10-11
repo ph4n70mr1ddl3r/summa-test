@@ -1,8 +1,9 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { DataHold } from '../types'
 import { formatDate, escapeHtml } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
+import { useEscapeKey } from '../hooks/useEscapeKey'
 
 export default function DataHolds() {
   const [holds, setHolds] = useState<DataHold[]>([])
@@ -12,16 +13,9 @@ export default function DataHolds() {
   const [actionError, setActionError] = useState<string | null>(null)
   const [confirmReleaseId, setConfirmReleaseId] = useState<string | null>(null)
 
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      setConfirmReleaseId(null)
-    }
-  }, [])
-
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleKeyDown])
+  useEscapeKey(() => {
+    setConfirmReleaseId(null)
+  })
 
   const loadHolds = () => {
     setLoading(true)
