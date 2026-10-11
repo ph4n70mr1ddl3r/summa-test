@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.service.MemberService;
 import com.summa.enums.DataHoldKind;
+import com.summa.constants.Defaults;
 import java.util.Map;
 
 @RestController
@@ -27,11 +28,13 @@ public class DataHoldController {
     }
 
     @GetMapping
-    public ResponseEntity<?> listHolds() {
+    public ResponseEntity<?> listHolds(
+            @RequestParam(defaultValue = "50") int limit) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
         if (auth != null) return auth;
-        return ResponseEntity.ok(holdService.findAllActive());
+        int cappedLimit = Math.min(Math.max(limit, 1), Defaults.MAX_LIST_LIMIT);
+        return ResponseEntity.ok(holdService.findAllActive(cappedLimit));
     }
 
     @PostMapping

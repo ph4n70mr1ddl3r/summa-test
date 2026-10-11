@@ -168,6 +168,7 @@ public class GovernanceService {
         }
     }
 
+    @Transactional(readOnly = true)
     public Map<String, Object> getSpendView() {
         double ceiling = resolveSpendCeiling();
         long windowDays = resolveSpendWindowDays();
@@ -221,7 +222,13 @@ public class GovernanceService {
         if (value == null) return null;
         try {
             if (value.matches("^-?\\d+(\\.\\d+)?$")) {
-                if (value.contains(".")) return Double.parseDouble(value);
+                if (value.contains(".")) {
+                    double d = Double.parseDouble(value);
+                    if (Double.isNaN(d) || Double.isInfinite(d)) {
+                        throw new IllegalArgumentException("Invalid numeric value: " + value);
+                    }
+                    return d;
+                }
                 return Long.parseLong(value);
             }
             if ("true".equalsIgnoreCase(value)) return true;

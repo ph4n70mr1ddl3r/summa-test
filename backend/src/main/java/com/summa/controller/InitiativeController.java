@@ -8,6 +8,7 @@ import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
+import com.summa.constants.Defaults;
 import com.summa.util.JsonHelpers;
 import java.time.Instant;
 import java.util.Map;
@@ -37,7 +38,7 @@ public class InitiativeController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
         if (auth != null) return auth;
-        int cappedLimit = Math.min(Math.max(limit, 1), com.summa.constants.Defaults.MAX_LIST_LIMIT);
+        int cappedLimit = Math.min(Math.max(limit, 1), Defaults.MAX_LIST_LIMIT);
         if (status != null) {
             return ResponseEntity.ok(initiativeService.findByStatus(status));
         }

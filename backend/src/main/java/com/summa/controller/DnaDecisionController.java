@@ -100,6 +100,8 @@ public class DnaDecisionController {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 }

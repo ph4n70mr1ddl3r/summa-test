@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.function.Function;
 import com.summa.exception.EntityNotFoundException;
 
@@ -89,7 +91,7 @@ public class AgentController {
         // API-004: full lineage graph from any member — follows agent chain then human deputy chain
         int depthCap = agentService.getDepthCap();
         List<String> lineage = new ArrayList<>();
-        java.util.Set<String> visited = new java.util.HashSet<>();
+        Set<String> visited = new HashSet<>();
         String currentId = JsonHelpers.stripIdPrefix(id);
         while (currentId != null && lineage.size() < depthCap) {
             if (!visited.add(currentId)) {

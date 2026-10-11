@@ -908,7 +908,7 @@ export const api = {
         body: JSON.stringify({ targetNodeId }),
       }),
     archive: (id: string) =>
-      request<Record<string, unknown>>(`/workspaces/${id}/archive`, {
+      request<Workspace>(`/workspaces/${id}/archive`, {
         method: 'POST',
       }),
   },

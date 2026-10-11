@@ -39,9 +39,10 @@ public class DataHold {
 
     @PreUpdate
     public void preUpdate() {
-        // Hold release via released_at is allowed; no other updates permitted.
-        if (releasedAt != null) return;
-        throw new UnsupportedOperationException("data_holds is append-only except for release");
+        // data_holds is append-only except for release; release is performed
+        // via the service layer (setReleasedAt + save) so this hook prevents
+        // any other field mutations through JPA proxy updates.
+        throw new UnsupportedOperationException("data_holds is append-only except for setting releasedAt via the service layer");
     }
 
     public String getId() { return id; }
