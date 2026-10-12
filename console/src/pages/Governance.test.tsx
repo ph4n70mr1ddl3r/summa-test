@@ -175,4 +175,105 @@ describe('Governance page', () => {
       expect(screen.queryByLabelText('Edit spawn_quota')).not.toBeInTheDocument()
     })
   })
+
+  it('enters edit mode when clicking a quota cell', async () => {
+    vi.mocked(apiModule.api.governance.policies).mockResolvedValue({})
+    vi.mocked(apiModule.api.governance.quotas).mockResolvedValue({ max_concurrent: 5 })
+    vi.mocked(apiModule.api.governance.spend).mockResolvedValue({ reserved: 0, settled: 0, ceiling: 1000000, utilization: '0%', halted: false })
+    render(<Governance />)
+    await waitFor(() => expect(screen.getByText('Quotas (1)')).toBeInTheDocument())
+
+    const editButton = screen.getByRole('button', { name: /edit max_concurrent: 5/i })
+    await act(async () => {
+      editButton.click()
+    })
+
+    await waitFor(() => {
+      const input = screen.getByLabelText('Edit max_concurrent')
+      expect(input).toBeInTheDocument()
+      expect(input).toHaveValue('5')
+    })
+  })
+
+  it('saves an edited quota value', async () => {
+    vi.mocked(apiModule.api.governance.policies).mockResolvedValue({})
+    vi.mocked(apiModule.api.governance.quotas).mockResolvedValue({ max_concurrent: 5 })
+    vi.mocked(apiModule.api.governance.spend).mockResolvedValue({ reserved: 0, settled: 0, ceiling: 1000000, utilization: '0%', halted: false })
+    vi.mocked(apiModule.api.governance.updateQuotas).mockResolvedValue(undefined)
+    render(<Governance />)
+    await waitFor(() => expect(screen.getByText('Quotas (1)')).toBeInTheDocument())
+
+    const editButton = screen.getByRole('button', { name: /edit max_concurrent: 5/i })
+    await act(async () => {
+      editButton.click()
+    })
+
+    const input = await screen.findByLabelText('Edit max_concurrent')
+    await act(async () => {
+      fireEvent.change(input, { target: { value: '10' } })
+    })
+
+    const saveButton = screen.getByRole('button', { name: 'Save max_concurrent' })
+    await act(async () => {
+      saveButton.click()
+    })
+
+    await waitFor(() => {
+      expect(apiModule.api.governance.updateQuotas).toHaveBeenCalledWith({ max_concurrent: 10 })
+    })
+  })
+
+  it('clears an edited quota value', async () => {
+    vi.mocked(apiModule.api.governance.policies).mockResolvedValue({})
+    vi.mocked(apiModule.api.governance.quotas).mockResolvedValue({ max_concurrent: 5 })
+    vi.mocked(apiModule.api.governance.spend).mockResolvedValue({ reserved: 0, settled: 0, ceiling: 1000000, utilization: '0%', halted: false })
+    vi.mocked(apiModule.api.governance.updateQuotas).mockResolvedValue(undefined)
+    render(<Governance />)
+    await waitFor(() => expect(screen.getByText('Quotas (1)')).toBeInTheDocument())
+
+    const editButton = screen.getByRole('button', { name: /edit max_concurrent: 5/i })
+    await act(async () => {
+      editButton.click()
+    })
+
+    const input = await screen.findByLabelText('Edit max_concurrent')
+    await act(async () => {
+      fireEvent.change(input, { target: { value: '' } })
+    })
+
+    const saveButton = screen.getByRole('button', { name: 'Save max_concurrent' })
+    await act(async () => {
+      saveButton.click()
+    })
+
+    await waitFor(() => {
+      expect(apiModule.api.governance.updateQuotas).toHaveBeenCalledWith({ max_concurrent: null })
+    })
+  })
+
+  it('cancels quota editing when clicking the cancel button', async () => {
+    vi.mocked(apiModule.api.governance.policies).mockResolvedValue({})
+    vi.mocked(apiModule.api.governance.quotas).mockResolvedValue({ max_concurrent: 5 })
+    vi.mocked(apiModule.api.governance.spend).mockResolvedValue({ reserved: 0, settled: 0, ceiling: 1000000, utilization: '0%', halted: false })
+    render(<Governance />)
+    await waitFor(() => expect(screen.getByText('Quotas (1)')).toBeInTheDocument())
+
+    const editButton = screen.getByRole('button', { name: /edit max_concurrent: 5/i })
+    await act(async () => {
+      editButton.click()
+    })
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Edit max_concurrent')).toBeInTheDocument()
+    })
+
+    const cancelButton = screen.getByRole('button', { name: /cancel edit max_concurrent/i })
+    await act(async () => {
+      cancelButton.click()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByLabelText('Edit max_concurrent')).not.toBeInTheDocument()
+    })
+  })
 })
