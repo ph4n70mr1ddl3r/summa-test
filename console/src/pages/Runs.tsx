@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { api } from '../services/api'
 import type { Run, RunStatus, RunListParams } from '../types'
-import { runStatusColor, formatDate, escapeHtml } from '../utils/formatting'
+import { runStatusColor, formatDate, truncateSnippet, escapeHtml } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 const RUN_STATUSES: RunStatus[] = ['queued', 'running', 'suspended', 'completed', 'failed', 'cancelled']
@@ -75,7 +75,7 @@ export default function Runs() {
             <div key={run.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium text-gray-200">Run {escapeHtml(run.id.slice(0, 8))}</p>
+                  <p className="font-medium text-gray-200">Run {escapeHtml(truncateSnippet(run.prompt, 40))}</p>
                   <p className="text-sm text-gray-400 mt-1">
                     Agent: {escapeHtml(run.agentId)}
                     {run.workspaceId ? ` · Workspace: ${escapeHtml(run.workspaceId)}` : ''}

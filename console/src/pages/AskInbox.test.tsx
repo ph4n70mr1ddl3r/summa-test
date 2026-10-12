@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, waitFor, fireEvent } from '@testing-library/react'
 import AskInbox from './AskInbox'
-import { api, type AskKind, type AskTier } from '../services/api'
+import { api, type AskKind, type AskTier, getUser } from '../services/api'
 
 vi.mock('../services/api', () => ({
   api: {
@@ -98,5 +98,29 @@ describe('AskInbox page', () => {
       expect(api.asks.withdraw).toHaveBeenCalledWith('ask-1')
       expect(api.asks.list).toHaveBeenCalledTimes(2)
     })
+  })
+
+  it('disables withdraw when user prefix is stripped and IDs match', async () => {
+    vi.mocked(getUser).mockReturnValue({ userId: 'h:user-1', rbac: 'member', name: 'Test User' })
+    const ask = { id: 'ask-1', kind: 'question' as AskKind, slaTier: 'standard' as AskTier, from: 'h:user-1', to: 'human-2', payload: '{}', deadline: Math.floor(Date.now() / 1000) + 86400, status: 'pending' as const }
+    vi.mocked(api.asks.list).mockResolvedValue([ask])
+    const { getByRole, getByText } = render(<AskInbox />)
+    await waitFor(() => {
+      expect(getByText('Ask Inbox')).toBeInTheDocument()
+    })
+    const withdrawBtn = getByRole('button', { name: /withdraw ask from/i })
+    expect(withdrawBtn).not.toBeDisabled()
+  })
+
+  it('disables withdraw when user does not match ask originator', async () => {
+    vi.mocked(getUser).mockReturnValue({ userId: 'h:other-user', rbac: 'member', name: 'Other' })
+    const ask = { id: 'ask-1', kind: 'question' as AskKind, slaTier: 'standard' as AskTier, from: 'h:user-1', to: 'human-2', payload: '{}', deadline: Math.floor(Date.now() / 1000) + 86400, status: 'pending' as const }
+    vi.mocked(api.asks.list).mockResolvedValue([ask])
+    const { getByRole, getByText } = render(<AskInbox />)
+    await waitFor(() => {
+      expect(getByText('Ask Inbox')).toBeInTheDocument()
+    })
+    const withdrawBtn = getByRole('button', { name: /withdraw ask from/i })
+    expect(withdrawBtn).toBeDisabled()
   })
 })

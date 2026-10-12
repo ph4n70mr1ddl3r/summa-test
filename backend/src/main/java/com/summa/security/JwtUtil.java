@@ -103,7 +103,14 @@ public class JwtUtil {
                 return null;
             }
             Object svObj = payload.get("sv");
-            int sessionVersion = svObj instanceof Number ? ((Number) svObj).intValue() : 0;
+            long rawSv;
+            if (svObj instanceof Number num) {
+                rawSv = num.longValue();
+                if (rawSv < 0 || rawSv > Integer.MAX_VALUE) return null;
+            } else {
+                rawSv = 0;
+            }
+            int sessionVersion = (int) rawSv;
             return payload;
         } catch (Exception e) {
             log.warn("JWT parse failure: {}", e.getMessage());

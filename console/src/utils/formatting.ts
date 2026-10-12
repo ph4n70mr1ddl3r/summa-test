@@ -237,4 +237,10 @@ export function askKindIcon(kind: AskKind): string {
   }
 }
 
+/** Strip keyed-union prefix (h:/a:) from a member/agent ID, matching backend JsonHelpers.stripIdPrefix. */
+export function stripMemberPrefix(id: string | null | undefined): string {
+  if (id == null) return ''
+  return id.replace(/^[ha]:/, '')
+}
+
 export { escapeHtml } from './escapeHtml'

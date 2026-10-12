@@ -22,6 +22,7 @@ const publicNavItems: NavItem[] = [
   { to: '/dna/cards', label: 'Cards' },
   { to: '/dna/rules', label: 'Rules' },
   { to: '/dna/decisions', label: 'Decisions' },
+  { to: '/dna/glossary', label: 'Glossary' },
   { to: '/dna/goals', label: 'Goals' },
   { to: '/org', label: 'Org', end: true },
   { to: '/groups', label: 'Groups', end: true },

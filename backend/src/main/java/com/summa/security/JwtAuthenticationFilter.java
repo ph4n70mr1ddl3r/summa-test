@@ -155,7 +155,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     /** SEC-010: Verify the JWT session version matches the human's current session version. */
     private boolean checkSessionVersion(String subject, Map<String, Object> payload) {
         Object svObj = payload.get("sv");
-        int tokenSv = svObj instanceof Number ? ((Number) svObj).intValue() : 0;
+        long tokenSv;
+        if (svObj instanceof Number num) {
+            long raw = num.longValue();
+            if (raw < 0 || raw > Integer.MAX_VALUE) return false;
+            tokenSv = raw;
+        } else {
+            tokenSv = 0;
+        }
         try {
             Optional<Human> humanOpt = humanRepository.findById(subject);
             if (humanOpt.isEmpty()) return false;

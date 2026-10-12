@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatDate, tierColor, spawnStatusColor, triggerStatusColor, triggerCriticalityColor, boardTaskStatusColor, BOARD_TASK_STATUS_DISPLAY, roleTemplateStatusColor, dnaCardStatusColor, dnaGoalStatusColor, dnaRuleStatusColor, nodeStatusColor, groupStatusColor, rbacRoleColor, initiativeStatusColor, runStatusColor, agentStatusColor, domainAccessColor, proposalStatusColor, proposalKindColor, countParticipants, truncateSnippet } from './formatting'
+import { formatDate, tierColor, spawnStatusColor, triggerStatusColor, triggerCriticalityColor, boardTaskStatusColor, BOARD_TASK_STATUS_DISPLAY, roleTemplateStatusColor, dnaCardStatusColor, dnaGoalStatusColor, dnaRuleStatusColor, nodeStatusColor, groupStatusColor, rbacRoleColor, initiativeStatusColor, runStatusColor, agentStatusColor, domainAccessColor, proposalStatusColor, proposalKindColor, countParticipants, truncateSnippet, stripMemberPrefix } from './formatting'
 import type { AskTier, SpawnStatus, TriggerStatus, BoardTaskStatus, RoleTemplateStatus, DnaCardStatus, DnaGoalStatus, DnaRuleStatus, NodeStatus, GroupStatus, InitiativeStatus, RunStatus, AgentStatus } from '../types'
 import type { RbacRole } from '../types'
 
@@ -381,5 +381,27 @@ describe('truncateSnippet', () => {
 
   it('returns empty string for undefined input', () => {
     expect(truncateSnippet(undefined, 10)).toBe('')
+  })
+})
+
+describe('stripMemberPrefix', () => {
+  it('strips h: prefix', () => {
+    expect(stripMemberPrefix('h:human-1')).toBe('human-1')
+  })
+
+  it('strips a: prefix', () => {
+    expect(stripMemberPrefix('a:agent-1')).toBe('agent-1')
+  })
+
+  it('returns plain id unchanged', () => {
+    expect(stripMemberPrefix('plain-id')).toBe('plain-id')
+  })
+
+  it('returns empty string for null', () => {
+    expect(stripMemberPrefix(null)).toBe('')
+  })
+
+  it('returns empty string for undefined', () => {
+    expect(stripMemberPrefix(undefined)).toBe('')
   })
 })

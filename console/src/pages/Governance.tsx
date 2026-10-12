@@ -112,7 +112,7 @@ export default function Governance() {
             />
             <button
               type="button"
-              onClick={() => handleSave(section, key, ev[key] ?? '')}
+              onClick={() => handleSave(section, key, ev[key])}
               disabled={sv === `${section}:${key}`}
               className="px-2 py-0.5 bg-green-700 hover:bg-green-600 disabled:bg-gray-600 rounded text-xs text-white"
               aria-label={`Save ${key}`}

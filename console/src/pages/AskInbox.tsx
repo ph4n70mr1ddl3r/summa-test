@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, getUser } from '../services/api'
 import type { Ask, AskKind, RbacRole } from '../types'
-import { tierColor, formatDate, escapeHtml, askKindIcon } from '../utils/formatting'
+import { tierColor, formatDate, escapeHtml, askKindIcon, stripMemberPrefix } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 
@@ -178,7 +178,7 @@ export default function AskInbox() {
                 <button
                   type="button"
                   onClick={() => handleWithdraw(ask.id)}
-                  disabled={currentUser === null || currentUser.userId.replace(/^[ha]:/, '') !== ask.from}
+                  disabled={currentUser === null || stripMemberPrefix(currentUser.userId) !== stripMemberPrefix(ask.from)}
                   className="px-3 py-1 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 rounded text-sm text-gray-300"
                   aria-label={`Withdraw ask from ${escapeHtml(ask.from)}`}
                 >

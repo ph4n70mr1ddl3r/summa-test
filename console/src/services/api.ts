@@ -331,6 +331,7 @@ export interface RunListParams {
   workspaceId?: string;
   status?: RunStatus;
   limit?: number;
+  [key: string]: string | number | boolean | undefined;
 }
 
 export interface DnaCard {
@@ -579,7 +580,7 @@ export interface DataHold {
   releasedAt?: number;
 }
 
-export function buildQuery(params?: Record<string, string | number | boolean | undefined>): string {
+export function buildQuery(params?: Record<string, unknown>): string {
   const entries = Object.entries(params ?? {}).filter(([, v]) => v !== undefined && v !== null && v !== '');
   if (entries.length === 0) return '';
   const qs = new URLSearchParams(entries.map(([k, v]) => [k, String(v)])).toString();
@@ -814,7 +815,7 @@ export const api = {
   },
   runs: {
     list: (params?: RunListParams) =>
-      request<Run[]>(`/runs${buildQuery(params as Record<string, string | number | boolean | undefined>)}`),
+      request<Run[]>(`/runs${buildQuery(params)}`),
     create: (body: Record<string, string>) =>
       request<Run>('/runs', {
         method: 'POST',

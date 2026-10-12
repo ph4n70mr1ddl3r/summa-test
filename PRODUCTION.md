@@ -51,6 +51,9 @@ Kubernetes (prod): decomposed services
 | `SUMMA_DB_PATH` | `~/.summa/summa.db` (local) · `/data/db/summa.db` (Docker/prod) | SQLite database path (`~` is not expanded in containers — use absolute paths) |
 | `SUMMA_DNA_REPO` | `~/.summa/dna` (local) · `/data/dna` (Docker/prod) | DNA git repository path |
 | `SUMMA_AUTH_JWT_SECRET` | *(required)* | JWT signing secret (256+ bits; generate with `openssl rand -hex 32`) |
+| `SUMMA_MODE` | `single-process` | Backend mode: `single-process` or `multi-node` |
+| `SUMMA_PROXY_TRUSTED_IPS` | *(empty)* | Comma-separated trusted proxy IPs for X-Forwarded-For resolution |
+| `SUMMA_PAT_DEFAULT_EXPIRY_DAYS` | `90` | Default PAT expiry in days |
 | `SUMMA_SPEND_CEILING` | `1000000` | Org spend ceiling |
 | `SUMMA_CORS_ORIGINS` | *(empty = localhost + 127.0.0.1 only)* | Extra CORS origins, comma-separated (e.g. `https://app.example.com`) |
 | `SUMMA_AUTH_LOCAL_AUTH_ENABLED` | `true` | Enable local email/password auth (set `false` when using OIDC/gateway auth) |
