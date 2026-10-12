@@ -665,7 +665,7 @@ export const api = {
         if (effectiveTo !== undefined) body.effectiveTo = effectiveTo;
         return request<DnaGoal>(`/dna/goals/${id}/window`, {
           method: 'PATCH',
-          body: Object.keys(body).length ? JSON.stringify(body) : undefined,
+          body: JSON.stringify(body),
         });
     },
     glossary: (params?: { domainId?: string; scope?: string }) =>

@@ -9,8 +9,10 @@ npm run build:backend
 export SUMMA_AUTH_JWT_SECRET=$(openssl rand -hex 32)
 ./start.sh
 
-# Dev mode (backend + console hot-reload)
-./dev.sh
+# Docker Compose (API + console on :3000)
+cp .env.example .env
+# Edit .env and set SUMMA_AUTH_JWT_SECRET
+docker compose up -d --build
 ```
 
 ## Architecture
@@ -56,6 +58,7 @@ Kubernetes (prod): decomposed services
 | `SPRING_PROFILES_ACTIVE` | `prod` (Dockerfile, docker-compose, start.sh) · `dev` (dev.sh, hot-reload) | Spring profile |
 | `VITE_API_URL` | `/api` | API base URL baked into the console bundle at build time |
 | `VITE_SUMMA_MODE` | `single-process` | Console mode badge: `single-process` or `multi-node` |
+| `VITE_REQUEST_TIMEOUT_MS` | `30000` | Request timeout in ms for console API calls (baked at build time via Dockerfile.console) |
 | `SUMMA_OIDC_ISSUER` | *(reserved)* | Keycloak issuer URI — **not yet wired**. Human auth today is email+password via `POST /api/auth/login`. See OIDC note below. |
 | `SUMMA_OIDC_CLIENT_ID` | *(reserved)* | OIDC client ID — not yet wired |
 | `SUMMA_OIDC_CLIENT_SECRET` | *(reserved)* | OIDC client secret — not yet wired |

@@ -71,6 +71,8 @@ Summa follows a defense-in-depth model. Key patterns:
   - `IllegalStateException` → 403 `gate` or 409 `conflict` (depends on message content)
   - `EntityNotFoundException` → 404 `not_found`
   - `DataIntegrityViolationException` → 409 `conflict`
+  - `RateLimiter.RateLimitedException` → 429 `rate_limited`
+  - Unhandled exceptions → 500 `internal`
 
 ### Security Spec Coverage
 

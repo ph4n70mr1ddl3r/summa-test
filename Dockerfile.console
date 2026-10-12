@@ -5,6 +5,7 @@ WORKDIR /app/console
 # Vite env vars are baked into the bundle at build time.
 ARG VITE_API_URL=/api
 ARG VITE_SUMMA_MODE=single-process
+ARG VITE_REQUEST_TIMEOUT_MS=30000
 
 COPY console/package*.json ./
 RUN npm ci

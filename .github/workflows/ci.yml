@@ -77,7 +77,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      - uses: actions/setup-docker@7b7773a76f2620a3f6181ad05720efab4cft3e26 # v3.0.0
       - name: Build backend Docker image
         run: docker build -f Dockerfile -t summa-backend:test .
       - name: Build console Docker image
