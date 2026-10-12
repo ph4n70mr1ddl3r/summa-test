@@ -77,9 +77,14 @@ if [ "${#SUMMA_AUTH_JWT_SECRET}" -lt 32 ]; then
     exit 1
 fi
 
-# Check for curl
-if ! command -v curl &> /dev/null; then
-    echo "ERROR: curl is required for health checks"
+# Check for health-check tool (prefer curl, fall back to wget)
+HEALTH_CHECK_CMD=""
+if command -v curl &> /dev/null; then
+    HEALTH_CHECK_CMD="curl -sf"
+elif command -v wget &> /dev/null; then
+    HEALTH_CHECK_CMD="wget --no-verbose --tries=1 --spider"
+else
+    echo "ERROR: curl or wget is required for health checks"
     exit 1
 fi
 
@@ -127,7 +132,7 @@ echo "      Backend PID: $BACKEND_PID"
 echo "      Waiting for backend on :8080..."
 BACKEND_READY=false
 for i in {1..30}; do
-    if curl -sf http://localhost:8080/api/health > /dev/null 2>&1; then
+    if eval "$HEALTH_CHECK_CMD" http://localhost:8080/api/health > /dev/null 2>&1; then
         echo "      Backend ready!"
         BACKEND_READY=true
         break
@@ -156,7 +161,7 @@ popd > /dev/null
 echo "      Waiting for console on :3000..."
 CONSOLE_READY=false
 for i in {1..20}; do
-    if curl -sf http://localhost:3000 > /dev/null 2>&1; then
+    if eval "$HEALTH_CHECK_CMD" http://localhost:3000 > /dev/null 2>&1; then
         echo "      Console ready!"
         CONSOLE_READY=true
         break

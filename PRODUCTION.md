@@ -83,6 +83,11 @@ Kubernetes (prod): decomposed services
 | `SUMMA_ASKS_RATE_LIMIT` | `60` | Ask rate limit per source per hour |
 | `SUMMA_DNA_REVIEW_SLA` | `7` | Default DNA review SLA in days |
 | `SUMMA_CRITICAL_FLOOR_PERCENT` | `5` | Critical spend floor percentage of ceiling |
+| `JAVA_OPTS` | `-Xmx384m -Xms256m -XX:MaxMetaspaceSize=128m` | JVM arguments (e.g. memory settings) |
+| `SUMMA_INJECTION_ORG_SNAPSHOT_TOKEN_BUDGET` | `1000` | Org snapshot token budget for injection layers |
+| `SUMMA_INJECTION_GLOSSARY_TOKEN_BUDGET` | `2000` | Glossary token budget for injection layers |
+| `SUMMA_INJECTION_RULES_TOKEN_BUDGET` | `4000` | Rules token budget for injection layers |
+| `SUMMA_INJECTION_GOAL_SLICE_TOKEN_BUDGET` | `1000` | Goal slice token budget for injection layers |
 
 > **OIDC note:** `SUMMA_OIDC_*` variables are reserved for a planned Keycloak integration. Human auth today is email + password via `POST /api/auth/login`. Keycloak OIDC was decided per PLAN §14.2 / SEC-001 but not yet implemented — these variables have no effect.
 
