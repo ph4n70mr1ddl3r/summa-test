@@ -158,8 +158,8 @@ export default function AskInbox() {
                   )}
                 </div>
               </div>
-              <details className="mt-3" aria-label="Ask details">
-                <summary className="text-sm text-blue-400 cursor-pointer hover:text-blue-300">
+              <details className="mt-3">
+                <summary className="text-sm text-blue-400 cursor-pointer hover:text-blue-300" aria-label="Ask details">
                   View payload
                 </summary>
                 <pre className="mt-2 text-xs text-gray-400 bg-gray-900 rounded p-3 overflow-x-auto">

@@ -94,7 +94,7 @@ function ModeLabel() {
 export default function App() {
   const authed = useAuthState()
   const navigate = useNavigate()
-  const user = useMemo(() => getUser(), [])
+  const user = getUser()
   useEffect(() => {
     setNavigate(navigate)
   }, [navigate])
