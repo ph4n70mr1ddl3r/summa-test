@@ -92,10 +92,9 @@ export default function Governance() {
     setEditValues(prev => ({ ...prev, [key]: displayValue }))
   }, [])
 
-  const renderCell = useCallback((section: 'policies' | 'quotas', key: string, value: unknown) => {
-    const ev = editValues
-    const isEditing = ev[key] !== undefined
-    const currentValue = isEditing ? ev[key] : String(value ?? '')
+  const renderCell = useCallback((section: 'policies' | 'quotas', key: string, value: unknown, currentEditValue?: string) => {
+    const isEditing = currentEditValue !== undefined
+    const currentValue = isEditing ? currentEditValue : String(value ?? '')
     const sv = saving
     return (
       <div key={key} className="flex items-center justify-between text-sm gap-2">
@@ -111,7 +110,7 @@ export default function Governance() {
             />
               <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); handleSave(section, key, ev[key]) }}
+              onClick={(e) => { e.stopPropagation(); handleSave(section, key, currentEditValue) }}
               disabled={sv === `${section}:${key}`}
               className="px-2 py-0.5 bg-green-700 hover:bg-green-600 disabled:bg-gray-600 rounded text-xs text-white"
               aria-label={`Save ${key}`}
@@ -120,7 +119,7 @@ export default function Governance() {
             </button>
             <button
               type="button"
-              onClick={() => { const next = { ...ev }; delete next[key]; setEditValues(next) }}
+              onClick={() => setEditValues(prev => { const next = { ...prev }; delete next[key]; return next })}
               className="px-2 py-0.5 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-400"
               aria-label={`Cancel edit ${key}`}
             >
@@ -165,7 +164,7 @@ export default function Governance() {
             <p className="text-gray-500 text-sm">No policies configured.</p>
           ) : (
             <div className="space-y-1">
-              {policyEntries.map(([k, v]) => renderCell('policies', k, v))}
+              {policyEntries.map(([k, v]) => renderCell('policies', k, v, editValues[k]))}
             </div>
           )}
         </div>
@@ -176,7 +175,7 @@ export default function Governance() {
             <p className="text-gray-500 text-sm">No quotas configured.</p>
           ) : (
             <div className="space-y-1">
-              {quotaEntries.map(([k, v]) => renderCell('quotas', k, v))}
+              {quotaEntries.map(([k, v]) => renderCell('quotas', k, v, editValues[k]))}
             </div>
           )}
         </div>

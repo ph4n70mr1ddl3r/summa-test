@@ -185,7 +185,7 @@ public class DnaProposalController {
             // Allow domain owners to see proposals for their domain
             Optional<DnaDomain> domainOpt = domainService.findById(domainId);
             boolean isDomainOwner = domainOpt.isPresent()
-                    && domainOpt.get().getStatus().equals("active")
+                    && "active".equals(domainOpt.get().getStatus())
                     && domainOpt.get().getOwnerHumanId() != null
                     && domainOpt.get().getOwnerHumanId().equals(JsonHelpers.stripIdPrefix(actor));
             if (!isDomainOwner) {
