@@ -101,6 +101,28 @@ class JwtUtilTest {
         assertTrue(exp <= maxExp, "Expiry should be capped to 1 year from now");
     }
 
+    @Test
+    void parseToken_rejectsFarFutureExpiry() {
+        // A token with expiry 10 years from now should be rejected
+        long farFuture = System.currentTimeMillis() / 1000L + 10L * 365 * 24 * 3600;
+        String header = base64UrlEncode("{\"alg\":\"HS256\",\"typ\":\"JWT\"}".getBytes());
+        String payloadJson = base64UrlEncode(
+            ("{\"sub\":\"user-1\",\"iat\":" + (farFuture - 1000) + ",\"exp\":" + farFuture + ",\"sv\":0}").getBytes());
+        String sig = base64UrlEncode(computeHmac(header + "." + payloadJson));
+        String token = header + "." + payloadJson + "." + sig;
+        assertNull(JwtUtil.parseToken(token, SECRET));
+    }
+
+    private byte[] computeHmac(String data) {
+        try {
+            javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
+            mac.init(new javax.crypto.spec.SecretKeySpec(SECRET.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256"));
+            return mac.doFinal(data.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private String base64UrlEncode(byte[] bytes) {
         return java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }

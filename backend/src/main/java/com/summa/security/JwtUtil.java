@@ -96,8 +96,7 @@ public class JwtUtil {
             Object expObj = payload.get("exp");
             if (!(expObj instanceof Number)) return null;
             long exp = ((Number) expObj).longValue();
-            if (exp <= 0 || exp > Defaults.SECONDS_PER_YEAR * 365L) return null; // reject nonsensical/expired timestamps
-            // Guard against absurdly large timestamps; Defaults.SECONDS_PER_YEAR*365 is year ~2359.
+            if (exp <= 0 || exp > System.currentTimeMillis() / 1000L + MAX_EXPIRY_SECONDS) return null; // reject expired or future-capped tokens
             long expMillis = exp * SECONDS_TO_MILLIS;
             if (Long.compareUnsigned(expMillis, System.currentTimeMillis()) < 0) {
                 return null;

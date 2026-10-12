@@ -554,12 +554,25 @@ public class AskService {
                 // On parse failure fall back to empty prior map.
             }
         }
+        // Track which responder is newly added (last in list but not in prior) so only
+        // that responder receives latestResponse, not every missing responder.
+        String newResponder = null;
+        for (String id : ids) {
+            if (!prior.containsKey(id)) {
+                newResponder = id;
+            }
+        }
         List<Map<String, String>> list = new ArrayList<>();
         for (String id : ids) {
             Map<String, String> entry = new HashMap<>();
             entry.put("responder", id);
-            entry.put("response", prior.containsKey(id) ? prior.get(id)
-                    : (latestResponse != null ? latestResponse : ""));
+            if (prior.containsKey(id)) {
+                entry.put("response", prior.get(id));
+            } else if (id.equals(newResponder)) {
+                entry.put("response", latestResponse != null ? latestResponse : "");
+            } else {
+                entry.put("response", "");
+            }
             list.add(entry);
         }
         try {

@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -383,5 +384,44 @@ class AskServiceTest {
         svc.processExpiredAsks();
 
         verify(askRepository, never()).save(any());
+    }
+
+    @Test
+    void toJsonResponseList_preservesPriorResponses() throws Exception {
+        AskService svc = buildService();
+        // Use reflection to invoke the private method
+        java.lang.reflect.Method method = AskService.class.getDeclaredMethod(
+            "toJsonResponseList", List.class, String.class, String.class);
+        method.setAccessible(true);
+
+        String existing = "[{\"responder\":\"h1\",\"response\":\"answer1\"}]";
+        List<String> ids = List.of("h1", "h2");
+        String result = (String) method.invoke(svc, ids, "answer2", existing);
+
+        List<Map<String, String>> entries = objectMapper.readValue(result,
+            new com.fasterxml.jackson.core.type.TypeReference<List<Map<String, String>>>() {});
+        assertEquals(2, entries.size());
+        assertEquals("answer1", entries.get(0).get("response"));
+        assertEquals("answer2", entries.get(1).get("response"));
+    }
+
+    @Test
+    void toJsonResponseList_doesNotSpreadLatestToPriorResponders() throws Exception {
+        AskService svc = buildService();
+        java.lang.reflect.Method method = AskService.class.getDeclaredMethod(
+            "toJsonResponseList", List.class, String.class, String.class);
+        method.setAccessible(true);
+
+        String existing = "[{\"responder\":\"h1\",\"response\":\"old-answer\"}]";
+        List<String> ids = List.of("h1", "h2", "h3");
+        String result = (String) method.invoke(svc, ids, "new-answer", existing);
+
+        List<Map<String, String>> entries = objectMapper.readValue(result,
+            new com.fasterxml.jackson.core.type.TypeReference<List<Map<String, String>>>() {});
+        assertEquals(3, entries.size());
+        assertEquals("old-answer", entries.get(0).get("response"));
+        // Only the last missing responder (h3) gets latestResponse; h2 gets empty
+        assertEquals("", entries.get(1).get("response"));
+        assertEquals("new-answer", entries.get(2).get("response"));
     }
 }

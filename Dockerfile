@@ -42,4 +42,4 @@ HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=20s \
   CMD wget --no-verbose --tries=1 --spider http://localhost:8080/api/health || exit 1
 
 USER 1000
-ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "[[ -f app.jar ]] || { echo \"ERROR: app.jar not found\" >&2; exit 1; }; exec java $JAVA_OPTS -jar app.jar"]

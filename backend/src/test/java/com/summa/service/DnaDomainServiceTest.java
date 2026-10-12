@@ -440,4 +440,36 @@ class DnaDomainServiceTest {
 
         assertEquals(1, results.size());
     }
+
+    @Test
+    void split_acceptsDuplicateIdsInMapping() {
+        DnaDomain parent = new DnaDomain();
+        parent.setId("parent-1");
+        parent.setName("Parent");
+        when(domainRepository.findById("parent-1")).thenReturn(Optional.of(parent));
+        when(dataHoldRepository.existsByKindAndSubjectIdAndReleasedAtIsNull("domain", "parent-1")).thenReturn(false);
+        when(cardRepository.countByDomainIdAndStatusNot("parent-1", "retired")).thenReturn(0L);
+        when(proposalRepository.countByDomainIdAndStatus("parent-1", "open")).thenReturn(0L);
+        when(workspaceRepository.countByDomainIdsContaining("parent-1")).thenReturn(0L);
+        DnaCard card = new DnaCard();
+        card.setId("card-1");
+        card.setDomainId("parent-1");
+        lenient().when(cardRepository.findById("card-1")).thenReturn(Optional.of(card));
+        lenient().when(cardRepository.save(any())).thenReturn(card);
+        when(domainRepository.save(any())).thenAnswer(invocation -> {
+            DnaDomain d = invocation.getArgument(0);
+            if (d.getId() == null) d.setId("child-1");
+            return d;
+        });
+        // Mock rekeyOwnerAdds no-op path
+        lenient().when(askRepository.findByToAndStatusPending(any())).thenReturn(Collections.emptyList());
+
+        // Duplicate card ID should not cause false unmapped count
+        List<DnaDomain> results = domainService.split("parent-1", "admin", "h:owner", "public", "git",
+            null, null, null,
+            List.of("card-1", "card-1"), Collections.emptyList(), Collections.emptyList());
+
+        assertEquals(1, results.size());
+        assertNotNull(results.get(0).getId());
+    }
 }

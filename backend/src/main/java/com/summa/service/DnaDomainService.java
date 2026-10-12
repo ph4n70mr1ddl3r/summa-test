@@ -184,6 +184,10 @@ public class DnaDomainService {
         if (itemIds == null) itemIds = List.of();
         if (workspaceIds == null) workspaceIds = List.of();
         if (proposalIds == null) proposalIds = List.of();
+        // Deduplicate to prevent cardinality arithmetic from being gamed by duplicate IDs.
+        itemIds = itemIds.stream().distinct().toList();
+        workspaceIds = workspaceIds.stream().distinct().toList();
+        proposalIds = proposalIds.stream().distinct().toList();
         DnaDomain parent = domainRepository.findById(parentId)
                 .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + parentId));
 

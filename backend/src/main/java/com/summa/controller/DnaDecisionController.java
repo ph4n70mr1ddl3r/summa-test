@@ -65,11 +65,13 @@ public class DnaDecisionController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            if (body.get("domainId") == null || body.get("domainId").isBlank()) {
+            String rawDomainId = body.get("domainId");
+            if (rawDomainId == null || rawDomainId.isBlank()) {
                 throw new IllegalArgumentException("domainId is required");
             }
-            if (domainService.findById(body.get("domainId")).isEmpty()) {
-                throw new EntityNotFoundException("Domain not found: " + body.get("domainId"));
+            String domainIdClean = JsonHelpers.stripIdPrefix(rawDomainId);
+            if (domainService.findById(domainIdClean).isEmpty()) {
+                throw new EntityNotFoundException("Domain not found: " + rawDomainId);
             }
             if (body.get("contextMd") == null || body.get("contextMd").isBlank()) {
                 throw new IllegalArgumentException("contextMd is required");

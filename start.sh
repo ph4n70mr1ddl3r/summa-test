@@ -6,8 +6,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 # Load .env file if present (for local development convenience)
-source "$SCRIPT_DIR/env.sh"
-load_env
+if [[ -f "$SCRIPT_DIR/env.sh" ]]; then
+    source "$SCRIPT_DIR/env.sh"
+    load_env
+else
+    echo "WARNING: $SCRIPT_DIR/env.sh not found — skipping environment load"
+fi
 
 echo "Starting Summa (single-process mode)..."
 
