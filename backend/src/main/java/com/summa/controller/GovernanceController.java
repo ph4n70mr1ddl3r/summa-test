@@ -39,7 +39,12 @@ public class GovernanceController {
         ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
         if (auth != null) return auth;
         if (!memberService.isAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to view governance policies");
-        return ResponseEntity.ok(governanceService.getAllSettings());
+        Map<String, Object> all = governanceService.getAllSettings();
+        Map<String, Object> policies = new LinkedHashMap<>();
+        for (String key : Defaults.POLICY_KEYS) {
+            policies.put(key, all.get(key));
+        }
+        return ResponseEntity.ok(policies);
     }
 
     @GetMapping("/quotas")

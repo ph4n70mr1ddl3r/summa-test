@@ -75,6 +75,7 @@ export default function Governance() {
       const savedValue = Number.isNaN(numericValue) ? trimmed : numericValue
       if (section === 'policies') setPolicies(prev => ({ ...prev, [key]: savedValue }))
       else setQuotas(prev => ({ ...prev, [key]: savedValue }))
+      // Use functional update to read the latest editValues without stale closure
       setEditValues(prev => { const next = { ...prev }; delete next[key]; return next })
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err))
@@ -108,9 +109,9 @@ export default function Governance() {
               className="flex-1 bg-gray-700 border border-gray-600 rounded px-2 py-0.5 text-gray-200 text-xs font-mono"
               aria-label={`Edit ${key}`}
             />
-            <button
+              <button
               type="button"
-              onClick={() => handleSave(section, key, ev[key])}
+              onClick={(e) => { e.stopPropagation(); handleSave(section, key, ev[key]) }}
               disabled={sv === `${section}:${key}`}
               className="px-2 py-0.5 bg-green-700 hover:bg-green-600 disabled:bg-gray-600 rounded text-xs text-white"
               aria-label={`Save ${key}`}
