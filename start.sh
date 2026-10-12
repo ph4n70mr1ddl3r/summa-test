@@ -40,7 +40,7 @@ if [ ! -d "backend/target" ]; then
     echo "ERROR: backend/target/ not found. Run 'npm run build:backend' (or 'cd backend && mvn package') first."
     exit 1
 fi
-JAR_FILE=$(find backend/target -maxdepth 1 -name 'summa-backend-*.jar' ! -name '*-sources.jar' ! -name '*-plain.jar' | head -n 1)
+JAR_FILE=$(find backend/target -maxdepth 1 -name 'summa-backend-*.jar' ! -name '*-sources.jar' ! -name '*-plain.jar' ! -name '*-original.jar' | head -n 1)
 if [ -z "$JAR_FILE" ]; then
     echo "ERROR: Backend JAR not found in backend/target/. Run 'npm run build:backend' (or 'cd backend && mvn package') first."
     exit 1

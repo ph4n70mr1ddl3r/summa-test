@@ -14,9 +14,7 @@ export default function Governance() {
   const [saving, setSaving] = useState<string | null>(null)
   const [editValues, setEditValues] = useState<Record<string, string>>({})
   const editValuesRef = useRef(editValues)
-  editValuesRef.current = editValues
   const savingRef = useRef(saving)
-  savingRef.current = saving
 
   const loadData = useCallback(() => {
     setLoading(true)
@@ -119,7 +117,7 @@ export default function Governance() {
               className="px-2 py-0.5 bg-green-700 hover:bg-green-600 disabled:bg-gray-600 rounded text-xs text-white"
               aria-label={`Save ${key}`}
             >
-              {sv === `${section}:${key}` ? '…' : '✓'}
+              {sv === `${section}:${key}` ? 'Saving...' : '✓'}
             </button>
             <button
               type="button"
@@ -145,7 +143,7 @@ export default function Governance() {
   }, [startEdit, handleSave])
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
-  if (error) return <ErrorBanner message={error} onRetry={loadData} />
+  if (error) return <ErrorBanner message={error} onRetry={loadData} onDismiss={() => setError(null)} />
 
   const policyEntries = Object.entries(policies)
   const quotaEntries = Object.entries(quotas)

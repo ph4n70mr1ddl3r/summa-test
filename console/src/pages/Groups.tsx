@@ -42,7 +42,7 @@ export default function Groups() {
   }
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
-  if (error) return <ErrorBanner message={error} onRetry={loadGroups} />
+  if (error) return <ErrorBanner message={error} onRetry={loadGroups} onDismiss={() => setError(null)} />
 
   return (
     <div className="space-y-6">

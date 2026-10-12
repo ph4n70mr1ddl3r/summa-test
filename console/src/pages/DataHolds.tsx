@@ -60,7 +60,7 @@ export default function DataHolds() {
       )}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Data Holds</h2>
-        <span className="text-sm text-gray-400">{holds.length === 1 ? '1 hold' : `${holds.length} holds`}</span>
+        <span className="text-sm text-gray-400">{holds.length} holds</span>
       </div>
       {holds.length === 0 ? (
         <div className="bg-gray-800 rounded-lg p-8 border border-gray-700 text-center">
@@ -91,7 +91,7 @@ export default function DataHolds() {
                     className="px-2 py-1 bg-red-700 hover:bg-red-600 disabled:bg-gray-600 disabled:text-gray-800 rounded text-xs text-white"
                     aria-label={`Release hold ${hold.id}`}
                   >
-                    {actionId === hold.id ? '…' : 'Release'}
+                    {actionId === hold.id ? 'Releasing...' : 'Release'}
                   </button>
                   {confirmReleaseId === hold.id && (
                     <div className="flex items-center gap-1">

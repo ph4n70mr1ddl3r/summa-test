@@ -64,7 +64,7 @@ export default function Spawning() {
   }
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
-  if (error) return <ErrorBanner message={error} onRetry={loadData} />
+  if (error) return <ErrorBanner message={error} onRetry={loadData} onDismiss={() => setError(null)} />
 
   const requested = requests.filter(r => r.status === 'requested')
   const other = requests.filter(r => r.status !== 'requested')

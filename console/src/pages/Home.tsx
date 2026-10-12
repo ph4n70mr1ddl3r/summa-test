@@ -82,7 +82,7 @@ function ApiStatusCheck() {
   }, [])
 
   if (status === 'error' && errorMsg) {
-    return <ErrorBanner message={errorMsg} onRetry={() => { setStatus('loading'); setErrorMsg(null) }} />
+    return <ErrorBanner message={errorMsg} onRetry={() => { setStatus('loading'); setErrorMsg(null) }} onDismiss={() => setErrorMsg(null)} />
   }
 
   return (

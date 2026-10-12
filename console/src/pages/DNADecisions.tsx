@@ -25,13 +25,13 @@ export default function DNADecisions() {
   }, [])
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
-  if (error) return <ErrorBanner message={error} onRetry={loadDecisions} />
+  if (error) return <ErrorBanner message={error} onRetry={loadDecisions} onDismiss={() => setError(null)} />
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">DNA Decisions</h2>
-        <span className="text-sm text-gray-400">{decisions.length === 1 ? '1 decision' : `${decisions.length} decisions`}</span>
+        <span className="text-sm text-gray-400">{decisions.length} decisions</span>
       </div>
       {decisions.length === 0 ? (
         <div className="bg-gray-800 rounded-lg p-8 border border-gray-700 text-center">

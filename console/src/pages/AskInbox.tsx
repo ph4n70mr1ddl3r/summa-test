@@ -91,7 +91,7 @@ export default function AskInbox() {
   }
 
   if (error) {
-    return <ErrorBanner message={error} onRetry={loadAsks} />
+    return <ErrorBanner message={error} onRetry={loadAsks} onDismiss={() => setError(null)} />
   }
 
   return (

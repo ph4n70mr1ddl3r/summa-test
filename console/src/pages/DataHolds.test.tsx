@@ -38,7 +38,7 @@ describe('DataHolds page', () => {
     ])
     render(<DataHolds />)
     await waitFor(() => {
-      expect(screen.getByText('1 hold')).toBeInTheDocument()
+      expect(screen.getByText('1 holds')).toBeInTheDocument()
       expect(screen.getByText('Subject: user-123')).toBeInTheDocument()
     })
   })

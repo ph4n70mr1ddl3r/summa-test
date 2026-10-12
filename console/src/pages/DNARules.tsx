@@ -25,13 +25,13 @@ export default function DNARules() {
   }, [])
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
-  if (error) return <ErrorBanner message={error} onRetry={loadRules} />
+  if (error) return <ErrorBanner message={error} onRetry={loadRules} onDismiss={() => setError(null)} />
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">DNA Rules</h2>
-        <span className="text-sm text-gray-400">{rules.length === 1 ? '1 rule' : `${rules.length} rules`}</span>
+        <span className="text-sm text-gray-400">{rules.length} rules</span>
       </div>
       {rules.length === 0 ? (
         <div className="bg-gray-800 rounded-lg p-8 border border-gray-700 text-center">

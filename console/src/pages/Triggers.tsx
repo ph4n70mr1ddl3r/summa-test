@@ -43,7 +43,7 @@ export default function Triggers() {
   }
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
-  if (error) return <ErrorBanner message={error} onRetry={loadTriggers} />
+  if (error) return <ErrorBanner message={error} onRetry={loadTriggers} onDismiss={() => setError(null)} />
 
   return (
     <div className="space-y-6">
@@ -92,7 +92,7 @@ export default function Triggers() {
                       className="ml-2 px-2 py-1 text-xs bg-yellow-700 hover:bg-yellow-600 disabled:bg-gray-600 rounded text-yellow-100"
                       aria-label={`Pause trigger ${t.name}`}
                     >
-                      {actionId === t.id ? '…' : 'Pause'}
+                      {actionId === t.id ? 'Pausing...' : 'Pause'}
                     </button>
                   )}
                   {t.status === 'paused' && (
@@ -103,7 +103,7 @@ export default function Triggers() {
                       className="ml-2 px-2 py-1 text-xs bg-green-700 hover:bg-green-600 disabled:bg-gray-600 rounded text-green-100"
                       aria-label={`Resume trigger ${t.name}`}
                     >
-                      {actionId === t.id ? '…' : 'Resume'}
+                      {actionId === t.id ? 'Resuming...' : 'Resume'}
                     </button>
                   )}
                   {t.status !== 'archived' && (
@@ -114,7 +114,7 @@ export default function Triggers() {
                       className="ml-2 px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 disabled:bg-gray-600 rounded text-gray-300"
                       aria-label={`Archive trigger ${t.name}`}
                     >
-                      {actionId === t.id ? '…' : 'Archive'}
+                      {actionId === t.id ? 'Archiving...' : 'Archive'}
                     </button>
                   )}
                 </div>

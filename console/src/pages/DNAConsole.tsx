@@ -48,7 +48,7 @@ export default function DNAConsole() {
   }, [])
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
-  if (error) return <ErrorBanner message={error} onRetry={loadData} />
+  if (error) return <ErrorBanner message={error} onRetry={loadData} onDismiss={() => setError(null)} />
 
   return (
     <div className="space-y-6">
@@ -84,7 +84,7 @@ export default function DNAConsole() {
           <p className="text-gray-500 text-sm">No open proposals.</p>
         ) : (
           <div className="space-y-2">
-            {proposals.slice(0, 5).map((p) => (
+            {proposals.filter(p => p.status === 'open').slice(0, 5).map((p) => (
               <div key={p.id} className="bg-gray-700 rounded px-3 py-2 text-sm text-gray-300">
                 <span className="font-medium">{p.kind}</span>
                 <span className="text-gray-500 ml-2">{escapeHtml(p.proposedBy)}</span>
