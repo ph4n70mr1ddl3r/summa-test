@@ -16,6 +16,7 @@ export default function Spawning() {
 
   useEscapeKey(() => {
     setConfirmAction({})
+    setActionId(null)
   })
 
   const loadData = () => {

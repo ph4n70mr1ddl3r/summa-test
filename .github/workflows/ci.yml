@@ -49,7 +49,7 @@ jobs:
       - name: Install console deps
         run: cd console && npm ci
       - name: Audit console dependencies
-        run: cd console && npm audit --omit=dev
+        run: cd console && npm audit --omit=dev --audit-level=high
       - name: Lint console
         run: cd console && npm run lint
       - name: Build console

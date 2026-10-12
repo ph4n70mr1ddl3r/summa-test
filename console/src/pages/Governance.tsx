@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { api, loadWithFallback } from '../services/api'
 import type { SpendSnapshot } from '../types'
 import { ErrorBanner } from '../components/ErrorBanner'
@@ -13,8 +13,6 @@ export default function Governance() {
   const [actionError, setActionError] = useState<string | null>(null)
   const [saving, setSaving] = useState<string | null>(null)
   const [editValues, setEditValues] = useState<Record<string, string>>({})
-  const editValuesRef = useRef(editValues)
-  const savingRef = useRef(saving)
 
   const loadData = useCallback(() => {
     setLoading(true)
@@ -94,10 +92,10 @@ export default function Governance() {
   }, [])
 
   const renderCell = useCallback((section: 'policies' | 'quotas', key: string, value: unknown) => {
-    const ev = editValuesRef.current
+    const ev = editValues
     const isEditing = ev[key] !== undefined
     const currentValue = isEditing ? ev[key] : String(value ?? '')
-    const sv = savingRef.current
+    const sv = saving
     return (
       <div key={key} className="flex items-center justify-between text-sm gap-2">
         <span className="text-gray-400 flex-shrink-0 w-48 truncate">{escapeHtml(key)}</span>
@@ -140,7 +138,7 @@ export default function Governance() {
         )}
       </div>
     )
-  }, [startEdit, handleSave])
+  }, [editValues, saving, startEdit, handleSave])
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
   if (error) return <ErrorBanner message={error} onRetry={loadData} onDismiss={() => setError(null)} />

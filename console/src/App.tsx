@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom'
 import { setAuthToken, isAuthenticated, getUser, setNavigate } from './services/api'
 import type { RbacRole } from './types'
@@ -94,11 +94,11 @@ function ModeLabel() {
 export default function App() {
   const authed = useAuthState()
   const navigate = useNavigate()
-  const user = getUser()
+  const user = useMemo(() => getUser(), [])
   useEffect(() => {
     setNavigate(navigate)
   }, [navigate])
-  const navItems = getFilteredNavItems(user)
+  const navItems = useMemo(() => getFilteredNavItems(user), [user])
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-blue-600 focus:text-white focus:p-2">
@@ -115,6 +115,7 @@ export default function App() {
                     key={to}
                     to={to}
                     end={end}
+                    aria-current={({ isActive }) => isActive ? 'page' : undefined}
                     className={({ isActive }) =>
                       isActive
                         ? 'text-white border-b-2 border-blue-400 px-1 py-2'

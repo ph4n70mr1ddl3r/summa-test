@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, act, fireEvent } from '@testing-library/react'
 import Governance from './Governance'
 import * as apiModule from '../services/api'
 
@@ -72,6 +72,107 @@ describe('Governance page', () => {
     render(<Governance />)
     await waitFor(() => {
       expect(screen.getByText(/network error/i)).toBeInTheDocument()
+    })
+  })
+
+  it('enters edit mode when clicking a policy cell', async () => {
+    vi.mocked(apiModule.api.governance.policies).mockResolvedValue({ spawn_quota: 10 })
+    vi.mocked(apiModule.api.governance.quotas).mockResolvedValue({})
+    vi.mocked(apiModule.api.governance.spend).mockResolvedValue({ reserved: 0, settled: 0, ceiling: 1000000, utilization: '0%', halted: false })
+    render(<Governance />)
+    await waitFor(() => expect(screen.getByText('Policies (1)')).toBeInTheDocument())
+
+    const editButton = screen.getByRole('button', { name: /edit spawn_quota: 10/i })
+    await act(async () => {
+      editButton.click()
+    })
+
+    await waitFor(() => {
+      const input = screen.getByLabelText('Edit spawn_quota')
+      expect(input).toBeInTheDocument()
+      expect(input).toHaveValue('10')
+    })
+  })
+
+  it('saves an edited policy value', async () => {
+    vi.mocked(apiModule.api.governance.policies).mockResolvedValue({ spawn_quota: 10 })
+    vi.mocked(apiModule.api.governance.quotas).mockResolvedValue({})
+    vi.mocked(apiModule.api.governance.spend).mockResolvedValue({ reserved: 0, settled: 0, ceiling: 1000000, utilization: '0%', halted: false })
+    vi.mocked(apiModule.api.governance.updatePolicies).mockResolvedValue(undefined)
+    render(<Governance />)
+    await waitFor(() => expect(screen.getByText('Policies (1)')).toBeInTheDocument())
+
+    const editButton = screen.getByRole('button', { name: /edit spawn_quota: 10/i })
+    await act(async () => {
+      editButton.click()
+    })
+
+    const input = await screen.findByLabelText('Edit spawn_quota')
+    await act(async () => {
+      fireEvent.change(input, { target: { value: '20' } })
+    })
+
+    const saveButton = screen.getByRole('button', { name: 'Save spawn_quota' })
+    await act(async () => {
+      saveButton.click()
+    })
+
+    await waitFor(() => {
+      expect(apiModule.api.governance.updatePolicies).toHaveBeenCalledWith({ spawn_quota: 20 })
+    })
+  })
+
+  it('clears an edited policy value', async () => {
+    vi.mocked(apiModule.api.governance.policies).mockResolvedValue({ spawn_quota: 10 })
+    vi.mocked(apiModule.api.governance.quotas).mockResolvedValue({})
+    vi.mocked(apiModule.api.governance.spend).mockResolvedValue({ reserved: 0, settled: 0, ceiling: 1000000, utilization: '0%', halted: false })
+    vi.mocked(apiModule.api.governance.updatePolicies).mockResolvedValue(undefined)
+    render(<Governance />)
+    await waitFor(() => expect(screen.getByText('Policies (1)')).toBeInTheDocument())
+
+    const editButton = screen.getByRole('button', { name: /edit spawn_quota: 10/i })
+    await act(async () => {
+      editButton.click()
+    })
+
+    const input = await screen.findByLabelText('Edit spawn_quota')
+    await act(async () => {
+      fireEvent.change(input, { target: { value: '' } })
+    })
+
+    const saveButton = screen.getByRole('button', { name: 'Save spawn_quota' })
+    await act(async () => {
+      saveButton.click()
+    })
+
+    await waitFor(() => {
+      expect(apiModule.api.governance.updatePolicies).toHaveBeenCalledWith({ spawn_quota: null })
+    })
+  })
+
+  it('cancels editing when clicking the cancel button', async () => {
+    vi.mocked(apiModule.api.governance.policies).mockResolvedValue({ spawn_quota: 10 })
+    vi.mocked(apiModule.api.governance.quotas).mockResolvedValue({})
+    vi.mocked(apiModule.api.governance.spend).mockResolvedValue({ reserved: 0, settled: 0, ceiling: 1000000, utilization: '0%', halted: false })
+    render(<Governance />)
+    await waitFor(() => expect(screen.getByText('Policies (1)')).toBeInTheDocument())
+
+    const editButton = screen.getByRole('button', { name: /edit spawn_quota: 10/i })
+    await act(async () => {
+      editButton.click()
+    })
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Edit spawn_quota')).toBeInTheDocument()
+    })
+
+    const cancelButton = screen.getByRole('button', { name: /cancel edit spawn_quota/i })
+    await act(async () => {
+      cancelButton.click()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByLabelText('Edit spawn_quota')).not.toBeInTheDocument()
     })
   })
 })

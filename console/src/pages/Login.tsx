@@ -20,7 +20,7 @@ export default function Login() {
       !s.toLowerCase().startsWith('data:') &&
       !s.toLowerCase().startsWith('javascript:') &&
       !s.startsWith('//') &&
-      !s.includes(':') &&
+      !/^\/?[a-z][a-z0-9+.-]*:/.test(s) &&
       (s.startsWith('/') || s.length === 0)
     // Decode once to catch percent-encoded protocol attacks (e.g. %2F%2Fevil.com)
     let decoded = candidate

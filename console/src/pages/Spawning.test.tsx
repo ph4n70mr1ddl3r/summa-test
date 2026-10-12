@@ -96,4 +96,54 @@ describe('Spawning page', () => {
       expect(screen.getByText('Confirm?')).toBeInTheDocument()
     })
   })
+
+  it('approves a requested spawn and reloads', async () => {
+    vi.mocked(apiModule.api.spawn.list).mockResolvedValue([
+      { id: 's1', requesterId: 'a1', class: 'ephemeral', purpose: 'Test task', status: 'requested' as const },
+    ])
+    vi.mocked(apiModule.api.spawn.stats).mockResolvedValue({ requested: 1, approved: 0, archived: 0 })
+    vi.mocked(apiModule.api.spawn.approve).mockResolvedValue(undefined)
+    render(<Spawning />)
+    await waitFor(() => expect(screen.getByText('Requested: 1')).toBeInTheDocument())
+
+    const approveButtons = screen.getAllByText('Approve')
+    await act(async () => {
+      approveButtons[0].click()
+    })
+    await waitFor(() => expect(screen.getByText('Confirm?')).toBeInTheDocument())
+
+    const yesButton = screen.getByRole('button', { name: /confirm approve test task/i })
+    await act(async () => {
+      yesButton.click()
+    })
+
+    await waitFor(() => {
+      expect(apiModule.api.spawn.approve).toHaveBeenCalledWith('s1')
+    })
+  })
+
+  it('denies a requested spawn and reloads', async () => {
+    vi.mocked(apiModule.api.spawn.list).mockResolvedValue([
+      { id: 's2', requesterId: 'a2', class: 'ephemeral', purpose: 'Bad request', status: 'requested' as const },
+    ])
+    vi.mocked(apiModule.api.spawn.stats).mockResolvedValue({ requested: 1, approved: 0, archived: 0 })
+    vi.mocked(apiModule.api.spawn.deny).mockResolvedValue(undefined)
+    render(<Spawning />)
+    await waitFor(() => expect(screen.getByText('Requested: 1')).toBeInTheDocument())
+
+    const denyButtons = screen.getAllByText('Deny')
+    await act(async () => {
+      denyButtons[0].click()
+    })
+    await waitFor(() => expect(screen.getByText('Confirm?')).toBeInTheDocument())
+
+    const yesButton = screen.getByRole('button', { name: /confirm deny bad request/i })
+    await act(async () => {
+      yesButton.click()
+    })
+
+    await waitFor(() => {
+      expect(apiModule.api.spawn.deny).toHaveBeenCalledWith('s2')
+    })
+  })
 })

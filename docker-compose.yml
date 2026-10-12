@@ -54,6 +54,11 @@ services:
       - SUMMA_DNA_REVIEW_SLA=${SUMMA_DNA_REVIEW_SLA:-7}
       # Spend config
       - SUMMA_CRITICAL_FLOOR_PERCENT=${SUMMA_CRITICAL_FLOOR_PERCENT:-5}
+      - SUMMA_PAT_DEFAULT_EXPIRY_DAYS=${SUMMA_PAT_DEFAULT_EXPIRY_DAYS:-90}
+      - SUMMA_INJECTION_ORG_SNAPSHOT_TOKEN_BUDGET=${SUMMA_INJECTION_ORG_SNAPSHOT_TOKEN_BUDGET:-1000}
+      - SUMMA_INJECTION_GLOSSARY_TOKEN_BUDGET=${SUMMA_INJECTION_GLOSSARY_TOKEN_BUDGET:-2000}
+      - SUMMA_INJECTION_RULES_TOKEN_BUDGET=${SUMMA_INJECTION_RULES_TOKEN_BUDGET:-4000}
+      - SUMMA_INJECTION_GOAL_SLICE_TOKEN_BUDGET=${SUMMA_INJECTION_GOAL_SLICE_TOKEN_BUDGET:-1000}
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/api/health || exit 1"]
       interval: 30s
@@ -90,8 +95,6 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    cap_add:
-      - NET_BIND_SERVICE
     read_only: true
     tmpfs:
       - /tmp

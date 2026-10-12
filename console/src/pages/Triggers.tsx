@@ -3,6 +3,7 @@ import { api } from '../services/api'
 import type { Trigger } from '../types'
 import { triggerStatusColor, triggerCriticalityColor, escapeHtml, formatDate } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
+import { useEscapeKey } from '../hooks/useEscapeKey'
 
 export default function Triggers() {
   const [triggers, setTriggers] = useState<Trigger[]>([])
@@ -10,6 +11,10 @@ export default function Triggers() {
   const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [actionId, setActionId] = useState<string | null>(null)
+
+  useEscapeKey(() => {
+    setActionId(null)
+  })
 
   const loadTriggers = () => {
     setLoading(true)

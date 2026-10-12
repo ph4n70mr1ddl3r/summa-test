@@ -42,7 +42,7 @@ summa:
     jwt-secret-min-length: ${SUMMA_AUTH_JWT_SECRET_MIN_LENGTH:32}
     local-auth-enabled: ${SUMMA_AUTH_LOCAL_AUTH_ENABLED:true}
     jwt-expiration: ${SUMMA_AUTH_JWT_EXPIRATION:86400000}
-    pat-default-expiry-days: 90
+    pat-default-expiry-days: ${SUMMA_PAT_DEFAULT_EXPIRY_DAYS:90}
   proxy:
     trusted-ips: ${SUMMA_PROXY_TRUSTED_IPS:}
   node:
@@ -64,10 +64,10 @@ summa:
   dna:
     default-review-sla-days: ${SUMMA_DNA_REVIEW_SLA:7}
     injection-layers:
-      org-snapshot-token-budget: 1000
-      glossary-token-budget: 2000
-      rules-token-budget: 4000
-      goal-slice-token-budget: 1000
+      org-snapshot-token-budget: ${SUMMA_INJECTION_ORG_SNAPSHOT_TOKEN_BUDGET:1000}
+      glossary-token-budget: ${SUMMA_INJECTION_GLOSSARY_TOKEN_BUDGET:2000}
+      rules-token-budget: ${SUMMA_INJECTION_RULES_TOKEN_BUDGET:4000}
+      goal-slice-token-budget: ${SUMMA_INJECTION_GOAL_SLICE_TOKEN_BUDGET:1000}
   spend:
     ceiling: ${SUMMA_SPEND_CEILING:1000000}
     critical-floor-percent: ${SUMMA_CRITICAL_FLOOR_PERCENT:5}

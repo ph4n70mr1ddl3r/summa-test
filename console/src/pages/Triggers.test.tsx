@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, act } from '@testing-library/react'
 import Triggers from './Triggers'
 import * as apiModule from '../services/api'
 
@@ -7,8 +7,15 @@ vi.mock('../services/api', () => ({
   api: {
     triggers: {
       list: vi.fn(),
+      pause: vi.fn(),
+      resume: vi.fn(),
+      archive: vi.fn(),
     },
   },
+}))
+
+vi.mock('../hooks/useEscapeKey', () => ({
+  useEscapeKey: vi.fn(),
 }))
 
 describe('Triggers page', () => {
@@ -50,5 +57,59 @@ describe('Triggers page', () => {
     await waitFor(() => {
       expect(container.textContent).toContain('Failed to load')
     })
+  })
+
+  it('pauses an active trigger', async () => {
+    vi.mocked(apiModule.api.triggers.list).mockResolvedValue([
+      { id: 'tr-1', name: 'Minute ticker', kind: 'schedule', expression: '* * * * *', agentId: 'a-1', status: 'active', criticality: 'standard' },
+    ])
+    vi.mocked(apiModule.api.triggers.pause).mockResolvedValue(undefined)
+    render(<Triggers />)
+    await waitFor(() => expect(screen.getByText('Minute ticker')).toBeInTheDocument())
+    await act(async () => {
+      screen.getByRole('button', { name: /pause trigger minute ticker/i }).click()
+    })
+    await waitFor(() => {
+      expect(apiModule.api.triggers.pause).toHaveBeenCalledWith('tr-1')
+    })
+  })
+
+  it('resumes a paused trigger', async () => {
+    vi.mocked(apiModule.api.triggers.list).mockResolvedValue([
+      { id: 'tr-2', name: 'Hourly tick', kind: 'schedule', expression: '0 * * * *', agentId: 'a-1', status: 'paused', criticality: 'standard' },
+    ])
+    vi.mocked(apiModule.api.triggers.resume).mockResolvedValue(undefined)
+    render(<Triggers />)
+    await waitFor(() => expect(screen.getByText('Hourly tick')).toBeInTheDocument())
+    await act(async () => {
+      screen.getByRole('button', { name: /resume trigger hourly tick/i }).click()
+    })
+    await waitFor(() => {
+      expect(apiModule.api.triggers.resume).toHaveBeenCalledWith('tr-2')
+    })
+  })
+
+  it('archives a non-archived trigger', async () => {
+    vi.mocked(apiModule.api.triggers.list).mockResolvedValue([
+      { id: 'tr-3', name: 'Daily job', kind: 'schedule', expression: '0 0 * * *', agentId: 'a-1', status: 'active', criticality: 'critical' },
+    ])
+    vi.mocked(apiModule.api.triggers.archive).mockResolvedValue(undefined)
+    render(<Triggers />)
+    await waitFor(() => expect(screen.getByText('Daily job')).toBeInTheDocument())
+    await act(async () => {
+      screen.getByRole('button', { name: /archive trigger daily job/i }).click()
+    })
+    await waitFor(() => {
+      expect(apiModule.api.triggers.archive).toHaveBeenCalledWith('tr-3')
+    })
+  })
+
+  it('does not show archive button for archived trigger', async () => {
+    vi.mocked(apiModule.api.triggers.list).mockResolvedValue([
+      { id: 'tr-4', name: 'Archived job', kind: 'schedule', expression: '0 0 * * *', agentId: 'a-1', status: 'archived', criticality: 'standard' },
+    ])
+    render(<Triggers />)
+    await waitFor(() => expect(screen.getByText('Archived job')).toBeInTheDocument())
+    expect(screen.queryByRole('button', { name: /archive trigger archived job/i })).not.toBeInTheDocument()
   })
 })

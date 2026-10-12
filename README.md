@@ -10,6 +10,7 @@ A self-hosted platform where human employees and AI agents work as one organizat
 - Node.js 22+
 - Maven 3.9+
 - Python 3.10+ (optional — required only for spec lint tooling)
+- curl (required for dev.sh health checks)
 
 ### Start Single-Process Mode (backend only)
 
@@ -75,7 +76,7 @@ python3 tools/test_lint.py
 
 ## Phases
 
-Status as of 2026-10-09; normative scope lives in `PLAN.md` and `specs/`
+Status as of 2026-10-12; normative scope lives in `PLAN.md` and `specs/`
 (see `specs/21-delivery-and-acceptance.md` for the full 0–8b phase table with entry/exit criteria).
 
 | Phase | Deliverable | Status |

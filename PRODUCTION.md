@@ -223,7 +223,7 @@ Abridged — the full surface with REQ IDs lives in `specs/17-api-surface.md`
 ### Single Container (API only, no console)
 ```bash
 docker run -d \
-  -p 8080:8080 \
+  -p 127.0.0.1:8080:8080 \
   -v summa-data:/data \
   -e SUMMA_AUTH_JWT_SECRET=<your-secret> \
   summa:latest
