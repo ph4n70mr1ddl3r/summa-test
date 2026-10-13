@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, waitFor } from '@testing-library/react'
-import { BrowserRouter } from 'react-router-dom'
+import { MemoryRouter } from 'react-router-dom'
 import Home from './Home'
 import * as apiModule from '../services/api'
 
@@ -11,7 +11,7 @@ vi.mock('../services/api', () => ({
 }))
 
 function renderWithRouter(ui: React.ReactNode) {
-  return render(<BrowserRouter>{ui}</BrowserRouter>)
+  return render(<MemoryRouter>{ui}</MemoryRouter>)
 }
 
 describe('Home page', () => {

@@ -95,6 +95,9 @@ export default function DNAConsole() {
                 </span>
               </div>
             ))}
+            {openProposals.length > 5 && (
+              <p className="text-xs text-gray-500 pt-1">…and {openProposals.length - 5} more. <NavLink to="/dna/proposals" className="text-blue-400 hover:text-blue-300" aria-label="View all proposals">View all →</NavLink></p>
+            )}
           </div>
         )}
       </div>

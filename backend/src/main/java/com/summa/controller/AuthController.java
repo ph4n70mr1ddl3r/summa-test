@@ -127,7 +127,7 @@ public class AuthController {
         String rateKey = actor + ":" + clientIp + ":change-password";
         if (!rateLimiter.allow(rateKey)) {
             long remaining = rateLimiter.getRemainingAttempts(rateKey);
-            var audit = auditService.logSystem("REFUSAL", "auth_change_password", "Rate limited password change for: " + actor, null);
+            var audit = auditService.logSystem("REFUSAL", "auth_change_password", actor, "Rate limited password change");
             return ControllerResponses.tooManyRequests(audit, "Too many password change attempts. Try again later.", remaining);
         }
 

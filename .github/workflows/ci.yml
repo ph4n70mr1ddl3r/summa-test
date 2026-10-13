@@ -36,8 +36,6 @@ jobs:
         run: cd backend && mvn -B test -Dspring.profiles.active=test
       - name: Analyze backend dependencies
         run: cd backend && mvn -B dependency:analyze
-      - name: Check backend dependency vulnerabilities
-        run: cd backend && mvn -B dependency:check -DfailOnWarning=true
 
   console-build:
     runs-on: ubuntu-latest

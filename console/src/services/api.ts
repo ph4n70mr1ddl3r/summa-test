@@ -146,7 +146,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T | undefin
         throw err;
       }
     }
-     if (res.status === 204) {
+    if (res.status === 204) {
       return undefined;
     }
     let json: T;
@@ -959,6 +959,23 @@ export const api = {
     update: (id: string, body: Record<string, string>) =>
       request<Node>(`/nodes/${id}`, {
         method: 'PUT',
+        body: JSON.stringify(body),
+      }),
+    heartbeat: (id: string, body: Record<string, unknown>) =>
+      request<Record<string, unknown>>(`/nodes/${id}/heartbeat`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    claims: (id: string) =>
+      request<string[]>(`/nodes/${id}/claims`),
+    workPull: (id: string, body: Record<string, unknown>) =>
+      request<Record<string, unknown>>(`/nodes/${id}/work/pull`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    reportRun: (id: string, body: Record<string, unknown>) =>
+      request<Record<string, unknown>>(`/nodes/${id}/runs/report`, {
+        method: 'POST',
         body: JSON.stringify(body),
       }),
   },

@@ -54,6 +54,16 @@ function useAuthState(): boolean {
   return authed
 }
 
+function useUser(): { userId: string; rbac: RbacRole; name?: string } | null {
+  const [user, setUser] = useState(getUser)
+  useEffect(() => {
+    const onChange = () => setUser(getUser())
+    window.addEventListener('summa-auth-change', onChange)
+    return () => window.removeEventListener('summa-auth-change', onChange)
+  }, [])
+  return user
+}
+
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const location = useLocation()
   const authed = useAuthState()
@@ -94,7 +104,7 @@ function ModeLabel() {
 export default function App() {
   const authed = useAuthState()
   const navigate = useNavigate()
-  const user = getUser()
+  const user = useUser()
   useEffect(() => {
     setNavigate(navigate)
   }, [navigate])

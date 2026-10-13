@@ -51,7 +51,7 @@ describe('DataHolds page', () => {
     })
   })
 
-  it('retry button calls loadHolds on click', async () => {
+  it('retry button calls loadHolds on click (no act wrapper)', async () => {
     vi.mocked(apiModule.api.governance.listHolds).mockRejectedValue(new Error('Network error'))
     const { getByRole } = render(<DataHolds />)
     await waitFor(() => {
@@ -80,7 +80,7 @@ describe('DataHolds page', () => {
     vi.mocked(apiModule.api.governance.listHolds).mockResolvedValue([
       { id: 'h1', kind: 'member', subjectId: 'user-123', reasonMd: 'Pending litigation', createdBy: 'admin-1', createdAt: 1700000000 },
     ])
-    vi.mocked(apiModule.api.governance.releaseHold).mockResolvedValue({})
+    vi.mocked(apiModule.api.governance.releaseHold).mockResolvedValue({ id: 'h1', kind: 'member', subjectId: 'user-123', reasonMd: '', createdBy: 'admin-1', createdAt: 1700000000 } as apiModule.DataHold)
     render(<DataHolds />)
     await waitFor(() => expect(screen.getByText('Release')).toBeInTheDocument())
     const releaseBtn = await screen.findByText('Release')

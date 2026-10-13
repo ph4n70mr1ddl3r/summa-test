@@ -89,7 +89,7 @@ export default function OrgView() {
                 <div key={a.id} className="flex items-center justify-between bg-gray-700 rounded px-3 py-2">
                   <span className="text-gray-200 text-sm">{escapeHtml(a.name)}</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500">{a.class}</span>
+                    <span className="text-xs text-gray-500">{escapeHtml(a.class)}</span>
                     <span className={`text-xs px-2 py-0.5 rounded ${agentStatusColor(a.status)}`} aria-label={`Status: ${a.status}`}>
                       {a.status}
                     </span>
