@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, act } from '@testing-library/react'
 import DNAProposals from './DNAProposals'
 import * as apiModule from '../services/api'
 
@@ -20,6 +20,14 @@ describe('DNAProposals page', () => {
     vi.mocked(apiModule.api.dna.proposals).mockResolvedValue([])
     render(<DNAProposals />)
     await waitFor(() => expect(screen.getByText('DNA Proposals')).toBeInTheDocument())
+  })
+
+  it('shows loading state while fetching', async () => {
+    vi.mocked(apiModule.api.dna.proposals).mockReturnValue(new Promise(() => {}))
+    render(<DNAProposals />)
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toBeInTheDocument()
+    })
   })
 
   it('shows empty state when no proposals', async () => {
@@ -46,6 +54,19 @@ describe('DNAProposals page', () => {
     render(<DNAProposals />)
     await waitFor(() => {
       expect(screen.getByText('Failed to load: Network error')).toBeInTheDocument()
+    })
+  })
+
+  it('retry button calls loadProposals on click', async () => {
+    vi.mocked(apiModule.api.dna.proposals).mockRejectedValue(new Error('Network error'))
+    const { getByRole } = render(<DNAProposals />)
+    await waitFor(() => {
+      expect(getByRole('button', { name: /retry/i })).toBeInTheDocument()
+    })
+    vi.mocked(apiModule.api.dna.proposals).mockResolvedValue([])
+    await act(async () => { getByRole('button', { name: /retry/i }).click() })
+    await waitFor(() => {
+      expect(apiModule.api.dna.proposals).toHaveBeenCalledTimes(2)
     })
   })
 })

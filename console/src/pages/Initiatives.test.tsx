@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, waitFor, screen } from '@testing-library/react'
+import { render, waitFor, screen, act } from '@testing-library/react'
 import Initiatives from './Initiatives'
 import * as apiModule from '../services/api'
 
@@ -21,6 +21,14 @@ describe('Initiatives page', () => {
     render(<Initiatives />)
     await waitFor(() => {
       expect(screen.getByText('Initiatives')).toBeInTheDocument()
+    })
+  })
+
+  it('shows loading state while fetching', async () => {
+    vi.mocked(apiModule.api.initiatives.list).mockReturnValue(new Promise(() => {}))
+    render(<Initiatives />)
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toBeInTheDocument()
     })
   })
 
@@ -61,6 +69,19 @@ describe('Initiatives page', () => {
     render(<Initiatives />)
     await waitFor(() => {
       expect(screen.getByText(/Failed to load/)).toBeInTheDocument()
+    })
+  })
+
+  it('retry button calls loadData on click', async () => {
+    vi.mocked(apiModule.api.initiatives.list).mockRejectedValue(new Error('Network error'))
+    const { getByRole } = render(<Initiatives />)
+    await waitFor(() => {
+      expect(getByRole('button', { name: /retry/i })).toBeInTheDocument()
+    })
+    vi.mocked(apiModule.api.initiatives.list).mockResolvedValue([])
+    await act(async () => { getByRole('button', { name: /retry/i }).click() })
+    await waitFor(() => {
+      expect(apiModule.api.initiatives.list).toHaveBeenCalledTimes(2)
     })
   })
 })

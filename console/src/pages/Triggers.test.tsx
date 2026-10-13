@@ -59,6 +59,20 @@ describe('Triggers page', () => {
     })
   })
 
+  it('retry button calls loadTriggers on click', async () => {
+    vi.mocked(apiModule.api.triggers.list).mockRejectedValue(new Error('failed'))
+    const { getByRole, container } = render(<Triggers />)
+    await waitFor(() => {
+      expect(container.textContent).toContain('Failed to load')
+    })
+    const retryBtn = getByRole('button', { name: /retry/i })
+    vi.mocked(apiModule.api.triggers.list).mockResolvedValue([])
+    await act(async () => { retryBtn.click() })
+    await waitFor(() => {
+      expect(apiModule.api.triggers.list).toHaveBeenCalledTimes(2)
+    })
+  })
+
   it('pauses an active trigger', async () => {
     vi.mocked(apiModule.api.triggers.list).mockResolvedValue([
       { id: 'tr-1', name: 'Minute ticker', kind: 'schedule', expression: '* * * * *', agentId: 'a-1', status: 'active', criticality: 'standard' },

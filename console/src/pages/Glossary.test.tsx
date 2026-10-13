@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, act } from '@testing-library/react'
 import Glossary from './Glossary'
 import * as apiModule from '../services/api'
 
@@ -20,6 +20,14 @@ describe('Glossary page', () => {
     vi.mocked(apiModule.api.dna.glossary).mockResolvedValue([])
     render(<Glossary />)
     await waitFor(() => expect(screen.getByText('DNA Glossary')).toBeInTheDocument())
+  })
+
+  it('shows loading state while fetching', async () => {
+    vi.mocked(apiModule.api.dna.glossary).mockReturnValue(new Promise(() => {}))
+    render(<Glossary />)
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toBeInTheDocument()
+    })
   })
 
   it('shows empty state when no entries', async () => {
@@ -48,6 +56,19 @@ describe('Glossary page', () => {
     render(<Glossary />)
     await waitFor(() => {
       expect(screen.getByText(/error/i)).toBeInTheDocument()
+    })
+  })
+
+  it('retry button calls loadEntries on click', async () => {
+    vi.mocked(apiModule.api.dna.glossary).mockRejectedValue(new Error('Network error'))
+    const { getByRole } = render(<Glossary />)
+    await waitFor(() => {
+      expect(getByRole('button', { name: /retry/i })).toBeInTheDocument()
+    })
+    vi.mocked(apiModule.api.dna.glossary).mockResolvedValue([])
+    await act(async () => { getByRole('button', { name: /retry/i }).click() })
+    await waitFor(() => {
+      expect(apiModule.api.dna.glossary).toHaveBeenCalledTimes(2)
     })
   })
 })

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, waitFor } from '@testing-library/react'
+import { render, waitFor, act } from '@testing-library/react'
 import BoardTasks from './BoardTasks'
 import * as apiModule from '../services/api'
 
@@ -21,6 +21,14 @@ describe('BoardTasks page', () => {
     const { container } = render(<BoardTasks />)
     await waitFor(() => {
       expect(container.textContent).toContain('Board Tasks')
+    })
+  })
+
+  it('shows loading state while fetching', async () => {
+    vi.mocked(apiModule.api.boardTasks.list).mockReturnValue(new Promise(() => {}))
+    const { container } = render(<BoardTasks />)
+    await waitFor(() => {
+      expect(container.textContent).toContain('Loading...')
     })
   })
 
@@ -49,6 +57,20 @@ describe('BoardTasks page', () => {
     const { container } = render(<BoardTasks />)
     await waitFor(() => {
       expect(container.textContent).toContain('Failed to load')
+    })
+  })
+
+  it('retry button calls loadTasks on click', async () => {
+    vi.mocked(apiModule.api.boardTasks.list).mockRejectedValue(new Error('failed'))
+    const { getByRole, container } = render(<BoardTasks />)
+    await waitFor(() => {
+      expect(container.textContent).toContain('Failed to load')
+    })
+    const retryBtn = getByRole('button', { name: /retry/i })
+    vi.mocked(apiModule.api.boardTasks.list).mockResolvedValue([])
+    await act(async () => { retryBtn.click() })
+    await waitFor(() => {
+      expect(apiModule.api.boardTasks.list).toHaveBeenCalledTimes(2)
     })
   })
 })

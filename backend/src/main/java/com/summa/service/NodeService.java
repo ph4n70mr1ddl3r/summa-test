@@ -171,6 +171,7 @@ public class NodeService {
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public boolean isRevoked(String id) {
         return nodeRepository.findById(id)
                 .map(Node::isRevoked)

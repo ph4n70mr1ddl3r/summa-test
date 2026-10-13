@@ -192,7 +192,7 @@ def check_section_refs(root: Path, specs: Path, errors: list[str]) -> None:
         return tuple(int(p) for p in s.split("."))
 
     for path in sorted(specs.glob("*.md")) + [root / "PLAN.md"]:
-        text = path.read_text(encoding="utf-8")
+        text = re.sub(r"```.*?```", "", path.read_text(encoding="utf-8"), flags=re.S)
         dangling = sections_in(text, path.name, errors) - plan_secs
         if dangling:
             listed = ", ".join(f"§{s}" for s in sorted(dangling, key=sec_key))
@@ -237,6 +237,23 @@ def main(argv: list[str] | None = None) -> int:
     specs = root / "specs"
     errors: list[str] = []
     warnings: list[str] = []
+
+    # Validate required paths exist before proceeding
+    if not specs.is_dir():
+        errors.append(f"specs directory not found: {specs}")
+        for e in errors:
+            print(f"error: {e}", file=sys.stderr)
+        print(f"{len(errors)} errors", file=sys.stderr)
+        return 1
+    if not (root / "PLAN.md").exists():
+        errors.append("PLAN.md not found")
+    if not (specs / "TRACEABILITY.md").exists():
+        errors.append("specs/TRACEABILITY.md not found")
+    if errors:
+        for e in errors:
+            print(f"error: {e}", file=sys.stderr)
+        print(f"{len(errors)} errors", file=sys.stderr)
+        return 1
 
     # --- 1+2. definitions and prefix homes ---
     defined: dict[str, Path] = {}

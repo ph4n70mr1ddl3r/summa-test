@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react'
 import DataHolds from './DataHolds'
 import * as apiModule from '../services/api'
 
@@ -51,6 +51,31 @@ describe('DataHolds page', () => {
     })
   })
 
+  it('retry button calls loadHolds on click', async () => {
+    vi.mocked(apiModule.api.governance.listHolds).mockRejectedValue(new Error('Network error'))
+    const { getByRole } = render(<DataHolds />)
+    await waitFor(() => {
+      expect(getByRole('button', { name: /retry/i })).toBeInTheDocument()
+    })
+    vi.mocked(apiModule.api.governance.listHolds).mockResolvedValue([])
+    getByRole('button', { name: /retry/i }).click()
+    await waitFor(() => {
+      expect(apiModule.api.governance.listHolds).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  it('retry button calls loadHolds on click', async () => {
+    vi.mocked(apiModule.api.governance.listHolds).mockRejectedValue(new Error('Network error'))
+    const { getByRole } = render(<DataHolds />)
+    await waitFor(() => {
+      expect(getByRole('button', { name: /retry/i })).toBeInTheDocument()
+    })
+    vi.mocked(apiModule.api.governance.listHolds).mockResolvedValue([])
+    await act(async () => { getByRole('button', { name: /retry/i }).click() })
+    await waitFor(() => {
+      expect(apiModule.api.governance.listHolds).toHaveBeenCalledTimes(2)
+    })
+  })
   it('releases a hold on click', async () => {
     vi.mocked(apiModule.api.governance.listHolds).mockResolvedValue([
       { id: 'h1', kind: 'member', subjectId: 'user-123', reasonMd: 'Pending litigation', createdBy: 'admin-1', createdAt: 1700000000 },

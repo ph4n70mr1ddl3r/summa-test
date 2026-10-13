@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, waitFor } from '@testing-library/react'
+import { render, waitFor, act } from '@testing-library/react'
 import Workspaces from './Workspaces'
 import * as apiModule from '../services/api'
 
@@ -21,6 +21,14 @@ describe('Workspaces page', () => {
     const { container } = render(<Workspaces />)
     await waitFor(() => {
       expect(container.textContent).toContain('Workspaces')
+    })
+  })
+
+  it('shows loading state while fetching', async () => {
+    vi.mocked(apiModule.api.workspaces.list).mockReturnValue(new Promise(() => {}))
+    const { container } = render(<Workspaces />)
+    await waitFor(() => {
+      expect(container.textContent).toContain('Loading...')
     })
   })
 
@@ -49,6 +57,20 @@ describe('Workspaces page', () => {
     const { container } = render(<Workspaces />)
     await waitFor(() => {
       expect(container.textContent).toContain('Failed to load')
+    })
+  })
+
+  it('retry button calls loadWorkspaces on click', async () => {
+    vi.mocked(apiModule.api.workspaces.list).mockRejectedValue(new Error('failed'))
+    const { getByRole, container } = render(<Workspaces />)
+    await waitFor(() => {
+      expect(container.textContent).toContain('Failed to load')
+    })
+    const retryBtn = getByRole('button', { name: /retry/i })
+    vi.mocked(apiModule.api.workspaces.list).mockResolvedValue([])
+    await act(async () => { retryBtn.click() })
+    await waitFor(() => {
+      expect(apiModule.api.workspaces.list).toHaveBeenCalledTimes(2)
     })
   })
 })

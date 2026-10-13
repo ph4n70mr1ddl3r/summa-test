@@ -84,4 +84,16 @@ describe('DNAConsole page', () => {
       expect(allZero.length).toBeGreaterThanOrEqual(3)
     })
   })
+
+  it('shows loading state while fetching', async () => {
+    vi.mocked(apiModule.api.dna.domains).mockReturnValue(new Promise(() => {}))
+    vi.mocked(apiModule.api.dna.cards).mockReturnValue(new Promise(() => {}))
+    vi.mocked(apiModule.api.dna.goals).mockReturnValue(new Promise(() => {}))
+    vi.mocked(apiModule.api.dna.reviewQueue).mockReturnValue(new Promise(() => {}))
+
+    render(wrapper(<DNAConsole />))
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toBeInTheDocument()
+    })
+  })
 })

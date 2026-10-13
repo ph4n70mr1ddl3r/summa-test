@@ -115,7 +115,7 @@ public class SpawnController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            SpawnRequest request = spawnService.approve(id, JsonHelpers.stripIdPrefix(actor), JsonHelpers.stripIdPrefix(actor));
+            SpawnRequest request = spawnService.approve(id, JsonHelpers.stripIdPrefix(actor), actor);
             return ResponseEntity.ok(request);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());

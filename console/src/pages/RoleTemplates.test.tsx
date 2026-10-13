@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, waitFor } from '@testing-library/react'
+import { render, waitFor, act } from '@testing-library/react'
 import RoleTemplates from './RoleTemplates'
 import * as apiModule from '../services/api'
 
@@ -21,6 +21,14 @@ describe('RoleTemplates page', () => {
     const { container } = render(<RoleTemplates />)
     await waitFor(() => {
       expect(container.textContent).toContain('Role Templates')
+    })
+  })
+
+  it('shows loading state while fetching', async () => {
+    vi.mocked(apiModule.api.roleTemplates.list).mockReturnValue(new Promise(() => {}))
+    const { container } = render(<RoleTemplates />)
+    await waitFor(() => {
+      expect(container.textContent).toContain('Loading...')
     })
   })
 
@@ -50,6 +58,20 @@ describe('RoleTemplates page', () => {
     const { container } = render(<RoleTemplates />)
     await waitFor(() => {
       expect(container.textContent).toContain('Failed to load')
+    })
+  })
+
+  it('retry button calls loadTemplates on click', async () => {
+    vi.mocked(apiModule.api.roleTemplates.list).mockRejectedValue(new Error('failed'))
+    const { getByRole, container } = render(<RoleTemplates />)
+    await waitFor(() => {
+      expect(container.textContent).toContain('Failed to load')
+    })
+    const retryBtn = getByRole('button', { name: /retry/i })
+    vi.mocked(apiModule.api.roleTemplates.list).mockResolvedValue([])
+    await act(async () => { retryBtn.click() })
+    await waitFor(() => {
+      expect(apiModule.api.roleTemplates.list).toHaveBeenCalledTimes(2)
     })
   })
 })

@@ -66,8 +66,7 @@ public class AuthController {
         String rateKey = email + ":" + clientIp;
         if (!rateLimiter.allow(rateKey)) {
             long remaining = rateLimiter.getRemainingAttempts(rateKey);
-            var audit = auditService.logSystem("REFUSAL", "auth_login", email, "Rate limited login attempt for: " + email);
-            return ControllerResponses.tooManyRequests(audit, "Too many login attempts. Try again later.", remaining);
+            return ControllerResponses.tooManyRequests(auditService, "Too many login attempts. Try again later.", remaining);
         }
 
         var humanOpt = orgService.findHumanByEmail(email);
