@@ -11,6 +11,7 @@ export default function Memory() {
   const [filter, setFilter] = useState<'all' | 'tainted'>('all')
   const [reviewingId, setReviewingId] = useState<string | null>(null)
   const [reviewingForId, setReviewingForId] = useState<string | null>(null)
+  const [isProcessingReview, setIsProcessingReview] = useState(false)
   const [reviewSuccess, setReviewSuccess] = useState(false)
   const [reviewError, setReviewError] = useState<string | null>(null)
 
@@ -39,6 +40,8 @@ export default function Memory() {
   }, [filter, loadItems])
 
   const handleReview = async (id: string) => {
+    if (isProcessingReview) return
+    setIsProcessingReview(true)
     setReviewSuccess(false)
     setReviewError(null)
     setReviewingForId(id)
@@ -54,15 +57,14 @@ export default function Memory() {
       setReviewingForId(null)
       setReviewingId(null)
       try { await loadItems(); setError(null) } catch { /* keep original review error */ }
+    } finally {
+      setIsProcessingReview(false)
     }
   }
 
   const requestReview = (id: string) => {
-    if (reviewingId === id || reviewingForId === id) {
-      handleReview(id)
-    } else {
-      setReviewingId(id)
-    }
+    if (isProcessingReview || reviewingId === id || reviewingForId === id) return
+    setReviewingId(id)
   }
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
@@ -141,7 +143,7 @@ export default function Memory() {
                     <button
                       type="button"
                       onClick={() => requestReview(item.id)}
-                      disabled={reviewingForId !== null && reviewingForId !== item.id || reviewingId === item.id}
+                      disabled={reviewingForId !== null && reviewingForId !== item.id || reviewingId === item.id || isProcessingReview}
                       className="px-3 py-1 bg-yellow-700 hover:bg-yellow-600 disabled:bg-gray-700 disabled:text-gray-500 rounded text-sm text-yellow-100"
                       aria-label={`Review tainted item ${item.id.slice(0, 8)}`}
                     >
@@ -159,9 +161,9 @@ export default function Memory() {
                       <button
                         type="button"
                         onClick={() => handleReview(item.id)}
-                        disabled={reviewingForId !== null}
+                        disabled={reviewingForId !== null || isProcessingReview}
                         className="px-3 py-1 bg-green-700 hover:bg-green-600 disabled:bg-gray-700 disabled:text-gray-500 rounded text-sm text-green-100"
-                         aria-label={reviewingForId === item.id ? 'Reviewing item' : `Confirm review of item ${item.id.slice(0, 8)}`}
+                        aria-label={reviewingForId === item.id ? 'Reviewing item' : `Confirm review of item ${item.id.slice(0, 8)}`}
                       >
                        {reviewingForId === item.id ? 'Reviewing...' : 'Confirm Review'}
                      </button>

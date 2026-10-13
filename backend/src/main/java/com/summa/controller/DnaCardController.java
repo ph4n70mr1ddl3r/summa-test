@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.service.MemberService;
+import com.summa.util.JsonHelpers;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -65,7 +66,7 @@ public class DnaCardController {
             if (body.get("title") == null || body.get("title").isBlank()) {
                 throw new IllegalArgumentException("title is required");
             }
-            String domainId = body.get("domainId");
+            String domainId = JsonHelpers.stripIdPrefix(body.get("domainId"));
             if (domainId == null || domainId.isBlank()) {
                 throw new IllegalArgumentException("domainId is required");
             }
@@ -100,7 +101,7 @@ public class DnaCardController {
             if (body.get("title") == null || body.get("title").isBlank()) {
                 throw new IllegalArgumentException("title is required");
             }
-            String domainId = body.get("domainId");
+            String domainId = JsonHelpers.stripIdPrefix(body.get("domainId"));
             if (domainId == null || domainId.isBlank()) {
                 throw new IllegalArgumentException("domainId is required");
             }

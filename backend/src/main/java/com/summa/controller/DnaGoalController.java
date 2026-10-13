@@ -10,6 +10,7 @@ import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.enums.GoalStatus;
+import com.summa.exception.EntityNotFoundException;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.service.DnaDomainService;
 import com.summa.model.DnaDomain;
@@ -102,7 +103,7 @@ public class DnaGoalController {
                 domainIdClean = JsonHelpers.stripIdPrefix(rawDomainId);
                 Optional<DnaDomain> domOpt = domainService.findById(domainIdClean);
                 if (domOpt.isEmpty()) {
-                    throw new IllegalArgumentException("Domain not found: " + rawDomainId);
+                    throw new EntityNotFoundException("Domain not found: " + rawDomainId);
                 }
                 // ORG-020: Only the domain owner or admin may create goals in a domain
                 boolean isDomainOwner = domOpt.get().getOwnerHumanId() != null

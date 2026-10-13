@@ -10,6 +10,10 @@ const GLOSSARY_STATUS_COLOR: Record<DnaGlossary['status'], string> = {
   retired: 'bg-gray-600 text-gray-400',
 }
 
+function getGlossaryStatusColor(status: DnaGlossary['status']): string {
+  return GLOSSARY_STATUS_COLOR[status] ?? 'bg-gray-700 text-gray-400'
+}
+
 export default function Glossary() {
   const [entries, setEntries] = useState<DnaGlossary[]>([])
   const [loading, setLoading] = useState(true)
@@ -55,7 +59,7 @@ export default function Glossary() {
                     {entry.aliases ? ` · Aliases: ${escapeHtml(entry.aliases)}` : ''}
                   </p>
                 </div>
-                <span className={`text-xs px-2 py-1 rounded ${GLOSSARY_STATUS_COLOR[entry.status]}`} aria-label={`Status: ${entry.status}`}>
+                <span className={`text-xs px-2 py-1 rounded ${getGlossaryStatusColor(entry.status)}`} aria-label={`Status: ${entry.status}`}>
                   {entry.status}
                 </span>
               </div>

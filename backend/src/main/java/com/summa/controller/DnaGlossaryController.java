@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.service.MemberService;
+import com.summa.util.JsonHelpers;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -71,14 +72,15 @@ public class DnaGlossaryController {
             if (body.get("domainId") == null || body.get("domainId").isBlank()) {
                 throw new IllegalArgumentException("domainId is required");
             }
-            if (domainService.findById(body.get("domainId")).isEmpty()) {
+            String domainIdClean = JsonHelpers.stripIdPrefix(body.get("domainId"));
+            if (domainService.findById(domainIdClean).isEmpty()) {
                 throw new EntityNotFoundException("Domain not found: " + body.get("domainId"));
             }
             // Security: reject client-supplied IDs — always generate server-side
             String generatedId = UUID.randomUUID().toString();
             DnaGlossary entry = glossaryService.create(
                 generatedId,
-                body.get("domainId"),
+                domainIdClean,
                 body.get("term"),
                 body.get("definition"),
                 body.get("aliases"),

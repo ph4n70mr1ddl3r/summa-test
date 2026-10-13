@@ -169,7 +169,11 @@ public class AskController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            Ask ask = askService.respond(id, actor, body.get("response"));
+            String response = body.get("response");
+            if (response == null || response.isBlank()) {
+                throw new IllegalArgumentException("response is required");
+            }
+            Ask ask = askService.respond(id, actor, response);
             return ResponseEntity.ok(ask);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
