@@ -559,17 +559,17 @@ public class OffboardingWalkService {
                                      domOpt.get().setNamedReaders(objectMapper.writeValueAsString(filteredReaders));
                                      domainRepository.save(domOpt.get());
                                      changed = true;
-                                 } catch (Exception e) {
-                                     auditService.logSystem("DEMOTE_CLEAN_DOMAIN_READERS_FAIL", "dna_domain", "",
-                        JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
-                                 }
-                             }
-                        }
-                    }
-                } catch (Exception e) {
-                        auditService.logSystem("DEMOTE_CLEAN_DOMAIN_READERS_FAIL", "dna_domain", "",
-                        JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
-                }
+                                  } catch (Exception e) {
+                                      auditService.logSystem("DEMOTE_CLEAN_DOMAIN_READERS_FAIL", "dna_domain", "",
+                                          JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
+                                  }
+                              }
+                         }
+                     }
+                 } catch (Exception e) {
+                     auditService.logSystem("DEMOTE_CLEAN_DOMAIN_READERS_FAIL", "dna_domain", "",
+                         JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
+                 }
             }
             if (changed) {
                 workspaceRepository.save(ws);

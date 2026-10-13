@@ -99,7 +99,7 @@ export default function Spawning() {
                   <div className="flex-1">
                     <p className="font-medium text-gray-200">{req.purpose || 'Untitled request'}</p>
                     <p className="text-sm text-gray-400 mt-1">
-                      Class: {req.class} · Requester: {escapeHtml(req.requesterId)}
+                      Class: {escapeHtml(req.class)} · Requester: {escapeHtml(req.requesterId)}
                       {req.templateId ? ` · Template: ${escapeHtml(req.templateId)}` : ''}
                     </p>
                     {req.budgetCap != null && (
@@ -173,7 +173,7 @@ export default function Spawning() {
                   <div>
                     <p className="font-medium text-gray-200">{req.purpose || 'Untitled request'}</p>
                     <p className="text-sm text-gray-400 mt-1">
-                      Class: {req.class} · Requester: {escapeHtml(req.requesterId)}
+                      Class: {escapeHtml(req.class)} · Requester: {escapeHtml(req.requesterId)}
                       {req.templateId ? ` · Template: ${escapeHtml(req.templateId)}` : ''}
                     </p>
                   </div>

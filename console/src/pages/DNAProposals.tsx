@@ -75,7 +75,7 @@ export default function DNAProposals() {
                 <div>
                   <p className="font-medium text-gray-200">
                     <span className={`text-xs px-2 py-0.5 rounded mr-2 ${proposalKindColor(p.kind)}`}>
-                      {p.kind}
+                      {escapeHtml(p.kind)}
                     </span>
                     {escapeHtml(p.proposedBy)}
                   </p>

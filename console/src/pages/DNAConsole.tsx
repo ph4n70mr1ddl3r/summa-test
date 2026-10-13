@@ -88,7 +88,7 @@ export default function DNAConsole() {
           <div className="space-y-2">
             {openProposals.slice(0, 5).map((p) => (
               <div key={p.id} className="bg-gray-700 rounded px-3 py-2 text-sm text-gray-300">
-                <span className="font-medium">{p.kind}</span>
+                <span className="font-medium">{escapeHtml(p.kind)}</span>
                 <span className="text-gray-500 ml-2">{escapeHtml(p.proposedBy)}</span>
                 <span className={`ml-auto text-xs px-2 py-0.5 rounded ${proposalStatusColor(p.status)}`}>
                   {p.status}
