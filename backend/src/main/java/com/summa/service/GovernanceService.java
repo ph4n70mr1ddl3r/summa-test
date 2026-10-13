@@ -19,6 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.Optional;
 
 @Service
+@Transactional
 public class GovernanceService {
     private static final Logger log = LoggerFactory.getLogger(GovernanceService.class);
     private final GovernanceSettingRepository settingRepository;

@@ -580,6 +580,25 @@ export interface DataHold {
   releasedAt?: number;
 }
 
+export interface Pat {
+  id: string;
+  memberId: string;
+  name: string;
+  scopes: string;
+  expiresAt: number;
+  revokedAt?: number;
+  lastUsedAt?: number;
+  createdAt: number;
+}
+
+export interface PatWithToken {
+  id: string;
+  name: string;
+  scopes: string;
+  expiresAt: number;
+  token: string;
+}
+
 export function buildQuery(params?: Record<string, unknown>): string {
   const entries = Object.entries(params ?? {}).filter(([, v]) => v !== undefined && v !== null && v !== '');
   if (entries.length === 0) return '';
@@ -849,6 +868,19 @@ export const api = {
       request<{ message: string }>('/auth/change-password', {
         method: 'PUT',
         body: JSON.stringify({ currentPassword, newPassword }),
+      }),
+  },
+  pats: {
+    list: (memberId: string) =>
+      request<Pat[]>(`/auth/pats?memberId=${encodeURIComponent(memberId)}`),
+    create: (body: { name: string; scopes?: string; expiryDays?: number }) =>
+      request<PatWithToken>('/auth/pats', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    revoke: (id: string) =>
+      request<Pat>(`/auth/pats/${id}/revoke`, {
+        method: 'POST',
       }),
   },
   health: () => request<HealthStatus>('/health'),

@@ -5,6 +5,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import com.summa.service.AuditService;
 import com.summa.repository.HumanRepository;
 import com.summa.model.Human;
 import org.slf4j.Logger;
@@ -32,6 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private int minJwtSecretLength;
 
     private final HumanRepository humanRepository;
+    private final AuditService auditService;
 
     @PostConstruct
     public void validateSecret() {
@@ -43,8 +45,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
-    public JwtAuthenticationFilter(HumanRepository humanRepository) {
+    public JwtAuthenticationFilter(HumanRepository humanRepository, AuditService auditService) {
         this.humanRepository = humanRepository;
+        this.auditService = auditService;
     }
 
     public static final List<String> PUBLIC_PATHS = List.of(
@@ -69,6 +72,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // For public paths, parse JWT if present so downstream filters can set up
             // actor context for authenticated callers (e.g. admin enrolling nodes or
             // re-bootstrapping). Unauthenticated calls still pass through cleanly.
+            // SEC-010: Session version is always checked even on public paths to prevent
+            // stale tokens from carrying actor context after password changes.
             String authHeader = request.getHeader("Authorization");
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 if (authHeader.length() > 7) {
@@ -77,6 +82,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     if (payload != null) {
                         String subject = payload.get("sub") instanceof String s ? s : null;
                         if (subject != null && !subject.isBlank()) {
+                            if (!checkSessionVersion(subject, payload)) {
+                                log.warn("[SUMMA] Stale session version for {} on public path={}", subject, path);
+                                writeRefusal(response, HttpServletResponse.SC_UNAUTHORIZED, "Session invalidated — please sign in again", subject);
+                                return;
+                            }
                             request.setAttribute("actor", subject);
                             var auth = new UsernamePasswordAuthenticationToken(subject, null, List.of());
                             SecurityContextHolder.getContext().setAuthentication(auth);
@@ -123,14 +133,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     String subject = payload.get("sub") instanceof String s ? s : null;
                     if (subject == null || subject.isBlank()) {
                         log.warn("[SUMMA] JWT missing valid sub claim from {} path={}", request.getRemoteAddr(), path);
-                        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "JWT missing valid subject");
+                        writeRefusal(response, HttpServletResponse.SC_UNAUTHORIZED, "JWT missing valid subject", null);
                         return;
                     }
                     // SEC-010: Verify session version matches current human record
                     // This invalidates tokens after password changes or session resets
                     if (!checkSessionVersion(subject, payload)) {
                         log.warn("[SUMMA] Stale session version for {} on path={}", subject, path);
-                        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Session invalidated — please sign in again");
+                        writeRefusal(response, HttpServletResponse.SC_UNAUTHORIZED, "Session invalidated — please sign in again", subject);
                         return;
                     }
                     request.setAttribute("actor", subject);
@@ -148,7 +158,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         // Reject requests without valid JWT
-        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing or invalid authentication");
+        writeRefusal(response, HttpServletResponse.SC_UNAUTHORIZED, "Missing or invalid authentication", null);
         return;
     }
 
@@ -182,5 +192,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return PUBLIC_PATHS.contains(normalized);
         }
         return false;
+    }
+
+    /**
+     * Writes a structured JSON refusal response per API-061, including an audit event.
+     */
+    private void writeRefusal(HttpServletResponse response, int status, String message, String actor)
+            throws IOException {
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        com.summa.model.AuditEvent auditEvent = auditService.logSystem("REFUSAL", "auth", null, message);
+        Map<String, Object> body = java.util.Map.of(
+            "code", "unauthorized",
+            "message", message,
+            "audit_event_id", auditEvent.getId()
+        );
+        response.setStatus(status);
+        response.getWriter().write(com.summa.util.JsonHelpers.toJson(body, null));
     }
 }

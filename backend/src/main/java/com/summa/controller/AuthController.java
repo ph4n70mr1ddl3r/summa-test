@@ -60,6 +60,17 @@ public class AuthController {
         if (!email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]{2,}$")) {
             return ControllerResponses.validation(auditService, "email has invalid format");
         }
+        // Additional validation: reject addresses with consecutive dots or leading/trailing dots in local part
+        if (email.contains("..") || email.startsWith(".") || email.endsWith(".")) {
+            return ControllerResponses.validation(auditService, "email has invalid format");
+        }
+        String[] parts = email.split("@");
+        if (parts.length != 2 || parts[0].isEmpty() || parts[1].isEmpty()) {
+            return ControllerResponses.validation(auditService, "email has invalid format");
+        }
+        if (!parts[1].contains(".") || parts[1].startsWith(".") || parts[1].endsWith(".")) {
+            return ControllerResponses.validation(auditService, "email has invalid format");
+        }
 
         // Rate limit by email+IP to prevent cross-user DoS via email-based keying.
         String clientIp = resolveClientIp(request);

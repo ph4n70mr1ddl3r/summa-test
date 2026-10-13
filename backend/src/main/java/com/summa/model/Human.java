@@ -73,7 +73,7 @@ public class Human {
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
     public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public void setEmail(String email) { this.email = email != null ? email.toLowerCase() : null; }
     public String getRbac() { return rbac; }
     public void setRbac(String rbac) { this.rbac = rbac; }
     public String getDeputyMemberId() { return deputyMemberId; }

@@ -2,18 +2,24 @@ package com.summa.security;
 
 import com.summa.constants.Defaults;
 import com.summa.service.MemberService;
+import com.summa.service.AuditService;
 import com.summa.model.Human;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
 
 @Component
 public class RbacAuthorizationFilter extends OncePerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(RbacAuthorizationFilter.class);
 
     private static final ThreadLocal<String> ACTOR_CONTEXT = new ThreadLocal<>();
     private static final ThreadLocal<Boolean> WRITES_ALLOWED = new ThreadLocal<>();
@@ -44,10 +50,16 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
         NODE_AUTH.set(value);
     }
 
-    private final MemberService memberService;
+    public static void setActorForTest(String actor) {
+        ACTOR_CONTEXT.set(actor);
+    }
 
-    public RbacAuthorizationFilter(MemberService memberService) {
+    private final MemberService memberService;
+    private final AuditService auditService;
+
+    public RbacAuthorizationFilter(MemberService memberService, AuditService auditService) {
         this.memberService = memberService;
+        this.auditService = auditService;
     }
 
     @Override
@@ -68,7 +80,7 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
 
         if (!isPublic) {
             if (actor == null) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "No actor identity provided");
+                writeRefusal(response, HttpServletResponse.SC_UNAUTHORIZED, "No actor identity provided");
                 return;
             }
         }
@@ -101,5 +113,21 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
 
     private boolean isPublicPath(String path) {
         return JwtAuthenticationFilter.isPublicPath(path);
+    }
+
+    /**
+     * Writes a structured JSON refusal response per API-061, including an audit event.
+     */
+    private void writeRefusal(HttpServletResponse response, int status, String message) throws IOException {
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        com.summa.model.AuditEvent auditEvent = auditService.logSystem("REFUSAL", "authz", null, message);
+        Map<String, Object> body = Map.of(
+            "code", "unauthorized",
+            "message", message,
+            "audit_event_id", auditEvent.getId()
+        );
+        response.setStatus(status);
+        response.getWriter().write(com.summa.util.JsonHelpers.toJson(body, null));
     }
 }

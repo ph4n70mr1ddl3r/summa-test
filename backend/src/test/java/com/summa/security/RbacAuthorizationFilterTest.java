@@ -3,6 +3,7 @@ package com.summa.security;
 import com.summa.model.Human;
 import com.summa.model.Agent;
 import com.summa.service.MemberService;
+import com.summa.service.AuditService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -14,12 +15,14 @@ import static org.mockito.Mockito.*;
 class RbacAuthorizationFilterTest {
 
     private MemberService memberService;
+    private AuditService auditService;
     private RbacAuthorizationFilter filter;
 
     @BeforeEach
     void setUp() {
         memberService = mock(MemberService.class);
-        filter = new RbacAuthorizationFilter(memberService);
+        auditService = mock(AuditService.class);
+        filter = new RbacAuthorizationFilter(memberService, auditService);
         // Clear any ThreadLocal state from previous tests
         RbacAuthorizationFilter.clearThreadLocals();
     }

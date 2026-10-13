@@ -93,7 +93,7 @@ public class PatController {
                 "id", result.pat().getId(),
                 "name", result.pat().getName(),
                 "scopes", result.pat().getScopes(),
-                "expiresAt", result.pat().getExpiresAt() != null ? result.pat().getExpiresAt().toString() : "null",
+                "expiresAt", result.pat().getExpiresAt() != null ? result.pat().getExpiresAt().getEpochSecond() : 0,
                 "token", result.token()
             ));
         } catch (IllegalArgumentException e) {

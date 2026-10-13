@@ -74,7 +74,7 @@ class WriteGateTest {
  */
 class RbacAuthorizationFilter_TEST_ONLY {
     static void setWriteAllowed(boolean allowed) {
-        RbacAuthorizationFilter TEST_HELPER = new RbacAuthorizationFilter(null) {};
+        RbacAuthorizationFilter TEST_HELPER = new RbacAuthorizationFilter(null, null) {};
         // Use reflection to set the WRITES_ALLOWED ThreadLocal
         try {
             java.lang.reflect.Field field = RbacAuthorizationFilter.class.getDeclaredField("WRITES_ALLOWED");

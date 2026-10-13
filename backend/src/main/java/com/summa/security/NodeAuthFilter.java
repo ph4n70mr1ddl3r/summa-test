@@ -2,6 +2,7 @@ package com.summa.security;
 
 import com.summa.model.Node;
 import com.summa.repository.NodeRepository;
+import com.summa.service.AuditService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,6 +22,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -37,9 +39,11 @@ public class NodeAuthFilter extends OncePerRequestFilter {
     private static final Pattern PUBKEY_PATTERN = Pattern.compile(Defaults.PUBKEY_REGEX);
 
     private final NodeRepository nodeRepository;
+    private final AuditService auditService;
 
-    public NodeAuthFilter(NodeRepository nodeRepository) {
+    public NodeAuthFilter(NodeRepository nodeRepository, AuditService auditService) {
         this.nodeRepository = nodeRepository;
+        this.auditService = auditService;
     }
 
     @Override
@@ -66,28 +70,28 @@ public class NodeAuthFilter extends OncePerRequestFilter {
         String signature = wrappedRequest.getHeader("X-Node-Signature");
         if (signature == null || signature.isBlank()) {
             log.warn("[SUMMA] node request without signature: {} from {}", path, wrappedRequest.getRemoteAddr());
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Node signature required");
+            writeRefusal(wrappedRequest, response, HttpServletResponse.SC_UNAUTHORIZED, "Node signature required");
             return;
         }
 
         // Extract node ID from path: /api/nodes/<id>/...
         String nodeId = extractNodeId(path);
         if (nodeId == null) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid node path");
+            writeRefusal(wrappedRequest, response, HttpServletResponse.SC_BAD_REQUEST, "Invalid node path");
             return;
         }
 
         Optional<Node> nodeOpt = nodeRepository.findById(nodeId);
         if (nodeOpt.isEmpty()) {
             log.warn("[SUMMA] unknown node ID: {} path={}", nodeId, path);
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unknown node");
+            writeRefusal(wrappedRequest, response, HttpServletResponse.SC_UNAUTHORIZED, "Unknown node");
             return;
         }
 
         Node node = nodeOpt.get();
         if (node.isRevoked()) {
             log.warn("[SUMMA] revoked node attempted request: {} path={}", nodeId, path);
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Node revoked");
+            writeRefusal(wrappedRequest, response, HttpServletResponse.SC_FORBIDDEN, "Node revoked");
             return;
         }
 
@@ -97,7 +101,7 @@ public class NodeAuthFilter extends OncePerRequestFilter {
             body = readRequestBody(wrappedRequest);
         } catch (IOException e) {
             log.warn("[SUMMA] node request body read error: {}", e.getMessage());
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Node signature verification failed");
+            writeRefusal(wrappedRequest, response, HttpServletResponse.SC_UNAUTHORIZED, "Node signature verification failed");
             return;
         }
         // Use normalized path for signature computation to ensure consistency
@@ -107,12 +111,12 @@ public class NodeAuthFilter extends OncePerRequestFilter {
             expectedSig = computeSignature(wrappedRequest.getMethod(), normalizedSignaturePath != null ? normalizedSignaturePath : path, body, node.getPubkey());
         } catch (Exception e) {
             log.warn("[SUMMA] node signature computation error: {}", e.getMessage());
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Node signature verification failed");
+            writeRefusal(wrappedRequest, response, HttpServletResponse.SC_UNAUTHORIZED, "Node signature verification failed");
             return;
         }
         if (!constantTimeEquals(expectedSig, signature)) {
             log.warn("[SUMMA] node signature mismatch: node={} path={}", nodeId, path);
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid node signature");
+            writeRefusal(wrappedRequest, response, HttpServletResponse.SC_UNAUTHORIZED, "Invalid node signature");
             return;
         }
 
@@ -186,5 +190,22 @@ public class NodeAuthFilter extends OncePerRequestFilter {
 
     private static boolean constantTimeEquals(String a, String b) {
         return JsonHelpers.constantTimeEquals(a, b);
+    }
+
+    /**
+     * Writes a structured JSON refusal response per API-061, including an audit event.
+     */
+    private void writeRefusal(HttpServletRequest request, HttpServletResponse response, int status, String message) throws IOException {
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        String actor = (String) request.getAttribute("actor");
+        com.summa.model.AuditEvent auditEvent = auditService.log(actor != null ? actor : Defaults.SYSTEM_ACTOR, "REFUSAL", "node_auth", null, message);
+        Map<String, Object> body = Map.of(
+            "code", "unauthorized",
+            "message", message,
+            "audit_event_id", auditEvent.getId()
+        );
+        response.setStatus(status);
+        response.getWriter().write(JsonHelpers.toJson(body, null));
     }
 }
