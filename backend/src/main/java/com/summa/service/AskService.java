@@ -316,7 +316,7 @@ public class AskService {
                 }
             } catch (Exception e) {
                 auditService.logSystem("EXPIRE_BATCH_FAIL", "ask", ask.getId(),
-                    JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
+                    JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
             }
         }
     }
@@ -341,7 +341,7 @@ public class AskService {
                 String.format("{\"reason\":\"chain_exhausted\",\"originalAskId\":\"%s\"}", originalAsk.getId()));
         } catch (Exception e) {
             auditService.logSystem("ORG_STALL_BROADCAST_FAIL", "ask", originalAsk.getId(),
-                JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
+                JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
         }
     }
 
@@ -473,7 +473,7 @@ public class AskService {
             }
         } catch (Exception e) {
             auditService.logSystem("DIRECTION_RESPOND_FAIL", "ask", ask.getId(),
-                String.format("{\"error\":%s}", JsonHelpers.jsonString(e.getMessage())));
+                String.format("{\"error\":%s}", JsonHelpers.jsonString(e.getMessage() != null ? e.getMessage() : "unknown")));
         }
     }
 

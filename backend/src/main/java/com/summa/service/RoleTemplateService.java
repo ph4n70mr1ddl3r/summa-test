@@ -105,7 +105,7 @@ public class RoleTemplateService {
                         agent.getId(), agent.getOwnerHumanId(), nextVersion));
             } catch (Exception e) {
                 auditService.logSystem("UPGRADE_ASK_FAIL", "role_template", id,
-                    JsonHelpers.toJson(Map.of("agentId", agent.getId(), "error", e.getMessage()), objectMapper));
+                    JsonHelpers.toJson(Map.of("agentId", agent.getId(), "error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
             }
         }
 

@@ -78,9 +78,9 @@ class OffboardingWalkServiceTest {
         human.setDeactivatedAt(null);
         when(memberService.findHuman("h1")).thenReturn(Optional.of(human));
         when(memberService.saveHuman(any())).thenReturn(human);
-        when(domainService.findAllIncludingArchived()).thenReturn(java.util.List.of());
-        when(agentService.findByOwner("h1")).thenReturn(java.util.List.of());
-        when(initiativeService.findAllActive()).thenReturn(java.util.List.of());
+        when(domainService.findAllIncludingArchived(anyInt())).thenReturn(java.util.List.of());
+        when(agentService.findByOwner(eq("h1"), anyInt())).thenReturn(java.util.List.of());
+        when(initiativeService.findAllActive(anyInt())).thenReturn(java.util.List.of());
         when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of());
         when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
         when(proposalService.findAllOpen()).thenReturn(java.util.List.of());
@@ -125,11 +125,11 @@ class OffboardingWalkServiceTest {
         DnaDomain domain = new DnaDomain();
         domain.setId("d1");
         domain.setOwnerHumanId("h1");
-        when(domainService.findAllIncludingArchived()).thenReturn(java.util.List.of(domain));
+        when(domainService.findAllIncludingArchived(anyInt())).thenReturn(java.util.List.of(domain));
         when(domainService.updateOwner("d1", "h2", "admin1")).thenReturn(domain);
 
-        when(agentService.findByOwner("h1")).thenReturn(java.util.List.of());
-        when(initiativeService.findAllActive()).thenReturn(java.util.List.of());
+        when(agentService.findByOwner(eq("h1"), anyInt())).thenReturn(java.util.List.of());
+        when(initiativeService.findAllActive(anyInt())).thenReturn(java.util.List.of());
         when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of());
         when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
         when(proposalService.findAllOpen()).thenReturn(java.util.List.of());
@@ -157,11 +157,11 @@ class OffboardingWalkServiceTest {
         agent.setId("a1");
         agent.setOwnerHumanId("h1");
         agent.setTemplateId(null);
-        when(agentService.findByOwner("h1")).thenReturn(java.util.List.of(agent));
+        when(agentService.findByOwner(eq("h1"), anyInt())).thenReturn(java.util.List.of(agent));
         when(agentRepository.save(any())).thenReturn(agent);
 
-        when(domainService.findAllIncludingArchived()).thenReturn(java.util.List.of());
-        when(initiativeService.findAllActive()).thenReturn(java.util.List.of());
+        when(domainService.findAllIncludingArchived(anyInt())).thenReturn(java.util.List.of());
+        when(initiativeService.findAllActive(anyInt())).thenReturn(java.util.List.of());
         when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of());
         when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
         when(proposalService.findAllOpen()).thenReturn(java.util.List.of());
@@ -190,11 +190,11 @@ class OffboardingWalkServiceTest {
         init.setId("i1");
         init.setSponsor("h1");
         init.setLead("h1");
-        when(initiativeService.findAllActive()).thenReturn(java.util.List.of(init));
+        when(initiativeService.findAllActive(anyInt())).thenReturn(java.util.List.of(init));
         when(initiativeRepository.save(any())).thenReturn(init);
 
-        when(domainService.findAllIncludingArchived()).thenReturn(java.util.List.of());
-        when(agentService.findByOwner("h1")).thenReturn(java.util.List.of());
+        when(domainService.findAllIncludingArchived(anyInt())).thenReturn(java.util.List.of());
+        when(agentService.findByOwner(eq("h1"), anyInt())).thenReturn(java.util.List.of());
         when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of());
         when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
         when(proposalService.findAllOpen()).thenReturn(java.util.List.of());
@@ -223,7 +223,7 @@ class OffboardingWalkServiceTest {
         DnaDomain domain = new DnaDomain();
         domain.setId("d1");
         domain.setOwnerHumanId("h1");
-        when(domainService.findAllIncludingArchived()).thenReturn(java.util.List.of(domain));
+        when(domainService.findAllIncludingArchived(anyInt())).thenReturn(java.util.List.of(domain));
 
         // Proposal for owned domain — should transfer to successor
         DnaProposal prop = new DnaProposal();
@@ -234,8 +234,8 @@ class OffboardingWalkServiceTest {
         when(proposalService.findAllOpen()).thenReturn(java.util.List.of(prop));
         when(proposalRepository.save(any())).thenReturn(prop);
 
-        when(agentService.findByOwner("h1")).thenReturn(java.util.List.of());
-        when(initiativeService.findAllActive()).thenReturn(java.util.List.of());
+        when(agentService.findByOwner(eq("h1"), anyInt())).thenReturn(java.util.List.of());
+        when(initiativeService.findAllActive(anyInt())).thenReturn(java.util.List.of());
         when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of());
         when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
         when(groupMembershipRepository.findById_MemberId("h1")).thenReturn(java.util.List.of());
@@ -262,7 +262,7 @@ class OffboardingWalkServiceTest {
         DnaDomain domain = new DnaDomain();
         domain.setId("d1");
         domain.setOwnerHumanId("other");
-        when(domainService.findAllIncludingArchived()).thenReturn(java.util.List.of(domain));
+        when(domainService.findAllIncludingArchived(anyInt())).thenReturn(java.util.List.of(domain));
 
         // Proposal for non-owned domain — should be withdrawn
         DnaProposal prop = new DnaProposal();
@@ -273,8 +273,8 @@ class OffboardingWalkServiceTest {
         when(proposalService.findAllOpen()).thenReturn(java.util.List.of(prop));
         when(proposalRepository.save(any())).thenReturn(prop);
 
-        when(agentService.findByOwner("h1")).thenReturn(java.util.List.of());
-        when(initiativeService.findAllActive()).thenReturn(java.util.List.of());
+        when(agentService.findByOwner(eq("h1"), anyInt())).thenReturn(java.util.List.of());
+        when(initiativeService.findAllActive(anyInt())).thenReturn(java.util.List.of());
         when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of());
         when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
         when(groupMembershipRepository.findById_MemberId("h1")).thenReturn(java.util.List.of());
@@ -304,9 +304,9 @@ class OffboardingWalkServiceTest {
         when(patRepository.findByMemberId("h1")).thenReturn(java.util.List.of(pat));
         when(patRepository.save(any())).thenReturn(pat);
 
-        when(domainService.findAllIncludingArchived()).thenReturn(java.util.List.of());
-        when(agentService.findByOwner("h1")).thenReturn(java.util.List.of());
-        when(initiativeService.findAllActive()).thenReturn(java.util.List.of());
+        when(domainService.findAllIncludingArchived(anyInt())).thenReturn(java.util.List.of());
+        when(agentService.findByOwner(eq("h1"), anyInt())).thenReturn(java.util.List.of());
+        when(initiativeService.findAllActive(anyInt())).thenReturn(java.util.List.of());
         when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of());
         when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
         when(proposalService.findAllOpen()).thenReturn(java.util.List.of());
@@ -330,12 +330,12 @@ class OffboardingWalkServiceTest {
         DnaDomain domain = new DnaDomain();
         domain.setId("d1");
         domain.setOwnerHumanId("h1");
-        when(domainService.findAllIncludingArchived()).thenReturn(java.util.List.of(domain));
+        when(domainService.findAllIncludingArchived(anyInt())).thenReturn(java.util.List.of(domain));
         when(domainService.updateOwner("d1", "admin1", "admin1")).thenReturn(domain);
 
-        when(agentService.findByOwner("h1")).thenReturn(java.util.List.of());
+        when(agentService.findByOwner(eq("h1"), anyInt())).thenReturn(java.util.List.of());
         when(proposalService.findAllOpen()).thenReturn(java.util.List.of());
-        when(initiativeService.findAllActive()).thenReturn(java.util.List.of());
+        when(initiativeService.findAllActive(anyInt())).thenReturn(java.util.List.of());
         when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of());
         when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
         when(askRepository.findByStatusPendingOrdered(anyInt())).thenReturn(java.util.List.of());
@@ -363,11 +363,11 @@ class OffboardingWalkServiceTest {
         agent.setId("a1");
         agent.setOwnerHumanId("h1");
         agent.setTemplateId(null);
-        when(agentService.findByOwner("h1")).thenReturn(java.util.List.of(agent));
+        when(agentService.findByOwner(eq("h1"), anyInt())).thenReturn(java.util.List.of(agent));
 
-        when(domainService.findAllIncludingArchived()).thenReturn(java.util.List.of());
+        when(domainService.findAllIncludingArchived(anyInt())).thenReturn(java.util.List.of());
         when(proposalService.findAllOpen()).thenReturn(java.util.List.of());
-        when(initiativeService.findAllActive()).thenReturn(java.util.List.of());
+        when(initiativeService.findAllActive(anyInt())).thenReturn(java.util.List.of());
         when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of());
         when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
         when(askRepository.findByStatusPendingOrdered(anyInt())).thenReturn(java.util.List.of());

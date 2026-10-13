@@ -288,7 +288,7 @@ public class DnaProposalService {
                     Duration.between(proposal.getCreatedAt(), Instant.now()).toDays()));
         } catch (Exception e) {
             auditService.logSystem("PROPOSAL_SLA_BREACH_ESCALATE_FAIL", "dna_proposal", proposal.getId(),
-                JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
+                JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
         }
     }
 

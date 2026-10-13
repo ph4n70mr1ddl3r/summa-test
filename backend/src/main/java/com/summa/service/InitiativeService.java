@@ -148,7 +148,7 @@ public class InitiativeService {
                         "Adding these dependencies would create a cycle: " + depIds);
                 }
             } catch (JsonProcessingException e) {
-                throw new IllegalArgumentException("Invalid dependsOn format: " + e.getMessage());
+                throw new IllegalArgumentException("Invalid dependsOn format: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
             }
         }
 
@@ -197,7 +197,7 @@ public class InitiativeService {
                     if (wouldCreateCycle(newId, grandchildDeps, visited, depth + 1)) return true;
                 } catch (Exception e) {
                     auditService.logSystem("CYCLE_DETECT_FAIL", "initiative", newId,
-                        JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
+                        JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
                 }
             }
         }
@@ -217,6 +217,11 @@ public class InitiativeService {
     @Transactional(readOnly = true)
     public List<Initiative> findAllActive() {
         return initiativeRepository.findByStatus("active");
+    }
+
+    @Transactional(readOnly = true)
+    public List<Initiative> findAllActive(int limit) {
+        return initiativeRepository.findByStatusOrdered("active", limit);
     }
 
     @Transactional(readOnly = true)
@@ -353,7 +358,7 @@ public class InitiativeService {
                 auditService.logSystem("CLOSE_CANCEL_TASK", "board_task", task.getId(),
                     String.format("{\"initiativeId\":\"%s\",\"reason\":\"initiative_closed\"}", id));
             } catch (Exception e) {
-                partialFailures.add("CANCEL_TASK:" + task.getId() + ":" + e.getMessage());
+                partialFailures.add("CANCEL_TASK:" + task.getId() + ":" + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
             }
         }
 
@@ -365,7 +370,7 @@ public class InitiativeService {
                 auditService.logSystem("CLOSE_WITHDRAW_ASK", "ask", ask.getId(),
                     String.format("{\"initiativeId\":\"%s\",\"reason\":\"initiative_closed\"}", id));
             } catch (Exception e) {
-                partialFailures.add("WITHDRAW_ASK:" + ask.getId() + ":" + e.getMessage());
+                partialFailures.add("WITHDRAW_ASK:" + ask.getId() + ":" + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
             }
         }
 
@@ -399,12 +404,12 @@ public class InitiativeService {
                     }
                 } catch (Exception e) {
                     auditService.logSystem("CLOSE_UNBIND_WORKSPACE_FAIL", "workspace", ws.getId(),
-                        JsonHelpers.toJson(Map.of("initiativeId", id, "error", e.getMessage()), objectMapper));
+                        JsonHelpers.toJson(Map.of("initiativeId", id, "error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
                 }
             }
         } catch (Exception e) {
             auditService.logSystem("CLOSE_UNBIND_WORKSPACE_FAIL", "initiative", id,
-                JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
+                JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
         }
 
         // INT-040: Archive pending spawn requests with template pins drained
@@ -443,12 +448,12 @@ public class InitiativeService {
                     }
                 } catch (Exception e) {
                     auditService.logSystem("CLOSE_ARCHIVE_SPAWN_FAIL", "spawn_request", sr.getId(),
-                        JsonHelpers.toJson(Map.of("initiativeId", id, "error", e.getMessage()), objectMapper));
+                        JsonHelpers.toJson(Map.of("initiativeId", id, "error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
                 }
             }
         } catch (Exception e) {
             auditService.logSystem("CLOSE_ARCHIVE_SPAWN_FAIL", "initiative", id,
-                JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
+                JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
         }
 
         // INT-042: File a retrospective ask (kind question, tier bulk, expiry escalate)
@@ -467,7 +472,7 @@ public class InitiativeService {
                 Instant.now().plusSeconds(askService.deriveDeadlineFromTier("bulk")), null, null);
         } catch (Exception e) {
             auditService.logSystem("CLOSE_RETRO_ASK_FAIL", "initiative", id,
-                JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
+                JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
         }
 
         // INT-071: Closing an upstream initiative with active dependents raises asks to each
@@ -476,7 +481,7 @@ public class InitiativeService {
             raiseDependentCloseAsks(id, actor);
         } catch (Exception e) {
             auditService.logSystem("CLOSE_DEPENDENT_ASKS_FAIL", "initiative", id,
-                JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
+                JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
         }
 
         // INT-040/CLC-040: Cancel queued and suspended runs; running runs complete with artifacts
@@ -492,12 +497,12 @@ public class InitiativeService {
                     auditService.logSystem("CLOSE_CANCEL_RUN", "run", run.getId(),
                         String.format("{\"initiativeId\":\"%s\",\"reason\":\"initiative_closed\"}", id));
                 } catch (Exception e) {
-                    partialFailures.add("CANCEL_RUN:" + run.getId() + ":" + e.getMessage());
+                    partialFailures.add("CANCEL_RUN:" + run.getId() + ":" + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
                 }
             }
         } catch (Exception e) {
             auditService.logSystem("CLOSE_CANCEL_RUNS_FAIL", "initiative", id,
-                JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
+                JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
         }
 
         // Log any partial failures before committing the close — some sub-operations may have
@@ -606,12 +611,12 @@ public class InitiativeService {
                         }
                     } catch (Exception e) {
                         auditService.logSystem("DIRECTION_ASK_FAIL", "initiative", init.getId(),
-                            JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
+                            JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
                     }
                 }
             } catch (Exception e) {
                 auditService.logSystem("STALL_CHECK_FAIL", "initiative", init.getId(),
-                    JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
+                    JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
             }
         }
     }
@@ -632,12 +637,12 @@ public class InitiativeService {
                     }
                 } catch (Exception e) {
                     auditService.logSystem("STALL_DEDUP_FAIL", "initiative", initiativeId,
-                        JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
+                        JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
                 }
             }
         } catch (Exception e) {
             auditService.logSystem("STALL_DEDUP_FAIL", "initiative", initiativeId,
-                JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
+                JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
         }
         return false;
     }
@@ -668,7 +673,7 @@ public class InitiativeService {
                 }
             } catch (Exception e) {
                 auditService.logSystem("DEPENDENT_CLOSE_ASK_FAIL", "initiative", dep.getId(),
-                    JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
+                    JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
             }
         }
     }

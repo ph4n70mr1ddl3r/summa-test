@@ -9,7 +9,7 @@ import java.util.ArrayList;
 public class SecretsScanner {
     private static final List<Pattern> SECRETS_PATTERNS = List.of(
         Pattern.compile("AKIA[0-9A-Z]{16}"),  // AWS access keys
-        Pattern.compile("sk-[0-9a-zA-Z]{48}"), // OpenAI keys
+        Pattern.compile("sk-[0-9a-zA-Z]{20,}"), // OpenAI keys (standard and legacy)
         Pattern.compile("sk-proj-[0-9a-zA-Z_-]{20,}"), // OpenAI project keys
         Pattern.compile("ghp_[0-9a-zA-Z]{36}"), // GitHub tokens
         Pattern.compile("gho_[0-9a-zA-Z]{36}"), // GitHub OAuth tokens

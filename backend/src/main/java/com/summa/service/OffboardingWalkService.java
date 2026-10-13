@@ -148,7 +148,7 @@ public class OffboardingWalkService {
         int groupsLeadershipTransferred = 0;
 
         // OFB-002: Transfer owned DNA domains (include archived — ownership references persist)
-        List<DnaDomain> allDomains = domainService.findAllIncludingArchived();
+        List<DnaDomain> allDomains = domainService.findAllIncludingArchived(OFFBOARD_BATCH_LIMIT);
         for (DnaDomain domain : allDomains) {
             if (humanId.equals(domain.getOwnerHumanId())) {
                 domainService.updateOwner(domain.getId(), finalTargetOwner, actor);
@@ -157,7 +157,7 @@ public class OffboardingWalkService {
         }
 
         // OFB-011: Re-own or retire dependent agents (all statuses, not just active)
-        List<Agent> ownedAgents = agentService.findByOwner(humanId);
+        List<Agent> ownedAgents = agentService.findByOwner(humanId, OFFBOARD_BATCH_LIMIT);
         for (Agent agent : ownedAgents) {
             // Skip archived agents — their state is terminal and should not be modified
             if (AgentStatus.ARCHIVED.getValue().equals(agent.getStatus())) continue;
@@ -172,7 +172,7 @@ public class OffboardingWalkService {
         }
 
         // OFB-012: Reassign initiatives (sponsor/lead) — only active ones
-        List<Initiative> activeInitiatives = initiativeService.findAllActive();
+        List<Initiative> activeInitiatives = initiativeService.findAllActive(OFFBOARD_BATCH_LIMIT);
         for (Initiative init : activeInitiatives) {
             boolean changed = false;
             if (Objects.equals(humanId, init.getSponsor())) {
@@ -383,7 +383,7 @@ public class OffboardingWalkService {
         int groupLeadershipsTransferred = 0;
 
         // OFB-030/033: Transfer owned DNA domains to admin custody
-        List<DnaDomain> allDomainsDemote = domainService.findAllIncludingArchived();
+        List<DnaDomain> allDomainsDemote = domainService.findAllIncludingArchived(OFFBOARD_BATCH_LIMIT);
         for (DnaDomain domain : allDomainsDemote) {
             if (humanId.equals(domain.getOwnerHumanId())) {
                 domainService.updateOwner(domain.getId(), targetOwner, actor);
@@ -393,7 +393,7 @@ public class OffboardingWalkService {
 
         // OFB-030/033: Re-own or retire dependent agents; personal assistants always retire
         // (all statuses, not just active — retired/suspended agents may still be owned)
-        List<Agent> ownedAgentsDemote = agentService.findByOwner(humanId);
+        List<Agent> ownedAgentsDemote = agentService.findByOwner(humanId, OFFBOARD_BATCH_LIMIT);
         for (Agent agent : ownedAgentsDemote) {
             // Skip archived agents — their state is terminal and should not be modified
             if (AgentStatus.ARCHIVED.getValue().equals(agent.getStatus())) continue;
@@ -426,7 +426,7 @@ public class OffboardingWalkService {
         }
 
         // OFB-031: Reassign or retire sponsored/led initiatives
-        List<Initiative> activeForDemote = initiativeService.findAllActive();
+        List<Initiative> activeForDemote = initiativeService.findAllActive(OFFBOARD_BATCH_LIMIT);
         for (Initiative init : activeForDemote) {
             boolean changed = false;
             if (Objects.equals(humanId, init.getSponsor())) {
@@ -527,7 +527,7 @@ public class OffboardingWalkService {
                     }
                 } catch (Exception e) {
                     auditService.logSystem("DEMOTE_CLEAN_WORKSPACE_FAIL", "workspace", ws.getId(),
-                        JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
+                        JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
                 }
             }
             // Clear named readers that reference this human
@@ -561,14 +561,14 @@ public class OffboardingWalkService {
                                      changed = true;
                                  } catch (Exception e) {
                                      auditService.logSystem("DEMOTE_CLEAN_DOMAIN_READERS_FAIL", "dna_domain", "",
-                        JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
+                        JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
                                  }
                              }
                         }
                     }
                 } catch (Exception e) {
                         auditService.logSystem("DEMOTE_CLEAN_DOMAIN_READERS_FAIL", "dna_domain", "",
-                        JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
+                        JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
                 }
             }
             if (changed) {

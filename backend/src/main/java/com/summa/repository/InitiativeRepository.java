@@ -11,6 +11,9 @@ import java.util.List;
 public interface InitiativeRepository extends JpaRepository<Initiative, String> {
     List<Initiative> findByStatus(String status);
 
+    @Query(value = "SELECT * FROM initiatives WHERE status = :status ORDER BY id ASC LIMIT :limit", nativeQuery = true)
+    List<Initiative> findByStatusOrdered(@Param("status") String status, @Param("limit") int limit);
+
     List<Initiative> findBySponsor(String sponsor);
 
     List<Initiative> findByLead(String lead);

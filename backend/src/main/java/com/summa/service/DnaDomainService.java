@@ -114,6 +114,11 @@ public class DnaDomainService {
         return domainRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
+    public List<DnaDomain> findAllIncludingArchived(int limit) {
+        return domainRepository.findAllOrdered(limit);
+    }
+
     @Transactional
     public DnaDomain archive(String id, String actor) {
         DnaDomain domain = domainRepository.findById(id)
@@ -402,7 +407,7 @@ public class DnaDomainService {
                 }
             } catch (Exception e) {
                 auditService.logSystem("MERGE_SKIP_MALFORMED_WS", "workspace", ws.getId(),
-                    JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
+                    JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
             }
         }
 

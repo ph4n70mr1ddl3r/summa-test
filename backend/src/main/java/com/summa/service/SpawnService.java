@@ -116,8 +116,8 @@ public class SpawnService {
                 bindings = objectMapper.readTree(workspaceBindings);
             } catch (Exception e) {
                 auditService.logSystem("SPAWN_PARSE_BINDINGS_FAIL", "spawn_request", "unknown",
-                    JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
-                throw new IllegalStateException("Invalid workspace bindings JSON: " + e.getMessage());
+                    JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
+                throw new IllegalStateException("Invalid workspace bindings JSON: " + (e.getMessage() != null ? e.getMessage() : "unknown"));
             }
             if (bindings.isArray()) {
                 for (JsonNode binding : bindings) {
@@ -135,8 +135,8 @@ public class SpawnService {
                                 initIds = objectMapper.readTree(ws.getInitiativeIds());
                             } catch (Exception e) {
                                 auditService.logSystem("SPAWN_PARSE_BINDINGS_FAIL", "spawn_request", "unknown",
-                                    JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
-                                throw new IllegalStateException("Invalid initiativeIds JSON in workspace " + wsId + ": " + e.getMessage());
+                    JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
+                                 throw new IllegalStateException("Invalid initiativeIds JSON in workspace " + wsId + ": " + (e.getMessage() != null ? e.getMessage() : "unknown"));
                             }
                             if (initIds != null && initIds.isArray()) {
                                 for (JsonNode initIdNode : initIds) {
@@ -199,7 +199,7 @@ public class SpawnService {
                         domIds = objectMapper.readTree(domainIdsStr);
                     } catch (Exception e) {
                         auditService.logSystem("SPAWN_PARSE_DOMAINS_FAIL", "spawn_request", UUID.randomUUID().toString(),
-                            JsonHelpers.toJson(Map.of("error", e.getMessage()), objectMapper));
+                            JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
                     }
                     if (domIds != null && domIds.isArray() && domIds.size() > 0) {
                         // DAT-090: first entry is primary domain
@@ -478,8 +478,8 @@ public class SpawnService {
             throw e;
         } catch (Exception e) {
             auditService.logSystem("SPAWN_SCOPE_VALIDATE_FAIL", "spawn_request", UUID.randomUUID().toString(),
-                JsonHelpers.toJson(Map.of("requesterId", requesterId, "error", e.getMessage()), objectMapper));
-            throw new IllegalStateException("Scope ceiling validation failed: " + e.getMessage());
+                JsonHelpers.toJson(Map.of("requesterId", requesterId, "error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
+            throw new IllegalStateException("Scope ceiling validation failed: " + (e.getMessage() != null ? e.getMessage() : "unknown"));
         }
     }
 

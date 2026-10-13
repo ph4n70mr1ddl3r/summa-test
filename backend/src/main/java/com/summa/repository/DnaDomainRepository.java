@@ -21,4 +21,7 @@ public interface DnaDomainRepository extends JpaRepository<DnaDomain, String> {
     
     @Query("SELECT d FROM DnaDomain d WHERE d.ownerHumanId = :ownerId AND d.status != 'archived'")
     List<DnaDomain> findByOwnerHumanId(String ownerId);
+
+    @Query(value = "SELECT * FROM dna_domains ORDER BY id ASC LIMIT :limit", nativeQuery = true)
+    List<DnaDomain> findAllOrdered(@org.springframework.data.repository.query.Param("limit") int limit);
 }

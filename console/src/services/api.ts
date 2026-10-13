@@ -248,7 +248,7 @@ export interface Ask {
   createdAt?: number;
   updatedAt?: number;
   escalation?: string;
-  expiryBehavior?: string;
+  expiryBehavior?: 'deny' | 'escalate' | 'reassign';
   respondedAt?: number;
   responses?: string;
 }
@@ -948,12 +948,12 @@ export const api = {
   nodes: {
     list: () => request<Node[]>('/nodes'),
     enroll: (body: Record<string, string>) =>
-      request<Record<string, unknown>>('/nodes/enroll', {
+      request<{ id: string; enrollmentToken: string }>('/nodes/enroll', {
         method: 'POST',
         body: JSON.stringify(body),
       }),
     revoke: (id: string) =>
-      request<Record<string, unknown>>(`/nodes/${id}/revoke`, {
+      request<Node>(`/nodes/${id}/revoke`, {
         method: 'POST',
       }),
     update: (id: string, body: Record<string, string>) =>
@@ -977,13 +977,13 @@ export const api = {
         body: JSON.stringify(body),
       }),
     createHold: (body: Record<string, string>) =>
-      request<Record<string, unknown>>('/governance/holds', {
+      request<DataHold>('/governance/holds', {
         method: 'POST',
         body: JSON.stringify(body),
       }),
     listHolds: () => request<DataHold[]>('/governance/holds'),
     releaseHold: (id: string) =>
-      request<Record<string, unknown>>(`/governance/holds/${id}/release`, {
+      request<DataHold>(`/governance/holds/${id}/release`, {
         method: 'POST',
       }),
     ackSpendOverrun: (id: string) =>
@@ -999,11 +999,11 @@ export const api = {
         body: JSON.stringify(body),
       }),
     publish: (id: string) =>
-      request<Record<string, unknown>>(`/role-templates/${id}/publish`, {
+      request<RoleTemplate>(`/role-templates/${id}/publish`, {
         method: 'POST',
       }),
     retire: (id: string) =>
-      request<Record<string, unknown>>(`/role-templates/${id}/retire`, {
+      request<RoleTemplate>(`/role-templates/${id}/retire`, {
         method: 'POST',
       }),
   },
