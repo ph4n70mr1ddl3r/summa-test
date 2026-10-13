@@ -36,6 +36,10 @@ public class NodeAuthFilter extends OncePerRequestFilter {
         "/api/nodes"
     );
 
+    // Reject node auth requests with bodies exceeding this size (1 MB) to prevent memory exhaustion
+    // before signature verification.
+    private static final int MAX_BODY_BYTES = 1_048_576;
+
     private static final Pattern PUBKEY_PATTERN = Pattern.compile(Defaults.PUBKEY_REGEX);
 
     private final NodeRepository nodeRepository;
@@ -177,6 +181,9 @@ public class NodeAuthFilter extends OncePerRequestFilter {
             throw new IOException("Request is not a ContentCachingRequestWrapper");
         }
         byte[] bytes = wrapper.getContentAsByteArray();
+        if (bytes.length > MAX_BODY_BYTES) {
+            throw new IOException("Request body exceeds maximum size of " + MAX_BODY_BYTES + " bytes");
+        }
         return new String(bytes, StandardCharsets.UTF_8);
     }
 

@@ -120,7 +120,7 @@ export default function Memory() {
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-gray-200">Tier: {item.tier}</span>
+                    <span className="font-medium text-gray-200">Tier: {escapeHtml(item.tier)}</span>
                     <span className={`text-xs px-2 py-0.5 rounded ${
                       item.tainted ? 'bg-red-900/50 text-red-400' : 'bg-gray-700 text-gray-300'
                     }`}>
@@ -143,7 +143,7 @@ export default function Memory() {
                     <button
                       type="button"
                       onClick={() => requestReview(item.id)}
-                      disabled={reviewingForId !== null && reviewingForId !== item.id || reviewingId === item.id || isProcessingReview}
+                      disabled={(reviewingForId !== null && reviewingForId !== item.id) || reviewingId === item.id || isProcessingReview}
                       className="px-3 py-1 bg-yellow-700 hover:bg-yellow-600 disabled:bg-gray-700 disabled:text-gray-500 rounded text-sm text-yellow-100"
                       aria-label={`Review tainted item ${item.id.slice(0, 8)}`}
                     >

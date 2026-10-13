@@ -238,10 +238,12 @@ public class InitiativeService {
             throw new IllegalStateException("Cannot activate initiative with status: " + initiative.getStatus());
         }
 
-        // INT-020: If actor is not the sponsor, route an activation ask to the sponsor
-        // with expiry=deny. The sponsor's own opens go active outright.
+        // INT-020: If actor is not the sponsor or lead, route an activation ask to the sponsor
+        // with expiry=deny. The sponsor's or lead's own opens go active outright.
         String actorClean = actor != null ? JsonHelpers.stripIdPrefix(actor) : "";
-        if (actorClean != null && !actorClean.equals(initiative.getSponsor())) {
+        boolean isSponsor = actorClean != null && actorClean.equals(initiative.getSponsor());
+        boolean isLead = initiative.getLead() != null && actorClean != null && actorClean.equals(initiative.getLead());
+        if (!isSponsor && !isLead) {
             // Validate sponsor is still active before routing ask to them
             String sponsorId = initiative.getSponsor();
             if (sponsorId == null) {

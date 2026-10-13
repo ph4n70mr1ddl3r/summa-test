@@ -45,10 +45,10 @@ export default function Nodes() {
                 <div>
                   <p className="font-medium text-gray-200">{escapeHtml(n.name)}</p>
                   <p className="text-sm text-gray-400 mt-1">
-                    Kind: {n.kind} | Region: {escapeHtml(n.region ?? 'default')}
+                    Kind: {escapeHtml(n.kind)} | Region: {escapeHtml(n.region ?? 'default')}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                      Pubkey: {escapeHtml(n.pubkey.slice(0, 16))}… | Enrolled: {n.enrolledAt != null ? formatDate(n.enrolledAt, { dateOnly: true }) : '?'}
+                    Pubkey: {escapeHtml(n.pubkey.slice(0, 16))}… | Enrolled: {n.enrolledAt != null ? formatDate(n.enrolledAt, { dateOnly: true }) : '?'}
                   </p>
                 </div>
                 <span className={`text-xs px-2 py-1 rounded ${nodeStatusColor(n.status)}`} aria-label={`Status: ${n.status}`}>

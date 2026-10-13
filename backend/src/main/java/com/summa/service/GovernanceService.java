@@ -19,7 +19,6 @@ import java.util.LinkedHashMap;
 import java.util.Optional;
 
 @Service
-@Transactional
 public class GovernanceService {
     private static final Logger log = LoggerFactory.getLogger(GovernanceService.class);
     private final GovernanceSettingRepository settingRepository;
@@ -154,6 +153,7 @@ public class GovernanceService {
 
     @Transactional
     public void setSettingsBulk(Map<String, Object> entries, String editedBy) {
+        if (entries == null) return;
         for (Map.Entry<String, Object> entry : entries.entrySet()) {
             setSetting(entry.getKey(), entry.getValue(), editedBy);
         }

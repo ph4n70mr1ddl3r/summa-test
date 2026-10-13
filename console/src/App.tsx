@@ -55,7 +55,7 @@ function useAuthState(): boolean {
 }
 
 function useUser(): { userId: string; rbac: RbacRole; name?: string } | null {
-  const [user, setUser] = useState(getUser)
+  const [user, setUser] = useState(() => getUser())
   useEffect(() => {
     const onChange = () => setUser(getUser())
     window.addEventListener('summa-auth-change', onChange)

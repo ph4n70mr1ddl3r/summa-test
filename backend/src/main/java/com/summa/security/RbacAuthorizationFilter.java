@@ -81,6 +81,9 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
         if (!isPublic) {
             if (actor == null) {
                 writeRefusal(response, HttpServletResponse.SC_UNAUTHORIZED, "No actor identity provided");
+                ACTOR_CONTEXT.remove();
+                WRITES_ALLOWED.remove();
+                NODE_AUTH.remove();
                 return;
             }
         }
