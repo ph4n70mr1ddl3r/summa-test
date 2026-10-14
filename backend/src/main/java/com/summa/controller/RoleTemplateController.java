@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.service.MemberService;
+import com.summa.enums.AgentClass;
 import java.util.Map;
 import java.util.Optional;
 
@@ -57,6 +58,10 @@ public class RoleTemplateController {
             }
             if (body.get("class") == null || body.get("class").isBlank()) {
                 throw new IllegalArgumentException("class is required");
+            }
+            // Validate class against known agent class types
+            if (AgentClass.fromValue(body.get("class")) == null) {
+                throw new IllegalArgumentException("Invalid class: " + body.get("class") + ". Must be one of: persistent, ephemeral, ephemeral-subagent");
             }
             RoleTemplate template = templateService.create(
                 body.get("name"),

@@ -271,14 +271,20 @@ public class AskService {
                     try {
                         // Depth is keyed by the root ask ID stored in the escalation field.
                         // Successor asks carry the root ID so depth accumulates across the chain.
+                        // Use atomic compute() to prevent TOCTOU: two concurrent scheduled
+                        // executions must not both read the same depth and create duplicates.
                         String rootAskId = current.getEscalation() != null ? current.getEscalation() : current.getId();
-                        ExpiringEntry<Integer> depthEntry = successorDepth.get(rootAskId);
-                        int depth = (depthEntry != null ? depthEntry.value : 0) + 1;
-                        if (depth >= Defaults.MAX_EXPIRE_SUCCESSOR_DEPTH) {
+                        final int[] depth = {0};
+                        successorDepth.compute(rootAskId, (k, entry) -> {
+                            int d = (entry != null ? entry.value : 0) + 1;
+                            depth[0] = d;
+                            return new ExpiringEntry<>(d, Instant.now().getEpochSecond() + SUCCESSOR_DEPTH_TTL_SECONDS);
+                        });
+                        if (depth[0] >= Defaults.MAX_EXPIRE_SUCCESSOR_DEPTH) {
                             // ASK-057: Chain exhausted — broadcast org-stall alert
                             broadcastOrgStall(current);
                             auditService.logSystem("EXPIRE_CHAIN_EXHAUSTED", "ask", current.getId(),
-                                String.format("{\"depth\":%d,\"behavior\":\"%s\"}", depth, behavior));
+                                String.format("{\"depth\":%d,\"behavior\":\"%s\"}", depth[0], behavior));
                             expire(current.getId());
                             successorDepth.remove(rootAskId);
                             continue;
@@ -298,15 +304,8 @@ public class AskService {
                              current.getQuorumRequired(),
                              Instant.now().plusSeconds(successorDeadlineSeconds),
                              current.getInitiativeId(), current.getWorkspaceId(), rootAskId);
-                        // Store chain root in a stable cache key so subsequent expiry cycles
-                        // find the accumulated depth rather than resetting to zero.
-                        long expireNowSeconds = Instant.now().getEpochSecond();
-                        successorDepth.compute(rootAskId, (k, entry) -> {
-                            int d = (entry != null ? entry.value : 0) + 1;
-                            return new ExpiringEntry<>(d, expireNowSeconds + SUCCESSOR_DEPTH_TTL_SECONDS);
-                        });
                         auditService.logSystem("EXPIRE_SUCCESSOR_CREATED", "ask", current.getId(),
-                            String.format("{\"originalId\":\"%s\",\"behavior\":\"%s\",\"depth\":%d}", current.getId(), behavior, depth));
+                            String.format("{\"originalId\":\"%s\",\"behavior\":\"%s\",\"depth\":%d}", current.getId(), behavior, depth[0]));
                         // Expire the original ask after scheduling the successor
                         expire(current.getId());
                     } catch (Exception ex) {

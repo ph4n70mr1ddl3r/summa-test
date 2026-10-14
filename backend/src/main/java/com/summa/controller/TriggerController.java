@@ -71,6 +71,10 @@ public class TriggerController {
             if (kind == null || kind.isBlank()) {
                 throw new IllegalArgumentException("kind is required");
             }
+            // Validate kind against known trigger types
+            if (!"schedule".equals(kind) && !"api".equals(kind) && !"event".equals(kind)) {
+                throw new IllegalArgumentException("Invalid trigger kind: " + kind + ". Must be one of: schedule, api, event");
+            }
             String expression = body.get("expression");
             if (expression == null || expression.isBlank()) {
                 throw new IllegalArgumentException("expression is required");

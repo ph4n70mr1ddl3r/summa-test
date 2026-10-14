@@ -21,10 +21,15 @@ import java.util.Optional;
 @Service
 public class GovernanceService {
     private static final Logger log = LoggerFactory.getLogger(GovernanceService.class);
+    private static final long SETTINGS_CACHE_TTL_SECONDS = 10L;
     private final GovernanceSettingRepository settingRepository;
     private final SpendLedgerRepository spendLedgerRepository;
     private final ObjectMapper objectMapper;
     private final double spendCeilingOverride;
+    // Lightweight TTL cache to avoid N+1 full-table scans on every getSetting() call.
+    // Invalidated on set/delete operations; entries expire automatically after SETTINGS_CACHE_TTL_SECONDS.
+    private volatile Map<String, Object> cachedSettings;
+    private volatile long cacheExpiryEpochSeconds;
 
     public GovernanceService(GovernanceSettingRepository settingRepository,
                               SpendLedgerRepository spendLedgerRepository,
@@ -45,12 +50,19 @@ public class GovernanceService {
 
     @Transactional(readOnly = true)
     public Map<String, Object> getAllSettings() {
+        long nowSeconds = Instant.now().getEpochSecond();
+        if (cachedSettings != null && nowSeconds < cacheExpiryEpochSeconds) {
+            return cachedSettings;
+        }
         Map<String, Object> settings = new LinkedHashMap<>();
         for (GovernanceSetting s : settingRepository.findAll()) {
             settings.put(s.getKey(), parseValue(s.getValue()));
         }
         // Apply defaults for any missing keys
-        return Collections.unmodifiableMap(applyDefaults(settings));
+        Map<String, Object> result = Collections.unmodifiableMap(applyDefaults(settings));
+        cachedSettings = result;
+        cacheExpiryEpochSeconds = nowSeconds + SETTINGS_CACHE_TTL_SECONDS;
+        return result;
     }
 
     @Transactional(readOnly = true)
@@ -115,11 +127,15 @@ public class GovernanceService {
         setting.setEditedBy(editedBy);
         setting.setEditedAt(Instant.now());
         settingRepository.save(setting);
+        // Invalidate cache on write so subsequent reads reflect the update
+        cachedSettings = null;
     }
 
     @Transactional
     public void deleteSetting(String key) {
         settingRepository.deleteById(key);
+        // Invalidate cache on delete so subsequent reads reflect the change
+        cachedSettings = null;
     }
 
     /**

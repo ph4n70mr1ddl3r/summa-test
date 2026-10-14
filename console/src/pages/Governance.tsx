@@ -11,7 +11,7 @@ export default function Governance() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
-  const [saving, setSaving] = useState<string | null>(null)
+  const [saving, setSaving] = useState<Record<string, boolean>>({})
   const [editValues, setEditValues] = useState<Record<string, string>>({})
 
   const loadData = useCallback(() => {
@@ -53,7 +53,8 @@ export default function Governance() {
   }, [loadData])
 
   const handleSave = useCallback(async (section: 'policies' | 'quotas', key: string, currentValue: string) => {
-    setSaving(`${section}:${key}`)
+    const saveKey = `${section}:${key}`
+    setSaving(prev => ({ ...prev, [saveKey]: true }))
     setActionError(null)
     try {
       const trimmed = currentValue.trim()
@@ -81,7 +82,7 @@ export default function Governance() {
       setActionError(err instanceof Error ? err.message : String(err))
       try { await loadData(); setError(null) } catch { /* keep original action error */ }
     } finally {
-      setSaving(null)
+      setSaving(prev => { const next = { ...prev }; delete next[saveKey]; return next })
     }
   }, [loadData])
 
@@ -95,7 +96,8 @@ export default function Governance() {
   const renderCell = useCallback((section: 'policies' | 'quotas', key: string, value: unknown, currentEditValue?: string) => {
     const isEditing = currentEditValue !== undefined
     const currentValue = isEditing ? currentEditValue : String(value ?? '')
-    const sv = saving
+    const saveKey = `${section}:${key}`
+    const sv = saving[saveKey] ?? false
     return (
       <div key={key} className="flex items-center justify-between text-sm gap-2">
         <span className="text-gray-400 flex-shrink-0 w-48 truncate">{escapeHtml(key)}</span>
@@ -111,11 +113,11 @@ export default function Governance() {
               <button
               type="button"
               onClick={(e) => { e.stopPropagation(); handleSave(section, key, currentEditValue) }}
-              disabled={sv === `${section}:${key}`}
+              disabled={sv}
               className="px-2 py-0.5 bg-green-700 hover:bg-green-600 disabled:bg-gray-600 rounded text-xs text-white"
               aria-label={`Save ${key}`}
             >
-              {sv === `${section}:${key}` ? 'Saving...' : '✓'}
+              {sv ? 'Saving...' : '✓'}
             </button>
             <button
               type="button"
@@ -153,7 +155,7 @@ export default function Governance() {
       {actionError && (
         <div className="rounded-lg p-3 text-sm bg-red-900/30 border border-red-700 text-red-400" role="alert">
           {actionError}
-          <button type="button" onClick={() => setActionError(null)} className="ml-2 text-red-300 hover:text-white" aria-label="Dismiss error">×</button>
+          <button type="button" onClick={() => setActionError(null)} className="ml-2 text-red-300 hover:text-white" aria-label="Dismiss governance error">×</button>
         </div>
       )}
 

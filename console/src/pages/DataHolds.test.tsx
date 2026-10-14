@@ -51,19 +51,6 @@ describe('DataHolds page', () => {
     })
   })
 
-  it('retry button calls loadHolds on click (no act wrapper)', async () => {
-    vi.mocked(apiModule.api.governance.listHolds).mockRejectedValue(new Error('Network error'))
-    const { getByRole } = render(<DataHolds />)
-    await waitFor(() => {
-      expect(getByRole('button', { name: /retry/i })).toBeInTheDocument()
-    })
-    vi.mocked(apiModule.api.governance.listHolds).mockResolvedValue([])
-    getByRole('button', { name: /retry/i }).click()
-    await waitFor(() => {
-      expect(apiModule.api.governance.listHolds).toHaveBeenCalledTimes(2)
-    })
-  })
-
   it('retry button calls loadHolds on click', async () => {
     vi.mocked(apiModule.api.governance.listHolds).mockRejectedValue(new Error('Network error'))
     const { getByRole } = render(<DataHolds />)
