@@ -74,6 +74,10 @@ public class GroupController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        // ORG-040: archival is an admin act
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Admin access required to archive groups");
+        }
         try {
             Group group = groupService.archive(id, actor);
             return ResponseEntity.ok(group);
@@ -89,6 +93,10 @@ public class GroupController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        // ORG-040/042: the Leader post is guarded at write — admin act
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Admin access required to set a group leader");
+        }
         try {
             String leaderId = body.get("leaderMemberId");
             if (leaderId == null || leaderId.isBlank()) {

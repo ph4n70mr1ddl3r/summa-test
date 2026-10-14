@@ -10,6 +10,8 @@ import com.summa.security.RbacAuthorizationFilter;
 import com.summa.service.AgentService;
 import com.summa.service.WorkspaceService;
 import com.summa.service.MemberService;
+import com.summa.util.JsonHelpers;
+import com.summa.model.Agent;
 import java.util.Map;
 import java.util.Optional;
 
@@ -40,7 +42,7 @@ public class TriggerController {
         ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
         if (auth != null) return auth;
         if (agentId != null) {
-            return ResponseEntity.ok(triggerService.findByAgent(agentId));
+            return ResponseEntity.ok(triggerService.findByAgent(JsonHelpers.stripIdPrefix(agentId)));
         }
         return ResponseEntity.ok(triggerService.findAll());
     }
@@ -83,19 +85,27 @@ public class TriggerController {
             if (agentId == null || agentId.isBlank()) {
                 throw new IllegalArgumentException("agentId is required");
             }
+            agentId = JsonHelpers.stripIdPrefix(agentId);
             if (agentService.findById(agentId).isEmpty()) {
                 throw new IllegalArgumentException("Agent not found: " + agentId);
             }
+            // TRG-002: only the agent's owner or an admin may bind triggers to the agent
+            if (!memberService.isAdmin(actor) && !isAgentOwner(agentId, actor)) {
+                throw new IllegalStateException("Only the agent's owner or an admin may create triggers for this agent");
+            }
             String workspaceId = body.get("workspaceId");
-            if (workspaceId != null && !workspaceId.isBlank() && workspaceService.findById(workspaceId).isEmpty()) {
-                throw new IllegalArgumentException("Workspace not found: " + workspaceId);
+            if (workspaceId != null && !workspaceId.isBlank()) {
+                workspaceId = JsonHelpers.stripIdPrefix(workspaceId);
+                if (workspaceService.findById(workspaceId).isEmpty()) {
+                    throw new IllegalArgumentException("Workspace not found: " + workspaceId);
+                }
             }
             Trigger trigger = triggerService.create(
                 name,
                 kind,
                 expression,
                 agentId,
-                body.get("workspaceId"),
+                workspaceId,
                 body.get("criticality"),
                 body.get("config"),
                 actor
@@ -113,8 +123,12 @@ public class TriggerController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        String triggerId = JsonHelpers.stripIdPrefix(id);
+        if (!mayControlTrigger(triggerId, actor)) {
+            return ControllerResponses.gate(auditService, actor, "Only the agent's owner or an admin may pause this trigger");
+        }
         try {
-            Trigger trigger = triggerService.pause(id, actor);
+            Trigger trigger = triggerService.pause(triggerId, actor);
             return ResponseEntity.ok(trigger);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
@@ -128,8 +142,12 @@ public class TriggerController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        String triggerId = JsonHelpers.stripIdPrefix(id);
+        if (!mayControlTrigger(triggerId, actor)) {
+            return ControllerResponses.gate(auditService, actor, "Only the agent's owner or an admin may resume this trigger");
+        }
         try {
-            Trigger trigger = triggerService.resume(id, actor);
+            Trigger trigger = triggerService.resume(triggerId, actor);
             return ResponseEntity.ok(trigger);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
@@ -143,8 +161,12 @@ public class TriggerController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        String triggerId = JsonHelpers.stripIdPrefix(id);
+        if (!mayControlTrigger(triggerId, actor)) {
+            return ControllerResponses.gate(auditService, actor, "Only the agent's owner or an admin may archive this trigger");
+        }
         try {
-            Trigger trigger = triggerService.archive(id, actor);
+            Trigger trigger = triggerService.archive(triggerId, actor);
             return ResponseEntity.ok(trigger);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
@@ -164,5 +186,18 @@ public class TriggerController {
             return ControllerResponses.gate(auditService, actor, "Admin access required to view trigger stats");
         }
         return ResponseEntity.ok(triggerService.getStats());
+    }
+
+    private boolean isAgentOwner(String agentId, String actor) {
+        Agent agent = agentService.findById(JsonHelpers.stripIdPrefix(agentId)).orElse(null);
+        return agent != null
+                && agent.getOwnerHumanId() != null
+                && agent.getOwnerHumanId().equals(JsonHelpers.stripIdPrefix(actor));
+    }
+
+    private boolean mayControlTrigger(String triggerId, String actor) {
+        Trigger trigger = triggerService.findById(triggerId).orElse(null);
+        if (trigger == null) return false;
+        return memberService.isAdmin(actor) || isAgentOwner(JsonHelpers.stripIdPrefix(trigger.getAgentId()), actor);
     }
 }

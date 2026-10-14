@@ -42,6 +42,10 @@ public class DataHoldController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        // GVH-010: data holds block erasure, so only admins may create or release them
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Admin access required to create data holds");
+        }
         try {
             String kind = body.get("kind");
             if (kind == null || kind.isBlank()) {
@@ -76,6 +80,9 @@ public class DataHoldController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Admin access required to release data holds");
+        }
         try {
             DataHold hold = holdService.release(id, actor);
             return ResponseEntity.ok(hold);

@@ -315,25 +315,25 @@ public class OrgService {
         }
 
         // STG-032: Sweep ask from/to attribution using targeted queries
-        for (Ask ask : askRepository.findByFrom(id)) {
+        for (Ask ask : askRepository.findByFrom(cleanId)) {
             ask.setFrom(OffboardingWalkService.ADMIN_BROADCAST);
             askRepository.save(ask);
         }
-        for (Ask ask : askRepository.findByTo(id)) {
+        for (Ask ask : askRepository.findByTo(cleanId)) {
             ask.setTo(OffboardingWalkService.ADMIN_BROADCAST);
             askRepository.save(ask);
         }
 
         // STG-033: Sweep board task assignment attribution using targeted query
-        for (BoardTask task : boardTaskRepository.findByAssigneeMemberId(id)) {
-            if (id.equals(task.getAssigneeMemberId())) {
+        for (BoardTask task : boardTaskRepository.findByAssigneeMemberId(cleanId)) {
+            if (cleanId.equals(task.getAssigneeMemberId())) {
                 task.setAssigneeMemberId(null);
                 boardTaskRepository.save(task);
             }
         }
 
         // STG-034: Sweep memory item attribution
-        for (MemoryItem mem : memoryItemRepository.findByMemberId(id)) {
+        for (MemoryItem mem : memoryItemRepository.findByMemberId(cleanId)) {
             mem.setMemberId(OffboardingWalkService.ADMIN_BROADCAST);
             memoryItemRepository.save(mem);
         }
