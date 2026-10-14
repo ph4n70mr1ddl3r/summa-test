@@ -49,6 +49,7 @@ public class GlobalExceptionHandler {
         if (auditEvent != null) {
             body.put("audit_event_id", auditEvent.getId());
         }
+        body.put("ask_id", null);
         return ResponseEntity.status(status).body(body);
     }
 

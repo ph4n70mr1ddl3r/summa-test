@@ -83,15 +83,27 @@ public class BackupController {
     /**
      * Validate that the given path resolves under the allowed directory.
      * Handles both existing and non-existing paths by walking up to the nearest ancestor.
+     * Rejects symlinks at every component to prevent path traversal via symlink redirection.
      */
     private Path validatePathUnder(String rawPath, Path allowedDir, String paramName) throws IOException {
         Path p = Paths.get(rawPath).normalize();
+        // Check every path component for symlinks that escape the allowed directory
+        Path current = Path.of("/");
+        for (Path segment : p) {
+            current = current.resolve(segment);
+            if (Files.isSymbolicLink(current)) {
+                throw new IllegalArgumentException(paramName + " contains a symlink, which is not allowed");
+            }
+        }
         Path resolved;
         try {
             resolved = p.toRealPath();
         } catch (NoSuchFileException e) {
             Path ancestor = p;
             while (ancestor != null && !Files.exists(ancestor)) {
+                if (Files.isSymbolicLink(ancestor)) {
+                    throw new IllegalArgumentException(paramName + " contains a symlink, which is not allowed");
+                }
                 ancestor = ancestor.getParent();
             }
             if (ancestor == null) {

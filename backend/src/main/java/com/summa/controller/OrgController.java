@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import com.summa.exception.EntityNotFoundException;
 import com.summa.util.JsonHelpers;
+import com.summa.constants.Defaults;
 
 @RestController
 @RequestMapping("/org")
@@ -52,8 +53,11 @@ public class OrgController {
         }
         if (orgService.isInitialized()) {
             String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
-            ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
-            if (gate != null) return gate;
+            // System actor bypasses WriteGate but must still be admin for re-bootstrap
+            if (!Defaults.SYSTEM_ACTOR.equals(actor)) {
+                ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+                if (gate != null) return gate;
+            }
             if (!memberService.isAdmin(actor)) {
                 return ControllerResponses.gate(auditService, actor, "Bootstrap requires admin role when org is initialized");
             }

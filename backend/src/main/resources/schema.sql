@@ -146,7 +146,7 @@ CREATE TABLE IF NOT EXISTS dna_goals (
     domain_id TEXT,
     quarter TEXT,
     statement_md TEXT NOT NULL,
-    owner TEXT NOT NULL,
+    owner TEXT NOT NULL CHECK (owner LIKE 'h:%' OR owner LIKE 'a:%'),
     status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'met', 'missed', 'retired')),
     inject TEXT NOT NULL DEFAULT 'linked' CHECK (inject IN ('always', 'linked')),
     effective_from INTEGER NOT NULL,
@@ -187,8 +187,8 @@ CREATE INDEX IF NOT EXISTS idx_humans_deputy ON humans(deputy_member_id);
 CREATE TABLE IF NOT EXISTS asks (
     id TEXT PRIMARY KEY,
     kind TEXT NOT NULL CHECK (kind IN ('approval', 'question', 'assignment', 'spawn_request', 'promotion')),
-    "from" TEXT NOT NULL,
-    "to" TEXT NOT NULL,
+    "from" TEXT NOT NULL CHECK ("from" LIKE 'h:%' OR "from" LIKE 'a:%' OR "from" = 'system'),
+    "to" TEXT NOT NULL CHECK ("to" = 'admins' OR "to" LIKE 'h:%' OR "to" LIKE 'a:%'),
     payload TEXT NOT NULL DEFAULT '{}',
     initiative_id TEXT,
     workspace_id TEXT,
@@ -230,6 +230,8 @@ CREATE TABLE IF NOT EXISTS initiatives (
     FOREIGN KEY (goal_ref) REFERENCES dna_goals(id) ON DELETE SET NULL,
     FOREIGN KEY (decision_ref) REFERENCES dna_decisions(id) ON DELETE SET NULL
     -- sponsor and lead are keyed unions per DAT-120: h:<humans.id> or a:<agents.id>
+    CHECK (sponsor LIKE 'h:%' OR sponsor LIKE 'a:%'),
+    CHECK (lead LIKE 'h:%' OR lead LIKE 'a:%')
 );
 
 CREATE INDEX IF NOT EXISTS idx_initiatives_status ON initiatives(status);
@@ -249,6 +251,7 @@ CREATE TABLE IF NOT EXISTS board_tasks (
     completed_at INTEGER,
     FOREIGN KEY (initiative_id) REFERENCES initiatives(id) ON DELETE SET NULL
     -- assignee_member_id and created_by are keyed unions per DAT-120: h:<humans.id> or a:<agents.id>
+    CHECK (assignee_member_id IS NULL OR assignee_member_id LIKE 'h:%' OR assignee_member_id LIKE 'a:%')
 );
 
 CREATE INDEX IF NOT EXISTS idx_board_tasks_status ON board_tasks(status);
@@ -413,6 +416,8 @@ CREATE TABLE IF NOT EXISTS group_memberships (
     PRIMARY KEY (group_id, member_id),
     FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE
     -- member_id and added_by are keyed unions per DAT-120: h:<humans.id> or a:<agents.id>
+    CHECK (member_id LIKE 'h:%' OR member_id LIKE 'a:%'),
+    CHECK (added_by LIKE 'h:%' OR added_by LIKE 'a:%')
 );
 
 CREATE INDEX IF NOT EXISTS idx_group_memberships_member ON group_memberships(member_id);

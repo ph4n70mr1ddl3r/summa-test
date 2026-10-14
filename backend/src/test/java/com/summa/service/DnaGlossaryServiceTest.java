@@ -128,7 +128,7 @@ class DnaGlossaryServiceTest {
         DnaGlossary retired = new DnaGlossary();
         retired.setId("gloss-2");
         retired.setStatus("retired");
-        when(glossaryRepository.findAll()).thenReturn(List.of(active, retired));
+        when(glossaryRepository.findByStatus("active")).thenReturn(List.of(active));
 
         List<DnaGlossary> results = glossaryService.findAllActive();
 

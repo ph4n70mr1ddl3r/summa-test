@@ -69,9 +69,7 @@ public class DnaGlossaryService {
 
     @Transactional(readOnly = true)
     public List<DnaGlossary> findAllActive() {
-        return glossaryRepository.findAll().stream()
-                .filter(DnaGlossary::isActive)
-                .toList();
+        return glossaryRepository.findByStatus("active");
     }
 
     @Transactional(readOnly = true)

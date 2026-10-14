@@ -494,23 +494,18 @@ public class AskService {
      */
     public long deriveDeadlineFromTier(String tier) {
         if (tier == null) tier = "standard";
-        if ("critical".equals(tier)) {
-            Number val = governanceService.getSetting("asks-tier-critical-deadline-hours", Number.class);
-            if (val != null) return val.longValue() * 3600L;
-            return Defaults.DEFAULT_CRITICAL_ASK_DEADLINE_HOURS * 3600L;
-        }
-        if ("bulk".equals(tier)) {
-            Number val = governanceService.getSetting("asks-tier-bulk-deadline-hours", Number.class);
-            if (val != null) return val.longValue() * 3600L;
-            return Defaults.DEFAULT_BULK_ASK_DEADLINE_HOURS * 3600L;
-        }
-        // standard tier: next digest is not a fixed deadline — use configurable hours (default 0 = indefinite)
-        Number val = governanceService.getSetting("asks-tier-standard-deadline-hours", Number.class);
+        Map<String, Long> tierDefaults = Map.of(
+            "critical", Defaults.DEFAULT_CRITICAL_ASK_DEADLINE_HOURS,
+            "bulk", Defaults.DEFAULT_BULK_ASK_DEADLINE_HOURS,
+            "standard", Defaults.DEFAULT_STANDARD_ASK_DEADLINE_HOURS
+        );
+        Long defaultHours = tierDefaults.getOrDefault(tier, Defaults.DEFAULT_STANDARD_ASK_DEADLINE_HOURS);
+        Number val = governanceService.getSetting("asks-tier-" + tier + "-deadline-hours", Number.class);
         if (val != null) {
             long result = val.longValue() * 3600L;
-            return result > 0 ? result : Defaults.MAX_DEADLINE_SECONDS;
+            return result > 0 ? result : (defaultHours > 0 ? defaultHours * 3600L : Defaults.MAX_DEADLINE_SECONDS);
         }
-        long defaultResult = Defaults.DEFAULT_STANDARD_ASK_DEADLINE_HOURS * 3600L;
+        long defaultResult = defaultHours * 3600L;
         return defaultResult > 0 ? defaultResult : Defaults.MAX_DEADLINE_SECONDS;
     }
 

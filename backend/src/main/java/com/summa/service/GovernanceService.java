@@ -82,10 +82,6 @@ public class GovernanceService {
         }
         if (type.equals(Float.class) || type.equals(float.class)) {
             if (value instanceof Number) return type.cast(((Number) value).floatValue());
-            try { return type.cast((float) Double.parseDouble(value.toString())); }
-            catch (NumberFormatException e) {
-                log.debug("Cannot cast '{}' to Float: {}", value, e.getMessage());
-            }
             return null;
         }
         if (type.equals(Double.class) || type.equals(double.class)) {

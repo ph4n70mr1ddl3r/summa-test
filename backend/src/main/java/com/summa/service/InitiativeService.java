@@ -147,7 +147,7 @@ public class InitiativeService {
                     throw new IllegalArgumentException(
                         "Adding these dependencies would create a cycle: " + depIds);
                 }
-            } catch (JsonProcessingException e) {
+            } catch (Exception e) {
                 throw new IllegalArgumentException("Invalid dependsOn format: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
             }
         }

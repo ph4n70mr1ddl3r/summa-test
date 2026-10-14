@@ -99,7 +99,7 @@ public class RoleTemplateService {
                     ? agent.getOwnerHumanId() : OffboardingWalkService.ADMIN_BROADCAST;
                 askService.create("approval", askTo, askTo,
                     payload, "standard", "deny", 1,
-                    Instant.now().plusSeconds(7 * 86400L), null, null);
+                    Instant.now().plusSeconds(Defaults.STALL_ASK_DEADLINE_SECONDS), null, null);
                 auditService.logSystem("UPGRADE_ASK_FILED", "role_template", id,
                     String.format("{\"agentId\":\"%s\",\"owner\":\"%s\",\"version\":%d}",
                         agent.getId(), agent.getOwnerHumanId(), nextVersion));

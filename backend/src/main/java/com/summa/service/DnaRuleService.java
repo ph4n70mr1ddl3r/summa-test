@@ -39,17 +39,17 @@ public class DnaRuleService {
 
         // Validate supersedes_id is in same domain
         if (supersedesId != null) {
-            ruleRepository.findById(supersedesId).ifPresentOrElse(
-                existing -> {
-                    if (!Objects.equals(existing.getDomainId(), domainId)) {
-                        throw new IllegalArgumentException("Supersedes rule must be in the same domain");
-                    }
-                    if (!"active".equals(existing.getStatus()) && !"superseded".equals(existing.getStatus())) {
-                        throw new IllegalArgumentException("Cannot supersede a lapsed rule");
-                    }
-                },
-                () -> { /* supersedesId does not exist — allow it as a forward reference; the FK handles enforcement */ }
-            );
+            Optional<DnaRule> existingOpt = ruleRepository.findById(supersedesId);
+            if (existingOpt.isEmpty()) {
+                throw new IllegalArgumentException("Supersedes rule not found: " + supersedesId);
+            }
+            DnaRule existing = existingOpt.get();
+            if (!Objects.equals(existing.getDomainId(), domainId)) {
+                throw new IllegalArgumentException("Supersedes rule must be in the same domain");
+            }
+            if (!"active".equals(existing.getStatus()) && !"superseded".equals(existing.getStatus())) {
+                throw new IllegalArgumentException("Cannot supersede a lapsed rule");
+            }
 
             // Check for forked supersession
             long successorCount = ruleRepository.findBySupersedesId(supersedesId).size();

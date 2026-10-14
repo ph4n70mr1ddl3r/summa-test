@@ -277,7 +277,7 @@ class MemoryServiceTest {
         ws.setDomainIds("not-json");
         when(workspaceService.findById("ws-1")).thenReturn(Optional.of(ws));
 
-        assertThrows(IllegalStateException.class, () -> {
+        assertThrows(com.summa.exception.AuthorizationDeniedException.class, () -> {
             memoryService.review("mem-1", "human-1");
         });
     }

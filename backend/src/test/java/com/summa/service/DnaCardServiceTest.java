@@ -102,7 +102,7 @@ class DnaCardServiceTest {
         DnaCard retired = new DnaCard();
         retired.setId("card-2");
         retired.setStatus("retired");
-        when(cardRepository.findAll()).thenReturn(List.of(active, retired));
+        when(cardRepository.findByStatus("active")).thenReturn(List.of(active));
 
         List<DnaCard> results = cardService.findAllActive();
 

@@ -97,14 +97,12 @@ class DnaRuleServiceTest {
     }
 
     @Test
-    void create_allowsMissingSupersedesAsForwardReference() {
+    void create_rejectsMissingSupersedes() {
         when(ruleRepository.findById("rule-future")).thenReturn(Optional.empty());
-        when(ruleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
 
-        DnaRule result = ruleService.create("rule-1", "domain-1", "stmt", null, null, null, "rule-future", "admin");
-
-        assertEquals("rule-future", result.getSupersedesId());
+        assertThrows(IllegalArgumentException.class, () -> {
+            ruleService.create("rule-1", "domain-1", "stmt", null, null, null, "rule-future", "admin");
+        });
     }
 
     @Test

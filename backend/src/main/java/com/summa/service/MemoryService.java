@@ -119,8 +119,10 @@ public class MemoryService {
                             }
                         }
                     } catch (Exception e) {
-                        // If domainIds parsing fails, reject — do not fall through to admin check
-                        throw new IllegalStateException("Invalid workspace domainIds format: " + ws.getDomainIds());
+                        // If domainIds parsing fails, log and deny rather than throwing unchecked
+                        auditService.logSystem("MEMORY_REVIEW_FAIL", "memory_item", item.getId(),
+                            String.format("{\"reviewerId\":%s,\"error\":%s}", JsonHelpers.jsonString(reviewerId), JsonHelpers.jsonString(e.getMessage())));
+                        throw new AuthorizationDeniedException("Invalid workspace domainIds format — review denied");
                     }
                 }
             }

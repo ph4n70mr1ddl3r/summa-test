@@ -83,7 +83,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         String subject = payload.get("sub") instanceof String s ? s : null;
                         if (subject != null && !subject.isBlank()) {
                             if (!checkSessionVersion(subject, payload)) {
-                                log.warn("[SUMMA] Stale session version for {} on public path={}", subject, path);
+                                log.warn("[SUMMA] Stale session version on public path={}", path);
                                 writeRefusal(response, HttpServletResponse.SC_UNAUTHORIZED, "Session invalidated — please sign in again", subject);
                                 return;
                             }
@@ -133,13 +133,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     String subject = payload.get("sub") instanceof String s ? s : null;
                     if (subject == null || subject.isBlank()) {
                         log.warn("[SUMMA] JWT missing valid sub claim from {} path={}", request.getRemoteAddr(), path);
-                        writeRefusal(response, HttpServletResponse.SC_UNAUTHORIZED, "JWT missing valid subject", null);
+                        writeRefusal(response, HttpServletResponse.SC_UNAUTHORIZED, "JWT missing valid subject", request.getRemoteAddr());
                         return;
                     }
                     // SEC-010: Verify session version matches current human record
                     // This invalidates tokens after password changes or session resets
                     if (!checkSessionVersion(subject, payload)) {
-                        log.warn("[SUMMA] Stale session version for {} on path={}", subject, path);
+                        log.warn("[SUMMA] Stale session version on path={}", path);
                         writeRefusal(response, HttpServletResponse.SC_UNAUTHORIZED, "Session invalidated — please sign in again", subject);
                         return;
                     }

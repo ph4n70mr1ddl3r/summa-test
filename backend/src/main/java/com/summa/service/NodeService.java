@@ -92,10 +92,11 @@ public class NodeService {
         return nodeRepository.findByPubkey(pubkey);
     }
 
+    private static final SecureRandom RANDOM = new SecureRandom();
+
     public String generateEnrollmentToken(String nodeId) {
-        SecureRandom random = new SecureRandom();
         byte[] bytes = new byte[32];
-        random.nextBytes(bytes);
+        RANDOM.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
@@ -108,7 +109,8 @@ public class NodeService {
     public Node heartbeat(String id, String actor, String capabilities) {
         Node node = nodeRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Node not found: " + id));
-        if (!id.equals(actor)) {
+        String actorClean = JsonHelpers.stripIdPrefix(actor);
+        if (!id.equals(actorClean)) {
             throw new IllegalStateException("Node can only heartbeat its own record");
         }
 

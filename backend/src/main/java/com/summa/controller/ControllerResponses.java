@@ -26,70 +26,118 @@ public final class ControllerResponses {
 
     public static ResponseEntity<Map<String, Object>> validation(AuditService audit, String message) {
         AuditEvent event = audit.logSystem("REFUSAL", "validation", null, message);
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                .body(Map.of("code", "validation", "message", message, "audit_event_id", event.getId()));
+        Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("code", "validation");
+        body.put("message", message);
+        body.put("audit_event_id", event.getId());
+        body.put("ask_id", null);
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(body);
     }
 
     public static ResponseEntity<Map<String, Object>> validation(AuditEvent existingAudit, String message) {
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                .body(Map.of("code", "validation", "message", message, "audit_event_id", existingAudit.getId()));
+        Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("code", "validation");
+        body.put("message", message);
+        body.put("audit_event_id", existingAudit.getId());
+        body.put("ask_id", null);
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(body);
     }
 
     public static ResponseEntity<Map<String, Object>> validation(AuditService audit, String actor, String message) {
         AuditEvent event = audit.log(actor, "REFUSAL", "validation", null, message);
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                .body(Map.of("code", "validation", "message", message, "audit_event_id", event.getId()));
+        Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("code", "validation");
+        body.put("message", message);
+        body.put("audit_event_id", event.getId());
+        body.put("ask_id", null);
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(body);
     }
 
     public static ResponseEntity<Map<String, Object>> gate(AuditService audit, String message) {
         AuditEvent event = audit.logSystem("REFUSAL", "gate", null, message);
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(Map.of("code", "gate", "message", message, "audit_event_id", event.getId()));
+        Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("code", "gate");
+        body.put("message", message);
+        body.put("audit_event_id", event.getId());
+        body.put("ask_id", null);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
     }
 
     public static ResponseEntity<Map<String, Object>> gate(AuditEvent existingAudit, String message) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(Map.of("code", "gate", "message", message, "audit_event_id", existingAudit.getId()));
+        Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("code", "gate");
+        body.put("message", message);
+        body.put("audit_event_id", existingAudit.getId());
+        body.put("ask_id", null);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
     }
 
     public static ResponseEntity<Map<String, Object>> gate(AuditService audit, String actor, String message) {
         AuditEvent event = audit.log(actor, "REFUSAL", "gate", null, message);
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(Map.of("code", "gate", "message", message, "audit_event_id", event.getId()));
+        Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("code", "gate");
+        body.put("message", message);
+        body.put("audit_event_id", event.getId());
+        body.put("ask_id", null);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
     }
 
     public static ResponseEntity<Map<String, Object>> notFound(AuditService audit, String message) {
         AuditEvent event = audit.logSystem("NOT_FOUND", "not_found", null, message);
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("code", "not_found", "message", message, "audit_event_id", event.getId()));
+        Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("code", "not_found");
+        body.put("message", message);
+        body.put("audit_event_id", event.getId());
+        body.put("ask_id", null);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
 
     public static ResponseEntity<Map<String, Object>> notFound(AuditEvent existingAudit, String message) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("code", "not_found", "message", message, "audit_event_id", existingAudit.getId()));
+        Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("code", "not_found");
+        body.put("message", message);
+        body.put("audit_event_id", existingAudit.getId());
+        body.put("ask_id", null);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
 
     public static ResponseEntity<Map<String, Object>> notFound(AuditService audit, String actor, String message) {
         AuditEvent event = audit.log(actor, "NOT_FOUND", "not_found", null, message);
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("code", "not_found", "message", message, "audit_event_id", event.getId()));
+        Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("code", "not_found");
+        body.put("message", message);
+        body.put("audit_event_id", event.getId());
+        body.put("ask_id", null);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
 
     public static ResponseEntity<Map<String, Object>> conflict(AuditService audit, String message) {
         AuditEvent event = audit.logSystem("REFUSAL", "conflict", null, message);
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(Map.of("code", "conflict", "message", message, "audit_event_id", event.getId()));
+        Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("code", "conflict");
+        body.put("message", message);
+        body.put("audit_event_id", event.getId());
+        body.put("ask_id", null);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
     public static ResponseEntity<Map<String, Object>> conflict(AuditEvent existingAudit, String message) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(Map.of("code", "conflict", "message", message, "audit_event_id", existingAudit.getId()));
+        Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("code", "conflict");
+        body.put("message", message);
+        body.put("audit_event_id", existingAudit.getId());
+        body.put("ask_id", null);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
     public static ResponseEntity<Map<String, Object>> conflict(AuditService audit, String actor, String message) {
         AuditEvent event = audit.log(actor, "REFUSAL", "conflict", null, message);
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(Map.of("code", "conflict", "message", message, "audit_event_id", event.getId()));
+        Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("code", "conflict");
+        body.put("message", message);
+        body.put("audit_event_id", event.getId());
+        body.put("ask_id", null);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
     public static ResponseEntity<Map<String, Object>> internalError(AuditService audit, String message) {

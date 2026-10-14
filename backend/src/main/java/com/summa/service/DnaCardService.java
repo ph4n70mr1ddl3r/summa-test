@@ -60,9 +60,7 @@ public class DnaCardService {
 
     @Transactional(readOnly = true)
     public List<DnaCard> findAllActive() {
-        return cardRepository.findAll().stream()
-                .filter(DnaCard::isActive)
-                .toList();
+        return cardRepository.findByStatus("active");
     }
 
     @Transactional
