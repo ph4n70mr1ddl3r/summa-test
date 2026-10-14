@@ -311,7 +311,7 @@ public class AskService {
                         expire(current.getId());
                     } catch (Exception ex) {
                         auditService.logSystem("EXPIRE_SUCCESSOR_FAIL", "ask", current.getId(),
-                            JsonHelpers.toJson(Map.of("behavior", behavior, "error", ex.getMessage()), objectMapper));
+                            JsonHelpers.toJson(Map.of("behavior", behavior, "error", ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName()), objectMapper));
                     }
                 }
             } catch (Exception e) {

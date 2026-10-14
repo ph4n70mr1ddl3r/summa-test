@@ -43,7 +43,7 @@ export default function DNADecisions() {
             <div key={d.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium text-gray-200">{escapeHtml(truncateSnippet(d.contextMd, 60))}</p>
+                  <p className="font-medium text-gray-200">Decision {escapeHtml(truncateSnippet(d.outcomeMd, 40))}</p>
                   <p className="text-sm text-gray-400 mt-1">Domain: {escapeHtml(d.domainId)} · By: {escapeHtml(d.decidedBy)}</p>
                 </div>
               </div>
