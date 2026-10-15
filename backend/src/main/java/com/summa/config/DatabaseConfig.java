@@ -8,12 +8,17 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 @Configuration
 public class DatabaseConfig {
 
     @Value("${summa.database.path:${user.home}/.summa/summa.db}")
     private String dbPath;
+
+    @Value("${summa.git.dna-repo-path:${user.home}/.summa/dna}")
+    private String dnaRepoPath;
 
     @Bean
     public HikariDataSource dataSource() throws Exception {
@@ -39,7 +44,16 @@ public class DatabaseConfig {
 
     @Bean
     public JdbcTemplate jdbcTemplate(HikariDataSource dataSource) {
-        return new JdbcTemplate(dataSource);
+        JdbcTemplate template = new JdbcTemplate(dataSource);
+        // Ensure the DNA git store directory exists so the health endpoint's
+        // git_store check reports UP on first boot (fresh volumes in Docker).
+        try {
+            Files.createDirectories(Paths.get(expandPath(dnaRepoPath)));
+        } catch (Exception e) {
+            // Non-fatal: health endpoint will report git_store DOWN but the
+            // application still starts.
+        }
+        return template;
     }
 
     private String expandPath(String path) {

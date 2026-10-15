@@ -125,6 +125,9 @@ nohup mvn spring-boot:run -Dspring-boot.run.profiles=dev \
     -Dsumma.auth.local-auth-enabled=${SUMMA_AUTH_LOCAL_AUTH_ENABLED:-true} \
     > "$SUMMA_LOG_DIR/backend.log" 2>&1 &
 BACKEND_PID=$!
+# mvn spring-boot:run forks the actual JVM as a child; kill the whole process
+# group on shutdown so the Spring Boot JVM doesn't outlive dev.sh.
+BACKEND_PGID=$(ps -o pgid= -p "$BACKEND_PID" 2>/dev/null | tr -d ' ')
 popd > /dev/null
 echo "      Backend PID: $BACKEND_PID"
 
@@ -148,12 +151,15 @@ fi
 # Start console
 echo "[2/2] Starting console..."
 pushd console > /dev/null
-if [ ! -d "node_modules" ]; then
+# npm workspaces hoist deps to the repo root's node_modules; check both
+# so we don't re-run `npm ci` every time when deps are already installed.
+if [ ! -d "$SCRIPT_DIR/node_modules" ] && [ ! -d "node_modules" ]; then
     echo "      Installing console dependencies..."
     npm ci --prefer-offline
 fi
 npm run dev > "$SUMMA_LOG_DIR/console.log" 2>&1 &
 CONSOLE_PID=$!
+CONSOLE_PGID=$(ps -o pgid= -p "$CONSOLE_PID" 2>/dev/null | tr -d ' ')
 echo "      Console PID: $CONSOLE_PID"
 popd > /dev/null
 
@@ -181,6 +187,6 @@ echo "  API:     http://localhost:8080/api"
 echo ""
 echo "Press Ctrl+C to stop all services"
 
-trap '[ "${BACKEND_PID:-}" != "" ] && kill "${BACKEND_PID}" 2>/dev/null; [ "${BACKEND_PID:-}" != "" ] && pkill -P "${BACKEND_PID}" 2>/dev/null; [ "${CONSOLE_PID:-}" != "" ] && kill "${CONSOLE_PID}" 2>/dev/null; [ "${CONSOLE_PID:-}" != "" ] && pkill -P "${CONSOLE_PID}" 2>/dev/null; exit 0' INT TERM HUP
+trap 'for g in "${BACKEND_PGID:-}" "${CONSOLE_PGID:-}"; do [ -n "$g" ] && kill -TERM -"$g" 2>/dev/null; done; exit 0' INT TERM HUP
 trap '[ "${ORIG_DIR:-}" != "" ] && [ -d "${ORIG_DIR:-}" ] && cd "${ORIG_DIR}" || true' EXIT
 wait

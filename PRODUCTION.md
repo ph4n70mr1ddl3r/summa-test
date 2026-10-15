@@ -113,7 +113,7 @@ Abridged — the full surface with REQ IDs lives in `specs/17-api-surface.md`
 - `GET /api/dna/glossary` — List glossary entries
 - `GET /api/dna/goals` — List goals
 - `GET /api/dna/proposals` — List proposals (filterable by status)
-- `GET /api/dna/review-queue` — Review queue (open proposals)
+- `GET /api/dna/proposals/review-queue` — Review queue (open proposals)
 - `GET /api/dna/search?q=...&domainId=<id>&limit=<n>` — FTS5 search (limit defaults to 20, max 100)
 - `GET /api/dna/search/org-snapshot` — Full org DNA snapshot for injection layers
 - `GET /api/dna/search/domains` — Domain list with metadata
@@ -270,7 +270,7 @@ curl -X POST http://localhost:8080/api/admin/backup/restore \
   -H 'Content-Type: application/json' \
   -d '{"backupPath": "/tmp/summa-backup-2026-01-01T00-00-00Z.zip"}'
 ```
-> Backups must reside under the JVM's `java.io.tmpdir` (typically `/tmp`). Paths outside this root are rejected with 400.
+> Backups may reside under the JVM's `java.io.tmpdir` (typically `/tmp`) **or** under the data directory that holds the SQLite database (e.g. `/data/db`). Paths outside these roots are rejected with 400.
 
 ## Security Checklist
 
@@ -279,7 +279,7 @@ curl -X POST http://localhost:8080/api/admin/backup/restore \
 - [ ] Set protected branches on DNA repo
 - [ ] Configure firewall for ports 8080 (API, always) and 3000 (console, dev.sh / compose only)
 - [ ] Rotate JWT secret annually; update `SUMMA_AUTH_JWT_SECRET` and redeploy
-- [ ] Back up database and DNA repo daily; backups must reside under `java.io.tmpdir`
+- [ ] Back up database and DNA repo daily; backups must reside under `java.io.tmpdir` or the data directory
 - [ ] Set `SUMMA_AUTH_LOCAL_AUTH_ENABLED=false` in production when using OIDC/gateway auth
 - [ ] Set `SUMMA_SPEND_CEILING` to a realistic org limit
 - [ ] Review `GET /api/org/audit` periodically for anomalous activity
