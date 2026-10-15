@@ -9,10 +9,11 @@ import java.util.List;
 @Repository
 public interface AuditEventRepository extends JpaRepository<AuditEvent, String> {
     @Query("SELECT a FROM AuditEvent a WHERE a.objectType = :type AND a.objectId = :id ORDER BY a.at DESC")
-    List<AuditEvent> findByObject(String type, String id);
-    
+    List<AuditEvent> findByObject(@org.springframework.data.repository.query.Param("type") String type,
+                                   @org.springframework.data.repository.query.Param("id") String id);
+
     @Query("SELECT a FROM AuditEvent a WHERE a.actor = :actor ORDER BY a.at DESC")
-    List<AuditEvent> findByActor(String actor);
+    List<AuditEvent> findByActor(@org.springframework.data.repository.query.Param("actor") String actor);
     
     @Query("SELECT a FROM AuditEvent a ORDER BY a.at DESC")
     List<AuditEvent> findRecent(int limit);

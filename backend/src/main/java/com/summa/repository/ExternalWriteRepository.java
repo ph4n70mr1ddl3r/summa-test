@@ -13,5 +13,5 @@ public interface ExternalWriteRepository extends JpaRepository<ExternalWrite, St
     List<ExternalWrite> findByRunId(String runId);
     
     @Query("SELECT e FROM ExternalWrite e WHERE e.status = 'prepared' AND e.preparedAt < :before")
-    List<ExternalWrite> findStrandedBefore(Instant before);
+    List<ExternalWrite> findStrandedBefore(@org.springframework.data.repository.query.Param("before") Instant before);
 }

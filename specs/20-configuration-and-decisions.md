@@ -8,7 +8,8 @@ trigger; the mechanism it tunes is already designed (NFR-022). Defaults live beh
   collision is contained by the db-only carve-out (STG-002…003, STG-030…033, STG-005),
   human legibility is load-bearing (PRN-006), and git concurrency is what the DLV-042
   spike gates before the ladder commits. DB-with-export remains the per-domain carve-out,
-  not the default.
+  not the default. (CFG-002 was retired during the v2.48 re-base and its slot is not
+  reused per the suite's ID-stability invariant.)
 - **CFG-003** — SQLite as single-process default: WAL mode with FTS5, chosen for the
   MVP path where a single owner holds both control plane and node (ARC-001); remote-node
   deployments layer on a replicated store (CFG-030).

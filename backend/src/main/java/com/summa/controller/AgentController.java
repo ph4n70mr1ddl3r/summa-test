@@ -163,13 +163,14 @@ public class AgentController {
             if (agent.getTemplateId() != null) {
                 throw new IllegalStateException("Only customRole hires (no template) can be promoted");
             }
-            // TPL-046: One live promotion ask per hire — refuse if already pending
-            // Check asks TO the agent being promoted, not asks TO the actor
-            List<Ask> pendingPromoAsks = askService.findByToAndStatusPending(agentId).stream()
-                    .filter(a -> "promotion".equals(a.getKind()))
-                    .toList();
+            // TPL-046: One live promotion ask per hire — refuse if already pending.
+            // Promotion asks are filed from the owner (a human), not to the agent,
+            // so check pending promotion asks from the actor matching this agentId.
+            String actorClean = JsonHelpers.stripIdPrefix(actor);
             boolean hasPromoForAgent = false;
-            for (Ask a : pendingPromoAsks) {
+            for (Ask a : askService.findByFromAndStatusPending(actorClean).stream()
+                    .filter(a -> "promotion".equals(a.getKind()))
+                    .toList()) {
                 try {
                     JsonNode node = objectMapper.readTree(a.getPayload());
                     JsonNode agentIdNode = node.get("agentId");
@@ -209,7 +210,7 @@ public class AgentController {
             } catch (Exception e) {
                 throw new IllegalStateException("Failed to serialize promotion snapshot: " + e.getMessage());
             }
-            askService.create("promotion", JsonHelpers.stripIdPrefix(actor), OffboardingWalkService.ADMIN_BROADCAST,
+            askService.create("promotion", "h:" + JsonHelpers.stripIdPrefix(actor), OffboardingWalkService.ADMIN_BROADCAST,
                 snapshotPayload, "standard", "deny", 1,
                 Instant.now().plusSeconds(Defaults.DEFAULT_STANDARD_ASK_DEADLINE_HOURS * 3600L), null, null);
             auditService.log(actor, "PROMOTE_REQUEST", "agent", agentId, snapshotPayload);

@@ -313,13 +313,25 @@ public class OrgService {
             prop.setProposedBy(OffboardingWalkService.ADMIN_BROADCAST);
             proposalRepository.save(prop);
         }
+        for (DnaProposal prop : proposalRepository.findByProposedBy("h:" + cleanId)) {
+            prop.setProposedBy(OffboardingWalkService.ADMIN_BROADCAST);
+            proposalRepository.save(prop);
+        }
 
         // STG-032: Sweep ask from/to attribution using targeted queries
         for (Ask ask : askRepository.findByFrom(cleanId)) {
             ask.setFrom(OffboardingWalkService.ADMIN_BROADCAST);
             askRepository.save(ask);
         }
+        for (Ask ask : askRepository.findByFrom("h:" + cleanId)) {
+            ask.setFrom(OffboardingWalkService.ADMIN_BROADCAST);
+            askRepository.save(ask);
+        }
         for (Ask ask : askRepository.findByTo(cleanId)) {
+            ask.setTo(OffboardingWalkService.ADMIN_BROADCAST);
+            askRepository.save(ask);
+        }
+        for (Ask ask : askRepository.findByTo("h:" + cleanId)) {
             ask.setTo(OffboardingWalkService.ADMIN_BROADCAST);
             askRepository.save(ask);
         }
@@ -331,9 +343,17 @@ public class OrgService {
                 boardTaskRepository.save(task);
             }
         }
+        for (BoardTask task : boardTaskRepository.findByAssigneeMemberId("h:" + cleanId)) {
+            task.setAssigneeMemberId(null);
+            boardTaskRepository.save(task);
+        }
 
         // STG-034: Sweep memory item attribution
         for (MemoryItem mem : memoryItemRepository.findByMemberId(cleanId)) {
+            mem.setMemberId(OffboardingWalkService.ADMIN_BROADCAST);
+            memoryItemRepository.save(mem);
+        }
+        for (MemoryItem mem : memoryItemRepository.findByMemberId("h:" + cleanId)) {
             mem.setMemberId(OffboardingWalkService.ADMIN_BROADCAST);
             memoryItemRepository.save(mem);
         }

@@ -110,7 +110,10 @@ public final class JsonHelpers {
      */
     public static String stripIdPrefix(String id) {
         if (id == null) return null;
-        return id.replaceFirst("^[ha]:", "");
+        if (id.startsWith("h:") || id.startsWith("a:")) {
+            return id.substring(2);
+        }
+        return id;
     }
 
     /**

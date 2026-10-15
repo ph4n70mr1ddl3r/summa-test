@@ -12,11 +12,12 @@ public interface RoleTemplateRepository extends JpaRepository<RoleTemplate, Stri
     Optional<RoleTemplate> findByName(String name);
     
     @Query("SELECT t FROM RoleTemplate t WHERE t.agentClass = :clazz AND t.status = 'active' ORDER BY t.version DESC")
-    List<RoleTemplate> findActiveByClass(String clazz);
-    
+    List<RoleTemplate> findActiveByClass(@org.springframework.data.repository.query.Param("clazz") String clazz);
+
     @Query("SELECT t FROM RoleTemplate t WHERE t.name = :name AND t.status = 'active' ORDER BY t.version DESC")
-    List<RoleTemplate> findActiveByName(String name);
-    
+    List<RoleTemplate> findActiveByName(@org.springframework.data.repository.query.Param("name") String name);
+
     @Query("SELECT t FROM RoleTemplate t WHERE t.agentClass = :clazz AND t.name = :name ORDER BY t.version DESC")
-    List<RoleTemplate> findByClassAndName(String clazz, String name);
+    List<RoleTemplate> findByClassAndName(@org.springframework.data.repository.query.Param("clazz") String clazz,
+                                            @org.springframework.data.repository.query.Param("name") String name);
 }

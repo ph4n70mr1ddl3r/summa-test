@@ -11,7 +11,7 @@ public interface AskRepository extends JpaRepository<Ask, String> {
     List<Ask> findByStatus(String status);
 
     @Query("SELECT a FROM Ask a WHERE a.to = :to AND a.status = 'pending' ORDER BY a.deadline ASC")
-    List<Ask> findByToAndStatusPending(String to);
+    List<Ask> findByToAndStatusPending(@org.springframework.data.repository.query.Param("to") String to);
 
     @Query("SELECT a FROM Ask a WHERE a.to = :to AND a.status = 'pending' ORDER BY a.deadline ASC LIMIT :limit")
     List<Ask> findByToAndStatusPending(@org.springframework.data.repository.query.Param("to") String to,
@@ -20,16 +20,16 @@ public interface AskRepository extends JpaRepository<Ask, String> {
     long countByStatus(String status);
 
     @Query("SELECT a FROM Ask a WHERE a.status = 'pending' AND a.deadline < :now")
-    List<Ask> findExpiredBefore(java.time.Instant now);
+    List<Ask> findExpiredBefore(@org.springframework.data.repository.query.Param("now") java.time.Instant now);
 
     @Query("SELECT a FROM Ask a WHERE a.from = :agentId AND a.status = 'pending'")
-    List<Ask> findByFromAndStatusPending(String agentId);
+    List<Ask> findByFromAndStatusPending(@org.springframework.data.repository.query.Param("agentId") String agentId);
 
     @Query("SELECT a FROM Ask a WHERE a.initiativeId = :initiativeId AND a.status = 'pending'")
-    List<Ask> findByInitiativeIdAndStatusPending(String initiativeId);
+    List<Ask> findByInitiativeIdAndStatusPending(@org.springframework.data.repository.query.Param("initiativeId") String initiativeId);
 
     @Query("SELECT a FROM Ask a WHERE a.workspaceId = :workspaceId AND a.status = 'pending'")
-    List<Ask> findByWorkspaceIdAndStatusPending(String workspaceId);
+    List<Ask> findByWorkspaceIdAndStatusPending(@org.springframework.data.repository.query.Param("workspaceId") String workspaceId);
 
     @Query("SELECT a FROM Ask a WHERE a.status = :status ORDER BY a.deadline ASC LIMIT :limit")
     List<Ask> findByStatusOrdered(@org.springframework.data.repository.query.Param("status") String status,
@@ -39,11 +39,11 @@ public interface AskRepository extends JpaRepository<Ask, String> {
     List<Ask> findByStatusPendingOrdered(@org.springframework.data.repository.query.Param("limit") int limit);
 
     @Query("SELECT a FROM Ask a WHERE a.from = :from")
-    List<Ask> findByFrom(String from);
+    List<Ask> findByFrom(@org.springframework.data.repository.query.Param("from") String from);
 
     @Query("SELECT a FROM Ask a WHERE a.to = :to")
-    List<Ask> findByTo(String to);
+    List<Ask> findByTo(@org.springframework.data.repository.query.Param("to") String to);
 
     @Query("SELECT a FROM Ask a WHERE a.initiativeId = :initiativeId AND a.kind = 'approval' AND a.status = 'pending'")
-    List<Ask> findByInitiativeIdAndKindApprovalPending(String initiativeId);
+    List<Ask> findByInitiativeIdAndKindApprovalPending(@org.springframework.data.repository.query.Param("initiativeId") String initiativeId);
 }

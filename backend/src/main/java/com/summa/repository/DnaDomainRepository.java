@@ -12,7 +12,7 @@ public interface DnaDomainRepository extends JpaRepository<DnaDomain, String> {
     Optional<DnaDomain> findByName(String name);
     
     @Query("SELECT d FROM DnaDomain d WHERE d.status != 'archived' AND d.name = :name")
-    Optional<DnaDomain> findByNameNotArchived(String name);
+    Optional<DnaDomain> findByNameNotArchived(@org.springframework.data.repository.query.Param("name") String name);
     
     List<DnaDomain> findByStatus(String status);
     
@@ -20,7 +20,7 @@ public interface DnaDomainRepository extends JpaRepository<DnaDomain, String> {
     List<DnaDomain> findAllActive();
     
     @Query("SELECT d FROM DnaDomain d WHERE d.ownerHumanId = :ownerId AND d.status != 'archived'")
-    List<DnaDomain> findByOwnerHumanId(String ownerId);
+    List<DnaDomain> findByOwnerHumanId(@org.springframework.data.repository.query.Param("ownerId") String ownerId);
 
     @Query(value = "SELECT * FROM dna_domains ORDER BY id ASC LIMIT :limit", nativeQuery = true)
     List<DnaDomain> findAllOrdered(@org.springframework.data.repository.query.Param("limit") int limit);

@@ -82,7 +82,7 @@ function ApiStatusCheck() {
   }, [])
 
   if (status === 'error' && errorMsg) {
-    return <ErrorBanner message={errorMsg} onRetry={() => { setStatus('loading'); setErrorMsg(null) }} onDismiss={() => setErrorMsg(null)} />
+    return <ErrorBanner message={errorMsg} onRetry={() => { setStatus('loading'); setErrorMsg(null); api.health().then(() => setStatus('ok')).catch((err: unknown) => { setStatus('error'); setErrorMsg(err instanceof Error ? err.message : 'Backend unreachable') }) }} onDismiss={() => setErrorMsg(null)} />
   }
 
   return (

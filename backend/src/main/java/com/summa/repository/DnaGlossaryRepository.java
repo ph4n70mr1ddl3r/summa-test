@@ -13,7 +13,7 @@ public interface DnaGlossaryRepository extends JpaRepository<DnaGlossary, String
     List<DnaGlossary> findByDomainId(String domainId);
 
     @Query("SELECT g FROM DnaGlossary g WHERE g.status = 'active' AND (g.domainId = :domainId OR g.domainId IS NULL) ORDER BY g.domainId ASC, g.term ASC")
-    List<DnaGlossary> findActiveByScope(String domainId);
+    List<DnaGlossary> findActiveByScope(@org.springframework.data.repository.query.Param("domainId") String domainId);
 
     List<DnaGlossary> findByStatus(String status);
     long countByDomainIdAndStatus(String domainId, String status);

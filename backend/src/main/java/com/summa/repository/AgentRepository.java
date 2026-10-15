@@ -24,30 +24,30 @@ public interface AgentRepository extends JpaRepository<Agent, String> {
     List<Agent> findBySpawnedBy(String spawnedBy);
 
     @Query("SELECT a FROM Agent a WHERE a.ownerHumanId = :ownerId AND a.status = 'active'")
-    List<Agent> findActiveByOwner(String ownerId);
+    List<Agent> findActiveByOwner(@org.springframework.data.repository.query.Param("ownerId") String ownerId);
 
     @Query("SELECT a FROM Agent a WHERE a.ownerHumanId = :ownerId")
-    List<Agent> findByOwner(String ownerId);
+    List<Agent> findByOwner(@org.springframework.data.repository.query.Param("ownerId") String ownerId);
 
     @Query("SELECT a FROM Agent a WHERE a.ownerHumanId = :ownerId ORDER BY a.createdAt DESC LIMIT :limit")
     List<Agent> findByOwnerOrdered(@org.springframework.data.repository.query.Param("ownerId") String ownerId,
                                     @org.springframework.data.repository.query.Param("limit") int limit);
 
     @Query("SELECT a FROM Agent a WHERE a.status = :status")
-    List<Agent> findByStatus(String status);
+    List<Agent> findByStatus(@org.springframework.data.repository.query.Param("status") String status);
 
     @Query("SELECT a FROM Agent a WHERE a.status = :status ORDER BY a.createdAt DESC LIMIT :limit")
     List<Agent> findByStatusOrdered(@org.springframework.data.repository.query.Param("status") String status,
                                        @org.springframework.data.repository.query.Param("limit") int limit);
 
     @Query("SELECT a FROM Agent a WHERE a.status = 'active' AND a.ttlAt IS NOT NULL AND a.ttlAt < :now")
-    List<Agent> findActiveExpiredBefore(java.time.Instant now);
+    List<Agent> findActiveExpiredBefore(@org.springframework.data.repository.query.Param("now") java.time.Instant now);
 
     @Query("SELECT a FROM Agent a WHERE a.status = 'suspended' AND a.ttlAt IS NOT NULL AND a.ttlAt < :now")
-    List<Agent> findSuspendedExpiredBefore(java.time.Instant now);
+    List<Agent> findSuspendedExpiredBefore(@org.springframework.data.repository.query.Param("now") java.time.Instant now);
 
     @Query("SELECT a FROM Agent a WHERE a.templateId = :templateId AND a.status = 'active'")
-    List<Agent> findActiveByTemplateId(String templateId);
+    List<Agent> findActiveByTemplateId(@org.springframework.data.repository.query.Param("templateId") String templateId);
 
     long countByTemplateIdAndStatus(String templateId, String status);
 }

@@ -12,7 +12,7 @@ describe('formatDate', () => {
     expect(formatDate(undefined)).toBe('?')
   })
 
-  it('formats epoch seconds as local datetime', () => {
+  it('formats epoch seconds as UTC datetime', () => {
     const d = formatDate(1700000000)
     expect(d).not.toBe('?')
     expect(d.length).toBeGreaterThan(0)

@@ -12,7 +12,7 @@ A self-hosted platform where human employees and AI agents work as one organizat
 - Python 3.10+ (optional — required only for spec lint tooling)
 - curl (required for dev.sh health checks)
 
-### Start Single-Process Mode (backend only)
+### Start Single-Process Mode (backend only — no console)
 
 ```bash
 # Build the backend JAR first (./start.sh runs the packaged JAR)
@@ -20,6 +20,8 @@ npm run build:backend
 export SUMMA_AUTH_JWT_SECRET=$(openssl rand -hex 32)
 ./start.sh
 ```
+
+> Single-process mode serves the API on :8080 only. The console at :3000 requires `./dev.sh` or `docker compose up -d`.
 
 ### Development Mode (backend + console)
 
@@ -41,7 +43,7 @@ cp .env.example .env
 docker compose up -d
 ```
 
-> **Note:** Ports are bound to `127.0.0.1` by default for security. To expose externally, change the port mappings in `docker-compose.yml` (e.g., `"8080:8080"`).
+> **Note:** Ports are bound to `127.0.0.1` by default for security. To expose externally, remove the `127.0.0.1:` host-side prefix in `docker-compose.yml` port mappings (i.e., change `"127.0.0.1:8080:8080"` to `"8080:8080"`).
 
 ## Architecture
 

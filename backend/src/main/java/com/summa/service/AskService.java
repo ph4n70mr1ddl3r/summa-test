@@ -229,6 +229,11 @@ public class AskService {
     }
 
     @Transactional(readOnly = true)
+    public List<Ask> findByFromAndStatusPending(String from) {
+        return askRepository.findByFromAndStatusPending(from);
+    }
+
+    @Transactional(readOnly = true)
     public List<Ask> findByStatus(String status, int limit) {
         return askRepository.findByStatusOrdered(status, limit);
     }
@@ -423,15 +428,18 @@ public class AskService {
      * Pool principals are the target human, active admins (for admin broadcast), and domain owners.
      */
     private boolean isPoolPrincipal(Ask ask, String responder) {
-        // Direct target match
-        if (ask.getTo() != null && ask.getTo().equals(responder)) {
-            Optional<Human> target = memberService.findHuman(ask.getTo());
+        String responderClean = JsonHelpers.stripIdPrefix(responder);
+        String targetClean = JsonHelpers.stripIdPrefix(ask.getTo());
+        // Direct target match: target stored as keyed union (h:<id>/a:<id>); compare cleaned forms
+        if (targetClean != null && targetClean.equals(responderClean)
+                && !OffboardingWalkService.ADMIN_BROADCAST.equals(targetClean)) {
+            Optional<Human> target = memberService.findHuman(targetClean);
             return target.isPresent() && !RbacRole.VIEWER.getValue().equals(target.get().getRbac());
         }
         // Admin broadcast: any active admin is a pool principal
-        if (ask.getTo() != null && OffboardingWalkService.ADMIN_BROADCAST.equals(ask.getTo())) {
+        if (OffboardingWalkService.ADMIN_BROADCAST.equals(ask.getTo())) {
             return memberService.findAdmins().stream()
-                    .anyMatch(h -> h.getId().equals(responder));
+                    .anyMatch(h -> h.getId().equals(responderClean));
         }
         return false;
     }
@@ -585,7 +593,7 @@ public class AskService {
             throw new IllegalStateException("Can only withdraw pending asks, current status: " + ask.getStatus());
         }
 
-        if (JsonHelpers.stripIdPrefix(originator) == null || !JsonHelpers.stripIdPrefix(originator).equals(ask.getFrom())) {
+        if (JsonHelpers.stripIdPrefix(originator) == null || !JsonHelpers.stripIdPrefix(originator).equals(JsonHelpers.stripIdPrefix(ask.getFrom()))) {
             throw new IllegalArgumentException("Only the originator can withdraw");
         }
 
@@ -611,26 +619,30 @@ public class AskService {
      */
     private boolean isEligibleResponder(Ask ask, String responder) {
         // ASK-031: System cannot respond to its own or others' asks
-        if ("system".equals(responder)) {
+        String responderClean = JsonHelpers.stripIdPrefix(responder);
+        if ("system".equals(responderClean)) {
             return false;
         }
 
-        // Direct match
-        if (ask.getTo() != null && ask.getTo().equals(responder)) {
+        // Direct match: target is stored as a keyed union (h:<id>/a:<id>) or 'admins'.
+        // The responder is normalized the same way, so compare cleaned forms.
+        String targetClean = JsonHelpers.stripIdPrefix(ask.getTo());
+        if (targetClean != null && targetClean.equals(responderClean)
+                && !OffboardingWalkService.ADMIN_BROADCAST.equals(targetClean)) {
             return true;
         }
 
         // Admin broadcast: any active admin can respond to `admins` target
         if (OffboardingWalkService.ADMIN_BROADCAST.equals(ask.getTo())) {
             return memberService.findAdmins().stream()
-                    .anyMatch(h -> h.getId().equals(responder));
+                    .anyMatch(h -> h.getId().equals(responderClean));
         }
 
         // Deputy check: responder is the deputy of the target human
-        Optional<Human> targetHuman = memberService.findHuman(ask.getTo());
+        Optional<Human> targetHuman = memberService.findHuman(targetClean);
         if (targetHuman.isPresent()) {
             String deputyId = targetHuman.get().getDeputyMemberId();
-            if (deputyId != null && deputyId.equals(responder)) {
+            if (deputyId != null && JsonHelpers.stripIdPrefix(deputyId).equals(responderClean)) {
                 return true;
             }
         }

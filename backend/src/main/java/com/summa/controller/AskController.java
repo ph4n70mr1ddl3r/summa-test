@@ -56,11 +56,13 @@ public class AskController {
         ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
         if (auth != null) return auth;
         int cappedLimit = Math.min(Math.max(limit, 1), Defaults.MAX_LIST_LIMIT);
+        // Ask "to"/"from" values are stored as keyed unions; normalize the inbox
+        // target so the query matches the stored representation.
         if (to != null) {
-            return ResponseEntity.ok(askService.findByTo(JsonHelpers.stripIdPrefix(to), cappedLimit));
+            return ResponseEntity.ok(askService.findByTo(normalizeMemberRef(to), cappedLimit));
         }
         // Default: show asks to the current actor (inbox), not all pending asks
-        return ResponseEntity.ok(askService.findByTo(JsonHelpers.stripIdPrefix(actor), cappedLimit));
+        return ResponseEntity.ok(askService.findByTo(normalizeMemberRef(actor), cappedLimit));
     }
 
     @GetMapping("/{id}")
@@ -98,10 +100,14 @@ public class AskController {
             if (to == null || to.isBlank()) {
                 throw new IllegalArgumentException("to is required");
             }
-            // Strip keyed-union prefix (h:/a:) for consistency with other controllers
-            String toClean = JsonHelpers.stripIdPrefix(to);
-            if (memberService.findHuman(toClean).isEmpty() && memberService.findAgent(toClean).isEmpty()
-                    && !OffboardingWalkService.ADMIN_BROADCAST.equals(toClean)) {
+            // Strip keyed-union prefix (h:/a:) for consistency with other controllers.
+            // The asks.from/asks.to CHECK constraint only accepts 'system', 'admins',
+            // or a keyed union, so a plain member id must be re-prefixed.
+            String toClean = normalizeMemberRef(to);
+            String fromClean = normalizeMemberRef(actor);
+            if (memberService.findHuman(JsonHelpers.stripIdPrefix(toClean)).isEmpty()
+                    && memberService.findAgent(JsonHelpers.stripIdPrefix(toClean)).isEmpty()
+                    && !OffboardingWalkService.ADMIN_BROADCAST.equals(JsonHelpers.stripIdPrefix(toClean))) {
                 throw new IllegalArgumentException("to does not reference an existing human or agent: " + to);
             }
             String slaTier = body.get("slaTier");
@@ -145,7 +151,7 @@ public class AskController {
             }
             Ask ask = askService.create(
                 kind,
-                JsonHelpers.stripIdPrefix(actor),
+                fromClean,
                 toClean,
                 body.get("payload"),
                 slaTier,
@@ -173,7 +179,9 @@ public class AskController {
             if (response == null || response.isBlank()) {
                 throw new IllegalArgumentException("response is required");
             }
-            Ask ask = askService.respond(id, actor, response);
+            // The asks table stores from/to as keyed unions (h:<id> / a:<id>),
+            // so the human actor is re-prefixed after stripping.
+            Ask ask = askService.respond(id, normalizeMemberRef(actor), response);
             return ResponseEntity.ok(ask);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
@@ -188,7 +196,7 @@ public class AskController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            Ask ask = askService.withdraw(id, actor);
+            Ask ask = askService.withdraw(id, normalizeMemberRef(actor));
             return ResponseEntity.ok(ask);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
@@ -210,6 +218,19 @@ public class AskController {
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         }
+    }
+    /**
+     * Normalize a member reference to the stored keyed-union representation
+     * used in asks.from / asks.to. Plain human ids are prefixed with "h:".
+     * "system" and "admins" pass through unchanged.
+     */
+    private static String normalizeMemberRef(String ref) {
+        String clean = JsonHelpers.stripIdPrefix(ref);
+        if (clean == null || OffboardingWalkService.ADMIN_BROADCAST.equals(clean)
+                || Defaults.SYSTEM_ACTOR.equals(clean)) {
+            return clean;
+        }
+        return "h:" + clean;
     }
 
 }

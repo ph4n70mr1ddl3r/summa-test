@@ -120,7 +120,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T | undefin
       } catch {
         message = `Network error (connection failed)`;
       }
-      const err = new ApiError(message, res.status);
+      const err = new ApiError(res.status === 401 ? 'Session expired' : message, res.status);
       if (res.status === 401) {
         setAuthToken(null, null);
         // Prevent duplicate redirects if multiple requests fail simultaneously.
@@ -973,8 +973,8 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(body),
       }),
-    reportRun: (id: string, body: Record<string, unknown>) =>
-      request<Record<string, unknown>>(`/nodes/${id}/runs/report`, {
+    reportRun: (id: string, runId: string, body: Record<string, unknown>) =>
+      request<Record<string, unknown>>(`/nodes/${id}/runs/${runId}/report`, {
         method: 'POST',
         body: JSON.stringify(body),
       }),

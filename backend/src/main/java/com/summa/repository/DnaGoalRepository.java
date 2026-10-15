@@ -14,9 +14,10 @@ public interface DnaGoalRepository extends JpaRepository<DnaGoal, String> {
     long countByDomainIdAndStatusNot(String domainId, String status);
 
     @Query("SELECT g FROM DnaGoal g WHERE g.status = 'active' AND g.inject = :inject AND g.effectiveFrom <= :now AND (g.effectiveTo IS NULL OR g.effectiveTo > :now)")
-    List<DnaGoal> findActiveInject(String inject, Instant now);
-    
+    List<DnaGoal> findActiveInject(@org.springframework.data.repository.query.Param("inject") String inject,
+                                     @org.springframework.data.repository.query.Param("now") Instant now);
+
     @Query("SELECT g FROM DnaGoal g WHERE g.status = 'active' AND g.effectiveFrom <= :now AND (g.effectiveTo IS NULL OR g.effectiveTo > :now) ORDER BY g.inject DESC, g.id ASC")
-    List<DnaGoal> findAllActiveWindowed(Instant now);
+    List<DnaGoal> findAllActiveWindowed(@org.springframework.data.repository.query.Param("now") Instant now);
 
 }

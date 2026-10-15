@@ -17,7 +17,7 @@ public interface RunRepository extends JpaRepository<Run, String> {
     List<Run> findByInitiativeIdAndStatus(String initiativeId, String status);
     
     @Query("SELECT r FROM Run r WHERE r.status = 'running' AND r.startedAt < :before")
-    List<Run> findRunningBefore(Instant before);
+    List<Run> findRunningBefore(@org.springframework.data.repository.query.Param("before") Instant before);
     
     long countByStatus(String status);
     long countByAgentId(String agentId);
@@ -26,14 +26,17 @@ public interface RunRepository extends JpaRepository<Run, String> {
     List<Run> findByOrderByCreatedAtDesc();
 
     @Query("SELECT r FROM Run r WHERE r.agentId = :agentId ORDER BY r.createdAt DESC LIMIT :limit")
-    List<Run> findByAgentIdOrderByCreatedAtDesc(String agentId, int limit);
+    List<Run> findByAgentIdOrderByCreatedAtDesc(@org.springframework.data.repository.query.Param("agentId") String agentId,
+                                                   @org.springframework.data.repository.query.Param("limit") int limit);
 
     @Query("SELECT r FROM Run r WHERE r.workspaceId = :workspaceId ORDER BY r.createdAt DESC LIMIT :limit")
-    List<Run> findByWorkspaceIdOrderByCreatedAtDesc(String workspaceId, int limit);
+    List<Run> findByWorkspaceIdOrderByCreatedAtDesc(@org.springframework.data.repository.query.Param("workspaceId") String workspaceId,
+                                                       @org.springframework.data.repository.query.Param("limit") int limit);
 
     @Query("SELECT r FROM Run r WHERE r.status = :status ORDER BY r.createdAt DESC LIMIT :limit")
-    List<Run> findByStatusOrderByCreatedAtDesc(String status, int limit);
+    List<Run> findByStatusOrderByCreatedAtDesc(@org.springframework.data.repository.query.Param("status") String status,
+                                                 @org.springframework.data.repository.query.Param("limit") int limit);
 
     @Query("SELECT r FROM Run r ORDER BY r.createdAt DESC LIMIT :limit")
-    List<Run> findByOrderByCreatedAtDesc(int limit);
+    List<Run> findByOrderByCreatedAtDesc(@org.springframework.data.repository.query.Param("limit") int limit);
 }

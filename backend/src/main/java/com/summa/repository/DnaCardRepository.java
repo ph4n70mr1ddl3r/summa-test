@@ -11,7 +11,7 @@ public interface DnaCardRepository extends JpaRepository<DnaCard, String> {
     List<DnaCard> findByDomainId(String domainId);
     List<DnaCard> findByDomainIdAndStatus(String domainId, String status);
     @Query("SELECT c FROM DnaCard c WHERE c.domainId = :domainId AND c.status = 'active' ORDER BY c.title ASC")
-    List<DnaCard> findActiveByDomain(String domainId);
+    List<DnaCard> findActiveByDomain(@org.springframework.data.repository.query.Param("domainId") String domainId);
     List<DnaCard> findByStatus(String status);
     long countByDomainIdAndStatus(String domainId, String status);
     long countByDomainIdAndStatusNot(String domainId, String status);
