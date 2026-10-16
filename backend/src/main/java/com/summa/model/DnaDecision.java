@@ -20,7 +20,7 @@ public class DnaDecision {
     @Column(name = "outcome_md", nullable = false, columnDefinition = "TEXT")
     private String outcomeMd;
 
-    @Column(name = "decided_by", nullable = false, length = 36)
+    @Column(name = "decided_by", nullable = false, length = 45)
     private String decidedBy;
 
     @Column(name = "decided_at", nullable = false)

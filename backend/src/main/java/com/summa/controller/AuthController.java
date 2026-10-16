@@ -48,7 +48,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> body, HttpServletRequest request) {
         if (!localAuthEnabled) {
-            return ControllerResponses.serviceUnavailable(auditService, "Local authentication is not enabled. Use OIDC/gateway auth instead.");
+            return ControllerResponses.gate(auditService, "Local authentication is not enabled. Use OIDC/gateway auth instead.");
         }
 
         String email = body.get("email");

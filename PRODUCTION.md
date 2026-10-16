@@ -40,7 +40,7 @@ Kubernetes (prod): decomposed services
 |-----------|--------------|---------------------|-------------|
 | SQLite DB | `~/.summa/summa.db` | `/data/db/summa.db` | All runtime state (WAL mode) |
 | DNA Git Repo | `~/.summa/dna` | `/data/dna` | Canonical DNA store (markdown) |
-| Logs | stdout/stderr | stdout/stderr | Application logs (collect via `journald` / `docker compose logs`) |
+| Logs | stdout/stderr + `~/.summa/logs/summa.log` | stdout/stderr + `/data/logs/summa.log` | Application logs (also collect via `journald` / `docker compose logs`) |
 
 > Override paths via `SUMMA_DB_PATH` and `SUMMA_DNA_REPO`. In containers, `~` is not expanded — use absolute paths.
 
@@ -280,7 +280,7 @@ curl -X POST http://localhost:8080/api/admin/backup/restore \
 - [ ] Configure firewall for ports 8080 (API, always) and 3000 (console, dev.sh / compose only)
 - [ ] Rotate JWT secret annually; update `SUMMA_AUTH_JWT_SECRET` and redeploy
 - [ ] Back up database and DNA repo daily; backups must reside under `java.io.tmpdir` or the data directory
-- [ ] Set `SUMMA_AUTH_LOCAL_AUTH_ENABLED=false` in production when using OIDC/gateway auth
+- [ ] Leave `SUMMA_AUTH_LOCAL_AUTH_ENABLED=true` until OIDC is wired (it is the only human auth path today); set it `false` only once an OIDC/gateway auth path is actually serving logins
 - [ ] Set `SUMMA_SPEND_CEILING` to a realistic org limit
 - [ ] Review `GET /api/org/audit` periodically for anomalous activity
 - [ ] Rotate node keypairs when a node is compromised (`POST /api/nodes/{id}/revoke` then re-enroll)

@@ -244,6 +244,7 @@ public class OrgController {
             m.put("name", h.getName());
             m.put("rbac", h.getRbac());
             m.put("active", h.isActive());
+            m.put("createdAt", h.getCreatedAt());
             members.add(m);
         }
         for (Agent a : agents) {
@@ -253,6 +254,7 @@ public class OrgController {
             m.put("name", a.getName());
             m.put("class", a.getAgentClass());
             m.put("status", a.getStatus());
+            m.put("createdAt", a.getCreatedAt());
             members.add(m);
         }
         return ResponseEntity.ok(Map.of("members", members, "total", members.size()));

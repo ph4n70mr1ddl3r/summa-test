@@ -191,14 +191,14 @@ class AuthControllerTest {
     }
 
     @Test
-    void login_localAuthDisabled_returnsServiceUnavailable() {
+    void login_localAuthDisabled_returnsGateRefusal() {
         setField(controller, "localAuthEnabled", false);
 
         Map<String, String> body = Map.of("email", "test@example.com", "password", "pass");
         var result = controller.login(body, httpServletRequest);
 
-        assertEquals(503, result.getStatusCodeValue());
-        assertEquals("service_unavailable", result.getBody().get("code"));
+        assertEquals(403, result.getStatusCodeValue());
+        assertEquals("gate", result.getBody().get("code"));
     }
 
     private Human newHuman() {

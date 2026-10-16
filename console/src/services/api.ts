@@ -966,12 +966,14 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(body),
       }),
-    claims: (id: string) =>
-      request<string[]>(`/nodes/${id}/claims`),
-    workPull: (id: string, body: Record<string, unknown>) =>
-      request<Record<string, unknown>>(`/nodes/${id}/work/pull`, {
+    claims: (id: string, body: Record<string, string>) =>
+      request<Node>(`/nodes/${id}/claims`, {
         method: 'POST',
         body: JSON.stringify(body),
+      }),
+    workPull: (id: string) =>
+      request<Run[]>(`/nodes/${id}/work/pull`, {
+        method: 'POST',
       }),
     reportRun: (id: string, runId: string, body: Record<string, unknown>) =>
       request<Record<string, unknown>>(`/nodes/${id}/runs/${runId}/report`, {

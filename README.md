@@ -10,7 +10,7 @@ A self-hosted platform where human employees and AI agents work as one organizat
 - Node.js 22+
 - Maven 3.9+
 - Python 3.10+ (optional — required only for spec lint tooling)
-- curl (required for dev.sh health checks)
+- curl or wget (used by dev.sh health checks; curl preferred)
 
 ### Start Single-Process Mode (backend only — no console)
 

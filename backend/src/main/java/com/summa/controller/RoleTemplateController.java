@@ -52,6 +52,9 @@ public class RoleTemplateController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Admin access required to create role templates");
+        }
         try {
             if (body.get("name") == null || body.get("name").isBlank()) {
                 throw new IllegalArgumentException("name is required");
@@ -83,6 +86,9 @@ public class RoleTemplateController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Admin access required to publish role templates");
+        }
         try {
             RoleTemplate template = templateService.publish(id, actor);
             return ResponseEntity.ok(template);
@@ -98,6 +104,9 @@ public class RoleTemplateController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Admin access required to retire role templates");
+        }
         try {
             RoleTemplate template = templateService.retire(id, actor);
             return ResponseEntity.ok(template);

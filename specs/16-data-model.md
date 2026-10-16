@@ -99,7 +99,7 @@ pats           (id, member_id, name, token_hash, scopes json, created_at, expire
                 revoked_at?, last_used_at?, updated_at?)
 governance_settings (key, value json, edited_by member, edited_at)
  memory_items   (id, tier 'personal'|'project'|'proposal', member_id?, workspace_id?,
-                 content_md, provenance json, tainted INTEGER default 0, created_at, updated_at?,
+                 content_md, provenance json, tainted INTEGER default 0, created_at,
                  reviewed_by?, reviewed_at?)
 ```
 

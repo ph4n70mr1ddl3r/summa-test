@@ -54,7 +54,7 @@ public class DataHoldService {
         if (limit <= 0) {
             return holdRepository.findByReleasedAtIsNull();
         }
-        return holdRepository.findByReleasedAtIsNullOrderByCreatedAtDesc(limit, 0);
+        return holdRepository.findReleasedOrderByCreatedAtDesc(limit);
     }
 
     @Transactional(readOnly = true)

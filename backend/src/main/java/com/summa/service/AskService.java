@@ -239,6 +239,11 @@ public class AskService {
     }
 
     @Transactional(readOnly = true)
+    public List<Ask> findByToAndStatus(String to, String status, int limit) {
+        return askRepository.findByToAndStatusOrdered(to, status, limit);
+    }
+
+    @Transactional(readOnly = true)
     public List<Ask> findAllPending(int limit) {
         return askRepository.findByStatusPendingOrdered(limit);
     }

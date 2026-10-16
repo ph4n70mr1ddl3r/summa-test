@@ -56,6 +56,9 @@ public class DnaDomainController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Admin access required to create domains");
+        }
         try {
             if (body.get("name") == null || body.get("name").isBlank()) {
                 throw new IllegalArgumentException("name is required");
@@ -94,6 +97,9 @@ public class DnaDomainController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Admin access required to archive domains");
+        }
         try {
             DnaDomain domain = domainService.archive(id, actor);
             return ResponseEntity.ok(domain);
@@ -128,6 +134,9 @@ public class DnaDomainController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Admin access required to re-point domain owners");
+        }
         try {
             String rawOwner = body.get("ownerHumanId");
             String ownerClean = rawOwner != null && !rawOwner.isBlank() ? JsonHelpers.stripIdPrefix(rawOwner) : null;

@@ -58,11 +58,12 @@ public class AskController {
         int cappedLimit = Math.min(Math.max(limit, 1), Defaults.MAX_LIST_LIMIT);
         // Ask "to"/"from" values are stored as keyed unions; normalize the inbox
         // target so the query matches the stored representation.
-        if (to != null) {
-            return ResponseEntity.ok(askService.findByTo(normalizeMemberRef(to), cappedLimit));
+        String target = to != null ? normalizeMemberRef(to) : normalizeMemberRef(actor);
+        if (status != null && !status.isBlank()) {
+            return ResponseEntity.ok(askService.findByToAndStatus(target, status, cappedLimit));
         }
-        // Default: show asks to the current actor (inbox), not all pending asks
-        return ResponseEntity.ok(askService.findByTo(normalizeMemberRef(actor), cappedLimit));
+        // Default: show pending asks to the target (the current actor's inbox)
+        return ResponseEntity.ok(askService.findByTo(target, cappedLimit));
     }
 
     @GetMapping("/{id}")

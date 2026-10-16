@@ -83,3 +83,7 @@ jobs:
         run: docker build -f Dockerfile.console -t summa-console:test .
       - name: Validate docker-compose config
         run: docker compose config --quiet
+        env:
+          # Satisfy the compose-level required-variable guard (${SUMMA_AUTH_JWT_SECRET:?})
+          # on a clean checkout with no .env file.
+          SUMMA_AUTH_JWT_SECRET: ci-compose-validation-secret-0000000000

@@ -15,8 +15,8 @@ public interface AuditEventRepository extends JpaRepository<AuditEvent, String> 
     @Query("SELECT a FROM AuditEvent a WHERE a.actor = :actor ORDER BY a.at DESC")
     List<AuditEvent> findByActor(@org.springframework.data.repository.query.Param("actor") String actor);
     
-    @Query("SELECT a FROM AuditEvent a ORDER BY a.at DESC")
-    List<AuditEvent> findRecent(int limit);
+    @Query("SELECT a FROM AuditEvent a ORDER BY a.at DESC LIMIT :limit")
+    List<AuditEvent> findRecent(@org.springframework.data.repository.query.Param("limit") int limit);
     
     long countByAtAfter(java.time.Instant since);
 }

@@ -424,4 +424,19 @@ class AskServiceTest {
         assertEquals("", entries.get(1).get("response"));
         assertEquals("new-answer", entries.get(2).get("response"));
     }
+
+    @Test
+    void findByToAndStatus_queriesTargetedStatus() {
+        Ask ask = new Ask();
+        ask.setId("ask-9");
+        when(askRepository.findByToAndStatusOrdered("h:user-1", "answered", 25))
+            .thenReturn(List.of(ask));
+
+        AskService svc = buildService();
+        List<Ask> result = svc.findByToAndStatus("h:user-1", "answered", 25);
+
+        assertEquals(1, result.size());
+        assertEquals("ask-9", result.get(0).getId());
+        verify(askRepository).findByToAndStatusOrdered("h:user-1", "answered", 25);
+    }
 }

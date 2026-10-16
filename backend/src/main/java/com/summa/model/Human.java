@@ -26,6 +26,10 @@ public class Human {
     @Column(name = "password_hash", columnDefinition = "TEXT")
     private String passwordHash;
 
+    @JsonIgnore
+    @Column(name = "auth", nullable = false, columnDefinition = "TEXT")
+    private String auth;
+
     @Column(name = "deputy_member_id", length = 45)
     private String deputyMemberId;
 
@@ -57,6 +61,7 @@ public class Human {
         }
         if (updatedAt == null) updatedAt = Instant.now();
         if (rbac == null || rbac.isBlank()) rbac = RbacRole.MEMBER.getValue();
+        if (auth == null || auth.isBlank()) auth = "{}";
         if (email != null) email = email.toLowerCase();
         if (sessionVersion <= 0) sessionVersion = 1;
     }
@@ -92,6 +97,9 @@ public class Human {
     public String getPasswordHash() { return passwordHash; }
     @JsonIgnore
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+    @JsonIgnore
+    public String getAuth() { return auth; }
+    public void setAuth(String auth) { this.auth = auth; }
     public boolean isActive() { return deactivatedAt == null; }
     public int getSessionVersion() { return sessionVersion; }
     public void setSessionVersion(int sessionVersion) { this.sessionVersion = sessionVersion; }

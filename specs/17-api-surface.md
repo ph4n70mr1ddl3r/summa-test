@@ -43,7 +43,7 @@ this surface is the PRN-009 form — refuse, audit, ask where a human decision i
   create/update/retire only (never delete; decisions create-only).
 - **API-022** — `POST /dna/proposals` · `POST /dna/proposals/:id/review` (publish|reject) ·
   `POST /dna/proposals/:id/withdraw` · `POST /dna/proposals/:id/amend` (revision during
-  review) · `GET /dna/review-queue`.
+  review) · `GET /dna/proposals/review-queue`.
 - **API-023** — `POST /dna/domains/:id/split|merge|rename|archive` — governed topology ops
   per DGV-001; archive refuses live-set holdings (DGV-040); owner-addressed pending asks
   settle inside the event (DGV-047).
