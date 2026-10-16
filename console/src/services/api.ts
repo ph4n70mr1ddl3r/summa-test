@@ -10,10 +10,12 @@ declare global {
 
 export class ApiError extends Error {
   status: number;
-  constructor(message: string, status: number) {
+  body?: unknown;
+  constructor(message: string, status: number, body?: unknown) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
+    this.body = body;
   }
 }
 
@@ -109,18 +111,20 @@ async function request<T>(path: string, init?: RequestInit): Promise<T | undefin
     });
     if (!res.ok) {
       let message: string;
+      let errorBody: unknown;
       try {
         const text = await res.text();
         try {
           const err = JSON.parse(text) as { code?: string; message?: string };
           message = err.message || `HTTP ${res.status}`;
+          errorBody = err;
         } catch {
           message = text || `HTTP ${res.status}`;
         }
       } catch {
         message = `Network error (connection failed)`;
       }
-      const err = new ApiError(res.status === 401 ? 'Session expired' : message, res.status);
+      const err = new ApiError(res.status === 401 ? 'Session expired' : message, res.status, errorBody);
       if (res.status === 401) {
         setAuthToken(null, null);
         // Prevent duplicate redirects if multiple requests fail simultaneously.
@@ -157,11 +161,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T | undefin
     }
     return json;
   } catch (err) {
-    // Preserve the original HTTP status for server-origin errors (401, 429, 500, etc.).
-    // Only wrap true network/abort failures with status 0 so callers can still
-    // distinguish between a network error and an actual HTTP error response.
+    // Preserve the original HTTP status and body for server-origin errors
+    // (401, 429, 500, 503, etc.). Only wrap true network/abort failures
+    // with status 0 so callers can still distinguish between a network error
+    // and an actual HTTP error response.
     const status = err instanceof ApiError ? err.status : 0;
-    throw new ApiError(err instanceof Error ? err.message : String(err), status);
+    const body = err instanceof ApiError ? err.body : undefined;
+    throw new ApiError(err instanceof Error ? err.message : String(err), status, body);
   } finally {
     clearTimeout(timeoutId);
   }
@@ -711,11 +717,6 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(body),
       }),
-    publishProposal: (id: string) =>
-      request<DnaProposal>(`/dna/proposals/${id}/review`, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'publish' }),
-      }),
     reviewProposal: (id: string, action: 'publish' | 'reject') =>
       request<DnaProposal>(`/dna/proposals/${id}/review`, {
         method: 'POST',
@@ -961,7 +962,7 @@ export const api = {
         method: 'PUT',
         body: JSON.stringify(body),
       }),
-    heartbeat: (id: string, body: Record<string, unknown>) =>
+    heartbeat: (id: string, body: Record<string, string>) =>
       request<Record<string, unknown>>(`/nodes/${id}/heartbeat`, {
         method: 'POST',
         body: JSON.stringify(body),
@@ -1051,7 +1052,7 @@ export const api = {
         method: 'POST',
       }),
     setLeader: (id: string, memberId: string) =>
-      request<Record<string, unknown>>(`/org/groups/${id}/leader`, {
+      request<Group>(`/org/groups/${id}/leader`, {
         method: 'PUT',
         body: JSON.stringify({ leaderMemberId: memberId }),
       }),

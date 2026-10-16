@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { api } from '../services/api'
+import { api, ApiError } from '../services/api'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export default function Home() {
@@ -62,8 +62,20 @@ export default function Home() {
   )
 }
 
+function healthMessage(err: unknown): string {
+  if (err instanceof ApiError && err.status === 503) {
+    const body = err.body as { status?: string; checks?: Record<string, string> } | undefined
+    const down = body?.checks
+      ? Object.entries(body.checks).filter(([, v]) => v && v !== 'UP').map(([k]) => k).join(', ')
+      : undefined
+    return down ? `Backend degraded: ${down} unavailable` : 'Backend degraded'
+  }
+  if (err instanceof Error && err.message) return err.message
+  return 'Backend unreachable'
+}
+
 function ApiStatusCheck() {
-  const [status, setStatus] = useState<'ok' | 'error' | 'loading'>('loading')
+  const [status, setStatus] = useState<'ok' | 'degraded' | 'error' | 'loading'>('loading')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   useEffect(() => {
@@ -73,7 +85,12 @@ function ApiStatusCheck() {
         await api.health()
         if (!aborted) { setStatus('ok'); setErrorMsg(null) }
       } catch (err) {
-        if (!aborted) { setStatus('error'); setErrorMsg(err instanceof Error ? err.message : 'Backend unreachable') }
+        if (aborted) return
+        if (err instanceof ApiError && err.status === 503) {
+          setStatus('degraded'); setErrorMsg(healthMessage(err))
+        } else {
+          setStatus('error'); setErrorMsg(healthMessage(err))
+        }
       }
     }
     check()
@@ -81,8 +98,8 @@ function ApiStatusCheck() {
     return () => { aborted = true; clearInterval(interval) }
   }, [])
 
-  if (status === 'error' && errorMsg) {
-    return <ErrorBanner message={errorMsg} onRetry={() => { setStatus('loading'); setErrorMsg(null); api.health().then(() => setStatus('ok')).catch((err: unknown) => { setStatus('error'); setErrorMsg(err instanceof Error ? err.message : 'Backend unreachable') }) }} onDismiss={() => setErrorMsg(null)} />
+  if ((status === 'error' || status === 'degraded') && errorMsg) {
+    return <ErrorBanner message={errorMsg} onRetry={() => { setStatus('loading'); setErrorMsg(null); api.health().then(() => setStatus('ok')).catch((err: unknown) => { setStatus(err instanceof ApiError && err.status === 503 ? 'degraded' : 'error'); setErrorMsg(healthMessage(err)) }) }} onDismiss={() => setErrorMsg(null)} />
   }
 
   return (
@@ -90,12 +107,16 @@ function ApiStatusCheck() {
       <span
         role="status"
         className={`w-2 h-2 rounded-full ${
-          status === 'ok' ? 'bg-green-400' : status === 'error' ? 'bg-red-400' : 'bg-yellow-400'
+          status === 'ok' ? 'bg-green-400' : status === 'degraded' ? 'bg-yellow-400' : status === 'error' ? 'bg-red-400' : 'bg-gray-400'
         }`}
-        aria-label={status === 'ok' ? 'Backend running' : status === 'error' ? 'Backend unreachable' : 'Backend checking'}
+        aria-label={
+          status === 'ok' ? 'Backend running' :
+          status === 'degraded' ? 'Backend degraded' :
+          status === 'error' ? 'Backend unreachable' : 'Backend checking'
+        }
       ></span>
       <span className="text-gray-400">
-        {status === 'ok' ? 'Backend: Running' : status === 'error' ? 'Backend: Unreachable' : 'Backend: Checking...'}
+        {status === 'ok' ? 'Backend: Running' : status === 'degraded' ? 'Backend: Degraded' : status === 'error' ? 'Backend: Unreachable' : 'Backend: Checking...'}
       </span>
     </div>
   )

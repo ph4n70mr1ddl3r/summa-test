@@ -5,11 +5,15 @@ import { MemoryRouter } from 'react-router-dom'
 import Home from './Home'
 import * as apiModule from '../services/api'
 
-vi.mock('../services/api', () => ({
-  api: {
-    health: vi.fn(),
-  },
-}))
+vi.mock('../services/api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../services/api')>()
+  return {
+    ...actual,
+    api: {
+      health: vi.fn(),
+    },
+  }
+})
 
 function renderWithRouter(ui: React.ReactNode) {
   return render(<MemoryRouter>{ui}</MemoryRouter>)
@@ -70,5 +74,28 @@ describe('Home page', () => {
       expect(container.textContent).toContain('Backend: Running')
     })
     expect(container.textContent).not.toContain('Service unavailable')
+  })
+
+  it('renders a distinct degraded state when the backend answers 503 with a health body', async () => {
+    const user = userEvent.setup()
+    const degraded503 = new apiModule.ApiError('HTTP 503', 503, {
+      status: 'DEGRADED',
+      checks: { database: 'DOWN', git_store: 'UP' },
+    })
+    vi.mocked(apiModule.api.health)
+      .mockImplementationOnce(() => Promise.reject(degraded503))
+      .mockResolvedValueOnce({ status: 'UP', service: 'summa', mode: 'single-process', checks: { database: 'UP', git_store: 'UP' } })
+
+    const { container } = renderWithRouter(<Home />)
+    await waitFor(() => {
+      expect(container.textContent).toContain('Backend degraded: database unavailable')
+    })
+    expect(container.textContent).not.toContain('Backend: Unreachable')
+    // Retry recovers to running
+    const retry = screen.getByRole('button', { name: 'Retry loading' })
+    await user.click(retry)
+    await waitFor(() => {
+      expect(container.textContent).toContain('Backend: Running')
+    })
   })
 })

@@ -50,7 +50,8 @@ public class BoardTaskService {
 
         // ORG-031: Refuse viewer or non-active members as assignee at creation time
         if (assigneeMemberId != null && !assigneeMemberId.isBlank()) {
-            Optional<Human> assigneeHuman = memberService.findHuman(assigneeMemberId);
+            String cleanAssignee = JsonHelpers.stripIdPrefix(assigneeMemberId);
+            Optional<Human> assigneeHuman = memberService.findHuman(cleanAssignee);
             if (assigneeHuman.isPresent()) {
                 if (memberService.isViewer(assigneeHuman.get())) {
                     throw new IllegalStateException("Viewers cannot be assigned board tasks");
@@ -59,7 +60,7 @@ public class BoardTaskService {
                     throw new IllegalStateException("Non-active members cannot be assigned board tasks");
                 }
             } else {
-                Optional<Agent> assigneeAgent = memberService.findAgent(assigneeMemberId);
+                Optional<Agent> assigneeAgent = memberService.findAgent(cleanAssignee);
                 if (assigneeAgent.isPresent()) {
                     if (!assigneeAgent.get().isActive()) {
                         throw new IllegalStateException("Suspended/retired agents cannot be assigned board tasks");
@@ -125,7 +126,8 @@ public class BoardTaskService {
         }
 
         // ORG-031: Refuse viewer assignees
-        Optional<Human> assigneeHuman = memberService.findHuman(assigneeMemberId);
+        String cleanAssignee = JsonHelpers.stripIdPrefix(assigneeMemberId);
+        Optional<Human> assigneeHuman = memberService.findHuman(cleanAssignee);
         if (assigneeHuman.isPresent()) {
             if (memberService.isViewer(assigneeHuman.get())) {
                 throw new IllegalStateException("Viewers cannot be assigned board tasks");
@@ -135,7 +137,7 @@ public class BoardTaskService {
             }
         } else {
             // Check if it's an agent
-            Optional<Agent> assigneeAgent = memberService.findAgent(assigneeMemberId);
+            Optional<Agent> assigneeAgent = memberService.findAgent(cleanAssignee);
             if (assigneeAgent.isPresent()) {
                 if (!assigneeAgent.get().isActive()) {
                     throw new IllegalStateException("Suspended/retired agents cannot be assigned board tasks");

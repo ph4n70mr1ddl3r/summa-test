@@ -125,6 +125,25 @@ class BoardTaskServiceTest {
     }
 
     @Test
+    void assign_stripsKeyedUnionPrefix() {
+        BoardTask task = new BoardTask();
+        task.setId("t1");
+        task.setStatus("open");
+        when(taskRepository.findById("t1")).thenReturn(Optional.of(task));
+
+        Human human = new Human();
+        human.setId("h1");
+        human.setRbac("admin");
+        when(memberService.findHuman("h1")).thenReturn(Optional.of(human));
+        when(taskRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        BoardTask result = boardTaskService.assign("t1", "h:h1", "admin");
+
+        assertEquals("in_progress", result.getStatus());
+        assertEquals("h:h1", result.getAssigneeMemberId());
+    }
+
+    @Test
     void assign_throwsForViewer() {
         BoardTask task = new BoardTask();
         task.setId("t1");

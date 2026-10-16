@@ -72,7 +72,8 @@ public class GroupService {
                 .orElseThrow(() -> new EntityNotFoundException("Group not found: " + id));
 
         // ORG-042: Validate leader eligibility — active human, not viewer, not ephemeral
-        Optional<Human> leaderOpt = memberService.findHuman(leaderMemberId);
+        String cleanLeader = JsonHelpers.stripIdPrefix(leaderMemberId);
+        Optional<Human> leaderOpt = memberService.findHuman(cleanLeader);
         if (leaderOpt.isEmpty()) {
             throw new EntityNotFoundException("Leader member not found: " + leaderMemberId);
         }
@@ -84,7 +85,7 @@ public class GroupService {
             throw new IllegalStateException("Viewers cannot be group leaders: " + leaderMemberId);
         }
         // Check not ephemeral agent
-        Optional<Agent> agentOpt = memberService.findAgent(leaderMemberId);
+        Optional<Agent> agentOpt = memberService.findAgent(cleanLeader);
         if (agentOpt.isPresent() && agentOpt.get().isEphemeral()) {
             throw new IllegalStateException("Ephemeral agents cannot be group leaders: " + leaderMemberId);
         }

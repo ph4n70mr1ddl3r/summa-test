@@ -198,6 +198,6 @@ public class TriggerController {
     private boolean mayControlTrigger(String triggerId, String actor) {
         Trigger trigger = triggerService.findById(triggerId).orElse(null);
         if (trigger == null) return false;
-        return memberService.isAdmin(actor) || isAgentOwner(JsonHelpers.stripIdPrefix(trigger.getAgentId()), actor);
+        return memberService.isAdmin(actor) || isAgentOwner(trigger.getAgentId(), actor);
     }
 }

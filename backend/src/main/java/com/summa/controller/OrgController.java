@@ -215,7 +215,7 @@ public class OrgController {
         try {
             Human human = orgService.findHuman(id).orElseThrow(() -> new EntityNotFoundException("Human not found: " + id));
 
-            List<DataHold> holds = dataHoldService.findBySubject("human", id);
+            List<DataHold> holds = dataHoldService.findBySubject("member", id);
             if (!holds.isEmpty()) {
                 return ControllerResponses.conflict(auditService, "Active data holds prevent erasure");
             }
