@@ -1,15 +1,12 @@
 spring:
   jpa:
     show-sql: true
-    properties:
-      eclipselink:
-        show-sql: true
 
 logging:
   level:
     com.summa: DEBUG
     org.springframework.security: DEBUG
-    org.eclipse.persistence: DEBUG
+    org.hibernate.SQL: DEBUG
   file:
     name: ${SUMMA_LOG_DIR:${user.home}/.summa/logs}/summa.log
 

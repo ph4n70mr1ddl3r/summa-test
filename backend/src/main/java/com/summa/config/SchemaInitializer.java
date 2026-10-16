@@ -65,6 +65,11 @@ public class SchemaInitializer {
      *   <li>tracks CREATE TRIGGER ... BEGIN ... END state to avoid splitting on
      *       semicolons inside trigger bodies.</li>
      * </ul>
+     * <p>
+     * A trigger body is delimited by an outer {@code BEGIN} / matching
+     * {@code END}; {@code END} keywords inside the body that close a CASE
+     * expression are handled by decrementing a CASE depth counter first, so
+     * only the final outer END closes the trigger.
      */
     private List<String> parseSqlStatements(String sql) {
         String withoutComments = stripComments(sql);
@@ -72,6 +77,7 @@ public class SchemaInitializer {
         StringBuilder current = new StringBuilder();
         boolean inSingleQuote = false;
         int triggerDepth = 0;
+        int caseDepth = 0;
 
         for (int i = 0; i < withoutComments.length(); i++) {
             char c = withoutComments.charAt(i);
@@ -90,9 +96,15 @@ public class SchemaInitializer {
                 current.append("BEGIN");
                 triggerDepth++;
                 i += 4; // skip past "EGIN" (already appended "BEGIN")
+            } else if (!inSingleQuote && isWordBoundaryMatch(withoutComments, i, "CASE")) {
+                current.append("CASE");
+                caseDepth++;
+                i += 3; // skip past "ASE" (already appended "CASE")
             } else if (!inSingleQuote && isWordBoundaryMatch(withoutComments, i, "END")) {
-                if (triggerDepth > 0) {
-                    triggerDepth--;
+                if (caseDepth > 0) {
+                    caseDepth--; // closes a CASE expression
+                } else if (triggerDepth > 0) {
+                    triggerDepth--; // closes the trigger body
                 }
                 current.append("END");
                 i += 2; // skip past "ND" (already appended "END")
@@ -102,6 +114,7 @@ public class SchemaInitializer {
                     statements.add(stmt);
                 }
                 current = new StringBuilder();
+                caseDepth = 0;
             } else {
                 current.append(c);
             }

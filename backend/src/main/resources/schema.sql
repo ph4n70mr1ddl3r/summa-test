@@ -209,7 +209,7 @@ CREATE TABLE IF NOT EXISTS asks (
 
 CREATE INDEX IF NOT EXISTS idx_asks_deadline ON asks(deadline);
 CREATE INDEX IF NOT EXISTS idx_asks_status ON asks(status);
-CREATE INDEX IF NOT EXISTS idx_asks_to_status ON asks(to, status);
+CREATE INDEX IF NOT EXISTS idx_asks_to_status ON asks("to", status);
 CREATE INDEX IF NOT EXISTS idx_asks_initiative ON asks(initiative_id);
 CREATE INDEX IF NOT EXISTS idx_asks_workspace ON asks(workspace_id);
 
@@ -538,7 +538,7 @@ CREATE INDEX IF NOT EXISTS idx_triggers_agent ON triggers(agent_id);
 CREATE INDEX IF NOT EXISTS idx_triggers_workspace ON triggers(workspace_id);
 CREATE INDEX IF NOT EXISTS idx_initiatives_sponsor ON initiatives(sponsor);
 CREATE INDEX IF NOT EXISTS idx_initiatives_lead ON initiatives(lead);
-CREATE INDEX IF NOT EXISTS idx_asks_to_status_deadline ON asks(to, status, deadline);
+CREATE INDEX IF NOT EXISTS idx_asks_to_status_deadline ON asks("to", status, deadline);
 CREATE INDEX IF NOT EXISTS idx_asks_status_deadline ON asks(status, deadline);
 
 CREATE TABLE IF NOT EXISTS messages (
@@ -644,9 +644,11 @@ CREATE TRIGGER IF NOT EXISTS dna_rules_au AFTER UPDATE ON dna_rules BEGIN
     WHERE id = old.id;
 END;
 
+-- Decisions are lifecycle-free immutable records (no status column): always live
+-- in the search corpus, so the FTS row carries a literal 'active' status.
 CREATE TRIGGER IF NOT EXISTS dna_decisions_ai AFTER INSERT ON dna_decisions BEGIN
-    INSERT INTO dna_search_index (id, context_md, outcome_md, domain_id, kind)
-    VALUES (new.id, new.context_md, new.outcome_md, new.domain_id, 'decision');
+    INSERT INTO dna_search_index (id, context_md, outcome_md, domain_id, kind, status)
+    VALUES (new.id, new.context_md, new.outcome_md, new.domain_id, 'decision', 'active');
 END;
 
 CREATE TRIGGER IF NOT EXISTS dna_glossary_ai AFTER INSERT ON dna_glossary BEGIN
@@ -668,7 +670,8 @@ CREATE TRIGGER IF NOT EXISTS dna_decisions_au AFTER UPDATE ON dna_decisions BEGI
         context_md = new.context_md,
         outcome_md = new.outcome_md,
         domain_id = new.domain_id,
-        kind = 'decision'
+        kind = 'decision',
+        status = 'active'
     WHERE id = old.id;
 END;
 

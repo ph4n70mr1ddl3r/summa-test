@@ -10,16 +10,11 @@ spring:
     url: jdbc:sqlite:${SUMMA_DB_PATH:${user.home}/.summa/summa.db}
     driver-class-name: org.sqlite.JDBC
   jpa:
-    database-platform: org.eclipse.persistence.platform.database.SQLiteDialect
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
     properties:
-      eclipselink:
-        jdbc:
-          batch-writing: delayed
-        batching:
-          size: 50
-        jpa:
-          convertors: com.summa.config.InstantToUnixEpochConverter
-      eclipselink.cache.shared.default: false
+      hibernate.jdbc.batch_size: 50
+      hibernate.order_inserts: true
+      hibernate.order_updates: true
   sql:
     init:
       mode: never
@@ -76,4 +71,4 @@ logging:
   level:
     com.summa: INFO
     org.springframework.security: INFO
-    org.eclipse.persistence: WARN
+    org.hibernate.SQL: WARN

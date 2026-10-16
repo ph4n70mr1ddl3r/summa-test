@@ -22,14 +22,14 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
-                                              NodeAuthFilter nodeAuthFilter,
-                                              JwtAuthenticationFilter jwtFilter,
-                                              RbacAuthorizationFilter rbacFilter) throws Exception {
+                                               NodeAuthFilter nodeAuthFilter,
+                                               JwtAuthenticationFilter jwtFilter,
+                                               RbacAuthorizationFilter rbacFilter) throws Exception {
         http
             .csrf(csrf -> csrf.disable()) // Stateless JWT auth; CSRF applies to browser-form submissions, not API tokens
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .addFilterBefore(nodeAuthFilter, JwtAuthenticationFilter.class)
-            .addFilterBefore(jwtFilter, RbacAuthorizationFilter.class)
+            .addFilterBefore(nodeAuthFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(rbacFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(request -> JwtAuthenticationFilter.isPublicPath(request.getRequestURI())).permitAll()
