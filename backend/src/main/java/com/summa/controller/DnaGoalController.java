@@ -125,7 +125,7 @@ public class DnaGoalController {
                 domainIdClean,
                 body.get("quarter"),
                 body.get("statementMd"),
-                ownerClean,
+                ownerRaw,
                 body.get("inject"),
                 effectiveFrom,
                 effectiveTo,
@@ -156,8 +156,9 @@ public class DnaGoalController {
                 return ControllerResponses.notFound(auditService, "Goal not found: " + id);
             }
             DnaGoal goal = goalOpt.get();
-            boolean isGoalOwner = goal.getOwner() != null && goal.getOwner().equals(JsonHelpers.stripIdPrefix(actor));
-            if (!isGoalOwner && !memberService.isAdmin(JsonHelpers.stripIdPrefix(actor))) {
+            boolean isGoalOwner = goal.getOwner() != null
+                && JsonHelpers.stripIdPrefix(goal.getOwner()).equals(JsonHelpers.stripIdPrefix(actor));
+            if (!isGoalOwner && !memberService.isAdmin(actor)) {
                 return ControllerResponses.gate(auditService, actor, "Only the goal owner or an admin may update goal status");
             }
             DnaGoal updated = goalService.updateStatus(id, statusEnum.getValue(), actor);
@@ -191,8 +192,9 @@ public class DnaGoalController {
             return ControllerResponses.notFound(auditService, "Goal not found: " + id);
         }
         DnaGoal goal = goalOpt.get();
-        boolean isGoalOwner = goal.getOwner() != null && goal.getOwner().equals(JsonHelpers.stripIdPrefix(actor));
-        if (!isGoalOwner && !memberService.isAdmin(JsonHelpers.stripIdPrefix(actor))) {
+        boolean isGoalOwner = goal.getOwner() != null
+            && JsonHelpers.stripIdPrefix(goal.getOwner()).equals(JsonHelpers.stripIdPrefix(actor));
+        if (!isGoalOwner && !memberService.isAdmin(actor)) {
             return ControllerResponses.gate(auditService, actor, "Only the goal owner or an admin may update goal window");
         }
         try {

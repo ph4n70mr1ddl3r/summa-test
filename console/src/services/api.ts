@@ -976,7 +976,7 @@ export const api = {
         method: 'POST',
       }),
     reportRun: (id: string, runId: string, body: Record<string, unknown>) =>
-      request<Record<string, unknown>>(`/nodes/${id}/runs/${runId}/report`, {
+      request<Run>(`/nodes/${id}/runs/${runId}/report`, {
         method: 'POST',
         body: JSON.stringify(body),
       }),

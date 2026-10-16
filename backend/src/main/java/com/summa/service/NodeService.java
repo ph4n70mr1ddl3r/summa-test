@@ -94,10 +94,16 @@ public class NodeService {
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
+    /**
+     * Enrollment token is a single-use, node-scoped secret handed to the node at
+     * enrollment time. The node id is part of the token payload so a leaked token
+     * cannot be replayed against a different node's enrollment record.
+     */
     public String generateEnrollmentToken(String nodeId) {
         byte[] bytes = new byte[32];
         RANDOM.nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+        String nonce = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+        return nodeId + "." + nonce;
     }
 
     @Transactional(readOnly = true)

@@ -68,21 +68,23 @@ public class NodeController {
         if (!memberService.isAdmin(actor)) {
             return ControllerResponses.gate(auditService, actor, "Only admins can enroll nodes");
         }
-        String name = body.get("name");
-        String kind = body.get("kind");
-        String pubkey = body.get("pubkey");
-        if (name == null || name.isBlank() || kind == null || kind.isBlank() || pubkey == null || pubkey.isBlank()) {
-            throw new IllegalArgumentException("name, kind, and pubkey are required");
-        }
-        if (!pubkey.matches(Defaults.PUBKEY_REGEX)) {
-            throw new IllegalArgumentException("pubkey must be a valid base64-encoded public key");
-        }
         try {
+            String name = body.get("name");
+            String kind = body.get("kind");
+            String pubkey = body.get("pubkey");
+            if (name == null || name.isBlank() || kind == null || kind.isBlank() || pubkey == null || pubkey.isBlank()) {
+                throw new IllegalArgumentException("name, kind, and pubkey are required");
+            }
+            if (!pubkey.matches(Defaults.PUBKEY_REGEX)) {
+                throw new IllegalArgumentException("pubkey must be a valid base64-encoded public key");
+            }
             Node node = nodeService.enroll(name, kind, pubkey, actor);
             return ResponseEntity.ok(Map.of(
                 "id", node.getId(),
                 "enrollmentToken", nodeService.generateEnrollmentToken(node.getId())
             ));
+        } catch (IllegalArgumentException e) {
+            return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         }

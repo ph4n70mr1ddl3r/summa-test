@@ -121,7 +121,6 @@ class InitiativeServiceTest {
         init.setClosedAt(null);
         when(initiativeRepository.findById("i1")).thenReturn(Optional.of(init));
         when(initiativeRepository.save(any())).thenReturn(init);
-        when(memberService.isAdmin("admin")).thenReturn(true);
         when(boardTaskRepository.findByInitiativeId("i1")).thenReturn(List.of());
         when(askRepository.findByInitiativeIdAndStatusPending("i1")).thenReturn(List.of());
 

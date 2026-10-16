@@ -11,7 +11,6 @@ import java.util.List;
 public interface MemoryItemRepository extends JpaRepository<MemoryItem, String> {
     List<MemoryItem> findByMemberId(String memberId);
     List<MemoryItem> findByWorkspaceId(String workspaceId);
-    List<MemoryItem> findByTaintedTrue();
     @Query("SELECT m FROM MemoryItem m WHERE m.memberId = :memberId ORDER BY m.createdAt DESC LIMIT :limit")
     List<MemoryItem> findByMemberId(@Param("memberId") String memberId, @Param("limit") int limit);
     @Query("SELECT m FROM MemoryItem m WHERE m.workspaceId = :workspaceId ORDER BY m.createdAt DESC LIMIT :limit")

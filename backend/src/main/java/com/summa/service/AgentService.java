@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import com.summa.model.Human;
@@ -170,8 +171,17 @@ public class AgentService {
         }
 
         // CLC-020: full dependency walk on retire
+        // DAT-120: asks.from/asks.to and board_tasks.assignee_member_id are keyed
+        // unions (a:<id> for agent refs), so sweep both bare and a:-prefixed forms.
+        String agentKeyedRef = "a:" + id;
         // 1. Close pending asks from the retiring agent
         for (Ask ask : askRepository.findByFromAndStatusPending(id)) {
+            ask.setStatus("withdrawn");
+            askRepository.save(ask);
+            auditService.logSystem("RETIRE_CLOSE_ASK_FROM", "ask", ask.getId(),
+                String.format("{\"agentId\":%s,\"reason\":\"agent_retiring\"}", JsonHelpers.jsonString(id)));
+        }
+        for (Ask ask : askRepository.findByFromAndStatusPending(agentKeyedRef)) {
             ask.setStatus("withdrawn");
             askRepository.save(ask);
             auditService.logSystem("RETIRE_CLOSE_ASK_FROM", "ask", ask.getId(),
@@ -181,34 +191,18 @@ public class AgentService {
         // ASK-061: Reassign asks TO the retiring agent up the chain
         // (non-active target rule reassigns them to deputy or admin broadcast)
         for (Ask ask : askRepository.findByToAndStatusPending(id)) {
-            String targetId = ask.getTo();
-            if (targetId == null || targetId.isBlank()) {
-                ask.setTo(OffboardingWalkService.ADMIN_BROADCAST);
-                askRepository.save(ask);
-                auditService.logSystem("RETIRE_REASSIGN_ASK_TO", "ask", ask.getId(),
-                    String.format("{\"agentId\":%s,\"newTo\":%s,\"reason\":\"agent_retiring\"}", JsonHelpers.jsonString(id), JsonHelpers.jsonString(OffboardingWalkService.ADMIN_BROADCAST)));
-                continue;
-            }
-            Optional<Human> targetHuman = memberService.findHuman(targetId);
-            String newTo = OffboardingWalkService.ADMIN_BROADCAST;
-            Optional<String> deputy = memberService.resolveDeputyTarget(targetId);
-            if (deputy.isPresent()) {
-                newTo = deputy.get();
-            }
-            ask.setTo(newTo);
-            askRepository.save(ask);
-            auditService.logSystem("RETIRE_REASSIGN_ASK_TO", "ask", ask.getId(),
-                String.format("{\"agentId\":%s,\"newTo\":%s,\"reason\":\"agent_retiring\"}", JsonHelpers.jsonString(id), JsonHelpers.jsonString(newTo)));
+            reassignRetiringAgentAsk(ask, id, targetFallbackFor(id));
+        }
+        for (Ask ask : askRepository.findByToAndStatusPending(agentKeyedRef)) {
+            reassignRetiringAgentAsk(ask, id, OffboardingWalkService.ADMIN_BROADCAST);
         }
 
         // 2. Cancel board tasks assigned to the agent
         for (BoardTask task : boardTaskRepository.findByAssigneeMemberId(id)) {
-            if ("open".equals(task.getStatus()) || "in_progress".equals(task.getStatus())) {
-                task.setStatus("cancelled");
-                boardTaskRepository.save(task);
-                auditService.logSystem("RETIRE_CANCEL_TASK", "board_task", task.getId(),
-                    String.format("{\"agentId\":%s,\"reason\":\"agent_retiring\"}", JsonHelpers.jsonString(id)));
-            }
+            cancelRetiringAgentTask(task, id);
+        }
+        for (BoardTask task : boardTaskRepository.findByAssigneeMemberId(agentKeyedRef)) {
+            cancelRetiringAgentTask(task, id);
         }
 
         // 3. Archive pending spawn requests from the agent
@@ -231,18 +225,22 @@ public class AgentService {
             }
         }
 
-        // 5. Pause initiatives led by the agent
+        // 5. Pause initiatives led by the agent (DAT-120: keyed-union refs)
         for (Initiative init : initiativeRepository.findByLead(id)) {
-            if ("active".equals(init.getStatus()) || "paused".equals(init.getStatus())) {
-                init.setStatus("paused");
-                initiativeRepository.save(init);
-                auditService.logSystem("RETIRE_PAUSE_INITIATIVE", "initiative", init.getId(),
-                    String.format("{\"agentId\":%s,\"reason\":\"agent_retiring\"}", JsonHelpers.jsonString(id)));
-            }
+            pauseRetiringAgentInitiative(init, id);
+        }
+        for (Initiative init : initiativeRepository.findByLead(agentKeyedRef)) {
+            pauseRetiringAgentInitiative(init, id);
         }
 
         // CLC-026: Withdraw open DNA proposals authored by the retiring agent
         for (DnaProposal prop : proposalRepository.findByProposedByAndStatus(id, "open")) {
+            prop.setStatus("withdrawn");
+            proposalRepository.save(prop);
+            auditService.logSystem("RETIRE_WITHDRAW_PROPOSAL", "dna_proposal", prop.getId(),
+                String.format("{\"agentId\":%s,\"reason\":\"agent_retiring\"}", JsonHelpers.jsonString(id)));
+        }
+        for (DnaProposal prop : proposalRepository.findByProposedByAndStatus(agentKeyedRef, "open")) {
             prop.setStatus("withdrawn");
             proposalRepository.save(prop);
             auditService.logSystem("RETIRE_WITHDRAW_PROPOSAL", "dna_proposal", prop.getId(),
@@ -263,6 +261,37 @@ public class AgentService {
         Agent saved = agentRepository.save(agent);
         auditService.log(actor, "RETIRE", "agent", id, null);
         return saved;
+    }
+
+    private String targetFallbackFor(String agentId) {
+        Optional<String> deputy = memberService.resolveDeputyTarget(agentId);
+        return deputy.orElse(OffboardingWalkService.ADMIN_BROADCAST);
+    }
+
+    private void reassignRetiringAgentAsk(Ask ask, String agentId, String newTo) {
+        ask.setTo(newTo);
+        askRepository.save(ask);
+        auditService.logSystem("RETIRE_REASSIGN_ASK_TO", "ask", ask.getId(),
+            String.format("{\"agentId\":%s,\"newTo\":%s,\"reason\":\"agent_retiring\"}",
+                JsonHelpers.jsonString(agentId), JsonHelpers.jsonString(newTo)));
+    }
+
+    private void cancelRetiringAgentTask(BoardTask task, String agentId) {
+        if ("open".equals(task.getStatus()) || "in_progress".equals(task.getStatus())) {
+            task.setStatus("cancelled");
+            boardTaskRepository.save(task);
+            auditService.logSystem("RETIRE_CANCEL_TASK", "board_task", task.getId(),
+                String.format("{\"agentId\":%s,\"reason\":\"agent_retiring\"}", JsonHelpers.jsonString(agentId)));
+        }
+    }
+
+    private void pauseRetiringAgentInitiative(Initiative init, String agentId) {
+        if ("active".equals(init.getStatus()) || "paused".equals(init.getStatus())) {
+            init.setStatus("paused");
+            initiativeRepository.save(init);
+            auditService.logSystem("RETIRE_PAUSE_INITIATIVE", "initiative", init.getId(),
+                String.format("{\"agentId\":%s,\"reason\":\"agent_retiring\"}", JsonHelpers.jsonString(agentId)));
+        }
     }
 
     @Transactional
@@ -390,32 +419,45 @@ public class AgentService {
      */
     @Transactional
     private void cleanupSuspendedAgent(Agent agent) {
-        for (Ask ask : askRepository.findByFromAndStatusPending(agent.getId())) {
+        String agentId = agent.getId();
+        String agentKeyedRef = "a:" + agentId;
+        for (Ask ask : askRepository.findByFromAndStatusPending(agentId)) {
             ask.setStatus("withdrawn");
             askRepository.save(ask);
         }
-        for (Ask ask : askRepository.findByToAndStatusPending(agent.getId())) {
+        for (Ask ask : askRepository.findByFromAndStatusPending(agentKeyedRef)) {
             ask.setStatus("withdrawn");
             askRepository.save(ask);
         }
-        for (SpawnRequest spawn : spawnRequestRepository.findByRequesterId(agent.getId())) {
+        for (Ask ask : askRepository.findByToAndStatusPending(agentId)) {
+            ask.setStatus("withdrawn");
+            askRepository.save(ask);
+        }
+        for (Ask ask : askRepository.findByToAndStatusPending(agentKeyedRef)) {
+            ask.setStatus("withdrawn");
+            askRepository.save(ask);
+        }
+        for (SpawnRequest spawn : spawnRequestRepository.findByRequesterId(agentId)) {
             if (AgentStatus.REQUESTED.getValue().equals(spawn.getStatus())) {
                 spawn.setStatus("archived");
                 spawnRequestRepository.save(spawn);
             }
         }
-        // Ensure initiative references are cleaned up (mirrors active-agent retire behavior)
-        List<Initiative> owned = new ArrayList<>(initiativeRepository.findBySponsor(agent.getId()));
-        owned.addAll(initiativeRepository.findByLead(agent.getId()));
+        // Ensure initiative references are cleaned up (mirrors active-agent retire behavior).
+        // DAT-120: initiatives.sponsor/lead are keyed unions; sweep both bare and a:-prefixed forms.
+        List<Initiative> owned = new ArrayList<>(initiativeRepository.findBySponsor(agentId));
+        owned.addAll(initiativeRepository.findBySponsor(agentKeyedRef));
+        owned.addAll(initiativeRepository.findByLead(agentId));
+        owned.addAll(initiativeRepository.findByLead(agentKeyedRef));
         Set<String> seen = new HashSet<>();
         for (Initiative init : owned) {
             if (!seen.add(init.getId())) continue;
             boolean changed = false;
-            if (agent.getId().equals(init.getSponsor())) {
+            if (Objects.equals(agentId, init.getSponsor()) || Objects.equals(agentKeyedRef, init.getSponsor())) {
                 init.setSponsor(OffboardingWalkService.ADMIN_BROADCAST);
                 changed = true;
             }
-            if (agent.getId().equals(init.getLead())) {
+            if (Objects.equals(agentId, init.getLead()) || Objects.equals(agentKeyedRef, init.getLead())) {
                 init.setLead(OffboardingWalkService.ADMIN_BROADCAST);
                 changed = true;
             }
@@ -423,7 +465,7 @@ public class AgentService {
                 initiativeRepository.save(init);
             }
         }
-        for (Trigger trigger : triggerRepository.findByAgentId(agent.getId())) {
+        for (Trigger trigger : triggerRepository.findByAgentId(agentId)) {
             if ("active".equals(trigger.getStatus())) {
                 trigger.setStatus("paused");
                 triggerRepository.save(trigger);

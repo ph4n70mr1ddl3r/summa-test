@@ -411,8 +411,13 @@ public class AskService {
         }
 
         existingResponses.add(responder);
-        ask.setResponses(toJsonResponseList(existingResponses, response, ask.getResponses()));
-        boolean quorumReached = existingResponses.size() >= quorum;
+        String newResponsesJson = toJsonResponseList(existingResponses, response, ask.getResponses());
+        ask.setResponses(newResponsesJson);
+        // Count quorum from the serialized JSON, not the in-memory list, so a
+        // malformed prior `responses` column (which parseResponseIds resets to
+        // empty) cannot close a multi-quorum ask on a single response.
+        int storedCount = parseResponseIds(ask).size();
+        boolean quorumReached = storedCount >= quorum;
         if (quorumReached) {
             ask.setStatus("answered");
             ask.setRespondedAt(Instant.now());

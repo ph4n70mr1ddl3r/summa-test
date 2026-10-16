@@ -25,6 +25,9 @@ public class GroupMembership {
     @PrePersist
     public void prePersist() {
         if (addedAt == null) addedAt = Instant.now();
+        // added_by is NOT NULL with no schema default; leave it null here so the
+        // save fails fast on a missing actor rather than silently attributing the
+        // row to the system actor.
     }
 
     @PreUpdate

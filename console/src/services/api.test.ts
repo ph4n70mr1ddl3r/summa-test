@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { buildQuery, isAuthenticated, setAuthToken, getAuthToken, getUser, setNavigate, loadWithFallback, ApiError } from './api'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { buildQuery, isAuthenticated, setAuthToken, getAuthToken, getUser, setNavigate, loadWithFallback, ApiError, api } from './api'
 import type { RbacRole } from './api'
 
 describe('buildQuery', () => {
@@ -232,5 +232,45 @@ describe('loadWithFallback error message formatting', () => {
     )
     // When individual fetches succeed, error is null even if parallel failed
     expect(result.data).toHaveLength(1)
+  })
+})
+
+describe('api.nodes endpoint paths', () => {
+  const okResponse = { ok: true, status: 200, json: async () => ({}) }
+  const fetchMock = vi.fn()
+
+  beforeEach(() => {
+    setAuthToken('test-token', { userId: 'u1', rbac: 'admin' as RbacRole, name: 'Admin' })
+    fetchMock.mockResolvedValue(okResponse as unknown as Response)
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    setAuthToken(null)
+  })
+
+  it('reportRun POSTs to /nodes/{id}/runs/{runId}/report', async () => {
+    await api.nodes.reportRun('node-1', 'run-1', { result: 'ok' })
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/nodes/node-1/runs/run-1/report'),
+      expect.objectContaining({ method: 'POST' }),
+    )
+  })
+
+  it('claims POSTs to /nodes/{id}/claims', async () => {
+    await api.nodes.claims('node-1', { workspaceId: 'ws-1', epoch: '3' })
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/nodes/node-1/claims'),
+      expect.objectContaining({ method: 'POST' }),
+    )
+  })
+
+  it('workPull POSTs to /nodes/{id}/work/pull', async () => {
+    await api.nodes.workPull('node-1')
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/nodes/node-1/work/pull'),
+      expect.objectContaining({ method: 'POST' }),
+    )
   })
 })

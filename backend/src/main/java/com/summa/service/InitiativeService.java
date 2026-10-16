@@ -155,16 +155,20 @@ public class InitiativeService {
         Initiative initiative = new Initiative();
         initiative.setId(id);
         initiative.setTitle(title);
-        // Store clean (unprefixed) IDs so downstream lookups work without re-stripping
-        initiative.setSponsor(sponsorClean);
-        initiative.setLead(leadClean);
+        // DAT-120: initiatives.sponsor/lead are keyed unions (h:<id>/a:<id>),
+        // derived from the kind each member id resolved to during validation.
+        String sponsorKeyed = sponsorHuman.isPresent() ? "h:" + sponsorClean : "a:" + sponsorClean;
+        String leadKeyed = leadHuman.isPresent() || leadAgent.isPresent()
+            ? (leadAgent.isPresent() ? "a:" : "h:") + leadClean : sponsorKeyed;
+        initiative.setSponsor(sponsorKeyed);
+        initiative.setLead(leadKeyed);
         initiative.setGoalRef(goalRef);
         initiative.setDecisionRef(decisionRef);
         initiative.setDeadline(deadline);
         initiative.setDependsOn(dependsOn != null ? dependsOn : "[]");
 
         Initiative saved = initiativeRepository.save(initiative);
-        String auditActor = actor != null ? actor : sponsorClean;
+        String auditActor = actor != null ? actor : sponsorKeyed;
         auditService.log(auditActor, "CREATE", "initiative", id,
             String.format("{\"title\":%s,\"lead\":%s}", JsonHelpers.jsonString(title), JsonHelpers.jsonString(lead)));
         return saved;
@@ -240,12 +244,13 @@ public class InitiativeService {
 
         // INT-020: If actor is not the sponsor or lead, route an activation ask to the sponsor
         // with expiry=deny. The sponsor's or lead's own opens go active outright.
+        // DAT-120: sponsor/lead are stored as keyed unions; compare stripped forms.
         String actorClean = actor != null ? JsonHelpers.stripIdPrefix(actor) : "";
-        boolean isSponsor = actorClean != null && actorClean.equals(initiative.getSponsor());
-        boolean isLead = initiative.getLead() != null && actorClean != null && actorClean.equals(initiative.getLead());
+        boolean isSponsor = actorClean != null && actorClean.equals(JsonHelpers.stripIdPrefix(initiative.getSponsor()));
+        boolean isLead = initiative.getLead() != null && actorClean != null && actorClean.equals(JsonHelpers.stripIdPrefix(initiative.getLead()));
         if (!isSponsor && !isLead) {
             // Validate sponsor is still active before routing ask to them
-            String sponsorId = initiative.getSponsor();
+            String sponsorId = JsonHelpers.stripIdPrefix(initiative.getSponsor());
             if (sponsorId == null) {
                 throw new IllegalStateException("Cannot activate: sponsor is not set");
             }
@@ -340,11 +345,12 @@ public class InitiativeService {
             throw new IllegalStateException("Cannot close initiative with status: " + initiative.getStatus());
         }
 
-        // INT-022: Authority check — close belongs to sponsor, lead, or admin
+        // INT-022: Authority check — close belongs to sponsor, lead, or admin.
+        // DAT-120: sponsor/lead are stored as keyed unions; compare stripped forms.
+        String actorClean = JsonHelpers.stripIdPrefix(actor);
         boolean isSponsor = initiative.getSponsor() != null && initiative.getSponsor().equals(actor);
         boolean isLead = initiative.getLead() != null && initiative.getLead().equals(actor);
-        boolean isAdmin = memberService.isAdmin(actor);
-        if (!isSponsor && !isLead && !isAdmin) {
+        if (!isSponsor && !isLead && !memberService.isAdmin(actor)) {
             throw new IllegalStateException("Only the sponsor, lead, or an admin can close an initiative");
         }
 

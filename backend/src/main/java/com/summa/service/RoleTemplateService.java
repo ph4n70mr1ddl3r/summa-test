@@ -89,20 +89,26 @@ public class RoleTemplateService {
         RoleTemplate saved = templateRepository.save(template);
 
         // TPL-011: File approval ask to each pinned agent's owner
+        // DAT-120: asks.from/asks.to are keyed unions. The owner_human_id column is a
+        // plain FK to humans (no CHECK), so it may be stored bare or h:-prefixed —
+        // sweep both forms. The ask is filed from the system actor to the owner's
+        // h:<id> keyed reference, or to the admin broadcast when unowned.
         List<Agent> pinnedAgents = agentRepository.findActiveByTemplateId(id);
         for (Agent agent : pinnedAgents) {
             try {
                 String payload = String.format(
                     "{\"templateId\":\"%s\",\"newVersion\":%d,\"agentId\":\"%s\",\"agentName\":\"%s\"}",
                     id, nextVersion, agent.getId(), agent.getName());
-                String askTo = agent.getOwnerHumanId() != null && !agent.getOwnerHumanId().isBlank()
-                    ? agent.getOwnerHumanId() : OffboardingWalkService.ADMIN_BROADCAST;
-                askService.create("approval", askTo, askTo,
+                String ownerRaw = agent.getOwnerHumanId();
+                String ownerClean = ownerRaw != null ? JsonHelpers.stripIdPrefix(ownerRaw) : null;
+                boolean hasOwner = ownerClean != null && !ownerClean.isBlank();
+                String askTo = hasOwner ? "h:" + ownerClean : OffboardingWalkService.ADMIN_BROADCAST;
+                askService.create("approval", Defaults.SYSTEM_ACTOR, askTo,
                     payload, "standard", "deny", 1,
                     Instant.now().plusSeconds(Defaults.STALL_ASK_DEADLINE_SECONDS), null, null);
                 auditService.logSystem("UPGRADE_ASK_FILED", "role_template", id,
                     String.format("{\"agentId\":\"%s\",\"owner\":\"%s\",\"version\":%d}",
-                        agent.getId(), agent.getOwnerHumanId(), nextVersion));
+                        agent.getId(), JsonHelpers.jsonString(ownerClean) , nextVersion));
             } catch (Exception e) {
                 auditService.logSystem("UPGRADE_ASK_FAIL", "role_template", id,
                     JsonHelpers.toJson(Map.of("agentId", agent.getId(), "error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));

@@ -46,7 +46,7 @@ class DnaGoalServiceTest {
         lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
         Human human = new Human();
         human.setId("human-1");
-        when(memberService.findHuman("h:human-1")).thenReturn(Optional.of(human));
+        when(memberService.findHuman("human-1")).thenReturn(Optional.of(human));
 
         DnaGoal result = goalService.create("goal-1", "domain-1", "Q1", "Statement", "h:human-1", null, null, null, "admin");
 
@@ -55,6 +55,8 @@ class DnaGoalServiceTest {
         assertEquals("domain-1", result.getDomainId());
         assertEquals("active", result.getStatus());
         assertEquals("linked", result.getInject());
+        // DAT-120: owner is stored as a keyed union
+        assertEquals("h:human-1", result.getOwner());
     }
 
     @Test
@@ -72,7 +74,7 @@ class DnaGoalServiceTest {
         lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
         Human human = new Human();
         human.setId("human-1");
-        when(memberService.findHuman("h:human-1")).thenReturn(Optional.of(human));
+        when(memberService.findHuman("human-1")).thenReturn(Optional.of(human));
 
         DnaGoal result = goalService.create("goal-1", "", "Q1", "stmt", "h:human-1", null, null, null, "admin");
 
@@ -81,8 +83,8 @@ class DnaGoalServiceTest {
 
     @Test
     void create_validatesOwnerExists() {
-        when(memberService.findHuman("h:human-1")).thenReturn(Optional.empty());
-        when(memberService.findAgent("h:human-1")).thenReturn(Optional.empty());
+        when(memberService.findHuman("human-1")).thenReturn(Optional.empty());
+        when(memberService.findAgent("human-1")).thenReturn(Optional.empty());
 
         assertThrows(IllegalArgumentException.class, () ->
             goalService.create("goal-1", null, "Q1", "stmt", "h:human-1", null, null, null, "admin")
@@ -93,26 +95,26 @@ class DnaGoalServiceTest {
     void create_succeedsWhenOwnerIsHuman() {
         Human human = new Human();
         human.setId("human-1");
-        when(memberService.findHuman("h:human-1")).thenReturn(Optional.of(human));
+        when(memberService.findHuman("human-1")).thenReturn(Optional.of(human));
         when(goalRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
 
         DnaGoal result = goalService.create("goal-1", null, "Q1", "stmt", "h:human-1", null, null, null, "admin");
 
-        assertEquals("human-1", result.getOwner());
+        assertEquals("h:human-1", result.getOwner());
     }
 
     @Test
     void create_succeedsWhenOwnerIsAgent() {
         Agent agent = new Agent();
         agent.setId("agent-1");
-        when(memberService.findAgent("a:agent-1")).thenReturn(Optional.of(agent));
+        when(memberService.findAgent("agent-1")).thenReturn(Optional.of(agent));
         when(goalRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
 
         DnaGoal result = goalService.create("goal-1", null, "Q1", "stmt", "a:agent-1", null, null, null, "admin");
 
-        assertEquals("agent-1", result.getOwner());
+        assertEquals("a:agent-1", result.getOwner());
     }
 
     @Test

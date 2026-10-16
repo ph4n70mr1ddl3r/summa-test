@@ -171,15 +171,17 @@ public class OffboardingWalkService {
             agentsReowned++;
         }
 
-        // OFB-012: Reassign initiatives (sponsor/lead) — only active ones
+        // OFB-012: Reassign initiatives (sponsor/lead) — only active ones.
+        // DAT-120: initiatives.sponsor/lead are keyed unions (h:<id>/a:<id>).
+        String initiatorKeyedRef = "h:" + humanId;
         List<Initiative> activeInitiatives = initiativeService.findAllActive(OFFBOARD_BATCH_LIMIT);
         for (Initiative init : activeInitiatives) {
             boolean changed = false;
-            if (Objects.equals(humanId, init.getSponsor())) {
+            if (Objects.equals(humanId, init.getSponsor()) || Objects.equals(initiatorKeyedRef, init.getSponsor())) {
                 init.setSponsor(finalTargetOwner);
                 changed = true;
             }
-            if (Objects.equals(humanId, init.getLead())) {
+            if (Objects.equals(humanId, init.getLead()) || Objects.equals(initiatorKeyedRef, init.getLead())) {
                 init.setLead(finalTargetOwner);
                 changed = true;
             }
@@ -188,9 +190,11 @@ public class OffboardingWalkService {
             }
         }
 
-        // OFB-013: Re-own or retire owned goals (active only)
+        // OFB-013: Re-own or retire owned goals (active only).
+        // DAT-120: dna_goals.owner is stored as a keyed union (h:<id>/a:<id>).
+        String humanKeyedRefGoals = "h:" + humanId;
         for (DnaGoal goal : goalService.findAllActiveWindowed(Instant.now())) {
-            if (humanId.equals(goal.getOwner()) && "active".equals(goal.getStatus())) {
+            if (humanKeyedRefGoals.equals(goal.getOwner()) || humanId.equals(goal.getOwner())) {
                 goal.setOwner(finalTargetOwner);
                 goalRepository.save(goal);
                 goalsReowned++;
@@ -218,9 +222,11 @@ public class OffboardingWalkService {
             membershipsCleared++;
         }
 
-        // OFB-017: Transfer group leadership
+        // OFB-017: Transfer group leadership.
+        // DAT-120: groups.leader_member_id is a keyed union.
         for (Group group : groupRepository.findAll().stream().limit(OFFBOARD_BATCH_LIMIT).toList()) {
-            if (humanId.equals(group.getLeaderMemberId()) && group.isActive()) {
+            if ((humanId.equals(group.getLeaderMemberId()) || ("h:" + humanId).equals(group.getLeaderMemberId()))
+                    && group.isActive()) {
                 group.setLeaderMemberId(finalTargetOwner);
                 groupRepository.save(group);
                 groupsLeadershipTransferred++;
@@ -282,17 +288,19 @@ public class OffboardingWalkService {
             }
         }
 
-        // OFB-003: Reassign asks TO the member up the chain; close asks FROM the member with audit note
+        // OFB-003: Reassign asks TO the member up the chain; close asks FROM the member with audit note.
+        // DAT-120: asks.from/asks.to are stored as keyed unions (h:<id>/a:<id>/system/admins).
+        String humanKeyedRef = "h:" + humanId;
         List<Ask> pendingAsks = askRepository.findByStatusPendingOrdered(OFFBOARD_BATCH_LIMIT);
         for (Ask ask : pendingAsks) {
-            if (humanId.equals(ask.getTo())) {
+            if (humanId.equals(ask.getTo()) || humanKeyedRef.equals(ask.getTo())) {
                 // Reassign up the chain to successor first, then deputy, then admin broadcast
                 ask.setTo(finalTargetOwner);
                 askRepository.save(ask);
                 asksReassigned++;
                 auditService.logSystem("OFFBOARD_REASSIGN_ASK_TO", "ask", ask.getId(),
                     JsonHelpers.toJson(Map.of("newTo", ask.getTo(), "reason", "member_departed"), objectMapper));
-            } else if (humanId.equals(ask.getFrom())) {
+            } else if (humanId.equals(ask.getFrom()) || humanKeyedRef.equals(ask.getFrom())) {
                 // Close asks from the departing member with audit note
                 ask.setStatus("withdrawn");
                 askRepository.save(ask);
@@ -302,8 +310,16 @@ public class OffboardingWalkService {
             }
         }
 
-        // OFB-010: Reassign board tasks or return to pool
+        // OFB-010: Reassign board tasks or return to pool.
+        // DAT-120: board_tasks.assignee_member_id is a keyed union.
         for (BoardTask task : boardTaskRepository.findByAssigneeMemberId(humanId)) {
+            task.setAssigneeMemberId(finalTargetOwner);
+            boardTaskRepository.save(task);
+            tasksReassigned++;
+            auditService.logSystem("OFFBOARD_REASSIGN_TASK", "board_task", task.getId(),
+                JsonHelpers.toJson(Map.of("newAssignee", finalTargetOwner, "reason", "member_departed"), objectMapper));
+        }
+        for (BoardTask task : boardTaskRepository.findByAssigneeMemberId(humanKeyedRef)) {
             task.setAssigneeMemberId(finalTargetOwner);
             boardTaskRepository.save(task);
             tasksReassigned++;
@@ -411,10 +427,12 @@ public class OffboardingWalkService {
             }
         }
 
-        // OFB-032: Withdraw authored open proposals when new role cannot propose
+        // OFB-032: Withdraw authored open proposals when new role cannot propose.
+        // DAT-120: proposals may be keyed-union refs; match both bare and h:-prefixed forms.
         List<DnaProposal> openProposals = proposalService.findAllOpen();
+        String humanKeyedRefDemote = "h:" + humanId;
         for (DnaProposal prop : openProposals) {
-            if (!humanId.equals(prop.getProposedBy())) continue;
+            if (!humanId.equals(prop.getProposedBy()) && !humanKeyedRefDemote.equals(prop.getProposedBy())) continue;
             boolean canPropose = !RbacRole.VIEWER.getValue().equals(newRbac);
             if (!canPropose) {
                 prop.setStatus("withdrawn");
@@ -425,15 +443,16 @@ public class OffboardingWalkService {
             }
         }
 
-        // OFB-031: Reassign or retire sponsored/led initiatives
+        // OFB-031: Reassign or retire sponsored/led initiatives.
+        // DAT-120: initiatives.sponsor/lead are keyed unions (h:<id>/a:<id>).
         List<Initiative> activeForDemote = initiativeService.findAllActive(OFFBOARD_BATCH_LIMIT);
         for (Initiative init : activeForDemote) {
             boolean changed = false;
-            if (Objects.equals(humanId, init.getSponsor())) {
+            if (Objects.equals(humanId, init.getSponsor()) || Objects.equals(humanKeyedRefDemote, init.getSponsor())) {
                 init.setSponsor(targetOwner);
                 changed = true;
             }
-            if (Objects.equals(humanId, init.getLead())) {
+            if (Objects.equals(humanId, init.getLead()) || Objects.equals(humanKeyedRefDemote, init.getLead())) {
                 init.setLead(targetOwner);
                 changed = true;
             }
@@ -443,9 +462,10 @@ public class OffboardingWalkService {
             }
         }
 
-        // OFB-031: Re-own or retire owned goals (active only)
+        // OFB-031: Re-own or retire owned goals (active only).
+        // DAT-120: dna_goals.owner is stored as a keyed union.
         for (DnaGoal goal : goalService.findAllActiveWindowed(Instant.now())) {
-            if (humanId.equals(goal.getOwner()) && "active".equals(goal.getStatus())) {
+            if (("h:" + humanId).equals(goal.getOwner()) || humanId.equals(goal.getOwner())) {
                 if (RbacRole.VIEWER.getValue().equals(newRbac)) {
                     goal.setStatus("retired");
                     goalRepository.save(goal);
@@ -453,7 +473,6 @@ public class OffboardingWalkService {
                 }
             }
         }
-
         // OFB-031: Clear deputy references — clear references TO the departing member from others
         for (Human h : memberService.findAllActiveHumans()) {
             if (humanId.equals(h.getDeputyMemberId())) {
@@ -467,9 +486,11 @@ public class OffboardingWalkService {
             memberService.saveHuman(human);
         }
 
-        // OFB-031: Transfer group leadership posts
+        // OFB-031: Transfer group leadership posts.
+        // DAT-120: groups.leader_member_id is a keyed union.
         for (Group group : groupRepository.findAll().stream().limit(OFFBOARD_BATCH_LIMIT).toList()) {
-            if (humanId.equals(group.getLeaderMemberId()) && group.isActive()) {
+            if ((humanId.equals(group.getLeaderMemberId()) || ("h:" + humanId).equals(group.getLeaderMemberId()))
+                    && group.isActive()) {
                 group.setLeaderMemberId(targetOwner);
                 groupRepository.save(group);
                 groupLeadershipsTransferred++;
@@ -478,14 +499,16 @@ public class OffboardingWalkService {
             }
         }
 
-        // OFB-031: Close asks to the member up the chain; asks from the member close with audit note
+        // OFB-031: Close asks to the member up the chain; asks from the member close with audit note.
+        // DAT-120: asks.from/asks.to are stored as keyed unions.
+        String humanKeyedRefDemoteAsks = "h:" + humanId;
         List<Ask> pendingAsksDemote = askRepository.findByStatusPendingOrdered(OFFBOARD_BATCH_LIMIT);
         for (Ask ask : pendingAsksDemote) {
-            if (humanId.equals(ask.getTo())) {
+            if (humanId.equals(ask.getTo()) || humanKeyedRefDemoteAsks.equals(ask.getTo())) {
                 ask.setTo(targetOwner);
                 askRepository.save(ask);
                 asksClosed++;
-            } else if (humanId.equals(ask.getFrom())) {
+            } else if (humanId.equals(ask.getFrom()) || humanKeyedRefDemoteAsks.equals(ask.getFrom())) {
                 ask.setStatus("withdrawn");
                 askRepository.save(ask);
                 asksClosed++;
@@ -494,8 +517,17 @@ public class OffboardingWalkService {
             }
         }
 
-        // OFB-031: Return board-task assignments to pool or reassign
+        // OFB-031: Return board-task assignments to pool or reassign.
+        // DAT-120: board_tasks.assignee_member_id is a keyed union.
         for (BoardTask task : boardTaskRepository.findByAssigneeMemberId(humanId)) {
+            if (RbacRole.VIEWER.getValue().equals(newRbac)) {
+                task.setAssigneeMemberId(null);
+                task.setStatus("open");
+                boardTaskRepository.save(task);
+                tasksReturned++;
+            }
+        }
+        for (BoardTask task : boardTaskRepository.findByAssigneeMemberId(humanKeyedRefDemoteAsks)) {
             if (RbacRole.VIEWER.getValue().equals(newRbac)) {
                 task.setAssigneeMemberId(null);
                 task.setStatus("open");
@@ -541,35 +573,35 @@ public class OffboardingWalkService {
                         Optional<DnaDomain> domOpt = domainService.findById(domId);
                         if (domOpt.isPresent() && "named".equals(domOpt.get().getAccess())) {
                             String namedReaders = domOpt.get().getNamedReaders();
-                             if (namedReaders != null && !namedReaders.isBlank()
-                                     && !namedReaders.equals("[]")) {
-                                 try {
-                                     JsonNode readers = objectMapper.readTree(namedReaders);
-                                     boolean contains = false;
-                                     for (JsonNode r : readers) {
-                                         if (humanId.equals(r.asText())) { contains = true; break; }
-                                     }
-                                     if (!contains) continue;
-                                     ArrayNode filteredReaders = objectMapper.createArrayNode();
-                                     for (int i = 0; i < readers.size(); i++) {
-                                         if (!humanId.equals(readers.get(i).asText())) {
-                                             filteredReaders.add(readers.get(i));
-                                         }
-                                     }
-                                     domOpt.get().setNamedReaders(objectMapper.writeValueAsString(filteredReaders));
-                                     domainRepository.save(domOpt.get());
-                                     changed = true;
-                                  } catch (Exception e) {
-                                      auditService.logSystem("DEMOTE_CLEAN_DOMAIN_READERS_FAIL", "dna_domain", "",
-                                          JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
-                                  }
-                              }
-                         }
-                     }
-                 } catch (Exception e) {
-                     auditService.logSystem("DEMOTE_CLEAN_DOMAIN_READERS_FAIL", "dna_domain", "",
-                         JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
-                 }
+                            if (namedReaders != null && !namedReaders.isBlank()
+                                    && !namedReaders.equals("[]")) {
+                                try {
+                                    JsonNode readers = objectMapper.readTree(namedReaders);
+                                    boolean contains = false;
+                                    for (JsonNode r : readers) {
+                                        if (humanId.equals(r.asText())) { contains = true; break; }
+                                    }
+                                    if (!contains) continue;
+                                    ArrayNode filteredReaders = objectMapper.createArrayNode();
+                                    for (int i = 0; i < readers.size(); i++) {
+                                        if (!humanId.equals(readers.get(i).asText())) {
+                                            filteredReaders.add(readers.get(i));
+                                        }
+                                    }
+                                    domOpt.get().setNamedReaders(objectMapper.writeValueAsString(filteredReaders));
+                                    domainRepository.save(domOpt.get());
+                                    changed = true;
+                                } catch (Exception e) {
+                                    auditService.logSystem("DEMOTE_CLEAN_DOMAIN_READERS_FAIL", "dna_domain", domId,
+                                        JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    auditService.logSystem("DEMOTE_CLEAN_DOMAIN_READERS_FAIL", "dna_domain", ws.getId(),
+                        JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
+                }
             }
             if (changed) {
                 workspaceRepository.save(ws);

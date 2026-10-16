@@ -24,7 +24,10 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        var mapping = registry.addMapping("/api/**")
+        // The servlet context path is /api (server.servlet.context-path), and
+        // Spring MVC matches CORS mappings against the *servlet-relative* path,
+        // so the registry key is /** — not /api/**, which would never match.
+        var mapping = registry.addMapping("/**")
                 .allowedOriginPatterns("http://localhost:*", "https://localhost:*", "http://127.0.0.1:*", "https://127.0.0.1:*")
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("*")

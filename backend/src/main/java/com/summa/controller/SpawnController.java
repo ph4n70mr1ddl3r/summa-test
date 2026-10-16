@@ -156,6 +156,9 @@ public class SpawnController {
     }
 
     private Integer parseTtlHours(String s) {
+        if (s != null && s.isBlank()) {
+            throw new IllegalArgumentException("ttlHours must not be blank");
+        }
         Integer val = JsonHelpers.parseIntSafe(s);
         if (val != null && (val <= 0 || val > 8760)) {
             throw new IllegalArgumentException("ttlHours must be between 1 and 8760");

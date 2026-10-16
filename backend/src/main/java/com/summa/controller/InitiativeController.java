@@ -183,6 +183,7 @@ public class InitiativeController {
         if (opt.isEmpty()) return false;
         Initiative initiative = opt.get();
         String actorClean = JsonHelpers.stripIdPrefix(actor);
-        return actorClean.equals(initiative.getSponsor()) || actorClean.equals(initiative.getLead());
+        return actorClean.equals(JsonHelpers.stripIdPrefix(initiative.getSponsor()))
+            || actorClean.equals(JsonHelpers.stripIdPrefix(initiative.getLead()));
     }
 }

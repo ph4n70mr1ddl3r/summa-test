@@ -41,7 +41,11 @@ public class SchemaInitializer {
                         jdbcTemplate.execute(s);
                     } catch (Exception e) {
                         String msg = e.getMessage();
-                        if (msg != null && msg.toLowerCase().contains("already exists")) {
+                        // Idempotent re-run: swallow "already exists" only for the
+                        // DDL shapes that actually use IF NOT EXISTS. Anything else
+                        // failing with that message is a real defect — rethrow.
+                        if (msg != null && msg.toLowerCase().contains("already exists")
+                                && isIdempotentCreate(s)) {
                             // Expected - schema already initialized
                         } else {
                             log.error("Schema init failure: {}", msg);
@@ -53,6 +57,20 @@ public class SchemaInitializer {
         } catch (Exception e) {
             throw new RuntimeException("Failed to initialize database schema", e);
         }
+    }
+
+    /**
+     * Only CREATE ... IF NOT EXISTS shapes may legitimately fail with
+     * "already exists" on an idempotent re-run; every other statement that
+     * carries that message signals a broken schema and must not be swallowed.
+     */
+    private static boolean isIdempotentCreate(String statement) {
+        String upper = statement.trim().toUpperCase();
+        return upper.startsWith("CREATE TABLE IF NOT EXISTS")
+            || upper.startsWith("CREATE UNIQUE INDEX IF NOT EXISTS")
+            || upper.startsWith("CREATE INDEX IF NOT EXISTS")
+            || upper.startsWith("CREATE TRIGGER IF NOT EXISTS")
+            || upper.startsWith("CREATE VIRTUAL TABLE IF NOT EXISTS");
     }
 
     /**

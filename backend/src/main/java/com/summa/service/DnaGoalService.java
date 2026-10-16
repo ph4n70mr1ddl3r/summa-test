@@ -43,9 +43,12 @@ public class DnaGoalService {
                 () -> new EntityNotFoundException("Domain not found: " + domainId));
         }
         // DNC-053: Validate owner exists before writing
-        if (owner != null && !owner.isBlank()) {
-            Optional<Human> ownerHuman = memberService.findHuman(owner);
-            Optional<Agent> ownerAgent = memberService.findAgent(owner);
+        // DAT-120: dna_goals.owner is a keyed union (h:<id>/a:<id>); strip the
+        // prefix for lookup, then re-derive the kind when storing.
+        String ownerClean = owner != null && !owner.isBlank() ? JsonHelpers.stripIdPrefix(owner) : null;
+        Optional<Human> ownerHuman = ownerClean != null ? memberService.findHuman(ownerClean) : Optional.empty();
+        Optional<Agent> ownerAgent = ownerClean != null ? memberService.findAgent(ownerClean) : Optional.empty();
+        if (ownerClean != null) {
             if (ownerHuman.isEmpty() && ownerAgent.isEmpty()) {
                 throw new IllegalArgumentException("Owner does not reference an existing human or agent: " + owner);
             }
@@ -63,8 +66,9 @@ public class DnaGoalService {
         goal.setDomainId(domainId);
         goal.setQuarter(quarter);
         goal.setStatementMd(statementMd != null ? statementMd : "");
-        String ownerClean = owner != null ? JsonHelpers.stripIdPrefix(owner) : owner;
-        goal.setOwner(ownerClean);
+        String ownerKeyed = ownerClean == null ? null
+            : (ownerHuman.isPresent() ? "h:" + ownerClean : "a:" + ownerClean);
+        goal.setOwner(ownerKeyed);
         goal.setInject(inject != null ? inject : "linked");
         goal.setEffectiveFrom(effectiveFrom);
         goal.setEffectiveTo(effectiveTo);
@@ -72,7 +76,7 @@ public class DnaGoalService {
 
         DnaGoal saved = goalRepository.save(goal);
         auditService.log(actor, "CREATE_GOAL", "dna_goal", id,
-            String.format("{\"owner\":%s,\"inject\":%s}", JsonHelpers.jsonString(ownerClean), JsonHelpers.jsonString(inject)));
+            String.format("{\"owner\":%s,\"inject\":%s}", JsonHelpers.jsonString(ownerKeyed), JsonHelpers.jsonString(inject)));
         return saved;
     }
 
