@@ -125,11 +125,13 @@ public class DnaDomainService {
                 .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + id));
 
         // DGV-040: Archive refuses a domain still holding live-set state
+        // (terminal history — superseded/lapsed rules, terminal goals, retired cards,
+        // decisions — never blocks; only the live set does, §4.4)
         long liveCards = cardRepository.countByDomainIdAndStatusNot(id, "retired");
         long openProposals = proposalRepository.countByDomainIdAndStatus(id, "open");
         long liveBindings = workspaceRepository.countByDomainIdsContaining(id);
-        long activeGoals = goalRepository.countByDomainIdAndStatusNot(id, "retired");
-        long activeRules = ruleRepository.countByDomainIdAndStatusNot(id, "superseded");
+        long activeGoals = goalRepository.countByDomainIdAndStatus(id, "active");
+        long activeRules = ruleRepository.countByDomainIdAndStatus(id, "active");
         if (liveCards > 0 || openProposals > 0 || liveBindings > 0 || activeGoals > 0 || activeRules > 0) {
             throw new IllegalStateException(
                 String.format("Domain holds live state: cards=%d proposals=%d bindings=%d goals=%d rules=%d",
@@ -173,6 +175,54 @@ public class DnaDomainService {
         DnaDomain saved = domainRepository.save(domain);
         auditService.log(actor, "UPDATE_ACCESS", "dna_domain", id, null);
         return saved;
+    }
+
+    /**
+     * DWP-025: A domain edit re-derives standing clocks in one direction only —
+     * tightening recomputes each open proposal's review deadline from its filed date
+     * under the new SLA and applies it only where it lands earlier; loosening
+     * leaves standing clocks untouched. If tightening would push a proposal's
+     * review deadline into the past, the proposal is flagged as already breached
+     * (status `breached`) rather than retroactively assigned a past deadline.
+     * The `breached` status is a rendering urgency flag, not a lifecycle: the
+     * proposal stays open, and the scheduled SLA checker re-escalates it.
+     */
+    @Transactional
+    public DnaDomain updateReviewSlaDays(String id, Integer reviewSlaDays, String actor) {
+        if (reviewSlaDays == null || reviewSlaDays < 1) {
+            throw new IllegalArgumentException("reviewSlaDays must be >= 1");
+        }
+        DnaDomain domain = domainRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + id));
+        Integer oldSlaDays = domain.getReviewSlaDays() != null ? domain.getReviewSlaDays() : 7;
+        if (!reviewSlaDays.equals(oldSlaDays)) {
+            domain.setReviewSlaDays(reviewSlaDays);
+            domainRepository.save(domain);
+            // DWP-025: only tighten — when the new SLA is shorter, re-derive standing clocks
+            if (reviewSlaDays < oldSlaDays) {
+                rederiveReviewClocks(id, reviewSlaDays);
+            }
+        }
+        auditService.log(actor, "UPDATE_REVIEW_SLA", "dna_domain", id,
+            String.format("{\"oldSlaDays\":%d,\"newSlaDays\":%d}", oldSlaDays, reviewSlaDays));
+        return domain;
+    }
+
+    private void rederiveReviewClocks(String domainId, int newSlaDays) {
+        long newSeconds = newSlaDays * 86400L;
+        for (DnaProposal p : proposalRepository.findOpenByDomain(domainId)) {
+            if (p.getCreatedAt() == null) continue;
+            long newDeadline = p.getCreatedAt().getEpochSecond() + newSeconds;
+            long now = java.time.Instant.now().getEpochSecond();
+            // DWP-025: flag already-breached rather than retroactively assigning a past deadline.
+            // The proposal stays open; the scheduled SLA checker re-escalates it.
+            if (newDeadline < now) {
+                p.setStatus("breached");
+                proposalRepository.save(p);
+                auditService.logSystem("SLA_TIGHTEN_BREACHED", "dna_proposal", p.getId(),
+                    String.format("{\"newSlaDays\":%d,\"filedAt\":%d}", newSlaDays, p.getCreatedAt().getEpochSecond()));
+            }
+        }
     }
 
     // DGV-010..013: Split a domain into a child domain.

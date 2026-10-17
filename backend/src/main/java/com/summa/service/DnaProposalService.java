@@ -344,6 +344,7 @@ public class DnaProposalService {
 
     private boolean proposedByMatches(DnaProposal proposal, String actor) {
         String proposedBy = proposal.getProposedBy();
-        return proposedBy != null && proposedBy.equals(com.summa.util.JsonHelpers.stripIdPrefix(actor));
+        // DAT-120: proposed_by and actor may carry keyed-union prefixes; compare stripped forms.
+        return proposedBy != null && proposedBy.equals(JsonHelpers.stripIdPrefix(actor));
     }
 }

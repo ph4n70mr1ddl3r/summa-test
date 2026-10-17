@@ -348,9 +348,9 @@ public class InitiativeService {
         // INT-022: Authority check — close belongs to sponsor, lead, or admin.
         // DAT-120: sponsor/lead are stored as keyed unions; compare stripped forms.
         String actorClean = JsonHelpers.stripIdPrefix(actor);
-        boolean isSponsor = initiative.getSponsor() != null && initiative.getSponsor().equals(actor);
-        boolean isLead = initiative.getLead() != null && initiative.getLead().equals(actor);
-        if (!isSponsor && !isLead && !memberService.isAdmin(actor)) {
+        boolean isSponsor = initiative.getSponsor() != null && actorClean.equals(JsonHelpers.stripIdPrefix(initiative.getSponsor()));
+        boolean isLead = initiative.getLead() != null && actorClean.equals(JsonHelpers.stripIdPrefix(initiative.getLead()));
+        if (!isSponsor && !isLead && !memberService.isAdmin(actorClean)) {
             throw new IllegalStateException("Only the sponsor, lead, or an admin can close an initiative");
         }
 

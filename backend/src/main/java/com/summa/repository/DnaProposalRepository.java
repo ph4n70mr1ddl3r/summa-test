@@ -12,10 +12,10 @@ public interface DnaProposalRepository extends JpaRepository<DnaProposal, String
     
     List<DnaProposal> findByDomainId(String domainId);
     
-    @Query("SELECT p FROM DnaProposal p WHERE p.domainId = :domainId AND p.status = 'open' ORDER BY p.createdAt ASC")
+    @Query("SELECT p FROM DnaProposal p WHERE p.domainId = :domainId AND (p.status = 'open' OR p.status = 'breached') ORDER BY p.createdAt ASC")
     List<DnaProposal> findOpenByDomain(@org.springframework.data.repository.query.Param("domainId") String domainId);
     
-    @Query("SELECT p FROM DnaProposal p WHERE p.status = 'open' ORDER BY p.createdAt ASC")
+    @Query("SELECT p FROM DnaProposal p WHERE p.status = 'open' OR p.status = 'breached' ORDER BY p.createdAt ASC")
     List<DnaProposal> findAllOpen();
     
     long countByStatus(String status);

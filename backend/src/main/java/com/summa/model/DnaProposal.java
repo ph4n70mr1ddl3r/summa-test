@@ -91,8 +91,9 @@ public class DnaProposal {
     public void setDomainId(String domainId) { this.domainId = domainId; }
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
-    public boolean isOpen() { return "open".equals(status); }
+    public boolean isOpen() { return "open".equals(status) || "breached".equals(status); }
     public boolean isPublished() { return "published".equals(status); }
     public boolean isRejected() { return "rejected".equals(status); }
     public boolean isWithdrawn() { return "withdrawn".equals(status); }
+    public boolean isBreached() { return "breached".equals(status); }
 }

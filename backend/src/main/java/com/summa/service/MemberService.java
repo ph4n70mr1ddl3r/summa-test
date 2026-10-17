@@ -91,7 +91,8 @@ public class MemberService {
     @Transactional(readOnly = true)
     public Optional<String> resolveDeputyTarget(String memberId) {
         if (memberId == null || memberId.isBlank()) return Optional.empty();
-        Optional<Human> humanOpt = findHuman(memberId);
+        String cleanId = JsonHelpers.stripIdPrefix(memberId);
+        Optional<Human> humanOpt = findHuman(cleanId);
         if (!humanOpt.isPresent() || !humanOpt.get().isActive() || humanOpt.get().getDeputyMemberId() == null) {
             return Optional.empty();
         }

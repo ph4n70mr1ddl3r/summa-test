@@ -168,6 +168,27 @@ public class DnaDomainController {
         }
     }
 
+    /**
+     * DWP-025: edit a domain's review SLA. Tightening re-derives standing clocks
+     * (flagging already-breached proposals); loosening leaves standing clocks
+     * untouched. Per DGV-005, review_sla_days is an owner-editable attribute.
+     */
+    @PatchMapping("/{id}/review-sla")
+    public ResponseEntity<?> updateReviewSla(@PathVariable String id, @RequestBody Map<String, String> body) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
+        try {
+            Integer sla = JsonHelpers.parseIntSafe(body.get("reviewSlaDays"));
+            DnaDomain domain = domainService.updateReviewSlaDays(id, sla, actor);
+            return ResponseEntity.ok(domain);
+        } catch (IllegalArgumentException e) {
+            return ControllerResponses.validation(auditService, e.getMessage());
+        } catch (IllegalStateException e) {
+            return ControllerResponses.gate(auditService, e.getMessage());
+        }
+    }
+
     // API-023: topology ops — split and merge
     @SuppressWarnings("unchecked")
     @PostMapping("/{id}/split")

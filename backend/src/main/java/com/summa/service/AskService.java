@@ -446,8 +446,11 @@ public class AskService {
             Optional<Human> target = memberService.findHuman(targetClean);
             return target.isPresent() && !RbacRole.VIEWER.getValue().equals(target.get().getRbac());
         }
-        // Admin broadcast: any active admin is a pool principal
-        if (OffboardingWalkService.ADMIN_BROADCAST.equals(ask.getTo())) {
+        // Admin broadcast: any active admin is a pool principal.
+        // targetClean strips the h:/a: prefix from the stored 'to' value, so a
+        // keyed-union stored target of "admins" (unlikely but possible) still matches.
+        if (OffboardingWalkService.ADMIN_BROADCAST.equals(ask.getTo())
+                || OffboardingWalkService.ADMIN_BROADCAST.equals(targetClean)) {
             return memberService.findAdmins().stream()
                     .anyMatch(h -> h.getId().equals(responderClean));
         }

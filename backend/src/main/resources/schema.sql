@@ -163,7 +163,7 @@ CREATE TABLE IF NOT EXISTS dna_proposals (
     revision INTEGER NOT NULL DEFAULT 1,
     proposed_by TEXT NOT NULL,
     provenance TEXT NOT NULL DEFAULT '{}',
-    status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'published', 'rejected', 'withdrawn')),
+    status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'published', 'rejected', 'withdrawn', 'breached')),
     review_by TEXT,
     reviewed_by TEXT,
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),

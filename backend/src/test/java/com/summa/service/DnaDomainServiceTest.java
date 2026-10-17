@@ -132,8 +132,8 @@ class DnaDomainServiceTest {
         when(cardRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(0L);
         when(proposalRepository.countByDomainIdAndStatus("domain-1", "open")).thenReturn(0L);
         when(workspaceRepository.countByDomainIdsContaining("domain-1")).thenReturn(0L);
-        when(goalRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(0L);
-        when(ruleRepository.countByDomainIdAndStatusNot("domain-1", "superseded")).thenReturn(0L);
+        when(goalRepository.countByDomainIdAndStatus("domain-1", "active")).thenReturn(0L);
+        when(ruleRepository.countByDomainIdAndStatus("domain-1", "active")).thenReturn(0L);
         when(domainRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         DnaDomain result = domainService.archive("domain-1", "admin");
@@ -148,8 +148,8 @@ class DnaDomainServiceTest {
         domain.setStatus("active");
         when(domainRepository.findById("domain-1")).thenReturn(Optional.of(domain));
         when(cardRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(1L);
-        when(goalRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(0L);
-        when(ruleRepository.countByDomainIdAndStatusNot("domain-1", "superseded")).thenReturn(0L);
+        when(goalRepository.countByDomainIdAndStatus("domain-1", "active")).thenReturn(0L);
+        when(ruleRepository.countByDomainIdAndStatus("domain-1", "active")).thenReturn(0L);
 
         assertThrows(IllegalStateException.class, () ->
             domainService.archive("domain-1", "admin")
@@ -164,8 +164,8 @@ class DnaDomainServiceTest {
         when(domainRepository.findById("domain-1")).thenReturn(Optional.of(domain));
         when(cardRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(0L);
         when(proposalRepository.countByDomainIdAndStatus("domain-1", "open")).thenReturn(1L);
-        when(goalRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(0L);
-        when(ruleRepository.countByDomainIdAndStatusNot("domain-1", "superseded")).thenReturn(0L);
+        when(goalRepository.countByDomainIdAndStatus("domain-1", "active")).thenReturn(0L);
+        when(ruleRepository.countByDomainIdAndStatus("domain-1", "active")).thenReturn(0L);
 
         assertThrows(IllegalStateException.class, () ->
             domainService.archive("domain-1", "admin")
@@ -181,8 +181,8 @@ class DnaDomainServiceTest {
         when(cardRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(0L);
         when(proposalRepository.countByDomainIdAndStatus("domain-1", "open")).thenReturn(0L);
         when(workspaceRepository.countByDomainIdsContaining("domain-1")).thenReturn(1L);
-        when(goalRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(0L);
-        when(ruleRepository.countByDomainIdAndStatusNot("domain-1", "superseded")).thenReturn(0L);
+        when(goalRepository.countByDomainIdAndStatus("domain-1", "active")).thenReturn(0L);
+        when(ruleRepository.countByDomainIdAndStatus("domain-1", "active")).thenReturn(0L);
 
         assertThrows(IllegalStateException.class, () ->
             domainService.archive("domain-1", "admin")
@@ -198,8 +198,8 @@ class DnaDomainServiceTest {
         when(cardRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(0L);
         when(proposalRepository.countByDomainIdAndStatus("domain-1", "open")).thenReturn(0L);
         when(workspaceRepository.countByDomainIdsContaining("domain-1")).thenReturn(0L);
-        when(goalRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(1L);
-        when(ruleRepository.countByDomainIdAndStatusNot("domain-1", "superseded")).thenReturn(0L);
+        when(goalRepository.countByDomainIdAndStatus("domain-1", "active")).thenReturn(1L);
+        when(ruleRepository.countByDomainIdAndStatus("domain-1", "active")).thenReturn(0L);
 
         assertThrows(IllegalStateException.class, () ->
             domainService.archive("domain-1", "admin")
@@ -215,8 +215,8 @@ class DnaDomainServiceTest {
         when(cardRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(0L);
         when(proposalRepository.countByDomainIdAndStatus("domain-1", "open")).thenReturn(0L);
         when(workspaceRepository.countByDomainIdsContaining("domain-1")).thenReturn(0L);
-        when(goalRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(0L);
-        when(ruleRepository.countByDomainIdAndStatusNot("domain-1", "superseded")).thenReturn(1L);
+        when(goalRepository.countByDomainIdAndStatus("domain-1", "active")).thenReturn(0L);
+        when(ruleRepository.countByDomainIdAndStatus("domain-1", "active")).thenReturn(1L);
 
         assertThrows(IllegalStateException.class, () ->
             domainService.archive("domain-1", "admin")
@@ -439,6 +439,53 @@ class DnaDomainServiceTest {
         List<DnaDomain> results = domainService.findByOwnerHumanId("h:admin");
 
         assertEquals(1, results.size());
+    }
+
+    @Test
+    void updateReviewSlaDays_refusesBelowOne() {
+        DnaDomain domain = new DnaDomain();
+        domain.setId("domain-1");
+        domain.setReviewSlaDays(7);
+        lenient().when(domainRepository.findById("domain-1")).thenReturn(Optional.of(domain));
+
+        assertThrows(IllegalArgumentException.class, () ->
+            domainService.updateReviewSlaDays("domain-1", 0, "admin")
+        );
+    }
+
+    @Test
+    void updateReviewSlaDays_tighteningFlagsBreachedProposals() {
+        DnaDomain domain = new DnaDomain();
+        domain.setId("domain-1");
+        domain.setReviewSlaDays(7);
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.of(domain));
+
+        DnaProposal oldProp = new DnaProposal();
+        oldProp.setId("prop-old");
+        oldProp.setStatus("open");
+        oldProp.setCreatedAt(java.time.Instant.now().minusSeconds(86400L * 10)); // 10 days ago
+        when(proposalRepository.findOpenByDomain("domain-1")).thenReturn(List.of(oldProp));
+        when(proposalRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(domainRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        domainService.updateReviewSlaDays("domain-1", 5, "admin");
+
+        assertEquals("breached", oldProp.getStatus());
+        assertEquals(Integer.valueOf(5), domain.getReviewSlaDays());
+    }
+
+    @Test
+    void updateReviewSlaDays_looseningLeavesClocksUntouched() {
+        DnaDomain domain = new DnaDomain();
+        domain.setId("domain-1");
+        domain.setReviewSlaDays(3);
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.of(domain));
+        when(domainRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        domainService.updateReviewSlaDays("domain-1", 7, "admin");
+
+        assertEquals(Integer.valueOf(7), domain.getReviewSlaDays());
+        verify(proposalRepository, never()).findOpenByDomain(any());
     }
 
     @Test
