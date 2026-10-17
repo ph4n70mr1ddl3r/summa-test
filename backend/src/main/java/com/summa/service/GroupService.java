@@ -37,7 +37,8 @@ public class GroupService {
         Group group = new Group();
         group.setId(UUID.randomUUID().toString());
         group.setName(name);
-        group.setLeaderMemberId(leaderMemberId);
+        // DAT-120: leader_member_id is stored as a keyed union (h:<id> for a human).
+        group.setLeaderMemberId(normalizeLeader(leaderMemberId));
 
         Group saved = groupRepository.save(group);
         auditService.log(actor, "CREATE", "group", group.getId(),
@@ -90,9 +91,19 @@ public class GroupService {
             throw new IllegalStateException("Ephemeral agents cannot be group leaders: " + leaderMemberId);
         }
 
-        group.setLeaderMemberId(leaderMemberId);
+        // DAT-120: the human leader is re-prefixed to the stored keyed-union form.
+        group.setLeaderMemberId(normalizeLeader(leaderMemberId));
         Group saved = groupRepository.save(group);
         auditService.log(actor, "SET_LEADER", "group", id, null);
         return saved;
+    }
+
+    /**
+     * DAT-120: normalize a caller-supplied leader reference to the stored
+     * keyed-union form (h:<humans.id>).
+     */
+    private static String normalizeLeader(String leaderMemberId) {
+        String clean = JsonHelpers.stripIdPrefix(leaderMemberId);
+        return clean == null ? leaderMemberId : "h:" + clean;
     }
 }

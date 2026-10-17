@@ -429,7 +429,7 @@ public class AskService {
         auditService.log(responder, "RESPOND", "ask", id,
                 String.format("{\"response\":%s,\"quorumProgress\":%d/%d}",
                     JsonHelpers.jsonString(response != null && !response.isEmpty() ? response.substring(0, Math.min(100, response.length())) : ""),
-                    existingResponses.size(), quorum));
+                    storedCount, quorum));
         return saved;
     }
 

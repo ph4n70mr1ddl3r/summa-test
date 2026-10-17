@@ -115,4 +115,28 @@ class GovernanceServiceTest {
         Float result = governanceService.getSetting("spend-critical-floor-percent", Float.class);
         assertEquals(5.5f, result, 0.001f);
     }
+
+    @Test
+    void getSetting_NumberClassReturnsNumber() {
+        GovernanceSetting setting = new GovernanceSetting();
+        setting.setKey("asks-tier-critical-deadline-hours");
+        setting.setValue("1");
+        when(settingRepository.findAll()).thenReturn(java.util.List.of(setting));
+
+        Number result = governanceService.getSetting("asks-tier-critical-deadline-hours", Number.class);
+        assertNotNull(result);
+        assertEquals(1L, result.longValue());
+    }
+
+    @Test
+    void getSetting_NumberClassFloatReturnsNumber() {
+        GovernanceSetting setting = new GovernanceSetting();
+        setting.setKey("asks-tier-critical-deadline-hours");
+        setting.setValue("1.5");
+        when(settingRepository.findAll()).thenReturn(java.util.List.of(setting));
+
+        Number result = governanceService.getSetting("asks-tier-critical-deadline-hours", Number.class);
+        assertNotNull(result);
+        assertEquals(1.5, result.doubleValue(), 0.0001);
+    }
 }

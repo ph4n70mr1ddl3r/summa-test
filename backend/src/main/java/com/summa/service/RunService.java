@@ -2,9 +2,12 @@ package com.summa.service;
 
 import com.summa.repository.RunRepository;
 import com.summa.model.Run;
+import com.summa.model.Agent;
+import com.summa.model.SpendLedger;
+import com.summa.repository.AgentRepository;
+import com.summa.repository.SpendLedgerRepository;
 import com.summa.repository.InitiativeRepository;
 import com.summa.model.Initiative;
-import com.summa.repository.AgentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -20,13 +23,16 @@ public class RunService {
     private final AuditService auditService;
     private final InitiativeRepository initiativeRepository;
     private final AgentRepository agentRepository;
+    private final SpendLedgerRepository spendLedgerRepository;
 
     public RunService(RunRepository runRepository, AuditService auditService,
-                      InitiativeRepository initiativeRepository, AgentRepository agentRepository) {
+                       InitiativeRepository initiativeRepository, AgentRepository agentRepository,
+                       SpendLedgerRepository spendLedgerRepository) {
         this.runRepository = runRepository;
         this.auditService = auditService;
         this.initiativeRepository = initiativeRepository;
         this.agentRepository = agentRepository;
+        this.spendLedgerRepository = spendLedgerRepository;
     }
 
     @Transactional
@@ -113,6 +119,27 @@ public class RunService {
         if (costTokens != null) run.setCostTokens(costTokens);
         if (costUsd != null) run.setCostUsd(costUsd);
         Run saved = runRepository.save(run);
+        // SPW-060: land a settle line so the spend breaker sees API-landed runs,
+        // matching NodeService.reportRun (the node path lands the same ledger row).
+        if (costUsd != null && costUsd > 0) {
+            String memberId = null;
+            if (run.getAgentId() != null) {
+                Optional<Agent> agentOpt = agentRepository.findById(run.getAgentId());
+                if (agentOpt.isPresent()) {
+                    memberId = agentOpt.get().getOwnerHumanId();
+                }
+            }
+            if (memberId != null && !memberId.isBlank()) {
+                SpendLedger ledger = new SpendLedger();
+                ledger.setId(UUID.randomUUID().toString());
+                ledger.setMemberId(memberId);
+                ledger.setRunId(run.getId());
+                ledger.setKind("settle");
+                ledger.setCost(costUsd);
+                ledger.setTokensOut(costTokens != null ? costTokens : 0L);
+                spendLedgerRepository.save(ledger);
+            }
+        }
         auditService.logSystem("COMPLETE_RUN", "run", id, null);
         return saved;
     }

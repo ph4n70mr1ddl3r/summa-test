@@ -57,7 +57,7 @@ Kubernetes (prod): decomposed services
 | `SUMMA_SPEND_CEILING` | `1000000` | Org spend ceiling |
 | `SUMMA_CORS_ORIGINS` | *(empty = localhost + 127.0.0.1 only)* | Extra CORS origins, comma-separated (e.g. `https://app.example.com`) |
 | `SUMMA_AUTH_LOCAL_AUTH_ENABLED` | `true` | Enable local email/password auth (set `false` when using OIDC/gateway auth) |
-| `SUMMA_GIT_BRANCH` | `main` | DNA repo branch to track |
+| `SUMMA_GIT_BRANCH` | `main` | DNA repo branch to track — **currently inert**: `summa.git.branch` is bound in `application.yml` but no backend code reads it yet (the DNA store check only uses `summa.git.dna-repo-path`) |
 | `SPRING_PROFILES_ACTIVE` | `prod` (Dockerfile, docker-compose, start.sh) · `dev` (dev.sh, hot-reload) | Spring profile |
 | `VITE_API_URL` | `/api` | API base URL baked into the console bundle at build time |
 | `VITE_SUMMA_MODE` | `single-process` | Console mode badge: `single-process` or `multi-node` |
@@ -90,6 +90,8 @@ Kubernetes (prod): decomposed services
 | `SUMMA_INJECTION_GOAL_SLICE_TOKEN_BUDGET` | `1000` | Goal slice token budget for injection layers |
 
 > **OIDC note:** `SUMMA_OIDC_*` variables are reserved for a planned Keycloak integration. Human auth today is email + password via `POST /api/auth/login`. Keycloak OIDC was decided per PLAN §14.2 / SEC-001 but not yet implemented — these variables have no effect.
+
+> **Inert knobs note:** the following `application.yml` bindings have no `@Value`/`@ConfigurationProperties` consumer in the backend yet and therefore have no runtime effect despite being documented here and in `.env.example`: `SUMMA_GIT_BRANCH`, `SUMMA_INJECTION_*_TOKEN_BUDGET` (4 vars), and the spawn/asks/node defaults under `SUMMA_SPAWN_*`/`SUMMA_ASKS_*`/`SUMMA_NODE_*` — their effective counterparts live in the `governance_settings` table (see `GovernanceService.applyDefaults` / `Defaults.QUOTA_KEYS`/`POLICY_KEYS`), seeded at startup with the same values. The only env knob that is genuinely read is `SUMMA_SPAWN_DEPTH_CAP` (injected into `AgentService`/`SpawnService` via `summa.spawn.depth-cap`). Operators tuning quotas/SLAs should prefer `PUT /governance/quotas` / `PUT /governance/policies` over these env vars.
 
 ## API Endpoints
 

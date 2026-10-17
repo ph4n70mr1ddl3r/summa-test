@@ -126,27 +126,36 @@ async function request<T>(path: string, init?: RequestInit): Promise<T | undefin
       }
       const err = new ApiError(res.status === 401 ? 'Session expired' : message, res.status, errorBody);
       if (res.status === 401) {
-        setAuthToken(null, null);
-        // Prevent duplicate redirects if multiple requests fail simultaneously.
-        // Use a closure-guarded flag so a second 401 during the navigation window
-        // does not trigger another redirect.
-        if (!window.__summaRedirecting) {
-          window.__summaRedirecting = true;
-          const cleanup = () => { window.__summaRedirecting = false; };
-          if (navigateRef) {
-            navigateRef('/login', { replace: true });
-          } else {
-            window.location.href = '/login';
+        // A 401 from /auth/login is a wrong-credentials failure, not an
+        // expired session: clearing the token / redirecting would churn the
+        // auth state for a plain login error the page already handles.
+        const isLoginAttempt = path.startsWith('/auth/login');
+        if (!isLoginAttempt) {
+          setAuthToken(null, null);
+          // Prevent duplicate redirects if multiple requests fail simultaneously.
+          // Use a closure-guarded flag so a second 401 during the navigation window
+          // does not trigger another redirect.
+          if (!window.__summaRedirecting) {
+            window.__summaRedirecting = true;
+            const cleanup = () => { window.__summaRedirecting = false; };
+            if (navigateRef) {
+              navigateRef('/login', { replace: true });
+            } else {
+              window.location.href = '/login';
+            }
+            // Extend the guard to cover the full navigation cycle, not just 1s
+            setTimeout(cleanup, 5000);
+            window.addEventListener('focus', cleanup, { once: true });
+            // Also clear on auth-change event so re-login resets the guard immediately
+            const onAuthChange = () => cleanup();
+            window.addEventListener('summa-auth-change', onAuthChange);
+            // Clean up listener after the same timeout as the redirect guard
+            setTimeout(() => window.removeEventListener('summa-auth-change', onAuthChange), 5000);
           }
-          // Extend the guard to cover the full navigation cycle, not just 1s
-          setTimeout(cleanup, 5000);
-          window.addEventListener('focus', cleanup, { once: true });
-          // Also clear on auth-change event so re-login resets the guard immediately
-          const onAuthChange = () => cleanup();
-          window.addEventListener('summa-auth-change', onAuthChange);
-          // Clean up listener after the same timeout as the redirect guard
-          setTimeout(() => window.removeEventListener('summa-auth-change', onAuthChange), 5000);
         }
+        // Propagate the 401 without re-wrapping: the outer catch below preserves
+        // status/body via the ApiError instance check, so the login error keeps
+        // its "Session expired"/invalid-credentials message and identity.
         throw err;
       }
     }
@@ -165,9 +174,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T | undefin
     // (401, 429, 500, 503, etc.). Only wrap true network/abort failures
     // with status 0 so callers can still distinguish between a network error
     // and an actual HTTP error response.
-    const status = err instanceof ApiError ? err.status : 0;
-    const body = err instanceof ApiError ? err.body : undefined;
-    throw new ApiError(err instanceof Error ? err.message : String(err), status, body);
+    if (err instanceof ApiError) {
+      // Already a typed HTTP error (e.g. the 401 thrown above) — re-throw as-is
+      // so callers see the original instance (message, status, body intact)
+      // instead of a freshly-constructed wrapper.
+      throw err;
+    }
+    const status = 0;
+    throw new ApiError(err instanceof Error ? err.message : String(err), status, undefined);
   } finally {
     clearTimeout(timeoutId);
   }
@@ -246,7 +260,7 @@ export interface Ask {
   payload: string;
   slaTier: AskTier;
   status: AskStatus;
-  deadline: number;
+  deadline?: number;
   quorumRequired?: number;
   collapsedCount?: number;
   initiativeId?: string;
@@ -288,7 +302,7 @@ export interface SpawnStats {
   requested: number;
   approved: number;
   archived: number;
-  halted?: number;
+  halted: number;
 }
 
 export interface Initiative {

@@ -68,12 +68,26 @@ export default function Governance() {
         setEditValues(prev => { const next = { ...prev }; delete next[key]; return next })
         return
       }
+      // Boolean round-trip: a stored boolean rendered as the text "true"/"false"
+      // must be sent back as a JSON boolean — the backend validateNumberOrBoolean
+      // only accepts Boolean | Number | numeric string, so a bare "true" string
+      // would fail validation ("must be a number") and corrupt the setting.
+      const isBoolString = trimmed === 'true' || trimmed === 'false'
       const numericValue = Number(trimmed)
-      const body = Number.isNaN(numericValue) ? { [key]: trimmed } : { [key]: numericValue }
+      let savedValue: number | boolean | string
+      let body: Record<string, unknown>
+      if (isBoolString) {
+        savedValue = trimmed === 'true'
+        body = { [key]: savedValue }
+      } else if (Number.isNaN(numericValue)) {
+        savedValue = trimmed
+        body = { [key]: trimmed }
+      } else {
+        savedValue = numericValue
+        body = { [key]: numericValue }
+      }
       if (section === 'policies') await api.governance.updatePolicies(body)
       else await api.governance.updateQuotas(body)
-      // Preserve the original type — if it was a number string, store as number; otherwise string
-      const savedValue = Number.isNaN(numericValue) ? trimmed : numericValue
       if (section === 'policies') setPolicies(prev => ({ ...prev, [key]: savedValue }))
       else setQuotas(prev => ({ ...prev, [key]: savedValue }))
       // Use functional update to read the latest editValues without stale closure
@@ -132,8 +146,8 @@ export default function Governance() {
           <button
             type="button"
             onClick={() => startEdit(key, value)}
-            className="flex-1 text-right text-gray-200 font-mono text-xs hover:text-white truncate"
-            aria-label={`Edit ${key}: ${currentValue}`}
+             className="flex-1 text-right text-gray-200 font-mono text-xs hover:text-white truncate"
+             aria-label={`Edit ${key}`}
           >
             {typeof value === 'object' && value !== null ? escapeHtml(JSON.stringify(value)) : escapeHtml(String(value))}
           </button>

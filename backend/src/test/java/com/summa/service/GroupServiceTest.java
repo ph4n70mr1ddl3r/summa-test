@@ -37,7 +37,8 @@ class GroupServiceTest {
 
         assertNotNull(result);
         assertEquals("Engineering", result.getName());
-        assertEquals("human-1", result.getLeaderMemberId());
+        // DAT-120: the stored leader is the keyed-union form
+        assertEquals("h:human-1", result.getLeaderMemberId());
     }
 
     @Test
@@ -90,7 +91,8 @@ class GroupServiceTest {
 
         Group result = groupService.setLeader("group-1", "human-2", "admin");
 
-        assertEquals("human-2", result.getLeaderMemberId());
+        // DAT-120: bare ids are stored as the keyed-union form
+        assertEquals("h:human-2", result.getLeaderMemberId());
     }
 
     @Test

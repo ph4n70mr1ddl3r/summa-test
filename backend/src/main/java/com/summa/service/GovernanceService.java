@@ -98,6 +98,19 @@ public class GovernanceService {
             if ("false".equals(lower) || "no".equals(lower) || "0".equals(lower)) return type.cast(false);
             return null;
         }
+        if (type.equals(Number.class) || type.equals(java.math.BigDecimal.class)) {
+            if (value instanceof Number) return type.cast(value);
+            try {
+                if (value instanceof String s) {
+                    String trimmed = s.trim();
+                    if (trimmed.contains(".")) return type.cast((Number) Double.parseDouble(trimmed));
+                    return type.cast((Number) Long.parseLong(trimmed));
+                }
+            } catch (NumberFormatException ignored) {
+                // fall through to the failure below
+            }
+            return null;
+        }
         throw new IllegalArgumentException("Cannot cast value to " + type.getName() + " for key: " + key);
     }
 

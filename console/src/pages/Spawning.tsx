@@ -84,6 +84,7 @@ export default function Spawning() {
           <div className="flex space-x-4 text-sm">
             <span className="text-yellow-400">Requested: {stats.requested}</span>
             <span className="text-green-400">Approved: {stats.approved}</span>
+            <span className="text-orange-400">Halted: {stats.halted}</span>
             <span className="text-gray-400">Archived: {stats.archived}</span>
           </div>
         )}

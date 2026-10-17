@@ -170,11 +170,44 @@ class AgentServiceTest {
         agent.setStatus("requested");
         when(agentRepository.findById("agent-1")).thenReturn(Optional.of(agent));
         when(agentRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(spawnRequestRepository.findByRequesterId("agent-1")).thenReturn(List.of());
+        when(spawnRequestRepository.findByRequesterId("a:agent-1")).thenReturn(List.of());
+        when(triggerRepository.findByAgentId("agent-1")).thenReturn(List.of());
 
         Agent result = agentService.deny("agent-1", "admin");
 
         assertEquals("archived", result.getStatus());
         assertNotNull(result.getArchivedAt());
+    }
+
+    @Test
+    void deny_archivesPendingSpawnsAndPausesTriggers() {
+        Agent agent = new Agent();
+        agent.setId("agent-1");
+        agent.setStatus("requested");
+        when(agentRepository.findById("agent-1")).thenReturn(Optional.of(agent));
+        when(agentRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        com.summa.model.SpawnRequest spawn = new com.summa.model.SpawnRequest();
+        spawn.setId("spawn-1");
+        spawn.setStatus("requested");
+        when(spawnRequestRepository.findByRequesterId("agent-1")).thenReturn(List.of(spawn));
+        when(spawnRequestRepository.findByRequesterId("a:agent-1")).thenReturn(List.of());
+        when(spawnRequestRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        com.summa.model.Trigger trigger = new com.summa.model.Trigger();
+        trigger.setId("trigger-1");
+        trigger.setStatus("active");
+        when(triggerRepository.findByAgentId("agent-1")).thenReturn(List.of(trigger));
+        when(triggerRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Agent result = agentService.deny("agent-1", "admin");
+
+        assertEquals("archived", result.getStatus());
+        assertEquals("archived", spawn.getStatus());
+        assertEquals("paused", trigger.getStatus());
+        verify(auditService).logSystem(eq("DENY_ARCHIVE_SPAWN"), eq("spawn_request"), eq("spawn-1"), anyString());
+        verify(auditService).logSystem(eq("DENY_PAUSE_TRIGGER"), eq("trigger"), eq("trigger-1"), anyString());
     }
 
     @Test

@@ -34,14 +34,14 @@ describe('Spawning page', () => {
 
   it('renders the Spawning heading', async () => {
     vi.mocked(apiModule.api.spawn.list).mockResolvedValue([])
-    vi.mocked(apiModule.api.spawn.stats).mockResolvedValue({ requested: 0, approved: 0, archived: 0 })
+    vi.mocked(apiModule.api.spawn.stats).mockResolvedValue({ requested: 0, approved: 0, archived: 0, halted: 0 })
     render(<Spawning />)
     await waitFor(() => expect(screen.getByText('Spawning')).toBeInTheDocument())
   })
 
   it('shows empty state when no requests', async () => {
     vi.mocked(apiModule.api.spawn.list).mockResolvedValue([])
-    vi.mocked(apiModule.api.spawn.stats).mockResolvedValue({ requested: 0, approved: 0, archived: 0 })
+    vi.mocked(apiModule.api.spawn.stats).mockResolvedValue({ requested: 0, approved: 0, archived: 0, halted: 0 })
     render(<Spawning />)
     await waitFor(() => {
       const el = screen.getByText(/no spawn requests/i)
@@ -53,7 +53,7 @@ describe('Spawning page', () => {
     vi.mocked(apiModule.api.spawn.list).mockResolvedValue([
       { id: 's1', requesterId: 'a1', class: 'ephemeral', purpose: 'Test task', status: 'requested' as const },
     ])
-    vi.mocked(apiModule.api.spawn.stats).mockResolvedValue({ requested: 1, approved: 0, archived: 0 })
+    vi.mocked(apiModule.api.spawn.stats).mockResolvedValue({ requested: 1, approved: 0, archived: 0, halted: 0 })
     render(<Spawning />)
     await waitFor(() => {
       expect(screen.getByText('Requested: 1')).toBeInTheDocument()
@@ -62,7 +62,7 @@ describe('Spawning page', () => {
 
   it('shows gates section', async () => {
     vi.mocked(apiModule.api.spawn.list).mockResolvedValue([])
-    vi.mocked(apiModule.api.spawn.stats).mockResolvedValue({ requested: 0, approved: 0, archived: 0 })
+    vi.mocked(apiModule.api.spawn.stats).mockResolvedValue({ requested: 0, approved: 0, archived: 0, halted: 0 })
     render(<Spawning />)
     await waitFor(() => expect(screen.getByText('Gates')).toBeInTheDocument())
   })
@@ -80,7 +80,7 @@ describe('Spawning page', () => {
       { id: 's1', requesterId: 'a1', class: 'ephemeral', purpose: 'Task 1', status: 'requested' as const },
       { id: 's2', requesterId: 'a2', class: 'ephemeral', purpose: 'Task 2', status: 'requested' as const },
     ])
-    vi.mocked(apiModule.api.spawn.stats).mockResolvedValue({ requested: 2, approved: 0, archived: 0 })
+    vi.mocked(apiModule.api.spawn.stats).mockResolvedValue({ requested: 2, approved: 0, archived: 0, halted: 0 })
     render(<Spawning />)
     await waitFor(() => expect(screen.getByText('Requested: 2')).toBeInTheDocument())
 
@@ -101,7 +101,7 @@ describe('Spawning page', () => {
     vi.mocked(apiModule.api.spawn.list).mockResolvedValue([
       { id: 's1', requesterId: 'a1', class: 'ephemeral', purpose: 'Test task', status: 'requested' as const },
     ])
-    vi.mocked(apiModule.api.spawn.stats).mockResolvedValue({ requested: 1, approved: 0, archived: 0 })
+    vi.mocked(apiModule.api.spawn.stats).mockResolvedValue({ requested: 1, approved: 0, archived: 0, halted: 0 })
     vi.mocked(apiModule.api.spawn.approve).mockResolvedValue(undefined)
     render(<Spawning />)
     await waitFor(() => expect(screen.getByText('Requested: 1')).toBeInTheDocument())
@@ -126,7 +126,7 @@ describe('Spawning page', () => {
     vi.mocked(apiModule.api.spawn.list).mockResolvedValue([
       { id: 's2', requesterId: 'a2', class: 'ephemeral', purpose: 'Bad request', status: 'requested' as const },
     ])
-    vi.mocked(apiModule.api.spawn.stats).mockResolvedValue({ requested: 1, approved: 0, archived: 0 })
+    vi.mocked(apiModule.api.spawn.stats).mockResolvedValue({ requested: 1, approved: 0, archived: 0, halted: 0 })
     vi.mocked(apiModule.api.spawn.deny).mockResolvedValue(undefined)
     render(<Spawning />)
     await waitFor(() => expect(screen.getByText('Requested: 1')).toBeInTheDocument())

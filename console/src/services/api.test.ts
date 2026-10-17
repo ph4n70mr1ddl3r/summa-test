@@ -274,3 +274,41 @@ describe('api.nodes endpoint paths', () => {
     )
   })
 })
+
+describe('request 401 handling', () => {
+  const unauthResponse = { ok: false, status: 401, text: async () => JSON.stringify({ message: 'Unauthorized' }) }
+  const fetchMock = vi.fn()
+
+  const originalFetch = globalThis.fetch
+
+  beforeEach(() => {
+    fetchMock.mockResolvedValue(unauthResponse as unknown as Response)
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    globalThis.fetch = originalFetch
+    setAuthToken(null)
+    delete (window as { __summaRedirecting?: boolean }).__summaRedirecting
+  })
+
+  it('a 401 on a data call clears the token and redirects to /login', async () => {
+    setAuthToken('stale-token', { userId: 'u1', rbac: 'member' as RbacRole })
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    await expect(api.health()).rejects.toBeInstanceOf(ApiError)
+    expect(getAuthToken()).toBe(null)
+    expect((window as { __summaRedirecting?: boolean }).__summaRedirecting).toBe(true)
+  })
+
+  it('a 401 on /auth/login does not clear the token or redirect', async () => {
+    setAuthToken('some-token', { userId: 'u1', rbac: 'member' as RbacRole })
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    await expect(api.auth.login('a@b.com', 'wrong-password')).rejects.toBeInstanceOf(ApiError)
+    expect(getAuthToken()).toBe('some-token')
+    // The redirect guard must not have been armed by a login-credential failure
+    expect((window as { __summaRedirecting?: boolean }).__summaRedirecting).toBeFalsy()
+  })
+})

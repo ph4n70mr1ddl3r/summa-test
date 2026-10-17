@@ -26,6 +26,11 @@ public class SpendLedgerService {
     public SpendLedger acknowledge(String id, String actor) {
         SpendLedger ledger = repository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Spend ledger row not found: " + id));
+        // Idempotency: a duplicate ack (e.g. controller retry) must not emit
+        // a second audit row for the same logical act.
+        if (Boolean.TRUE.equals(ledger.getAcknowledged())) {
+            return ledger;
+        }
         ledger.setAcknowledged(true);
         SpendLedger saved = repository.save(ledger);
         auditService.log(actor, "ACKNOWLEDGE_OVERRUN", "spend_ledger", id, null);

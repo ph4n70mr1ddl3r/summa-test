@@ -227,7 +227,9 @@ public class OffboardingWalkService {
         for (Group group : groupRepository.findAll().stream().limit(OFFBOARD_BATCH_LIMIT).toList()) {
             if ((humanId.equals(group.getLeaderMemberId()) || ("h:" + humanId).equals(group.getLeaderMemberId()))
                     && group.isActive()) {
-                group.setLeaderMemberId(finalTargetOwner);
+                // DAT-120: store the successor as a keyed union, matching GroupService.
+                group.setLeaderMemberId(finalTargetOwner.startsWith("h:") || finalTargetOwner.startsWith("a:")
+                        ? finalTargetOwner : "h:" + finalTargetOwner);
                 groupRepository.save(group);
                 groupsLeadershipTransferred++;
                 auditService.log(actor, "OFFBOARD_TRANSFER_GROUP_LEADER", "group", group.getId(),
@@ -491,7 +493,9 @@ public class OffboardingWalkService {
         for (Group group : groupRepository.findAll().stream().limit(OFFBOARD_BATCH_LIMIT).toList()) {
             if ((humanId.equals(group.getLeaderMemberId()) || ("h:" + humanId).equals(group.getLeaderMemberId()))
                     && group.isActive()) {
-                group.setLeaderMemberId(targetOwner);
+                // DAT-120: store the successor as a keyed union, matching GroupService.
+                group.setLeaderMemberId(targetOwner.startsWith("h:") || targetOwner.startsWith("a:")
+                        ? targetOwner : "h:" + targetOwner);
                 groupRepository.save(group);
                 groupLeadershipsTransferred++;
                 auditService.log(actor, "DEMOTE_TRANSFER_GROUP_LEADER", "group", group.getId(),

@@ -3,10 +3,14 @@ package com.summa.service;
 import com.summa.repository.RunRepository;
 import com.summa.repository.InitiativeRepository;
 import com.summa.repository.AgentRepository;
+import com.summa.repository.SpendLedgerRepository;
+import com.summa.model.Agent;
+import com.summa.model.SpendLedger;
 import com.summa.model.Run;
 import com.summa.model.Initiative;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -31,6 +35,9 @@ class RunServiceTest {
 
     @Mock
     private AgentRepository agentRepository;
+
+    @Mock
+    private SpendLedgerRepository spendLedgerRepository;
 
     @InjectMocks
     private RunService runService;
@@ -61,6 +68,47 @@ class RunServiceTest {
 
         assertEquals("completed", result.getStatus());
         assertEquals("success", result.getResult());
+    }
+
+    @Test
+    void complete_landsSpendLedgerSettleLine() {
+        Run run = new Run();
+        run.setId("run-1");
+        run.setStatus("running");
+        run.setAgentId("agent-1");
+        when(runRepository.findById("run-1")).thenReturn(Optional.of(run));
+        when(runRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Agent agent = new Agent();
+        agent.setId("agent-1");
+        agent.setOwnerHumanId("human-1");
+        when(agentRepository.findById("agent-1")).thenReturn(Optional.of(agent));
+        when(spendLedgerRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Run result = runService.complete("run-1", "success", 100L, 2.5);
+
+        assertEquals("completed", result.getStatus());
+        ArgumentCaptor<SpendLedger> captor = ArgumentCaptor.forClass(SpendLedger.class);
+        verify(spendLedgerRepository).save(captor.capture());
+        SpendLedger ledger = captor.getValue();
+        assertEquals("settle", ledger.getKind());
+        assertEquals("human-1", ledger.getMemberId());
+        assertEquals("run-1", ledger.getRunId());
+        assertEquals(2.5, ledger.getCost());
+        assertEquals(100L, ledger.getTokensOut());
+    }
+
+    @Test
+    void complete_noLedgerLineWhenCostZeroOrMissingAgent() {
+        Run run = new Run();
+        run.setId("run-1");
+        run.setStatus("running");
+        when(runRepository.findById("run-1")).thenReturn(Optional.of(run));
+        when(runRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        runService.complete("run-1", "success", 0L, 0.0);
+
+        verify(spendLedgerRepository, never()).save(any());
     }
 
     @Test

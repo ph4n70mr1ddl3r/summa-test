@@ -82,7 +82,7 @@ describe('Governance page', () => {
     render(<Governance />)
     await waitFor(() => expect(screen.getByText('Policies (1)')).toBeInTheDocument())
 
-    const editButton = screen.getByRole('button', { name: /edit spawn_quota: 10/i })
+    const editButton = screen.getByRole('button', { name: /edit spawn_quota/i })
     await act(async () => {
       editButton.click()
     })
@@ -102,7 +102,7 @@ describe('Governance page', () => {
     render(<Governance />)
     await waitFor(() => expect(screen.getByText('Policies (1)')).toBeInTheDocument())
 
-    const editButton = screen.getByRole('button', { name: /edit spawn_quota: 10/i })
+    const editButton = screen.getByRole('button', { name: /edit spawn_quota/i })
     await act(async () => {
       editButton.click()
     })
@@ -130,7 +130,7 @@ describe('Governance page', () => {
     render(<Governance />)
     await waitFor(() => expect(screen.getByText('Policies (1)')).toBeInTheDocument())
 
-    const editButton = screen.getByRole('button', { name: /edit spawn_quota: 10/i })
+    const editButton = screen.getByRole('button', { name: /edit spawn_quota/i })
     await act(async () => {
       editButton.click()
     })
@@ -157,7 +157,7 @@ describe('Governance page', () => {
     render(<Governance />)
     await waitFor(() => expect(screen.getByText('Policies (1)')).toBeInTheDocument())
 
-    const editButton = screen.getByRole('button', { name: /edit spawn_quota: 10/i })
+    const editButton = screen.getByRole('button', { name: /edit spawn_quota/i })
     await act(async () => {
       editButton.click()
     })
@@ -171,8 +171,9 @@ describe('Governance page', () => {
       cancelButton.click()
     })
 
+    // The display button (aria-label "Edit spawn_quota") reappears; the edit input (aria-label "Edit spawn_quota" inside the edit controls) is gone.
     await waitFor(() => {
-      expect(screen.queryByLabelText('Edit spawn_quota')).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /cancel edit spawn_quota/i })).not.toBeInTheDocument()
     })
   })
 
@@ -183,7 +184,7 @@ describe('Governance page', () => {
     render(<Governance />)
     await waitFor(() => expect(screen.getByText('Quotas (1)')).toBeInTheDocument())
 
-    const editButton = screen.getByRole('button', { name: /edit max_concurrent: 5/i })
+    const editButton = screen.getByRole('button', { name: /edit max_concurrent/i })
     await act(async () => {
       editButton.click()
     })
@@ -203,7 +204,7 @@ describe('Governance page', () => {
     render(<Governance />)
     await waitFor(() => expect(screen.getByText('Quotas (1)')).toBeInTheDocument())
 
-    const editButton = screen.getByRole('button', { name: /edit max_concurrent: 5/i })
+    const editButton = screen.getByRole('button', { name: /edit max_concurrent/i })
     await act(async () => {
       editButton.click()
     })
@@ -231,7 +232,7 @@ describe('Governance page', () => {
     render(<Governance />)
     await waitFor(() => expect(screen.getByText('Quotas (1)')).toBeInTheDocument())
 
-    const editButton = screen.getByRole('button', { name: /edit max_concurrent: 5/i })
+    const editButton = screen.getByRole('button', { name: /edit max_concurrent/i })
     await act(async () => {
       editButton.click()
     })
@@ -258,7 +259,7 @@ describe('Governance page', () => {
     render(<Governance />)
     await waitFor(() => expect(screen.getByText('Quotas (1)')).toBeInTheDocument())
 
-    const editButton = screen.getByRole('button', { name: /edit max_concurrent: 5/i })
+    const editButton = screen.getByRole('button', { name: /edit max_concurrent/i })
     await act(async () => {
       editButton.click()
     })
@@ -272,8 +273,9 @@ describe('Governance page', () => {
       cancelButton.click()
     })
 
+    // The display button reappears; the "Cancel edit" control is gone.
     await waitFor(() => {
-      expect(screen.queryByLabelText('Edit max_concurrent')).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /cancel edit max_concurrent/i })).not.toBeInTheDocument()
     })
   })
 })

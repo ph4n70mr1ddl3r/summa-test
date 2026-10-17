@@ -313,6 +313,9 @@ public class AgentService {
     /**
      * CLC-002: Denial is terminal for requested rows — requested→archived.
      * A requested agent that is denied never becomes active.
+     * Before archiving, sweep dependencies that could reference the agent
+     * (pending spawn requests it filed, active triggers it owns), matching
+     * the retire/cleanupSuspendedAgent walks so no live state is stranded.
      */
     @Transactional
     public Agent deny(String id, String actor) {
@@ -321,6 +324,28 @@ public class AgentService {
 
         if (!AgentStatus.REQUESTED.getValue().equals(agent.getStatus())) {
             throw new IllegalStateException("Can only deny requested agents, current status: " + agent.getStatus());
+        }
+
+        // Archive pending spawn requests this agent filed (DAT-120: sweep bare and a: forms)
+        for (String requesterRef : List.of(id, "a:" + id)) {
+            for (SpawnRequest spawn : spawnRequestRepository.findByRequesterId(requesterRef)) {
+                if ("requested".equals(spawn.getStatus())) {
+                    spawn.setStatus("archived");
+                    spawnRequestRepository.save(spawn);
+                    auditService.logSystem("DENY_ARCHIVE_SPAWN", "spawn_request", spawn.getId(),
+                        String.format("{\"agentId\":%s,\"reason\":\"agent_denied\"}", JsonHelpers.jsonString(id)));
+                }
+            }
+        }
+
+        // Pause active triggers owned by the agent
+        for (Trigger trigger : triggerRepository.findByAgentId(id)) {
+            if ("active".equals(trigger.getStatus())) {
+                trigger.setStatus("paused");
+                triggerRepository.save(trigger);
+                auditService.logSystem("DENY_PAUSE_TRIGGER", "trigger", trigger.getId(),
+                    String.format("{\"agentId\":%s,\"reason\":\"agent_denied\"}", JsonHelpers.jsonString(id)));
+            }
         }
 
         agent.setStatus(AgentStatus.ARCHIVED.getValue());

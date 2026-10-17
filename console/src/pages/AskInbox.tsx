@@ -149,7 +149,7 @@ export default function AskInbox() {
                 <div className="text-right shrink-0">
                   <p className="text-xs text-gray-500">Deadline</p>
                   <p className="text-sm text-gray-300">
-                    {formatDate(ask.deadline, { dateOnly: true })}
+                    {ask.deadline != null ? formatDate(ask.deadline, { dateOnly: true }) : 'No deadline'}
                   </p>
                   {ask.quorumRequired && ask.quorumRequired > 1 && (
                     <p className="text-xs text-gray-500 mt-1">

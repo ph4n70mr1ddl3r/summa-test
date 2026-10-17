@@ -205,7 +205,11 @@ public class NodeService {
             throw new IllegalStateException("Workspace is archived");
         }
 
-        // ARC-024: refuse stale or equal epoch (equal epoch = replay attack)
+        // ARC-024: refuse stale or equal epoch (equal epoch = replay attack).
+        // Re-read the workspace row immediately before the bump so a concurrent
+        // claim that interleaved between the lookup above and the save cannot
+        // race past the epoch check (SQLite/H2 cannot hold a row lock here).
+        ws = workspaceRepository.findById(workspaceId).orElse(ws);
         // Null epoch on a fresh workspace is treated as epoch 0, so a replay with epoch=0 is also refused.
         int wsEpoch = ws.getClaimEpoch() != null ? ws.getClaimEpoch() : 0;
         if (wsEpoch >= currentEpoch) {
@@ -299,11 +303,14 @@ public class NodeService {
         run.setCostUsd(costUsd);
         Run saved = runRepository.save(run);
 
-        // Land spend ledger line (DAT-100)
-        if (memberId != null && !memberId.isBlank() && costUsd > 0) {
+        // Land spend ledger line (DAT-100). Strip any keyed-union prefix so the
+        // ledger always stores the bare member id, matching the agents(id) FK
+        // and the acknowledge/ack paths' strip-comparison.
+        String cleanMemberId = JsonHelpers.stripIdPrefix(memberId);
+        if (cleanMemberId != null && !cleanMemberId.isBlank() && costUsd > 0) {
             SpendLedger ledger = new SpendLedger();
             ledger.setId(UUID.randomUUID().toString());
-            ledger.setMemberId(memberId);
+            ledger.setMemberId(cleanMemberId);
             ledger.setRunId(runId);
             ledger.setKind("settle");
             ledger.setCost(costUsd);
