@@ -55,13 +55,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         "/api/nodes/enroll", "/api/org/bootstrap"
     );
 
-    public static boolean isNodePath(String path) {
-        if (path == null) return false;
-        // Tolerate a trailing slash (e.g. /api/nodes/)
-        String normalizedPath = com.summa.util.JsonHelpers.normalizeTrailingSlash(path);
-        return normalizedPath != null && normalizedPath.startsWith("/api/nodes");
-    }
-
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
                                       @NonNull HttpServletResponse response,
@@ -104,19 +97,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        if (isNodePath(path)) {
-            try {
-                filterChain.doFilter(request, response);
-            } finally {
-                SecurityContextHolder.clearContext();
-            }
-            return;
-        }
-
-        // If node auth already authenticated this request, skip JWT check
+        // Node callbacks (API-060) are authenticated by NodeAuthFilter, which has
+        // already installed the node principal in the SecurityContext — preserve it.
         if (Boolean.TRUE.equals(request.getAttribute("nodeAuth"))) {
             try {
-                SecurityContextHolder.clearContext();
                 filterChain.doFilter(request, response);
             } finally {
                 SecurityContextHolder.clearContext();

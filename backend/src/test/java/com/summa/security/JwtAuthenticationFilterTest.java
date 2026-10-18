@@ -85,21 +85,6 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    void isNodePath_nodesEndpoint_returnsTrue() {
-        assertTrue(JwtAuthenticationFilter.isNodePath("/api/nodes/123/heartbeat"));
-    }
-
-    @Test
-    void isNodePath_nonNodePath_returnsFalse() {
-        assertFalse(JwtAuthenticationFilter.isNodePath("/api/org/humans"));
-    }
-
-    @Test
-    void isNodePath_null_returnsFalse() {
-        assertFalse(JwtAuthenticationFilter.isNodePath(null));
-    }
-
-    @Test
     void doFilterInternal_validJwtOnProtectedPath_setsActor() throws Exception {
         when(request.getRequestURI()).thenReturn("/api/org/humans");
         when(request.getHeader("Authorization")).thenReturn("Bearer " + VALID_TOKEN);
@@ -166,12 +151,33 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    void doFilterInternal_nodePath_skipsJwtFilter() throws Exception {
-        when(request.getRequestURI()).thenReturn("/api/nodes/123/heartbeat");
+    void doFilterInternal_nodeCallbackWithoutNodeAuthFilter_rejectsWithJson() throws Exception {
+        // Without NodeAuthFilter having authenticated the callback (nodeAuth attr),
+        // a node path is an ordinary protected path requiring a JWT.
+        when(request.getRequestURI()).thenReturn("/api/nodes/550e8400-e29b-41d4-a716-446655440000/heartbeat");
+        when(request.getHeader("Authorization")).thenReturn(null);
+        when(auditService.logSystem(eq("REFUSAL"), eq("auth"), isNull(), eq("Missing or invalid authentication")))
+            .thenReturn(newAuditEvent());
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        verify(filterChain, never()).doFilter(request, response);
+        verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    }
+
+    @Test
+    void doFilterInternal_nodeAuthAttr_preservesContextAndPassesThrough() throws Exception {
+        when(request.getRequestURI()).thenReturn("/api/nodes/550e8400-e29b-41d4-a716-446655440000/heartbeat");
+        when(request.getAttribute("nodeAuth")).thenReturn(Boolean.TRUE);
+        // NodeAuthFilter has already installed the node principal
+        org.springframework.security.core.context.SecurityContextHolder.getContext()
+            .setAuthentication(new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                "550e8400-e29b-41d4-a716-446655440000", null, List.of()));
 
         filter.doFilterInternal(request, response, filterChain);
 
         verify(filterChain).doFilter(request, response);
+        assertNull(org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication());
     }
 
     @Test
