@@ -109,6 +109,11 @@ public class DnaProposalService {
         return proposalRepository.findAllOpen();
     }
 
+    @Transactional(readOnly = true)
+    public List<DnaProposal> findAll() {
+        return proposalRepository.findAll();
+    }
+
     /**
      * DWP-040: Publish runs inside the domain write lock and re-runs contradiction checks
      * against current state at commit. The second of two sequenced contradictory publishes

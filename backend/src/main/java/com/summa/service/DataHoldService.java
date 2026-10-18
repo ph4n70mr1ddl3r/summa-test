@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.UUID;
 import com.summa.exception.EntityNotFoundException;
 import com.summa.enums.DataHoldKind;
+import com.summa.util.JsonHelpers;
 
 @Service
 public class DataHoldService {
@@ -35,7 +36,7 @@ public class DataHoldService {
 
         DataHold saved = holdRepository.save(hold);
         auditService.log(createdBy, "CREATE_HOLD", "data_hold", saved.getId(),
-            String.format("{\"kind\":\"%s\",\"subjectId\":\"%s\"}", kind, subjectId));
+            String.format("{\"kind\":%s,\"subjectId\":%s}", JsonHelpers.jsonString(kind), JsonHelpers.jsonString(subjectId)));
         return saved;
     }
 
@@ -54,7 +55,7 @@ public class DataHoldService {
         if (limit <= 0) {
             return holdRepository.findByReleasedAtIsNull();
         }
-        return holdRepository.findReleasedOrderByCreatedAtDesc(limit);
+        return holdRepository.findActiveOrderByCreatedAtDesc(limit);
     }
 
     @Transactional(readOnly = true)

@@ -190,6 +190,11 @@ public class AskService {
 
             // Save inside the lock to prevent concurrent duplicates from passing the collapse check
             Ask saved = askRepository.save(ask);
+            // Re-arm the window for this new canonical ask: computeIfAbsent above does not
+            // refresh an expired entry, so without this put every ask created after the
+            // first window expiry would pass the collapse check forever (until the hourly
+            // purge evicts the stale slot) and storms would never collapse again.
+            collapseWindowTimestamps.put(collapseKey, new ExpiringEntry<>(now, nowSeconds + stormCollapseWindowSeconds));
             auditService.log(from, "CREATE", "ask", ask.getId(),
                 String.format("{\"kind\":%s,\"to\":%s,\"tier\":%s}", JsonHelpers.jsonString(kind), JsonHelpers.jsonString(to), JsonHelpers.jsonString(ask.getSlaTier())));
             return saved;

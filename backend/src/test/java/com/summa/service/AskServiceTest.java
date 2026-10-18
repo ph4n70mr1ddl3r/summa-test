@@ -439,4 +439,33 @@ class AskServiceTest {
         assertEquals("ask-9", result.get(0).getId());
         verify(askRepository).findByToAndStatusOrdered("h:user-1", "answered", 25);
     }
+
+    @Test
+    void create_rearmsStormCollapseWindowAfterNonCollapsingCreate() {
+        // ASK-100: a create that does not collapse must (re)arm the window for its
+        // key, so a following duplicate within the window still collapses. Before
+        // the fix, an expired slot was never refreshed and duplicates passed forever.
+        AskService svc = buildService();
+        when(askRepository.save(any(Ask.class))).thenAnswer(i -> {
+            Ask a = (Ask) i.getArgument(0);
+            if (a.getId() == null) a.setId("ask-new");
+            return a;
+        });
+
+        Instant deadline = Instant.now().plusSeconds(600);
+        when(askRepository.findByToAndStatusPending("h:user-2")).thenReturn(List.of());
+        Ask second = svc.create("question", "h:user-1", "h:user-2", "other-payload", "standard", "deny", 1, deadline, null, null);
+        assertNotNull(second.getId());
+
+        // A duplicate of that ask within the live window must now collapse:
+        Ask canonical = new Ask();
+        canonical.setId("ask-canonical");
+        canonical.setTo("h:user-2");
+        canonical.setPayload("other-payload");
+        canonical.setKind("question");
+        when(askRepository.findByToAndStatusPending("h:user-2")).thenReturn(List.of(canonical));
+        Ask collapsed = svc.create("question", "h:user-1", "h:user-2", "other-payload", "standard", "deny", 1, deadline, null, null);
+        assertEquals("ask-canonical", collapsed.getId());
+        assertEquals(1, canonical.getCollapsedCount());
+    }
 }

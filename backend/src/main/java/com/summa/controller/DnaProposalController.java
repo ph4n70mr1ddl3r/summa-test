@@ -45,6 +45,11 @@ public class DnaProposalController {
         ResponseEntity<?> auth = ControllerResponses.requireAuth(auditService, memberService, actor);
         if (auth != null) return auth;
         if (status != null) {
+            // `status=all` returns the full lifecycle history; the bare default
+            // stays the review-inbox view (open + SLA-breached, DWP-020).
+            if ("all".equalsIgnoreCase(status)) {
+                return ResponseEntity.ok(proposalService.findAll());
+            }
             return ResponseEntity.ok(proposalService.findByStatus(status));
         }
         if (domainId != null) {

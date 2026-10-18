@@ -412,7 +412,7 @@ export interface DnaProposal {
   updatedAt?: number;
 }
 
-export type DnaProposalStatus = 'open' | 'published' | 'rejected' | 'withdrawn';
+export type DnaProposalStatus = 'open' | 'breached' | 'published' | 'rejected' | 'withdrawn';
 export type DnaProposalKind = 'card' | 'rule' | 'decision' | 'goal' | 'glossary' | 'edit';
 
 export interface DnaGoal {
@@ -724,7 +724,7 @@ export const api = {
       request<DnaGlossary>(`/dna/glossary/${id}/retire`, {
         method: 'POST',
       }),
-    proposals: (status?: DnaProposalStatus) =>
+    proposals: (status?: DnaProposalStatus | 'all') =>
       request<DnaProposal[]>(`/dna/proposals${buildQuery(status ? { status } : undefined)}`),
     createProposal: (body: Record<string, string>) =>
       request<DnaProposal>('/dna/proposals', {

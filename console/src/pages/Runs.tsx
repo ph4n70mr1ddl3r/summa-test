@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { api } from '../services/api'
-import type { Run, RunStatus, RunListParams } from '../types'
+import type { Run, RunStatus } from '../types'
 import { runStatusColor, formatDate, truncateSnippet, escapeHtml } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
@@ -12,22 +12,28 @@ export default function Runs() {
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<RunStatus | 'all'>('all')
 
+  // Load the full list once and filter client-side: server-side filtering would
+  // reload a status-only subset on every filter change, zeroing the other status
+  // counts and making the filter buttons for other statuses disappear mid-session.
   const loadRuns = useCallback(() => {
     setLoading(true)
     setError(null)
     let aborted = false
-    const params: RunListParams = {}
-    if (filter !== 'all') params.status = filter
-    api.runs.list(params)
+    api.runs.list()
       .then((data) => { if (!aborted) { setRuns(Array.isArray(data) ? data : []); setLoading(false) } })
       .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
     return () => { aborted = true }
-  }, [filter])
+  }, [])
 
   useEffect(() => {
     const cancel = loadRuns()
     return cancel
-  }, [filter, loadRuns])
+  }, [loadRuns])
+
+  const visible = useMemo(
+    () => (filter === 'all' ? runs : runs.filter(r => r.status === filter)),
+    [runs, filter],
+  )
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -65,13 +71,13 @@ export default function Runs() {
         </div>
       </div>
 
-      {runs.length === 0 ? (
+      {visible.length === 0 ? (
         <div className="bg-gray-800 rounded-lg p-8 border border-gray-700 text-center">
           <p className="text-gray-400">No runs found.</p>
         </div>
       ) : (
         <div className="space-y-3">
-          {runs.map((run) => (
+          {visible.map((run) => (
             <div key={run.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>

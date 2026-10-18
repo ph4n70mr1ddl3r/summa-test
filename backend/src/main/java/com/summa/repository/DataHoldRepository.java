@@ -13,6 +13,6 @@ public interface DataHoldRepository extends JpaRepository<DataHold, String> {
     List<DataHold> findByReleasedAtIsNull();
 
     @Query("SELECT h FROM DataHold h WHERE h.releasedAt IS NULL ORDER BY h.createdAt DESC LIMIT :limit")
-    List<DataHold> findReleasedOrderByCreatedAtDesc(@Param("limit") int limit);
+    List<DataHold> findActiveOrderByCreatedAtDesc(@Param("limit") int limit);
     boolean existsByKindAndSubjectIdAndReleasedAtIsNull(String kind, String subjectId);
 }

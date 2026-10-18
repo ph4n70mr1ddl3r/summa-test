@@ -93,6 +93,25 @@ class NodeServiceTest {
     }
 
     @Test
+    void heartbeat_auditDetailEmbedsCapabilitiesAsJsonValue() throws Exception {
+        Node node = new Node();
+        node.setId("node-1");
+        when(nodeRepository.findById("node-1")).thenReturn(Optional.of(node));
+        when(nodeRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        nodeService.heartbeat("node-1", "node-1", "{\"cpu\":4,\"note\":\"quoted \\\"x\\\"\"}");
+
+        org.mockito.ArgumentCaptor<String> detail = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(auditService).logWithNode(eq("node-1"), eq("HEARTBEAT"), eq("node"), eq("node-1"), eq("node-1"), detail.capture());
+        // The detail must parse as JSON with capabilities as an embedded object,
+        // even when the capabilities payload itself contains quotes.
+        com.fasterxml.jackson.databind.JsonNode parsed = new ObjectMapper().readTree(detail.getValue());
+        assertTrue(parsed.has("capabilities"));
+        assertTrue(parsed.get("capabilities").isObject());
+        assertEquals(4, parsed.get("capabilities").get("cpu").asInt());
+    }
+
+    @Test
     void heartbeat_skipsNullCapabilities() {
         Node node = new Node();
         node.setId("node-1");
@@ -176,6 +195,63 @@ class NodeServiceTest {
         assertEquals(1, ws.getClaimEpoch());
         assertNotNull(ws.getLeaseExpiresAt());
         assertNotNull(result.getClaim());
+    }
+
+    @Test
+    void claimWorkspace_mergesIntoExistingClaimArray() throws Exception {
+        // ARC-020: a node may hold live claims on several workspaces; claiming a
+        // second workspace must not drop the first claim from the node's array.
+        Node node = new Node();
+        node.setId("node-1");
+        node.setStatus("trusted");
+        node.setClaim("[{\"workspaceId\":\"ws-1\",\"epoch\":1,\"expiresAt\":100}]");
+
+        Workspace ws2 = new Workspace();
+        ws2.setId("ws-2");
+        ws2.setClaimEpoch(0);
+
+        when(nodeRepository.findById("node-1")).thenReturn(Optional.of(node));
+        when(workspaceService.findById("ws-2")).thenReturn(Optional.of(ws2));
+        when(nodeRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(workspaceRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Node result = nodeService.claimWorkspace("node-1", "ws-2", 1);
+
+        com.fasterxml.jackson.databind.JsonNode claim = new ObjectMapper().readTree(result.getClaim());
+        assertTrue(claim.isArray());
+        assertEquals(2, claim.size());
+        assertEquals("ws-1", claim.get(0).get("workspaceId").asText());
+        assertEquals("ws-2", claim.get(1).get("workspaceId").asText());
+        assertEquals(1, claim.get(1).get("epoch").asInt());
+        // The stored entry must carry the actual lease expiry, not the claim instant.
+        assertEquals(ws2.getLeaseExpiresAt().getEpochSecond(), claim.get(1).get("expiresAt").asLong());
+    }
+
+    @Test
+    void claimWorkspace_renewalReplacesPriorEntryForSameWorkspace() throws Exception {
+        Node node = new Node();
+        node.setId("node-1");
+        node.setStatus("trusted");
+        node.setClaim("[{\"workspaceId\":\"ws-1\",\"epoch\":1,\"expiresAt\":100},{\"workspaceId\":\"ws-2\",\"epoch\":4,\"expiresAt\":100}]");
+
+        Workspace ws1 = new Workspace();
+        ws1.setId("ws-1");
+        ws1.setClaimEpoch(1);
+
+        when(nodeRepository.findById("node-1")).thenReturn(Optional.of(node));
+        when(workspaceService.findById("ws-1")).thenReturn(Optional.of(ws1));
+        when(nodeRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(workspaceRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Node result = nodeService.claimWorkspace("node-1", "ws-1", 2);
+
+        com.fasterxml.jackson.databind.JsonNode claim = new ObjectMapper().readTree(result.getClaim());
+        assertEquals(2, claim.size());
+        // ws-2 entry preserved, ws-1 entry renewed at the new epoch
+        java.util.List<String> ids = new java.util.ArrayList<>();
+        claim.forEach(c -> ids.add(c.get("workspaceId").asText()));
+        assertTrue(ids.contains("ws-2"));
+        assertEquals(2, claim.get(ids.indexOf("ws-1")).get("epoch").asInt());
     }
 
     @Test

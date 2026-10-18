@@ -4,7 +4,7 @@ import type { DnaProposal, DnaProposalStatus } from '../types'
 import { formatDate, proposalKindColor, proposalStatusColor, escapeHtml } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 
-const PROPOSAL_STATUSES: DnaProposalStatus[] = ['open', 'published', 'rejected', 'withdrawn']
+const PROPOSAL_STATUSES: DnaProposalStatus[] = ['open', 'breached', 'published', 'rejected', 'withdrawn']
 
 export default function DNAProposals() {
   const [proposals, setProposals] = useState<DnaProposal[]>([])
@@ -12,20 +12,29 @@ export default function DNAProposals() {
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | DnaProposalStatus>('all')
 
+  // Load the full lifecycle list once and filter client-side: the backend default
+  // only returns the review inbox (open + breached), which would hide published/
+  // rejected/withdrawn history and zero the other status counts (making their
+  // filter buttons disappear mid-session).
   const loadProposals = useCallback(() => {
     setLoading(true)
     setError(null)
     let aborted = false
-    api.dna.proposals(filter !== 'all' ? filter : undefined)
+    api.dna.proposals('all')
        .then((data) => { if (!aborted) { setProposals(Array.isArray(data) ? data : []); setLoading(false) } })
       .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
     return () => { aborted = true }
-  }, [filter])
+  }, [])
 
   useEffect(() => {
     const cancel = loadProposals()
     return cancel
-  }, [filter, loadProposals])
+  }, [loadProposals])
+
+  const visible = useMemo(
+    () => (filter === 'all' ? proposals : proposals.filter(p => p.status === filter)),
+    [proposals, filter],
+  )
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -63,13 +72,13 @@ export default function DNAProposals() {
         </div>
       </div>
 
-      {proposals.length === 0 ? (
+      {visible.length === 0 ? (
         <div className="bg-gray-800 rounded-lg p-8 border border-gray-700 text-center">
           <p className="text-gray-400">No DNA proposals yet.</p>
         </div>
       ) : (
         <div className="space-y-3">
-          {proposals.map((p) => (
+          {visible.map((p) => (
             <div key={p.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-start justify-between">
                 <div>

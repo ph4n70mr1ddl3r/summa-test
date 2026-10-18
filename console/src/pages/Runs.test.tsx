@@ -70,4 +70,25 @@ describe('Runs page', () => {
       expect(apiModule.api.runs.list).toHaveBeenCalledTimes(2)
     })
   })
+
+  it('keeps all status filter buttons visible after selecting one', async () => {
+    // Regression: server-side filtering reloaded a status-only subset, zeroing
+    // the other counts and making the other filter buttons disappear.
+    vi.mocked(apiModule.api.runs.list).mockResolvedValue([
+      { id: 'r1', agentId: 'a1', status: 'running' as const, costTokens: 0, costUsd: 0 },
+      { id: 'r2', agentId: 'a1', status: 'completed' as const, costTokens: 0, costUsd: 0 },
+    ])
+    render(<Runs />)
+    await waitFor(() => expect(screen.getByText('running (1)')).toBeInTheDocument())
+
+    fireEvent.click(screen.getByRole('button', { name: /running \(1\)/i }))
+
+    // Both buttons must still be present after filtering.
+    expect(screen.getByRole('button', { name: /running \(1\)/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /completed \(1\)/i })).toBeInTheDocument()
+    // Only the filtered row is rendered.
+    expect(screen.getAllByText(/r1|a1/).length).toBeGreaterThan(0)
+    expect(screen.queryByLabelText('Status: completed')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Status: running')).toBeInTheDocument()
+  })
 })

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.security.SecureRandom;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.summa.exception.EntityNotFoundException;
@@ -133,7 +134,9 @@ public class NodeService {
 
         Node saved = nodeRepository.save(node);
         auditService.logWithNode(actor, "HEARTBEAT", "node", id, actor,
-            String.format("{\"capabilities\":\"%s\"}", capabilities != null ? capabilities : "{}"));
+            // capabilities is validated parseable JSON above — embed it as a JSON
+            // value (not a raw-interpolated string) so the audit detail stays valid JSON.
+            String.format("{\"capabilities\":%s}", capabilities != null ? capabilities : "{}"));
         return saved;
     }
 
@@ -219,17 +222,34 @@ public class NodeService {
 
         // Bump epoch and set lease expiry
         int newEpoch = ws.getClaimEpoch() != null ? ws.getClaimEpoch() + 1 : 1;
+        Instant leaseExpiry = Instant.now().plusSeconds(leaseIntervalSeconds);
         ws.setClaimEpoch(newEpoch);
-        ws.setLeaseExpiresAt(Instant.now().plusSeconds(leaseIntervalSeconds));
+        ws.setLeaseExpiresAt(leaseExpiry);
         workspaceRepository.save(ws);
 
-        // Store claim on node as an array (one entry per claimed workspace)
+        // Store the claim on the node as a per-workspace array (ARC-020): a node may
+        // hold live claims on several workspaces at once, so merge this entry into
+        // any existing array rather than replacing the whole claim. Renewing a claim
+        // on the same workspace replaces its prior entry. WorkspaceService.archive
+        // relies on this shape when it strips a single workspace's entry.
         try {
             ArrayNode claimArray = objectMapper.createArrayNode();
+            if (node.getClaim() != null && !node.getClaim().isBlank()) {
+                JsonNode existing = objectMapper.readTree(node.getClaim());
+                if (existing.isArray()) {
+                    for (JsonNode entry : existing) {
+                        String entryWsId = entry.isObject() && entry.has("workspaceId")
+                            ? entry.get("workspaceId").asText() : null;
+                        if (entryWsId != null && !entryWsId.equals(workspaceId)) {
+                            claimArray.add(entry);
+                        }
+                    }
+                }
+            }
             claimArray.add(objectMapper.createObjectNode()
                 .put("workspaceId", workspaceId)
                 .put("epoch", newEpoch)
-                .put("expiresAt", Instant.now().getEpochSecond()));
+                .put("expiresAt", leaseExpiry.getEpochSecond()));
             node.setClaim(objectMapper.writeValueAsString(claimArray));
         } catch (Exception e) {
             throw new IllegalStateException("Failed to serialize claim: " + e.getMessage());

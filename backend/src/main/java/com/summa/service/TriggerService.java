@@ -150,7 +150,7 @@ public class TriggerService {
         Instant nextFire = cron.next(now);
         if (nextFire == null) {
             auditService.logSystem("TRIGGER_CRON_INVALID", "trigger", trigger.getId(),
-                String.format("{\"expression\":\"%s\"}", expr != null ? expr : ""));
+                String.format("{\"expression\":%s}", JsonHelpers.jsonString(expr != null ? expr : "")));
             return;
         }
         // Fire if the next scheduled time is within the current minute window

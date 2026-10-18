@@ -175,6 +175,7 @@ export function domainAccessColor(access: DomainAccess): string {
 export function proposalStatusColor(status: DnaProposalStatus): string {
   switch (status) {
     case 'open': return 'bg-blue-900/50 text-blue-400'
+    case 'breached': return 'bg-orange-900/50 text-orange-400'
     case 'published': return 'bg-green-900/50 text-green-400'
     case 'rejected': return 'bg-red-900/50 text-red-400'
     case 'withdrawn': return 'bg-gray-600 text-gray-400'
