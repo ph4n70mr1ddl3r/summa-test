@@ -1,8 +1,10 @@
 package com.summa.controller;
 
 import com.summa.enums.DomainAccess;
+import com.summa.enums.RbacRole;
 import com.summa.service.DnaDomainService;
 import com.summa.model.DnaDomain;
+import com.summa.model.Human;
 import com.summa.service.AuditService;
 import com.summa.service.MemberService;
 import com.summa.security.WriteGate;
@@ -115,6 +117,11 @@ public class DnaDomainController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        // DGV-005/API-023: rename is a topology reorg on a structural attribute — admin write,
+        // like its sibling archive.
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Admin access required to rename domains");
+        }
         try {
             String newName = body.get("name");
             if (newName == null || newName.isBlank()) {
@@ -154,6 +161,9 @@ public class DnaDomainController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        // DGV-005/API-020: access is an owner-editable attribute — domain owner or admin.
+        ResponseEntity<Map<String, Object>> ownerGate = requireDomainOwnerOrAdmin(actor, id);
+        if (ownerGate != null) return ownerGate;
         try {
             String rawAccess = body.get("access");
             if (rawAccess != null && !rawAccess.isBlank()) {
@@ -178,6 +188,9 @@ public class DnaDomainController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        // DGV-005/API-020: review_sla_days is an owner-editable attribute — domain owner or admin.
+        ResponseEntity<Map<String, Object>> ownerGate = requireDomainOwnerOrAdmin(actor, id);
+        if (ownerGate != null) return ownerGate;
         try {
             Integer sla = JsonHelpers.parseIntSafe(body.get("reviewSlaDays"));
             DnaDomain domain = domainService.updateReviewSlaDays(id, sla, actor);
@@ -196,6 +209,10 @@ public class DnaDomainController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        // DGV-005/DGV-010: reorgs re-point owners and structural attributes — admin writes.
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Admin access required to split domains");
+        }
         try {
             List<?> rawItemIds = body.get("itemIds") instanceof List ? (List<?>) body.get("itemIds") : List.of();
             List<String> itemIds = rawItemIds.stream().filter(o -> o instanceof String).map(o -> (String) o).toList();
@@ -234,6 +251,10 @@ public class DnaDomainController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        // DGV-005/DGV-014: merges settle topology and reader sets — admin writes.
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Admin access required to merge domains");
+        }
         try {
             String sourceId = body.get("sourceId") instanceof String ? (String) body.get("sourceId") : null;
             if (sourceId == null || sourceId.isBlank()) {
@@ -252,6 +273,34 @@ public class DnaDomainController {
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
         }
+    }
+
+    /**
+     * DGV-005/API-020 row-write authority for owner-editable domain attributes
+     * (`access`, `named_readers`, `review_sla_days`): the domain's owner — who must
+     * still hold role `owner` or `admin` at write (DGV-006) — or an active admin.
+     * Returns null when the write may proceed; a 403 gate otherwise. A missing
+     * domain also returns null so the service layer answers with 404 instead.
+     */
+    private ResponseEntity<Map<String, Object>> requireDomainOwnerOrAdmin(String actor, String domainId) {
+        if (memberService.isAdmin(actor)) return null;
+        String cleanActor = JsonHelpers.stripIdPrefix(actor);
+        if (cleanActor == null) {
+            return ControllerResponses.gate(auditService, actor, "Only the domain owner or an admin may edit this domain attribute");
+        }
+        Optional<DnaDomain> domOpt = domainService.findById(domainId);
+        if (domOpt.isEmpty()) return null;
+        DnaDomain domain = domOpt.get();
+        boolean isOwner = domain.getOwnerHumanId() != null
+            && domain.getOwnerHumanId().equals(cleanActor);
+        if (isOwner) {
+            Optional<Human> humanOpt = memberService.findHuman(cleanActor);
+            if (humanOpt.isPresent()) {
+                RbacRole role = RbacRole.fromValue(humanOpt.get().getRbac());
+                if (role != null && role.canManageDomains()) return null;
+            }
+        }
+        return ControllerResponses.gate(auditService, actor, "Only the domain owner or an admin may edit this domain attribute");
     }
 
 }

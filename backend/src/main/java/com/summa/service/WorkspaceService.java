@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.summa.exception.EntityNotFoundException;
 import com.summa.util.JsonHelpers;
@@ -228,18 +229,32 @@ public class WorkspaceService {
         return saved;
     }
 
+    /**
+     * CLC-040/ARC-020: strip only the archived workspace's entry from a node's claim
+     * array, preserving every surviving entry verbatim. NodeService.claimWorkspace
+     * writes entries as {workspaceId, epoch, expiresAt} objects, so surviving objects
+     * must be written back as objects — rewriting the array as bare workspace-id strings
+     * would drop epoch/expiry data and make claimWorkspace's next merge (which only
+     * carries entries exposing a workspaceId field) silently erase those live claims.
+     * Legacy textual entries pass through untouched; duplicate workspace ids keep the
+     * first occurrence only.
+     */
     private void applyFilteredClaim(Node node, JsonNode claimNode, String workspaceId) throws Exception {
         if (claimNode.isArray()) {
-            List<String> remaining = new ArrayList<>();
+            ArrayNode remaining = objectMapper.createArrayNode();
+            List<String> seen = new ArrayList<>();
             for (JsonNode c : claimNode) {
+                String entryWsId = null;
                 if (c.isObject() && c.has("workspaceId")) {
-                    String wsId = c.get("workspaceId").asText();
-                    if (!wsId.equals(workspaceId) && !remaining.contains(wsId)) {
-                        remaining.add(wsId);
-                    }
-                } else if (c.isTextual() && !c.asText().equals(workspaceId)) {
-                    remaining.add(c.asText());
+                    entryWsId = c.get("workspaceId").asText();
+                } else if (c.isTextual()) {
+                    entryWsId = c.asText();
                 }
+                if (entryWsId == null || entryWsId.equals(workspaceId) || seen.contains(entryWsId)) {
+                    continue;
+                }
+                seen.add(entryWsId);
+                remaining.add(c);
             }
             node.setClaim(objectMapper.writeValueAsString(remaining));
         } else if (claimNode.isObject()) {

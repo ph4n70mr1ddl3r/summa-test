@@ -50,6 +50,10 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
         NODE_AUTH.set(value);
     }
 
+    static void setWriteAllowedForTest(boolean value) {
+        WRITES_ALLOWED.set(value);
+    }
+
     public static void setActorForTest(String actor) {
         ACTOR_CONTEXT.set(actor);
     }

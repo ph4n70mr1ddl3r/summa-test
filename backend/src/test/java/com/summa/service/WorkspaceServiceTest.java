@@ -194,4 +194,62 @@ class WorkspaceServiceTest {
         verify(runRepository).save(run);
         assertEquals("cancelled", run.getStatus());
     }
+
+    @Test
+    void archive_stripsOnlyArchivedClaimEntry_preservingObjectShape() throws Exception {
+        // ARC-020/CLC-040: archiving ws-A must remove only ws-A's entry from the node's
+        // claim array; surviving entries keep NodeService.claimWorkspace's
+        // {workspaceId, epoch, expiresAt} object shape (epoch/expiry data intact) so a
+        // later claim merge — which only carries entries exposing workspaceId — cannot
+        // silently erase those live claims.
+        Workspace ws = new Workspace();
+        ws.setId("ws-A");
+        ws.setNodeId("node-1");
+        when(workspaceRepository.findById("ws-A")).thenReturn(Optional.of(ws));
+        when(workspaceRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        com.summa.model.Node node = new com.summa.model.Node();
+        node.setId("node-1");
+        String claims = "["
+            + "{\"workspaceId\":\"ws-A\",\"epoch\":4,\"expiresAt\":1700000100},"
+            + "{\"workspaceId\":\"ws-B\",\"epoch\":2,\"expiresAt\":1700000200},"
+            + "\"ws-C\"]";
+        node.setClaim(claims);
+        when(nodeRepository.findById("node-1")).thenReturn(Optional.of(node));
+        when(nodeRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        workspaceService.archive("ws-A", "admin");
+
+        com.fasterxml.jackson.databind.JsonNode saved = objectMapper.readTree(node.getClaim());
+        assertTrue(saved.isArray());
+        assertEquals(2, saved.size());
+        assertEquals("ws-B", saved.get(0).get("workspaceId").asText());
+        assertEquals(2, saved.get(0).get("epoch").asInt());
+        assertEquals(1700000200, saved.get(0).get("expiresAt").asInt());
+        // Legacy textual entries pass through untouched
+        assertTrue(saved.get(1).isTextual());
+        assertEquals("ws-C", saved.get(1).asText());
+    }
+
+    @Test
+    void archive_claimEntryDeduplicatedOnWorkspaceId() throws Exception {
+        Workspace ws = new Workspace();
+        ws.setId("ws-A");
+        ws.setNodeId("node-1");
+        when(workspaceRepository.findById("ws-A")).thenReturn(Optional.of(ws));
+        when(workspaceRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        com.summa.model.Node node = new com.summa.model.Node();
+        node.setId("node-1");
+        node.setClaim("[{\"workspaceId\":\"ws-B\",\"epoch\":2,\"expiresAt\":1700000200},"
+            + "{\"workspaceId\":\"ws-B\",\"epoch\":5,\"expiresAt\":1700000300}]");
+        when(nodeRepository.findById("node-1")).thenReturn(Optional.of(node));
+        when(nodeRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        workspaceService.archive("ws-A", "admin");
+
+        com.fasterxml.jackson.databind.JsonNode saved = objectMapper.readTree(node.getClaim());
+        assertEquals(1, saved.size());
+        assertEquals(2, saved.get(0).get("epoch").asInt());
+    }
 }
