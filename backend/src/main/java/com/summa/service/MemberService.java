@@ -87,6 +87,8 @@ public class MemberService {
     /**
      * Resolve the effective successor for delegation: deputy if eligible, otherwise returns null.
      * A deputy is eligible when active and not a viewer.
+     * Returns the deputy id in the keyed-union representation used by asks.to /
+     * initiatives.sponsor / initiatives.lead (h:<id>).
      */
     @Transactional(readOnly = true)
     public Optional<String> resolveDeputyTarget(String memberId) {
@@ -97,9 +99,9 @@ public class MemberService {
             return Optional.empty();
         }
         String deputyId = humanOpt.get().getDeputyMemberId();
-        Optional<Human> deputyOpt = findHuman(deputyId);
+        Optional<Human> deputyOpt = findHuman(JsonHelpers.stripIdPrefix(deputyId));
         if (deputyOpt.isPresent() && deputyOpt.get().isActive() && !"viewer".equals(deputyOpt.get().getRbac())) {
-            return Optional.of(deputyOpt.get().getId());
+            return Optional.of("h:" + deputyOpt.get().getId());
         }
         return Optional.empty();
     }

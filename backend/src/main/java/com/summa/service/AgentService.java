@@ -469,7 +469,14 @@ public class AgentService {
             }
         }
         // Ensure initiative references are cleaned up (mirrors active-agent retire behavior).
-        // DAT-120: initiatives.sponsor/lead are keyed unions; sweep both bare and a:-prefixed forms.
+        // DAT-120: initiatives.sponsor/lead are keyed unions (h:<id>/a:<id>); the admin
+        // broadcast addressee 'admins' is reserved for asks.to alone, so custody falls to a
+        // concrete active admin (h:-prefixed). If none exists, the row keeps the agent ref
+        // rather than writing a value the CHECK constraint would reject.
+        String adminCustody = memberService.findAdmins().stream()
+            .map(h -> "h:" + h.getId())
+            .findFirst()
+            .orElse(null);
         List<Initiative> owned = new ArrayList<>(initiativeRepository.findBySponsor(agentId));
         owned.addAll(initiativeRepository.findBySponsor(agentKeyedRef));
         owned.addAll(initiativeRepository.findByLead(agentId));
@@ -478,12 +485,14 @@ public class AgentService {
         for (Initiative init : owned) {
             if (!seen.add(init.getId())) continue;
             boolean changed = false;
-            if (Objects.equals(agentId, init.getSponsor()) || Objects.equals(agentKeyedRef, init.getSponsor())) {
-                init.setSponsor(OffboardingWalkService.ADMIN_BROADCAST);
+            if (adminCustody != null
+                    && (Objects.equals(agentId, init.getSponsor()) || Objects.equals(agentKeyedRef, init.getSponsor()))) {
+                init.setSponsor(adminCustody);
                 changed = true;
             }
-            if (Objects.equals(agentId, init.getLead()) || Objects.equals(agentKeyedRef, init.getLead())) {
-                init.setLead(OffboardingWalkService.ADMIN_BROADCAST);
+            if (adminCustody != null
+                    && (Objects.equals(agentId, init.getLead()) || Objects.equals(agentKeyedRef, init.getLead()))) {
+                init.setLead(adminCustody);
                 changed = true;
             }
             if (changed) {

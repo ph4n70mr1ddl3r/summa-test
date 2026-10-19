@@ -2,20 +2,20 @@ import { describe, it, expect } from 'vitest'
 import { escapeHtml } from './escapeHtml'
 
 describe('escapeHtml', () => {
-  it('escapes ampersand', () => {
-    expect(escapeHtml('a & b')).toBe('a &amp; b')
+  it('does not HTML-encode ampersand (React escapes on its own)', () => {
+    expect(escapeHtml('a & b')).toBe('a & b')
   })
 
-  it('escapes angle brackets', () => {
-    expect(escapeHtml('<script>alert(1)</script>')).toBe('&lt;script&gt;alert(1)&lt;/script&gt;')
+  it('does not HTML-encode angle brackets', () => {
+    expect(escapeHtml('<script>alert(1)</script>')).toBe('<script>alert(1)</script>')
   })
 
-  it('escapes double quotes', () => {
-    expect(escapeHtml('say "hello"')).toBe('say &quot;hello&quot;')
+  it('does not HTML-encode double quotes', () => {
+    expect(escapeHtml('say "hello"')).toBe('say "hello"')
   })
 
-  it('escapes single quotes', () => {
-    expect(escapeHtml("it's")).toBe('it&#x27;s')
+  it('does not HTML-encode single quotes', () => {
+    expect(escapeHtml("it's")).toBe("it's")
   })
 
   it('handles empty string', () => {
@@ -34,10 +34,8 @@ describe('escapeHtml', () => {
     expect(escapeHtml('line1\r\nline2')).toBe('line1\nline2')
   })
 
-  it('escapes all special characters together', () => {
-    expect(escapeHtml('<a href="x" onclick="alert(1)">click</a>')).toBe(
-      '&lt;a href=&quot;x&quot; onclick=&quot;alert(1)&quot;&gt;click&lt;/a&gt;'
-    )
+  it('does not HTML-encode mixed special characters', () => {
+    expect(escapeHtml('<a href="x" onclick="alert(1)">click</a>')).toBe('<a href="x" onclick="alert(1)">click</a>')
   })
 
   it('returns empty string for null', () => {
@@ -48,8 +46,8 @@ describe('escapeHtml', () => {
     expect(escapeHtml(undefined)).toBe('')
   })
 
-  it('escapes backticks', () => {
-    expect(escapeHtml('`code`')).toBe('&#96;code&#96;')
+  it('does not encode backticks', () => {
+    expect(escapeHtml('`code`')).toBe('`code`')
   })
 
   it('does not escape forward slashes', () => {

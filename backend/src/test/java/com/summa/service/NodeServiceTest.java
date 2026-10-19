@@ -298,7 +298,9 @@ class NodeServiceTest {
 
         Run run = new Run();
         run.setId("run-1");
+        run.setStatus("running");
         run.setWorkspaceId("ws-1");
+        run.setAgentId("agent-1");
         run.setStatus("queued");
 
         when(nodeRepository.findById("node-1")).thenReturn(Optional.of(node));
@@ -334,6 +336,7 @@ class NodeServiceTest {
         run.setId("run-1");
         run.setStatus("running");
         run.setWorkspaceId("ws-1");
+        run.setAgentId("agent-1");
 
         Workspace ws = new Workspace();
         ws.setId("ws-1");

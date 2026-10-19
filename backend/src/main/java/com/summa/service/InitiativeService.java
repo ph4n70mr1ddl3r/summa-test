@@ -128,6 +128,11 @@ public class InitiativeService {
         if (leadAgent.isPresent() && !leadAgent.get().isActive()) {
             throw new IllegalStateException("Lead must be an active agent: " + lead);
         }
+        // INT-001: lead is required and must resolve to a known human or agent;
+        // an unknown lead is refused rather than silently re-parented to the sponsor.
+        if (leadHuman.isEmpty() && leadAgent.isEmpty()) {
+            throw new EntityNotFoundException("Lead not found: " + lead);
+        }
 
         // INT-070: Cycle detection in depends_on — edges name non-closed rows only
         if (dependsOn != null && !dependsOn.isBlank() && !dependsOn.equals("[]")) {
@@ -158,8 +163,7 @@ public class InitiativeService {
         // DAT-120: initiatives.sponsor/lead are keyed unions (h:<id>/a:<id>),
         // derived from the kind each member id resolved to during validation.
         String sponsorKeyed = sponsorHuman.isPresent() ? "h:" + sponsorClean : "a:" + sponsorClean;
-        String leadKeyed = leadHuman.isPresent() || leadAgent.isPresent()
-            ? (leadAgent.isPresent() ? "a:" : "h:") + leadClean : sponsorKeyed;
+        String leadKeyed = leadAgent.isPresent() ? "a:" + leadClean : "h:" + leadClean;
         initiative.setSponsor(sponsorKeyed);
         initiative.setLead(leadKeyed);
         initiative.setGoalRef(goalRef);
@@ -168,7 +172,7 @@ public class InitiativeService {
         initiative.setDependsOn(dependsOn != null ? dependsOn : "[]");
 
         Initiative saved = initiativeRepository.save(initiative);
-        String auditActor = actor != null ? actor : sponsorKeyed;
+        String auditActor = actor != null ? actor : Defaults.SYSTEM_ACTOR;
         auditService.log(auditActor, "CREATE", "initiative", id,
             String.format("{\"title\":%s,\"lead\":%s}", JsonHelpers.jsonString(title), JsonHelpers.jsonString(lead)));
         return saved;

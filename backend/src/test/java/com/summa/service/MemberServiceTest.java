@@ -293,7 +293,7 @@ class MemberServiceTest {
         when(humanRepository.findById("h1")).thenReturn(Optional.of(human));
         when(humanRepository.findById("h2")).thenReturn(Optional.of(deputy));
 
-        assertEquals("h2", memberService.resolveDeputyTarget("h1").orElse(null));
+        assertEquals("h:h2", memberService.resolveDeputyTarget("h1").orElse(null));
     }
 
     @Test

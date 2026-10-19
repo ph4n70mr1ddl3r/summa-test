@@ -323,14 +323,13 @@ public class NodeService {
         run.setCostUsd(costUsd);
         Run saved = runRepository.save(run);
 
-        // Land spend ledger line (DAT-100). Strip any keyed-union prefix so the
-        // ledger always stores the bare member id, matching the agents(id) FK
-        // and the acknowledge/ack paths' strip-comparison.
-        String cleanMemberId = JsonHelpers.stripIdPrefix(memberId);
-        if (cleanMemberId != null && !cleanMemberId.isBlank() && costUsd > 0) {
+        // Land spend ledger line (DAT-100). The ledger's member_id FK points at
+        // agents(id), so the accountable member is the run's agent, not a human —
+        // store the run's agent id. The node-supplied memberId is audit-only.
+        if (costUsd > 0 && run.getAgentId() != null && !run.getAgentId().isBlank()) {
             SpendLedger ledger = new SpendLedger();
             ledger.setId(UUID.randomUUID().toString());
-            ledger.setMemberId(cleanMemberId);
+            ledger.setMemberId(run.getAgentId());
             ledger.setRunId(runId);
             ledger.setKind("settle");
             ledger.setCost(costUsd);

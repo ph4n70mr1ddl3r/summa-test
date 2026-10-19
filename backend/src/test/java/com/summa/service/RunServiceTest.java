@@ -14,6 +14,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import static org.mockito.Mockito.lenient;
 import java.util.List;
 import java.util.Optional;
 
@@ -82,7 +83,7 @@ class RunServiceTest {
         Agent agent = new Agent();
         agent.setId("agent-1");
         agent.setOwnerHumanId("human-1");
-        when(agentRepository.findById("agent-1")).thenReturn(Optional.of(agent));
+        lenient().when(agentRepository.findById("agent-1")).thenReturn(Optional.of(agent));
         when(spendLedgerRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         Run result = runService.complete("run-1", "success", 100L, 2.5);
@@ -92,7 +93,8 @@ class RunServiceTest {
         verify(spendLedgerRepository).save(captor.capture());
         SpendLedger ledger = captor.getValue();
         assertEquals("settle", ledger.getKind());
-        assertEquals("human-1", ledger.getMemberId());
+        // spend_ledger.member_id carries the agent id (its agents(id) FK).
+        assertEquals("agent-1", ledger.getMemberId());
         assertEquals("run-1", ledger.getRunId());
         assertEquals(2.5, ledger.getCost());
         assertEquals(100L, ledger.getTokensOut());

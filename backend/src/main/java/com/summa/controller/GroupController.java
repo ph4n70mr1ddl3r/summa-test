@@ -53,13 +53,13 @@ public class GroupController {
         if (gate != null) return gate;
         String name = body.get("name");
         String leaderMemberId = body.get("leaderMemberId");
-        if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException("name is required");
-        }
-        if (leaderMemberId == null || leaderMemberId.isBlank()) {
-            throw new IllegalArgumentException("leaderMemberId is required");
-        }
         try {
+            if (name == null || name.isBlank()) {
+                throw new IllegalArgumentException("name is required");
+            }
+            if (leaderMemberId == null || leaderMemberId.isBlank()) {
+                throw new IllegalArgumentException("leaderMemberId is required");
+            }
             Group group = groupService.create(name, leaderMemberId, actor);
             return ResponseEntity.ok(group);
         } catch (IllegalArgumentException e) {

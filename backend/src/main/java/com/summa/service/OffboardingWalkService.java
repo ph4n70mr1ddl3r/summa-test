@@ -172,17 +172,20 @@ public class OffboardingWalkService {
         }
 
         // OFB-012: Reassign initiatives (sponsor/lead) — only active ones.
-        // DAT-120: initiatives.sponsor/lead are keyed unions (h:<id>/a:<id>).
+        // DAT-120: initiatives.sponsor/lead are keyed unions (h:<id>/a:<id>);
+        // the successor is always a human, so write the h:-prefixed form.
         String initiatorKeyedRef = "h:" + humanId;
+        String targetKeyedRef = finalTargetOwner.startsWith("h:") || finalTargetOwner.startsWith("a:")
+                ? finalTargetOwner : "h:" + finalTargetOwner;
         List<Initiative> activeInitiatives = initiativeService.findAllActive(OFFBOARD_BATCH_LIMIT);
         for (Initiative init : activeInitiatives) {
             boolean changed = false;
             if (Objects.equals(humanId, init.getSponsor()) || Objects.equals(initiatorKeyedRef, init.getSponsor())) {
-                init.setSponsor(finalTargetOwner);
+                init.setSponsor(targetKeyedRef);
                 changed = true;
             }
             if (Objects.equals(humanId, init.getLead()) || Objects.equals(initiatorKeyedRef, init.getLead())) {
-                init.setLead(finalTargetOwner);
+                init.setLead(targetKeyedRef);
                 changed = true;
             }
             if (changed) {
@@ -195,7 +198,7 @@ public class OffboardingWalkService {
         String humanKeyedRefGoals = "h:" + humanId;
         for (DnaGoal goal : goalService.findAllActiveWindowed(Instant.now())) {
             if (humanKeyedRefGoals.equals(goal.getOwner()) || humanId.equals(goal.getOwner())) {
-                goal.setOwner(finalTargetOwner);
+                goal.setOwner(targetKeyedRef);
                 goalRepository.save(goal);
                 goalsReowned++;
             }
@@ -297,7 +300,7 @@ public class OffboardingWalkService {
         for (Ask ask : pendingAsks) {
             if (humanId.equals(ask.getTo()) || humanKeyedRef.equals(ask.getTo())) {
                 // Reassign up the chain to successor first, then deputy, then admin broadcast
-                ask.setTo(finalTargetOwner);
+                ask.setTo(targetKeyedRef);
                 askRepository.save(ask);
                 asksReassigned++;
                 auditService.logSystem("OFFBOARD_REASSIGN_ASK_TO", "ask", ask.getId(),
@@ -315,18 +318,18 @@ public class OffboardingWalkService {
         // OFB-010: Reassign board tasks or return to pool.
         // DAT-120: board_tasks.assignee_member_id is a keyed union.
         for (BoardTask task : boardTaskRepository.findByAssigneeMemberId(humanId)) {
-            task.setAssigneeMemberId(finalTargetOwner);
+            task.setAssigneeMemberId(targetKeyedRef);
             boardTaskRepository.save(task);
             tasksReassigned++;
             auditService.logSystem("OFFBOARD_REASSIGN_TASK", "board_task", task.getId(),
-                JsonHelpers.toJson(Map.of("newAssignee", finalTargetOwner, "reason", "member_departed"), objectMapper));
+                JsonHelpers.toJson(Map.of("newAssignee", targetKeyedRef, "reason", "member_departed"), objectMapper));
         }
         for (BoardTask task : boardTaskRepository.findByAssigneeMemberId(humanKeyedRef)) {
-            task.setAssigneeMemberId(finalTargetOwner);
+            task.setAssigneeMemberId(targetKeyedRef);
             boardTaskRepository.save(task);
             tasksReassigned++;
             auditService.logSystem("OFFBOARD_REASSIGN_TASK", "board_task", task.getId(),
-                JsonHelpers.toJson(Map.of("newAssignee", finalTargetOwner, "reason", "member_departed"), objectMapper));
+                JsonHelpers.toJson(Map.of("newAssignee", targetKeyedRef, "reason", "member_departed"), objectMapper));
         }
 
         // OFB-015: Revoke PATs and terminate sessions
@@ -447,15 +450,17 @@ public class OffboardingWalkService {
 
         // OFB-031: Reassign or retire sponsored/led initiatives.
         // DAT-120: initiatives.sponsor/lead are keyed unions (h:<id>/a:<id>).
+        String adminKeyedRef = targetOwner.startsWith("h:") || targetOwner.startsWith("a:")
+                ? targetOwner : "h:" + targetOwner;
         List<Initiative> activeForDemote = initiativeService.findAllActive(OFFBOARD_BATCH_LIMIT);
         for (Initiative init : activeForDemote) {
             boolean changed = false;
             if (Objects.equals(humanId, init.getSponsor()) || Objects.equals(humanKeyedRefDemote, init.getSponsor())) {
-                init.setSponsor(targetOwner);
+                init.setSponsor(adminKeyedRef);
                 changed = true;
             }
             if (Objects.equals(humanId, init.getLead()) || Objects.equals(humanKeyedRefDemote, init.getLead())) {
-                init.setLead(targetOwner);
+                init.setLead(adminKeyedRef);
                 changed = true;
             }
             if (changed) {
@@ -509,7 +514,7 @@ public class OffboardingWalkService {
         List<Ask> pendingAsksDemote = askRepository.findByStatusPendingOrdered(OFFBOARD_BATCH_LIMIT);
         for (Ask ask : pendingAsksDemote) {
             if (humanId.equals(ask.getTo()) || humanKeyedRefDemoteAsks.equals(ask.getTo())) {
-                ask.setTo(targetOwner);
+                ask.setTo(adminKeyedRef);
                 askRepository.save(ask);
                 asksClosed++;
             } else if (humanId.equals(ask.getFrom()) || humanKeyedRefDemoteAsks.equals(ask.getFrom())) {

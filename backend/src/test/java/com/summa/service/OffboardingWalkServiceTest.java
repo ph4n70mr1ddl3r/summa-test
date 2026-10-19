@@ -206,8 +206,8 @@ class OffboardingWalkServiceTest {
 
         var result = walkService.walkOffboard("h1", "h2", "admin1");
 
-        assertEquals("h2", init.getSponsor());
-        assertEquals("h2", init.getLead());
+        assertEquals("h:h2", init.getSponsor());
+        assertEquals("h:h2", init.getLead());
         verify(initiativeRepository).save(init);
     }
 

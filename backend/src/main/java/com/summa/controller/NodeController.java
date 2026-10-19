@@ -182,6 +182,9 @@ public class NodeController {
                 if (costUsd < 0 || Double.isInfinite(costUsd) || Double.isNaN(costUsd)) throw new IllegalArgumentException("costUsd must be non-negative and finite");
             }
             String memberId = body.get("memberId");
+            if (memberId != null && memberId.isBlank()) {
+                memberId = null;
+            }
             Run run = nodeService.reportRun(id, runId, result, artifacts, costTokens, costUsd, memberId);
             return ResponseEntity.ok(run);
         } catch (IllegalArgumentException e) {

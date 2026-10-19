@@ -2,7 +2,6 @@ package com.summa.service;
 
 import com.summa.repository.RunRepository;
 import com.summa.model.Run;
-import com.summa.model.Agent;
 import com.summa.model.SpendLedger;
 import com.summa.repository.AgentRepository;
 import com.summa.repository.SpendLedgerRepository;
@@ -121,24 +120,17 @@ public class RunService {
         Run saved = runRepository.save(run);
         // SPW-060: land a settle line so the spend breaker sees API-landed runs,
         // matching NodeService.reportRun (the node path lands the same ledger row).
-        if (costUsd != null && costUsd > 0) {
-            String memberId = null;
-            if (run.getAgentId() != null) {
-                Optional<Agent> agentOpt = agentRepository.findById(run.getAgentId());
-                if (agentOpt.isPresent()) {
-                    memberId = agentOpt.get().getOwnerHumanId();
-                }
-            }
-            if (memberId != null && !memberId.isBlank()) {
-                SpendLedger ledger = new SpendLedger();
-                ledger.setId(UUID.randomUUID().toString());
-                ledger.setMemberId(memberId);
-                ledger.setRunId(run.getId());
-                ledger.setKind("settle");
-                ledger.setCost(costUsd);
-                ledger.setTokensOut(costTokens != null ? costTokens : 0L);
-                spendLedgerRepository.save(ledger);
-            }
+        // spend_ledger.member_id carries the agent id (its agents(id) FK); the agent is
+        // accountable for its own spend, and the run already references it.
+        if (costUsd != null && costUsd > 0 && run.getAgentId() != null) {
+            SpendLedger ledger = new SpendLedger();
+            ledger.setId(UUID.randomUUID().toString());
+            ledger.setMemberId(run.getAgentId());
+            ledger.setRunId(run.getId());
+            ledger.setKind("settle");
+            ledger.setCost(costUsd);
+            ledger.setTokensOut(costTokens != null ? costTokens : 0L);
+            spendLedgerRepository.save(ledger);
         }
         auditService.logSystem("COMPLETE_RUN", "run", id, null);
         return saved;

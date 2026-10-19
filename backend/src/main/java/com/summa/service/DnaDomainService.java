@@ -511,19 +511,23 @@ public class DnaDomainService {
         if (oldOpt.isEmpty() || newOpt.isEmpty()) return;
         String oldOwner = oldOpt.get().getOwnerHumanId();
         String newOwner = newOpt.get().getOwnerHumanId();
-        if (Objects.equals(oldOwner, newOwner)) return;
         if (oldOwner == null) return;
-        // Re-key pending asks addressed to the old owner that are scoped to this domain
-        // (by initiative or workspace) so we don't redirect asks belonging to other domains.
-        for (Ask ask : askRepository.findByToAndStatusPending(oldOwner)) {
-            boolean scoped = isAskScopedToDomain(ask, oldDomainId);
-            if (scoped) {
-                ask.setTo(newOwner);
-                askRepository.save(ask);
-                auditService.logSystem("REKEY_ASK", "ask", ask.getId(),
-                    String.format("{\"oldDomain\":%s,\"newDomain\":%s,\"oldTo\":%s,\"newTo\":%s}",
-                        JsonHelpers.jsonString(oldDomainId), JsonHelpers.jsonString(newDomainId),
-                        JsonHelpers.jsonString(oldOwner), JsonHelpers.jsonString(newOwner)));
+        // DAT-120: owner_human_id is a bare humans.id, but asks.to is a keyed union.
+        // Query both bare and h:-prefixed forms so asks filed by either code path
+        // are re-keyed, and compare owners by their stripped forms.
+        if (Objects.equals(JsonHelpers.stripIdPrefix(oldOwner), JsonHelpers.stripIdPrefix(newOwner))) return;
+        String newOwnerKeyed = newOwner != null ? "h:" + JsonHelpers.stripIdPrefix(newOwner) : null;
+        for (String oldForm : List.of(oldOwner, "h:" + JsonHelpers.stripIdPrefix(oldOwner))) {
+            for (Ask ask : askRepository.findByToAndStatusPending(oldForm)) {
+                boolean scoped = isAskScopedToDomain(ask, oldDomainId);
+                if (scoped && newOwnerKeyed != null) {
+                    ask.setTo(newOwnerKeyed);
+                    askRepository.save(ask);
+                    auditService.logSystem("REKEY_ASK", "ask", ask.getId(),
+                        String.format("{\"oldDomain\":%s,\"newDomain\":%s,\"oldTo\":%s,\"newTo\":%s}",
+                            JsonHelpers.jsonString(oldDomainId), JsonHelpers.jsonString(newDomainId),
+                            JsonHelpers.jsonString(oldForm), JsonHelpers.jsonString(newOwnerKeyed)));
+                }
             }
         }
     }

@@ -288,18 +288,18 @@ public class AskService {
                         // Successor asks carry the root ID so depth accumulates across the chain.
                         // Use atomic compute() to prevent TOCTOU: two concurrent scheduled
                         // executions must not both read the same depth and create duplicates.
+                        // Read the current depth (without bumping it) to decide whether the
+                        // chain is exhausted. The bump happens only after a non-collapsed
+                        // successor create succeeds — a storm collapse must not burn the
+                        // chain's remaining depth budget.
                         String rootAskId = current.getEscalation() != null ? current.getEscalation() : current.getId();
-                        final int[] depth = {0};
-                        successorDepth.compute(rootAskId, (k, entry) -> {
-                            int d = (entry != null ? entry.value : 0) + 1;
-                            depth[0] = d;
-                            return new ExpiringEntry<>(d, Instant.now().getEpochSecond() + SUCCESSOR_DEPTH_TTL_SECONDS);
-                        });
-                        if (depth[0] >= Defaults.MAX_EXPIRE_SUCCESSOR_DEPTH) {
+                        ExpiringEntry<Integer> depthEntry = successorDepth.get(rootAskId);
+                        int depth = depthEntry != null ? depthEntry.value : 0;
+                        if (depth >= Defaults.MAX_EXPIRE_SUCCESSOR_DEPTH) {
                             // ASK-057: Chain exhausted — broadcast org-stall alert
                             broadcastOrgStall(current);
                             auditService.logSystem("EXPIRE_CHAIN_EXHAUSTED", "ask", current.getId(),
-                                String.format("{\"depth\":%d,\"behavior\":\"%s\"}", depth[0], behavior));
+                                String.format("{\"depth\":%d,\"behavior\":\"%s\"}", depth, behavior));
                             expire(current.getId());
                             successorDepth.remove(rootAskId);
                             continue;
@@ -314,13 +314,18 @@ public class AskService {
                         if (successorDeadlineSeconds > Defaults.MAX_DEADLINE_SECONDS) {
                             successorDeadlineSeconds = Defaults.MAX_DEADLINE_SECONDS;
                         }
-                         Ask successor = create(current.getKind(), current.getFrom(), successorTo,
-                             current.getPayload(), current.getSlaTier(), current.getExpiryBehavior(),
-                             current.getQuorumRequired(),
-                             Instant.now().plusSeconds(successorDeadlineSeconds),
-                             current.getInitiativeId(), current.getWorkspaceId(), rootAskId);
-                        auditService.logSystem("EXPIRE_SUCCESSOR_CREATED", "ask", current.getId(),
-                            String.format("{\"originalId\":\"%s\",\"behavior\":\"%s\",\"depth\":%d}", current.getId(), behavior, depth[0]));
+                          Ask successor = create(current.getKind(), current.getFrom(), successorTo,
+                              current.getPayload(), current.getSlaTier(), current.getExpiryBehavior(),
+                              current.getQuorumRequired(),
+                              Instant.now().plusSeconds(successorDeadlineSeconds),
+                              current.getInitiativeId(), current.getWorkspaceId(), rootAskId);
+                         // Bump the chain depth only when a successor actually lands: the
+                         // collapse path inside create() returns an existing canonical ask
+                         // without creating a new row, which must not consume depth budget.
+                         successorDepth.put(rootAskId, new ExpiringEntry<>(depth + 1,
+                             Instant.now().getEpochSecond() + SUCCESSOR_DEPTH_TTL_SECONDS));
+                         auditService.logSystem("EXPIRE_SUCCESSOR_CREATED", "ask", current.getId(),
+                             String.format("{\"originalId\":\"%s\",\"behavior\":\"%s\",\"depth\":%d}", current.getId(), behavior, depth + 1));
                         // Expire the original ask after scheduling the successor
                         expire(current.getId());
                     } catch (Exception ex) {
@@ -408,14 +413,17 @@ public class AskService {
 
         // ASK-050: N > 1 quorum — collect responses until N distinct principals answered
         List<String> existingResponses = parseResponseIds(ask);
-        if (existingResponses.contains(responder)) {
+        // Normalize the responder through stripIdPrefix so quorum counting compares
+        // clean forms even when the caller supplied a keyed-union value.
+        String responderClean = JsonHelpers.stripIdPrefix(responder);
+        if (existingResponses.stream().anyMatch(r -> JsonHelpers.stripIdPrefix(r).equals(responderClean))) {
             // Already responded — audit-only duplicate
             auditService.logSystem("AUDIT_ONLY_DUPLICATE_RESPONSE", "ask", id,
                 String.format("{\"responder\":%s}", JsonHelpers.jsonString(responder)));
             return ask;
         }
 
-        existingResponses.add(responder);
+        existingResponses.add(responderClean);
         String newResponsesJson = toJsonResponseList(existingResponses, response, ask.getResponses());
         ask.setResponses(newResponsesJson);
         // Count quorum from the serialized JSON, not the in-memory list, so a
