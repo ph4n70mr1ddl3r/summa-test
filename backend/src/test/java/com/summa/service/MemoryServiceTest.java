@@ -53,6 +53,9 @@ class MemoryServiceTest {
     @Test
     void create_memoryItem() {
         when(memoryItemRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        Human member = new Human();
+        member.setId("human-1");
+        when(memberService.findHuman("human-1")).thenReturn(Optional.of(member));
 
         MemoryItem result = memoryService.create("short", "human-1", "ws-1", "Content", "{}", false);
 
@@ -60,6 +63,16 @@ class MemoryServiceTest {
         assertEquals("short", result.getTier());
         assertEquals("human-1", result.getMemberId());
         assertFalse(result.isTainted());
+    }
+
+    @Test
+    void create_refusesNonHumanAttribution() {
+        // DAT-125: the attribution is a humans(id) reference — a member that is
+        // not a human is refused here rather than aborting the insert.
+        when(memberService.findHuman("agent-1")).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () ->
+            memoryService.create("short", "agent-1", "ws-1", "Content", "{}", false));
     }
 
     @Test

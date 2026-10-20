@@ -534,16 +534,20 @@ public class InitiativeService {
 
     /**
      * Check whether a member ID refers to an active member (non-deactivated human or active agent).
+     * DAT-120: the stored sponsor/lead refs are keyed unions (h:/a:) — the lookup
+     * strips the prefix so a keyed ref resolves against its live row.
      */
     private boolean isMemberActive(String memberId) {
         if (memberId == null || memberId.isBlank()) return false;
+        String clean = JsonHelpers.stripIdPrefix(memberId);
+        if (clean == null) return false;
         // Check if it's a human
-        Optional<Human> humanOpt = memberService.findHuman(memberId);
+        Optional<Human> humanOpt = memberService.findHuman(clean);
         if (humanOpt.isPresent()) {
             return humanOpt.get().isActive();
         }
         // Check if it's an agent
-        Optional<Agent> agentOpt = memberService.findAgent(memberId);
+        Optional<Agent> agentOpt = memberService.findAgent(clean);
         if (agentOpt.isPresent()) {
             return agentOpt.get().isActive();
         }

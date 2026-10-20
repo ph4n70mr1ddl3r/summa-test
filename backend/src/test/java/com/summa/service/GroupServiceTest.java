@@ -2,6 +2,7 @@ package com.summa.service;
 
 import com.summa.repository.GroupRepository;
 import com.summa.model.Group;
+import com.summa.model.Human;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -33,12 +34,44 @@ class GroupServiceTest {
         when(groupRepository.findByNameAndStatusNot("Engineering", "archived")).thenReturn(Optional.empty());
         when(groupRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
+        Human leader = new Human();
+        leader.setId("human-1");
+        leader.setRbac("member");
+        when(memberService.findHuman("human-1")).thenReturn(Optional.of(leader));
+
         Group result = groupService.create("Engineering", "human-1", "actor");
 
         assertNotNull(result);
         assertEquals("Engineering", result.getName());
         // DAT-120: the stored leader is the keyed-union form
         assertEquals("h:human-1", result.getLeaderMemberId());
+    }
+
+    @Test
+    void create_refusesViewerLeader() {
+        // ORG-042: the Leader post is guarded at write — creating a group must not
+        // be a way around the set-leader door.
+        when(groupRepository.findByNameAndStatusNot("Engineering", "archived")).thenReturn(Optional.empty());
+
+        Human leader = new Human();
+        leader.setId("human-1");
+        leader.setRbac("viewer");
+        when(memberService.findHuman("human-1")).thenReturn(Optional.of(leader));
+        when(memberService.isViewer(leader)).thenReturn(true);
+
+        assertThrows(IllegalStateException.class, () -> {
+            groupService.create("Engineering", "human-1", "actor");
+        });
+    }
+
+    @Test
+    void create_refusesUnknownLeader() {
+        when(groupRepository.findByNameAndStatusNot("Engineering", "archived")).thenReturn(Optional.empty());
+        when(memberService.findHuman("ghost")).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> {
+            groupService.create("Engineering", "ghost", "actor");
+        });
     }
 
     @Test

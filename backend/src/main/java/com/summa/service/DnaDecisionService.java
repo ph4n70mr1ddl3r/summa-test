@@ -35,7 +35,14 @@ public class DnaDecisionService {
             domainRepository.findById(domainId).orElseThrow(
                 () -> new EntityNotFoundException("Domain not found: " + domainId));
         }
-        String decidedByClean = decidedBy != null ? JsonHelpers.stripIdPrefix(decidedBy) : decidedBy;
+        // DAT-120: dna_decisions.decided_by is a keyed union (h:<humans.id> /
+        // a:<agents.id>) — resolve the kind by live lookup and store the keyed form.
+        String decidedByKeyed = decidedBy != null && !decidedBy.isBlank()
+                ? memberService.toKeyedMemberRef(decidedBy)
+                : decidedBy;
+        if (decidedBy != null && !decidedBy.isBlank() && decidedByKeyed == null) {
+            throw new IllegalArgumentException("decidedBy does not reference an existing member: " + decidedBy);
+        }
         ScanUtils.scanForSecrets(contextMd, actor, "dna_decision", id, secretsScanner, auditService);
         ScanUtils.scanForSecrets(outcomeMd, actor, "dna_decision", id, secretsScanner, auditService);
 
@@ -44,12 +51,12 @@ public class DnaDecisionService {
         decision.setDomainId(domainId);
         decision.setContextMd(contextMd != null ? contextMd : "");
         decision.setOutcomeMd(outcomeMd != null ? outcomeMd : "");
-        decision.setDecidedBy(decidedByClean);
+        decision.setDecidedBy(decidedByKeyed);
         decision.setProvenance(provenance != null ? provenance : "{}");
 
         DnaDecision saved = decisionRepository.save(decision);
         auditService.log(actor, "CREATE_DECISION", "dna_decision", id,
-            String.format("{\"domainId\":%s,\"decidedBy\":%s}", JsonHelpers.jsonString(domainId), JsonHelpers.jsonString(decidedBy)));
+            String.format("{\"domainId\":%s,\"decidedBy\":%s}", JsonHelpers.jsonString(domainId), JsonHelpers.jsonString(decidedByKeyed)));
         return saved;
     }
 

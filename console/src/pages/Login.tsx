@@ -39,7 +39,10 @@ export default function Login() {
     } catch (err) {
       if (err instanceof ApiError && err.status === 429) {
         setError('Too many login attempts. Please try again shortly.')
-      } else if (err instanceof ApiError && err.status === 401) {
+      } else if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+        // The server refuses bad credentials with a 403 gate envelope (and a 401
+        // where the deployment fronts auth with an OIDC gateway) — both are
+        // wrong-credentials failures, not a service outage.
         setError('Invalid email or password')
       } else {
         setError('Authentication service error. Please try again later.')

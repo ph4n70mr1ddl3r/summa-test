@@ -23,6 +23,7 @@ import com.summa.util.KeyedUnionValidator;
 import com.summa.util.JsonHelpers;
 import com.summa.exception.EntityNotFoundException;
 import com.summa.model.Human;
+import com.summa.model.Agent;
 import com.summa.service.GovernanceService;
 import com.summa.constants.Defaults;
 
@@ -59,16 +60,29 @@ public class DnaProposalService {
     @Transactional
     public DnaProposal create(String id, String kind, String payload, String proposedBy,
                                  String provenance, String domainId) {
-        KeyedUnionValidator.validate(proposedBy, "proposedBy");
+        // DAT-120: proposed_by is a keyed union (h:<humans.id> / a:<agents.id>) —
+        // the kind is resolved by live lookup so an agent proposer is not
+        // relabelled as a human one. DWP-010: the proposer must hold a write
+        // surface (a human of any role but viewer, or a persistent agent).
+        String proposedByKeyed = memberService.toKeyedMemberRef(proposedBy);
+        if (proposedByKeyed == null
+                || KeyedUnionValidator.RESERVED_IDS.contains(JsonHelpers.stripIdPrefix(proposedByKeyed))) {
+            throw new IllegalArgumentException(
+                    "proposedBy must reference an existing human or agent: " + proposedBy);
+        }
+        requireProposeSurface(proposedByKeyed);
+        KeyedUnionValidator.validate(proposedByKeyed, "proposedBy");
         DnaProposal proposal = new DnaProposal();
         proposal.setId(id);
         proposal.setKind(kind);
         proposal.setPayload(payload);
-        proposal.setProposedBy(proposedBy);
+        proposal.setProposedBy(proposedByKeyed);
         proposal.setProvenance(provenance != null ? provenance : "{}");
         proposal.setDomainId(domainId);
 
-        // DWP-020/021/022: Derive review_by from domain owner (or admin broadcast for org-wide)
+        // DWP-020/021/022: Derive review_by from domain owner (or the admin queue for org-wide).
+        // review_by is a humans(id) reference — the reserved 'admins' broadcast addressee
+        // is legal on asks.to alone (DAT-120) and would abort the insert here.
         String reviewBy = null;
         if (domainId != null && !domainId.isBlank()) {
             Optional<DnaDomain> domainOpt = domainService.findById(domainId);
@@ -76,7 +90,12 @@ public class DnaProposalService {
                 reviewBy = domainOpt.get().getOwnerHumanId();
             }
         } else {
-            reviewBy = OffboardingWalkService.ADMIN_BROADCAST;
+            // Org-scoped: the queue is the admin queue — point review_by at a live
+            // admin, or leave it null when the org has none (no dangling reference).
+            reviewBy = memberService.findAdmins().stream()
+                    .map(Human::getId)
+                    .findFirst()
+                    .orElse(null);
         }
         proposal.setReviewBy(reviewBy);
 
@@ -87,6 +106,29 @@ public class DnaProposalService {
         auditService.log(proposedBy, "PROPOSE", "dna_proposal", id,
             String.format("{\"kind\":%s,\"domainId\":%s}", JsonHelpers.jsonString(kind), JsonHelpers.jsonString(domainId)));
         return saved;
+    }
+
+    /**
+     * DWP-010: a proposer must hold a write surface — a human of any role but viewer,
+     * or a persistent agent (an ephemeral worker's learning folds back to its spawner).
+     */
+    private void requireProposeSurface(String proposedByKeyed) {
+        String clean = JsonHelpers.stripIdPrefix(proposedByKeyed);
+        Optional<Human> humanOpt = memberService.findHuman(clean);
+        if (humanOpt.isPresent()) {
+            if (memberService.isViewer(humanOpt.get())) {
+                throw new IllegalArgumentException("viewers cannot propose DNA changes");
+            }
+            return;
+        }
+        Optional<Agent> agentOpt = memberService.findAgent(clean);
+        if (agentOpt.isPresent()) {
+            if (agentOpt.get().isEphemeral()) {
+                throw new IllegalArgumentException("ephemeral workers cannot propose DNA changes");
+            }
+            return;
+        }
+        throw new IllegalArgumentException("proposedBy must reference an existing human or agent: " + clean);
     }
 
     @Transactional(readOnly = true)
@@ -128,6 +170,10 @@ public class DnaProposalService {
             throw new IllegalStateException("Proposal is not open: " + proposal.getStatus());
         }
 
+        // DWP-003: the publish door belongs to the domain owner (the proposal's
+        // review_by) or an admin — any other member is refused.
+        requireReviewAuthority(proposal, actor);
+
         // DWP-064: Prevent cross-domain topology smuggling — published payload domain must match proposal domain
         if (proposal.getDomainId() != null && !proposal.getDomainId().isBlank()) {
             try {
@@ -154,13 +200,15 @@ public class DnaProposalService {
                 "Contradiction detected at publish: " + String.join("; ", contradictions));
         }
 
-        // DWP-050: Check SoD — if the domain has sod enabled and the proposer is the reviewer,
-        // route to admin broadcast instead
+        // DWP-050: Check SoD — if the domain has sod enabled and the proposer is the publisher,
+        // route to the admin broadcast instead
         String actualReviewer = reviewedBy;
         if (proposal.getDomainId() != null && !proposal.getDomainId().isBlank()) {
             Optional<DnaDomain> domainOpt = domainService.findById(proposal.getDomainId());
             if (domainOpt.isPresent() && "reviewer-distinct".equals(domainOpt.get().getSod())) {
-                if (proposal.getProposedBy() != null && proposal.getProposedBy().equals(reviewedBy)) {
+                // DAT-120: proposed_by is a keyed union and the actor is a bare id —
+                // compare the stripped forms so the separation-of-duties guard fires.
+                if (proposedByMatches(proposal, actor)) {
                     // SoD breach: route to admin broadcast instead of self-approval
                     auditService.logSystem("SOD_ROUTE_TO_ADMIN", "dna_proposal", id,
                         String.format("{\"reason\":\"separation_of_duties\",\"proposer\":%s}", JsonHelpers.jsonString(proposal.getProposedBy())));
@@ -305,6 +353,8 @@ public class DnaProposalService {
         if (!proposal.isOpen()) {
             throw new IllegalStateException("Only open proposals can be rejected");
         }
+        // DWP-003: the reject door belongs to the domain owner (review_by) or an admin.
+        requireReviewAuthority(proposal, actor);
         proposal.setStatus("rejected");
         proposal.setReviewedBy(reviewedBy);
         proposal.setReviewedAt(Instant.now());
@@ -318,7 +368,13 @@ public class DnaProposalService {
     public DnaProposal withdraw(String id, String actor) {
         DnaProposal proposal = proposalRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Proposal not found: " + id));
-        
+
+        // DWP-051: withdrawal is for a pending proposal — a published or rejected
+        // one is settled history, not a pending item the proposer can retract.
+        if (!proposal.isOpen()) {
+            throw new IllegalStateException("Only open proposals can be withdrawn: " + proposal.getStatus());
+        }
+
         if (!proposedByMatches(proposal, actor)) {
             throw new IllegalArgumentException("Only the proposer can withdraw");
         }
@@ -329,6 +385,10 @@ public class DnaProposalService {
         return saved;
     }
 
+    /**
+     * DWP-030: amendments come from the proposer or the reviewing owner (as
+     * suggested changes) — any other member is refused.
+     */
     @Transactional
     public DnaProposal amend(String id, String payload, String actor) {
         DnaProposal proposal = proposalRepository.findById(id)
@@ -337,6 +397,7 @@ public class DnaProposalService {
         if (!proposal.isOpen()) {
             throw new IllegalStateException("Only open proposals can be amended");
         }
+        requireAmendAuthority(proposal, actor);
         
         proposal.setRevision((proposal.getRevision() != null ? proposal.getRevision() : 0) + 1);
         proposal.setPayload(payload);
@@ -347,9 +408,41 @@ public class DnaProposalService {
         return saved;
     }
 
+    /**
+     * DWP-003: the review door belongs to the proposal's reviewing owner
+     * ({@code review_by}) or an admin.
+     */
+    private void requireReviewAuthority(DnaProposal proposal, String actor) {
+        if (memberService.isAdmin(actor)) return;
+        String reviewBy = proposal.getReviewBy();
+        if (reviewBy != null && !reviewBy.isBlank()
+                && reviewBy.equals(JsonHelpers.stripIdPrefix(actor))) {
+            return;
+        }
+        throw new IllegalStateException("Only the reviewing owner or an admin may review this proposal");
+    }
+
+    /**
+     * DWP-030: the proposer or the reviewing owner may amend.
+     */
+    private void requireAmendAuthority(DnaProposal proposal, String actor) {
+        if (proposedByMatches(proposal, actor)) return;
+        if (memberService.isAdmin(actor)) return;
+        String reviewBy = proposal.getReviewBy();
+        if (reviewBy != null && !reviewBy.isBlank()
+                && reviewBy.equals(JsonHelpers.stripIdPrefix(actor))) {
+            return;
+        }
+        throw new IllegalStateException("Only the proposer or the reviewing owner may amend this proposal");
+    }
+
     private boolean proposedByMatches(DnaProposal proposal, String actor) {
         String proposedBy = proposal.getProposedBy();
-        // DAT-120: proposed_by and actor may carry keyed-union prefixes; compare stripped forms.
-        return proposedBy != null && proposedBy.equals(JsonHelpers.stripIdPrefix(actor));
+        // DAT-120: proposed_by is a keyed union (h:/a:) and the actor is a bare id —
+        // compare the stripped forms so both spellings count as one principal.
+        if (proposedBy == null) return false;
+        String proposedClean = JsonHelpers.stripIdPrefix(proposedBy);
+        String actorClean = JsonHelpers.stripIdPrefix(actor);
+        return proposedClean != null && proposedClean.equals(actorClean);
     }
 }

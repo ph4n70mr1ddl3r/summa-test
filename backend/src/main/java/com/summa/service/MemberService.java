@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import com.summa.util.JsonHelpers;
+import com.summa.util.KeyedUnionValidator;
 
 @Service
 public class MemberService {
@@ -68,11 +69,39 @@ public class MemberService {
         return agent != null && agent.isActive() && !agent.isEphemeral();
     }
 
+    /**
+     * Admin authority is evaluated against live state: a deactivated human is no
+     * longer an admin even if its row still carries the role (OFB-015 — deactivation
+     * is credential-death, and the role lapses with the membership).
+     */
     public boolean isAdmin(String actorId) {
         if (actorId == null || Defaults.SYSTEM_ACTOR.equals(actorId)) return false;
         String cleanId = JsonHelpers.stripIdPrefix(actorId);
         Optional<Human> humanOpt = findHuman(cleanId);
-        return humanOpt.isPresent() && RbacRole.ADMIN.getValue().equals(humanOpt.get().getRbac());
+        return humanOpt.isPresent()
+                && humanOpt.get().isActive()
+                && RbacRole.ADMIN.getValue().equals(humanOpt.get().getRbac());
+    }
+
+    /**
+     * DAT-120: resolve a caller-supplied member reference to the stored keyed-union
+     * form — {@code h:<humans.id>} or {@code a:<agents.id>}. The kind is resolved by
+     * live lookup, so an agent reference is never relabelled as a human one (a
+     * mislabelled kind makes the row resolve against the wrong live table).
+     *
+     * <p>The reserved spellings {@code system} and {@code admins} pass through
+     * unchanged; a reference to no live member resolves to {@code null} so callers
+     * can refuse the write rather than store a dangling id.
+     */
+    @Transactional(readOnly = true)
+    public String toKeyedMemberRef(String ref) {
+        if (ref == null || ref.isBlank()) return null;
+        String clean = JsonHelpers.stripIdPrefix(ref);
+        if (clean == null) return null;
+        if (KeyedUnionValidator.RESERVED_IDS.contains(clean)) return clean;
+        if (findHuman(clean).isPresent()) return "h:" + clean;
+        if (findAgent(clean).isPresent()) return "a:" + clean;
+        return null;
     }
 
     public boolean canWrite(String rbac) {

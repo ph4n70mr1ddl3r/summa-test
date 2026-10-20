@@ -34,11 +34,20 @@ public class GroupService {
             throw new IllegalArgumentException("Group name already exists: " + name);
         }
 
+        // ORG-042: the Leader post is guarded at write — the same guard the
+        // set-leader door applies. Creating a group with a viewer, a non-active
+        // member or an ephemeral worker as Leader would route to an unanswerable
+        // addressee, so the guard is not a set-leader-only rule.
+        String leaderKeyed = null;
+        if (leaderMemberId != null && !leaderMemberId.isBlank()) {
+            leaderKeyed = requireEligibleLeader(leaderMemberId);
+        }
+
         Group group = new Group();
         group.setId(UUID.randomUUID().toString());
         group.setName(name);
         // DAT-120: leader_member_id is stored as a keyed union (h:<id> for a human).
-        group.setLeaderMemberId(normalizeLeader(leaderMemberId));
+        group.setLeaderMemberId(leaderKeyed);
 
         Group saved = groupRepository.save(group);
         auditService.log(actor, "CREATE", "group", group.getId(),
@@ -73,6 +82,23 @@ public class GroupService {
                 .orElseThrow(() -> new EntityNotFoundException("Group not found: " + id));
 
         // ORG-042: Validate leader eligibility — active human, not viewer, not ephemeral
+        String leaderKeyed = requireEligibleLeader(leaderMemberId);
+
+        // DAT-120: the human leader is re-prefixed to the stored keyed-union form.
+        group.setLeaderMemberId(leaderKeyed);
+        Group saved = groupRepository.save(group);
+        auditService.log(actor, "SET_LEADER", "group", id, null);
+        return saved;
+    }
+
+    /**
+     * ORG-042: the Leader post is guarded at write — a viewer human or any
+     * non-active member is refused (routing addresses the Leader; the Leader must
+     * be answerable), and an ephemeral worker is refused by the mortality pin.
+     *
+     * @return the keyed-union form of the eligible leader (DAT-120)
+     */
+    private String requireEligibleLeader(String leaderMemberId) {
         String cleanLeader = JsonHelpers.stripIdPrefix(leaderMemberId);
         Optional<Human> leaderOpt = memberService.findHuman(cleanLeader);
         if (leaderOpt.isEmpty()) {
@@ -90,12 +116,8 @@ public class GroupService {
         if (agentOpt.isPresent() && agentOpt.get().isEphemeral()) {
             throw new IllegalStateException("Ephemeral agents cannot be group leaders: " + leaderMemberId);
         }
-
         // DAT-120: the human leader is re-prefixed to the stored keyed-union form.
-        group.setLeaderMemberId(normalizeLeader(leaderMemberId));
-        Group saved = groupRepository.save(group);
-        auditService.log(actor, "SET_LEADER", "group", id, null);
-        return saved;
+        return normalizeLeader(leaderMemberId);
     }
 
     /**

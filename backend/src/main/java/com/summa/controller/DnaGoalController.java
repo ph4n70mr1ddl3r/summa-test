@@ -105,10 +105,13 @@ public class DnaGoalController {
                 if (domOpt.isEmpty()) {
                     throw new EntityNotFoundException("Domain not found: " + rawDomainId);
                 }
-                // ORG-020: Only the domain owner or admin may create goals in a domain
-                boolean isDomainOwner = domOpt.get().getOwnerHumanId() != null
-                        && domOpt.get().getOwnerHumanId().equals(ownerClean);
-                if (!isDomainOwner && !memberService.isAdmin(ownerClean)) {
+                // ORG-020: Only the domain owner or admin may create goals in a domain.
+                // The authority is the caller's, not the goal's claimed owner: the
+                // owner field names who the goal belongs to, not who may write it.
+                String actorClean = JsonHelpers.stripIdPrefix(actor);
+                boolean actorIsDomainOwner = domOpt.get().getOwnerHumanId() != null
+                        && domOpt.get().getOwnerHumanId().equals(actorClean);
+                if (!actorIsDomainOwner && !memberService.isAdmin(actor)) {
                     throw new IllegalStateException("Only the domain owner or an admin may create goals in this domain");
                 }
             }

@@ -4,6 +4,7 @@ import type { DataHold } from '../types'
 import { formatDate, escapeHtml } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { useEscapeKey } from '../hooks/useEscapeKey'
+import { readSessionUser } from '../utils/session'
 
 export default function DataHolds() {
   const [holds, setHolds] = useState<DataHold[]>([])
@@ -12,6 +13,9 @@ export default function DataHolds() {
   const [actionId, setActionId] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [confirmReleaseId, setConfirmReleaseId] = useState<string | null>(null)
+  // Releasing a hold is an admin act (the release door is admin-gated) — the
+  // control is hidden rather than offered and then refused with a 403.
+  const isAdmin = readSessionUser()?.rbac === 'admin'
 
   useEscapeKey(() => {
     setConfirmReleaseId(null)
@@ -88,16 +92,18 @@ export default function DataHolds() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
-                  <button
-                    type="button"
-                    onClick={() => setConfirmReleaseId(hold.id)}
-                    disabled={actionId === hold.id}
-                    className="px-2 py-1 bg-red-700 hover:bg-red-600 disabled:bg-gray-600 disabled:text-gray-800 rounded text-xs text-white"
-                    aria-label={`Release hold ${hold.id}`}
-                  >
-                    {actionId === hold.id ? 'Releasing...' : 'Release'}
-                  </button>
-                  {confirmReleaseId === hold.id && (
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmReleaseId(hold.id)}
+                      disabled={actionId === hold.id}
+                      className="px-2 py-1 bg-red-700 hover:bg-red-600 disabled:bg-gray-600 disabled:text-gray-800 rounded text-xs text-white"
+                      aria-label={`Release hold ${hold.id}`}
+                    >
+                      {actionId === hold.id ? 'Releasing...' : 'Release'}
+                    </button>
+                  )}
+                  {isAdmin && confirmReleaseId === hold.id && (
                     <div className="flex items-center gap-1">
                       <span className="text-xs text-yellow-400">Confirm?</span>
                       <button

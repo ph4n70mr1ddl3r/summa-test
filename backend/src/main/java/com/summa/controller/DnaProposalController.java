@@ -111,7 +111,9 @@ public class DnaProposalController {
         if (gate != null) return gate;
         // API-022: single review endpoint with action in body
         String action = body.get("action");
-        // Validate reviewedBy — only the actor or an admin may set it; otherwise defaults to actor
+        // Validate reviewedBy — the reviewer is the actor, or an admin the actor
+        // (itself an admin) attributes the review to. A non-admin may not record
+        // another principal as the reviewer of their own publish.
         String reviewedBy = body.get("reviewedBy");
         String effectiveReviewer = actor;
         if (reviewedBy != null && !reviewedBy.isBlank()) {
@@ -119,8 +121,10 @@ public class DnaProposalController {
             String actorClean = JsonHelpers.stripIdPrefix(actor);
             if (!reviewedByClean.equals(actorClean)) {
                 Optional<Human> reviewerOpt = memberService.findHuman(reviewedByClean);
-                boolean isReviewerAdmin = reviewerOpt.isPresent() && RbacRole.ADMIN.getValue().equals(reviewerOpt.get().getRbac());
-                if (!isReviewerAdmin) {
+                boolean reviewerIsAdmin = reviewerOpt.isPresent()
+                        && reviewerOpt.get().isActive()
+                        && RbacRole.ADMIN.getValue().equals(reviewerOpt.get().getRbac());
+                if (!reviewerIsAdmin || !memberService.isAdmin(actor)) {
                     return ControllerResponses.validation(auditService, "reviewedBy must be the current actor or an admin");
                 }
                 effectiveReviewer = reviewedByClean;

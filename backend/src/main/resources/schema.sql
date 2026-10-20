@@ -485,8 +485,12 @@ CREATE TABLE IF NOT EXISTS memory_items (
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     reviewed_by TEXT,
     reviewed_at INTEGER,
-    FOREIGN KEY (member_id) REFERENCES agents(id) ON DELETE SET NULL,
-    -- member_id is a keyed union per DAT-120: h:<humans.id> or a:<agents.id>
+    FOREIGN KEY (member_id) REFERENCES humans(id) ON DELETE SET NULL,
+    -- member_id is the human member the item is attributed to (a personal-tier item
+    -- belongs to its member, DAT-125). It is NOT a keyed union and NOT an agent
+    -- reference: the write path attributes to the writing human, and the erasure
+    -- sweep severs the attribution rather than re-pointing it (STG-030) — an erased
+    -- human is not an agent.
     FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE SET NULL,
     FOREIGN KEY (reviewed_by) REFERENCES humans(id) ON DELETE SET NULL
 );

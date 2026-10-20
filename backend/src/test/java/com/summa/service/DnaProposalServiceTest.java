@@ -6,6 +6,8 @@ import com.summa.model.DnaProposal;
 import com.summa.model.DnaDomain;
 import com.summa.model.DnaRule;
 import com.summa.model.Ask;
+import com.summa.model.Agent;
+import com.summa.model.Human;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -66,12 +68,80 @@ class DnaProposalServiceTest {
             if (p.getStatus() == null) p.setStatus("open");
             return p;
         });
+        when(memberService.toKeyedMemberRef("a:agent-1")).thenReturn("a:agent-1");
+        Agent agent = new Agent();
+        agent.setId("agent-1");
+        agent.setAgentClass("persistent");
+        when(memberService.findAgent("agent-1")).thenReturn(Optional.of(agent));
 
         DnaProposal result = proposalService.create("prop-1", "card", "{}", "a:agent-1", "{}", "domain-1");
 
         assertNotNull(result);
         assertEquals("open", result.getStatus());
         assertNull(result.getReviewedAt());
+        // DAT-120: proposed_by is stored in the keyed-union form
+        assertEquals("a:agent-1", result.getProposedBy());
+    }
+
+    @Test
+    void create_storesReviewingOwnerAsHumanReference() {
+        when(proposalRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(memberService.toKeyedMemberRef("h:human-1")).thenReturn("h:human-1");
+        Human human = new Human();
+        human.setId("human-1");
+        human.setRbac("member");
+        when(memberService.findHuman("human-1")).thenReturn(Optional.of(human));
+
+        DnaDomain domain = new DnaDomain();
+        domain.setId("domain-1");
+        domain.setOwnerHumanId("human-1");
+        when(domainService.findById("domain-1")).thenReturn(Optional.of(domain));
+
+        DnaProposal result = proposalService.create("prop-1", "card", "{}", "h:human-1", "{}", "domain-1");
+
+        // review_by is a humans(id) reference — the reserved 'admins' broadcast is
+        // legal on asks.to alone and would abort the insert here.
+        assertEquals("human-1", result.getReviewBy());
+    }
+
+    @Test
+    void create_orgScopedReviewByIsAnAdminHumanNotTheBroadcast() {
+        when(proposalRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(memberService.toKeyedMemberRef("h:human-1")).thenReturn("h:human-1");
+        Human human = new Human();
+        human.setId("human-1");
+        human.setRbac("member");
+        when(memberService.findHuman("human-1")).thenReturn(Optional.of(human));
+
+        Human admin = new Human();
+        admin.setId("admin-1");
+        when(memberService.findAdmins()).thenReturn(List.of(admin));
+
+        DnaProposal result = proposalService.create("prop-1", "card", "{}", "h:human-1", "{}", null);
+
+        assertEquals("admin-1", result.getReviewBy());
+    }
+
+    @Test
+    void create_refusesUnknownProposer() {
+        when(memberService.toKeyedMemberRef("h:ghost")).thenReturn(null);
+
+        assertThrows(IllegalArgumentException.class, () ->
+            proposalService.create("prop-1", "card", "{}", "h:ghost", "{}", null));
+    }
+
+    @Test
+    void create_refusesViewerProposer() {
+        // DWP-010: proposed_by must hold a write surface — viewers never propose.
+        when(memberService.toKeyedMemberRef("h:viewer-1")).thenReturn("h:viewer-1");
+        Human viewer = new Human();
+        viewer.setId("viewer-1");
+        viewer.setRbac("viewer");
+        when(memberService.findHuman("viewer-1")).thenReturn(Optional.of(viewer));
+        when(memberService.isViewer(viewer)).thenReturn(true);
+
+        assertThrows(IllegalArgumentException.class, () ->
+            proposalService.create("prop-1", "card", "{}", "h:viewer-1", "{}", null));
     }
 
     @Test
@@ -79,13 +149,74 @@ class DnaProposalServiceTest {
         DnaProposal proposal = new DnaProposal();
         proposal.setId("prop-1");
         proposal.setStatus("open");
+        proposal.setReviewBy("human-1");
         when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
         when(proposalRepository.save(any())).thenReturn(proposal);
 
-        DnaProposal result = proposalService.publish("prop-1", "h:human-1", "h:human-1");
+        DnaProposal result = proposalService.publish("prop-1", "human-1", "human-1");
 
         assertEquals("published", result.getStatus());
         assertNotNull(result.getReviewedAt());
+    }
+
+    @Test
+    void publish_refusesNonReviewingMember() {
+        // DWP-003: the publish door belongs to the domain owner (review_by) or an admin.
+        DnaProposal proposal = new DnaProposal();
+        proposal.setId("prop-1");
+        proposal.setStatus("open");
+        proposal.setReviewBy("human-1");
+        when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
+        when(memberService.isAdmin("intruder")).thenReturn(false);
+
+        assertThrows(IllegalStateException.class, () -> {
+            proposalService.publish("prop-1", "intruder", "intruder");
+        });
+    }
+
+    @Test
+    void publish_allowsAdmin() {
+        DnaProposal proposal = new DnaProposal();
+        proposal.setId("prop-1");
+        proposal.setStatus("open");
+        proposal.setReviewBy("human-1");
+        when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
+        when(proposalRepository.save(any())).thenReturn(proposal);
+        when(memberService.isAdmin("admin-1")).thenReturn(true);
+
+        DnaProposal result = proposalService.publish("prop-1", "admin-1", "admin-1");
+
+        assertEquals("published", result.getStatus());
+    }
+
+    @Test
+    void publish_separationOfDutiesRoutesProposerToAdmin() {
+        // DWP-050: on a sod domain the proposer cannot be the publisher — the
+        // review routes to an admin. The comparison is on the stripped forms.
+        DnaProposal proposal = new DnaProposal();
+        proposal.setId("prop-1");
+        proposal.setStatus("open");
+        proposal.setKind("card");
+        proposal.setProposedBy("h:human-1");
+        proposal.setReviewBy("human-1");
+        proposal.setDomainId("domain-1");
+        proposal.setPayload("{}");
+        when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
+        when(proposalRepository.save(any())).thenReturn(proposal);
+
+        DnaDomain domain = new DnaDomain();
+        domain.setId("domain-1");
+        domain.setSod("reviewer-distinct");
+        when(domainService.findById("domain-1")).thenReturn(Optional.of(domain));
+
+        Human admin = new Human();
+        admin.setId("admin-1");
+        when(memberService.findAdmins()).thenReturn(List.of(admin));
+
+        DnaProposal result = proposalService.publish("prop-1", "human-1", "human-1");
+
+        assertEquals("published", result.getStatus());
+        assertEquals("admin-1", result.getReviewedBy());
     }
 
     @Test
@@ -114,17 +245,82 @@ class DnaProposalServiceTest {
     }
 
     @Test
+    void withdraw_allowedForKeyedProposer() {
+        // DAT-120: proposed_by is a keyed union and the actor is a bare id — the
+        // proposer must still be recognized across the two spellings.
+        DnaProposal proposal = new DnaProposal();
+        proposal.setId("prop-1");
+        proposal.setStatus("open");
+        proposal.setProposedBy("h:human-1");
+        when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
+        when(proposalRepository.save(any())).thenReturn(proposal);
+
+        DnaProposal result = proposalService.withdraw("prop-1", "human-1");
+
+        assertEquals("withdrawn", result.getStatus());
+    }
+
+    @Test
+    void withdraw_refusesSettledProposal() {
+        // DWP-051: withdrawal is for a pending proposal — a published one is
+        // settled history and must not be retractable.
+        DnaProposal proposal = new DnaProposal();
+        proposal.setId("prop-1");
+        proposal.setStatus("published");
+        proposal.setProposedBy("h:human-1");
+        when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
+
+        assertThrows(IllegalStateException.class, () -> {
+            proposalService.withdraw("prop-1", "human-1");
+        });
+    }
+
+    @Test
     void amend_incrementsRevision() {
         DnaProposal proposal = new DnaProposal();
         proposal.setId("prop-1");
         proposal.setStatus("open");
         proposal.setRevision(1);
+        proposal.setProposedBy("a:agent-1");
         when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
         when(proposalRepository.save(any())).thenReturn(proposal);
 
         DnaProposal result = proposalService.amend("prop-1", "{\"new\":\"payload\"}", "a:agent-1");
 
         assertEquals(2, result.getRevision());
+    }
+
+    @Test
+    void amend_allowedForReviewingOwner() {
+        // DWP-030: the reviewing owner may file a suggested change.
+        DnaProposal proposal = new DnaProposal();
+        proposal.setId("prop-1");
+        proposal.setStatus("open");
+        proposal.setRevision(1);
+        proposal.setProposedBy("h:human-1");
+        proposal.setReviewBy("owner-1");
+        when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
+        when(proposalRepository.save(any())).thenReturn(proposal);
+
+        DnaProposal result = proposalService.amend("prop-1", "{\"new\":\"payload\"}", "owner-1");
+
+        assertEquals(2, result.getRevision());
+    }
+
+    @Test
+    void amend_refusesUnrelatedMember() {
+        DnaProposal proposal = new DnaProposal();
+        proposal.setId("prop-1");
+        proposal.setStatus("open");
+        proposal.setRevision(1);
+        proposal.setProposedBy("h:human-1");
+        proposal.setReviewBy("owner-1");
+        when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
+        when(memberService.isAdmin("intruder")).thenReturn(false);
+
+        assertThrows(IllegalStateException.class, () -> {
+            proposalService.amend("prop-1", "{}", "intruder");
+        });
     }
 
     @Test
@@ -164,8 +360,9 @@ class DnaProposalServiceTest {
         supersedesRule.setId("rule-old");
         when(ruleRepository.findById("rule-old")).thenReturn(Optional.of(supersedesRule));
         when(proposalRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        proposal.setReviewBy("human-1");
 
-        DnaProposal result = proposalService.publish("prop-1", "h:human-1", "h:human-1");
+        DnaProposal result = proposalService.publish("prop-1", "human-1", "human-1");
         assertNotNull(result);
         assertEquals("published", result.getStatus());
     }
@@ -222,10 +419,11 @@ class DnaProposalServiceTest {
         proposal.setPayload("{\"statement\":\"test\"}");
         proposal.setProposedBy(null);
         proposal.setDomainId(null);
+        proposal.setReviewBy("human-1");
         when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
         when(proposalRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         // Should not throw NPE — proposedBy is null so SoD check is skipped
-        assertDoesNotThrow(() -> proposalService.publish("prop-1", "reviewer-1", "actor"));
+        assertDoesNotThrow(() -> proposalService.publish("prop-1", "human-1", "human-1"));
     }
 }

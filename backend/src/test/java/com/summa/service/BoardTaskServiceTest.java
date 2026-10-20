@@ -47,11 +47,15 @@ class BoardTaskServiceTest {
         Human human = new Human();
         human.setRbac("member");
         when(memberService.findHuman("member-1")).thenReturn(Optional.of(human));
+        when(memberService.toKeyedMemberRef("member-1")).thenReturn("h:member-1");
 
         BoardTask result = boardTaskService.create("task-1", "desc", "user-1", "member-1", "init-1", 1, null);
 
         assertNotNull(result);
         assertEquals("task-1", result.getTitle());
+        // DAT-120: the stored assignee is the keyed-union form — a bare id would
+        // violate the column's CHECK constraint.
+        assertEquals("h:member-1", result.getAssigneeMemberId());
     }
 
     @Test
@@ -106,6 +110,22 @@ class BoardTaskServiceTest {
     }
 
     @Test
+    void findByAssignee_matchesBareAndKeyedForms() {
+        // DAT-120: the stored assignee is a keyed union, but a caller-supplied
+        // bare id must still resolve the row.
+        BoardTask keyed = new BoardTask();
+        keyed.setId("t1");
+        keyed.setAssigneeMemberId("h:member-1");
+        when(taskRepository.findByAssigneeMemberId("member-1")).thenReturn(java.util.List.of());
+        when(taskRepository.findByAssigneeMemberId("h:member-1")).thenReturn(java.util.List.of(keyed));
+
+        var result = boardTaskService.findByAssignee("member-1");
+
+        assertEquals(1, result.size());
+        assertEquals("t1", result.get(0).getId());
+    }
+
+    @Test
     void assign_toActiveHuman() {
         BoardTask task = new BoardTask();
         task.setId("t1");
@@ -116,12 +136,13 @@ class BoardTaskServiceTest {
         human.setId("h1");
         human.setRbac("admin");
         when(memberService.findHuman("h1")).thenReturn(Optional.of(human));
+        when(memberService.toKeyedMemberRef("h1")).thenReturn("h:h1");
         when(taskRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         BoardTask result = boardTaskService.assign("t1", "h1", "admin");
 
         assertEquals("in_progress", result.getStatus());
-        assertEquals("h1", result.getAssigneeMemberId());
+        assertEquals("h:h1", result.getAssigneeMemberId());
     }
 
     @Test
@@ -135,6 +156,7 @@ class BoardTaskServiceTest {
         human.setId("h1");
         human.setRbac("admin");
         when(memberService.findHuman("h1")).thenReturn(Optional.of(human));
+        when(memberService.toKeyedMemberRef("h:h1")).thenReturn("h:h1");
         when(taskRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         BoardTask result = boardTaskService.assign("t1", "h:h1", "admin");

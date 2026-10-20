@@ -134,7 +134,12 @@ public class AskService {
         if (AskKind.fromValue(kind) == null) {
             throw new IllegalArgumentException("Invalid ask kind: " + kind);
         }
-        if (AskTier.fromValue(slaTier) == null) {
+        // The tier is optional at the API door (the controller validates it only
+        // when supplied) and the row defaults to 'standard' — so an absent tier
+        // must resolve to the default, not be refused as an unknown value.
+        String effectiveTier = (slaTier == null || slaTier.isBlank())
+                ? AskTier.STANDARD.getValue() : slaTier;
+        if (AskTier.fromValue(effectiveTier) == null) {
             throw new IllegalArgumentException("Invalid SLA tier: " + slaTier);
         }
         // Cap deadline against org-wide maximum to prevent misconfigured tiers from
@@ -150,7 +155,7 @@ public class AskService {
         ask.setFrom(from);
         ask.setTo(to);
         ask.setPayload(payload != null ? payload : "{}");
-        ask.setSlaTier(slaTier != null ? slaTier : "standard");
+        ask.setSlaTier(effectiveTier);
         ask.setExpiryBehavior(expiryBehavior != null ? expiryBehavior : "deny");
         ask.setQuorumRequired(quorumRequired != null ? quorumRequired : 1);
         ask.setDeadline(deadline);
@@ -457,7 +462,12 @@ public class AskService {
         if (targetClean != null && targetClean.equals(responderClean)
                 && !OffboardingWalkService.ADMIN_BROADCAST.equals(targetClean)) {
             Optional<Human> target = memberService.findHuman(targetClean);
-            return target.isPresent() && !RbacRole.VIEWER.getValue().equals(target.get().getRbac());
+            if (target.isPresent()) {
+                return !RbacRole.VIEWER.getValue().equals(target.get().getRbac());
+            }
+            // An agent addressee is a pool principal in its own right — its accept
+            // counts toward the quorum like a human target's would.
+            return memberService.findAgent(targetClean).isPresent();
         }
         // Admin broadcast: any active admin is a pool principal.
         // targetClean strips the h:/a: prefix from the stored 'to' value, so a

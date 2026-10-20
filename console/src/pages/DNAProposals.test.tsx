@@ -7,6 +7,8 @@ vi.mock('../services/api', () => ({
   api: {
     dna: {
       proposals: vi.fn(),
+      reviewProposal: vi.fn(),
+      withdrawProposal: vi.fn(),
     },
   },
 }))
@@ -14,6 +16,7 @@ vi.mock('../services/api', () => ({
 describe('DNAProposals page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    localStorage.removeItem('summa_user')
   })
 
   it('renders the DNA Proposals heading', async () => {
@@ -97,5 +100,68 @@ describe('DNAProposals page', () => {
     render(<DNAProposals />)
     await waitFor(() => expect(screen.getByText('breached (1)')).toBeInTheDocument())
     expect(screen.getByLabelText('Status: breached')).toBeInTheDocument()
+  })
+
+  it('offers publish and reject to the reviewing owner', async () => {
+    // DWP-003: the review door belongs to the proposal's reviewing owner.
+    localStorage.setItem('summa_user', JSON.stringify({ userId: 'owner-1', rbac: 'owner' }))
+    vi.mocked(apiModule.api.dna.proposals).mockResolvedValue([
+      { id: 'p1', kind: 'rule', payload: '{}', revision: 1, proposedBy: 'h:human-1', reviewBy: 'owner-1', provenance: '', status: 'open' },
+    ])
+    vi.mocked(apiModule.api.dna.reviewProposal).mockResolvedValue({
+      id: 'p1', kind: 'rule', payload: '{}', revision: 1, proposedBy: 'h:human-1', provenance: '', status: 'published',
+    })
+    render(<DNAProposals />)
+    await waitFor(() => expect(screen.getByRole('button', { name: /publish proposal p1/i })).toBeInTheDocument())
+
+    await act(async () => { screen.getByRole('button', { name: /publish proposal p1/i }).click() })
+
+    await waitFor(() => {
+      expect(apiModule.api.dna.reviewProposal).toHaveBeenCalledWith('p1', 'publish')
+    })
+  })
+
+  it('offers withdraw to the proposer', async () => {
+    // DWP-051: the proposer may withdraw their own pending proposal.
+    localStorage.setItem('summa_user', JSON.stringify({ userId: 'human-1', rbac: 'member' }))
+    vi.mocked(apiModule.api.dna.proposals).mockResolvedValue([
+      { id: 'p1', kind: 'rule', payload: '{}', revision: 1, proposedBy: 'h:human-1', reviewBy: 'owner-1', provenance: '', status: 'open' },
+    ])
+    vi.mocked(apiModule.api.dna.withdrawProposal).mockResolvedValue({
+      id: 'p1', kind: 'rule', payload: '{}', revision: 1, proposedBy: 'h:human-1', provenance: '', status: 'withdrawn',
+    })
+    render(<DNAProposals />)
+    await waitFor(() => expect(screen.getByRole('button', { name: /withdraw proposal p1/i })).toBeInTheDocument())
+
+    await act(async () => { screen.getByRole('button', { name: /withdraw proposal p1/i }).click() })
+
+    await waitFor(() => {
+      expect(apiModule.api.dna.withdrawProposal).toHaveBeenCalledWith('p1')
+    })
+  })
+
+  it('hides the review actions from an unrelated member', async () => {
+    localStorage.setItem('summa_user', JSON.stringify({ userId: 'member-9', rbac: 'member' }))
+    vi.mocked(apiModule.api.dna.proposals).mockResolvedValue([
+      { id: 'p1', kind: 'rule', payload: '{}', revision: 1, proposedBy: 'h:human-1', reviewBy: 'owner-1', provenance: '', status: 'open' },
+    ])
+    render(<DNAProposals />)
+    await waitFor(() => expect(screen.getByText('rule')).toBeInTheDocument())
+    expect(screen.queryByRole('button', { name: /publish proposal p1/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /withdraw proposal p1/i })).not.toBeInTheDocument()
+  })
+
+  it('surfaces a failed review action', async () => {
+    localStorage.setItem('summa_user', JSON.stringify({ userId: 'owner-1', rbac: 'owner' }))
+    vi.mocked(apiModule.api.dna.proposals).mockResolvedValue([
+      { id: 'p1', kind: 'rule', payload: '{}', revision: 1, proposedBy: 'h:human-1', reviewBy: 'owner-1', provenance: '', status: 'open' },
+    ])
+    vi.mocked(apiModule.api.dna.reviewProposal).mockRejectedValue(new Error('Contradiction detected at publish'))
+    render(<DNAProposals />)
+    await waitFor(() => expect(screen.getByRole('button', { name: /publish proposal p1/i })).toBeInTheDocument())
+
+    await act(async () => { screen.getByRole('button', { name: /publish proposal p1/i }).click() })
+
+    await waitFor(() => expect(screen.getByText(/contradiction detected/i)).toBeInTheDocument())
   })
 })

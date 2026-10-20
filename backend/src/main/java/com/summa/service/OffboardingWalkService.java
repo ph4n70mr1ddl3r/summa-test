@@ -224,6 +224,13 @@ public class OffboardingWalkService {
             groupMembershipRepository.save(m);
             membershipsCleared++;
         }
+        // DAT-120: group_memberships.member_id is a keyed union (h:/a:) — the
+        // column's CHECK forbids a bare id, so the sweep matches the keyed form too.
+        for (GroupMembership m : groupMembershipRepository.findById_MemberId("h:" + humanId)) {
+            m.setRemovedAt(Instant.now());
+            groupMembershipRepository.save(m);
+            membershipsCleared++;
+        }
 
         // OFB-017: Transfer group leadership.
         // DAT-120: groups.leader_member_id is a keyed union.
@@ -266,7 +273,9 @@ public class OffboardingWalkService {
         // Now process proposals with cached agent data
         for (DnaProposal prop : proposalService.findAllOpen()) {
             String proposerId = prop.getProposedBy();
-            boolean isDirectProposer = humanId.equals(proposerId);
+            // DAT-120: proposed_by is a keyed union — match the bare and h:-prefixed
+            // forms so a human-authored proposal is recognized as the departing member's.
+            boolean isDirectProposer = humanId.equals(proposerId) || ("h:" + humanId).equals(proposerId);
             boolean isAgentOfDeparted = false;
             if (!isDirectProposer && proposerId != null && proposerId.startsWith("a:")) {
                 Agent agent = agentById.get(proposerId.substring(2));
@@ -278,11 +287,12 @@ public class OffboardingWalkService {
             if (!isDirectProposer && !isAgentOfDeparted) continue;
             boolean ownsDomain = prop.getDomainId() != null && ownedDomainIds.contains(prop.getDomainId());
             if (ownsDomain) {
-                prop.setProposedBy(finalTargetOwner);
+                // DAT-120: the successor is written in the stored keyed-union form.
+                prop.setProposedBy(targetKeyedRef);
                 proposalRepository.save(prop);
                 proposalsTransferred++;
                 auditService.logSystem("OFFBOARD_TRANSFER_PROPOSAL", "dna_proposal", prop.getId(),
-                    JsonHelpers.toJson(Map.of("domainId", prop.getDomainId(), "newProposer", finalTargetOwner), objectMapper));
+                    JsonHelpers.toJson(Map.of("domainId", prop.getDomainId(), "newProposer", targetKeyedRef), objectMapper));
             } else {
                 // Member-scoped proposal: auto-withdraw with audit note
                 prop.setStatus("withdrawn");
@@ -348,6 +358,10 @@ public class OffboardingWalkService {
         // OFB-001: Deactivate the human
         humanOpt.ifPresent(human -> {
             human.setDeactivatedAt(Instant.now());
+            // OFB-015: deactivation is credential-death — bumping the session
+            // version invalidates every unexpired JWT the departing member holds
+            // (SEC-010), so the walk terminates the session, not just the login.
+            human.setSessionVersion(human.getSessionVersion() + 1);
             memberService.saveHuman(human);
         });
 

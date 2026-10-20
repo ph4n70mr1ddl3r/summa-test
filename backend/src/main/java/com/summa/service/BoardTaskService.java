@@ -49,6 +49,7 @@ public class BoardTaskService {
         }
 
         // ORG-031: Refuse viewer or non-active members as assignee at creation time
+        String assigneeKeyed = null;
         if (assigneeMemberId != null && !assigneeMemberId.isBlank()) {
             String cleanAssignee = JsonHelpers.stripIdPrefix(assigneeMemberId);
             Optional<Human> assigneeHuman = memberService.findHuman(cleanAssignee);
@@ -69,6 +70,12 @@ public class BoardTaskService {
                     throw new EntityNotFoundException("Assignee not found: " + assigneeMemberId);
                 }
             }
+            // DAT-120: board_tasks.assignee_member_id is a keyed union (h:/a:);
+            // a bare id violates the column's CHECK constraint.
+            assigneeKeyed = memberService.toKeyedMemberRef(assigneeMemberId);
+            if (assigneeKeyed == null) {
+                throw new EntityNotFoundException("Assignee not found: " + assigneeMemberId);
+            }
         }
 
         BoardTask task = new BoardTask();
@@ -76,7 +83,7 @@ public class BoardTaskService {
         task.setTitle(title);
         task.setDescription(description != null ? description : "");
         task.setCreatedBy(createdBy);
-        task.setAssigneeMemberId(assigneeMemberId);
+        task.setAssigneeMemberId(assigneeKeyed);
         task.setInitiativeId(initiativeId);
         task.setPriority(priority != null ? priority : 0);
         task.setDueAt(dueAt);
@@ -99,7 +106,16 @@ public class BoardTaskService {
 
     @Transactional(readOnly = true)
     public List<BoardTask> findByAssignee(String assigneeMemberId) {
-        return taskRepository.findByAssigneeMemberId(assigneeMemberId);
+        // DAT-120: the stored assignee is a keyed union; match the bare and the
+        // h:-prefixed form so a caller-supplied bare id still resolves.
+        String clean = JsonHelpers.stripIdPrefix(assigneeMemberId);
+        List<BoardTask> tasks = new java.util.ArrayList<>(taskRepository.findByAssigneeMemberId(clean));
+        for (BoardTask task : taskRepository.findByAssigneeMemberId("h:" + clean)) {
+            if (tasks.stream().noneMatch(t -> t.getId().equals(task.getId()))) {
+                tasks.add(task);
+            }
+        }
+        return tasks;
     }
 
     @Transactional(readOnly = true)
@@ -147,11 +163,18 @@ public class BoardTaskService {
             }
         }
 
-        task.setAssigneeMemberId(assigneeMemberId);
+        // DAT-120: board_tasks.assignee_member_id is a keyed union (h:/a:);
+        // a bare id violates the column's CHECK constraint.
+        String assigneeKeyed = memberService.toKeyedMemberRef(assigneeMemberId);
+        if (assigneeKeyed == null) {
+            throw new EntityNotFoundException("Assignee not found: " + assigneeMemberId);
+        }
+
+        task.setAssigneeMemberId(assigneeKeyed);
         task.setStatus("in_progress");
         BoardTask saved = taskRepository.save(task);
         auditService.log(actor, "ASSIGN", "board_task", id,
-            String.format("{\"assignee\":%s}", JsonHelpers.jsonString(assigneeMemberId)));
+            String.format("{\"assignee\":%s}", JsonHelpers.jsonString(assigneeKeyed)));
         return saved;
     }
 

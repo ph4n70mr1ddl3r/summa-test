@@ -134,6 +134,57 @@ class MemberServiceTest {
     }
 
     @Test
+    void isAdmin_returnsFalseForDeactivatedAdmin() {
+        // OFB-015: deactivation is credential-death — a departed admin's token
+        // must not keep satisfying every admin gate.
+        Human h = new Human();
+        h.setRbac("admin");
+        h.setDeactivatedAt(Instant.now());
+        when(humanRepository.findById("h1")).thenReturn(Optional.of(h));
+
+        assertFalse(memberService.isAdmin("h1"));
+    }
+
+    @Test
+    void toKeyedMemberRef_resolvesHumanKind() {
+        Human h = new Human();
+        h.setId("h1");
+        when(humanRepository.findById("h1")).thenReturn(Optional.of(h));
+
+        assertEquals("h:h1", memberService.toKeyedMemberRef("h1"));
+        assertEquals("h:h1", memberService.toKeyedMemberRef("h:h1"));
+    }
+
+    @Test
+    void toKeyedMemberRef_resolvesAgentKind() {
+        // The kind is resolved by live lookup — an agent reference must never be
+        // relabelled as a human one.
+        when(humanRepository.findById("a1")).thenReturn(Optional.empty());
+        Agent agent = new Agent();
+        agent.setId("a1");
+        when(agentRepository.findById("a1")).thenReturn(Optional.of(agent));
+
+        assertEquals("a:a1", memberService.toKeyedMemberRef("a1"));
+        assertEquals("a:a1", memberService.toKeyedMemberRef("a:a1"));
+    }
+
+    @Test
+    void toKeyedMemberRef_passesReservedSpellingsThrough() {
+        assertEquals("system", memberService.toKeyedMemberRef("system"));
+        assertEquals("admins", memberService.toKeyedMemberRef("admins"));
+    }
+
+    @Test
+    void toKeyedMemberRef_returnsNullForUnknownMember() {
+        when(humanRepository.findById("ghost")).thenReturn(Optional.empty());
+        when(agentRepository.findById("ghost")).thenReturn(Optional.empty());
+
+        assertNull(memberService.toKeyedMemberRef("ghost"));
+        assertNull(memberService.toKeyedMemberRef(null));
+        assertNull(memberService.toKeyedMemberRef("  "));
+    }
+
+    @Test
     void isAdmin_returnsFalseForNonAdmin() {
         Human h = new Human();
         h.setRbac("member");

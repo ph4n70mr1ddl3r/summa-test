@@ -101,6 +101,36 @@ class OffboardingWalkServiceTest {
     }
 
     @Test
+    void walkOffboard_terminatesSessions() {
+        // OFB-015: deactivation is credential-death — the session version bump
+        // invalidates every unexpired JWT the departing member holds.
+        Human human = new Human();
+        human.setId("h1");
+        human.setRbac("admin");
+        human.setSessionVersion(3);
+        when(memberService.findHuman("h1")).thenReturn(Optional.of(human));
+        when(memberService.saveHuman(any())).thenReturn(human);
+        when(domainService.findAllIncludingArchived(anyInt())).thenReturn(java.util.List.of());
+        when(agentService.findByOwner(eq("h1"), anyInt())).thenReturn(java.util.List.of());
+        when(initiativeService.findAllActive(anyInt())).thenReturn(java.util.List.of());
+        when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of());
+        when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
+        when(proposalService.findAllOpen()).thenReturn(java.util.List.of());
+        when(groupMembershipRepository.findById_MemberId(anyString())).thenReturn(java.util.List.of());
+        when(askRepository.findByStatusPendingOrdered(anyInt())).thenReturn(java.util.List.of());
+        when(boardTaskRepository.findByAssigneeMemberId(anyString())).thenReturn(java.util.List.of());
+        when(patRepository.findByMemberId(anyString())).thenReturn(java.util.List.of());
+        when(groupRepository.findAll()).thenReturn(java.util.List.of());
+        Human admin = new Human();
+        admin.setId("admin1");
+        when(memberService.findAdmins()).thenReturn(java.util.List.of(admin));
+
+        walkService.walkOffboard("h1", null, "admin1");
+
+        assertEquals(4, human.getSessionVersion());
+    }
+
+    @Test
     void walkOffboard_throwsWhenNoSuccessorAndNoAdmin() {
         Human human = new Human();
         human.setId("h1");
@@ -246,7 +276,43 @@ class OffboardingWalkServiceTest {
 
         var result = walkService.walkOffboard("h1", "h2", "admin1");
 
-        assertEquals("h2", prop.getProposedBy());
+        // DAT-120: the transferred proposer is written in the keyed-union form
+        assertEquals("h:h2", prop.getProposedBy());
+        assertEquals(1, result.get("proposalsTransferred"));
+    }
+
+    @Test
+    void walkOffboard_recognisesKeyedProposer() {
+        // A proposal authored by the departing member is stored with a keyed
+        // proposed_by — the walk must match that spelling too, or the proposal
+        // waits on a proposer who can no longer amend it.
+        Human human = new Human();
+        human.setId("h1");
+        human.setRbac("member");
+        when(memberService.findHuman("h1")).thenReturn(Optional.of(human));
+        when(memberService.saveHuman(any())).thenReturn(human);
+
+        DnaProposal prop = new DnaProposal();
+        prop.setId("p1");
+        prop.setProposedBy("h:h1");
+        prop.setStatus("open");
+        prop.setDomainId(null);
+        when(proposalService.findAllOpen()).thenReturn(java.util.List.of(prop));
+        when(proposalRepository.save(any())).thenReturn(prop);
+
+        when(agentService.findByOwner(eq("h1"), anyInt())).thenReturn(java.util.List.of());
+        when(initiativeService.findAllActive(anyInt())).thenReturn(java.util.List.of());
+        when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of());
+        when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
+        when(groupMembershipRepository.findById_MemberId(anyString())).thenReturn(java.util.List.of());
+        when(askRepository.findByStatusPendingOrdered(anyInt())).thenReturn(java.util.List.of());
+        when(boardTaskRepository.findByAssigneeMemberId(anyString())).thenReturn(java.util.List.of());
+        when(patRepository.findByMemberId(anyString())).thenReturn(java.util.List.of());
+        when(groupRepository.findAll()).thenReturn(java.util.List.of());
+
+        var result = walkService.walkOffboard("h1", "h2", "admin1");
+
+        assertEquals("withdrawn", prop.getStatus());
         assertEquals(1, result.get("proposalsTransferred"));
     }
 

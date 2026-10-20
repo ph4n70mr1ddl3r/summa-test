@@ -15,6 +15,7 @@ vi.mock('../services/api', () => ({
 describe('DataHolds page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    localStorage.removeItem('summa_user')
   })
 
   it('renders the Data Holds heading', async () => {
@@ -64,6 +65,8 @@ describe('DataHolds page', () => {
     })
   })
   it('releases a hold on click', async () => {
+    // Releasing a hold is an admin act — the control is only offered to an admin.
+    localStorage.setItem('summa_user', JSON.stringify({ userId: 'admin-1', rbac: 'admin' }))
     vi.mocked(apiModule.api.governance.listHolds).mockResolvedValue([
       { id: 'h1', kind: 'member', subjectId: 'user-123', reasonMd: 'Pending litigation', createdBy: 'admin-1', createdAt: 1700000000 },
     ])
@@ -76,5 +79,15 @@ describe('DataHolds page', () => {
     const yesBtn = screen.getByText('Yes')
     fireEvent.click(yesBtn)
     await waitFor(() => expect(apiModule.api.governance.releaseHold).toHaveBeenCalledWith('h1'))
+  })
+
+  it('hides the release control from non-admins', async () => {
+    localStorage.setItem('summa_user', JSON.stringify({ userId: 'member-1', rbac: 'member' }))
+    vi.mocked(apiModule.api.governance.listHolds).mockResolvedValue([
+      { id: 'h1', kind: 'member', subjectId: 'user-123', reasonMd: 'Pending litigation', createdBy: 'admin-1', createdAt: 1700000000 },
+    ])
+    render(<DataHolds />)
+    await waitFor(() => expect(screen.getByText('Subject: user-123')).toBeInTheDocument())
+    expect(screen.queryByText('Release')).not.toBeInTheDocument()
   })
 })

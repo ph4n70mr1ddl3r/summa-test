@@ -1,3 +1,5 @@
+import { readSessionUser } from '../utils/session';
+
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 const TOKEN_KEY = 'summa_auth_token';
 const USER_KEY = 'summa_user';
@@ -62,17 +64,7 @@ export function getAuthToken(): string | null {
 }
 
 export function getUser(): { userId: string; rbac: RbacRole; name?: string } | null {
-  try {
-    const raw = localStorage.getItem(USER_KEY);
-    if (!raw) return null;
-    const user = JSON.parse(raw);
-    if (!user?.userId || !user?.rbac) return null;
-    const validRoles = ['admin', 'owner', 'member', 'viewer'] satisfies RbacRole[];
-    if (!validRoles.includes(user.rbac)) return null;
-    return { userId: user.userId, rbac: user.rbac, name: user.name };
-  } catch {
-    return null;
-  }
+  return readSessionUser();
 }
 
 export function isAuthenticated(): boolean {

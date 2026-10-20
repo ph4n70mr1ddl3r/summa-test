@@ -101,6 +101,8 @@ governance_settings (key, value json, edited_by member, edited_at)
  memory_items   (id, tier 'personal'|'project'|'proposal', member_id?, workspace_id?,
                  content_md, provenance json, tainted INTEGER default 0, created_at,
                  reviewed_by?, reviewed_at?)
+                 -- member_id is the human member the item is attributed to (FK ->
+                 -- humans(id)); it is not a keyed union — see DAT-120
 ```
 
 ## Representational invariants (DAT)
@@ -162,15 +164,23 @@ governance_settings (key, value json, edited_by member, edited_at)
 
 ## Completion tables (v2.46)
 
-- **DAT-120** — Member references are one keyed union: every member-typed column
+- **DAT-120** — Member references are one keyed union: every member-typed column that
+  carries a member reference without being foreign-key-pinned to a single member table
   (`asks.from/to`, `initiatives.sponsor/lead`, `board_tasks.assignee_member_id`,
-  `groups.leader_member_id`, `pats.member_id`, `group_memberships.member_id`, among others)
-  carries `h:<humans.id>` or `a:<agents.id>` — never a bare integer — and resolves against
-  the live row of its keyed kind (ORG-001's shared namespace, given a representation).
-  Exactly two reserved non-member spellings exist, and they are the only ones: `system` —
+  `groups.leader_member_id`, `pats.member_id`, `group_memberships.member_id`,
+  `dna_proposals.proposed_by`, `dna_decisions.decided_by`, among others) carries
+  `h:<humans.id>` or `a:<agents.id>` — never a bare integer — and resolves against the
+  live row of its keyed kind (ORG-001's shared namespace, given a representation). A
+  column whose foreign key pins it to one member table carries that table's bare id —
+  the foreign key is the stronger constraint and a keyed union can never satisfy it:
+  `memory_items.member_id` → `humans(id)` (the human the item is attributed to; a
+  personal-tier item belongs to its member, DAT-125), `spend_ledger.member_id` and
+  `spawn_requests.requester_id` → `agents(id)` (the accountable agent), and the
+  `created_by` / `edited_by` / `reviewed_by` columns → `humans(id)`. Exactly two
+  reserved non-member spellings exist, and they are the only ones: `system` —
   carried by `asks.from` (the system originator, DAT-080) and `audit_events.actor`
-  (DAT-121) — and `admins`, carried by `asks.to` alone, the live-evaluated admin broadcast
-  (DAT-080).
+  (DAT-121) — and `admins`, carried by `asks.to` alone, the live-evaluated admin
+  broadcast (DAT-080).
 - **DAT-121** — `audit_events` is append-only: rows are inserted, never updated or deleted;
   every refusal, write door, credential use, and admin act lands one row (SEC-009,
   NFR-001); `node_id` stamps the acting node where one exists (SEC-012); restore re-appends

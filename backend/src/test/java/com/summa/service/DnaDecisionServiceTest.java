@@ -42,6 +42,7 @@ class DnaDecisionServiceTest {
         when(domainRepository.findById("domain-1")).thenReturn(java.util.Optional.of(new com.summa.model.DnaDomain()));
         when(decisionRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
+        when(memberService.toKeyedMemberRef("h:human-1")).thenReturn("h:human-1");
 
         DnaDecision result = decisionService.create("dec-1", "domain-1", "Context", "Outcome", "h:human-1", null, "admin");
 
@@ -56,6 +57,7 @@ class DnaDecisionServiceTest {
         when(domainRepository.findById("domain-1")).thenReturn(java.util.Optional.of(new com.summa.model.DnaDomain()));
         when(decisionRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
+        when(memberService.toKeyedMemberRef("h:human-1")).thenReturn("h:human-1");
 
         DnaDecision result = decisionService.create("dec-1", "domain-1", "ctx", "out", "h:human-1", "my-prov", "admin");
 
@@ -75,6 +77,7 @@ class DnaDecisionServiceTest {
     void create_skipsDomainValidationWhenBlank() {
         when(decisionRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
+        when(memberService.toKeyedMemberRef("h:human-1")).thenReturn("h:human-1");
 
         DnaDecision result = decisionService.create("dec-1", "", "ctx", "out", "h:human-1", "prov", "admin");
 
@@ -85,10 +88,21 @@ class DnaDecisionServiceTest {
     void create_stripsIdPrefixFromDecidedBy() {
         when(decisionRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
+        when(memberService.toKeyedMemberRef("h:human-1")).thenReturn("h:human-1");
 
         DnaDecision result = decisionService.create("dec-1", null, "ctx", "out", "h:human-1", "prov", "admin");
 
-        assertEquals("human-1", result.getDecidedBy());
+        // DAT-120: decided_by is stored in the keyed-union form
+        assertEquals("h:human-1", result.getDecidedBy());
+    }
+
+    @Test
+    void create_refusesUnknownDecidedBy() {
+        lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
+        when(memberService.toKeyedMemberRef("h:ghost")).thenReturn(null);
+
+        assertThrows(IllegalArgumentException.class, () ->
+            decisionService.create("dec-1", null, "ctx", "out", "h:ghost", "prov", "admin"));
     }
 
     @Test

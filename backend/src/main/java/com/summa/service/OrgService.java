@@ -178,8 +178,13 @@ public class OrgService {
 
         // Then check last-admin guard with the lock held — no concurrent transaction
         // can offboard another admin until this transaction commits.
+        // OFB-020: the guard is about the *last admin* — offboarding a member who
+        // is not an admin never empties the admin set, so it is not refused (a
+        // single-admin org must still be able to offboard its other members).
         long activeAdminCount = humanRepository.countByDeactivatedAtIsNullAndRbac("admin");
-        if (activeAdminCount <= 1) {
+        boolean targetIsActiveAdmin = human.isActive()
+                && RbacRole.ADMIN.getValue().equals(human.getRbac());
+        if (targetIsActiveAdmin && activeAdminCount <= 1) {
             throw new IllegalStateException("Cannot offboard the last admin");
         }
 
@@ -321,6 +326,9 @@ public class OrgService {
         human.setPasswordHash(null);
         human.setDeputyMemberId(null);
         human.setDeactivatedAt(Instant.now());
+        // OFB-015: erasure is credential-death too — the session version bump
+        // invalidates every unexpired JWT the erased member holds (SEC-010).
+        human.setSessionVersion(human.getSessionVersion() + 1);
         humanRepository.save(human);
 
         String cleanId = JsonHelpers.stripIdPrefix(id);
@@ -378,7 +386,7 @@ public class OrgService {
             boardTaskRepository.save(task);
         }
 
-        // STG-034: Sweep memory item attribution. member_id is an FK to agents(id),
+        // STG-034: Sweep memory item attribution. member_id is an FK to humans(id),
         // so a pseudonymized human ref nulls out (severed) rather than taking custody.
         for (MemoryItem mem : memoryItemRepository.findByMemberId(cleanId)) {
             mem.setMemberId(null);

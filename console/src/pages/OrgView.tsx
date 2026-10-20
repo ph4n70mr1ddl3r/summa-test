@@ -3,12 +3,14 @@ import { api, loadWithFallback } from '../services/api'
 import type { Group, Member } from '../types'
 import { groupStatusColor, rbacRoleColor, agentStatusColor, escapeHtml, formatDate } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
+import { hasAnyData } from '../utils/loadState'
 
 export default function OrgView() {
   const [members, setMembers] = useState<Member[]>([])
   const [groups, setGroups] = useState<Group[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [hasData, setHasData] = useState(false)
 
   const loadData = () => {
     setLoading(true)
@@ -29,6 +31,9 @@ export default function OrgView() {
       const membersList: Member[] = (membersResp as { members?: Member[] } | null)?.members ?? []
       setMembers(membersList)
       setGroups(Array.isArray(data[1]) ? data[1] : [])
+      // A partial outage must not blank the page — the panels that did load
+      // stay on screen with the banner above them.
+      setHasData(hasAnyData(data))
       setError(loadError)
       setLoading(false)
     })
@@ -41,13 +46,16 @@ export default function OrgView() {
   }, [])
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
-  if (error) return <ErrorBanner message={error} onRetry={loadData} onDismiss={() => setError(null)} />
+  if (error && !hasData) return <ErrorBanner message={error} onRetry={loadData} onDismiss={() => setError(null)} />
 
   const humans = members.filter(m => m.kind === 'human')
   const agents = members.filter(m => m.kind === 'agent')
 
   return (
     <div className="space-y-6">
+      {error && (
+        <ErrorBanner message={error} onRetry={loadData} onDismiss={() => setError(null)} />
+      )}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Organization</h2>
         <span className="text-sm text-gray-400">{members.length} members</span>

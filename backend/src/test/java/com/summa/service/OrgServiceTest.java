@@ -120,6 +120,23 @@ class OrgServiceTest {
         assertNotNull(result);
     }
 
+    @Test
+    void offboard_succeedsForNonAdminInASingleAdminOrg() {
+        // OFB-020: the guard is about the *last admin* — offboarding a member who
+        // is not an admin never empties the admin set, so a single-admin org must
+        // still be able to offboard its other members.
+        Human human = createHuman("human-1", "member");
+        when(humanRepository.findByIdForUpdate("human-1")).thenReturn(Optional.of(human));
+        when(humanRepository.countByDeactivatedAtIsNullAndRbac("admin")).thenReturn(1L);
+        when(offboardingWalkService.walkOffboard(eq("human-1"), eq(null), eq("admin-2")))
+            .thenReturn(Map.of("humanId", "human-1"));
+
+        Human result = orgService.offboard("human-1", "admin-2");
+
+        assertNotNull(result);
+        verify(offboardingWalkService).walkOffboard("human-1", null, "admin-2");
+    }
+
     private Human createHuman(String id, String rbac) {
         Human h = new Human();
         h.setId(id);

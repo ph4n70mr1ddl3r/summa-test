@@ -59,6 +59,10 @@ public class AskController {
         // Ask "to"/"from" values are stored as keyed unions; normalize the inbox
         // target so the query matches the stored representation.
         String target = to != null ? normalizeMemberRef(to) : normalizeMemberRef(actor);
+        if (target == null) {
+            // The reference resolves to no live member — there is no such inbox.
+            return ResponseEntity.ok(java.util.List.of());
+        }
         if (status != null && !status.isBlank()) {
             return ResponseEntity.ok(askService.findByToAndStatus(target, status, cappedLimit));
         }
@@ -106,10 +110,11 @@ public class AskController {
             // or a keyed union, so a plain member id must be re-prefixed.
             String toClean = normalizeMemberRef(to);
             String fromClean = normalizeMemberRef(actor);
-            if (memberService.findHuman(JsonHelpers.stripIdPrefix(toClean)).isEmpty()
-                    && memberService.findAgent(JsonHelpers.stripIdPrefix(toClean)).isEmpty()
-                    && !OffboardingWalkService.ADMIN_BROADCAST.equals(JsonHelpers.stripIdPrefix(toClean))) {
+            if (toClean == null) {
                 throw new IllegalArgumentException("to does not reference an existing human or agent: " + to);
+            }
+            if (fromClean == null) {
+                throw new IllegalArgumentException("actor does not reference an existing member: " + actor);
             }
             String slaTier = body.get("slaTier");
             if (slaTier != null && !slaTier.isBlank()) {
@@ -182,7 +187,11 @@ public class AskController {
             }
             // The asks table stores from/to as keyed unions (h:<id> / a:<id>),
             // so the human actor is re-prefixed after stripping.
-            Ask ask = askService.respond(id, normalizeMemberRef(actor), response);
+            String responderRef = normalizeMemberRef(actor);
+            if (responderRef == null) {
+                throw new IllegalArgumentException("actor does not reference an existing member: " + actor);
+            }
+            Ask ask = askService.respond(id, responderRef, response);
             return ResponseEntity.ok(ask);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
@@ -197,7 +206,11 @@ public class AskController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            Ask ask = askService.withdraw(id, normalizeMemberRef(actor));
+            String originatorRef = normalizeMemberRef(actor);
+            if (originatorRef == null) {
+                throw new IllegalArgumentException("actor does not reference an existing member: " + actor);
+            }
+            Ask ask = askService.withdraw(id, originatorRef);
             return ResponseEntity.ok(ask);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
@@ -222,16 +235,22 @@ public class AskController {
     }
     /**
      * Normalize a member reference to the stored keyed-union representation
-     * used in asks.from / asks.to. Plain human ids are prefixed with "h:".
-     * "system" and "admins" pass through unchanged.
+     * used in asks.from / asks.to. The kind is resolved by live lookup, so an
+     * agent addressee keeps its {@code a:} kind (a mislabelled kind makes the
+     * ask resolve against the wrong live table). "system" and "admins" pass
+     * through unchanged.
+     *
+     * @return the keyed-union reference, or null when the reference resolves to
+     *         no live member
      */
-    private static String normalizeMemberRef(String ref) {
+    private String normalizeMemberRef(String ref) {
         String clean = JsonHelpers.stripIdPrefix(ref);
-        if (clean == null || OffboardingWalkService.ADMIN_BROADCAST.equals(clean)
+        if (clean == null) return null;
+        if (OffboardingWalkService.ADMIN_BROADCAST.equals(clean)
                 || Defaults.SYSTEM_ACTOR.equals(clean)) {
             return clean;
         }
-        return "h:" + clean;
+        return memberService.toKeyedMemberRef(clean);
     }
 
 }

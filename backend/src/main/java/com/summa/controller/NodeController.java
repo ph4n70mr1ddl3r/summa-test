@@ -199,6 +199,11 @@ public class NodeController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
+        // SEC-012: revocation is a trust-surface act — admin-only, like every
+        // other node door (list, view, enroll, update).
+        if (!memberService.isAdmin(actor)) {
+            return ControllerResponses.gate(auditService, actor, "Admin access required to revoke nodes");
+        }
         try {
             Node node = nodeService.revoke(id, actor);
             return ResponseEntity.ok(node);

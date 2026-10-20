@@ -468,4 +468,34 @@ class AskServiceTest {
         assertEquals("ask-canonical", collapsed.getId());
         assertEquals(1, canonical.getCollapsedCount());
     }
+
+    @Test
+    void create_defaultsTheSlaTierWhenAbsent() {
+        // The tier is optional at the API door and the row defaults to
+        // 'standard' — an absent tier must resolve to the default, not be
+        // refused as an unknown value.
+        AskService svc = buildService();
+        when(askRepository.save(any(Ask.class))).thenAnswer(i -> {
+            Ask a = (Ask) i.getArgument(0);
+            if (a.getId() == null) a.setId("ask-new");
+            return a;
+        });
+        when(askRepository.findByToAndStatusPending("h:user-2")).thenReturn(List.of());
+
+        Instant deadline = Instant.now().plusSeconds(600);
+        Ask ask = svc.create("question", "h:user-1", "h:user-2", "{}", null, null, null, deadline, null, null);
+
+        assertEquals("standard", ask.getSlaTier());
+        assertEquals("deny", ask.getExpiryBehavior());
+        assertEquals(1, ask.getQuorumRequired());
+    }
+
+    @Test
+    void create_refusesAnUnknownSlaTier() {
+        AskService svc = buildService();
+        Instant deadline = Instant.now().plusSeconds(600);
+
+        assertThrows(IllegalArgumentException.class, () ->
+            svc.create("question", "h:user-1", "h:user-2", "{}", "urgent", "deny", 1, deadline, null, null));
+    }
 }

@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom'
 import { api, loadWithFallback } from '../services/api'
 import type { DnaDomain, DnaCard, DnaGoal, DnaProposal } from '../types'
 import { ErrorBanner } from '../components/ErrorBanner'
+import { hasAnyData } from '../utils/loadState'
 import { domainAccessColor, proposalStatusColor, escapeHtml } from '../utils/formatting'
 
 export default function DNAConsole() {
@@ -12,6 +13,7 @@ export default function DNAConsole() {
   const [proposals, setProposals] = useState<DnaProposal[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [hasData, setHasData] = useState(false)
 
   const loadData = () => {
     setLoading(true)
@@ -36,6 +38,9 @@ export default function DNAConsole() {
       setCards(Array.isArray(data[1]) ? data[1].filter((c): c is DnaCard => typeof c === 'object' && c != null && 'id' in c && 'title' in c) : [])
       setGoals(Array.isArray(data[2]) ? data[2].filter((g): g is DnaGoal => typeof g === 'object' && g != null && 'id' in g && 'statementMd' in g) : [])
       setProposals(Array.isArray(data[3]) ? data[3].filter((p): p is DnaProposal => typeof p === 'object' && p != null && 'id' in p && 'kind' in p) : [])
+      // A partial outage (e.g. the review queue is admin-gated) must not blank
+      // the console — the panels that did load stay on screen with the banner.
+      setHasData(hasAnyData(data))
       setError(loadError)
       setLoading(false)
     })
@@ -50,11 +55,15 @@ export default function DNAConsole() {
   const openProposals = useMemo(() => proposals.filter(p => p.status === 'open'), [proposals])
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
-  if (error) return <ErrorBanner message={error} onRetry={loadData} onDismiss={() => setError(null)} />
+  if (error && !hasData) return <ErrorBanner message={error} onRetry={loadData} onDismiss={() => setError(null)} />
 
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">DNA Console</h2>
+
+      {error && (
+        <ErrorBanner message={error} onRetry={loadData} onDismiss={() => setError(null)} />
+      )}
 
       <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
         <div className="flex items-center justify-between mb-4">

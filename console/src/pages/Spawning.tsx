@@ -3,6 +3,7 @@ import { api, loadWithFallback } from '../services/api'
 import type { SpawnRequest, SpawnStats } from '../types'
 import { spawnStatusColor, escapeHtml, formatDate } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
+import { hasAnyData } from '../utils/loadState'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 
 export default function Spawning() {
@@ -10,6 +11,7 @@ export default function Spawning() {
   const [stats, setStats] = useState<SpawnStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [hasData, setHasData] = useState(false)
   const [actionId, setActionId] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [confirmAction, setConfirmAction] = useState<Record<string, 'approve' | 'deny'>>({})
@@ -37,6 +39,9 @@ export default function Spawning() {
       setRequests(Array.isArray(data[0]) ? data[0] : [])
       setStats(data[1] != null && typeof data[1] === 'object' && !Array.isArray(data[1])
         ? data[1] : null)
+      // A partial outage must not blank the page — the panels that did load
+      // stay on screen with the banner above them.
+      setHasData(hasAnyData(data))
       setError(loadError)
       setLoading(false)
     })
@@ -67,13 +72,16 @@ export default function Spawning() {
   }
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
-  if (error) return <ErrorBanner message={error} onRetry={loadData} onDismiss={() => setError(null)} />
+  if (error && !hasData) return <ErrorBanner message={error} onRetry={loadData} onDismiss={() => setError(null)} />
 
   const requested = requests.filter(r => r.status === 'requested')
   const other = requests.filter(r => r.status !== 'requested')
 
   return (
     <div className="space-y-6">
+      {error && (
+        <ErrorBanner message={error} onRetry={loadData} onDismiss={() => setError(null)} />
+      )}
       {actionError && (
         <div className="rounded-lg p-3 text-sm bg-red-900/30 border border-red-700 text-red-400" role="alert">
           {actionError}

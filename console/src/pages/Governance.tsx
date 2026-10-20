@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { api, loadWithFallback } from '../services/api'
 import type { SpendSnapshot } from '../types'
 import { ErrorBanner } from '../components/ErrorBanner'
+import { hasAnyData } from '../utils/loadState'
 import { escapeHtml } from '../utils/formatting'
 
 export default function Governance() {
@@ -10,6 +11,7 @@ export default function Governance() {
   const [spend, setSpend] = useState<SpendSnapshot | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [hasData, setHasData] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const [saving, setSaving] = useState<Record<string, boolean>>({})
   const [editValues, setEditValues] = useState<Record<string, string>>({})
@@ -41,6 +43,9 @@ export default function Governance() {
       setPolicies(policiesData != null ? policiesData : {})
       setQuotas(quotasData != null ? quotasData : {})
       setSpend(spendData)
+      // A partial outage must not blank the page — the panels that did load
+      // stay on screen with the banner above them.
+      setHasData(hasAnyData(data))
       setError(loadError)
       setLoading(false)
     })
@@ -157,7 +162,7 @@ export default function Governance() {
   }, [saving, startEdit, handleSave])
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
-  if (error) return <ErrorBanner message={error} onRetry={loadData} onDismiss={() => setError(null)} />
+  if (error && !hasData) return <ErrorBanner message={error} onRetry={loadData} onDismiss={() => setError(null)} />
 
   const policyEntries = Object.entries(policies)
   const quotaEntries = Object.entries(quotas)
@@ -165,6 +170,10 @@ export default function Governance() {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Governance</h2>
+
+      {error && (
+        <ErrorBanner message={error} onRetry={loadData} onDismiss={() => setError(null)} />
+      )}
 
       {actionError && (
         <div className="rounded-lg p-3 text-sm bg-red-900/30 border border-red-700 text-red-400" role="alert">

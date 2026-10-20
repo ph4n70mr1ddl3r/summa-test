@@ -45,6 +45,16 @@ public class MemoryService {
     public MemoryItem create(String tier, String memberId, String workspaceId,
                                String contentMd, String provenance, boolean tainted) {
         ScanUtils.scanForSecrets(contentMd, memberId, "memory_item", null, secretsScanner, auditService);
+        // DAT-125: a memory item is attributed to the human member that wrote it —
+        // the column is a humans(id) reference, so a non-human attribution is
+        // refused here rather than aborting the insert on the foreign key.
+        if (memberId != null && !memberId.isBlank()) {
+            String cleanMember = JsonHelpers.stripIdPrefix(memberId);
+            if (memberService.findHuman(cleanMember).isEmpty()) {
+                throw new IllegalArgumentException(
+                        "memory attribution requires an existing human member: " + memberId);
+            }
+        }
         MemoryItem item = new MemoryItem();
         item.setId(UUID.randomUUID().toString());
         item.setTier(tier);

@@ -75,6 +75,18 @@ describe('Login page', () => {
     await findByText('Invalid email or password')
   })
 
+  it('reports a 403 gate as invalid credentials, not a service error', async () => {
+    // The server refuses bad credentials with a 403 gate envelope — the page must
+    // not report a mistyped password as an outage.
+    vi.mocked(apiModule.api.auth.login).mockRejectedValue(new apiModule.ApiError('Invalid credentials', 403))
+    const { getByLabelText, getByText, findByText, queryByText } = renderLogin()
+    fireEvent.change(getByLabelText(/email/i), { target: { value: 'bad@example.com' } })
+    fireEvent.change(getByLabelText(/password/i), { target: { value: 'wrong' } })
+    fireEvent.click(getByText('Sign in'))
+    await findByText('Invalid email or password')
+    expect(queryByText(/authentication service error/i)).not.toBeInTheDocument()
+  })
+
   it('shows loading state while submitting', async () => {
     let resolveLogin: (v: { token: string; userId: string; rbac: import('../services/api').RbacRole; name: string }) => void
     const loginPromise = new Promise<{ token: string; userId: string; rbac: import('../services/api').RbacRole; name: string }>((resolve) => {

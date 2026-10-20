@@ -96,4 +96,30 @@ describe('DNAConsole page', () => {
       expect(screen.getByRole('status')).toBeInTheDocument()
     })
   })
+
+  it('keeps the loaded panels when one sub-request fails', async () => {
+    // The review queue is admin-gated — a member's console must still show the
+    // domains and cards that did load, with the failure reported alongside.
+    vi.mocked(apiModule.api.dna.domains).mockResolvedValue([
+      { id: 'd1', name: 'Engineering', ownerHumanId: 'h1', access: 'public', status: 'active' },
+    ])
+    vi.mocked(apiModule.api.dna.cards).mockResolvedValue([])
+    vi.mocked(apiModule.api.dna.goals).mockResolvedValue([])
+    vi.mocked(apiModule.api.dna.reviewQueue).mockRejectedValue(new Error('Admin access required'))
+
+    render(wrapper(<DNAConsole />))
+    await waitFor(() => expect(screen.getByText('Domains (1)')).toBeInTheDocument())
+    expect(screen.getByText(/admin access required/i)).toBeInTheDocument()
+  })
+
+  it('shows only the error banner when nothing could be loaded', async () => {
+    vi.mocked(apiModule.api.dna.domains).mockRejectedValue(new Error('Network error'))
+    vi.mocked(apiModule.api.dna.cards).mockRejectedValue(new Error('Network error'))
+    vi.mocked(apiModule.api.dna.goals).mockRejectedValue(new Error('Network error'))
+    vi.mocked(apiModule.api.dna.reviewQueue).mockRejectedValue(new Error('Network error'))
+
+    render(wrapper(<DNAConsole />))
+    await waitFor(() => expect(screen.getByText(/network error/i)).toBeInTheDocument())
+    expect(screen.queryByText('DNA Console')).not.toBeInTheDocument()
+  })
 })
