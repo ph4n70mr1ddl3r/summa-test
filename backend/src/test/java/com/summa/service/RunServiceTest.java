@@ -310,4 +310,21 @@ class RunServiceTest {
 
         assertFalse(runService.agentExists("agent-99"));
     }
+
+    @Test
+    void resume_refusesToResurrectASuspendedRun() {
+        // CLC-032/NFR-011: a suspended run is terminal — resume never re-opens it,
+        // and no backward step reverses a terminal transition.
+        Run run = new Run();
+        run.setId("run-1");
+        run.setStatus("suspended");
+        when(runRepository.findById("run-1")).thenReturn(Optional.of(run));
+
+        IllegalStateException refusal = assertThrows(IllegalStateException.class,
+            () -> runService.resume("run-1"));
+
+        assertTrue(refusal.getMessage().contains("terminal"));
+        assertEquals("suspended", run.getStatus());
+        verify(runRepository, never()).save(any());
+    }
 }

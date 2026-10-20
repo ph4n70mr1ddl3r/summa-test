@@ -13,7 +13,7 @@ is promoted to a central, governed **Company DNA** with proposals and review; ag
 agents (governed); topology becomes a **control plane + execution nodes**, with a single-process
 mode so small teams start simple.
 
-*Version v2.71 · 2026-10-21 — change history: [CHANGELOG.md](CHANGELOG.md)*
+*Version v2.72 · 2026-10-21 — change history: [CHANGELOG.md](CHANGELOG.md)*
 
 > **Provenance & completion status**: the v1 design document that §7, §8, and §9 delta
 > against is not part of this repository. The normative, testable statement of every
@@ -1360,7 +1360,7 @@ addressable from every member-typed column:
 ```
 humans         (id, name, email, rbac 'admin'|'owner'|'member'|'viewer', auth json,
                   password_hash?, deputy_member_id?, timezone?, working_hours json?, created_at,
-                  updated_at?, deactivated_at?)
+                  updated_at?, deactivated_at?, session_version int default 0)
                   -- password_hash: reserved for local-account auth (a deployment choice, not the
                   -- default — SEC-001's OIDC path leaves it null); when set, /auth/login accepts
                   -- email+password as an alternative to OIDC; hashed, never returned in
@@ -1428,8 +1428,8 @@ role_templates (id, name, version, class 'persistent'|'ephemeral-subagent', body
                  -- catalog writes — create, publish, retire — are admin, audited (§9):
                  -- authorship is infrastructure; the owner asks govern adoption, not authoring
 nodes          (id, name, kind 'local'|'remote', capabilities json, region?, claim json?,
-                  last_heartbeat, pubkey, enrolled_at, revoked_at?, status 'trusted'|'revoked',
-                  created_at, updated_at?)
+                  last_heartbeat?, pubkey, enrolled_at, revoked_at?, status 'trusted'|'revoked',
+                  updated_at?)
                  -- region gates residency-constrained scheduling (§3, §4.5);
                  -- claim: epoch-fenced workspace leases (§3)
                  -- capabilities re-advertise on every heartbeat: drift against a bound
@@ -1479,7 +1479,7 @@ dna_cards      (id, domain_id, title, definition_md, refs json, provenance json,
                  -- retirement is terminal: revival is a new card, and a draft discards by
                  -- retiring — one lifecycle, no un-retire (§9)
 dna_rules      (id, domain_id, statement_md, machine_hint json?, effective_from, effective_to?,
-                  supersedes_id, status 'active'|'superseded'|'lapsed',
+                  supersedes_id?, status 'active'|'superseded'|'lapsed',
                   created_at, updated_at?)
                  -- effective_to bounds delegation windows (§8.10); lapsed: the window ended —
                  -- ordinary expiring rules transition lapsed at effective_to exactly like
@@ -1502,7 +1502,7 @@ dna_rules      (id, domain_id, statement_md, machine_hint json?, effective_from,
                  -- way to displace a superseded rule being to name the chain's live head, so
                  -- the superseder whose window displaces a predecessor is always one rule (§4.4)
 dna_decisions  (id, domain_id, context_md, outcome_md, decided_by member, decided_at,
-                  refs json?, provenance json?)
+                  refs json, provenance json, created_at)
                  -- immutable and lifecycle-free: create-only at every surface (proposal publish
                  -- and item CRUD, §9) — no update, retire, or delete exists for them, and they
                  -- are always live in search (§4.2); reversal or amendment is a new decision
@@ -1550,7 +1550,7 @@ dna_goals      (id, domain_id?, quarter?, statement_md, owner member, status 'ac
                 -- — severable only by §4.5 erasure, never by a walk
 dna_proposals  (id, kind 'card'|'rule'|'decision'|'goal'|'glossary'|'edit', payload json, revision int
                   default 1, proposed_by member,
-                  provenance json, status 'open'|'published'|'rejected'|'withdrawn', reviewed_by?, created_at,
+                  provenance json, status 'open'|'breached'|'published'|'rejected'|'withdrawn', reviewed_by?, created_at,
                   reviewed_at?, review_by?, domain_id?, updated_at?)  -- review_by: queue SLA deadline; breach escalates to admin (§4.3);
                  -- created_at: the filed date review_by derives and re-derives from (§4.3);
                  -- reviewed_at: when reviewed_by decided
@@ -1560,12 +1560,12 @@ dna_proposals  (id, kind 'card'|'rule'|'decision'|'goal'|'glossary'|'edit', payl
                  -- proposed_by must hold a write surface: humans and persistent agents only —
                  -- an ephemeral worker is refused at propose (§6); its learning folds back, and
                  -- the spawner or a human proposes from it. Viewers are refused the same way (§5)
-asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request', from member, to member,
-                  payload json, initiative_id?, workspace_id?, status 'pending'|'answered'|'expired'|'withdrawn', deadline, created_at,
+asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request'|'promotion', from member, to member,
+                  payload json, initiative_id?, workspace_id?, status 'pending'|'answered'|'denied'|'expired'|'withdrawn', deadline, created_at,
                   updated_at?,
-                  sla_tier 'critical'|'standard'|'bulk', escalation json,
+                  sla_tier 'critical'|'standard'|'bulk', escalation json?,
                   expiry_behavior 'deny'|'escalate'|'reassign', responded_at?, quorum_required int
-                  default 1, responses json, collapsed_count int default 1)
+                  default 1, responses json, collapsed_count int default 0)
                  -- supersedes approvals;
                  -- withdrawn: the originator's retract of a pending ask — originator-scoped,
                  -- never communal: the retracting originator's waiters resolve per the expiry
@@ -1694,7 +1694,7 @@ playbooks      + criticality 'standard'|'critical' default 'standard',
                   -- with triggers (§6.2
                  -- breaker): a firing's class is the stricter of its trigger's and playbook's tags
 spend_ledger   (id, member_id, run_id?, spawn_id?, kind 'reserve'|'settle'|'release',
-                  tokens_in/out, cost, pricing_version, at, created_at)
+                  tokens_in/out, cost, pricing_version, acknowledged int default 0, at, created_at)
                  -- reservation metering: caps evaluate reserved + settled; releases return
                  -- budget on failure or reap (§6.2)
 trigger_firings (id, trigger_id, idempotency_key, fired_at, run_id?)

@@ -185,7 +185,8 @@ Source: PLAN.md §8.10.
 Scenario: An impossible quorum degrades to a visible no
   Given a rule requiring 3 approvals and an eligible pool of 2
   When the ask expires
-  Then it closes denied with the breach escalation naming the shortfall
+  Then it closes expired — a denial by default (ASK-011)
+  And the breach escalation names the shortfall
   And no hang remains
 
 Scenario: Taint never becomes approval authority

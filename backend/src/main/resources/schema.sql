@@ -328,8 +328,12 @@ CREATE TABLE IF NOT EXISTS spawn_requests (
     agent_id TEXT,
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
-    FOREIGN KEY (requester_id) REFERENCES agents(id) ON DELETE SET NULL
-    -- requester_id is a keyed union per DAT-120: h:<humans.id> or a:<agents.id>,
+    -- requester_id is foreign-key-pinned to agents(id), so it carries that table's
+    -- bare id — never a keyed union (DAT-120: a keyed union can never satisfy a
+    -- single-table foreign key). The reference is required, so it pins the agent:
+    -- ON DELETE RESTRICT, because a NOT NULL column cannot carry the NULL an
+    -- ON DELETE SET NULL would write. Agents are archived, never deleted (CLC).
+    FOREIGN KEY (requester_id) REFERENCES agents(id) ON DELETE RESTRICT,
     FOREIGN KEY (template_id) REFERENCES role_templates(id) ON DELETE SET NULL,
     FOREIGN KEY (approved_by) REFERENCES humans(id) ON DELETE SET NULL,
     FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE SET NULL

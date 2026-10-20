@@ -152,4 +152,21 @@ class DnaProposalControllerTest {
         assertEquals(403, res.getStatusCodeValue());
         verify(proposalService, never()).findOpenByDomain(any());
     }
+
+    @Test
+    void createProposal_withAnUnknownDomain_isNotFound() {
+        // API-061: validation before constraint — dna_proposals.domain_id is
+        // foreign-key-pinned, so an unknown one is a 404, not an integrity abort.
+        TestAuthContext.allowWrites("member-1");
+        when(domainService.findById("ghost")).thenReturn(Optional.empty());
+
+        // The not-found exception travels to the global handler, which maps it
+        // to 404 with the refusal envelope.
+        assertThrows(com.summa.exception.EntityNotFoundException.class,
+            () -> controller.createProposal(Map.of(
+                    "kind", "card",
+                    "payload", "{}",
+                    "domainId", "ghost")));
+        verify(proposalService, never()).create(any(), any(), any(), any(), any(), any());
+    }
 }

@@ -429,4 +429,26 @@ class DnaProposalServiceTest {
         // Should not throw NPE — proposedBy is null so SoD check is skipped
         assertDoesNotThrow(() -> proposalService.publish("prop-1", "human-1", "human-1"));
     }
+
+    @Test
+    void publish_acceptsABreachedProposal() {
+        // DWP-025: a proposal whose SLA was tightened into the past is flagged
+        // 'breached' — still open, surfaced as urgent in the review queue. The
+        // publish door admits it; the literal 'open' check bricked it.
+        DnaProposal proposal = new DnaProposal();
+        proposal.setId("prop-1");
+        proposal.setStatus("breached");
+        proposal.setKind("card");
+        proposal.setProposedBy("h:human-1");
+        // review_by is foreign-key-pinned to humans(id): the bare id.
+        proposal.setReviewBy("owner-1");
+        proposal.setDomainId("domain-1");
+        proposal.setPayload("{}");
+        when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
+        when(proposalRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        DnaProposal result = proposalService.publish("prop-1", "owner-1", "owner-1");
+
+        assertEquals("published", result.getStatus());
+    }
 }

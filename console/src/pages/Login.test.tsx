@@ -13,10 +13,12 @@ vi.mock('../services/api', () => ({
   setAuthToken: vi.fn(),
   ApiError: class ApiError extends Error {
     status: number
-    constructor(message: string, status: number) {
+    body?: unknown
+    constructor(message: string, status: number, body?: unknown) {
       super(message)
       this.name = 'ApiError'
       this.status = status
+      this.body = body
     }
   },
   isAuthenticated: vi.fn(),
@@ -223,5 +225,36 @@ describe('Login page', () => {
       expect(navigateMock).not.toHaveBeenCalledWith('/javascript:alert(1)', { replace: true })
       expect(navigateMock).toHaveBeenCalledWith('/', { replace: true })
     })
+  })
+
+  it('surfaces the server message on a validation refusal', async () => {
+    // A malformed address is the caller's to fix — reporting it as a service
+    // outage sends the user into a retry loop that never succeeds.
+    vi.mocked(apiModule.api.auth.login).mockRejectedValue(
+      new apiModule.ApiError('email has invalid format', 422, { code: 'validation', message: 'email has invalid format' }),
+    )
+    const { getByLabelText, getByRole, findByText } = renderLogin()
+    fireEvent.change(getByLabelText(/email/i), { target: { value: 'a@b' } })
+    fireEvent.change(getByLabelText(/password/i), { target: { value: 'password123' } })
+    await act(async () => {
+      fireEvent.click(getByRole('button'))
+    })
+    expect(await findByText('email has invalid format')).toBeInTheDocument()
+  })
+
+  it('surfaces the deployment refusal when local auth is disabled', async () => {
+    vi.mocked(apiModule.api.auth.login).mockRejectedValue(
+      new apiModule.ApiError('Local authentication is not enabled.', 403, {
+        code: 'gate',
+        message: 'Local authentication is not enabled. Use OIDC/gateway auth instead.',
+      }),
+    )
+    const { getByLabelText, getByRole, findByText } = renderLogin()
+    fireEvent.change(getByLabelText(/email/i), { target: { value: 'a@b.com' } })
+    fireEvent.change(getByLabelText(/password/i), { target: { value: 'password123' } })
+    await act(async () => {
+      fireEvent.click(getByRole('button'))
+    })
+    expect(await findByText(/Local authentication is not enabled/)).toBeInTheDocument()
   })
 })

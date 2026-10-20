@@ -4,8 +4,8 @@ import type { Agent, Trigger } from '../types'
 import { triggerStatusColor, triggerCriticalityColor, escapeHtml, formatDate } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { useEscapeKey } from '../hooks/useEscapeKey'
-import { readSessionUser } from '../utils/session'
-import { cancellableLoad } from '../utils/loadState'
+import { readSessionUser, canWrite } from '../utils/session'
+import { cancellableLoad, startLoad } from '../utils/loadState'
 import { stripMemberPrefix } from '../utils/formatting'
 
 export default function Triggers() {
@@ -18,6 +18,9 @@ export default function Triggers() {
 
   const user = readSessionUser()
   const isAdmin = user?.rbac === 'admin'
+  // A viewer holds no write surface — the backend's write gate refuses every
+  // viewer write, so a control offered to one can only ever answer 403.
+  const mayWrite = canWrite(user)
   const userId = user?.userId ?? ''
 
   useEscapeKey(() => {
@@ -49,14 +52,12 @@ export default function Triggers() {
     return cancellableLoad(promise, () => { aborted = true })
   }, [userId])
 
-  useEffect(() => {
-    const cancel = loadTriggers()
-    return cancel
-  }, [loadTriggers])
+  useEffect(() => startLoad(loadTriggers), [loadTriggers])
 
   // TRG-002: an admin controls every trigger; anyone else controls only the
   // triggers of the agents they own.
-  const canControl = (t: Trigger) => isAdmin || ownedAgentIds.has(stripMemberPrefix(t.agentId))
+  const canControl = (t: Trigger) =>
+    mayWrite && (isAdmin || ownedAgentIds.has(stripMemberPrefix(t.agentId)))
 
   const handleLifecycle = async (id: string, action: 'pause' | 'resume' | 'archive') => {
     setActionId(id)

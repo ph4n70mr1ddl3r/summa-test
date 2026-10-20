@@ -134,4 +134,53 @@ class AskControllerTest {
         verify(askService).create(eq("question"), eq("h:human-1"), eq("admins"), any(), any(), any(),
                 any(), any(), any(), any());
     }
+
+    @Test
+    void createAsk_withAnUnknownInitiative_isAValidationRefusal() {
+        // API-061: validation before constraint — asks.initiative_id is
+        // foreign-key-pinned, so an unknown one is a 422, not an integrity abort.
+        TestAuthContext.allowWrites("member-1");
+        when(memberService.toKeyedMemberRef("member-1")).thenReturn("h:member-1");
+        when(memberService.toKeyedMemberRef("owner-1")).thenReturn("h:owner-1");
+        doThrow(new IllegalArgumentException("initiativeId does not reference an existing initiative: ghost"))
+            .when(askService).requireLiveReferences("ghost", null);
+
+        var res = controller.createAsk(Map.of(
+                "kind", "question",
+                "to", "owner-1",
+                "initiativeId", "ghost"));
+
+        assertEquals(422, res.getStatusCodeValue());
+        assertTrue(bodyMessage(res).contains("initiativeId"));
+        verify(askService, never()).create(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void respond_withAnUnknownDecision_isAValidationRefusal() {
+        // ASK-050/API-061: the decision vocabulary is validated at the door.
+        TestAuthContext.allowWrites("member-1");
+        when(memberService.toKeyedMemberRef("member-1")).thenReturn("h:member-1");
+        when(askService.respond(eq("ask-1"), anyString(), anyString(), anyString()))
+            .thenThrow(new IllegalArgumentException("Invalid decision: perhaps. Must be one of: accept, deny"));
+
+        var res = controller.respond("ask-1", Map.of("response", "sure", "decision", "perhaps"));
+
+        assertEquals(422, res.getStatusCodeValue());
+        assertTrue(bodyMessage(res).contains("Invalid decision"));
+    }
+
+    @Test
+    void respond_withADeny_passesTheDecisionToTheService() {
+        TestAuthContext.allowWrites("member-1");
+        when(memberService.toKeyedMemberRef("member-1")).thenReturn("h:member-1");
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("denied");
+        when(askService.respond("ask-1", "h:member-1", "no thanks", "deny")).thenReturn(ask);
+
+        var res = controller.respond("ask-1", Map.of("response", "no thanks", "decision", "deny"));
+
+        assertEquals(200, res.getStatusCodeValue());
+        verify(askService).respond("ask-1", "h:member-1", "no thanks", "deny");
+    }
 }

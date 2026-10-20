@@ -27,7 +27,7 @@ role_templates (id, name, version, class 'persistent'|'ephemeral-subagent', body
                 default_scopes json, status 'draft'|'active'|'retired',
                 created_at, updated_at?)
 nodes          (id, name, kind 'local'|'remote', capabilities json, region?, claim json?,
-                last_heartbeat, pubkey, enrolled_at, revoked_at?, status 'trusted'|'revoked',
+                last_heartbeat?, pubkey, enrolled_at, revoked_at?, status 'trusted'|'revoked',
                 updated_at?)
 dna_domains    (id, name, owner_human_id, access 'public'|'domain'|'named',
                 named_readers json, store 'git'|'db-only', sod 'off'|'reviewer-distinct',
@@ -36,9 +36,9 @@ dna_domains    (id, name, owner_human_id, access 'public'|'domain'|'named',
 dna_cards      (id, domain_id, title, definition_md, refs json, provenance json, version,
                 status 'draft'|'active'|'retired' default 'active', created_at, updated_at?)
 dna_rules      (id, domain_id, statement_md, machine_hint json?, effective_from, effective_to?,
-                supersedes_id, status 'active'|'superseded'|'lapsed', created_at, updated_at?)
+                supersedes_id?, status 'active'|'superseded'|'lapsed', created_at, updated_at?)
 dna_decisions  (id, domain_id, context_md, outcome_md, decided_by member, decided_at,
-                refs json?, provenance json?)
+                refs json, provenance json, created_at)
 dna_glossary   (id, domain_id?, term, definition, aliases json,
                 status 'draft'|'active'|'retired' default 'active', created_at, updated_at?)
 dna_goals      (id, domain_id?, quarter?, statement_md, owner member,
@@ -46,12 +46,12 @@ dna_goals      (id, domain_id?, quarter?, statement_md, owner member,
                 effective_from, effective_to?, created_at, updated_at?)
 dna_proposals  (id, kind 'card'|'rule'|'decision'|'goal'|'glossary'|'edit', payload json,
                 revision int default 1, proposed_by member, provenance json,
-                status 'open'|'published'|'rejected'|'withdrawn', reviewed_by?, created_at,
+                status 'open'|'breached'|'published'|'rejected'|'withdrawn', reviewed_by?, created_at,
                 reviewed_at?, review_by?, domain_id?, updated_at?)
 asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request'|'promotion', from member,
                 to member, payload json, initiative_id?, workspace_id?,
-                status 'pending'|'answered'|'expired'|'withdrawn', deadline, created_at, updated_at?,
-                sla_tier 'critical'|'standard'|'bulk', escalation json,
+                status 'pending'|'answered'|'denied'|'expired'|'withdrawn', deadline, created_at, updated_at?,
+                sla_tier 'critical'|'standard'|'bulk', escalation json?,
                 expiry_behavior 'deny'|'escalate'|'reassign', responded_at?,
                  quorum_required int default 1, responses json, collapsed_count int default 0)
 initiatives    (id, title, goal_ref?, decision_ref?, sponsor member, lead member,
@@ -141,7 +141,13 @@ governance_settings (key, value json, edited_by member, edited_at)
   escalation hop and digest grouping; the system originator (ASK-031) is a reserved
   non-member value of `from`; `to` reserves the broadcast addressee `admins` — every
   active admin, evaluated at render and respond time (ASK-055) — carried by every ask
-  routed to 'an admin' at creation or on escalation, never a single admin's id.
+  routed to 'an admin' at creation or on escalation, never a single admin's id. The
+  status vocabulary is `pending|answered|denied|expired|withdrawn`: `denied` is
+  ASK-050's terminal — a member's deny closes the ask denied immediately — and
+  `expired` is the deadline terminal, a denial by default (ASK-011) but distinct
+  because the `escalate`/`reassign` behaviours open a successor ask. The responses
+  ledger records each responder's decision (`accept` | `deny`); only an accept counts
+  toward the quorum (ASK-050/052) and a denial never does.
 - **DAT-081** — `initiatives.sponsor` pinned human (INT-001); `goal_ref` live at write
   (INT-011); `decision_ref` live at write (INT-012); `depends_on` acyclic with live edges
   (INT-070).

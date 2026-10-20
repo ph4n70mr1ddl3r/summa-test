@@ -218,21 +218,13 @@ public class OrgService {
             throw new IllegalStateException("Cannot update rbac: would leave the org with zero admins");
         }
 
-        // OFB-030: a demotion door never elevates — the walk is destructive (it
-        // transfers domains, closes asks, revokes credentials), so an elevation
-        // through it would strip the member of everything they just gained.
-        RbacRole currentRole = RbacRole.fromValue(human.getRbac());
-        RbacRole nextRole = RbacRole.fromValue(newRbac);
-        if (currentRole != null && nextRole != null && nextRole.rank() > currentRole.rank()) {
-            throw new IllegalArgumentException(
-                    "Demotion requires a lower role: " + newRbac + " is not below " + currentRole.getValue());
-        }
-
         // OFB-030: Run the demotion walk when the new role strips what the member
         // holds. The walk is scoped to what the new role can no longer carry —
         // owner → member sheds domain ownership (OFB-033), member → viewer sheds
         // every write surface. A role change that raises the member's authority
         // is an elevation and runs no walk.
+        RbacRole currentRole = RbacRole.fromValue(human.getRbac());
+        RbacRole nextRole = RbacRole.fromValue(newRbac);
         boolean reducesAuthority = currentRole != null && nextRole != null
                 && nextRole.rank() < currentRole.rank();
         if (reducesAuthority) {
@@ -309,6 +301,17 @@ public class OrgService {
         boolean becomesNonAdmin = isCurrentAdmin && !RbacRole.ADMIN.getValue().equals(newRbac);
         if (becomesNonAdmin && activeAdminCount <= 1) {
             throw new IllegalStateException("Cannot demote the last admin");
+        }
+
+        // OFB-030: the demotion door never elevates — the walk is destructive (it
+        // transfers domains, closes asks, revokes credentials), so an elevation
+        // through it would strip the member of everything they just gained. The
+        // plain role-edit door is where an elevation belongs.
+        RbacRole currentRole = RbacRole.fromValue(human.getRbac());
+        RbacRole nextRole = RbacRole.fromValue(newRbac);
+        if (currentRole != null && nextRole != null && nextRole.rank() > currentRole.rank()) {
+            throw new IllegalArgumentException(
+                    "Demotion requires a lower role: " + newRbac + " is not below " + currentRole.getValue());
         }
 
         // OFB-030: Run the demotion walk scoped to what the new role can no longer carry

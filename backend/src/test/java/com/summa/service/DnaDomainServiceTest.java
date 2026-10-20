@@ -14,6 +14,7 @@ import com.summa.repository.InitiativeRepository;
 import com.summa.model.DnaDomain;
 import com.summa.model.DnaCard;
 import com.summa.model.DnaProposal;
+import com.summa.model.DnaDecision;
 import com.summa.model.Workspace;
 import com.summa.exception.EntityNotFoundException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -518,5 +519,61 @@ class DnaDomainServiceTest {
 
         assertEquals(1, results.size());
         assertNotNull(results.get(0).getId());
+    }
+
+    @Test
+    void updateOwner_rekeysTheReviewQueue() {
+        // DWP-021: the queue belongs to the domain — owner re-pointing re-keys
+        // the rendering, so the new owner holds the publish door and the former
+        // owner does not.
+        DnaDomain domain = new DnaDomain();
+        domain.setId("domain-1");
+        domain.setOwnerHumanId("h:old-owner");
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.of(domain));
+        when(domainRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        DnaProposal proposal = new DnaProposal();
+        proposal.setId("prop-1");
+        proposal.setStatus("open");
+        proposal.setDomainId("domain-1");
+        proposal.setReviewBy("h:old-owner");
+        when(proposalRepository.findOpenByDomain("domain-1")).thenReturn(List.of(proposal));
+        when(proposalRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        domainService.updateOwner("domain-1", "h:new-owner", "admin");
+
+        assertEquals("h:new-owner", proposal.getReviewBy());
+    }
+
+    @Test
+    void merge_movesTheDecisionsWithTheCorpus() {
+        // DNC-032: decisions move with the corpus on merge, ids stable. The move
+        // is a topology re-point, not a content update — the entity's immutability
+        // guard refuses any write, so the pointer moves natively.
+        DnaDomain source = new DnaDomain();
+        source.setId("source-1");
+        source.setAccess("public");
+        DnaDomain survivor = new DnaDomain();
+        survivor.setId("survivor-1");
+        survivor.setAccess("public");
+        when(domainRepository.findById("source-1")).thenReturn(Optional.of(source));
+        when(domainRepository.findById("survivor-1")).thenReturn(Optional.of(survivor));
+        lenient().when(dataHoldRepository.existsByKindAndSubjectIdAndReleasedAtIsNull(anyString(), anyString())).thenReturn(false);
+        lenient().when(cardRepository.findByDomainId("source-1")).thenReturn(Collections.emptyList());
+        lenient().when(ruleRepository.findByDomainId("source-1")).thenReturn(Collections.emptyList());
+        DnaDecision decision = new DnaDecision();
+        decision.setId("dec-1");
+        decision.setDomainId("source-1");
+        lenient().when(decisionRepository.findByDomainId("source-1")).thenReturn(List.of(decision));
+        lenient().when(glossaryRepository.findByDomainId("source-1")).thenReturn(Collections.emptyList());
+        lenient().when(goalRepository.findByDomainId("source-1")).thenReturn(Collections.emptyList());
+        lenient().when(proposalRepository.findOpenByDomain("source-1")).thenReturn(Collections.emptyList());
+        lenient().when(workspaceRepository.findAll()).thenReturn(Collections.emptyList());
+        when(domainRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        domainService.merge("source-1", "survivor-1", "admin", null, null);
+
+        verify(decisionRepository).updateDomainId("dec-1", "survivor-1");
+        verify(decisionRepository, never()).save(any());
     }
 }

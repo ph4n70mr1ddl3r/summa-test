@@ -68,6 +68,9 @@ the PRN-009 form — refuse, audit, ask where a human decision is needed.
 
 - **API-040** — `CRUD /asks` · `POST /asks/:id/respond` · `POST /asks/:id/withdraw`
   (originator retract; the ASK-030/032 door rules apply) · `WS: ask.requested, ask.answered`.
+  The respond body carries `response` (the human's answer) and `decision`
+  (`accept` | `deny`): an absent decision is an acceptance, and a deny closes the ask
+  denied immediately (ASK-050) — only an accept counts toward the quorum (ASK-052).
 - **API-041** — `CRUD /initiatives` · `POST /initiatives/:id/activate|pause|resume|close` —
   transition authority per INT-020…023; close runs the dependency check.
 - **API-042** — `CRUD /board-tasks` — assign to any ask-eligible member (viewer and

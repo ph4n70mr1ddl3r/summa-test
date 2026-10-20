@@ -1,9 +1,11 @@
 import { useEffect, useState, useCallback } from 'react'
 import { api } from '../services/api'
-import type { MemoryItem } from '../types'
+import type { MemoryItem, DnaDomain, Workspace } from '../types'
 import { truncateSnippet, escapeHtml, formatDate } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { cancellableLoad, startLoad } from '../utils/loadState'
+import { readSessionUser, canWrite } from '../utils/session'
+import { stripMemberPrefix } from '../utils/formatting'
 
 export default function Memory() {
   const [items, setItems] = useState<MemoryItem[]>([])
@@ -15,6 +17,15 @@ export default function Memory() {
   const [isProcessingReview, setIsProcessingReview] = useState(false)
   const [reviewSuccess, setReviewSuccess] = useState(false)
   const [reviewError, setReviewError] = useState<string | null>(null)
+  // The review door's authority depends on the item's tier (SUB-041), so the
+  // control is offered only where the door would admit the caller: a personal
+  // item to its member, a project item to a domain owner (or an admin), a
+  // proposal item to any writer.
+  const [ownedDomainIds, setOwnedDomainIds] = useState<Set<string>>(new Set())
+  const [workspaceDomains, setWorkspaceDomains] = useState<Record<string, string[]>>({})
+  const user = readSessionUser()
+  const isAdmin = user?.rbac === 'admin'
+  const userId = stripMemberPrefix(user?.userId ?? '')
 
   useEffect(() => {
     if (reviewSuccess) {
@@ -39,6 +50,47 @@ export default function Memory() {
   }, [filter])
 
   useEffect(() => startLoad(loadItems), [loadItems])
+
+  // Load the reader-side inputs for the project-tier review rule: the domains
+  // the caller owns and each workspace's domain bindings.
+  useEffect(() => {
+    let aborted = false
+    Promise.all([
+      api.dna.domains().catch(() => [] as DnaDomain[]).then((list) => list ?? []),
+      api.workspaces.list().catch(() => [] as Workspace[]).then((list) => list ?? []),
+    ]).then(([domains, workspaces]) => {
+      if (aborted) return
+      const owned = new Set<string>()
+      for (const domain of domains) {
+        if (stripMemberPrefix(domain.ownerHumanId) === userId) owned.add(domain.id)
+      }
+      setOwnedDomainIds(owned)
+      const bindings: Record<string, string[]> = {}
+      for (const workspace of workspaces) {
+        try {
+          const parsed = JSON.parse(workspace.domainIds || '[]')
+          bindings[workspace.id] = Array.isArray(parsed) ? parsed : []
+        } catch {
+          bindings[workspace.id] = []
+        }
+      }
+      setWorkspaceDomains(bindings)
+    })
+    return () => { aborted = true }
+  }, [userId])
+
+  const canReview = (item: MemoryItem): boolean => {
+    if (!canWrite(user)) return false
+    if (item.tier === 'personal') {
+      return item.memberId != null && stripMemberPrefix(item.memberId) === userId
+    }
+    if (item.tier === 'project') {
+      if (isAdmin) return true
+      const domains = item.workspaceId ? workspaceDomains[item.workspaceId] ?? [] : []
+      return domains.some((domainId) => ownedDomainIds.has(domainId))
+    }
+    return true
+  }
 
   const handleReview = async (id: string) => {
     if (isProcessingReview) return
@@ -141,7 +193,7 @@ export default function Memory() {
                     <p className="text-xs text-gray-500">Reviewed: {formatDate(item.reviewedAt)}</p>
                   )}
                 </div>
-                {item.tainted && (
+                {item.tainted && canReview(item) && (
                     <button
                       type="button"
                       onClick={() => requestReview(item.id)}

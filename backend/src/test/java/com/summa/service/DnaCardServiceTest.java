@@ -193,4 +193,19 @@ class DnaCardServiceTest {
         assertEquals("draft", result.getStatus());
         assertEquals("card-draft", result.getId());
     }
+
+    @Test
+    void create_refusesAnArchivedDomain() {
+        // DGV-041: the archived row is read-only history — no new items land in it.
+        DnaDomain archived = new DnaDomain();
+        archived.setId("domain-1");
+        archived.setStatus("archived");
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.of(archived));
+
+        IllegalStateException refusal = assertThrows(IllegalStateException.class, () ->
+            cardService.create("card-1", "domain-1", "Title", "Definition", null, "admin"));
+
+        assertTrue(refusal.getMessage().contains("archived"));
+        verify(cardRepository, never()).save(any());
+    }
 }

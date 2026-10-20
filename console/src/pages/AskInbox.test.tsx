@@ -123,4 +123,44 @@ describe('AskInbox page', () => {
     const withdrawBtn = getByRole('button', { name: /withdraw ask from/i })
     expect(withdrawBtn).toBeDisabled()
   })
+
+  it('sends a deny decision when the member denies the ask', async () => {
+    // ASK-050: a deny closes the ask denied immediately — the console states
+    // the decision explicitly.
+    const ask = { id: 'ask-1', kind: 'question' as AskKind, slaTier: 'standard' as AskTier, from: 'agent-1', to: 'human-1', payload: '{}', deadline: Math.floor(Date.now() / 1000) + 86400, status: 'pending' as const }
+    vi.mocked(api.asks.list).mockResolvedValue([ask])
+    vi.mocked(api.asks.respond).mockResolvedValue({ ...ask, status: 'denied' })
+    const { getByText, getAllByPlaceholderText } = render(<AskInbox />)
+    await waitFor(() => {
+      expect(getByText('Ask Inbox')).toBeInTheDocument()
+    })
+    fireEvent.click(getByText('Respond'))
+    const textarea = getAllByPlaceholderText(/type your response/i)[0] as HTMLTextAreaElement
+    fireEvent.change(textarea, { target: { value: 'not now' } })
+    fireEvent.click(getByText('Deny'))
+    await waitFor(() => {
+      expect(api.asks.respond).toHaveBeenCalledWith('ask-1', 'not now', 'deny')
+    })
+  })
+
+  it('keeps the typed answer when the server refuses the response', async () => {
+    // A refused response must not wipe what the member wrote — the answer is
+    // theirs to correct and resubmit.
+    const ask = { id: 'ask-1', kind: 'question' as AskKind, slaTier: 'standard' as AskTier, from: 'agent-1', to: 'human-1', payload: '{}', deadline: Math.floor(Date.now() / 1000) + 86400, status: 'pending' as const }
+    vi.mocked(api.asks.list).mockResolvedValue([ask])
+    vi.mocked(api.asks.respond).mockRejectedValue(new Error('Not eligible'))
+    const { getByText, getAllByPlaceholderText } = render(<AskInbox />)
+    await waitFor(() => {
+      expect(getByText('Ask Inbox')).toBeInTheDocument()
+    })
+    fireEvent.click(getByText('Respond'))
+    const textarea = getAllByPlaceholderText(/type your response/i)[0] as HTMLTextAreaElement
+    fireEvent.change(textarea, { target: { value: 'a long answer worth keeping' } })
+    fireEvent.click(getByText('Accept'))
+    await waitFor(() => {
+      expect(getByText('Not eligible')).toBeInTheDocument()
+    })
+    expect((getAllByPlaceholderText(/type your response/i)[0] as HTMLTextAreaElement).value)
+      .toBe('a long answer worth keeping')
+  })
 })

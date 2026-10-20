@@ -159,4 +159,24 @@ class DnaGoalControllerTest {
 
         assertEquals(200, res.getStatusCodeValue());
     }
+
+    @Test
+    void createGoal_withAnUnknownInject_isAValidationRefusal() {
+        // API-061: validation before constraint — dna_goals.inject carries a CHECK.
+        TestAuthContext.allowWrites("owner-1");
+        when(memberService.isAdmin("owner-1")).thenReturn(false);
+        when(domainService.findById("domain-1")).thenReturn(Optional.of(domainOwnedBy("owner-1")));
+        when(memberService.findHuman("owner-1")).thenReturn(Optional.of(human("owner-1", "owner")));
+        when(memberService.findAgent("owner-1")).thenReturn(Optional.empty());
+
+        var res = controller.createGoal(Map.of(
+                "statementMd", "Ship it",
+                "owner", "owner-1",
+                "inject", "sometimes",
+                "domainId", "domain-1"));
+
+        assertEquals(422, res.getStatusCodeValue());
+        assertTrue(bodyMessage(res).contains("inject"));
+        verify(goalService, never()).create(any(), any(), any(), any(), any(), any(), any(), any(), any());
+    }
 }

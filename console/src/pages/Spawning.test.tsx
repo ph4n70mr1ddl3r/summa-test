@@ -146,4 +146,27 @@ describe('Spawning page', () => {
       expect(apiModule.api.spawn.deny).toHaveBeenCalledWith('s2')
     })
   })
+
+  it('lists the other lifecycle states, not only the requested inbox', async () => {
+    // The backend's unfiltered list is the "requested" inbox only — the other
+    // states are fetched by status, so the "other requests" panel is a live list.
+    vi.mocked(apiModule.api.spawn.list).mockImplementation(async (status?: string) => {
+      if (status === 'approved') {
+        return [{ id: 's2', requesterId: 'a1', class: 'ephemeral', purpose: 'Approved task', status: 'approved' as const }]
+      }
+      if (status === 'requested') {
+        return [{ id: 's1', requesterId: 'a1', class: 'ephemeral', purpose: 'Pending task', status: 'requested' as const }]
+      }
+      return []
+    })
+    vi.mocked(apiModule.api.spawn.stats).mockResolvedValue({ requested: 1, approved: 1, archived: 0, halted: 0 })
+    render(<Spawning />)
+    await waitFor(() => {
+      expect(screen.getByText('Approved task')).toBeInTheDocument()
+    })
+    expect(apiModule.api.spawn.list).toHaveBeenCalledWith('requested')
+    expect(apiModule.api.spawn.list).toHaveBeenCalledWith('approved')
+    expect(apiModule.api.spawn.list).toHaveBeenCalledWith('halted')
+    expect(apiModule.api.spawn.list).toHaveBeenCalledWith('archived')
+  })
 })

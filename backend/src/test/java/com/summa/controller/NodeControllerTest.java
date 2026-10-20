@@ -85,4 +85,21 @@ class NodeControllerTest {
         assertEquals(200, res.getStatusCodeValue());
         verify(nodeService).revoke("node-1", "admin-1");
     }
+
+    @Test
+    void enroll_withAnUnknownKind_isAValidationRefusal() {
+        // API-061: validation before constraint — nodes.kind carries a CHECK, so
+        // an unknown kind must be a 422, not an integrity abort.
+        TestAuthContext.allowWrites("admin-1");
+        when(memberService.isAdmin("admin-1")).thenReturn(true);
+
+        var res = controller.enroll(Map.of(
+                "name", "edge-1",
+                "kind", "edge",
+                "pubkey", java.util.Base64.getEncoder().encodeToString(new byte[32])));
+
+        assertEquals(422, res.getStatusCodeValue());
+        assertTrue(bodyMessage(res).contains("kind"));
+        verify(nodeService, never()).enroll(anyString(), anyString(), anyString(), anyString());
+    }
 }

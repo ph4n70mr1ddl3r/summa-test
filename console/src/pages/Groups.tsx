@@ -4,7 +4,7 @@ import type { Group } from '../types'
 import { groupStatusColor, escapeHtml } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { readSessionUser } from '../utils/session'
-import { cancellableLoad } from '../utils/loadState'
+import { cancellableLoad, startLoad } from '../utils/loadState'
 
 export default function Groups() {
   const [groups, setGroups] = useState<Group[]>([])
@@ -30,10 +30,7 @@ export default function Groups() {
     return cancellableLoad(promise, () => { aborted = true })
   }
 
-  useEffect(() => {
-    const cancel = loadGroups()
-    return cancel
-  }, [])
+  useEffect(() => startLoad(loadGroups), [])
 
   const handleArchive = async (id: string) => {
     setActionError(null)

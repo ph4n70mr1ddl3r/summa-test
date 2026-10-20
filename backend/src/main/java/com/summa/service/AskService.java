@@ -804,10 +804,41 @@ public class AskService {
         Ask ask = askRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Ask not found: " + id));
 
+        // ASK-053: an unanswerable quorum ask denies at expiry, fail-safe, "with the
+        // breach escalation naming the shortfall" — the audit row names the required
+        // quorum, the eligible pool and the gap between them.
+        int quorum = ask.getQuorumRequired() != null ? ask.getQuorumRequired() : 1;
+        int poolSize = eligiblePoolSize(ask);
         ask.setStatus(AskStatus.EXPIRED.getValue());
         Ask saved = askRepository.save(ask);
-        auditService.logSystem("EXPIRE", "ask", id, null);
+        auditService.logSystem("EXPIRE", "ask", id,
+            String.format("{\"quorumRequired\":%d,\"eligiblePool\":%d,\"shortfall\":%d,\"behavior\":%s}",
+                quorum, poolSize, Math.max(0, quorum - poolSize),
+                JsonHelpers.jsonString(ask.getExpiryBehavior() != null ? ask.getExpiryBehavior() : "deny")));
         return saved;
+    }
+
+    /**
+     * ASK-051: the eligible pool of an ask is its primary recipient plus every
+     * active admin, evaluated at the moment of the settlement. A viewer recipient
+     * holds no answerable post and an agent recipient counts toward N > 1 only as
+     * a delegated agent (audit-only), so neither joins the pool.
+     */
+    int eligiblePoolSize(Ask ask) {
+        int pool = 0;
+        String targetClean = JsonHelpers.stripIdPrefix(ask.getTo());
+        if (targetClean != null && !OffboardingWalkService.ADMIN_BROADCAST.equals(targetClean)) {
+            Optional<Human> target = memberService.findHuman(targetClean);
+            if (target.isPresent() && !RbacRole.VIEWER.getValue().equals(target.get().getRbac())) {
+                pool++;
+            }
+        }
+        for (Human admin : memberService.findAdmins()) {
+            if (!admin.getId().equals(targetClean)) {
+                pool++;
+            }
+        }
+        return pool;
     }
 
     /**

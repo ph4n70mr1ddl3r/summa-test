@@ -6,6 +6,16 @@ import { ErrorBanner } from '../components/ErrorBanner'
 import { cancellableLoad, hasAnyData, startLoad } from '../utils/loadState'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 
+/** The same request can arrive from more than one status fetch — keep one row per id. */
+function dedupeRequests(requests: SpawnRequest[]): SpawnRequest[] {
+  const seen = new Set<string>()
+  return requests.filter((request) => {
+    if (seen.has(request.id)) return false
+    seen.add(request.id)
+    return true
+  })
+}
+
 export default function Spawning() {
   const [requests, setRequests] = useState<SpawnRequest[]>([])
   const [stats, setStats] = useState<SpawnStats | null>(null)
@@ -25,13 +35,30 @@ export default function Spawning() {
     setLoading(true)
     setError(null)
     let aborted = false
+    // The backend's list without a status filter is the "requested" inbox only —
+    // the other lifecycle states (approved, halted, archived) are fetched by
+    // status, so the "other requests" panel is a live list and not a dead one.
+    const fetchAllRequests = () => Promise.all([
+      api.spawn.list('requested'),
+      api.spawn.list('approved'),
+      api.spawn.list('halted'),
+      api.spawn.list('archived'),
+    ]).then((lists) => dedupeRequests(lists.flatMap((list) => list ?? [])))
+    const fetchAllRequestsLenient = () => Promise.all([
+      api.spawn.list('requested').catch(() => null),
+      api.spawn.list('approved').catch(() => null),
+      api.spawn.list('halted').catch(() => null),
+      api.spawn.list('archived').catch(() => null),
+    ]).then((lists) => lists.some((list) => list === null)
+      ? null
+      : dedupeRequests(lists.flatMap((list) => list ?? [])))
     const promise = loadWithFallback(
       () => Promise.all([
-        api.spawn.list(),
+        fetchAllRequests(),
         api.spawn.stats(),
       ]),
       () => Promise.all([
-        api.spawn.list().catch(() => null),
+        fetchAllRequestsLenient(),
         api.spawn.stats().catch(() => null),
       ]),
     ).then(({ data, error: loadError }) => {

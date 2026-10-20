@@ -380,4 +380,33 @@ class NodeServiceTest {
 
         verify(spendLedgerRepository, never()).save(any());
     }
+
+    @Test
+    void reportRun_refusesATerminalRun() {
+        // NFR-011: a late node report never reverses a terminal transition, and
+        // the settle lands once — the report that closes the run is the only one
+        // that passes the gate.
+        Node node = new Node();
+        node.setId("node-1");
+        node.setStatus("trusted");
+
+        Run run = new Run();
+        run.setId("run-1");
+        run.setStatus("cancelled");
+        run.setWorkspaceId("ws-1");
+        run.setAgentId("agent-1");
+
+        Workspace ws = new Workspace();
+        ws.setId("ws-1");
+        ws.setLeaseExpiresAt(java.time.Instant.now().plusSeconds(30));
+
+        when(nodeRepository.findById("node-1")).thenReturn(Optional.of(node));
+        when(runRepository.findById("run-1")).thenReturn(Optional.of(run));
+
+        assertThrows(IllegalStateException.class,
+            () -> nodeService.reportRun("node-1", "run-1", "done", "[]", 100L, 0.5, "agent-1"));
+
+        assertEquals("cancelled", run.getStatus());
+        verify(spendLedgerRepository, never()).save(any());
+    }
 }

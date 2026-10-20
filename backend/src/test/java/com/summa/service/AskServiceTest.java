@@ -448,7 +448,9 @@ class AskServiceTest {
         svc.processExpiredAsks();
 
         assertEquals("expired", ask.getStatus());
-        verify(auditService).logSystem(eq("EXPIRE"), eq("ask"), eq("ask-expire-1"), isNull());
+        // ASK-053: the expiry row names the quorum, the eligible pool and the gap.
+        verify(auditService).logSystem(eq("EXPIRE"), eq("ask"), eq("ask-expire-1"),
+            org.mockito.ArgumentMatchers.contains("shortfall"));
     }
 
     @Test
@@ -581,5 +583,187 @@ class AskServiceTest {
 
         assertThrows(IllegalArgumentException.class, () ->
             svc.create("question", "h:user-1", "h:user-2", "{}", "urgent", "deny", 1, deadline, null, null));
+    }
+
+    // --- ASK-050: the denial terminal and the decision vocabulary ---
+
+    @Test
+    void respond_withADeny_closesTheAskDenied() {
+        // ASK-050: "a deny closes it denied immediately" — the terminal is not
+        // 'answered', and the decision is recorded on the ledger entry.
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("pending");
+        ask.setTo("h:human-1");
+        ask.setQuorumRequired(1);
+        ask.setResponses("[]");
+        ask.setDeadline(Instant.now().plusSeconds(3600));
+
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+        when(askRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Human human1 = new Human();
+        human1.setId("human-1");
+        human1.setRbac("member");
+        lenient().when(memberService.findHuman("human-1")).thenReturn(Optional.of(human1));
+
+        AskService svc = buildService();
+        Ask result = svc.respond("ask-1", "human-1", "not now", "deny");
+
+        assertEquals("denied", result.getStatus());
+        assertTrue(result.getResponses().contains("\"decision\":\"deny\""));
+    }
+
+    @Test
+    void respond_withADeny_onAQuorumAsk_closesItDeniedImmediately() {
+        // ASK-050: a denial is terminal whatever the quorum is — it does not wait
+        // for the Nth accept.
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("pending");
+        ask.setTo("h:human-1");
+        ask.setQuorumRequired(3);
+        ask.setResponses("[]");
+        ask.setDeadline(Instant.now().plusSeconds(3600));
+
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+        when(askRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Human human1 = new Human();
+        human1.setId("human-1");
+        human1.setRbac("member");
+        lenient().when(memberService.findHuman("human-1")).thenReturn(Optional.of(human1));
+        lenient().when(memberService.findAdmins()).thenReturn(List.of());
+
+        AskService svc = buildService();
+        Ask result = svc.respond("ask-1", "human-1", "no", "deny");
+
+        assertEquals("denied", result.getStatus());
+    }
+
+    @Test
+    void respond_aDenialDoesNotCountTowardTheQuorum() {
+        // ASK-050: the ask closes answered once N distinct ACCEPTS land — a
+        // response that is not an accept never counts toward the quorum.
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("pending");
+        ask.setTo("h:human-1");
+        ask.setQuorumRequired(2);
+        ask.setResponses("[]");
+        ask.setDeadline(Instant.now().plusSeconds(3600));
+
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+        when(askRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Human human1 = new Human();
+        human1.setId("human-1");
+        human1.setRbac("member");
+        lenient().when(memberService.findHuman("human-1")).thenReturn(Optional.of(human1));
+        lenient().when(memberService.findAdmins()).thenReturn(List.of());
+
+        AskService svc = buildService();
+        Ask result = svc.respond("ask-1", "human-1", "looks fine", "accept");
+
+        assertEquals("pending", result.getStatus());
+        assertTrue(result.getResponses().contains("\"decision\":\"accept\""));
+    }
+
+    @Test
+    void respond_withAnUnknownDecision_isRefused() {
+        // API-061: the decision vocabulary is validated at the door.
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("pending");
+        ask.setTo("h:human-1");
+        ask.setQuorumRequired(1);
+        ask.setResponses("[]");
+        ask.setDeadline(Instant.now().plusSeconds(3600));
+
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+
+        Human human1 = new Human();
+        human1.setId("human-1");
+        human1.setRbac("member");
+        lenient().when(memberService.findHuman("human-1")).thenReturn(Optional.of(human1));
+
+        AskService svc = buildService();
+        IllegalArgumentException refusal = assertThrows(IllegalArgumentException.class,
+            () -> svc.respond("ask-1", "human-1", "maybe", "perhaps"));
+        assertTrue(refusal.getMessage().contains("Invalid decision"));
+    }
+
+    @Test
+    void respond_quorumN_anAgentAddressee_isNotAPoolPrincipal() {
+        // ASK-050/052/092: toward N > 1 only human members count — a delegated
+        // agent's accept is audit-only, exactly like a deputy's.
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("pending");
+        ask.setTo("a:agent-1");
+        ask.setQuorumRequired(2);
+        ask.setResponses("[]");
+        ask.setDeadline(Instant.now().plusSeconds(3600));
+
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+        lenient().when(memberService.findHuman("agent-1")).thenReturn(Optional.empty());
+        lenient().when(memberService.findAdmins()).thenReturn(List.of());
+
+        AskService svc = buildService();
+        Ask result = svc.respond("ask-1", "agent-1", "done", "accept");
+
+        // Audit-only: the ask does not close and the ledger records nothing.
+        assertEquals("pending", result.getStatus());
+        assertEquals("[]", result.getResponses());
+        verify(auditService).logSystem(eq("AUDIT_ONLY_QUORUM_RESPONSE"), eq("ask"), eq("ask-1"), anyString());
+    }
+
+    @Test
+    void expire_namesTheQuorumShortfall() {
+        // ASK-053: an unanswerable quorum ask denies at expiry, fail-safe, "with
+        // the breach escalation naming the shortfall".
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("pending");
+        ask.setTo("h:owner-1");
+        ask.setQuorumRequired(3);
+        ask.setResponses("[]");
+        ask.setExpiryBehavior("deny");
+        ask.setDeadline(Instant.now().plusSeconds(3600));
+
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+        when(askRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        Human owner = new Human();
+        owner.setId("owner-1");
+        owner.setRbac("owner");
+        lenient().when(memberService.findHuman("owner-1")).thenReturn(Optional.of(owner));
+        Human admin = new Human();
+        admin.setId("admin-1");
+        lenient().when(memberService.findAdmins()).thenReturn(List.of(admin));
+
+        AskService svc = buildService();
+        Ask result = svc.expire("ask-1");
+
+        assertEquals("expired", result.getStatus());
+        verify(auditService).logSystem(eq("EXPIRE"), eq("ask"), eq("ask-1"),
+            org.mockito.ArgumentMatchers.contains("shortfall"));
+    }
+
+    @Test
+    void requireLiveReferences_refusesAnUnknownInitiative() {
+        // API-061: the ask's optional references are foreign-key-pinned — an
+        // unknown one is a validation refusal, not an integrity abort.
+        when(initiativeRepository.existsById("ghost")).thenReturn(false);
+        AskService svc = buildService();
+        assertThrows(IllegalArgumentException.class,
+            () -> svc.requireLiveReferences("ghost", null));
+    }
+
+    @Test
+    void requireLiveReferences_refusesAnUnknownWorkspace() {
+        when(workspaceRepository.existsById("ghost-ws")).thenReturn(false);
+        AskService svc = buildService();
+        assertThrows(IllegalArgumentException.class,
+            () -> svc.requireLiveReferences(null, "ghost-ws"));
     }
 }

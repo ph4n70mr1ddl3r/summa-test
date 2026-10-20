@@ -282,4 +282,101 @@ class OrgServiceTest {
         assertThrows(IllegalArgumentException.class, () ->
             orgService.updateRbac("human-1", "superuser", "admin-1"));
     }
+
+    // --- erasure: pseudonymization, uniqueness, and the last-admin guard ---
+
+    @Test
+    void erasure_writesAUniqueOneWayPseudonymEmail() {
+        // STG-030: the member reference becomes a one-way pseudonym. The email
+        // column is UNIQUE, so a shared constant made every erasure after the
+        // first abort on the constraint.
+        Human human = new Human();
+        human.setId("h-1");
+        human.setRbac("member");
+        human.setEmail("member@corp.com");
+        when(humanRepository.findByIdForUpdate("h-1")).thenReturn(Optional.of(human));
+        when(dataHoldRepository.findByKindAndSubjectIdAndReleasedAtIsNull(anyString(), anyString()))
+            .thenReturn(List.of());
+        when(proposalRepository.findByProposedBy(anyString())).thenReturn(List.of());
+        when(askRepository.findByFrom(anyString())).thenReturn(List.of());
+        when(askRepository.findByTo(anyString())).thenReturn(List.of());
+        when(boardTaskRepository.findByAssigneeMemberId(anyString())).thenReturn(List.of());
+        when(memoryItemRepository.findByMemberId(anyString())).thenReturn(List.of());
+        when(patRepository.findByMemberId(anyString())).thenReturn(List.of());
+        Human admin = new Human();
+        admin.setId("admin-1");
+        when(memberService.findAdmins()).thenReturn(List.of(admin));
+
+        orgService.erasure("h-1", "admin-1");
+
+        assertNotEquals("member@corp.com", human.getEmail());
+        assertTrue(human.getEmail().startsWith("erased-"));
+        assertTrue(human.getEmail().endsWith("@erased.invalid"));
+
+        // The pseudonym is stable for the member and unique across members.
+        Human other = new Human();
+        other.setId("h-2");
+        assertNotEquals(human.getEmail(), OrgService.erasurePseudonymEmail("h-2"));
+        assertEquals(human.getEmail(), OrgService.erasurePseudonymEmail("h-1"));
+    }
+
+    @Test
+    void erasure_refusesTheLastAdmin() {
+        // OFB-020: erasure deactivates the member, so the last-admin guard binds
+        // here exactly as it does on the offboarding door.
+        Human human = new Human();
+        human.setId("h-1");
+        human.setRbac("admin");
+        when(humanRepository.findByIdForUpdate("h-1")).thenReturn(Optional.of(human));
+        when(humanRepository.countByDeactivatedAtIsNullAndRbac("admin")).thenReturn(1L);
+
+        assertThrows(IllegalStateException.class, () -> orgService.erasure("h-1", "admin-1"));
+        verify(humanRepository, never()).save(any());
+    }
+
+    // --- the RBAC edit door: the walk runs on a reduction, never on an elevation ---
+
+    @Test
+    void updateRbac_ownerToMember_runsTheDemotionWalk() {
+        // OFB-030/OFB-033: a role change that strips what the member holds runs
+        // the dependency walk — owner → member sheds domain ownership.
+        Human human = new Human();
+        human.setId("h-1");
+        human.setRbac("owner");
+        when(humanRepository.findByIdForUpdate("h-1")).thenReturn(Optional.of(human));
+        when(humanRepository.countByDeactivatedAtIsNullAndRbac("admin")).thenReturn(3L);
+        when(humanRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        orgService.updateRbac("h-1", "member", "admin-1");
+
+        verify(offboardingWalkService).walkDemote("h-1", "member", "admin-1");
+    }
+
+    @Test
+    void updateRbac_aRaise_runsNoWalk() {
+        Human human = new Human();
+        human.setId("h-1");
+        human.setRbac("member");
+        when(humanRepository.findByIdForUpdate("h-1")).thenReturn(Optional.of(human));
+        when(humanRepository.countByDeactivatedAtIsNullAndRbac("admin")).thenReturn(3L);
+        when(humanRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        orgService.updateRbac("h-1", "owner", "admin-1");
+
+        verify(offboardingWalkService, never()).walkDemote(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void demote_refusesAnElevation() {
+        // OFB-030: the demotion walk is destructive — it transfers domains, closes
+        // asks and revokes credentials — so the demote door never elevates.
+        Human human = new Human();
+        human.setId("h-1");
+        human.setRbac("viewer");
+        when(humanRepository.findByIdForUpdate("h-1")).thenReturn(Optional.of(human));
+        when(humanRepository.countByDeactivatedAtIsNullAndRbac("admin")).thenReturn(3L);
+
+        assertThrows(IllegalArgumentException.class, () -> orgService.demote("h-1", "admin", "admin-1"));
+        verify(offboardingWalkService, never()).walkDemote(anyString(), anyString(), anyString());
+    }
 }

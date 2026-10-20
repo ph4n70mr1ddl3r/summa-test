@@ -451,4 +451,77 @@ class OffboardingWalkServiceTest {
         assertEquals(1, result.get("agentsRetired"));
         verify(agentService).retire("a1", "admin1");
     }
+
+    @Test
+    void walkOffboard_custodyIsNeverTheDepartingMember() {
+        // OFB-002: the custody admin is never the member who is leaving — the
+        // walk's whole promise is that no reference is left addressed to a dead
+        // identity.
+        Human human = new Human();
+        human.setId("h1");
+        human.setRbac("admin");
+        human.setDeactivatedAt(null);
+        when(memberService.findHuman("h1")).thenReturn(Optional.of(human));
+        when(memberService.saveHuman(any())).thenReturn(human);
+        when(domainService.findAllIncludingArchived(anyInt())).thenReturn(java.util.List.of());
+        when(agentService.findByOwner(eq("h1"), anyInt())).thenReturn(java.util.List.of());
+        when(initiativeService.findAllActive(anyInt())).thenReturn(java.util.List.of());
+        when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of());
+        when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
+        when(proposalService.findAllOpen()).thenReturn(java.util.List.of());
+        when(groupMembershipRepository.findById_MemberId("h1")).thenReturn(java.util.List.of());
+        when(askRepository.findByStatusPendingOrdered(anyInt())).thenReturn(java.util.List.of());
+        when(boardTaskRepository.findByAssigneeMemberId("h1")).thenReturn(java.util.List.of());
+        when(patRepository.findByMemberId("h1")).thenReturn(java.util.List.of());
+        when(groupRepository.findAll()).thenReturn(java.util.List.of());
+        // The departing admin is the first row of the (unordered) admin query.
+        Human departing = new Human();
+        departing.setId("h1");
+        Human other = new Human();
+        other.setId("admin2");
+        when(memberService.findAdmins()).thenReturn(java.util.List.of(departing, other));
+
+        var result = walkService.walkOffboard("h1", null, "admin1");
+
+        assertEquals("admin2", result.get("successorId"));
+    }
+
+    @Test
+    void walkOffboard_doesNotAbortOnANonActiveAgent() {
+        // The walk retires only an active agent — retiring a suspended or
+        // requested one is refused by the retire door, and a walk that aborts on
+        // a status it is responsible for arranging leaves the member un-offboarded.
+        Human human = new Human();
+        human.setId("h1");
+        human.setRbac("member");
+        human.setDeactivatedAt(null);
+        when(memberService.findHuman("h1")).thenReturn(Optional.of(human));
+        when(memberService.saveHuman(any())).thenReturn(human);
+        when(domainService.findAllIncludingArchived(anyInt())).thenReturn(java.util.List.of());
+
+        Agent agent = new Agent();
+        agent.setId("a1");
+        agent.setOwnerHumanId("h1");
+        agent.setStatus("suspended");
+        agent.setTemplateId(null);
+        when(agentService.findByOwner(eq("h1"), anyInt())).thenReturn(java.util.List.of(agent));
+
+        when(initiativeService.findAllActive(anyInt())).thenReturn(java.util.List.of());
+        when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of());
+        when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
+        when(proposalService.findAllOpen()).thenReturn(java.util.List.of());
+        when(groupMembershipRepository.findById_MemberId("h1")).thenReturn(java.util.List.of());
+        when(askRepository.findByStatusPendingOrdered(anyInt())).thenReturn(java.util.List.of());
+        when(boardTaskRepository.findByAssigneeMemberId("h1")).thenReturn(java.util.List.of());
+        when(patRepository.findByMemberId("h1")).thenReturn(java.util.List.of());
+        when(groupRepository.findAll()).thenReturn(java.util.List.of());
+        Human admin = new Human();
+        admin.setId("admin1");
+        when(memberService.findAdmins()).thenReturn(java.util.List.of(admin));
+
+        var result = walkService.walkOffboard("h1", null, "admin1");
+
+        verify(agentService, never()).retire(anyString(), anyString());
+        assertNotNull(human.getDeactivatedAt());
+    }
 }

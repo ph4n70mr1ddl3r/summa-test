@@ -9,12 +9,21 @@ vi.mock('../services/api', () => ({
       list: vi.fn(),
       review: vi.fn(),
     },
+    dna: {
+      domains: vi.fn(),
+    },
+    workspaces: {
+      list: vi.fn(),
+    },
   },
 }))
 
 describe('Memory page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    localStorage.removeItem('summa_user')
+    vi.mocked(apiModule.api.dna.domains).mockResolvedValue([])
+    vi.mocked(apiModule.api.workspaces.list).mockResolvedValue([])
   })
 
   it('renders the Memory heading', async () => {
@@ -63,10 +72,11 @@ describe('Memory page', () => {
   })
 
   it('shows success and reloads after reviewing a tainted item', async () => {
+    localStorage.setItem('summa_user', JSON.stringify({ userId: 'member-1', rbac: 'member' }))
     let resolveReview: () => void
     const reviewPromise = new Promise<void>((resolve) => { resolveReview = resolve })
     vi.mocked(apiModule.api.memory.list).mockResolvedValue([
-      { id: 'm-1', tier: 'personal', contentMd: 'Tainted content', provenance: 'test', tainted: true },
+      { id: 'm-1', tier: 'personal', memberId: 'member-1', contentMd: 'Tainted content', provenance: 'test', tainted: true },
     ])
     vi.mocked(apiModule.api.memory.review).mockImplementation(() => reviewPromise as unknown as Promise<apiModule.MemoryItem>)
     const { getByText, container } = render(<Memory />)
@@ -94,6 +104,51 @@ describe('Memory page', () => {
     })
     await waitFor(() => {
       expect(container.textContent).toContain('Item reviewed and taint cleared')
+    })
+  })
+
+  it('hides the review control on a personal item belonging to another member', async () => {
+    // SUB-041: personal-tier taint is cleared by the item's member alone — the
+    // control is offered only where the door would admit the caller.
+    localStorage.setItem('summa_user', JSON.stringify({ userId: 'member-1', rbac: 'member' }))
+    vi.mocked(apiModule.api.memory.list).mockResolvedValue([
+      { id: 'm-2', tier: 'personal', memberId: 'member-2', contentMd: 'Tainted content', provenance: 'test', tainted: true },
+    ])
+    const { queryByText } = render(<Memory />)
+    await waitFor(() => {
+      expect(queryByText('tainted')).toBeInTheDocument()
+    })
+    expect(queryByText('Review')).toBeNull()
+  })
+
+  it('hides the review control from a viewer', async () => {
+    // A viewer holds no write surface — the backend's write gate refuses the
+    // review door for every viewer.
+    localStorage.setItem('summa_user', JSON.stringify({ userId: 'viewer-1', rbac: 'viewer' }))
+    vi.mocked(apiModule.api.memory.list).mockResolvedValue([
+      { id: 'm-3', tier: 'proposal', contentMd: 'Tainted content', provenance: 'test', tainted: true },
+    ])
+    const { queryByText } = render(<Memory />)
+    await waitFor(() => {
+      expect(queryByText('tainted')).toBeInTheDocument()
+    })
+    expect(queryByText('Review')).toBeNull()
+  })
+
+  it('offers the review control on a project item the caller owns a domain of', async () => {
+    localStorage.setItem('summa_user', JSON.stringify({ userId: 'owner-1', rbac: 'owner' }))
+    vi.mocked(apiModule.api.dna.domains).mockResolvedValue([
+      { id: 'domain-1', name: 'Core', ownerHumanId: 'owner-1', access: 'public', status: 'active' },
+    ])
+    vi.mocked(apiModule.api.workspaces.list).mockResolvedValue([
+      { id: 'ws-1', name: 'Project', kind: 'project', initiativeIds: '[]', domainIds: '["domain-1"]', claimEpoch: 0, participants: '[]' },
+    ])
+    vi.mocked(apiModule.api.memory.list).mockResolvedValue([
+      { id: 'm-4', tier: 'project', workspaceId: 'ws-1', contentMd: 'Tainted content', provenance: 'test', tainted: true },
+    ])
+    const { getByText } = render(<Memory />)
+    await waitFor(() => {
+      expect(getByText('Review')).toBeInTheDocument()
     })
   })
 })
