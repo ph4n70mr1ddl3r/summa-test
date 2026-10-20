@@ -10,6 +10,7 @@ import java.util.Optional;
 import com.summa.util.ScanUtils;
 import com.summa.util.JsonHelpers;
 import com.summa.exception.EntityNotFoundException;
+import com.summa.util.DomainGuards;
 
 @Service
 public class DnaCardService {
@@ -30,8 +31,8 @@ public class DnaCardService {
     public DnaCard create(String id, String domainId, String title, String definitionMd,
                           String provenance, String actor) {
         if (domainId != null && !domainId.isBlank()) {
-            domainRepository.findById(domainId).orElseThrow(
-                () -> new EntityNotFoundException("Domain not found: " + domainId));
+            // DGV-041: an archived domain is read-only history — no new items.
+            DomainGuards.requireWritable(domainRepository.findById(domainId).orElse(null), domainId);
         }
         ScanUtils.scanForSecrets(definitionMd, actor, "dna_card", id, secretsScanner, auditService);
         DnaCard card = new DnaCard();
@@ -99,8 +100,8 @@ public class DnaCardService {
     public DnaCard createDraft(String id, String domainId, String title, String definitionMd,
                                   String provenance, String actor) {
         if (domainId != null && !domainId.isBlank()) {
-            domainRepository.findById(domainId).orElseThrow(
-                () -> new EntityNotFoundException("Domain not found: " + domainId));
+            // DGV-041: an archived domain is read-only history — no new items.
+            DomainGuards.requireWritable(domainRepository.findById(domainId).orElse(null), domainId);
         }
         ScanUtils.scanForSecrets(definitionMd, actor, "dna_card", id, secretsScanner, auditService);
         DnaCard card = new DnaCard();

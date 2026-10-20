@@ -10,6 +10,7 @@ import com.summa.service.MemberService;
 import com.summa.security.WriteGate;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.util.JsonHelpers;
+import com.summa.util.Vocabulary;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -71,6 +72,10 @@ public class DnaDomainController {
             if (body.get("access") != null && !body.get("access").isBlank()) {
                 DomainAccess.requireFromValue(body.get("access"));
             }
+            // API-061: validation before constraint — the structural attributes carry
+            // CHECK constraints the door must not let a request reach.
+            String store = Vocabulary.requireOneOf(body.get("store"), "store", "git", "db-only");
+            String sod = Vocabulary.requireOneOf(body.get("sod"), "sod", "off", "reviewer-distinct");
             String ownerHumanIdRaw = body.get("ownerHumanId");
             String ownerHumanIdClean = JsonHelpers.stripIdPrefix(ownerHumanIdRaw);
             requireEligibleDomainOwner(ownerHumanIdClean, ownerHumanIdRaw);
@@ -79,7 +84,8 @@ public class DnaDomainController {
                 body.get("name"),
                 ownerHumanIdClean,
                 body.get("access"),
-                body.get("store"),
+                store,
+                sod,
                 body.containsKey("reviewSlaDays") ? JsonHelpers.parseIntSafe(body.get("reviewSlaDays")) : null,
                 body.get("residency"),
                 actor
@@ -271,9 +277,14 @@ public class DnaDomainController {
                 ownerHumanIdClean = JsonHelpers.stripIdPrefix(ownerHumanId);
                 requireEligibleDomainOwner(ownerHumanIdClean, ownerHumanId);
             }
+            // API-061: validation before constraint — a declared attribute that the
+            // column's CHECK rejects aborts the whole split on the insert.
             String access = body.get("access") instanceof String ? (String) body.get("access") : null;
+            if (access != null) DomainAccess.requireFromValue(access);
             String store = body.get("store") instanceof String ? (String) body.get("store") : null;
+            Vocabulary.requireOneOf(store, "store", "git", "db-only");
             String sod = body.get("sod") instanceof String ? (String) body.get("sod") : null;
+            Vocabulary.requireOneOf(sod, "sod", "off", "reviewer-distinct");
             String residency = body.get("residency") instanceof String ? (String) body.get("residency") : null;
             String namedReaders = body.get("namedReaders") instanceof String ? (String) body.get("namedReaders") : null;
 
@@ -310,6 +321,7 @@ public class DnaDomainController {
                 throw new IllegalArgumentException("sourceId is required");
             }
             String access = body.get("access") instanceof String ? (String) body.get("access") : null;
+            if (access != null) DomainAccess.requireFromValue(access);
             String namedReaders = body.get("namedReaders") instanceof String ? (String) body.get("namedReaders") : null;
             DnaDomain survivor = domainService.merge(
                 sourceId, id, actor,

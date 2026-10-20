@@ -39,11 +39,23 @@ export default function Login() {
     } catch (err) {
       if (err instanceof ApiError && err.status === 429) {
         setError('Too many login attempts. Please try again shortly.')
-      } else if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
-        // The server refuses bad credentials with a 403 gate envelope (and a 401
-        // where the deployment fronts auth with an OIDC gateway) — both are
-        // wrong-credentials failures, not a service outage.
+      } else if (err instanceof ApiError && err.status === 403) {
+        // A 403 is either the wrong-credentials refusal or a deployment whose
+        // local auth is switched off — the envelope's code says which, and the
+        // server's message is the only actionable content in it.
+        const body = err.body as { code?: string; message?: string } | undefined
+        if (body?.code === 'gate' && body.message) {
+          setError(body.message)
+        } else {
+          setError('Invalid email or password')
+        }
+      } else if (err instanceof ApiError && err.status === 401) {
         setError('Invalid email or password')
+      } else if (err instanceof ApiError && err.status === 422) {
+        // A malformed address is the caller's to fix — reporting it as a
+        // service outage sends the user into a retry loop that never succeeds.
+        const body = err.body as { message?: string } | undefined
+        setError(body?.message || 'Enter a valid email address')
       } else {
         setError('Authentication service error. Please try again later.')
       }

@@ -54,6 +54,11 @@ public class SchemaInitializer {
                     }
                 }
             }
+
+            // schema.sql is applied with CREATE TABLE IF NOT EXISTS, so a widened
+            // CHECK constraint never reaches a database created before it. The
+            // migrations rebuild the affected table (DAT-080's ask status vocabulary).
+            SchemaMigrations.migrateAskStatusVocabulary(jdbcTemplate);
         } catch (Exception e) {
             throw new RuntimeException("Failed to initialize database schema", e);
         }

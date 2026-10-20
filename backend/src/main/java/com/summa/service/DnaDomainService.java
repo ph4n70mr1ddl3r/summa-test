@@ -78,13 +78,16 @@ public class DnaDomainService {
 
     @Transactional
     public DnaDomain create(String id, String name, String ownerHumanId, String access,
-                            String store, Integer reviewSlaDays, String residency, String actor) {
+                            String store, String sod, Integer reviewSlaDays, String residency, String actor) {
         DnaDomain domain = new DnaDomain();
         domain.setId(id);
         domain.setName(name);
         domain.setOwnerHumanId(ownerHumanId);
         domain.setAccess(access != null ? access : "public");
         domain.setStore(store != null ? store : "git");
+        // DGV-005: `sod` is a structural attribute, settled at creation (the door
+        // that owns it — there is no later structural-update endpoint).
+        domain.setSod(sod != null ? sod : "off");
         domain.setReviewSlaDays(reviewSlaDays != null ? reviewSlaDays : 7);
         domain.setResidency(residency);
 
@@ -162,9 +165,25 @@ public class DnaDomainService {
                 .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + id));
         domain.setOwnerHumanId(newOwnerId);
         DnaDomain saved = domainRepository.save(domain);
-        auditService.log(actor, "UPDATE_OWNER", "dna_domain", id, 
+        // DWP-021: owner re-pointing re-keys the queue's rendering — the review
+        // authority is the proposal's review_by, so without this the new owner is
+        // refused at the publish door while the former owner keeps it.
+        rekeyReviewAuthority(id, newOwnerId);
+        auditService.log(actor, "UPDATE_OWNER", "dna_domain", id,
             String.format("{\"newOwner\":%s}", JsonHelpers.jsonString(newOwnerId)));
         return saved;
+    }
+
+    /**
+     * DWP-021: the queue belongs to the domain — owner re-pointing re-keys the
+     * rendering with the review_by clocks untouched.
+     */
+    private void rekeyReviewAuthority(String domainId, String newOwnerId) {
+        if (newOwnerId == null || newOwnerId.isBlank()) return;
+        for (DnaProposal proposal : proposalRepository.findOpenByDomain(domainId)) {
+            proposal.setReviewBy(newOwnerId);
+            proposalRepository.save(proposal);
+        }
     }
 
     @Transactional
@@ -419,9 +438,12 @@ public class DnaDomainService {
         }
 
         // Move decisions (ids stable, lifecycle-free)
+        // DNC-032: decisions move with the corpus on merge. The move is a topology
+        // re-point, not a content update — the entity's @PreUpdate guard refuses any
+        // write to a decision, so the pointer is re-pointed natively and the
+        // decision's own fields stay untouched (DNC-030).
         for (DnaDecision decision : decisionRepository.findByDomainId(sourceId)) {
-            decision.setDomainId(survivorId);
-            decisionRepository.save(decision);
+            decisionRepository.updateDomainId(decision.getId(), survivorId);
         }
 
         // Move glossary (ids stable)

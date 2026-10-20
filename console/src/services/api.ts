@@ -308,7 +308,8 @@ export interface Ask {
   responses?: string;
 }
 
-export type AskStatus = 'pending' | 'answered' | 'expired' | 'withdrawn';
+export type AskStatus = 'pending' | 'answered' | 'denied' | 'expired' | 'withdrawn';
+export type AskDecision = 'accept' | 'deny';
 export type AskKind = 'approval' | 'question' | 'assignment' | 'spawn_request' | 'promotion';
 export type AskTier = 'critical' | 'standard' | 'bulk';
 
@@ -792,10 +793,10 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(body),
       }),
-    respond: (id: string, response: string) =>
+    respond: (id: string, response: string, decision?: AskDecision) =>
       request<Ask>(`/asks/${id}/respond`, {
         method: 'POST',
-        body: JSON.stringify({ response }),
+        body: JSON.stringify(decision ? { response, decision } : { response }),
       }),
     withdraw: (id: string) =>
       request<Ask>(`/asks/${id}/withdraw`, {

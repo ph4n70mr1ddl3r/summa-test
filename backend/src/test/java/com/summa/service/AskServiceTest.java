@@ -3,6 +3,7 @@ package com.summa.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.summa.repository.AskRepository;
 import com.summa.repository.InitiativeRepository;
+import com.summa.repository.WorkspaceRepository;
 import com.summa.model.Ask;
 import com.summa.model.Human;
 import com.summa.model.Initiative;
@@ -39,10 +40,13 @@ class AskServiceTest {
     @Mock
     private InitiativeService initiativeService;
 
+    @Mock
+    private WorkspaceRepository workspaceRepository;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private AskService buildService() {
-        return new AskService(askRepository, auditService, memberService, governanceService, initiativeRepository, initiativeService, 1L, objectMapper);
+        return new AskService(askRepository, auditService, memberService, governanceService, initiativeRepository, workspaceRepository, initiativeService, 1L, objectMapper);
     }
 
     @Test
@@ -327,7 +331,7 @@ class AskServiceTest {
 
         InitiativeService initSvc = mock(InitiativeService.class);
         AskService svc = new AskService(askRepository, auditService, memberService, governanceService,
-            initiativeRepository, initSvc, 1L, objectMapper);
+            initiativeRepository, workspaceRepository, initSvc, 1L, objectMapper);
 
         svc.handleDirectionAskResponse(ask, "extend");
 

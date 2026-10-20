@@ -59,7 +59,7 @@ class DnaDomainServiceTest {
             return d;
         });
 
-        DnaDomain result = domainService.create("domain-1", "My Domain", "h:admin", null, null, null, null, "admin");
+        DnaDomain result = domainService.create("domain-1", "My Domain", "h:admin", null, null, null, null, null, "admin");
 
         assertNotNull(result);
         assertEquals("domain-1", result.getId());

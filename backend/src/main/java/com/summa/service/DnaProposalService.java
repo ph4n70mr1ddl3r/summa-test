@@ -166,7 +166,10 @@ public class DnaProposalService {
         DnaProposal proposal = proposalRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Proposal not found: " + id));
         
-        if (!"open".equals(proposal.getStatus())) {
+        if (!proposal.isOpen()) {
+            // DWP-025: a proposal whose SLA was tightened into the past is flagged
+            // 'breached' — still open, surfaced as urgent in the review queue. The
+            // publish door admits it; the literal 'open' check bricked it.
             throw new IllegalStateException("Proposal is not open: " + proposal.getStatus());
         }
 
@@ -201,7 +204,7 @@ public class DnaProposalService {
         }
 
         // DWP-050: Check SoD — if the domain has sod enabled and the proposer is the publisher,
-        // route to the admin broadcast instead
+        // the publish routes to the admin broadcast instead of self-approval.
         String actualReviewer = reviewedBy;
         if (proposal.getDomainId() != null && !proposal.getDomainId().isBlank()) {
             Optional<DnaDomain> domainOpt = domainService.findById(proposal.getDomainId());
@@ -209,16 +212,16 @@ public class DnaProposalService {
                 // DAT-120: proposed_by is a keyed union and the actor is a bare id —
                 // compare the stripped forms so the separation-of-duties guard fires.
                 if (proposedByMatches(proposal, actor)) {
-                    // SoD breach: route to admin broadcast instead of self-approval
-                    auditService.logSystem("SOD_ROUTE_TO_ADMIN", "dna_proposal", id,
-                        String.format("{\"reason\":\"separation_of_duties\",\"proposer\":%s}", JsonHelpers.jsonString(proposal.getProposedBy())));
-                    // Find an admin to review instead
-                    List<Human> admins = memberService.findAdmins();
-                    if (!admins.isEmpty()) {
-                        actualReviewer = admins.get(0).getId();
-                    } else {
-                        throw new IllegalStateException("No admin available for SoD review");
-                    }
+                    // SoD breach: the proposer may not publish their own proposal.
+                    // DWP-050 routes the publish to the admin broadcast (ASK-055):
+                    // the proposal stays in review and an admin picks it up. The
+                    // publish itself is refused — recording an admin who never saw
+                    // the proposal as its reviewer and publishing it anyway made the
+                    // knob cosmetic.
+                    routeSodPublishToAdmin(proposal);
+                    throw new IllegalStateException(
+                        "Separation of duties: the proposer may not publish this proposal — "
+                            + "the publish is routed to the admin broadcast");
                 }
             }
         }
@@ -231,6 +234,32 @@ public class DnaProposalService {
         auditService.log(actor, "PUBLISH", "dna_proposal", id,
             String.format("{\"reviewedBy\":%s}", JsonHelpers.jsonString(actualReviewer)));
         return saved;
+    }
+
+    /**
+     * DWP-050: a separation-of-duties breach routes the publish to the admin
+     * broadcast (ASK-055) — the proposal stays in review and an admin publishes it.
+     */
+    private void routeSodPublishToAdmin(DnaProposal proposal) {
+        try {
+            Map<String, Object> payloadMap = new LinkedHashMap<>();
+            payloadMap.put("proposalId", proposal.getId());
+            payloadMap.put("proposalKind", proposal.getKind());
+            payloadMap.put("domainId", proposal.getDomainId());
+            payloadMap.put("reason", "separation_of_duties");
+            payloadMap.put("proposedBy", proposal.getProposedBy());
+            String payload = JsonHelpers.toJson(payloadMap, objectMapper);
+            long deadlineSeconds = askService.deriveDeadlineFromTier("standard");
+            if (deadlineSeconds > Defaults.MAX_DEADLINE_SECONDS) deadlineSeconds = Defaults.MAX_DEADLINE_SECONDS;
+            askService.create("approval", "system", OffboardingWalkService.ADMIN_BROADCAST,
+                payload, "standard", "deny", 1,
+                Instant.now().plusSeconds(deadlineSeconds), null, null);
+            auditService.logSystem("SOD_ROUTE_TO_ADMIN", "dna_proposal", proposal.getId(),
+                String.format("{\"reason\":\"separation_of_duties\",\"proposer\":%s}", JsonHelpers.jsonString(proposal.getProposedBy())));
+        } catch (Exception e) {
+            auditService.logSystem("SOD_ROUTE_TO_ADMIN_FAIL", "dna_proposal", proposal.getId(),
+                JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
+        }
     }
 
     /**

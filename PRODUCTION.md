@@ -71,7 +71,7 @@ Kubernetes (prod): decomposed services
 | `SUMMA_NODE_LEASE_INTERVAL` | `30` | Node lease interval in seconds |
 | `SUMMA_NODE_HEARTBEAT_TIMEOUT` | `90` | Node heartbeat timeout in seconds |
 | `SUMMA_NODE_AFFINITY_STARVATION` | `24` | Node affinity starvation threshold in hours |
-| `SUMMA_SPAWN_EPH_TOKEN_TTL` | `24` | Ephemeral spawn token TTL in hours |
+| `SUMMA_SPAWN_EPH_WORKER_TTL` | `24` | Ephemeral worker TTL in hours |
 | `SUMMA_SPAWN_MAX_CONCURRENT` | `3` | Max concurrent spawns per spawner |
 | `SUMMA_SPAWN_MAX_AGENTS` | `100` | Org-wide max active agents |
 | `SUMMA_SPAWN_DEPTH_CAP` | `2` | Spawn depth cap |

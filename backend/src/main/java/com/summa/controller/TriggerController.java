@@ -12,6 +12,7 @@ import com.summa.service.WorkspaceService;
 import com.summa.service.MemberService;
 import com.summa.util.JsonHelpers;
 import com.summa.model.Agent;
+import com.summa.util.Vocabulary;
 import java.util.Map;
 import java.util.Optional;
 
@@ -81,6 +82,8 @@ public class TriggerController {
             if (expression == null || expression.isBlank()) {
                 throw new IllegalArgumentException("expression is required");
             }
+            // API-061: validation before constraint — triggers.criticality carries a CHECK.
+            String criticality = Vocabulary.requireOneOf(body.get("criticality"), "criticality", "standard", "critical");
             String agentId = body.get("agentId");
             if (agentId == null || agentId.isBlank()) {
                 throw new IllegalArgumentException("agentId is required");
@@ -106,7 +109,7 @@ public class TriggerController {
                 expression,
                 agentId,
                 workspaceId,
-                body.get("criticality"),
+                criticality,
                 body.get("config"),
                 actor
             );

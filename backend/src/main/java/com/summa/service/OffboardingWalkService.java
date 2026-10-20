@@ -131,7 +131,10 @@ public class OffboardingWalkService {
         if (humanOpt.isEmpty()) {
             throw new IllegalStateException("Human not found for offboarding: " + humanId);
         }
-        String targetOwner = successorId != null ? successorId : findAnyAdminId();
+        // OFB-002: transfer to a named successor, else admin custody. The custody
+        // admin is never the departing member — the walk's whole promise is that no
+        // reference is left addressed to a dead identity.
+        String targetOwner = successorId != null ? successorId : findAnyAdminId(humanId);
         if (targetOwner == null) {
             throw new IllegalStateException("No successor specified and no active admin found for custody transfer");
         }
@@ -162,8 +165,11 @@ public class OffboardingWalkService {
             // Skip archived agents — their state is terminal and should not be modified
             if (AgentStatus.ARCHIVED.getValue().equals(agent.getStatus())) continue;
             agent.setOwnerHumanId(finalTargetOwner);
-            // Retire personal assistants (CLC-051: mirrored scopes die with member)
-            if (isPersonalAssistant(agent)) {
+            // Retire personal assistants (CLC-051: mirrored scopes die with member).
+            // Only an active agent can be retired — retiring a suspended/requested/
+            // retiring agent is refused by the retire door, and the walk must not
+            // abort on a status the walk itself is responsible for arranging.
+            if (isPersonalAssistant(agent) && AgentStatus.ACTIVE.getValue().equals(agent.getStatus())) {
                 agentService.retire(agent.getId(), actor);
             } else {
                 agentRepository.save(agent);
@@ -404,7 +410,7 @@ public class OffboardingWalkService {
             return Map.of("humanId", humanId, "newRbac", newRbac, "changed", false);
         }
 
-        String targetOwner = findAnyAdminId();
+        String targetOwner = findAnyAdminId(humanId);
         if (targetOwner == null) {
             throw new IllegalStateException("No active admin found for custody transfer during demotion");
         }
@@ -434,11 +440,15 @@ public class OffboardingWalkService {
         for (Agent agent : ownedAgentsDemote) {
             // Skip archived agents — their state is terminal and should not be modified
             if (AgentStatus.ARCHIVED.getValue().equals(agent.getStatus())) continue;
+            // Only an active agent can be retired — the retire door refuses every
+            // other status, and a demotion walk that aborts on a status it is
+            // responsible for arranging leaves the member un-demoted.
+            boolean canRetire = AgentStatus.ACTIVE.getValue().equals(agent.getStatus());
             // CLC-051: demotion to viewer retires the assistant (mirrored viewer scopes are read-only)
-            if (RbacRole.VIEWER.getValue().equals(newRbac) && isPersonalAssistant(agent)) {
+            if (canRetire && RbacRole.VIEWER.getValue().equals(newRbac) && isPersonalAssistant(agent)) {
                 agentService.retire(agent.getId(), actor);
                 agentsRetired++;
-            } else if (RbacRole.VIEWER.getValue().equals(newRbac)) {
+            } else if (canRetire && RbacRole.VIEWER.getValue().equals(newRbac)) {
                 // Viewer cannot own staff — retire all agents
                 agentService.retire(agent.getId(), actor);
                 agentsRetired++;
@@ -680,9 +690,10 @@ public class OffboardingWalkService {
                 .orElse(true);
     }
 
-    private String findAnyAdminId() {
+    private String findAnyAdminId(String excludeHumanId) {
         return memberService.findAdmins().stream()
             .map(Human::getId)
+            .filter(id -> !id.equals(excludeHumanId))
             .findFirst()
             .orElse(null);
     }

@@ -45,7 +45,7 @@ summa:
     heartbeat-timeout-seconds: ${SUMMA_NODE_HEARTBEAT_TIMEOUT:90}
     affinity-starvation-hours: ${SUMMA_NODE_AFFINITY_STARVATION:24}
   spawn:
-    ephemeral-default-ttl-hours: ${SUMMA_SPAWN_EPH_TOKEN_TTL:24}
+    ephemeral-default-ttl-hours: ${SUMMA_SPAWN_EPH_WORKER_TTL:${SUMMA_SPAWN_EPH_TOKEN_TTL:24}}
     ephemeral-max-concurrent-per-spawner: ${SUMMA_SPAWN_MAX_CONCURRENT:3}
     org-wide-max-active-agents: ${SUMMA_SPAWN_MAX_AGENTS:100}
     depth-cap: ${SUMMA_SPAWN_DEPTH_CAP:2}

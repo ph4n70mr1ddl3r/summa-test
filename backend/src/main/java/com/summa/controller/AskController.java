@@ -199,6 +199,13 @@ public class AskController {
                     throw new IllegalArgumentException("quorumRequired must be a positive integer");
                 }
             }
+            // API-061: validation before constraint — asks.initiative_id and
+            // asks.workspace_id are foreign-key-pinned, so an unknown reference
+            // would abort the insert as an integrity violation (a 409) instead of
+            // the validation refusal the API owes.
+            String initiativeId = body.get("initiativeId");
+            String workspaceId = body.get("workspaceId");
+            askService.requireLiveReferences(initiativeId, workspaceId);
             Ask ask = askService.create(
                 kind,
                 fromClean,
@@ -208,8 +215,8 @@ public class AskController {
                 expiryBehavior,
                 quorumRequired,
                 Instant.now().plusSeconds(deadlineSeconds),
-                body.get("initiativeId"),
-                body.get("workspaceId")
+                initiativeId,
+                workspaceId
             );
             return ResponseEntity.ok(ask);
         } catch (IllegalArgumentException e) {
@@ -229,13 +236,17 @@ public class AskController {
             if (response == null || response.isBlank()) {
                 throw new IllegalArgumentException("response is required");
             }
+            // ASK-050: the decision is the ask's accept/deny vocabulary. An absent
+            // decision is an acceptance (the historical free-text response); a
+            // deny closes the ask denied immediately.
+            String decision = body.get("decision");
             // The asks table stores from/to as keyed unions (h:<id> / a:<id>),
             // so the human actor is re-prefixed after stripping.
             String responderRef = normalizeMemberRef(actor);
             if (responderRef == null) {
                 throw new IllegalArgumentException("actor does not reference an existing member: " + actor);
             }
-            Ask ask = askService.respond(id, responderRef, response);
+            Ask ask = askService.respond(id, responderRef, response, decision);
             return ResponseEntity.ok(ask);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());

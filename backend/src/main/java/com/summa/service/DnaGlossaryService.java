@@ -6,6 +6,7 @@ import com.summa.model.DnaGlossary;
 import com.summa.exception.EntityNotFoundException;
 import com.summa.util.JsonHelpers;
 import com.summa.util.ScanUtils;
+import com.summa.util.DomainGuards;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -30,12 +31,14 @@ public class DnaGlossaryService {
     public DnaGlossary create(String id, String domainId, String term, String definition,
                                String aliases, String actor) {
         if (domainId != null && !domainId.isBlank()) {
-            domainRepository.findById(domainId).orElseThrow(
-                () -> new EntityNotFoundException("Domain not found: " + domainId));
+            // DGV-041: an archived domain is read-only history — no new items.
+            DomainGuards.requireWritable(domainRepository.findById(domainId).orElse(null), domainId);
         }
-        // Check for duplicate term
-        Optional<DnaGlossary> existing = glossaryRepository.findByTermAndDomainId(term, domainId);
-        if (existing.isPresent() && !"retired".equals(existing.get().getStatus())) {
+        // DNC-041/042: the live entry of the duplicate check is any non-retired row of
+        // the same scope; a retired entry no longer blocks the term (retirement is
+        // what frees it for reuse).
+        List<DnaGlossary> liveEntries = glossaryRepository.findLiveByTermAndScope(term, domainId);
+        if (!liveEntries.isEmpty()) {
             throw new IllegalArgumentException("Term already exists in this domain: " + term);
         }
 

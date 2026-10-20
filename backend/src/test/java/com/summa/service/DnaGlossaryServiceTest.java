@@ -36,7 +36,7 @@ class DnaGlossaryServiceTest {
 
     @Test
     void create_setsDefaults() {
-        when(glossaryRepository.findByTermAndDomainId("term", "domain-1")).thenReturn(Optional.empty());
+        when(glossaryRepository.findLiveByTermAndScope("term", "domain-1")).thenReturn(List.of());
         when(glossaryRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(domainRepository.findById("domain-1")).thenReturn(Optional.of(new DnaDomain()));
 
@@ -55,7 +55,7 @@ class DnaGlossaryServiceTest {
         existing.setTerm("term");
         existing.setStatus("active");
         when(domainRepository.findById("domain-1")).thenReturn(Optional.of(new DnaDomain()));
-        when(glossaryRepository.findByTermAndDomainId("term", "domain-1")).thenReturn(Optional.of(existing));
+        when(glossaryRepository.findLiveByTermAndScope("term", "domain-1")).thenReturn(List.of(existing));
 
         assertThrows(IllegalArgumentException.class, () ->
             glossaryService.create("gloss-2", "domain-1", "term", "Def", null, "admin")
@@ -68,7 +68,8 @@ class DnaGlossaryServiceTest {
         existing.setTerm("term");
         existing.setStatus("retired");
         when(domainRepository.findById("domain-1")).thenReturn(Optional.of(new DnaDomain()));
-        when(glossaryRepository.findByTermAndDomainId("term", "domain-1")).thenReturn(Optional.of(existing));
+        // A retired entry is not a live entry — it no longer holds the term.
+        when(glossaryRepository.findLiveByTermAndScope("term", "domain-1")).thenReturn(List.of());
         when(glossaryRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         DnaGlossary result = glossaryService.create("gloss-2", "domain-1", "term", "New Def", null, "admin");
@@ -79,7 +80,7 @@ class DnaGlossaryServiceTest {
 
     @Test
     void create_passesSecretScan() {
-        when(glossaryRepository.findByTermAndDomainId("term", "domain-1")).thenReturn(Optional.empty());
+        when(glossaryRepository.findLiveByTermAndScope("term", "domain-1")).thenReturn(List.of());
         when(glossaryRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(domainRepository.findById("domain-1")).thenReturn(Optional.of(new DnaDomain()));
         doReturn(false).when(secretsScanner).hasSecrets(anyString());

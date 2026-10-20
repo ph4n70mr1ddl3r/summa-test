@@ -15,6 +15,7 @@ import com.summa.security.RbacAuthorizationFilter;
 import com.summa.service.DnaDomainService;
 import com.summa.model.DnaDomain;
 import com.summa.util.JsonHelpers;
+import com.summa.util.Vocabulary;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
@@ -129,7 +130,8 @@ public class DnaGoalController {
                 body.get("quarter"),
                 body.get("statementMd"),
                 ownerRaw,
-                body.get("inject"),
+                // API-061: validation before constraint — dna_goals.inject carries a CHECK.
+                Vocabulary.requireOneOf(body.get("inject"), "inject", "always", "linked"),
                 effectiveFrom,
                 effectiveTo,
                 actor

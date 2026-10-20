@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { api, getUser } from '../services/api'
+import type { AskDecision } from '../services/api'
 import type { Ask, AskKind, RbacRole } from '../types'
 import { tierColor, formatDate, escapeHtml, askKindIcon, stripMemberPrefix } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { cancellableLoad, startLoad } from '../utils/loadState'
+import { canWrite } from '../utils/session'
 
 const KIND_DISPLAY_NAMES: Record<AskKind, string> = {
   approval: 'Approval',
@@ -14,8 +16,34 @@ const KIND_DISPLAY_NAMES: Record<AskKind, string> = {
   promotion: 'Promotion',
 }
 
+const STATUS_DISPLAY_NAMES: Record<string, string> = {
+  pending: 'Pending',
+  answered: 'Answered',
+  denied: 'Denied',
+  expired: 'Expired',
+  withdrawn: 'Withdrawn',
+}
+
+/**
+ * The ask's responses ledger (DAT-080) counts the accepts toward the quorum:
+ * only an accept counts, a denial never does (ASK-050).
+ */
+function countAccepts(ask: Ask): number {
+  if (!ask.responses) return 0
+  try {
+    const entries = JSON.parse(ask.responses)
+    if (!Array.isArray(entries)) return 0
+    return entries.filter(
+      (entry) => entry && (entry.decision === undefined || entry.decision === 'accept'),
+    ).length
+  } catch {
+    return 0
+  }
+}
+
 export default function AskInbox() {
   const [currentUser, setCurrentUser] = useState(() => getUser())
+  const mayWrite = canWrite(currentUser)
   const [asks, setAsks] = useState<Ask[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -54,7 +82,7 @@ export default function AskInbox() {
 
   useEffect(() => startLoad(loadAsks), [])
 
-  const handleRespond = async (id: string) => {
+  const handleRespond = async (id: string, decision: AskDecision) => {
     setSubmitError(null)
     setSubmitSuccess(null)
     if (!responseText.trim()) {
@@ -63,13 +91,18 @@ export default function AskInbox() {
     }
     setRespondingForId(id)
     try {
-      await api.asks.respond(id, responseText)
-      setSubmitSuccess('Response recorded')
+      const updated = await api.asks.respond(id, responseText, decision)
+      setSubmitSuccess(
+        updated && updated.status === 'denied'
+          ? 'Response recorded — the ask is now denied'
+          : 'Response recorded',
+      )
       setRespondingId(null)
       setResponseText('')
     } catch (err) {
+      // The typed answer survives a refusal: the member can correct it and
+      // resubmit instead of retyping the whole thing.
       setSubmitError(err instanceof Error ? err.message : String(err))
-      setResponseText('')
     } finally {
       setRespondingForId(null)
     }
@@ -136,6 +169,18 @@ export default function AskInbox() {
                       <span className={`text-xs px-2 py-0.5 rounded border ${tierColor(ask.slaTier)}`}>
                         {ask.slaTier}
                       </span>
+                      {ask.status && ask.status !== 'pending' && (
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded border ${
+                            ask.status === 'denied'
+                              ? 'bg-red-900/40 border-red-700 text-red-300'
+                              : 'bg-gray-700 border-gray-600 text-gray-300'
+                          }`}
+                          aria-label={`Status: ${ask.status}`}
+                        >
+                          {STATUS_DISPLAY_NAMES[ask.status] ?? ask.status}
+                        </span>
+                      )}
                       {ask.collapsedCount != null && ask.collapsedCount > 1 && (
                         <span className="text-xs text-gray-500">
                           ×{ask.collapsedCount} collapsed
@@ -156,6 +201,7 @@ export default function AskInbox() {
                   {ask.quorumRequired && ask.quorumRequired > 1 && (
                     <p className="text-xs text-gray-500 mt-1">
                       Quorum: {ask.quorumRequired}
+                      {` (${countAccepts(ask)} accepted)`}
                     </p>
                   )}
                 </div>
@@ -172,7 +218,8 @@ export default function AskInbox() {
                 <button
                   type="button"
                   onClick={() => { setRespondingId(ask.id); setResponseText('') }}
-                  className="px-3 py-1 bg-blue-700 hover:bg-blue-600 rounded text-sm text-blue-100"
+                  disabled={!mayWrite}
+                  className="px-3 py-1 bg-blue-700 hover:bg-blue-600 disabled:bg-gray-800 disabled:text-gray-600 rounded text-sm text-blue-100"
                   aria-label={`Respond to ask from ${escapeHtml(ask.from)}`}
                 >
                   Respond
@@ -200,12 +247,21 @@ export default function AskInbox() {
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      onClick={() => handleRespond(ask.id)}
+                      onClick={() => handleRespond(ask.id, 'accept')}
                       disabled={!responseText.trim() || respondingForId === ask.id}
                       className="px-3 py-1 bg-green-700 hover:bg-green-600 disabled:bg-gray-700 disabled:text-gray-500 rounded text-sm text-green-100"
-                      aria-label="Submit response"
+                      aria-label="Accept ask"
                     >
-                      {respondingForId === ask.id ? 'Submitting...' : 'Submit'}
+                      {respondingForId === ask.id ? 'Submitting...' : 'Accept'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRespond(ask.id, 'deny')}
+                      disabled={!responseText.trim() || respondingForId === ask.id}
+                      className="px-3 py-1 bg-red-700 hover:bg-red-600 disabled:bg-gray-700 disabled:text-gray-500 rounded text-sm text-red-100"
+                      aria-label="Deny ask"
+                    >
+                      Deny
                     </button>
                     <button
                       type="button"

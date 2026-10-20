@@ -1,6 +1,6 @@
 # Traceability — PLAN.md ⇄ Specification Suite
 
-Completeness proof for the SDD suite: every section of `PLAN.md` (v2.70) maps to requirements
+Completeness proof for the SDD suite: every section of `PLAN.md` (v2.71) maps to requirements
 in these specs, and every requirement traces back to a PLAN source. The coverage column lists
 exact ID ranges generated from the defined requirements (no elided prefixes, no implied gaps).
 Both directions — every defined ID listed, every listed ID defined — are verified by
@@ -49,7 +49,8 @@ Both directions — every defined ID listed, every listed ID defined — are ver
 ## Intentional cross-listings
 
 Eight IDs are cited by more than one coverage row — or by a row whose module column does not
-name their home — on purpose. `tools/lint_specs.py` reads this table and exempts exactly these
+name their home — on purpose (counting `ORG-040…043` as four IDs). `tools/lint_specs.py`
+reads this table and exempts exactly these
 IDs from the partition rule; every other ID belongs to exactly one coverage row and must be
 homed in a module that row's module column names. An ID listed here must actually appear in
 two or more rows, so a table entry cannot outlive the cross-listing it explains.

@@ -20,6 +20,21 @@ public enum RbacRole {
         return this != VIEWER;
     }
 
+    /**
+     * The authority ladder: admin &gt; owner &gt; member &gt; viewer. A role change
+     * that lowers the rank is a demotion (OFB-030/OFB-033) and runs the dependency
+     * walk; one that raises it is an elevation and must not.
+     */
+    public int rank() {
+        switch (this) {
+            case ADMIN: return 3;
+            case OWNER: return 2;
+            case MEMBER: return 1;
+            case VIEWER: return 0;
+            default: return 0;
+        }
+    }
+
     public boolean canManageDomains() {
         return this == ADMIN || this == OWNER;
     }

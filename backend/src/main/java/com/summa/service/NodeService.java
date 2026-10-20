@@ -304,6 +304,16 @@ public class NodeService {
         Run run = runRepository.findById(runId)
                 .orElseThrow(() -> new EntityNotFoundException("Run not found: " + runId));
 
+        // NFR-011: no backward clock step un-expires anything or reverses a terminal
+        // transition. A run that already reached a terminal state (completed, failed,
+        // cancelled, suspended — a suspended run is terminal per CLC-032) is never
+        // re-opened by a late node report, and the settle lands once: the report
+        // that closes the run is the only one that passes this gate.
+        if (!"queued".equals(run.getStatus()) && !"running".equals(run.getStatus())) {
+            throw new IllegalStateException(
+                    "Cannot report run with status: " + run.getStatus() + " — the run is terminal");
+        }
+
         // Verify the node holds a live claim on the run's workspace
         List<Workspace> claimedWorkspaces = workspaceService.findByNode(nodeId).stream()
                 .filter(ws -> ws.getLeaseExpiresAt() != null && ws.getLeaseExpiresAt().isAfter(Instant.now()))

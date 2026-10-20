@@ -6,6 +6,7 @@ import com.summa.repository.AskRepository;
 import com.summa.model.Ask;
 import com.summa.model.Human;
 import com.summa.repository.InitiativeRepository;
+import com.summa.repository.WorkspaceRepository;
 import com.summa.model.Initiative;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -27,6 +28,7 @@ import java.security.NoSuchAlgorithmException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.locks.ReentrantLock;
 import com.summa.enums.AskKind;
+import com.summa.enums.AskStatus;
 import com.summa.enums.AskTier;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -53,6 +55,7 @@ public class AskService {
     private final MemberService memberService;
     private final GovernanceService governanceService;
     private final InitiativeRepository initiativeRepository;
+    private final WorkspaceRepository workspaceRepository;
     private final InitiativeService initiativeService;
     private final long stormCollapseWindowSeconds;
 
@@ -72,6 +75,7 @@ public class AskService {
 
     public AskService(AskRepository askRepository, AuditService auditService, MemberService memberService,
                       GovernanceService governanceService, InitiativeRepository initiativeRepository,
+                      WorkspaceRepository workspaceRepository,
                       @Lazy InitiativeService initiativeService,
                       @Value("${summa.asks.storm-collapse-window-hours:1}") long stormCollapseWindowHours,
                       ObjectMapper objectMapper) {
@@ -80,9 +84,31 @@ public class AskService {
         this.memberService = memberService;
         this.governanceService = governanceService;
         this.initiativeRepository = initiativeRepository;
+        this.workspaceRepository = workspaceRepository;
         this.initiativeService = initiativeService;
         this.stormCollapseWindowSeconds = stormCollapseWindowHours * 3600L;
         this.objectMapper = objectMapper;
+    }
+
+    /**
+     * API-061: validation before constraint — the ask's optional references are
+     * foreign-key-pinned, so an unknown one aborts the insert as an integrity
+     * violation (a 409) rather than the validation refusal the API owes.
+     */
+    @Transactional(readOnly = true)
+    public void requireLiveReferences(String initiativeId, String workspaceId) {
+        if (initiativeId != null && !initiativeId.isBlank()) {
+            if (!initiativeRepository.existsById(initiativeId)) {
+                throw new IllegalArgumentException(
+                        "initiativeId does not reference an existing initiative: " + initiativeId);
+            }
+        }
+        if (workspaceId != null && !workspaceId.isBlank()) {
+            if (!workspaceRepository.existsById(workspaceId)) {
+                throw new IllegalArgumentException(
+                        "workspaceId does not reference an existing workspace: " + workspaceId);
+            }
+        }
     }
 
     /**
@@ -372,11 +398,26 @@ public class AskService {
     /**
      * ASK-040/050/052: Respond to an ask with eligibility, quorum, and re-validation checks.
      * ASK-052: When N>1, only pool principals' accepts count — deputy/delegate accepts are audit-only.
+     *
+     * <p>Without an explicit decision the response is an accept (the historical
+     * free-text response) — a caller that has no decision to express records an
+     * acceptance, never a denial.
      */
     @Transactional
     public Ask respond(String id, String responder, String response) {
+        return respond(id, responder, response, null);
+    }
+
+    /**
+     * ASK-050: the response carries a decision ({@code accept} | {@code deny}).
+     * A deny closes the ask denied immediately; only accepts count toward the quorum.
+     */
+    @Transactional
+    public Ask respond(String id, String responder, String response, String decision) {
         Ask ask = askRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Ask not found: " + id));
+
+        String effectiveDecision = normalizeDecision(decision);
 
         if (!ask.isPending()) {
             // ASK-015: later responses to an already-closed ask are audit-only, not refused
@@ -409,16 +450,30 @@ public class AskService {
             if (!isPoolPrincipal) {
                 // Audit-only: record but don't count toward quorum
                 auditService.logSystem("AUDIT_ONLY_QUORUM_RESPONSE", "ask", id,
-                    String.format("{\"responder\":%s,\"reason\":\"not_pool_principal\"}", JsonHelpers.jsonString(responder)));
+                    String.format("{\"responder\":%s,\"reason\":\"not_pool_principal\",\"decision\":%s}",
+                        JsonHelpers.jsonString(responder), JsonHelpers.jsonString(effectiveDecision)));
                 return ask;
             }
         }
 
+        // ASK-050: a deny closes the ask denied immediately — the terminal is not
+        // "answered", and the denial never counts toward a quorum. A deny from a
+        // pool principal is binding whatever else the ledger holds.
+        if (AskDecision.DENY.getValue().equals(effectiveDecision)) {
+            recordResponse(ask, responder, response, effectiveDecision);
+            ask.setRespondedAt(Instant.now());
+            ask.setStatus(AskStatus.DENIED.getValue());
+            Ask saved = askRepository.save(ask);
+            auditService.log(responder, "RESPOND_DENY", "ask", id,
+                String.format("{\"decision\":%s}", JsonHelpers.jsonString(effectiveDecision)));
+            return saved;
+        }
+
         // ASK-015: quorum-1 closes on first response; later responses are audit-only
         if (quorum == 1) {
-            recordResponse(ask, responder, response);
+            recordResponse(ask, responder, response, effectiveDecision);
             ask.setRespondedAt(Instant.now());
-            ask.setStatus("answered");
+            ask.setStatus(AskStatus.ANSWERED.getValue());
             Ask saved = askRepository.save(ask);
             auditService.log(responder, "RESPOND", "ask", id,
                 String.format("{\"response\":%s}", JsonHelpers.jsonString(response != null && !response.isEmpty() ? response.substring(0, Math.min(100, response.length())) : "")));
@@ -427,7 +482,7 @@ public class AskService {
             return saved;
         }
 
-        // ASK-050: N > 1 quorum — collect responses until N distinct principals answered
+        // ASK-050: N > 1 quorum — collect accepts until N distinct principals accepted
         List<String> existingResponses = parseResponseIds(ask);
         // Normalize the responder through stripIdPrefix so quorum counting compares
         // clean forms even when the caller supplied a keyed-union value.
@@ -440,15 +495,16 @@ public class AskService {
         }
 
         existingResponses.add(responderClean);
-        String newResponsesJson = toJsonResponseList(existingResponses, response, ask.getResponses());
+        String newResponsesJson = toJsonResponseList(existingResponses, response, ask.getResponses(), effectiveDecision);
         ask.setResponses(newResponsesJson);
         // Count quorum from the serialized JSON, not the in-memory list, so a
         // malformed prior `responses` column (which parseResponseIds resets to
-        // empty) cannot close a multi-quorum ask on a single response.
-        int storedCount = parseResponseIds(ask).size();
+        // empty) cannot close a multi-quorum ask on a single response. Only
+        // accepts count toward the quorum (ASK-050) — a denial never does.
+        int storedCount = parseAcceptResponderIds(ask).size();
         boolean quorumReached = storedCount >= quorum;
         if (quorumReached) {
-            ask.setStatus("answered");
+            ask.setStatus(AskStatus.ANSWERED.getValue());
             ask.setRespondedAt(Instant.now());
             // INT-051: Direction ask response on quorum reach
             handleDirectionAskResponse(ask, response);
@@ -460,6 +516,43 @@ public class AskService {
                     JsonHelpers.jsonString(response != null && !response.isEmpty() ? response.substring(0, Math.min(100, response.length())) : ""),
                     storedCount, quorum));
         return saved;
+    }
+
+    /**
+     * The decision vocabulary on the respond door (ASK-050). An absent decision is
+     * an acceptance — the historical free-text response carried no decision and
+     * never denied.
+     */
+    public enum AskDecision {
+        ACCEPT("accept"),
+        DENY("deny");
+
+        private final String value;
+
+        AskDecision(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+    }
+
+    /**
+     * Normalize the respond door's decision. An absent or blank decision is an
+     * acceptance; an unknown one is refused at the door (API-061's validation
+     * family) rather than silently read as something else.
+     */
+    private String normalizeDecision(String decision) {
+        if (decision == null || decision.isBlank()) {
+            return AskDecision.ACCEPT.getValue();
+        }
+        String clean = decision.trim().toLowerCase(java.util.Locale.ROOT);
+        if (!AskDecision.ACCEPT.getValue().equals(clean) && !AskDecision.DENY.getValue().equals(clean)) {
+            throw new IllegalArgumentException(
+                "Invalid decision: " + decision + ". Must be one of: accept, deny");
+        }
+        return clean;
     }
 
     /**
@@ -476,9 +569,11 @@ public class AskService {
             if (target.isPresent()) {
                 return !RbacRole.VIEWER.getValue().equals(target.get().getRbac());
             }
-            // An agent addressee is a pool principal in its own right — its accept
-            // counts toward the quorum like a human target's would.
-            return memberService.findAgent(targetClean).isPresent();
+            // ASK-050/052/092: toward N > 1 only human members count — "human members
+            // only toward N > 1", a delegated agent's accept is "audit-only, exactly
+            // like a deputy's". An agent addressee is therefore not a pool
+            // principal: its accept records in the ledger and never counts.
+            return false;
         }
         // Admin broadcast: any active admin is a pool principal.
         // targetClean strips the h:/a: prefix from the stored 'to' value, so a
@@ -582,39 +677,72 @@ public class AskService {
     }
 
     private void recordResponse(Ask ask, String responder, String response) {
+        recordResponse(ask, responder, response, AskDecision.ACCEPT.getValue());
+    }
+
+    private void recordResponse(Ask ask, String responder, String response, String decision) {
         List<String> ids = parseResponseIds(ask);
         ids.add(responder);
-        ask.setResponses(toJsonResponseList(ids, response, ask.getResponses()));
+        ask.setResponses(toJsonResponseList(ids, response, ask.getResponses(), decision));
     }
 
     private List<String> parseResponseIds(Ask ask) {
+        return new ArrayList<>(responseEntries(ask).stream()
+                .map(entry -> entry.get("responder"))
+                .filter(r -> r != null)
+                .toList());
+    }
+
+    /**
+     * ASK-050: the responders whose recorded decision is an acceptance. Only these
+     * count toward the quorum. A ledger entry written before the decision field
+     * existed carried an acceptance (the historical free-text response), so it
+     * counts as one.
+     */
+    private List<String> parseAcceptResponderIds(Ask ask) {
+        return responseEntries(ask).stream()
+                .filter(entry -> {
+                    String decision = entry.get("decision");
+                    return decision == null || AskDecision.ACCEPT.getValue().equals(decision);
+                })
+                .map(entry -> entry.get("responder"))
+                .filter(r -> r != null)
+                .toList();
+    }
+
+    private List<Map<String, String>> responseEntries(Ask ask) {
         try {
             String resp = ask.getResponses();
             if (resp == null || resp.isBlank() || resp.equals("[]")) return new ArrayList<>();
             List<Map<String, String>> entries = objectMapper.readValue(resp, new TypeReference<List<Map<String, String>>>() {});
-            List<String> ids = new ArrayList<>();
+            List<Map<String, String>> safe = new ArrayList<>();
             for (Map<String, String> entry : entries) {
-                if (entry.containsKey("responder")) {
-                    ids.add(entry.get("responder"));
-                }
+                if (entry != null) safe.add(entry);
             }
-            return ids;
+            return safe;
         } catch (Exception e) {
             return new ArrayList<>();
         }
     }
 
     private String toJsonResponseList(List<String> ids, String latestResponse, String existingJson) {
+        return toJsonResponseList(ids, latestResponse, existingJson, AskDecision.ACCEPT.getValue());
+    }
+
+    private String toJsonResponseList(List<String> ids, String latestResponse, String existingJson, String decision) {
         // Preserve prior response texts so that each responder's text is retained.
         Map<String, String> prior = new HashMap<>();
+        Map<String, String> priorDecision = new HashMap<>();
         if (existingJson != null && !existingJson.isBlank() && !existingJson.equals("[]")) {
             try {
                 List<Map<String, String>> entries = objectMapper.readValue(existingJson,
                         new TypeReference<List<Map<String, String>>>() {});
                 for (Map<String, String> entry : entries) {
+                    if (entry == null) continue;
                     String r = entry.get("responder");
                     String t = entry.get("response");
                     if (r != null) prior.put(r, t != null ? t : "");
+                    if (r != null) priorDecision.put(r, entry.get("decision"));
                 }
             } catch (Exception ignored) {
                 // On parse failure fall back to empty prior map.
@@ -634,10 +762,14 @@ public class AskService {
             entry.put("responder", id);
             if (prior.containsKey(id)) {
                 entry.put("response", prior.get(id));
+                String priorDec = priorDecision.get(id);
+                entry.put("decision", priorDec != null ? priorDec : AskDecision.ACCEPT.getValue());
             } else if (id.equals(newResponder)) {
                 entry.put("response", latestResponse != null ? latestResponse : "");
+                entry.put("decision", decision != null ? decision : AskDecision.ACCEPT.getValue());
             } else {
                 entry.put("response", "");
+                entry.put("decision", AskDecision.ACCEPT.getValue());
             }
             list.add(entry);
         }
@@ -661,7 +793,7 @@ public class AskService {
             throw new IllegalArgumentException("Only the originator can withdraw");
         }
 
-        ask.setStatus("withdrawn");
+        ask.setStatus(AskStatus.WITHDRAWN.getValue());
         Ask saved = askRepository.save(ask);
         auditService.log(originator, "WITHDRAW", "ask", id, null);
         return saved;
@@ -672,7 +804,7 @@ public class AskService {
         Ask ask = askRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Ask not found: " + id));
 
-        ask.setStatus("expired");
+        ask.setStatus(AskStatus.EXPIRED.getValue());
         Ask saved = askRepository.save(ask);
         auditService.logSystem("EXPIRE", "ask", id, null);
         return saved;

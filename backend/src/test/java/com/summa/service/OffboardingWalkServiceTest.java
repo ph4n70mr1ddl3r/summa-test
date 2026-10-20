@@ -187,6 +187,7 @@ class OffboardingWalkServiceTest {
         agent.setId("a1");
         agent.setOwnerHumanId("h1");
         agent.setTemplateId(null);
+        agent.setStatus("active");
         when(agentService.findByOwner(eq("h1"), anyInt())).thenReturn(java.util.List.of(agent));
         when(agentRepository.save(any())).thenReturn(agent);
 
@@ -429,6 +430,7 @@ class OffboardingWalkServiceTest {
         agent.setId("a1");
         agent.setOwnerHumanId("h1");
         agent.setTemplateId(null);
+        agent.setStatus("active");
         when(agentService.findByOwner(eq("h1"), anyInt())).thenReturn(java.util.List.of(agent));
 
         when(domainService.findAllIncludingArchived(anyInt())).thenReturn(java.util.List.of());

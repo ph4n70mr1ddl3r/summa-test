@@ -30,3 +30,13 @@ export function readSessionUser(): SessionUser | null {
     return null
   }
 }
+
+/**
+ * May this member write at all? The backend's write gate refuses every viewer
+ * (ORG-020: a viewer holds no write surface), so a write control offered to a
+ * viewer can only ever answer 403. Mirrors `MemberService.hasWriteSurface`.
+ */
+export function canWrite(user: SessionUser | null): boolean {
+  if (!user) return false
+  return user.rbac !== 'viewer'
+}

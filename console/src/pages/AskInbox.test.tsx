@@ -48,9 +48,9 @@ describe('AskInbox page', () => {
     fireEvent.click(getByText('Respond'))
     const textarea = getAllByPlaceholderText(/type your response/i)[0] as HTMLTextAreaElement
     fireEvent.change(textarea, { target: { value: 'approved' } })
-    fireEvent.click(getByText('Submit'))
+    fireEvent.click(getByText('Accept'))
     await waitFor(() => {
-      expect(api.asks.respond).toHaveBeenCalledWith('ask-1', 'approved')
+      expect(api.asks.respond).toHaveBeenCalledWith('ask-1', 'approved', 'accept')
     })
   })
 
@@ -65,7 +65,7 @@ describe('AskInbox page', () => {
     fireEvent.click(getByText('Respond'))
     const textarea = getAllByPlaceholderText(/type your response/i)[0] as HTMLTextAreaElement
     fireEvent.change(textarea, { target: { value: 'approved' } })
-    fireEvent.click(getByText('Submit'))
+    fireEvent.click(getByText('Accept'))
     await waitFor(() => {
       expect(getByText('Not eligible')).toBeInTheDocument()
     })

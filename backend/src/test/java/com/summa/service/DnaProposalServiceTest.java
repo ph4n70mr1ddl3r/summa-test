@@ -192,7 +192,8 @@ class DnaProposalServiceTest {
     @Test
     void publish_separationOfDutiesRoutesProposerToAdmin() {
         // DWP-050: on a sod domain the proposer cannot be the publisher — the
-        // review routes to an admin. The comparison is on the stripped forms.
+        // publish routes to the admin broadcast (ASK-055) and the proposal stays
+        // in review. The comparison is on the stripped forms.
         DnaProposal proposal = new DnaProposal();
         proposal.setId("prop-1");
         proposal.setStatus("open");
@@ -202,21 +203,23 @@ class DnaProposalServiceTest {
         proposal.setDomainId("domain-1");
         proposal.setPayload("{}");
         when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
-        when(proposalRepository.save(any())).thenReturn(proposal);
 
         DnaDomain domain = new DnaDomain();
         domain.setId("domain-1");
         domain.setSod("reviewer-distinct");
         when(domainService.findById("domain-1")).thenReturn(Optional.of(domain));
 
-        Human admin = new Human();
-        admin.setId("admin-1");
-        when(memberService.findAdmins()).thenReturn(List.of(admin));
+        when(askService.deriveDeadlineFromTier(anyString())).thenReturn(3600L);
 
-        DnaProposal result = proposalService.publish("prop-1", "human-1", "human-1");
+        IllegalStateException refusal = assertThrows(IllegalStateException.class, () ->
+            proposalService.publish("prop-1", "human-1", "human-1"));
+        assertTrue(refusal.getMessage().contains("Separation of duties"));
 
-        assertEquals("published", result.getStatus());
-        assertEquals("admin-1", result.getReviewedBy());
+        // The publish is routed to the admin broadcast; the proposal stays open.
+        verify(askService).create(eq("approval"), eq("system"),
+            eq(OffboardingWalkService.ADMIN_BROADCAST), anyString(), eq("standard"), eq("deny"),
+            eq(1), any(Instant.class), isNull(), isNull());
+        assertEquals("open", proposal.getStatus());
     }
 
     @Test

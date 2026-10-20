@@ -1,8 +1,9 @@
 # SPEC-17 — API Surface
 
-Source: PLAN.md §9 (delta over v1 endpoints for agents, sessions, messages, memory,
-workspaces, automated-tasks, triggers, playbooks, runs). General contract: every refusal on
-this surface is the PRN-009 form — refuse, audit, ask where a human decision is needed.
+Source: PLAN.md §9 — this module records the delta over the v1 endpoint set (agents,
+sessions, messages, memory, workspaces, automated-tasks, triggers, playbooks, runs carry
+over and are not re-enumerated here). General contract: every refusal on this surface is
+the PRN-009 form — refuse, audit, ask where a human decision is needed.
 
 ## Auth & org
 
@@ -115,3 +116,9 @@ this surface is the PRN-009 form — refuse, audit, ask where a human decision i
   the status is coarse, `code` the fine grain; `internal` covers unhandled exceptions
   (500) where an audit event is still written. `audit_event_id` links the row the refusal
   wrote and the ask it raised (API-061).
+
+Open surface (v1 carry-over, not yet re-enumerated as API rows): the carried-over v1
+surfaces include `GET /info`, the trigger CRUD (`/triggers`, incl. `/stats`), the run CRUD
+(`/runs`, incl. `/stats`), the admin secrets-scan door (`POST /admin/secrets/scan`, SEC-030),
+and the playbook surface; these have no API-NNN requirement rows yet and their coverage is
+tracked only through PLAN.md §9's carry-over line and TRACEABILITY §8.10/§9.

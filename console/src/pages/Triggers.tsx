@@ -5,6 +5,7 @@ import { triggerStatusColor, triggerCriticalityColor, escapeHtml, formatDate } f
 import { ErrorBanner } from '../components/ErrorBanner'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { readSessionUser } from '../utils/session'
+import { cancellableLoad } from '../utils/loadState'
 import { stripMemberPrefix } from '../utils/formatting'
 
 export default function Triggers() {
@@ -31,7 +32,7 @@ export default function Triggers() {
     // TRG-002: the trigger lifecycle doors belong to the trigger's agent owner or
     // an admin. The console asks the backend which agents the caller owns, so
     // the control is offered exactly where the door would admit it.
-    Promise.all([
+    const promise = Promise.all([
       api.triggers.list(),
       userId ? api.agents.list({ ownerId: userId }).catch(() => [] as Agent[]) : Promise.resolve([] as Agent[]),
     ])
@@ -41,8 +42,11 @@ export default function Triggers() {
         setOwnedAgentIds(new Set((Array.isArray(agentData) ? agentData : []).map(a => a.id)))
         setLoading(false)
       })
-      .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
-    return () => { aborted = true }
+      .catch((err) => {
+        if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) }
+        throw err
+      })
+    return cancellableLoad(promise, () => { aborted = true })
   }, [userId])
 
   useEffect(() => {
@@ -61,7 +65,9 @@ export default function Triggers() {
       if (action === 'pause') await api.triggers.pause(id)
       else if (action === 'resume') await api.triggers.resume(id)
       else await api.triggers.archive(id)
-      await loadTriggers()
+      // The reload is genuinely awaited: the loader's handle carries its promise,
+      // so the action's button re-enables against the refreshed list.
+      try { await loadTriggers().promise } catch { /* the page's error banner shows it */ }
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err))
     } finally {

@@ -192,7 +192,11 @@ CREATE TABLE IF NOT EXISTS asks (
     payload TEXT NOT NULL DEFAULT '{}',
     initiative_id TEXT,
     workspace_id TEXT,
-    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'answered', 'expired', 'withdrawn')),
+    -- status vocabulary per DAT-080: pending (live), answered (the quorum landed),
+    -- denied (a member denied it — ASK-050's terminal), expired (the deadline passed,
+    -- a denial by default but distinct: escalate/reassign open a successor),
+    -- withdrawn (the originator retracted, ASK-030).
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'answered', 'denied', 'expired', 'withdrawn')),
     deadline INTEGER NOT NULL,
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     sla_tier TEXT NOT NULL DEFAULT 'standard' CHECK (sla_tier IN ('critical', 'standard', 'bulk')),

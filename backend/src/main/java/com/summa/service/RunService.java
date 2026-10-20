@@ -179,6 +179,15 @@ public class RunService {
         return saved;
     }
 
+    /**
+     * CLC-032: "Resume ... never resurrects a halted one — a run suspended mid-flight
+     * is terminal: partial results fold back, interrupted work re-enters as new runs
+     * or board tasks, staged writes resolve through reconciliation — no half-replayed
+     * side effect." NFR-011: "no backward clock step un-expires anything or reverses a
+     * terminal transition."
+     *
+     * <p>The suspended run stays suspended; the caller files new work instead.
+     */
     @Transactional
     public Run resume(String id) {
         Run run = runRepository.findById(id)
@@ -186,10 +195,9 @@ public class RunService {
         if (!"suspended".equals(run.getStatus())) {
             throw new IllegalStateException("Cannot resume run with status: " + run.getStatus());
         }
-        run.setStatus("queued");
-        Run saved = runRepository.save(run);
-        auditService.logSystem("RESUME_RUN", "run", id, null);
-        return saved;
+        throw new IllegalStateException(
+                "A suspended run is terminal (CLC-032) — it is never resurrected. "
+                    + "Re-enter the interrupted work as a new run or a board task.");
     }
 
     @Transactional(readOnly = true)

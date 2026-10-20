@@ -4,6 +4,7 @@ import type { Group } from '../types'
 import { groupStatusColor, escapeHtml } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { readSessionUser } from '../utils/session'
+import { cancellableLoad } from '../utils/loadState'
 
 export default function Groups() {
   const [groups, setGroups] = useState<Group[]>([])
@@ -20,10 +21,13 @@ export default function Groups() {
     setLoading(true)
     setError(null)
     let aborted = false
-    api.groups.list()
+    const promise = api.groups.list()
       .then((data) => { if (!aborted) { setGroups(Array.isArray(data) ? data : []); setLoading(false) } })
-      .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
-    return () => { aborted = true }
+      .catch((err) => {
+        if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) }
+        throw err
+      })
+    return cancellableLoad(promise, () => { aborted = true })
   }
 
   useEffect(() => {
@@ -36,7 +40,9 @@ export default function Groups() {
     setArchivingId(id)
     try {
       await api.groups.archive(id)
-      await loadGroups()
+      // The reload is genuinely awaited: the loader's handle carries its promise,
+      // so the action's button re-enables against the refreshed list.
+      try { await loadGroups().promise } catch { /* the page's error banner shows it */ }
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err))
     } finally {

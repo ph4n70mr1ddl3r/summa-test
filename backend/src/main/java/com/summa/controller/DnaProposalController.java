@@ -13,6 +13,7 @@ import com.summa.model.Human;
 import com.summa.model.DnaDomain;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.util.JsonHelpers;
+import com.summa.exception.EntityNotFoundException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -88,13 +89,24 @@ public class DnaProposalController {
             if (payload == null || payload.isBlank()) {
                 throw new IllegalArgumentException("payload is required");
             }
+            // API-061: validation before constraint — dna_proposals.domain_id is
+            // foreign-key-pinned, so an unknown domain aborts the insert as an
+            // integrity violation (a 409) instead of the not-found the API owes.
+            String domainId = body.get("domainId");
+            if (domainId != null && !domainId.isBlank()) {
+                String domainIdClean = JsonHelpers.stripIdPrefix(domainId);
+                if (domainService.findById(domainIdClean).isEmpty()) {
+                    throw new EntityNotFoundException("Domain not found: " + domainId);
+                }
+                domainId = domainIdClean;
+            }
             DnaProposal proposal = proposalService.create(
                 generatedId,
                 kind,
                 payload,
                 actor,
                 body.get("provenance"),
-                body.get("domainId")
+                domainId
             );
             return ResponseEntity.ok(proposal);
         } catch (IllegalArgumentException e) {

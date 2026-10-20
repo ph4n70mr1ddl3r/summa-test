@@ -218,10 +218,24 @@ public class OrgService {
             throw new IllegalStateException("Cannot update rbac: would leave the org with zero admins");
         }
 
-        // OFB-030: Run demotion walk when the new role strips write surfaces
-        // (viewer cannot own domains, agents, initiatives, goals, proposals, or groups)
-        boolean stripsWriteSurface = !memberService.canWrite(newRbac) && memberService.canWrite(human.getRbac());
-        if (stripsWriteSurface) {
+        // OFB-030: a demotion door never elevates — the walk is destructive (it
+        // transfers domains, closes asks, revokes credentials), so an elevation
+        // through it would strip the member of everything they just gained.
+        RbacRole currentRole = RbacRole.fromValue(human.getRbac());
+        RbacRole nextRole = RbacRole.fromValue(newRbac);
+        if (currentRole != null && nextRole != null && nextRole.rank() > currentRole.rank()) {
+            throw new IllegalArgumentException(
+                    "Demotion requires a lower role: " + newRbac + " is not below " + currentRole.getValue());
+        }
+
+        // OFB-030: Run the demotion walk when the new role strips what the member
+        // holds. The walk is scoped to what the new role can no longer carry —
+        // owner → member sheds domain ownership (OFB-033), member → viewer sheds
+        // every write surface. A role change that raises the member's authority
+        // is an elevation and runs no walk.
+        boolean reducesAuthority = currentRole != null && nextRole != null
+                && nextRole.rank() < currentRole.rank();
+        if (reducesAuthority) {
             offboardingWalkService.walkDemote(id, newRbac, actor);
         }
 
@@ -318,15 +332,48 @@ public class OrgService {
         return auditEventRepository.findByObject(objectType, objectId);
     }
 
+    /**
+     * STG-030: the erased member's reference becomes a one-way pseudonym. The
+     * pseudonyms are derived from the member id, so they are stable for the
+     * member, unique across members (the email column is UNIQUE) and carry no
+     * recoverable identity.
+     */
+    static String erasurePseudonymEmail(String memberId) {
+        String clean = JsonHelpers.stripIdPrefix(memberId);
+        try {
+            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(clean.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < 6; i++) {
+                sb.append(String.format("%02x", hash[i]));
+            }
+            return "erased-" + sb + "@erased.invalid";
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 algorithm not available", e);
+        }
+    }
+
     @Transactional
     public void erasure(String id, String actor) {
         // Pessimistic lock to prevent concurrent erasure/offboard interleaving
         Human human = humanRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new EntityNotFoundException("Human not found: " + id));
 
+        // OFB-020: erasure deactivates the member, so the last-admin guard binds
+        // here exactly as it does on the offboarding door — an erased admin must
+        // not leave the org with zero active admins.
+        boolean targetIsActiveAdmin = human.isActive()
+                && RbacRole.ADMIN.getValue().equals(human.getRbac());
+        if (targetIsActiveAdmin && humanRepository.countByDeactivatedAtIsNullAndRbac("admin") <= 1) {
+            throw new IllegalStateException("Cannot erase the last admin");
+        }
+
         // Anonymize identity fields per STG-030..034
         human.setName("[ERASED]");
-        human.setEmail("[ERASED]");
+        // STG-030: the member reference becomes a one-way pseudonym. The email is
+        // UNIQUE, so a shared constant made every erasure after the first abort on
+        // the constraint — the pseudonyms are per-member and one-way.
+        human.setEmail(erasurePseudonymEmail(id));
         human.setPasswordHash(null);
         human.setDeputyMemberId(null);
         human.setDeactivatedAt(Instant.now());

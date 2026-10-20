@@ -8,6 +8,7 @@ import com.summa.security.WriteGate;
 import com.summa.service.AuditService;
 import com.summa.service.MemberService;
 import com.summa.service.NodeService;
+import com.summa.util.Vocabulary;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -78,6 +79,8 @@ public class NodeController {
             if (!pubkey.matches(Defaults.PUBKEY_REGEX)) {
                 throw new IllegalArgumentException("pubkey must be a valid base64-encoded public key");
             }
+            // API-061: validation before constraint — nodes.kind carries a CHECK.
+            Vocabulary.requireOneOf(kind, "kind", "local", "remote");
             Node node = nodeService.enroll(name, kind, pubkey, actor);
             return ResponseEntity.ok(Map.of(
                 "id", node.getId(),
