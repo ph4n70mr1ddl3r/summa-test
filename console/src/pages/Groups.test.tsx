@@ -15,6 +15,7 @@ vi.mock('../services/api', () => ({
 describe('Groups page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    localStorage.removeItem('summa_user')
   })
 
   it('renders the Groups heading', async () => {
@@ -33,6 +34,8 @@ describe('Groups page', () => {
   })
 
   it('displays groups with status and archive button', async () => {
+    // ORG-040: a group's archival is an admin act — the control is offered to an admin.
+    localStorage.setItem('summa_user', JSON.stringify({ userId: 'admin-1', rbac: 'admin' }))
     vi.mocked(apiModule.api.groups.list).mockResolvedValue([
       { id: 'g1', name: 'Engineering', leaderMemberId: 'h1', status: 'active', createdAt: 0 },
     ])
@@ -51,6 +54,7 @@ describe('Groups page', () => {
   })
 
   it('calls archive on archive button click', async () => {
+    localStorage.setItem('summa_user', JSON.stringify({ userId: 'admin-1', rbac: 'admin' }))
     vi.mocked(apiModule.api.groups.list).mockResolvedValue([
       { id: 'g1', name: 'Engineering', status: 'active', createdAt: 0 },
     ])
@@ -76,6 +80,7 @@ describe('Groups page', () => {
   })
 
   it('shows error when archive fails', async () => {
+    localStorage.setItem('summa_user', JSON.stringify({ userId: 'admin-1', rbac: 'admin' }))
     vi.mocked(apiModule.api.groups.list).mockResolvedValue([
       { id: 'g1', name: 'Engineering', status: 'active', createdAt: 0 },
     ])
@@ -101,6 +106,7 @@ describe('Groups page', () => {
   })
 
   it('reloads groups after successful archive', async () => {
+    localStorage.setItem('summa_user', JSON.stringify({ userId: 'admin-1', rbac: 'admin' }))
     const group = { id: 'g1', name: 'Engineering', status: 'active' as const, createdAt: 0 }
     vi.mocked(apiModule.api.groups.list).mockResolvedValue([group])
     vi.mocked(apiModule.api.groups.archive).mockResolvedValue({ ...group, status: 'archived' as const } as apiModule.Group)
@@ -123,5 +129,17 @@ describe('Groups page', () => {
       expect(apiModule.api.groups.archive).toHaveBeenCalledWith('g1')
       expect(apiModule.api.groups.list).toHaveBeenCalledTimes(2)
     })
+  })
+
+  it('hides the archive control from non-admins', async () => {
+    localStorage.setItem('summa_user', JSON.stringify({ userId: 'member-1', rbac: 'member' }))
+    vi.mocked(apiModule.api.groups.list).mockResolvedValue([
+      { id: 'g1', name: 'Engineering', status: 'active', createdAt: 0 },
+    ])
+    render(<Groups />)
+    await waitFor(() => {
+      expect(screen.getByText('Engineering')).toBeInTheDocument()
+    })
+    expect(screen.queryByText('Archive')).not.toBeInTheDocument()
   })
 })

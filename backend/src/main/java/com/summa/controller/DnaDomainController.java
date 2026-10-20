@@ -73,9 +73,7 @@ public class DnaDomainController {
             }
             String ownerHumanIdRaw = body.get("ownerHumanId");
             String ownerHumanIdClean = JsonHelpers.stripIdPrefix(ownerHumanIdRaw);
-            if (memberService.findHuman(ownerHumanIdClean).isEmpty()) {
-                throw new IllegalArgumentException("ownerHumanId does not reference an existing human: " + ownerHumanIdRaw);
-            }
+            requireEligibleDomainOwner(ownerHumanIdClean, ownerHumanIdRaw);
             DnaDomain domain = domainService.create(
                 UUID.randomUUID().toString(),
                 body.get("name"),
@@ -146,13 +144,49 @@ public class DnaDomainController {
         }
         try {
             String rawOwner = body.get("ownerHumanId");
-            String ownerClean = rawOwner != null && !rawOwner.isBlank() ? JsonHelpers.stripIdPrefix(rawOwner) : null;
+            if (rawOwner == null || rawOwner.isBlank()) {
+                throw new IllegalArgumentException("ownerHumanId is required");
+            }
+            String ownerClean = JsonHelpers.stripIdPrefix(rawOwner);
+            // DGV-006: the owner must hold role `owner` or `admin` at write, and
+            // ORG-020 bars a viewer from the domain-owner post. A domain whose owner
+            // cannot pass the owner's own attribute gate would be un-editable by its
+            // holder — the owner re-point is a topology act, so it validates here too.
+            requireEligibleDomainOwner(ownerClean, rawOwner);
             DnaDomain domain = domainService.updateOwner(id, ownerClean, actor);
             return ResponseEntity.ok(domain);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
+        }
+    }
+
+    /**
+     * DGV-006: a domain owner must hold role `owner` or `admin` at write; ORG-020
+     * bars a viewer from the domain-owner post and a non-active member from every
+     * answerable post. A blank or unknown reference is a validation failure (422),
+     * not an integrity violation (409).
+     */
+    private void requireEligibleDomainOwner(String ownerClean, String rawOwner) {
+        if (ownerClean == null || ownerClean.isBlank()) {
+            throw new IllegalArgumentException("ownerHumanId is required");
+        }
+        Optional<Human> ownerOpt = memberService.findHuman(ownerClean);
+        if (ownerOpt.isEmpty()) {
+            throw new IllegalArgumentException("ownerHumanId does not reference an existing human: " + rawOwner);
+        }
+        Human owner = ownerOpt.get();
+        if (memberService.isViewer(owner)) {
+            throw new IllegalStateException("Viewers cannot own a domain: " + rawOwner);
+        }
+        if (!owner.isActive()) {
+            throw new IllegalStateException("Domain owners must be active: " + rawOwner);
+        }
+        RbacRole role = RbacRole.fromValue(owner.getRbac());
+        if (role == null || !role.canManageDomains()) {
+            throw new IllegalStateException(
+                "Domain owners must hold role owner or admin (DGV-006): " + rawOwner);
         }
     }
 
@@ -166,9 +200,13 @@ public class DnaDomainController {
         if (ownerGate != null) return ownerGate;
         try {
             String rawAccess = body.get("access");
-            if (rawAccess != null && !rawAccess.isBlank()) {
-                DomainAccess.requireFromValue(rawAccess);
+            // `dna_domains.access` is NOT NULL with a CHECK on the three policies —
+            // an absent value would write NULL and abort the row as an integrity
+            // violation, so the door requires the value it is about to store.
+            if (rawAccess == null || rawAccess.isBlank()) {
+                throw new IllegalArgumentException("access is required");
             }
+            DomainAccess.requireFromValue(rawAccess);
             DnaDomain domain = domainService.updateAccess(id, rawAccess, actor);
             return ResponseEntity.ok(domain);
         } catch (IllegalArgumentException e) {
@@ -222,6 +260,17 @@ public class DnaDomainController {
             List<String> proposalIds = rawProposalIds.stream().filter(o -> o instanceof String).map(o -> (String) o).toList();
 
             String ownerHumanId = body.get("ownerHumanId") instanceof String ? (String) body.get("ownerHumanId") : null;
+            // DGV-011/DGV-006: a split names each result's owner; the named owner
+            // must be able to hold the post, exactly as at creation and at an
+            // owner re-point. An undeclared owner inherits the parent's.
+            // `dna_domains.owner_human_id` is foreign-key-pinned to humans(id), so
+            // the stored reference is the bare id — a keyed union would abort the
+            // insert on the foreign key.
+            String ownerHumanIdClean = null;
+            if (ownerHumanId != null && !ownerHumanId.isBlank()) {
+                ownerHumanIdClean = JsonHelpers.stripIdPrefix(ownerHumanId);
+                requireEligibleDomainOwner(ownerHumanIdClean, ownerHumanId);
+            }
             String access = body.get("access") instanceof String ? (String) body.get("access") : null;
             String store = body.get("store") instanceof String ? (String) body.get("store") : null;
             String sod = body.get("sod") instanceof String ? (String) body.get("sod") : null;
@@ -230,7 +279,7 @@ public class DnaDomainController {
 
             List<DnaDomain> children = domainService.split(
                 id, actor,
-                ownerHumanId,
+                ownerHumanIdClean,
                 access,
                 store,
                 sod,

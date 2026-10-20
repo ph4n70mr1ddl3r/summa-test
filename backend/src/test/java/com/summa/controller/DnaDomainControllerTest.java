@@ -13,6 +13,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -223,6 +224,145 @@ class DnaDomainControllerTest {
         assertTrue(RbacRole.ADMIN.canManageDomains());
         assertFalse(RbacRole.MEMBER.canManageDomains());
         assertFalse(RbacRole.VIEWER.canManageDomains());
+    }
+
+    // --- owner assignment: DGV-006's role requirement at write ---------------
+
+    @Test
+    void createDomain_withAnOwnerLackingTheDomainRole_refused() {
+        // DGV-006: the owner must hold role `owner` or `admin` at write. A
+        // domain owned by a plain member locks its own owner out of the owner's
+        // attribute doors, which admit only an owner/admin holder.
+        asWriter("admin-1");
+        when(memberService.isAdmin("admin-1")).thenReturn(true);
+        when(memberService.findHuman("member-1")).thenReturn(Optional.of(humanWithId("member-1", "member")));
+
+        var res = controller.createDomain(Map.of(
+                "name", "Core",
+                "ownerHumanId", "member-1"));
+
+        assertEquals(403, res.getStatusCodeValue());
+        assertTrue(bodyMessage(res).contains("owner or admin"));
+        verify(domainService, never()).create(any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void createDomain_withAViewerOwner_refused() {
+        // ORG-020: a viewer is never a domain owner.
+        asWriter("admin-1");
+        when(memberService.isAdmin("admin-1")).thenReturn(true);
+        when(memberService.findHuman("viewer-1")).thenReturn(Optional.of(humanWithId("viewer-1", "viewer")));
+        when(memberService.isViewer(any())).thenReturn(true);
+
+        var res = controller.createDomain(Map.of(
+                "name", "Core",
+                "ownerHumanId", "viewer-1"));
+
+        assertEquals(403, res.getStatusCodeValue());
+        verify(domainService, never()).create(any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void createDomain_withAnOwnerHoldingTheOwnerRole_allowed() {
+        asWriter("admin-1");
+        when(memberService.isAdmin("admin-1")).thenReturn(true);
+        when(memberService.findHuman("owner-1")).thenReturn(Optional.of(humanWithRole("owner")));
+        when(domainService.create(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(ownedDomain());
+
+        var res = controller.createDomain(Map.of(
+                "name", "Core",
+                "ownerHumanId", "h:owner-1"));
+
+        assertEquals(200, res.getStatusCodeValue());
+        verify(domainService).create(any(), eq("Core"), eq("owner-1"), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void updateOwner_withABlankOwner_refused() {
+        // The column is NOT NULL — a blank owner must be a 422, not a 409 abort.
+        asWriter("admin-1");
+        when(memberService.isAdmin("admin-1")).thenReturn(true);
+
+        var res = controller.updateOwner("domain-1", Map.of("ownerHumanId", "  "));
+
+        assertEquals(422, res.getStatusCodeValue());
+        verify(domainService, never()).updateOwner(any(), any(), any());
+    }
+
+    @Test
+    void updateOwner_withAnUnknownOwner_refused() {
+        asWriter("admin-1");
+        when(memberService.isAdmin("admin-1")).thenReturn(true);
+        when(memberService.findHuman("ghost")).thenReturn(Optional.empty());
+
+        var res = controller.updateOwner("domain-1", Map.of("ownerHumanId", "ghost"));
+
+        assertEquals(422, res.getStatusCodeValue());
+        verify(domainService, never()).updateOwner(any(), any(), any());
+    }
+
+    @Test
+    void updateOwner_withAnOwnerLackingTheDomainRole_refused() {
+        asWriter("admin-1");
+        when(memberService.isAdmin("admin-1")).thenReturn(true);
+        when(memberService.findHuman("member-1")).thenReturn(Optional.of(humanWithId("member-1", "member")));
+
+        var res = controller.updateOwner("domain-1", Map.of("ownerHumanId", "member-1"));
+
+        assertEquals(403, res.getStatusCodeValue());
+        verify(domainService, never()).updateOwner(any(), any(), any());
+    }
+
+    @Test
+    void split_withAnOwnerLackingTheDomainRole_refused() {
+        // DGV-011/DGV-006: a split names each result's owner, and the named
+        // owner must be able to hold the post.
+        asWriter("admin-1");
+        when(memberService.isAdmin("admin-1")).thenReturn(true);
+        when(memberService.findHuman("member-1")).thenReturn(Optional.of(humanWithId("member-1", "member")));
+
+        var res = controller.splitDomain("domain-1", Map.of("ownerHumanId", "member-1"));
+
+        assertEquals(403, res.getStatusCodeValue());
+        verify(domainService, never()).split(any(), any(), any(), any(), any(), any(), any(), any(),
+                any(), any(), any());
+    }
+
+    @Test
+    void split_storesTheBareOwnerId() {
+        // `dna_domains.owner_human_id` is foreign-key-pinned to humans(id), so a
+        // keyed union would abort the insert on the foreign key.
+        asWriter("admin-1");
+        when(memberService.isAdmin("admin-1")).thenReturn(true);
+        when(memberService.findHuman("owner-1")).thenReturn(Optional.of(humanWithRole("owner")));
+        when(domainService.split(eq("domain-1"), eq("admin-1"), eq("owner-1"), any(), any(), any(),
+                any(), any(), any(), any(), any())).thenReturn(List.of(ownedDomain()));
+
+        var res = controller.splitDomain("domain-1", Map.of("ownerHumanId", "h:owner-1"));
+
+        assertEquals(200, res.getStatusCodeValue());
+        verify(domainService).split(eq("domain-1"), eq("admin-1"), eq("owner-1"), any(), any(), any(),
+                any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void access_withABlankValue_refused() {
+        // `dna_domains.access` is NOT NULL with a CHECK on the three policies —
+        // an absent value must be a 422, not a 409 abort.
+        asWriter("admin-1");
+        when(memberService.isAdmin("admin-1")).thenReturn(true);
+
+        var res = controller.updateAccess("domain-1", Map.of());
+
+        assertEquals(422, res.getStatusCodeValue());
+        verify(domainService, never()).updateAccess(any(), any(), any());
+    }
+
+    private Human humanWithId(String id, String rbac) {
+        Human human = new Human();
+        human.setId(id);
+        human.setRbac(rbac);
+        return human;
     }
 
     @SuppressWarnings("unchecked")

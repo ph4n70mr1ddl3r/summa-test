@@ -201,6 +201,10 @@ public class OrgService {
         if (newRbac == null || newRbac.isBlank()) {
             throw new IllegalArgumentException("New RBAC role is required");
         }
+        // API-061: the role vocabulary is validated here, so the service is safe
+        // from every caller — the column's CHECK admits exactly the four roles and
+        // an unknown value would abort the write as an integrity violation.
+        RbacRole.requireFromValue(newRbac);
 
         // Acquire the row lock first to serialize concurrent rbac updates
         Human human = humanRepository.findByIdForUpdate(id)

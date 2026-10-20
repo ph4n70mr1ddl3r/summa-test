@@ -66,6 +66,21 @@ class MemoryServiceTest {
     }
 
     @Test
+    void create_storesTheBareHumanIdInTheAttribution() {
+        // DAT-120: the attribution column is foreign-key-pinned to humans(id), so
+        // it carries the bare human id — a keyed union can never satisfy that
+        // foreign key, and the two lines must not disagree about the form.
+        when(memoryItemRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        Human member = new Human();
+        member.setId("human-1");
+        when(memberService.findHuman("human-1")).thenReturn(Optional.of(member));
+
+        MemoryItem result = memoryService.create("short", "h:human-1", "ws-1", "Content", "{}", false);
+
+        assertEquals("human-1", result.getMemberId());
+    }
+
+    @Test
     void create_refusesNonHumanAttribution() {
         // DAT-125: the attribution is a humans(id) reference — a member that is
         // not a human is refused here rather than aborting the insert.

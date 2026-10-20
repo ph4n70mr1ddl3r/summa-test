@@ -120,7 +120,6 @@ class GroupServiceTest {
         human.setRbac("member");
         when(memberService.findHuman("human-2")).thenReturn(Optional.of(human));
         when(memberService.isViewer(human)).thenReturn(false);
-        when(memberService.findAgent("human-2")).thenReturn(Optional.empty());
 
         Group result = groupService.setLeader("group-1", "human-2", "admin");
 
@@ -140,10 +139,50 @@ class GroupServiceTest {
         human.setRbac("member");
         when(memberService.findHuman("human-2")).thenReturn(Optional.of(human));
         when(memberService.isViewer(human)).thenReturn(false);
-        when(memberService.findAgent("human-2")).thenReturn(Optional.empty());
 
         Group result = groupService.setLeader("group-1", "h:human-2", "admin");
 
         assertEquals("h:human-2", result.getLeaderMemberId());
+    }
+
+    @Test
+    void setLeader_acceptsALocalAgentLeader() {
+        // ORG-040: groups mix humans and agents — a local agent may act as Leader
+        // for execution routing. The stored reference carries the agent's own kind
+        // (DAT-120) so it resolves against the live agents row.
+        Group group = new Group();
+        group.setId("group-1");
+        when(groupRepository.findById("group-1")).thenReturn(Optional.of(group));
+        when(groupRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        com.summa.model.Agent agent = new com.summa.model.Agent();
+        agent.setId("agent-1");
+        agent.setAgentClass("persistent");
+        agent.setStatus("active");
+        when(memberService.findHuman("agent-1")).thenReturn(Optional.empty());
+        when(memberService.findAgent("agent-1")).thenReturn(Optional.of(agent));
+
+        Group result = groupService.setLeader("group-1", "agent-1", "admin");
+
+        assertEquals("a:agent-1", result.getLeaderMemberId());
+    }
+
+    @Test
+    void setLeader_refusesAnEphemeralAgentLeader() {
+        // ORG-042: an ephemeral worker is refused by the mortality pin.
+        Group group = new Group();
+        group.setId("group-1");
+        when(groupRepository.findById("group-1")).thenReturn(Optional.of(group));
+
+        com.summa.model.Agent agent = new com.summa.model.Agent();
+        agent.setId("agent-1");
+        agent.setAgentClass("ephemeral");
+        agent.setStatus("active");
+        when(memberService.findHuman("agent-1")).thenReturn(Optional.empty());
+        when(memberService.findAgent("agent-1")).thenReturn(Optional.of(agent));
+
+        assertThrows(IllegalStateException.class, () -> {
+            groupService.setLeader("group-1", "agent-1", "admin");
+        });
     }
 }

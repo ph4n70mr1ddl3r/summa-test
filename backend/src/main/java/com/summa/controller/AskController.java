@@ -15,6 +15,7 @@ import com.summa.service.OffboardingWalkService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -63,11 +64,43 @@ public class AskController {
             // The reference resolves to no live member — there is no such inbox.
             return ResponseEntity.ok(java.util.List.of());
         }
+        List<Ask> result;
         if (status != null && !status.isBlank()) {
-            return ResponseEntity.ok(askService.findByToAndStatus(target, status, cappedLimit));
+            result = askService.findByToAndStatus(target, status, cappedLimit);
+        } else {
+            // Default: show pending asks to the target (the current actor's inbox)
+            result = askService.findByTo(target, cappedLimit);
         }
-        // Default: show pending asks to the target (the current actor's inbox)
-        return ResponseEntity.ok(askService.findByTo(target, cappedLimit));
+        // DAT-080/ASK-055: the reserved `admins` broadcast renders against the live
+        // admin set — "every active admin, evaluated at render and respond time".
+        // Without this the broadcast is invisible to the very admins it addresses:
+        // the org-stall alert, the proposal SLA escalation and the spawn-gate
+        // fallback all file to `admins` and no admin could ever see or answer them.
+        // An explicit `to` is the caller naming a box, so the broadcast is added
+        // only to the actor's own inbox.
+        if (to == null && memberService.isAdmin(actor)) {
+            result = mergeBroadcast(result, status, cappedLimit);
+        }
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * DAT-080/ASK-055: union the admin broadcast into an admin's own inbox. The
+     * broadcast is addressed to the live admin set, so it renders for every active
+     * admin; the union is capped like any other list response.
+     */
+    private List<Ask> mergeBroadcast(List<Ask> own, String status, int cappedLimit) {
+        List<Ask> broadcast = (status != null && !status.isBlank())
+                ? askService.findByToAndStatus(OffboardingWalkService.ADMIN_BROADCAST, status, cappedLimit)
+                : askService.findByTo(OffboardingWalkService.ADMIN_BROADCAST, cappedLimit);
+        if (broadcast.isEmpty()) return own;
+        Map<String, Ask> merged = new java.util.LinkedHashMap<>();
+        for (Ask ask : own) merged.put(ask.getId(), ask);
+        for (Ask ask : broadcast) merged.putIfAbsent(ask.getId(), ask);
+        List<Ask> result = new java.util.ArrayList<>(merged.values());
+        result.sort(java.util.Comparator.comparing(
+                a -> a.getDeadline() != null ? a.getDeadline() : Instant.EPOCH));
+        return result.size() > cappedLimit ? result.subList(0, cappedLimit) : result;
     }
 
     @GetMapping("/{id}")
@@ -115,6 +148,17 @@ public class AskController {
             }
             if (fromClean == null) {
                 throw new IllegalArgumentException("actor does not reference an existing member: " + actor);
+            }
+            // ORG-020: filing an ask is a member post — a viewer is never an ask
+            // target and a non-active member is refused every answerable post at
+            // write. The reserved `admins` broadcast is not member-addressed and
+            // stays exempt.
+            memberService.requireEligibleAskTarget(toClean);
+            // ASK-031/DAT-120: the reserved system originator is never a target, and
+            // `asks.to`'s CHECK admits only `admins` or a keyed union — a `system`
+            // target would abort the insert as an integrity violation.
+            if (Defaults.SYSTEM_ACTOR.equals(toClean)) {
+                throw new IllegalArgumentException("to must not be the system originator");
             }
             String slaTier = body.get("slaTier");
             if (slaTier != null && !slaTier.isBlank()) {

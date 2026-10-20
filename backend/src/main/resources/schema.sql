@@ -250,7 +250,9 @@ CREATE TABLE IF NOT EXISTS board_tasks (
     updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
     completed_at INTEGER,
     FOREIGN KEY (initiative_id) REFERENCES initiatives(id) ON DELETE SET NULL
-    -- assignee_member_id and created_by are keyed unions per DAT-120: h:<humans.id> or a:<agents.id>
+    -- assignee_member_id is a keyed union per DAT-120: h:<humans.id> or a:<agents.id>.
+    -- created_by is unpinned (no foreign key, no keyed union): it names the
+    -- authoring member by its bare id and defaults to 'system'.
     CHECK (assignee_member_id IS NULL OR assignee_member_id LIKE 'h:%' OR assignee_member_id LIKE 'a:%')
 );
 

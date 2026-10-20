@@ -312,3 +312,54 @@ describe('request 401 handling', () => {
     expect((window as { __summaRedirecting?: boolean }).__summaRedirecting).toBeFalsy()
   })
 })
+
+describe('refusal envelopes', () => {
+  const fetchMock = vi.fn()
+  const originalFetch = globalThis.fetch
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    globalThis.fetch = originalFetch
+    setAuthToken(null)
+  })
+
+  it.each([
+    [403, 'gate', 'Admin access required to view governance policies'],
+    [404, 'not_found', 'Ask not found: ask-1'],
+    [422, 'validation', 'Invalid class: ephemeral'],
+    [409, 'conflict', 'Resource conflict'],
+  ])('keeps the server message and body for a %i refusal', async (status, code, message) => {
+    // The body is read once; a second read on the same response throws, so the
+    // server's machine-parseable envelope must survive the error path intact.
+    fetchMock.mockResolvedValue(new Response(
+      JSON.stringify({ code, message, audit_event_id: 'audit-1' }),
+      { status, headers: { 'Content-Type': 'application/json' } },
+    ) as unknown as Response)
+
+    const err = await api.health().catch((e) => e)
+
+    expect(err).toBeInstanceOf(ApiError)
+    expect(err.status).toBe(status)
+    expect(err.message).toBe(message)
+    expect(err.body).toEqual({ code, message, audit_event_id: 'audit-1' })
+  })
+
+  it('keeps the degraded-health checks on a 503', async () => {
+    // The health screen names the down subsystem from the refusal body.
+    fetchMock.mockResolvedValue(new Response(
+      JSON.stringify({ status: 'degraded', checks: { database: 'DOWN', git_store: 'UP' } }),
+      { status: 503, headers: { 'Content-Type': 'application/json' } },
+    ) as unknown as Response)
+
+    const err = await api.health().catch((e) => e)
+
+    expect(err).toBeInstanceOf(ApiError)
+    expect(err.status).toBe(503)
+    expect((err.body as { checks?: Record<string, string> }).checks?.database).toBe('DOWN')
+  })
+})

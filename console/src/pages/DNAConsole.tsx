@@ -5,6 +5,7 @@ import type { DnaDomain, DnaCard, DnaGoal, DnaProposal } from '../types'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { hasAnyData } from '../utils/loadState'
 import { domainAccessColor, proposalStatusColor, escapeHtml } from '../utils/formatting'
+import { readSessionUser } from '../utils/session'
 
 export default function DNAConsole() {
   const [domains, setDomains] = useState<DnaDomain[]>([])
@@ -19,18 +20,24 @@ export default function DNAConsole() {
     setLoading(true)
     setError(null)
     let aborted = false
+    // DWP-022: the review queue is an admin surface (org-scoped items route to
+    // the admin queue; a domain queue renders to that domain's owner). The
+    // console reads the org-wide queue, so it asks for it only as an admin —
+    // a non-admin's request was refused with a 403 that put a permanent error
+    // banner above a console whose other panels had loaded fine.
+    const isAdmin = readSessionUser()?.rbac === 'admin'
     loadWithFallback(
       () => Promise.all([
         api.dna.domains(),
         api.dna.cards(),
         api.dna.goals(),
-        api.dna.reviewQueue(),
+        isAdmin ? api.dna.reviewQueue() : Promise.resolve([]),
       ]),
       () => Promise.all([
         api.dna.domains().catch(() => null),
         api.dna.cards().catch(() => null),
         api.dna.goals().catch(() => null),
-        api.dna.reviewQueue().catch(() => null),
+        isAdmin ? api.dna.reviewQueue().catch(() => null) : Promise.resolve([]),
       ]),
     ).then(({ data, error: loadError }) => {
       if (aborted) { setLoading(false); return }

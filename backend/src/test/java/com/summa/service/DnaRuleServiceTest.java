@@ -198,6 +198,51 @@ class DnaRuleServiceTest {
     }
 
     @Test
+    void supersede_refusesAForkedChain() {
+        // DNC-025: supersession chains are linear, not forks — a second live
+        // `supersedes_id` edge onto an already-superseded row is refused at
+        // propose, amend, and item write; displacing a superseded rule means
+        // naming the chain's live head. The item-write door carried no such
+        // guard, so a fork was reachable from the API.
+        DnaRule predecessor = new DnaRule();
+        predecessor.setId("rule-old");
+        predecessor.setDomainId("domain-1");
+        predecessor.setStatus("superseded");
+        DnaRule successor = new DnaRule();
+        successor.setId("rule-new");
+        successor.setDomainId("domain-1");
+        successor.setStatus("active");
+        when(ruleRepository.findById("rule-new")).thenReturn(Optional.of(successor));
+        when(ruleRepository.findById("rule-old")).thenReturn(Optional.of(predecessor));
+        when(ruleRepository.findBySupersedesId("rule-old")).thenReturn(List.of(predecessor));
+
+        assertThrows(IllegalArgumentException.class, () ->
+            ruleService.supersede("rule-new", "rule-old", "admin")
+        );
+    }
+
+    @Test
+    void supersede_refusesALapsedPredecessor() {
+        // DNC-022: superseded and lapsed rules are frozen history — an item
+        // write must not flip a lapsed rule out of it.
+        DnaRule predecessor = new DnaRule();
+        predecessor.setId("rule-old");
+        predecessor.setDomainId("domain-1");
+        predecessor.setStatus("lapsed");
+        DnaRule successor = new DnaRule();
+        successor.setId("rule-new");
+        successor.setDomainId("domain-1");
+        successor.setStatus("active");
+        when(ruleRepository.findById("rule-new")).thenReturn(Optional.of(successor));
+        when(ruleRepository.findById("rule-old")).thenReturn(Optional.of(predecessor));
+        when(ruleRepository.findBySupersedesId("rule-old")).thenReturn(List.of());
+
+        assertThrows(IllegalArgumentException.class, () ->
+            ruleService.supersede("rule-new", "rule-old", "admin")
+        );
+    }
+
+    @Test
     void supersede_throwsWhenPredecessorNotFound() {
         DnaRule successor = new DnaRule();
         successor.setId("rule-new");

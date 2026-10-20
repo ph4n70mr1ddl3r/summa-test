@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { api, loadWithFallback } from '../services/api'
-import type { Group, Member } from '../types'
+import type { Group, OrgMember } from '../types'
 import { groupStatusColor, rbacRoleColor, agentStatusColor, escapeHtml, formatDate } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { hasAnyData } from '../utils/loadState'
 
 export default function OrgView() {
-  const [members, setMembers] = useState<Member[]>([])
+  const [members, setMembers] = useState<OrgMember[]>([])
   const [groups, setGroups] = useState<Group[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -28,7 +28,7 @@ export default function OrgView() {
     ).then(({ data, error: loadError }) => {
       if (aborted) { setLoading(false); return }
       const membersResp = data[0]
-      const membersList: Member[] = (membersResp as { members?: Member[] } | null)?.members ?? []
+      const membersList: OrgMember[] = (membersResp as { members?: OrgMember[] } | null)?.members ?? []
       setMembers(membersList)
       setGroups(Array.isArray(data[1]) ? data[1] : [])
       // A partial outage must not blank the page — the panels that did load

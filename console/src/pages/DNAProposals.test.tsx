@@ -151,6 +151,33 @@ describe('DNAProposals page', () => {
     expect(screen.queryByRole('button', { name: /withdraw proposal p1/i })).not.toBeInTheDocument()
   })
 
+  it('hides withdraw from an admin who did not propose the proposal', async () => {
+    // DWP-051: withdrawal is the proposer's side — the door has no admin
+    // bypass, so an admin who did not file the proposal is refused.
+    localStorage.setItem('summa_user', JSON.stringify({ userId: 'admin-1', rbac: 'admin' }))
+    vi.mocked(apiModule.api.dna.proposals).mockResolvedValue([
+      { id: 'p1', kind: 'rule', payload: '{}', revision: 1, proposedBy: 'h:human-1', reviewBy: 'owner-1', provenance: '', status: 'open' },
+    ])
+    render(<DNAProposals />)
+    await waitFor(() => expect(screen.getByText('rule')).toBeInTheDocument())
+    expect(screen.queryByRole('button', { name: /withdraw proposal p1/i })).not.toBeInTheDocument()
+    // The admin still holds the review door.
+    expect(screen.getByRole('button', { name: /publish proposal p1/i })).toBeInTheDocument()
+  })
+
+  it('does not offer publish on a breached proposal', async () => {
+    // The publish door is the strict one — it refuses anything but `open`,
+    // while reject and withdraw accept the breached queue too.
+    localStorage.setItem('summa_user', JSON.stringify({ userId: 'owner-1', rbac: 'owner' }))
+    vi.mocked(apiModule.api.dna.proposals).mockResolvedValue([
+      { id: 'p1', kind: 'rule', payload: '{}', revision: 1, proposedBy: 'h:human-1', reviewBy: 'owner-1', provenance: '', status: 'breached' },
+    ])
+    render(<DNAProposals />)
+    await waitFor(() => expect(screen.getByText('breached (1)')).toBeInTheDocument())
+    expect(screen.queryByRole('button', { name: /publish proposal p1/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /reject proposal p1/i })).toBeInTheDocument()
+  })
+
   it('surfaces a failed review action', async () => {
     localStorage.setItem('summa_user', JSON.stringify({ userId: 'owner-1', rbac: 'owner' }))
     vi.mocked(apiModule.api.dna.proposals).mockResolvedValue([

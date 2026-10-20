@@ -96,36 +96,43 @@ public class GroupService {
      * non-active member is refused (routing addresses the Leader; the Leader must
      * be answerable), and an ephemeral worker is refused by the mortality pin.
      *
+     * <p>ORG-040: groups mix humans and agents and a local agent may act as
+     * Leader for execution routing, so the Leader resolves against either member
+     * table; the stored form carries the resolved kind (DAT-120).
+     *
      * @return the keyed-union form of the eligible leader (DAT-120)
      */
     private String requireEligibleLeader(String leaderMemberId) {
         String cleanLeader = JsonHelpers.stripIdPrefix(leaderMemberId);
+        if (cleanLeader == null || cleanLeader.isBlank()) {
+            throw new IllegalArgumentException("leaderMemberId is required");
+        }
         Optional<Human> leaderOpt = memberService.findHuman(cleanLeader);
-        if (leaderOpt.isEmpty()) {
-            throw new EntityNotFoundException("Leader member not found: " + leaderMemberId);
+        if (leaderOpt.isPresent()) {
+            Human leader = leaderOpt.get();
+            if (!leader.isActive()) {
+                throw new IllegalStateException("Leader must be active: " + leaderMemberId);
+            }
+            if (memberService.isViewer(leader)) {
+                throw new IllegalStateException("Viewers cannot be group leaders: " + leaderMemberId);
+            }
+            // DAT-120: the human leader is stored in the keyed-union form.
+            return "h:" + leader.getId();
         }
-        Human leader = leaderOpt.get();
-        if (!leader.isActive()) {
-            throw new IllegalStateException("Leader must be active: " + leaderMemberId);
-        }
-        if (memberService.isViewer(leader)) {
-            throw new IllegalStateException("Viewers cannot be group leaders: " + leaderMemberId);
-        }
-        // Check not ephemeral agent
+        // ORG-040: a local agent may act as Leader for execution routing.
         Optional<Agent> agentOpt = memberService.findAgent(cleanLeader);
-        if (agentOpt.isPresent() && agentOpt.get().isEphemeral()) {
-            throw new IllegalStateException("Ephemeral agents cannot be group leaders: " + leaderMemberId);
+        if (agentOpt.isPresent()) {
+            Agent leader = agentOpt.get();
+            if (leader.isEphemeral()) {
+                throw new IllegalStateException("Ephemeral agents cannot be group leaders: " + leaderMemberId);
+            }
+            if (!leader.isActive()) {
+                throw new IllegalStateException("Leader must be active: " + leaderMemberId);
+            }
+            // DAT-120: an agent leader keeps its `a:` kind — the stored reference
+            // must resolve against the live row of its own keyed kind.
+            return "a:" + leader.getId();
         }
-        // DAT-120: the human leader is re-prefixed to the stored keyed-union form.
-        return normalizeLeader(leaderMemberId);
-    }
-
-    /**
-     * DAT-120: normalize a caller-supplied leader reference to the stored
-     * keyed-union form (h:<humans.id>).
-     */
-    private static String normalizeLeader(String leaderMemberId) {
-        String clean = JsonHelpers.stripIdPrefix(leaderMemberId);
-        return clean == null ? leaderMemberId : "h:" + clean;
+        throw new EntityNotFoundException("Leader member not found: " + leaderMemberId);
     }
 }

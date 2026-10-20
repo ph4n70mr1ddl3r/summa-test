@@ -13,6 +13,10 @@ const adminNavItems: NavItem[] = [
   { to: '/governance', label: 'Governance', end: true },
   { to: '/nodes', label: 'Nodes', end: true },
   { to: '/role-templates', label: 'Role Templates', end: true },
+  // The spawn surface is admin-only end to end (GET /spawn and GET /spawn/:id are
+  // both admin-gated), so offering it to every role landed non-admins on an
+  // error page.
+  { to: '/spawn', label: 'Spawn', end: true },
 ]
 
 const publicNavItems: NavItem[] = [
@@ -30,7 +34,6 @@ const publicNavItems: NavItem[] = [
   { to: '/board-tasks', label: 'Board', end: true },
   { to: '/triggers', label: 'Triggers', end: true },
   { to: '/workspaces', label: 'Workspaces', end: true },
-  { to: '/spawn', label: 'Spawn', end: true },
   { to: '/runs', label: 'Runs', end: true },
   { to: '/memory', label: 'Memory', end: true },
   { to: '/initiatives', label: 'Initiatives', end: true },
@@ -78,7 +81,9 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 function LogoutButton() {
   const navigate = useNavigate()
   function handleLogout() {
-    setNavigate(null)
+    // The redirect handle stays registered: the 401 path excludes /auth/login
+    // already, and clearing it left the next session-expired response doing a
+    // full-page reload instead of an SPA navigation for the life of the page.
     setAuthToken(null, null)
     navigate('/login', { replace: true })
   }

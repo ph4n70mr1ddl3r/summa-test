@@ -3,6 +3,7 @@ import { api } from '../services/api'
 import type { Group } from '../types'
 import { groupStatusColor, escapeHtml } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
+import { readSessionUser } from '../utils/session'
 
 export default function Groups() {
   const [groups, setGroups] = useState<Group[]>([])
@@ -11,6 +12,9 @@ export default function Groups() {
   const [actionError, setActionError] = useState<string | null>(null)
   const [archivingId, setArchivingId] = useState<string | null>(null)
   const [confirmArchiveId, setConfirmArchiveId] = useState<string | null>(null)
+  // ORG-040: a group's archival is an admin act — the control is hidden rather
+  // than offered to every role and then refused with a 403.
+  const isAdmin = readSessionUser()?.rbac === 'admin'
 
   const loadGroups = () => {
     setLoading(true)
@@ -80,7 +84,7 @@ export default function Groups() {
                   <span className={`text-xs px-2 py-1 rounded ${groupStatusColor(g.status)}`} aria-label={`Status: ${g.status}`}>
                     {g.status}
                   </span>
-                  {g.status === 'active' && (
+                  {g.status === 'active' && isAdmin && (
                     <button
                       type="button"
                       onClick={() => setConfirmArchiveId(g.id)}
@@ -91,7 +95,7 @@ export default function Groups() {
                       {archivingId === g.id ? 'Archiving...' : 'Archive'}
                     </button>
                   )}
-                  {confirmArchiveId === g.id && (
+                  {isAdmin && confirmArchiveId === g.id && (
                     <div className="flex items-center gap-1 ml-2">
                       <span className="text-xs text-yellow-400">Confirm?</span>
                       <button

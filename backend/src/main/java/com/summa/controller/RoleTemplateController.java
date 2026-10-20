@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.service.MemberService;
-import com.summa.enums.AgentClass;
+import com.summa.enums.RoleTemplateClass;
 import java.util.Map;
 import java.util.Optional;
 
@@ -62,10 +62,13 @@ public class RoleTemplateController {
             if (body.get("class") == null || body.get("class").isBlank()) {
                 throw new IllegalArgumentException("class is required");
             }
-            // Validate class against known agent class types
-            if (AgentClass.fromValue(body.get("class")) == null) {
-                throw new IllegalArgumentException("Invalid class: " + body.get("class") + ". Must be one of: persistent, ephemeral, ephemeral-subagent");
-            }
+            // Validate the class against the catalog column's vocabulary
+            // (DAT-010's role_templates.class — 'persistent' | 'ephemeral-subagent').
+            // The spawn classes are three; the template classes are two, so
+            // validating against the agent-class enum would accept a value the
+            // column's CHECK rejects — a 409 integrity abort where the door owes
+            // a 422 validation refusal (API-061).
+            RoleTemplateClass.requireFromValue(body.get("class"));
             RoleTemplate template = templateService.create(
                 body.get("name"),
                 body.get("class"),

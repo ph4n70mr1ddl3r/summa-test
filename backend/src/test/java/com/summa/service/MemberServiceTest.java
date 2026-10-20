@@ -42,6 +42,57 @@ class MemberServiceTest {
     }
 
     @Test
+    void requireEligibleAskTarget_allowsAnActiveNonViewerHuman() {
+        // ORG-020: an active member who is not a viewer is ask-eligible.
+        Human h = new Human();
+        h.setId("h1");
+        h.setRbac("member");
+        when(humanRepository.findById("h1")).thenReturn(Optional.of(h));
+
+        assertDoesNotThrow(() -> memberService.requireEligibleAskTarget("h:h1"));
+    }
+
+    @Test
+    void requireEligibleAskTarget_refusesAViewer() {
+        // ORG-020: a viewer is never an ask target.
+        Human h = new Human();
+        h.setId("v1");
+        h.setRbac("viewer");
+        when(humanRepository.findById("v1")).thenReturn(Optional.of(h));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> memberService.requireEligibleAskTarget("v1"));
+        assertTrue(ex.getMessage().contains("Viewers cannot be ask targets"));
+    }
+
+    @Test
+    void requireEligibleAskTarget_refusesANonActiveMember() {
+        // ORG-020: a non-active member is refused every answerable post at write.
+        Human h = new Human();
+        h.setId("h1");
+        h.setRbac("member");
+        h.setDeactivatedAt(java.time.Instant.now());
+        when(humanRepository.findById("h1")).thenReturn(Optional.of(h));
+
+        assertThrows(IllegalStateException.class, () -> memberService.requireEligibleAskTarget("h1"));
+    }
+
+    @Test
+    void requireEligibleAskTarget_refusesAnUnknownMember() {
+        when(humanRepository.findById("ghost")).thenReturn(Optional.empty());
+        when(agentRepository.findById("ghost")).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> memberService.requireEligibleAskTarget("ghost"));
+    }
+
+    @Test
+    void requireEligibleAskTarget_allowsTheReservedBroadcast() {
+        // The `admins` broadcast is not member-addressed — it stays exempt.
+        assertDoesNotThrow(() -> memberService.requireEligibleAskTarget("admins"));
+    }
+
+    @Test
     void findHuman_returnsEmpty() {
         when(humanRepository.findById("missing")).thenReturn(Optional.empty());
 

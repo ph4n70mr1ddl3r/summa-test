@@ -166,6 +166,86 @@ class AskServiceTest {
     }
 
     @Test
+    void respond_quorumN_GreaterThan1_activeAdminIsAPoolPrincipal() {
+        // ASK-051: the eligible pool of a quorum ask is the pool's primary
+        // recipient plus every active admin, evaluated at respond time. Without
+        // the admin in the pool an N>1 ask addressed to a single owner could never
+        // reach quorum — the owner alone cannot supply N approvals and every
+        // admin was refused at the door.
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("pending");
+        ask.setTo("h:owner-1");
+        ask.setQuorumRequired(2);
+        ask.setResponses("[]");
+        ask.setDeadline(Instant.now().plusSeconds(3600));
+
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+        when(askRepository.save(any())).thenReturn(ask);
+
+        Human admin = new Human();
+        admin.setId("admin-1");
+        admin.setRbac("admin");
+        lenient().when(memberService.findAdmins()).thenReturn(List.of(admin));
+        lenient().when(memberService.findHuman("owner-1")).thenReturn(Optional.empty());
+
+        AskService svc = buildService();
+        Ask result = svc.respond("ask-1", "admin-1", "accept");
+
+        // The admin's accept counts toward the quorum — one of two.
+        assertEquals("pending", result.getStatus());
+        assertTrue(result.getResponses().contains("admin-1"));
+    }
+
+    @Test
+    void respond_quorumN_GreaterThan1_nonPoolMemberIsRefused() {
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("pending");
+        ask.setTo("h:owner-1");
+        ask.setQuorumRequired(2);
+        ask.setResponses("[]");
+        ask.setDeadline(Instant.now().plusSeconds(3600));
+
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+        lenient().when(memberService.findAdmins()).thenReturn(List.of());
+        lenient().when(memberService.findHuman("owner-1")).thenReturn(Optional.empty());
+
+        AskService svc = buildService();
+        assertThrows(IllegalArgumentException.class, () -> svc.respond("ask-1", "stranger-1", "accept"));
+    }
+
+    @Test
+    void respond_afterTheDeadline_isAuditOnlyAndDoesNotBind() {
+        // ASK-015/ASK-050: expiry denies — a response landing after the deadline
+        // is recorded with no effect. The deadline is a hard cut, not a sweep
+        // granularity: between the deadline and the next sweep tick the ask is
+        // still 'pending' and a late accept must not close it 'answered'.
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("pending");
+        ask.setTo("h:human-1");
+        ask.setQuorumRequired(1);
+        ask.setResponses("[]");
+        ask.setDeadline(Instant.now().minusSeconds(60));
+
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+
+        Human human1 = new Human();
+        human1.setId("human-1");
+        human1.setRbac("member");
+        lenient().when(memberService.findHuman("human-1")).thenReturn(Optional.of(human1));
+
+        AskService svc = buildService();
+        Ask result = svc.respond("ask-1", "human-1", "accept");
+
+        assertEquals("pending", result.getStatus());
+        assertEquals("[]", result.getResponses());
+        verify(askRepository, never()).save(any());
+        verify(auditService).logSystem(eq("AUDIT_ONLY_STALE_RESPONSE"), eq("ask"), eq("ask-1"), anyString());
+    }
+
+    @Test
     void respond_systemOriginatedAsk_allowsHumanResponder() {
         Ask ask = new Ask();
         ask.setId("ask-1");

@@ -31,6 +31,7 @@ vi.mock('../services/api', () => ({
 describe('DNAConsole page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    localStorage.removeItem('summa_user')
   })
 
   const wrapper = (children: React.ReactNode) => (
@@ -60,6 +61,9 @@ describe('DNAConsole page', () => {
   })
 
   it('shows review queue count', async () => {
+    // DWP-022: the review queue is an admin surface — the console asks for it
+    // only as an admin.
+    localStorage.setItem('summa_user', JSON.stringify({ userId: 'admin-1', rbac: 'admin' }))
     vi.mocked(apiModule.api.dna.domains).mockResolvedValue([])
     vi.mocked(apiModule.api.dna.cards).mockResolvedValue([])
     vi.mocked(apiModule.api.dna.goals).mockResolvedValue([])
@@ -98,8 +102,9 @@ describe('DNAConsole page', () => {
   })
 
   it('keeps the loaded panels when one sub-request fails', async () => {
-    // The review queue is admin-gated — a member's console must still show the
+    // The review queue is admin-gated — an admin's console must still show the
     // domains and cards that did load, with the failure reported alongside.
+    localStorage.setItem('summa_user', JSON.stringify({ userId: 'admin-1', rbac: 'admin' }))
     vi.mocked(apiModule.api.dna.domains).mockResolvedValue([
       { id: 'd1', name: 'Engineering', ownerHumanId: 'h1', access: 'public', status: 'active' },
     ])
@@ -113,6 +118,7 @@ describe('DNAConsole page', () => {
   })
 
   it('shows only the error banner when nothing could be loaded', async () => {
+    localStorage.setItem('summa_user', JSON.stringify({ userId: 'admin-1', rbac: 'admin' }))
     vi.mocked(apiModule.api.dna.domains).mockRejectedValue(new Error('Network error'))
     vi.mocked(apiModule.api.dna.cards).mockRejectedValue(new Error('Network error'))
     vi.mocked(apiModule.api.dna.goals).mockRejectedValue(new Error('Network error'))
@@ -121,5 +127,21 @@ describe('DNAConsole page', () => {
     render(wrapper(<DNAConsole />))
     await waitFor(() => expect(screen.getByText(/network error/i)).toBeInTheDocument())
     expect(screen.queryByText('DNA Console')).not.toBeInTheDocument()
+  })
+
+  it('does not ask for the admin review queue as a non-admin', async () => {
+    // The queue is an admin surface — a member's console must not ask for it,
+    // so the console shows no error banner at all.
+    localStorage.setItem('summa_user', JSON.stringify({ userId: 'member-1', rbac: 'member' }))
+    vi.mocked(apiModule.api.dna.domains).mockResolvedValue([
+      { id: 'd1', name: 'Engineering', ownerHumanId: 'h1', access: 'public', status: 'active' },
+    ])
+    vi.mocked(apiModule.api.dna.cards).mockResolvedValue([])
+    vi.mocked(apiModule.api.dna.goals).mockResolvedValue([])
+
+    render(wrapper(<DNAConsole />))
+    await waitFor(() => expect(screen.getByText('Domains (1)')).toBeInTheDocument())
+    expect(apiModule.api.dna.reviewQueue).not.toHaveBeenCalled()
+    expect(screen.queryByText(/failed to load/i)).not.toBeInTheDocument()
   })
 })

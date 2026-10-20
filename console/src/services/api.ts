@@ -108,16 +108,19 @@ async function request<T>(path: string, init?: RequestInit): Promise<T | undefin
       signal: controller.signal,
     });
     if (!res.ok) {
+      // The body is read exactly once: `res.text()` consumes the stream, so a
+      // later `res.json()` on the same response throws "Body has already been
+      // read" and the server's message and refusal envelope are lost.
       let message: string;
       let errorBody: unknown;
       try {
-        const text = await res.text();
+        const rawText = await res.text();
         try {
-          const err = JSON.parse(text) as { code?: string; message?: string };
+          const err = JSON.parse(rawText) as { code?: string; message?: string };
           message = err.message || `HTTP ${res.status}`;
           errorBody = err;
         } catch {
-          message = text || `HTTP ${res.status}`;
+          message = rawText || `HTTP ${res.status}`;
         }
       } catch {
         message = `Network error (connection failed)`;
@@ -156,6 +159,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T | undefin
         // its "Session expired"/invalid-credentials message and identity.
         throw err;
       }
+      // Every other refusal (403 eligibility, 422 validation, 404 not_found,
+      // 409 conflict, 429 rate_limited, 503 degraded) carries the server's
+      // machine-parseable envelope — its `code`, its `message`, and the
+      // `audit_event_id` that links the refusal to the audit trail. Throwing it
+      // here keeps that envelope on the ApiError; falling through to the JSON
+      // parse below would replace it with a parse failure and lose the body.
+      throw err;
     }
     if (res.status === 204) {
       return undefined;
@@ -247,6 +257,33 @@ export interface Agent {
 }
 
 export type Member = Human | Agent;
+
+/**
+ * The `/org/members` wire shape (API-004).
+ *
+ * The registry's combined view is a projection, not the `Human`/`Agent` rows: a
+ * human carries its rbac and liveness but no email, and an agent carries its
+ * class and status but no owner. Declaring the projection as `Human | Agent`
+ * promised fields the endpoint never sends — `h.email` typed as present but
+ * `undefined` at runtime, and `a.ownerHumanId` missing entirely.
+ */
+export type OrgMember =
+  | {
+      id: string;
+      kind: 'human';
+      name: string;
+      createdAt?: number;
+      rbac: RbacRole;
+      active: boolean;
+    }
+  | {
+      id: string;
+      kind: 'agent';
+      name: string;
+      createdAt?: number;
+      class: AgentClass;
+      status: AgentStatus;
+    };
 
 export type AgentStatus = 'active' | 'suspended' | 'retiring' | 'archived' | 'requested';
 
@@ -795,7 +832,7 @@ export const api = {
       request<Record<string, unknown>>(`/org/humans/${id}/erasure`, {
         method: 'POST',
       }),
-    members: () => request<{ members: Member[]; total: number }>('/org/members'),
+    members: () => request<{ members: OrgMember[]; total: number }>('/org/members'),
     lineage: async (memberId: string) => {
       const res = await request<{ memberId: string; lineage: string[] }>(`/org/lineage${buildQuery({ memberId })}`);
       return res?.lineage ?? [];

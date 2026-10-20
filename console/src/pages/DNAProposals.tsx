@@ -4,6 +4,7 @@ import type { DnaProposal, DnaProposalStatus } from '../types'
 import { formatDate, proposalKindColor, proposalStatusColor, escapeHtml } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { readSessionUser } from '../utils/session'
+import { cancellableLoad, startLoad } from '../utils/loadState'
 
 const PROPOSAL_STATUSES: DnaProposalStatus[] = ['open', 'breached', 'published', 'rejected', 'withdrawn']
 
@@ -33,16 +34,16 @@ export default function DNAProposals() {
     setLoading(true)
     setError(null)
     let aborted = false
-    api.dna.proposals('all')
+    const promise = api.dna.proposals('all')
        .then((data) => { if (!aborted) { setProposals(Array.isArray(data) ? data : []); setLoading(false) } })
-      .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
-    return () => { aborted = true }
+      .catch((err) => {
+        if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) }
+        throw err
+      })
+    return cancellableLoad(promise, () => { aborted = true })
   }, [])
 
-  useEffect(() => {
-    const cancel = loadProposals()
-    return cancel
-  }, [loadProposals])
+  useEffect(() => startLoad(loadProposals), [loadProposals])
 
   const visible = useMemo(
     () => (filter === 'all' ? proposals : proposals.filter(p => p.status === filter)),
@@ -56,9 +57,17 @@ export default function DNAProposals() {
   }, [proposals])
 
   // DWP-003: the publish/reject door belongs to the proposal's reviewing owner
-  // (review_by) or an admin. DWP-051: the proposer may withdraw their own.
+  // (review_by) or an admin. DWP-051: the proposer may withdraw their own — the
+  // withdraw door has no admin bypass, so an admin who did not file the proposal
+  // is refused ("Only the proposer can withdraw").
   const canReview = (p: DnaProposal) => isAdmin || (!!p.reviewBy && stripKey(p.reviewBy) === userId)
-  const canWithdraw = (p: DnaProposal) => isAdmin || stripKey(p.proposedBy) === userId
+  const canWithdraw = (p: DnaProposal) => stripKey(p.proposedBy) === userId
+  // The publish door is the strict one: it refuses anything but `open`, while
+  // reject and withdraw accept the breached queue too (a breach is an urgency
+  // flag, not a lifecycle). Offering Publish on a breached proposal produced a
+  // button that always failed with "Proposal is not open: breached".
+  const canPublish = (p: DnaProposal) => p.status === 'open' && canReview(p)
+  const canReject = (p: DnaProposal) => (p.status === 'open' || p.status === 'breached') && canReview(p)
 
   const handleAction = async (id: string, action: 'publish' | 'reject' | 'withdraw') => {
     setActionId(id)
@@ -66,15 +75,15 @@ export default function DNAProposals() {
     try {
       if (action === 'withdraw') await api.dna.withdrawProposal(id)
       else await api.dna.reviewProposal(id, action)
-      await loadProposals()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err))
-      try { await loadProposals() } catch (reloadErr) {
-        setActionError(reloadErr instanceof Error ? reloadErr.message : String(reloadErr))
-      }
     } finally {
       setActionId(null)
     }
+    // Reload in both cases — a refused action may still have changed server
+    // state — and await it: the loader's failure is recorded in the page's own
+    // error banner, so the rejection is only swallowed here.
+    try { await loadProposals().promise } catch { /* the page's error banner shows it */ }
   }
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
@@ -145,27 +154,27 @@ export default function DNAProposals() {
               </p>
               {(p.status === 'open' || p.status === 'breached') && (canReview(p) || canWithdraw(p)) && (
                 <div className="flex items-center gap-2 mt-3">
-                  {canReview(p) && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => handleAction(p.id, 'publish')}
-                        disabled={actionId === p.id}
-                        className="px-2 py-1 bg-green-700 hover:bg-green-600 disabled:bg-gray-600 rounded text-xs text-white"
-                        aria-label={`Publish proposal ${p.id}`}
-                      >
-                        Publish
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleAction(p.id, 'reject')}
-                        disabled={actionId === p.id}
-                        className="px-2 py-1 bg-red-700 hover:bg-red-600 disabled:bg-gray-600 rounded text-xs text-white"
-                        aria-label={`Reject proposal ${p.id}`}
-                      >
-                        Reject
-                      </button>
-                    </>
+                  {canPublish(p) && (
+                    <button
+                      type="button"
+                      onClick={() => handleAction(p.id, 'publish')}
+                      disabled={actionId === p.id}
+                      className="px-2 py-1 bg-green-700 hover:bg-green-600 disabled:bg-gray-600 rounded text-xs text-white"
+                      aria-label={`Publish proposal ${p.id}`}
+                    >
+                      Publish
+                    </button>
+                  )}
+                  {canReject(p) && (
+                    <button
+                      type="button"
+                      onClick={() => handleAction(p.id, 'reject')}
+                      disabled={actionId === p.id}
+                      className="px-2 py-1 bg-red-700 hover:bg-red-600 disabled:bg-gray-600 rounded text-xs text-white"
+                      aria-label={`Reject proposal ${p.id}`}
+                    >
+                      Reject
+                    </button>
                   )}
                   {canWithdraw(p) && (
                     <button

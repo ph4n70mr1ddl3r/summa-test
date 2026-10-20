@@ -5,6 +5,7 @@ import { formatDate, escapeHtml } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { readSessionUser } from '../utils/session'
+import { cancellableLoad, startLoad } from '../utils/loadState'
 
 export default function DataHolds() {
   const [holds, setHolds] = useState<DataHold[]>([])
@@ -25,34 +26,32 @@ export default function DataHolds() {
     setLoading(true)
     setError(null)
     let aborted = false
-    api.governance.listHolds()
+    const promise = api.governance.listHolds()
       .then((data) => { if (!aborted) { setHolds(Array.isArray(data) ? data : []); setLoading(false) } })
-      .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
-    return () => { aborted = true }
+      .catch((err) => {
+        if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) }
+        throw err
+      })
+    return cancellableLoad(promise, () => { aborted = true })
   }
 
-  useEffect(() => {
-    const cancel = loadHolds()
-    return cancel
-  }, [])
+  useEffect(() => startLoad(loadHolds), [])
 
   const handleRelease = async (id: string) => {
     setActionId(id)
     setActionError(null)
     try {
       await api.governance.releaseHold(id)
-      await loadHolds()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err))
-      try { await loadHolds() } catch (reloadErr) {
-        // Surface the reload failure too — otherwise the list is stale and the
-        // only signal is which row the release referred to
-        setActionError((reloadErr instanceof Error ? reloadErr.message : String(reloadErr)))
-      }
     } finally {
       setActionId(null)
       setConfirmReleaseId(null)
     }
+    // Reload in both cases — a refused release may still have changed server
+    // state — and await it: the loader's failure is recorded in the page's own
+    // error banner, so the list is never left silently stale.
+    try { await loadHolds().promise } catch { /* the page's error banner shows it */ }
   }
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>

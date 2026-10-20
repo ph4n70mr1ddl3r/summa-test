@@ -189,16 +189,26 @@ public class DnaProposalController {
         // System actor allowed for automated DNA pipeline access (consistent with other read endpoints)
         if (!"system".equals(actor)) {
             if (domainId == null || domainId.isBlank()) {
-                return ControllerResponses.gate(auditService, actor, "Admin access required for review queue");
+                // DWP-022: org-scoped items (org-wide goals, org-wide glossary;
+                // domain_id null) route to the admin review queue — the org-wide
+                // queue is an admin surface. Without this an admin had no path
+                // to the queue at all: the domain-scoped branch admits the
+                // domain's owner, and the org-wide branch refused everyone.
+                if (!memberService.isAdmin(actor)) {
+                    return ControllerResponses.gate(auditService, actor, "Admin access required for review queue");
+                }
+                return ResponseEntity.ok(proposalService.findAllOpen());
             }
-            // Allow domain owners to see proposals for their domain
+            // DWP-021: the queue renders to whoever holds the domain's
+            // owner_human_id; DGV-004: an active admin holds a governance read
+            // of every domain, so the admin sees the queue too.
             Optional<DnaDomain> domainOpt = domainService.findById(domainId);
             boolean isDomainOwner = domainOpt.isPresent()
                     && "active".equals(domainOpt.get().getStatus())
                     && domainOpt.get().getOwnerHumanId() != null
                     && domainOpt.get().getOwnerHumanId().equals(JsonHelpers.stripIdPrefix(actor));
-            if (!isDomainOwner) {
-                return ControllerResponses.gate(auditService, actor, "Admin access required for review queue");
+            if (!isDomainOwner && !memberService.isAdmin(actor)) {
+                return ControllerResponses.gate(auditService, actor, "Only the domain owner or an admin may read this domain's review queue");
             }
         }
         if (domainId != null) {

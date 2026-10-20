@@ -385,6 +385,17 @@ public class AskService {
             return ask;
         }
 
+        // ASK-015/ASK-050: a response to an expired ask is recorded with no effect —
+        // expiry denies. The deadline is a hard cut, not a sweep-granularity
+        // boundary: between the deadline and the next sweep tick the ask is still
+        // 'pending', and a late accept must not bind and close it 'answered'.
+        if (ask.getDeadline() != null && ask.getDeadline().isBefore(Instant.now())) {
+            auditService.logSystem("AUDIT_ONLY_STALE_RESPONSE", "ask", id,
+                String.format("{\"responder\":%s,\"currentStatus\":%s,\"reason\":\"past_deadline\"}",
+                    JsonHelpers.jsonString(responder), JsonHelpers.jsonString(ask.getStatus())));
+            return ask;
+        }
+
         // ASK-040: Check eligibility at the door
         if (!isEligibleResponder(ask, responder)) {
             throw new IllegalArgumentException("Responder is not eligible: " + responder);
@@ -477,7 +488,24 @@ public class AskService {
             return memberService.findAdmins().stream()
                     .anyMatch(h -> h.getId().equals(responderClean));
         }
-        return false;
+        // ASK-051: the eligible pool of a quorum ask is the pool's primary recipient
+        // plus every active admin, evaluated at respond time. Without this an
+        // N>1 ask addressed to a single owner can never reach quorum — the owner
+        // alone cannot supply N approvals and every admin was refused at the door.
+        // ASK-054: the admin the SLA breach escalates to may contribute one of the
+        // required approvals.
+        return isActiveAdmin(responderClean);
+    }
+
+    /**
+     * Is the responder an active admin? Admin authority is evaluated against live
+     * state (OFB-015): a deactivated admin contributes nothing (ASK-055: a departed
+     * one contributes nothing).
+     */
+    private boolean isActiveAdmin(String responderClean) {
+        if (responderClean == null) return false;
+        return memberService.findAdmins().stream()
+                .anyMatch(h -> h.getId().equals(responderClean));
     }
 
     /**
@@ -672,6 +700,17 @@ public class AskService {
         if (OffboardingWalkService.ADMIN_BROADCAST.equals(ask.getTo())) {
             return memberService.findAdmins().stream()
                     .anyMatch(h -> h.getId().equals(responderClean));
+        }
+
+        // ASK-040/051: for a quorum ask the eligible pool is the pool's primary
+        // recipient plus every active admin, evaluated at respond time. An admin
+        // is otherwise refused at the door, so an N>1 ask addressed to a single
+        // owner could never reach quorum. ASK-056 keeps the broadcast from being
+        // ambient authority — the ask stays member-addressed; the admin
+        // contributes an approval (ASK-054), it does not re-address the ask.
+        int quorum = ask.getQuorumRequired() != null ? ask.getQuorumRequired() : 1;
+        if (quorum > 1 && isActiveAdmin(responderClean)) {
+            return true;
         }
 
         // Deputy check: responder is the deputy of the target human

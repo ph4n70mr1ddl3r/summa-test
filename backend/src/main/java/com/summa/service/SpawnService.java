@@ -2,6 +2,7 @@ package com.summa.service;
 
 import com.summa.enums.AgentClass;
 import com.summa.enums.AgentStatus;
+import com.summa.enums.RoleTemplateClass;
 import com.summa.repository.SpawnRequestRepository;
 import com.summa.model.SpawnRequest;
 import com.summa.repository.RoleTemplateRepository;
@@ -176,7 +177,16 @@ public class SpawnService {
                 throw new IllegalStateException("Template is not active: " + templateId
                     + " (status: " + template.getStatus() + ")");
             }
-            String requiredClass = AgentClass.EPHEMERAL.getValue().equals(effectiveSpawnClass) ? AgentClass.EPHEMERAL_SUBAGENT.getValue() : AgentClass.PERSISTENT.getValue();
+            // SPW-021: the gate is class-matched as well as status-matched — a
+            // persistent hire names a `persistent`-class template, an ephemeral
+            // worker (and an ephemeral subagent, SPW-001's third class) a
+            // whitelisted `ephemeral-subagent`-class one. The mapping is explicit:
+            // testing only for `ephemeral` sent an ephemeral-subagent request to
+            // the `persistent` class, which no nested worker can satisfy.
+            String requiredClass = RoleTemplateClass.templateClassForSpawnClass(effectiveSpawnClass);
+            if (requiredClass == null) {
+                throw new IllegalArgumentException("Unknown spawn class: " + effectiveSpawnClass);
+            }
             if (!requiredClass.equals(template.getAgentClass())) {
                 throw new IllegalStateException("Template class mismatch: request class="
                     + effectiveSpawnClass + " but template class=" + template.getAgentClass());

@@ -273,4 +273,13 @@ class OrgServiceTest {
         assertNotNull(result);
         assertEquals("human-2", result.getDeputyMemberId());
     }
+
+    @Test
+    void updateRbac_refusesAnUnknownRole() {
+        // API-061: an unknown role is a validation failure (422), not an
+        // integrity abort (409) — and the demotion walk must not run against a
+        // role the row can never carry.
+        assertThrows(IllegalArgumentException.class, () ->
+            orgService.updateRbac("human-1", "superuser", "admin-1"));
+    }
 }

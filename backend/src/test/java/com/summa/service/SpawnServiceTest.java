@@ -219,6 +219,60 @@ class SpawnServiceTest {
     }
 
     @Test
+    void create_ephemeralSubagent_namesAnEphemeralSubagentTemplate() {
+        // SPW-021: the gate is class-matched as well as status-matched — a
+        // persistent hire names a `persistent`-class template, an ephemeral
+        // worker and an ephemeral subagent a whitelisted `ephemeral-subagent`-class
+        // one. The mapping used to test only for `ephemeral`, so an
+        // ephemeral-subagent request was sent to the `persistent` class, which no
+        // nested worker can satisfy.
+        when(governanceService.isSpendHaltTripped()).thenReturn(false);
+
+        Agent agent = new Agent();
+        agent.setId("agent-1");
+        agent.setStatus("active");
+        when(agentRepository.findById("agent-1")).thenReturn(Optional.of(agent));
+
+        com.summa.model.RoleTemplate template = new com.summa.model.RoleTemplate();
+        template.setId("template-1");
+        template.setAgentClass("ephemeral-subagent");
+        template.setStatus("active");
+        when(templateRepository.findById("template-1")).thenReturn(Optional.of(template));
+
+        SpawnRequest request = new SpawnRequest();
+        request.setId("spawn-1");
+        request.setSpawnClass("ephemeral-subagent");
+        when(spawnRepository.save(any())).thenReturn(request);
+
+        SpawnRequest result = spawnService.create("agent-1", "template-1", null, "ephemeral-subagent",
+            "Nested task", "[]", "{}", null, 24, "human-1", "actor");
+
+        assertNotNull(result);
+        assertEquals("ephemeral-subagent", result.getSpawnClass());
+    }
+
+    @Test
+    void create_ephemeralSubagent_refusesAPersistentTemplate() {
+        when(governanceService.isSpendHaltTripped()).thenReturn(false);
+
+        Agent agent = new Agent();
+        agent.setId("agent-1");
+        agent.setStatus("active");
+        when(agentRepository.findById("agent-1")).thenReturn(Optional.of(agent));
+
+        com.summa.model.RoleTemplate template = new com.summa.model.RoleTemplate();
+        template.setId("template-1");
+        template.setAgentClass("persistent");
+        template.setStatus("active");
+        when(templateRepository.findById("template-1")).thenReturn(Optional.of(template));
+
+        assertThrows(IllegalStateException.class, () -> {
+            spawnService.create("agent-1", "template-1", null, "ephemeral-subagent",
+                "Nested task", "[]", "{}", null, 24, "human-1", "actor");
+        });
+    }
+
+    @Test
     void approve_throwsWhenApprovedByIsAgentNotHuman() {
         SpawnRequest request = new SpawnRequest();
         request.setId("spawn-1");

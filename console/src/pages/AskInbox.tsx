@@ -4,6 +4,7 @@ import type { Ask, AskKind, RbacRole } from '../types'
 import { tierColor, formatDate, escapeHtml, askKindIcon, stripMemberPrefix } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { useEscapeKey } from '../hooks/useEscapeKey'
+import { cancellableLoad, startLoad } from '../utils/loadState'
 
 const KIND_DISPLAY_NAMES: Record<AskKind, string> = {
   approval: 'Approval',
@@ -42,16 +43,16 @@ export default function AskInbox() {
     setLoading(true)
     setError(null)
     let aborted = false
-    api.asks.list()
+    const promise = api.asks.list()
       .then((data) => { if (!aborted) { setAsks(Array.isArray(data) ? data : []); setLoading(false) } })
-      .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
-    return () => { aborted = true }
+      .catch((err) => {
+        if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) }
+        throw err
+      })
+    return cancellableLoad(promise, () => { aborted = true })
   }
 
-  useEffect(() => {
-    const cancel = loadAsks()
-    return cancel
-  }, [])
+  useEffect(() => startLoad(loadAsks), [])
 
   const handleRespond = async (id: string) => {
     setSubmitError(null)
@@ -66,24 +67,25 @@ export default function AskInbox() {
       setSubmitSuccess('Response recorded')
       setRespondingId(null)
       setResponseText('')
-      await loadAsks()
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err))
       setResponseText('')
-      try { await loadAsks(); setError(null) } catch { /* keep original submit error */ }
     } finally {
       setRespondingForId(null)
     }
+    // Reload in both cases — a refused response may still have changed server
+    // state — and await it: the loader's failure is recorded in the page's own
+    // error banner, so the rejection is only swallowed here.
+    try { await loadAsks().promise } catch { /* the page's error banner shows it */ }
   }
 
   const handleWithdraw = async (id: string) => {
     try {
       await api.asks.withdraw(id)
-      await loadAsks()
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err))
-      try { await loadAsks(); setError(null) } catch (reloadErr) { setSubmitError(reloadErr instanceof Error ? reloadErr.message : String(reloadErr)) }
     }
+    try { await loadAsks().promise } catch { /* the page's error banner shows it */ }
   }
 
   if (loading) {

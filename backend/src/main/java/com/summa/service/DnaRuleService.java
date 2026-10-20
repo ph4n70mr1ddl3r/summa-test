@@ -135,6 +135,22 @@ public class DnaRuleService {
             throw new IllegalArgumentException("Cross-domain supersession not allowed");
         }
 
+        // DNC-025: supersession chains are linear, not forks — a second live
+        // `supersedes_id` edge onto an already-superseded row is refused at
+        // propose, amend, and item write; displacing a superseded rule means
+        // naming the chain's live head. The create door carries these guards; the
+        // item-write door must carry them too or a fork is reachable from the API.
+        long successorCount = ruleRepository.findBySupersedesId(supersedesId).size();
+        if (successorCount > 0) {
+            throw new IllegalArgumentException(
+                "Rule already has a superseder. Name the chain's live head instead.");
+        }
+        // DNC-022: superseded and lapsed rules are frozen history — a write must
+        // not flip a lapsed rule out of it.
+        if (!"active".equals(predecessor.getStatus()) && !"superseded".equals(predecessor.getStatus())) {
+            throw new IllegalArgumentException("Cannot supersede a lapsed rule");
+        }
+
         predecessor.setStatus("superseded");
         rule.setSupersedesId(supersedesId);
 

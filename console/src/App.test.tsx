@@ -52,6 +52,7 @@ describe('App', () => {
     expect(screen.getByText('Governance')).toBeInTheDocument()
     expect(screen.getByText('Nodes')).toBeInTheDocument()
     expect(screen.getByText('Role Templates')).toBeInTheDocument()
+    expect(screen.getByText('Spawn')).toBeInTheDocument()
   })
 
   it('hides admin nav items for non-admin user', () => {
@@ -60,6 +61,9 @@ describe('App', () => {
     expect(screen.queryByText('Governance')).not.toBeInTheDocument()
     expect(screen.queryByText('Nodes')).not.toBeInTheDocument()
     expect(screen.queryByText('Role Templates')).not.toBeInTheDocument()
+    // The spawn surface is admin-gated end to end, so a non-admin must not be
+    // offered a nav entry that lands on an error page.
+    expect(screen.queryByText('Spawn')).not.toBeInTheDocument()
   })
 
   it('redirects to login when not authenticated', () => {

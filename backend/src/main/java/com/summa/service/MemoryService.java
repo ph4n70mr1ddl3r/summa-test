@@ -48,8 +48,9 @@ public class MemoryService {
         // DAT-125: a memory item is attributed to the human member that wrote it —
         // the column is a humans(id) reference, so a non-human attribution is
         // refused here rather than aborting the insert on the foreign key.
+        String cleanMember = null;
         if (memberId != null && !memberId.isBlank()) {
-            String cleanMember = JsonHelpers.stripIdPrefix(memberId);
+            cleanMember = JsonHelpers.stripIdPrefix(memberId);
             if (memberService.findHuman(cleanMember).isEmpty()) {
                 throw new IllegalArgumentException(
                         "memory attribution requires an existing human member: " + memberId);
@@ -58,7 +59,9 @@ public class MemoryService {
         MemoryItem item = new MemoryItem();
         item.setId(UUID.randomUUID().toString());
         item.setTier(tier);
-        item.setMemberId(memberId);
+        // The column is foreign-key-pinned to humans(id) (DAT-120), so it carries
+        // the bare human id — a keyed union can never satisfy that foreign key.
+        item.setMemberId(cleanMember);
         item.setWorkspaceId(workspaceId);
         item.setContentMd(contentMd);
         item.setProvenance(provenance != null ? provenance : "{}");

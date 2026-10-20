@@ -175,12 +175,16 @@ governance_settings (key, value json, edited_by member, edited_at)
   the foreign key is the stronger constraint and a keyed union can never satisfy it:
   `memory_items.member_id` → `humans(id)` (the human the item is attributed to; a
   personal-tier item belongs to its member, DAT-125), `spend_ledger.member_id` and
-  `spawn_requests.requester_id` → `agents(id)` (the accountable agent), and the
-  `created_by` / `edited_by` / `reviewed_by` columns → `humans(id)`. Exactly two
-  reserved non-member spellings exist, and they are the only ones: `system` —
-  carried by `asks.from` (the system originator, DAT-080) and `audit_events.actor`
-  (DAT-121) — and `admins`, carried by `asks.to` alone, the live-evaluated admin
-  broadcast (DAT-080).
+  `spawn_requests.requester_id` → `agents(id)` (the accountable agent),
+  `playbooks.created_by` → `agents(id)` (the authoring agent), and the humans-pinned
+  authorship columns `data_holds.created_by`, `governance_settings.edited_by`,
+  `memory_items.reviewed_by`, `dna_proposals.review_by` and `dna_proposals.reviewed_by`
+  → `humans(id)`. `board_tasks.created_by` is unpinned — no foreign key and no keyed
+  union: it names the authoring member by its bare id and defaults to `system`.
+  Exactly two reserved non-member spellings exist, and they are the only ones: `system` —
+  carried by `asks.from` (the system originator, DAT-080), `audit_events.actor`
+  (DAT-121) and `board_tasks.created_by`'s default — and `admins`, carried by `asks.to`
+  alone, the live-evaluated admin broadcast (DAT-080).
 - **DAT-121** — `audit_events` is append-only: rows are inserted, never updated or deleted;
   every refusal, write door, credential use, and admin act lands one row (SEC-009,
   NFR-001); `node_id` stamps the acting node where one exists (SEC-012); restore re-appends

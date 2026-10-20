@@ -81,6 +81,26 @@ describe('DataHolds page', () => {
     await waitFor(() => expect(apiModule.api.governance.releaseHold).toHaveBeenCalledWith('h1'))
   })
 
+  it('surfaces a failed reload after a successful release', async () => {
+    // A failed reload must not leave a stale list behind with no signal — the
+    // loader records the failure in the page's own error banner.
+    localStorage.setItem('summa_user', JSON.stringify({ userId: 'admin-1', rbac: 'admin' }))
+    vi.mocked(apiModule.api.governance.listHolds)
+      .mockResolvedValueOnce([
+        { id: 'h1', kind: 'member', subjectId: 'user-123', reasonMd: 'Pending litigation', createdBy: 'admin-1', createdAt: 1700000000 },
+      ])
+      .mockRejectedValue(new Error('Could not refresh holds'))
+    vi.mocked(apiModule.api.governance.releaseHold).mockResolvedValue({ id: 'h1', kind: 'member', subjectId: 'user-123', reasonMd: '', createdBy: 'admin-1', createdAt: 1700000000 } as apiModule.DataHold)
+
+    render(<DataHolds />)
+    await waitFor(() => expect(screen.getByText('Release')).toBeInTheDocument())
+    fireEvent.click(await screen.findByText('Release'))
+    await waitFor(() => expect(screen.getByText('Confirm?')).toBeInTheDocument())
+    fireEvent.click(screen.getByText('Yes'))
+
+    await waitFor(() => expect(screen.getByText(/could not refresh holds/i)).toBeInTheDocument())
+  })
+
   it('hides the release control from non-admins', async () => {
     localStorage.setItem('summa_user', JSON.stringify({ userId: 'member-1', rbac: 'member' }))
     vi.mocked(apiModule.api.governance.listHolds).mockResolvedValue([

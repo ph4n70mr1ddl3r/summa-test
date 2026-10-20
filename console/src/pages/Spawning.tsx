@@ -3,7 +3,7 @@ import { api, loadWithFallback } from '../services/api'
 import type { SpawnRequest, SpawnStats } from '../types'
 import { spawnStatusColor, escapeHtml, formatDate } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
-import { hasAnyData } from '../utils/loadState'
+import { cancellableLoad, hasAnyData, startLoad } from '../utils/loadState'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 
 export default function Spawning() {
@@ -25,7 +25,7 @@ export default function Spawning() {
     setLoading(true)
     setError(null)
     let aborted = false
-    loadWithFallback(
+    const promise = loadWithFallback(
       () => Promise.all([
         api.spawn.list(),
         api.spawn.stats(),
@@ -45,13 +45,10 @@ export default function Spawning() {
       setError(loadError)
       setLoading(false)
     })
-    return () => { aborted = true }
+    return cancellableLoad(promise, () => { aborted = true })
   }
 
-  useEffect(() => {
-    const cancel = loadData()
-    return cancel
-  }, [])
+  useEffect(() => startLoad(loadData), [])
 
   const handleAction = async (id: string, action: 'approve' | 'deny') => {
     setActionId(id)
@@ -59,16 +56,16 @@ export default function Spawning() {
     try {
       if (action === 'approve') await api.spawn.approve(id)
       else await api.spawn.deny(id)
-      await loadData()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err))
-      try { await loadData() } catch (reloadErr) {
-        setActionError(reloadErr instanceof Error ? reloadErr.message : String(reloadErr))
-      }
     } finally {
       setActionId(null)
       setConfirmAction(prev => { const next = { ...prev }; delete next[id]; return next })
     }
+    // Reload in both cases — a refused action may still have changed server
+    // state — and await it: the loader's failure is recorded in the page's own
+    // error banner, so the rejection is only swallowed here.
+    try { await loadData().promise } catch { /* the page's error banner shows it */ }
   }
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>

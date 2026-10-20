@@ -3,6 +3,7 @@ import { api } from '../services/api'
 import type { MemoryItem } from '../types'
 import { truncateSnippet, escapeHtml, formatDate } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
+import { cancellableLoad, startLoad } from '../utils/loadState'
 
 export default function Memory() {
   const [items, setItems] = useState<MemoryItem[]>([])
@@ -28,16 +29,16 @@ export default function Memory() {
     let aborted = false
     const params: { memberId?: string; workspaceId?: string; tainted?: string } = {}
     if (filter === 'tainted') params.tainted = 'true'
-    api.memory.list(params)
+    const promise = api.memory.list(params)
       .then((data) => { if (!aborted) { setItems(Array.isArray(data) ? data : []); setLoading(false) } })
-      .catch((err) => { if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) } })
-    return () => { aborted = true }
+      .catch((err) => {
+        if (!aborted) { setError(err instanceof Error ? err.message : String(err)); setLoading(false) }
+        throw err
+      })
+    return cancellableLoad(promise, () => { aborted = true })
   }, [filter])
 
-  useEffect(() => {
-    const cancel = loadItems()
-    return cancel
-  }, [loadItems])
+  useEffect(() => startLoad(loadItems), [loadItems])
 
   const handleReview = async (id: string) => {
     if (isProcessingReview) return
@@ -50,16 +51,17 @@ export default function Memory() {
       setReviewSuccess(true)
       setReviewingForId(null)
       setReviewingId(null)
-      await loadItems()
     } catch (err) {
       setReviewError(err instanceof Error ? err.message : String(err))
       setReviewSuccess(false)
       setReviewingForId(null)
       setReviewingId(null)
-      try { await loadItems(); setError(null) } catch { /* keep original review error */ }
     } finally {
       setIsProcessingReview(false)
     }
+    // Reload in both cases and await it: the loader's failure is recorded in the
+    // page's own error banner, so the rejection is only swallowed here.
+    try { await loadItems().promise } catch { /* the page's error banner shows it */ }
   }
 
   const requestReview = (id: string) => {

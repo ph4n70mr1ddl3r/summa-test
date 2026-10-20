@@ -104,6 +104,43 @@ public class MemberService {
         return null;
     }
 
+    /**
+     * ORG-020: the ask-target eligibility rule — a viewer human is never an ask
+     * target and a non-active member is refused every answerable post at write
+     * (SPEC-01's actor eligibility summary; API-042's "ask-eligible member").
+     * The reserved broadcast addressee {@code admins} and the reserved system
+     * originator are not member-addressed and stay exempt.
+     *
+     * @throws IllegalArgumentException when the reference resolves to no live member
+     * @throws IllegalStateException when the member is a viewer or is not active
+     */
+    public void requireEligibleAskTarget(String ref) {
+        String clean = JsonHelpers.stripIdPrefix(ref);
+        if (clean == null || clean.isBlank()) {
+            throw new IllegalArgumentException("Ask target is required");
+        }
+        if (KeyedUnionValidator.RESERVED_IDS.contains(clean)) return;
+        Optional<Human> humanOpt = findHuman(clean);
+        if (humanOpt.isPresent()) {
+            Human target = humanOpt.get();
+            if (isViewer(target)) {
+                throw new IllegalStateException("Viewers cannot be ask targets: " + ref);
+            }
+            if (!target.isActive()) {
+                throw new IllegalStateException("Non-active members cannot be ask targets: " + ref);
+            }
+            return;
+        }
+        Optional<Agent> agentOpt = findAgent(clean);
+        if (agentOpt.isPresent()) {
+            if (!agentOpt.get().isActive()) {
+                throw new IllegalStateException("Non-active members cannot be ask targets: " + ref);
+            }
+            return;
+        }
+        throw new IllegalArgumentException("Ask target does not reference an existing member: " + ref);
+    }
+
     public boolean canWrite(String rbac) {
         if (rbac == null) return false;
         try {

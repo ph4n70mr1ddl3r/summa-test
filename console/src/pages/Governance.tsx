@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { api, loadWithFallback } from '../services/api'
 import type { SpendSnapshot } from '../types'
 import { ErrorBanner } from '../components/ErrorBanner'
-import { hasAnyData } from '../utils/loadState'
+import { cancellableLoad, hasAnyData, startLoad } from '../utils/loadState'
 import { escapeHtml } from '../utils/formatting'
 
 export default function Governance() {
@@ -21,7 +21,7 @@ export default function Governance() {
     setError(null)
     setEditValues({})
     let aborted = false
-    loadWithFallback(
+    const promise = loadWithFallback(
       () => Promise.all([
         api.governance.policies(),
         api.governance.quotas(),
@@ -49,13 +49,10 @@ export default function Governance() {
       setError(loadError)
       setLoading(false)
     })
-    return () => { aborted = true }
+    return cancellableLoad(promise, () => { aborted = true })
   }, [])
 
-  useEffect(() => {
-    const cancel = loadData()
-    return cancel
-  }, [loadData])
+  useEffect(() => startLoad(loadData), [loadData])
 
   const handleSave = useCallback(async (section: 'policies' | 'quotas', key: string, currentValue: string) => {
     const saveKey = `${section}:${key}`
@@ -99,10 +96,13 @@ export default function Governance() {
       setEditValues(prev => { const next = { ...prev }; delete next[key]; return next })
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err))
-      try { await loadData(); setError(null) } catch { /* keep original action error */ }
     } finally {
       setSaving(prev => { const next = { ...prev }; delete next[saveKey]; return next })
     }
+    // Reload in both cases — a refused save may still have changed server state —
+    // and await it: the loader's failure is recorded in the page's own error
+    // banner, so the rejection is only swallowed here.
+    try { await loadData().promise } catch { /* the page's error banner shows it */ }
   }, [loadData])
 
   const startEdit = useCallback((key: string, currentValue: unknown) => {

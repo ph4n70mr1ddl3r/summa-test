@@ -127,6 +127,11 @@ public class OrgController {
             if (rbacValue == null || rbacValue.isBlank()) {
                 throw new IllegalArgumentException("rbac is required");
             }
+            // API-061: an unknown role is a validation failure (422), not an
+            // integrity abort (409). The column's CHECK admits exactly the four
+            // roles; validating here also stops the demotion walk from running
+            // against a role the row can never carry.
+            RbacRole.requireFromValue(rbacValue);
             Human human = orgService.updateRbac(id, rbacValue, actor);
             return ResponseEntity.ok(human);
         } catch (IllegalArgumentException e) {
