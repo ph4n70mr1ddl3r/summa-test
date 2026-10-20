@@ -42,7 +42,11 @@ export function setAuthToken(token: string | null, user?: { userId: string; rbac
     } else {
       localStorage.removeItem(TOKEN_KEY);
     }
-    if (user) {
+    // Clear the cached user only on logout (user === null sentinel); a
+    // token refresh with no user argument leaves the cached identity intact.
+    if (user === undefined) {
+      if (token === null) localStorage.removeItem(USER_KEY);
+    } else if (user) {
       localStorage.setItem(USER_KEY, JSON.stringify(user));
     } else {
       localStorage.removeItem(USER_KEY);
@@ -84,7 +88,9 @@ export function isAuthenticated(): boolean {
     const payloadB64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
     const payloadJson = payloadB64 + '='.repeat((4 - payloadB64.length % 4) % 4);
     const payload = JSON.parse(atob(payloadJson)) as { exp?: number };
-    if (payload.exp === undefined) return false;
+    // A token without an exp claim (jwt-expiration disabled server-side) never
+    // expires client-side — the server is the source of truth.
+    if (payload.exp === undefined) return true;
     const nowSeconds = Math.floor(Date.now() / 1000);
     return payload.exp > nowSeconds;
   } catch {
@@ -351,7 +357,6 @@ export interface RunListParams {
   workspaceId?: string;
   status?: RunStatus;
   limit?: number;
-  [key: string]: string | number | boolean | undefined;
 }
 
 export interface DnaCard {
@@ -849,7 +854,7 @@ export const api = {
   },
   runs: {
     list: (params?: RunListParams) =>
-      request<Run[]>(`/runs${buildQuery(params)}`),
+      request<Run[]>(`/runs${buildQuery(params as Record<string, unknown> | undefined)}`),
     create: (body: Record<string, string>) =>
       request<Run>('/runs', {
         method: 'POST',

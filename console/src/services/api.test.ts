@@ -192,12 +192,12 @@ describe('buildQuery key encoding', () => {
 })
 
 describe('isAuthenticated token edge cases', () => {
-  it('isAuthenticated returns false when exp is missing', () => {
+  it('isAuthenticated returns true when exp is missing (server is source of truth)', () => {
     const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
       btoa(JSON.stringify({})) +
       '.sig'
     setAuthToken(token)
-    expect(isAuthenticated()).toBe(false)
+    expect(isAuthenticated()).toBe(true)
   })
 })
 

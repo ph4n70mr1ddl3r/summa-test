@@ -1,13 +1,27 @@
 package com.summa.service;
 
 import com.summa.repository.HumanRepository;
+import com.summa.repository.AuditEventRepository;
+import com.summa.repository.AskRepository;
+import com.summa.repository.BoardTaskRepository;
+import com.summa.repository.DnaProposalRepository;
+import com.summa.repository.MemoryItemRepository;
+import com.summa.repository.PatRepository;
+import com.summa.repository.DataHoldRepository;
 import com.summa.model.Human;
+import com.summa.model.Ask;
+import com.summa.model.BoardTask;
+import com.summa.model.DnaProposal;
+import com.summa.model.MemoryItem;
+import com.summa.model.DataHold;
 import com.summa.security.PasswordUtil;
+import com.summa.exception.ConflictException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -28,6 +42,30 @@ class OrgServiceTest {
 
     @Mock
     private PasswordUtil passwordUtil;
+
+    @Mock
+    private AuditEventRepository auditEventRepository;
+
+    @Mock
+    private MemberService memberService;
+
+    @Mock
+    private AskRepository askRepository;
+
+    @Mock
+    private BoardTaskRepository boardTaskRepository;
+
+    @Mock
+    private DnaProposalRepository proposalRepository;
+
+    @Mock
+    private MemoryItemRepository memoryItemRepository;
+
+    @Mock
+    private PatRepository patRepository;
+
+    @Mock
+    private DataHoldRepository dataHoldRepository;
 
     @InjectMocks
     private OrgService orgService;
@@ -124,6 +162,84 @@ class OrgServiceTest {
 
         assertThrows(IllegalStateException.class, () -> {
             orgService.setDeputy("human-1", "human-2", "admin");
+        });
+    }
+
+    @Test
+    void erasure_pseudonymizesAndSweeps() {
+        Human human = createHuman("human-1", "member");
+        when(humanRepository.findByIdForUpdate("human-1")).thenReturn(Optional.of(human));
+        when(humanRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(dataHoldRepository.findByKindAndSubjectIdAndReleasedAtIsNull("member", "human-1"))
+            .thenReturn(List.of());
+
+        Human admin = createHuman("admin-1", "admin");
+        when(memberService.findAdmins()).thenReturn(List.of(admin));
+
+        Ask fromAsk = new Ask();
+        fromAsk.setFrom("human-1");
+        Ask toAsk = new Ask();
+        toAsk.setTo("human-1");
+        when(askRepository.findByFrom("human-1")).thenReturn(List.of(fromAsk));
+        when(askRepository.findByFrom("h:human-1")).thenReturn(List.of());
+        when(askRepository.findByTo("human-1")).thenReturn(List.of(toAsk));
+        when(askRepository.findByTo("h:human-1")).thenReturn(List.of());
+        when(askRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        DnaProposal prop = new DnaProposal();
+        prop.setProposedBy("human-1");
+        when(proposalRepository.findByProposedBy("human-1")).thenReturn(List.of(prop));
+        when(proposalRepository.findByProposedBy("h:human-1")).thenReturn(List.of());
+        when(proposalRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        BoardTask task = new BoardTask();
+        task.setAssigneeMemberId("human-1");
+        when(boardTaskRepository.findByAssigneeMemberId("human-1")).thenReturn(List.of(task));
+        when(boardTaskRepository.findByAssigneeMemberId("h:human-1")).thenReturn(List.of());
+        when(boardTaskRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        MemoryItem mem = new MemoryItem();
+        mem.setMemberId("human-1");
+        when(memoryItemRepository.findByMemberId("human-1")).thenReturn(List.of(mem));
+        when(memoryItemRepository.findByMemberId("h:human-1")).thenReturn(List.of());
+        when(memoryItemRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        when(patRepository.findByMemberId("human-1")).thenReturn(List.of());
+        when(patRepository.findByMemberId("h:human-1")).thenReturn(List.of());
+
+        orgService.erasure("human-1", "admin-1");
+
+        assertEquals("system", fromAsk.getFrom());
+        assertEquals("h:admin-1", toAsk.getTo());
+        assertEquals("h:admin-1", prop.getProposedBy());
+        assertNull(task.getAssigneeMemberId());
+        assertNull(mem.getMemberId());
+    }
+
+    @Test
+    void erasure_refusesWhenNoActiveAdmin() {
+        Human human = createHuman("human-1", "member");
+        when(humanRepository.findByIdForUpdate("human-1")).thenReturn(Optional.of(human));
+        when(humanRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(dataHoldRepository.findByKindAndSubjectIdAndReleasedAtIsNull("member", "human-1"))
+            .thenReturn(List.of());
+        when(memberService.findAdmins()).thenReturn(List.of());
+
+        assertThrows(ConflictException.class, () -> {
+            orgService.erasure("human-1", "admin-1");
+        });
+    }
+
+    @Test
+    void erasure_refusesUnderLegalHold() {
+        Human human = createHuman("human-1", "member");
+        when(humanRepository.findByIdForUpdate("human-1")).thenReturn(Optional.of(human));
+        when(humanRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(dataHoldRepository.findByKindAndSubjectIdAndReleasedAtIsNull("member", "human-1"))
+            .thenReturn(List.of(new DataHold()));
+
+        assertThrows(ConflictException.class, () -> {
+            orgService.erasure("human-1", "admin-1");
         });
     }
 

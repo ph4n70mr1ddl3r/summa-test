@@ -1,7 +1,6 @@
 package com.summa.controller;
 
 import com.summa.model.Agent;
-import com.summa.model.DataHold;
 import com.summa.model.Human;
 import com.summa.enums.RbacRole;
 import com.summa.security.RbacAuthorizationFilter;
@@ -18,6 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.summa.exception.ConflictException;
 import com.summa.exception.EntityNotFoundException;
 import com.summa.util.JsonHelpers;
 import com.summa.constants.Defaults;
@@ -213,17 +213,12 @@ public class OrgController {
         }
         // API-005: admin, audited, honors data_holds (STG-030..034)
         try {
-            Human human = orgService.findHuman(id).orElseThrow(() -> new EntityNotFoundException("Human not found: " + id));
-
-            List<DataHold> holds = dataHoldService.findBySubject("member", id);
-            if (!holds.isEmpty()) {
-                return ControllerResponses.conflict(auditService, "Active data holds prevent erasure");
-            }
-
             orgService.erasure(id, actor);
             return ResponseEntity.ok(Map.of("status", "erased", "id", id));
         } catch (EntityNotFoundException e) {
             return ControllerResponses.notFound(auditService, e.getMessage());
+        } catch (ConflictException e) {
+            return ControllerResponses.conflict(auditService, e.getMessage());
         }
     }
 

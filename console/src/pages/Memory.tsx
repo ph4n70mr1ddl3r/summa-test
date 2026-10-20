@@ -37,7 +37,7 @@ export default function Memory() {
   useEffect(() => {
     const cancel = loadItems()
     return cancel
-  }, [filter, loadItems])
+  }, [loadItems])
 
   const handleReview = async (id: string) => {
     if (isProcessingReview) return

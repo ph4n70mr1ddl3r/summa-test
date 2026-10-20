@@ -332,14 +332,16 @@ public class OffboardingWalkService {
                 JsonHelpers.toJson(Map.of("newAssignee", targetKeyedRef, "reason", "member_departed"), objectMapper));
         }
 
-        // OFB-015: Revoke PATs and terminate sessions
-        for (Pat pat : patRepository.findByMemberId(humanId)) {
-            if (pat.getRevokedAt() == null) {
-                pat.setRevokedAt(Instant.now());
-                patRepository.save(pat);
-                patsRevoked++;
-                auditService.logSystem("OFFBOARD_REVOKE_PAT", "pat", pat.getId(),
-                    "{\"reason\":\"member_departed\"}");
+        // OFB-015: Revoke PATs and terminate sessions (DAT-120: sweep bare + keyed form)
+        for (String memberRef : List.of(humanId, "h:" + humanId)) {
+            for (Pat pat : patRepository.findByMemberId(memberRef)) {
+                if (pat.getRevokedAt() == null) {
+                    pat.setRevokedAt(Instant.now());
+                    patRepository.save(pat);
+                    patsRevoked++;
+                    auditService.logSystem("OFFBOARD_REVOKE_PAT", "pat", pat.getId(),
+                        "{\"reason\":\"member_departed\"}");
+                }
             }
         }
 
@@ -617,12 +619,14 @@ public class OffboardingWalkService {
             }
         }
 
-        // OFB-014: Revoke PATs — credential-death on any role reduction
-        for (Pat pat : patRepository.findByMemberId(humanId)) {
-            if (pat.getRevokedAt() == null) {
-                pat.setRevokedAt(Instant.now());
-                patRepository.save(pat);
-                patsRevoked++;
+        // OFB-014: Revoke PATs — credential-death on any role reduction (DAT-120: sweep both forms)
+        for (String memberRef : List.of(humanId, "h:" + humanId)) {
+            for (Pat pat : patRepository.findByMemberId(memberRef)) {
+                if (pat.getRevokedAt() == null) {
+                    pat.setRevokedAt(Instant.now());
+                    patRepository.save(pat);
+                    patsRevoked++;
+                }
             }
         }
 

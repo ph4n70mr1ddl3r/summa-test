@@ -348,7 +348,8 @@ CREATE TABLE IF NOT EXISTS spend_ledger (
     at INTEGER NOT NULL DEFAULT (unixepoch()),
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     FOREIGN KEY (member_id) REFERENCES agents(id) ON DELETE CASCADE,
-    -- member_id is a keyed union per DAT-120: h:<humans.id> or a:<agents.id>
+    -- member_id is the accountable agent (FK -> agents.id, ON DELETE CASCADE);
+    -- human cost attribution rides on agents.owner_human_id, not this column.
     FOREIGN KEY (run_id) REFERENCES runs(id) ON DELETE SET NULL,
     FOREIGN KEY (spawn_id) REFERENCES spawn_requests(id) ON DELETE SET NULL
 );

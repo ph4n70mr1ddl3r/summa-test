@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.security.SecureRandom;
+import com.summa.util.JsonHelpers;
 
 @Service
 public class PatService {
@@ -40,7 +41,8 @@ public class PatService {
 
         Pat pat = new Pat();
         pat.setId(UUID.randomUUID().toString());
-        pat.setMemberId(memberId);
+        // DAT-120: pats.member_id is a keyed union — PATs are minted by humans, so store h:<id>
+        pat.setMemberId("h:" + JsonHelpers.stripIdPrefix(memberId));
         pat.setName(name);
         pat.setTokenHash(tokenHash);
         pat.setScopes(scopes != null ? serializeScopes(scopes) : "[]");

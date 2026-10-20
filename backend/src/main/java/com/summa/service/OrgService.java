@@ -6,12 +6,15 @@ import com.summa.repository.AskRepository;
 import com.summa.repository.BoardTaskRepository;
 import com.summa.repository.DnaProposalRepository;
 import com.summa.repository.MemoryItemRepository;
+import com.summa.repository.PatRepository;
+import com.summa.repository.DataHoldRepository;
 import com.summa.model.Human;
 import com.summa.model.AuditEvent;
 import com.summa.model.Ask;
 import com.summa.model.BoardTask;
 import com.summa.model.DnaProposal;
 import com.summa.model.MemoryItem;
+import com.summa.model.Pat;
 import com.summa.security.PasswordUtil;
 import com.summa.security.PasswordValidator;
 import com.summa.util.JsonHelpers;
@@ -39,6 +42,8 @@ public class OrgService {
     private final BoardTaskRepository boardTaskRepository;
     private final DnaProposalRepository proposalRepository;
     private final MemoryItemRepository memoryItemRepository;
+    private final PatRepository patRepository;
+    private final DataHoldRepository dataHoldRepository;
 
     public OrgService(HumanRepository humanRepository, AuditService auditService,
                       AuditEventRepository auditEventRepository,
@@ -48,7 +53,9 @@ public class OrgService {
                       AskRepository askRepository,
                       BoardTaskRepository boardTaskRepository,
                       DnaProposalRepository proposalRepository,
-                      MemoryItemRepository memoryItemRepository) {
+                      MemoryItemRepository memoryItemRepository,
+                      PatRepository patRepository,
+                      DataHoldRepository dataHoldRepository) {
         this.humanRepository = humanRepository;
         this.auditService = auditService;
         this.auditEventRepository = auditEventRepository;
@@ -59,6 +66,15 @@ public class OrgService {
         this.boardTaskRepository = boardTaskRepository;
         this.proposalRepository = proposalRepository;
         this.memoryItemRepository = memoryItemRepository;
+        this.patRepository = patRepository;
+        this.dataHoldRepository = dataHoldRepository;
+    }
+
+    private String findErasureCustodyAdmin() {
+        return memberService.findAdmins().stream()
+                .map(h -> "h:" + h.getId())
+                .findFirst()
+                .orElse(null);
     }
 
     @Transactional
@@ -307,36 +323,50 @@ public class OrgService {
         human.setDeactivatedAt(Instant.now());
         humanRepository.save(human);
 
-        // STG-031: Sweep DNA proposal attribution
         String cleanId = JsonHelpers.stripIdPrefix(id);
+        // STG-034: legal holds (kind member) freeze erasure inside the transaction
+        // so a hold created between any external check and the sweep cannot slip through
+        if (!dataHoldRepository.findByKindAndSubjectIdAndReleasedAtIsNull("member", cleanId).isEmpty()) {
+            throw new ConflictException("Active data holds prevent erasure");
+        }
+
+        // STG-031: Sweep DNA proposal attribution to the erasure custody admin
+        String erasureCustody = findErasureCustodyAdmin();
+        if (erasureCustody == null) {
+            // No live admin can take custody: erasure would strand keyed-union rows — refuse
+            throw new ConflictException("No active admin to assume custody; erasure refused");
+        }
         for (DnaProposal prop : proposalRepository.findByProposedBy(cleanId)) {
-            prop.setProposedBy(OffboardingWalkService.ADMIN_BROADCAST);
+            prop.setProposedBy(erasureCustody);
             proposalRepository.save(prop);
         }
         for (DnaProposal prop : proposalRepository.findByProposedBy("h:" + cleanId)) {
-            prop.setProposedBy(OffboardingWalkService.ADMIN_BROADCAST);
+            prop.setProposedBy(erasureCustody);
             proposalRepository.save(prop);
         }
 
-        // STG-032: Sweep ask from/to attribution using targeted queries
+        // STG-031: Sweep ask attribution. asks.to takes custody of the departed member's
+        // pending addressee role; asks.from is re-pointed to the system originator —
+        // 'admins' is legal only on asks.to and the CHECK constraint rejects it on from.
         for (Ask ask : askRepository.findByFrom(cleanId)) {
-            ask.setFrom(OffboardingWalkService.ADMIN_BROADCAST);
+            ask.setFrom("system");
             askRepository.save(ask);
         }
         for (Ask ask : askRepository.findByFrom("h:" + cleanId)) {
-            ask.setFrom(OffboardingWalkService.ADMIN_BROADCAST);
+            ask.setFrom("system");
             askRepository.save(ask);
         }
         for (Ask ask : askRepository.findByTo(cleanId)) {
-            ask.setTo(OffboardingWalkService.ADMIN_BROADCAST);
+            ask.setTo(erasureCustody);
             askRepository.save(ask);
         }
         for (Ask ask : askRepository.findByTo("h:" + cleanId)) {
-            ask.setTo(OffboardingWalkService.ADMIN_BROADCAST);
+            ask.setTo(erasureCustody);
             askRepository.save(ask);
         }
 
-        // STG-033: Sweep board task assignment attribution using targeted query
+        // STG-031: Completed board-task assignments keep the event shape with the
+        // member link severed (null); a live assignee cannot be an erased member.
         for (BoardTask task : boardTaskRepository.findByAssigneeMemberId(cleanId)) {
             if (cleanId.equals(task.getAssigneeMemberId())) {
                 task.setAssigneeMemberId(null);
@@ -348,14 +378,29 @@ public class OrgService {
             boardTaskRepository.save(task);
         }
 
-        // STG-034: Sweep memory item attribution
+        // STG-034: Sweep memory item attribution. member_id is an FK to agents(id),
+        // so a pseudonymized human ref nulls out (severed) rather than taking custody.
         for (MemoryItem mem : memoryItemRepository.findByMemberId(cleanId)) {
-            mem.setMemberId(OffboardingWalkService.ADMIN_BROADCAST);
+            mem.setMemberId(null);
             memoryItemRepository.save(mem);
         }
         for (MemoryItem mem : memoryItemRepository.findByMemberId("h:" + cleanId)) {
-            mem.setMemberId(OffboardingWalkService.ADMIN_BROADCAST);
+            mem.setMemberId(null);
             memoryItemRepository.save(mem);
+        }
+
+        // STG-031: Revoke the member's personal access tokens (DAT-120: sweep both forms)
+        for (String memberRef : List.of(cleanId, "h:" + cleanId)) {
+            for (Pat pat : patRepository.findByMemberId(memberRef)) {
+                pat.setRevokedAt(Instant.now());
+                patRepository.save(pat);
+            }
+        }
+
+        // STG-030/034: legal holds (kind member) freeze erasure inside the transaction
+        // so a hold created between the controller check and the sweep cannot slip through
+        if (!dataHoldRepository.findByKindAndSubjectIdAndReleasedAtIsNull("member", cleanId).isEmpty()) {
+            throw new ConflictException("Active data holds prevent erasure");
         }
 
         auditService.log(actor, "ERASURE", "human", id, null);

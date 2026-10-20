@@ -22,7 +22,7 @@ function renderWithRouter(ui: React.ReactNode) {
 describe('Home page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(apiModule.api.health).mockResolvedValue({ status: 'UP', service: 'summa', mode: 'single-process', checks: { database: 'up', git_store: 'up' } })
+    vi.mocked(apiModule.api.health).mockResolvedValue({ status: 'UP', service: 'summa', mode: 'single-process', checks: { database: 'UP', git_store: 'UP' } })
   })
 
   it('renders the Summa title', async () => {
@@ -60,7 +60,7 @@ describe('Home page', () => {
     const user = userEvent.setup()
     vi.mocked(apiModule.api.health)
       .mockRejectedValueOnce(new Error('Service unavailable'))
-      .mockResolvedValue({ status: 'UP', service: 'summa', mode: 'single-process', checks: { database: 'up', git_store: 'up' } })
+      .mockResolvedValue({ status: 'UP', service: 'summa', mode: 'single-process', checks: { database: 'UP', git_store: 'UP' } })
 
     const { container } = renderWithRouter(<Home />)
     await waitFor(() => {

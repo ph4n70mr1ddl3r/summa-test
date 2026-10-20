@@ -205,13 +205,15 @@ public class AgentService {
             cancelRetiringAgentTask(task, id);
         }
 
-        // 3. Archive pending spawn requests from the agent
-        for (SpawnRequest spawn : spawnRequestRepository.findByRequesterId(id)) {
-            if ("requested".equals(spawn.getStatus())) {
-                spawn.setStatus("archived");
-                spawnRequestRepository.save(spawn);
-                auditService.logSystem("RETIRE_ARCHIVE_SPAWN", "spawn_request", spawn.getId(),
-                    String.format("{\"agentId\":%s,\"reason\":\"agent_retiring\"}", JsonHelpers.jsonString(id)));
+        // 3. Archive pending spawn requests from the agent (DAT-120: bare + a: forms)
+        for (String requesterRef : List.of(id, agentKeyedRef)) {
+            for (SpawnRequest spawn : spawnRequestRepository.findByRequesterId(requesterRef)) {
+                if ("requested".equals(spawn.getStatus())) {
+                    spawn.setStatus("archived");
+                    spawnRequestRepository.save(spawn);
+                    auditService.logSystem("RETIRE_ARCHIVE_SPAWN", "spawn_request", spawn.getId(),
+                        String.format("{\"agentId\":%s,\"reason\":\"agent_retiring\"}", JsonHelpers.jsonString(id)));
+                }
             }
         }
 
@@ -225,12 +227,19 @@ public class AgentService {
             }
         }
 
-        // 5. Pause initiatives led by the agent (DAT-120: keyed-union refs)
-        for (Initiative init : initiativeRepository.findByLead(id)) {
-            pauseRetiringAgentInitiative(init, id);
-        }
-        for (Initiative init : initiativeRepository.findByLead(agentKeyedRef)) {
-            pauseRetiringAgentInitiative(init, id);
+        // 5. Pause initiatives the agent sponsors or leads (CLC-020: both posts; DAT-120: bare + a: refs)
+        Set<String> seenInitiatives = new HashSet<>();
+        for (String ref : List.of(id, agentKeyedRef)) {
+            for (Initiative init : initiativeRepository.findBySponsor(ref)) {
+                if (seenInitiatives.add(init.getId())) {
+                    pauseRetiringAgentInitiative(init, id);
+                }
+            }
+            for (Initiative init : initiativeRepository.findByLead(ref)) {
+                if (seenInitiatives.add(init.getId())) {
+                    pauseRetiringAgentInitiative(init, id);
+                }
+            }
         }
 
         // CLC-026: Withdraw open DNA proposals authored by the retiring agent

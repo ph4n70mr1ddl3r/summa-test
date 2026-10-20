@@ -57,7 +57,9 @@ export default function Spawning() {
       await loadData()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err))
-      try { await loadData(); setError(null) } catch { /* keep original action error */ }
+      try { await loadData() } catch (reloadErr) {
+        setActionError(reloadErr instanceof Error ? reloadErr.message : String(reloadErr))
+      }
     } finally {
       setActionId(null)
       setConfirmAction(prev => { const next = { ...prev }; delete next[id]; return next })

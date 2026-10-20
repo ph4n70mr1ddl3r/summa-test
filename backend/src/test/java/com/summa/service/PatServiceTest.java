@@ -44,6 +44,8 @@ class PatServiceTest {
         assertNotNull(result.token());
         assertTrue(result.token().startsWith("summa_pat_"));
         assertEquals("bcrypt_hash", result.pat().getTokenHash());
+        // DAT-120: pats.member_id is stored keyed
+        assertEquals("h:human-1", result.pat().getMemberId());
         verify(passwordEncoder).encode(anyString());
     }
 

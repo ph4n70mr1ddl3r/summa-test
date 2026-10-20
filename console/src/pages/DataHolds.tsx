@@ -40,7 +40,11 @@ export default function DataHolds() {
       await loadHolds()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err))
-      try { await loadHolds(); setError(null) } catch { /* keep original action error */ }
+      try { await loadHolds() } catch (reloadErr) {
+        // Surface the reload failure too — otherwise the list is stale and the
+        // only signal is which row the release referred to
+        setActionError((reloadErr instanceof Error ? reloadErr.message : String(reloadErr)))
+      }
     } finally {
       setActionId(null)
       setConfirmReleaseId(null)

@@ -41,7 +41,11 @@ public class PatController {
         if (!memberService.isAdmin(actor)) {
             return ControllerResponses.gate(auditService, actor, "Admin access required to list PATs");
         }
-        return ResponseEntity.ok(patService.findByMember(memberId));
+        // DAT-120: pats.member_id is keyed — sweep both the bare and h:-prefixed form
+        List<com.summa.model.Pat> pats = new java.util.ArrayList<>(
+            patService.findByMember(JsonHelpers.stripIdPrefix(memberId)));
+        pats.addAll(patService.findByMember("h:" + JsonHelpers.stripIdPrefix(memberId)));
+        return ResponseEntity.ok(pats);
     }
 
     @PostMapping
@@ -115,7 +119,8 @@ public class PatController {
             com.summa.model.Pat pat = patService.findById(id)
                     .orElseThrow(() -> new com.summa.exception.EntityNotFoundException("PAT not found: " + id));
             String cleanActor = JsonHelpers.stripIdPrefix(actor);
-            boolean isOwner = pat.getMemberId() != null && pat.getMemberId().equals(cleanActor);
+            // DAT-120: stored member_id is keyed (h:<id>) — compare in that form
+            boolean isOwner = pat.getMemberId() != null && pat.getMemberId().equals("h:" + cleanActor);
             if (!isOwner && !memberService.isAdmin(actor)) {
                 return ControllerResponses.gate(auditService, actor, "Only the PAT owner or an admin may revoke");
             }
