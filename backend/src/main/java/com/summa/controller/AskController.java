@@ -9,6 +9,7 @@ import com.summa.security.RbacAuthorizationFilter;
 import com.summa.security.RateLimiter;
 import com.summa.enums.AskKind;
 import com.summa.enums.AskTier;
+import com.summa.model.ExpiryBehavior;
 import com.summa.util.JsonHelpers;
 import com.summa.constants.Defaults;
 import com.summa.service.OffboardingWalkService;
@@ -37,7 +38,7 @@ public class AskController {
     private static final Set<String> VALID_ASK_TIERS = EnumSet.allOf(AskTier.class).stream()
         .map(AskTier::getValue).collect(Collectors.toSet());
 
-    private static final Set<String> VALID_EXPIRY_BEHAVIORS = Set.of("deny", "escalate", "reassign");
+    private static final Set<ExpiryBehavior> VALID_EXPIRY_BEHAVIORS = Set.of(ExpiryBehavior.DENY, ExpiryBehavior.ESCALATE, ExpiryBehavior.REASSIGN);
 
     public AskController(AskService askService, AuditService auditService, WriteGate writeGate,
                            MemberService memberService, RateLimiter rateLimiter) {
@@ -166,10 +167,12 @@ public class AskController {
                     throw new IllegalArgumentException("Invalid slaTier: " + slaTier + ". Must be one of: " + VALID_ASK_TIERS);
                 }
             }
-            String expiryBehavior = body.get("expiryBehavior");
-            if (expiryBehavior != null && !expiryBehavior.isBlank()) {
+            String expiryBehaviorStr = body.get("expiryBehavior");
+            ExpiryBehavior expiryBehavior = null;
+            if (expiryBehaviorStr != null && !expiryBehaviorStr.isBlank()) {
+                expiryBehavior = ExpiryBehavior.valueOf(expiryBehaviorStr.toUpperCase());
                 if (!VALID_EXPIRY_BEHAVIORS.contains(expiryBehavior)) {
-                    throw new IllegalArgumentException("Invalid expiryBehavior: " + expiryBehavior + ". Must be one of: " + VALID_EXPIRY_BEHAVIORS);
+                    throw new IllegalArgumentException("Invalid expiryBehavior: " + expiryBehaviorStr + ". Must be one of: " + VALID_EXPIRY_BEHAVIORS);
                 }
             }
             String deadlineStr = body.get("deadlineSeconds");
@@ -212,7 +215,7 @@ public class AskController {
                 toClean,
                 body.get("payload"),
                 slaTier,
-                expiryBehavior,
+                expiryBehavior != null ? expiryBehavior.getValue() : ExpiryBehavior.DENY.getValue(),
                 quorumRequired,
                 Instant.now().plusSeconds(deadlineSeconds),
                 initiativeId,

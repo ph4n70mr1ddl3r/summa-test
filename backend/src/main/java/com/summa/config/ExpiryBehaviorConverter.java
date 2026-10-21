@@ -1,0 +1,26 @@
+package com.summa.config;
+
+import com.summa.model.ExpiryBehavior;
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
+
+@Converter
+public class ExpiryBehaviorConverter implements AttributeConverter<ExpiryBehavior, String> {
+
+    @Override
+    public String convertToDatabaseColumn(ExpiryBehavior attribute) {
+        return attribute != null ? attribute.getValue() : null;
+    }
+
+    @Override
+    public ExpiryBehavior convertToEntityAttribute(String dbData) {
+        if (dbData != null) {
+            for (ExpiryBehavior eb : ExpiryBehavior.values()) {
+                if (eb.getValue().equals(dbData)) {
+                    return eb;
+                }
+            }
+        }
+        return null;
+    }
+}

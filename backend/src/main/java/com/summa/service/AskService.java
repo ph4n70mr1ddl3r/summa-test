@@ -4,6 +4,7 @@ import com.summa.enums.RbacRole;
 import com.summa.constants.Defaults;
 import com.summa.repository.AskRepository;
 import com.summa.model.Ask;
+import com.summa.model.ExpiryBehavior;
 import com.summa.model.Human;
 import com.summa.repository.InitiativeRepository;
 import com.summa.repository.WorkspaceRepository;
@@ -182,7 +183,7 @@ public class AskService {
         ask.setTo(to);
         ask.setPayload(payload != null ? payload : "{}");
         ask.setSlaTier(effectiveTier);
-        ask.setExpiryBehavior(expiryBehavior != null ? expiryBehavior : "deny");
+        ask.setExpiryBehavior(expiryBehavior != null ? ExpiryBehavior.valueOf(expiryBehavior.toUpperCase()) : ExpiryBehavior.DENY);
         ask.setQuorumRequired(quorumRequired != null ? quorumRequired : 1);
         ask.setDeadline(deadline);
         ask.setInitiativeId(initiativeId);
@@ -370,8 +371,8 @@ public class AskService {
                         if (successorDeadlineSeconds > Defaults.MAX_DEADLINE_SECONDS) {
                             successorDeadlineSeconds = Defaults.MAX_DEADLINE_SECONDS;
                         }
-                          Ask successor = create(current.getKind(), current.getFrom(), successorTo,
-                              current.getPayload(), current.getSlaTier(), current.getExpiryBehavior(),
+Ask successor = create(current.getKind(), current.getFrom(), successorTo,
+    current.getPayload(), current.getSlaTier(), current.getExpiryBehavior(),
                               current.getQuorumRequired(),
                               Instant.now().plusSeconds(successorDeadlineSeconds),
                               current.getInitiativeId(), current.getWorkspaceId(), rootAskId);

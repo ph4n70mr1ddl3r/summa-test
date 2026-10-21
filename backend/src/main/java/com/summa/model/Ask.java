@@ -1,5 +1,6 @@
 package com.summa.model;
 
+import com.summa.config.ExpiryBehaviorConverter;
 import com.summa.config.InstantToUnixEpochConverter;
 import jakarta.persistence.*;
 import java.time.Instant;
@@ -51,7 +52,8 @@ public class Ask {
     private String escalation;
 
     @Column(name = "expiry_behavior", nullable = false, length = 20)
-    private String expiryBehavior;
+    @Convert(converter = ExpiryBehaviorConverter.class)
+    private ExpiryBehavior expiryBehavior;
 
     @Column(name = "responded_at")
     @Convert(converter = InstantToUnixEpochConverter.class)
@@ -72,7 +74,7 @@ public class Ask {
         if (updatedAt == null) updatedAt = Instant.now();
         if (status == null) status = "pending";
         if (slaTier == null) slaTier = "standard";
-        if (expiryBehavior == null) expiryBehavior = "deny";
+        if (expiryBehavior == null) expiryBehavior = ExpiryBehavior.DENY;
         if (quorumRequired == null) quorumRequired = 1;
         if (responses == null) responses = "[]";
         if (collapsedCount == null) collapsedCount = 0;
@@ -110,8 +112,12 @@ public class Ask {
     public void setSlaTier(String slaTier) { this.slaTier = slaTier; }
     public String getEscalation() { return escalation; }
     public void setEscalation(String escalation) { this.escalation = escalation; }
-    public String getExpiryBehavior() { return expiryBehavior; }
-    public void setExpiryBehavior(String expiryBehavior) { this.expiryBehavior = expiryBehavior; }
+    public String getExpiryBehavior() { return expiryBehavior != null ? expiryBehavior.getValue() : "deny"; }
+    public ExpiryBehavior getExpiryBehaviorEnum() { return expiryBehavior; }
+    public void setExpiryBehavior(ExpiryBehavior expiryBehavior) { this.expiryBehavior = expiryBehavior; }
+    public void setExpiryBehavior(String expiryBehavior) {
+        this.expiryBehavior = expiryBehavior != null ? ExpiryBehavior.valueOf(expiryBehavior.toUpperCase()) : ExpiryBehavior.DENY;
+    }
     public Instant getRespondedAt() { return respondedAt; }
     public void setRespondedAt(Instant respondedAt) { this.respondedAt = respondedAt; }
     public Integer getQuorumRequired() { return quorumRequired; }
