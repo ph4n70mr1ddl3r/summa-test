@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
 import java.util.Optional;
@@ -56,7 +57,14 @@ class OffboardingWalkServiceTest {
     @Mock private RoleTemplateRepository roleTemplateRepository;
     @Mock private WorkspaceRepository workspaceRepository;
     @Mock private DnaDomainRepository domainRepository;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    /**
+     * A spy, not a plain instance: Mockito resolves the SUT's constructor
+     * arguments from the test's mock candidates, so a plain ObjectMapper field
+     * left the service's mapper null and every JSON path under test silently
+     * took its fallback branch.
+     */
+    @Spy
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     @InjectMocks
     private OffboardingWalkService walkService;

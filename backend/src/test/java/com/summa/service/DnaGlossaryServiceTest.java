@@ -207,4 +207,57 @@ class DnaGlossaryServiceTest {
             glossaryService.update("gloss-1", "new def", null, "admin")
         );
     }
+
+    @Test
+    void create_refusesAnAliasThatDuplicatesALiveTerm() {
+        // DRP-032: the duplicate check covers an alias as well as a term — "term
+        // or alias duplicating a live entry of the same scope".
+        DnaGlossary existing = new DnaGlossary();
+        existing.setId("gloss-1");
+        existing.setTerm("revenue");
+        existing.setStatus("active");
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.of(new DnaDomain()));
+        when(glossaryRepository.findLiveByTermAndScope("recurring", "domain-1")).thenReturn(List.of());
+        when(glossaryRepository.findLiveByScope("domain-1")).thenReturn(List.of(existing));
+
+        assertThrows(IllegalArgumentException.class, () ->
+            glossaryService.create("gloss-2", "domain-1", "recurring", "Definition", "revenue", "admin")
+        );
+    }
+
+    @Test
+    void create_refusesATermThatDuplicatesALiveAlias() {
+        DnaGlossary existing = new DnaGlossary();
+        existing.setId("gloss-1");
+        existing.setTerm("revenue");
+        existing.setAliases("[\"recurring\"]");
+        existing.setStatus("active");
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.of(new DnaDomain()));
+        when(glossaryRepository.findLiveByTermAndScope("recurring", "domain-1")).thenReturn(List.of());
+        when(glossaryRepository.findLiveByScope("domain-1")).thenReturn(List.of(existing));
+
+        assertThrows(IllegalArgumentException.class, () ->
+            glossaryService.create("gloss-2", "domain-1", "recurring", "Definition", null, "admin")
+        );
+    }
+
+    @Test
+    void create_allowsAnAliasInAnotherScope() {
+        // The org-wide scope is a scope of its own: an org-wide entry does not
+        // collide with a domain-scoped one.
+        DnaGlossary existing = new DnaGlossary();
+        existing.setId("gloss-1");
+        existing.setTerm("revenue");
+        existing.setDomainId("domain-2");
+        existing.setStatus("active");
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.of(new DnaDomain()));
+        when(glossaryRepository.findLiveByTermAndScope("recurring", "domain-1")).thenReturn(List.of());
+        when(glossaryRepository.findLiveByScope("domain-1")).thenReturn(List.of());
+        when(glossaryRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
+
+        DnaGlossary result = glossaryService.create("gloss-2", "domain-1", "recurring", "Definition", "revenue", "admin");
+
+        assertNotNull(result);
+    }
 }

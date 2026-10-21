@@ -31,13 +31,13 @@ export default function DNAConsole() {
         api.dna.domains(),
         api.dna.cards(),
         api.dna.goals(),
-        isAdmin ? api.dna.reviewQueue() : Promise.resolve([]),
+        isAdmin ? api.dna.reviewQueue() : Promise.resolve(null),
       ]),
       () => Promise.all([
         api.dna.domains().catch(() => null),
         api.dna.cards().catch(() => null),
         api.dna.goals().catch(() => null),
-        isAdmin ? api.dna.reviewQueue().catch(() => null) : Promise.resolve([]),
+        isAdmin ? api.dna.reviewQueue().catch(() => null) : Promise.resolve(null),
       ]),
     ).then(({ data, error: loadError }) => {
       if (aborted) { setLoading(false); return }
@@ -59,7 +59,14 @@ export default function DNAConsole() {
     return cancel
   }, [])
 
-  const openProposals = useMemo(() => proposals.filter(p => p.status === 'open'), [proposals])
+  // DWP-020/DWP-025: the review queue holds every proposal still in review —
+  // `open` and `breached` alike (a breach is an urgency flag, not a lifecycle).
+  // The backend's review-queue endpoint returns both, so filtering to `open`
+  // alone hid exactly the proposals DWP-025 says must surface as urgent.
+  const inReview = useMemo(
+    () => proposals.filter(p => p.status === 'open' || p.status === 'breached'),
+    [proposals],
+  )
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
   if (error && !hasData) return <ErrorBanner message={error} onRetry={loadData} onDismiss={() => setError(null)} />
@@ -95,14 +102,14 @@ export default function DNAConsole() {
 
       <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-blue-300">Review Queue ({openProposals.length} open)</h3>
+          <h3 className="text-lg font-semibold text-blue-300">Review Queue ({inReview.length} in review)</h3>
             <NavLink to="/dna/proposals" className="text-sm text-blue-400 hover:text-blue-300" aria-label="Review DNA proposals">Review →</NavLink>
         </div>
-        {openProposals.length === 0 ? (
-          <p className="text-gray-500 text-sm">No open proposals.</p>
+        {inReview.length === 0 ? (
+          <p className="text-gray-500 text-sm">No proposals in review.</p>
         ) : (
           <div className="space-y-2">
-            {openProposals.slice(0, 5).map((p) => (
+            {inReview.slice(0, 5).map((p) => (
               <div key={p.id} className="bg-gray-700 rounded px-3 py-2 text-sm text-gray-300">
                 <span className="font-medium">{escapeHtml(p.kind)}</span>
                 <span className="text-gray-500 ml-2">{escapeHtml(p.proposedBy)}</span>
@@ -111,8 +118,8 @@ export default function DNAConsole() {
                 </span>
               </div>
             ))}
-            {openProposals.length > 5 && (
-              <p className="text-xs text-gray-500 pt-1">…and {openProposals.length - 5} more. <NavLink to="/dna/proposals" className="text-blue-400 hover:text-blue-300" aria-label="View all proposals">View all →</NavLink></p>
+            {inReview.length > 5 && (
+              <p className="text-xs text-gray-500 pt-1">…and {inReview.length - 5} more. <NavLink to="/dna/proposals" className="text-blue-400 hover:text-blue-300" aria-label="View all proposals">View all →</NavLink></p>
             )}
           </div>
         )}

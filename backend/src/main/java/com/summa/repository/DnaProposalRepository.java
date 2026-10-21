@@ -20,6 +20,14 @@ public interface DnaProposalRepository extends JpaRepository<DnaProposal, String
     
     long countByStatus(String status);
     long countByDomainIdAndStatus(String domainId, String status);
+
+    /**
+     * DGV-040: the live-set check counts every proposal still in review. A
+     * `breached` proposal is in review too — the breach is an urgency flag, not a
+     * lifecycle — so it blocks an archive exactly as an `open` one does.
+     */
+    @Query("SELECT COUNT(p) FROM DnaProposal p WHERE p.domainId = :domainId AND (p.status = 'open' OR p.status = 'breached')")
+    long countOpenByDomain(@org.springframework.data.repository.query.Param("domainId") String domainId);
     List<DnaProposal> findByProposedByAndStatus(String proposedBy, String status);
     List<DnaProposal> findByProposedBy(String proposedBy);
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import type { Group } from '../types'
-import { groupStatusColor, escapeHtml } from '../utils/formatting'
+import { groupStatusColor, escapeHtml, stripMemberPrefix } from '../utils/formatting'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { readSessionUser } from '../utils/session'
 import { cancellableLoad, startLoad } from '../utils/loadState'
@@ -80,7 +80,7 @@ export default function Groups() {
                 <div>
                   <p className="font-medium text-gray-200">{escapeHtml(g.name)}</p>
                   <p className="text-sm text-gray-400 mt-1">
-                    {g.leaderMemberId ? `Leader: ${escapeHtml(g.leaderMemberId)}` : 'No leader assigned'}
+                    {g.leaderMemberId ? `Leader: ${escapeHtml(stripMemberPrefix(g.leaderMemberId))}` : 'No leader assigned'}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">

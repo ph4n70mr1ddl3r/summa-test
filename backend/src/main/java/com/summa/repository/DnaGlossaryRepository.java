@@ -32,6 +32,23 @@ public interface DnaGlossaryRepository extends JpaRepository<DnaGlossary, String
     @Query("SELECT g FROM DnaGlossary g WHERE g.status = 'active' AND (g.domainId = :domainId OR g.domainId IS NULL) ORDER BY g.domainId ASC, g.term ASC")
     List<DnaGlossary> findActiveByScope(@org.springframework.data.repository.query.Param("domainId") String domainId);
 
+    /**
+     * DRP-032: the duplicate check covers an alias as well as a term — "term or
+     * alias duplicating a live entry of the same scope". The live entries of the
+     * scope are needed whole (their terms and their aliases), so the scope's
+     * non-retired rows are read in one query; the org-wide (null domain) scope is
+     * a scope of its own.
+     */
+    @Query(value = "SELECT g.* FROM dna_glossary g WHERE g.status <> 'retired' "
+            + "AND COALESCE(g.domain_id, '') = COALESCE(:domainId, '')", nativeQuery = true)
+    List<DnaGlossary> findLiveByScope(@org.springframework.data.repository.query.Param("domainId") String domainId);
+
     List<DnaGlossary> findByStatus(String status);
     long countByDomainIdAndStatus(String domainId, String status);
+
+    /**
+     * DGV-040: the live-set check counts the glossary entries that still hold
+     * their terms — a retired entry is history and never blocks an archive.
+     */
+    long countByDomainIdAndStatusNot(String domainId, String status);
 }

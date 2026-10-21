@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import com.summa.util.ScanUtils;
 import com.summa.util.JsonHelpers;
-import com.summa.exception.EntityNotFoundException;
+import com.summa.util.DomainGuards;
 
 @Service
 public class DnaDecisionService {
@@ -32,8 +32,8 @@ public class DnaDecisionService {
     public DnaDecision create(String id, String domainId, String contextMd, String outcomeMd,
                                String decidedBy, String provenance, String actor) {
         if (domainId != null && !domainId.isBlank()) {
-            domainRepository.findById(domainId).orElseThrow(
-                () -> new EntityNotFoundException("Domain not found: " + domainId));
+            // DGV-041: an archived domain is read-only history — no new items land in it.
+            DomainGuards.requireWritable(domainRepository.findById(domainId).orElse(null), domainId);
         }
         // DAT-120: dna_decisions.decided_by is a keyed union (h:<humans.id> /
         // a:<agents.id>) — resolve the kind by live lookup and store the keyed form.

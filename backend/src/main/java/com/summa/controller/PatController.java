@@ -119,8 +119,9 @@ public class PatController {
             com.summa.model.Pat pat = patService.findById(id)
                     .orElseThrow(() -> new com.summa.exception.EntityNotFoundException("PAT not found: " + id));
             String cleanActor = JsonHelpers.stripIdPrefix(actor);
-            // DAT-120: stored member_id is keyed (h:<id>) — compare in that form
-            boolean isOwner = pat.getMemberId() != null && pat.getMemberId().equals("h:" + cleanActor);
+            // DAT-120: stored member_id is keyed (h:<id> / a:<id>) — compare in that form
+            String cleanActorKeyed = JsonHelpers.stripIdPrefix(actor);
+            boolean isOwner = cleanActorKeyed != null && cleanActorKeyed.equals(JsonHelpers.stripIdPrefix(pat.getMemberId()));
             if (!isOwner && !memberService.isAdmin(actor)) {
                 return ControllerResponses.gate(auditService, actor, "Only the PAT owner or an admin may revoke");
             }

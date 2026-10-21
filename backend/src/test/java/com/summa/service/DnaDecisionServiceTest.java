@@ -3,6 +3,7 @@ package com.summa.service;
 import com.summa.repository.DnaDecisionRepository;
 import com.summa.repository.DnaDomainRepository;
 import com.summa.model.DnaDecision;
+import com.summa.model.DnaDomain;
 import com.summa.model.Human;
 import com.summa.exception.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
@@ -147,5 +148,22 @@ class DnaDecisionServiceTest {
         List<DnaDecision> results = decisionService.findAll();
 
         assertEquals(1, results.size());
+    }
+
+    @Test
+    void create_refusesAnArchivedDomain() {
+        // DGV-041: the archived domain row is read-only history — no new items
+        // land in it. A decision is an item.
+        DnaDomain archived = new DnaDomain();
+        archived.setId("domain-1");
+        archived.setStatus("archived");
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.of(archived));
+        lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
+        lenient().when(memberService.toKeyedMemberRef("h:human-1")).thenReturn("h:human-1");
+
+        assertThrows(IllegalStateException.class, () ->
+            decisionService.create("dec-1", "domain-1", "ctx", "out", "h:human-1", "prov", "admin")
+        );
+        verify(decisionRepository, never()).save(any());
     }
 }

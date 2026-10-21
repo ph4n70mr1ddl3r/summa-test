@@ -132,6 +132,26 @@ public class DnaRuleController {
         }
     }
 
+    @PostMapping("/{id}/retire")
+    public ResponseEntity<?> retireRule(@PathVariable String id) {
+        String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
+        ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
+        if (gate != null) return gate;
+        try {
+            // DWP-061/DNC-021: the item surface is create / update / retire, never
+            // delete. A rule's retire is window truncation — `effective_to` pinned
+            // to now, the row lapsing at that boundary.
+            DnaRule rule = ruleService.retire(id, actor);
+            return ResponseEntity.ok(rule);
+        } catch (IllegalArgumentException e) {
+            return ControllerResponses.validation(auditService, e.getMessage());
+        } catch (IllegalStateException e) {
+            return ControllerResponses.gate(auditService, e.getMessage());
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
+        }
+    }
+
     @PostMapping("/{id}/supersede/{supersedesId}")
     public ResponseEntity<?> supersede(@PathVariable String id, @PathVariable String supersedesId) {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();

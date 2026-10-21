@@ -21,10 +21,13 @@ import com.summa.model.Workspace;
 import com.summa.model.Ask;
 import com.summa.repository.InitiativeRepository;
 import com.summa.model.Initiative;
+import com.summa.enums.AskStatus;
+import com.summa.constants.Defaults;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -52,6 +55,7 @@ public class DnaDomainService {
     private final AskRepository askRepository;
     private final InitiativeRepository initiativeRepository;
     private final AuditService auditService;
+    private final AskService askService;
     private final ObjectMapper objectMapper;
 
     public DnaDomainService(DnaDomainRepository domainRepository, DnaCardRepository cardRepository,
@@ -60,7 +64,7 @@ public class DnaDomainService {
                             DnaGoalRepository goalRepository, DnaDecisionRepository decisionRepository,
                             DataHoldRepository dataHoldRepository,
                             AskRepository askRepository, InitiativeRepository initiativeRepository,
-                            AuditService auditService, ObjectMapper objectMapper) {
+                            AuditService auditService, AskService askService, ObjectMapper objectMapper) {
         this.domainRepository = domainRepository;
         this.cardRepository = cardRepository;
         this.proposalRepository = proposalRepository;
@@ -73,6 +77,7 @@ public class DnaDomainService {
         this.askRepository = askRepository;
         this.initiativeRepository = initiativeRepository;
         this.auditService = auditService;
+        this.askService = askService;
         this.objectMapper = objectMapper;
     }
 
@@ -127,24 +132,88 @@ public class DnaDomainService {
         DnaDomain domain = domainRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + id));
 
+        // DGV-017: legal holds freeze removal, not addition — an archive of a held
+        // domain queues behind the hold's release. Rename and merge-into stay open.
+        if (dataHoldRepository.existsByKindAndSubjectIdAndReleasedAtIsNull("domain", id)) {
+            throw new IllegalStateException("Domain is under a legal hold — archive refused");
+        }
+
         // DGV-040: Archive refuses a domain still holding live-set state
         // (terminal history — superseded/lapsed rules, terminal goals, retired cards,
-        // decisions — never blocks; only the live set does, §4.4)
+        // glossary — never blocks; only the live set does, §4.4). A `breached`
+        // proposal is still in review (the breach is an urgency flag, not a
+        // lifecycle), so it blocks the archive exactly as an `open` one does.
+        Instant now = Instant.now();
         long liveCards = cardRepository.countByDomainIdAndStatusNot(id, "retired");
-        long openProposals = proposalRepository.countByDomainIdAndStatus(id, "open");
+        long openProposals = proposalRepository.countOpenByDomain(id);
         long liveBindings = workspaceRepository.countByDomainIdsContaining(id);
-        long activeGoals = goalRepository.countByDomainIdAndStatus(id, "active");
-        long activeRules = ruleRepository.countByDomainIdAndStatus(id, "active");
-        if (liveCards > 0 || openProposals > 0 || liveBindings > 0 || activeGoals > 0 || activeRules > 0) {
+        long activeGoals = goalRepository.countLiveByDomainId(id, now);
+        long activeRules = ruleRepository.countLiveByDomainId(id, now);
+        long liveGlossary = glossaryRepository.countByDomainIdAndStatusNot(id, "retired");
+        if (liveCards > 0 || openProposals > 0 || liveBindings > 0 || activeGoals > 0
+                || activeRules > 0 || liveGlossary > 0) {
             throw new IllegalStateException(
-                String.format("Domain holds live state: cards=%d proposals=%d bindings=%d goals=%d rules=%d",
-                    liveCards, openProposals, liveBindings, activeGoals, activeRules));
+                String.format("Domain holds live state: cards=%d proposals=%d bindings=%d goals=%d rules=%d glossary=%d",
+                    liveCards, openProposals, liveBindings, activeGoals, activeRules, liveGlossary));
         }
+
+        // DGV-047: archive has no resulting owner to re-key onto, so it settles
+        // instead — owner-addressed asks pending against the archiving domain close
+        // with an audit note inside the event (ASK-044).
+        settleOwnerAddressedAsks(domain, actor);
 
         domain.setStatus("archived");
         DnaDomain saved = domainRepository.save(domain);
         auditService.log(actor, "ARCHIVE", "dna_domain", id, null);
         return saved;
+    }
+
+    /**
+     * DGV-047/ASK-044: settle the asks whose addressee was derived from the
+     * archiving domain's owner. The ask closes with an audit note inside the
+     * archive event; an ask whose expiry behavior escalates or reassigns opens a
+     * linked successor to the admin broadcast — the domain's owner is gone, so the
+     * terminal hop is the admin set (ASK-055).
+     */
+    private void settleOwnerAddressedAsks(DnaDomain domain, String actor) {
+        String owner = domain.getOwnerHumanId();
+        if (owner == null || owner.isBlank()) return;
+        // The owner is looked up in both the bare and the keyed-union spelling;
+        // an ask is settled once, however many spellings resolve to it.
+        java.util.Set<String> settled = new java.util.HashSet<>();
+        for (String oldForm : List.of(owner, "h:" + JsonHelpers.stripIdPrefix(owner))) {
+            for (Ask ask : askRepository.findByToAndStatusPending(oldForm)) {
+                if (ask.getId() != null && !settled.add(ask.getId())) continue;
+                if (!isAskScopedToDomain(ask, domain.getId())) continue;
+                String behavior = ask.getExpiryBehavior() != null ? ask.getExpiryBehavior() : "deny";
+                ask.setStatus(AskStatus.EXPIRED.getValue());
+                askRepository.save(ask);
+                auditService.log(actor, "ARCHIVE_SETTLE_ASK", "ask", ask.getId(),
+                    String.format("{\"domainId\":%s,\"behavior\":%s,\"reason\":%s}",
+                        JsonHelpers.jsonString(domain.getId()),
+                        JsonHelpers.jsonString(behavior),
+                        JsonHelpers.jsonString("owner_addressed_ask_settled_on_domain_archive")));
+                if ("escalate".equals(behavior) || "reassign".equals(behavior)) {
+                    try {
+                        long deadlineSeconds = Math.min(
+                            askService.deriveDeadlineFromTier(ask.getSlaTier()),
+                            Defaults.MAX_DEADLINE_SECONDS);
+                        askService.create(ask.getKind(), ask.getFrom(),
+                            OffboardingWalkService.ADMIN_BROADCAST, ask.getPayload(),
+                            ask.getSlaTier(), ask.getExpiryBehavior(), ask.getQuorumRequired(),
+                            Instant.now().plusSeconds(deadlineSeconds),
+                            ask.getInitiativeId(), ask.getWorkspaceId());
+                        auditService.log(actor, "ARCHIVE_ASK_SUCCESSOR", "ask", ask.getId(),
+                            String.format("{\"domainId\":%s}", JsonHelpers.jsonString(domain.getId())));
+                    } catch (Exception e) {
+                        auditService.logSystem("ARCHIVE_ASK_SUCCESSOR_FAIL", "ask", ask.getId(),
+                            String.format("{\"domainId\":%s,\"error\":%s}",
+                                JsonHelpers.jsonString(domain.getId()),
+                                JsonHelpers.jsonString(e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName())));
+                    }
+                }
+            }
+        }
     }
 
     @Transactional
@@ -163,12 +232,18 @@ public class DnaDomainService {
     public DnaDomain updateOwner(String id, String newOwnerId, String actor) {
         DnaDomain domain = domainRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + id));
+        String previousOwner = domain.getOwnerHumanId();
         domain.setOwnerHumanId(newOwnerId);
         DnaDomain saved = domainRepository.save(domain);
         // DWP-021: owner re-pointing re-keys the queue's rendering — the review
         // authority is the proposal's review_by, so without this the new owner is
         // refused at the publish door while the former owner keeps it.
         rekeyReviewAuthority(id, newOwnerId);
+        // DGV-045: the owner re-point is one of the owner-re-pointing doors the
+        // attention remapping names — pending asks whose addressee was derived
+        // from the domain's owner re-key to the resulting owner, ids stable and
+        // deadlines untouched.
+        rekeyOwnerAddressedAsks(previousOwner, newOwnerId, id, actor);
         auditService.log(actor, "UPDATE_OWNER", "dna_domain", id,
             String.format("{\"newOwner\":%s}", JsonHelpers.jsonString(newOwnerId)));
         return saved;
@@ -270,14 +345,23 @@ public class DnaDomainService {
             throw new IllegalStateException("Domain is under a legal hold — split refused");
         }
 
-        // DGV-040/DGV-012: refuse if parent holds live state not mapped below
+        // DGV-040/DGV-012: refuse if parent holds live state not mapped below.
+        // Every live item class counts — a card, a rule, a goal, a glossary entry —
+        // and every open proposal and live binding must be named too. Decisions
+        // never block (DNC-032: they are history at birth) and ride the parent's
+        // archive as resolvable history.
+        Instant now = Instant.now();
         long liveCards = cardRepository.countByDomainIdAndStatusNot(parentId, "retired");
-        long liveProposals = proposalRepository.countByDomainIdAndStatus(parentId, "open");
+        long liveRules = ruleRepository.countLiveByDomainId(parentId, now);
+        long liveGoals = goalRepository.countLiveByDomainId(parentId, now);
+        long liveGlossary = glossaryRepository.countByDomainIdAndStatusNot(parentId, "retired");
+        long liveProposals = proposalRepository.countOpenByDomain(parentId);
         long liveBindings = workspaceRepository.countByDomainIdsContaining(parentId);
-        if (Math.max(0, liveCards - itemIds.size()) > 0 || Math.max(0, liveProposals - proposalIds.size()) > 0 || Math.max(0, liveBindings - workspaceIds.size()) > 0) {
+        long liveItems = liveCards + liveRules + liveGoals + liveGlossary;
+        if (Math.max(0, liveItems - itemIds.size()) > 0 || Math.max(0, liveProposals - proposalIds.size()) > 0 || Math.max(0, liveBindings - workspaceIds.size()) > 0) {
             throw new IllegalStateException(
-                String.format("Split mapping is not total: unmapped_cards=%d proposals=%d bindings=%d",
-                    Math.max(0, liveCards - itemIds.size()), Math.max(0, liveProposals - proposalIds.size()), Math.max(0, liveBindings - workspaceIds.size())));
+                String.format("Split mapping is not total: unmapped_items=%d proposals=%d bindings=%d",
+                    Math.max(0, liveItems - itemIds.size()), Math.max(0, liveProposals - proposalIds.size()), Math.max(0, liveBindings - workspaceIds.size())));
         }
 
         // DGV-011: create child inheriting undeclared parent attrs
@@ -297,15 +381,22 @@ public class DnaDomainService {
         // Validate all referenced IDs exist and belong to the parent domain before mutating anything.
         // This prevents partial splits where items are silently left behind.
         List<String> missingCards = new ArrayList<>();
+        List<String> missingItems = new ArrayList<>();
         for (String cardId : itemIds) {
             Optional<DnaCard> cardOpt = cardRepository.findById(cardId);
-            if (cardOpt.isEmpty()) {
-                missingCards.add(cardId);
+            if (cardOpt.isPresent()) {
+                DnaCard card = cardOpt.get();
+                if (card.getDomainId() == null || !card.getDomainId().equals(parent.getId())) {
+                    missingCards.add(cardId + "(wrong_domain:" + card.getDomainId() + ")");
+                }
                 continue;
             }
-            DnaCard card = cardOpt.get();
-            if (card.getDomainId() == null || !card.getDomainId().equals(parent.getId())) {
-                missingCards.add(cardId + "(wrong_domain:" + card.getDomainId() + ")");
+            // DGV-010/DGV-012: the mapping names items of every class the domain
+            // holds — a rule, a goal, or a glossary entry moves with the same
+            // "ids stable" rule a card does.
+            String misplaced = misplacedItemDomain(cardId, parent.getId());
+            if (misplaced != null) {
+                missingItems.add(cardId + "(" + misplaced + ")");
             }
         }
         List<String> missingProposals = new ArrayList<>();
@@ -343,6 +434,7 @@ public class DnaDomainService {
         }
         List<String> allErrors = new ArrayList<>();
         if (!missingCards.isEmpty()) allErrors.add("missing_or_misplaced_cards=" + String.join(",", missingCards));
+        if (!missingItems.isEmpty()) allErrors.add("missing_or_misplaced_items=" + String.join(",", missingItems));
         if (!missingProposals.isEmpty()) allErrors.add("missing_or_misplaced_proposals=" + String.join(",", missingProposals));
         if (!missingWorkspaces.isEmpty()) allErrors.add("missing_or_misplaced_workspaces=" + String.join(",", missingWorkspaces));
         if (!allErrors.isEmpty()) {
@@ -353,12 +445,10 @@ public class DnaDomainService {
                 "Split mapping validation failed: " + String.join("; ", allErrors));
         }
 
-        // Move cards (ids stable per DGV-010)
-        for (String cardId : itemIds) {
-            cardRepository.findById(cardId).ifPresent(card -> {
-                card.setDomainId(savedChild.getId());
-                cardRepository.save(card);
-            });
+        // Move the mapped items (ids stable per DGV-010) — a card, a rule, a goal,
+        // or a glossary entry all move to the child by re-pointing their domain.
+        for (String itemId : itemIds) {
+            moveItemToDomain(itemId, savedChild.getId());
         }
 
         // Remap proposals (ids stable per DGV-042) — validate each belongs to parent domain
@@ -527,6 +617,63 @@ public class DnaDomainService {
         }
     }
 
+    /**
+     * DGV-010/DGV-012: a split's mapping names items of every class the domain
+     * holds. This resolves a mapped id to the domain it actually sits in — null
+     * when the id names no item at all, and a marker when it names an item of
+     * another domain.
+     */
+    private String misplacedItemDomain(String itemId, String parentId) {
+        Optional<DnaRule> ruleOpt = ruleRepository.findById(itemId);
+        if (ruleOpt.isPresent()) {
+            return ruleOpt.get().getDomainId() != null && ruleOpt.get().getDomainId().equals(parentId)
+                ? null : "wrong_domain:" + ruleOpt.get().getDomainId();
+        }
+        Optional<DnaGoal> goalOpt = goalRepository.findById(itemId);
+        if (goalOpt.isPresent()) {
+            return goalOpt.get().getDomainId() != null && goalOpt.get().getDomainId().equals(parentId)
+                ? null : "wrong_domain:" + goalOpt.get().getDomainId();
+        }
+        Optional<DnaGlossary> glossaryOpt = glossaryRepository.findById(itemId);
+        if (glossaryOpt.isPresent()) {
+            return glossaryOpt.get().getDomainId() != null && glossaryOpt.get().getDomainId().equals(parentId)
+                ? null : "wrong_domain:" + glossaryOpt.get().getDomainId();
+        }
+        return "not_an_item";
+    }
+
+    /**
+     * DGV-010: "items move with ids stable (citations and supersession chains
+     * survive)". A split re-points the mapped item's domain; the item's own id and
+     * content are untouched, so a citation to it and a supersession chain through
+     * it survive the move.
+     */
+    private void moveItemToDomain(String itemId, String targetDomainId) {
+        Optional<DnaCard> cardOpt = cardRepository.findById(itemId);
+        if (cardOpt.isPresent()) {
+            cardOpt.get().setDomainId(targetDomainId);
+            cardRepository.save(cardOpt.get());
+            return;
+        }
+        Optional<DnaRule> ruleOpt = ruleRepository.findById(itemId);
+        if (ruleOpt.isPresent()) {
+            ruleOpt.get().setDomainId(targetDomainId);
+            ruleRepository.save(ruleOpt.get());
+            return;
+        }
+        Optional<DnaGoal> goalOpt = goalRepository.findById(itemId);
+        if (goalOpt.isPresent()) {
+            goalOpt.get().setDomainId(targetDomainId);
+            goalRepository.save(goalOpt.get());
+            return;
+        }
+        Optional<DnaGlossary> glossaryOpt = glossaryRepository.findById(itemId);
+        if (glossaryOpt.isPresent()) {
+            glossaryOpt.get().setDomainId(targetDomainId);
+            glossaryRepository.save(glossaryOpt.get());
+        }
+    }
+
     private void rekeyOwnerAdds(String oldDomainId, String newDomainId, String actor) {
         Optional<DnaDomain> oldOpt = domainRepository.findById(oldDomainId);
         Optional<DnaDomain> newOpt = domainRepository.findById(newDomainId);
@@ -538,16 +685,32 @@ public class DnaDomainService {
         // Query both bare and h:-prefixed forms so asks filed by either code path
         // are re-keyed, and compare owners by their stripped forms.
         if (Objects.equals(JsonHelpers.stripIdPrefix(oldOwner), JsonHelpers.stripIdPrefix(newOwner))) return;
-        String newOwnerKeyed = newOwner != null ? "h:" + JsonHelpers.stripIdPrefix(newOwner) : null;
+        rekeyOwnerAddressedAsks(oldOwner, newOwner, oldDomainId, actor);
+    }
+
+    /**
+     * DGV-045: pending asks whose addressee was derived from a domain's owner
+     * re-key to the resulting owner — ask ids stable, deadlines untouched. The
+     * derived addressee is the domain's owner, so an ask is in scope when it is
+     * addressed to that owner and the domain is what the ask hangs off (the
+     * workspace it is bound to, or the initiative whose goal lives in the domain).
+     */
+    private void rekeyOwnerAddressedAsks(String oldOwner, String newOwner, String domainId, String actor) {
+        if (oldOwner == null || oldOwner.isBlank()) return;
+        if (newOwner == null || newOwner.isBlank()) return;
+        if (Objects.equals(JsonHelpers.stripIdPrefix(oldOwner), JsonHelpers.stripIdPrefix(newOwner))) return;
+        String newOwnerKeyed = "h:" + JsonHelpers.stripIdPrefix(newOwner);
+        java.util.Set<String> rekeyed = new java.util.HashSet<>();
         for (String oldForm : List.of(oldOwner, "h:" + JsonHelpers.stripIdPrefix(oldOwner))) {
             for (Ask ask : askRepository.findByToAndStatusPending(oldForm)) {
-                boolean scoped = isAskScopedToDomain(ask, oldDomainId);
-                if (scoped && newOwnerKeyed != null) {
+                if (ask.getId() != null && !rekeyed.add(ask.getId())) continue;
+                boolean scoped = isAskScopedToDomain(ask, domainId);
+                if (scoped) {
                     ask.setTo(newOwnerKeyed);
                     askRepository.save(ask);
                     auditService.logSystem("REKEY_ASK", "ask", ask.getId(),
                         String.format("{\"oldDomain\":%s,\"newDomain\":%s,\"oldTo\":%s,\"newTo\":%s}",
-                            JsonHelpers.jsonString(oldDomainId), JsonHelpers.jsonString(newDomainId),
+                            JsonHelpers.jsonString(domainId), JsonHelpers.jsonString(domainId),
                             JsonHelpers.jsonString(oldForm), JsonHelpers.jsonString(newOwnerKeyed)));
                 }
             }

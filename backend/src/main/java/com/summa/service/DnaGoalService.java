@@ -5,6 +5,7 @@ import com.summa.repository.DnaDomainRepository;
 import com.summa.model.DnaGoal;
 import com.summa.util.JsonHelpers;
 import com.summa.util.ScanUtils;
+import com.summa.util.DomainGuards;
 import com.summa.service.SecretsScanner;
 import com.summa.service.MemberService;
 import com.summa.model.Human;
@@ -39,8 +40,8 @@ public class DnaGoalService {
                             String owner, String inject, Instant effectiveFrom,
                             Instant effectiveTo, String actor) {
         if (domainId != null && !domainId.isBlank()) {
-            domainRepository.findById(domainId).orElseThrow(
-                () -> new EntityNotFoundException("Domain not found: " + domainId));
+            // DGV-041: an archived domain is read-only history — no new items land in it.
+            DomainGuards.requireWritable(domainRepository.findById(domainId).orElse(null), domainId);
         }
         // DNC-053: Validate owner exists before writing
         // DAT-120: dna_goals.owner is a keyed union (h:<id>/a:<id>); strip the

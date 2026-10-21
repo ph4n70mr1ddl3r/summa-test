@@ -234,4 +234,63 @@ class InitiativeServiceTest {
                 Instant.now().plusSeconds(86400), "[]", "h:h1")
         );
     }
+
+    @Test
+    void close_allowsClosingAProposedInitiative() {
+        // INT-020/INT-022: a `proposed` directive that never won activation is
+        // closed by its sponsor or its lead — without this the state was a dead
+        // end and the initiative sat proposed forever.
+        Initiative init = new Initiative();
+        init.setId("i1");
+        init.setStatus("proposed");
+        init.setSponsor("h:sponsor");
+        init.setLead("h:lead");
+        init.setClosedAt(null);
+        when(initiativeRepository.findById("i1")).thenReturn(Optional.of(init));
+        when(initiativeRepository.save(any())).thenReturn(init);
+        when(boardTaskRepository.findByInitiativeId("i1")).thenReturn(List.of());
+        when(askRepository.findByInitiativeIdAndStatusPending("i1")).thenReturn(List.of());
+        lenient().when(memberService.isAdmin("h:lead")).thenReturn(false);
+
+        Initiative result = initiativeService.close("i1", "h:lead");
+
+        assertEquals("closed", result.getStatus());
+    }
+
+    @Test
+    void close_refusesAMemberWhoIsNeitherSponsorLeadNorAdmin() {
+        Initiative init = new Initiative();
+        init.setId("i1");
+        init.setStatus("proposed");
+        init.setSponsor("h:sponsor");
+        init.setLead("h:lead");
+        when(initiativeRepository.findById("i1")).thenReturn(Optional.of(init));
+        lenient().when(memberService.isAdmin("h:member")).thenReturn(false);
+
+        assertThrows(IllegalStateException.class, () -> initiativeService.close("i1", "h:member"));
+    }
+
+    @Test
+    void activate_routesTheLeadToTheSponsorsActivationAsk() {
+        // INT-020: activation is the sponsor's acceptance — "an initiative opened
+        // by anyone other than its sponsor routes an activation ask to the
+        // sponsor". The lead is anyone other than the sponsor.
+        Initiative init = new Initiative();
+        init.setId("i1");
+        init.setStatus("proposed");
+        init.setSponsor("h:sponsor");
+        init.setLead("h:lead");
+        init.setTitle("Launch product");
+        when(initiativeRepository.findById("i1")).thenReturn(Optional.of(init));
+        when(askRepository.findByInitiativeIdAndKindApprovalPending("i1")).thenReturn(List.of());
+        lenient().when(memberService.findHuman("h:sponsor")).thenReturn(Optional.empty());
+        lenient().when(memberService.findAgent("h:sponsor")).thenReturn(Optional.empty());
+        lenient().when(askService.deriveDeadlineFromTier("standard")).thenReturn(86400L);
+
+        Initiative result = initiativeService.activate("i1", "h:lead");
+
+        assertEquals("proposed", result.getStatus());
+        verify(askService).create(eq("approval"), eq("system"), eq("h:sponsor"), anyString(),
+            eq("standard"), eq("deny"), eq(1), any(Instant.class), eq("i1"), eq(null));
+    }
 }

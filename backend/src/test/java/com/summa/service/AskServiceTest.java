@@ -766,4 +766,106 @@ class AskServiceTest {
         assertThrows(IllegalArgumentException.class,
             () -> svc.requireLiveReferences(null, "ghost-ws"));
     }
+
+    @Test
+    void create_flagsAQuorumLargerThanTheEligiblePool() {
+        // ASK-053: N is pool-checked at every write door — an N larger than the
+        // eligible approver pool flags at write like any contradiction. The ask is
+        // still filed (a live pool can grow back, ASK-044), but the shortfall is
+        // named so the write is never a silent impossibility.
+        AskService svc = buildService();
+        when(askRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        Human owner = new Human();
+        owner.setId("owner-1");
+        owner.setRbac("owner");
+        lenient().when(memberService.findHuman("owner-1")).thenReturn(Optional.of(owner));
+        lenient().when(memberService.findAdmins()).thenReturn(List.of());
+
+        svc.create("approval", "h:proposer", "h:owner-1", "{}", "standard", "deny", 3,
+            Instant.now().plusSeconds(3600), null, null);
+
+        verify(auditService).logSystem(eq("ASK_QUORUM_POOL_SHORTFALL"), eq("ask"), anyString(),
+            org.mockito.ArgumentMatchers.contains("shortfall"));
+    }
+
+    @Test
+    void create_doesNotFlagAQuorumThePoolCanMeet() {
+        AskService svc = buildService();
+        when(askRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        Human owner = new Human();
+        owner.setId("owner-1");
+        owner.setRbac("owner");
+        lenient().when(memberService.findHuman("owner-1")).thenReturn(Optional.of(owner));
+        lenient().when(memberService.findAdmins()).thenReturn(List.of());
+
+        svc.create("approval", "h:proposer", "h:owner-1", "{}", "standard", "deny", 1,
+            Instant.now().plusSeconds(3600), null, null);
+
+        verify(auditService, never()).logSystem(eq("ASK_QUORUM_POOL_SHORTFALL"), eq("ask"), anyString(), anyString());
+    }
+
+    @Test
+    void respond_auditsAnIneligibleResponder() {
+        // ASK-040: a response from outside the ask's eligible set is refused at
+        // the respond endpoint with the attempt audited.
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("pending");
+        ask.setTo("h:owner-1");
+        ask.setQuorumRequired(1);
+        ask.setResponses("[]");
+        ask.setDeadline(Instant.now().plusSeconds(3600));
+
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+        lenient().when(memberService.findAdmins()).thenReturn(List.of());
+        lenient().when(memberService.findHuman("owner-1")).thenReturn(Optional.empty());
+
+        AskService svc = buildService();
+        assertThrows(IllegalArgumentException.class, () -> svc.respond("ask-1", "stranger-1", "accept"));
+        verify(auditService).logSystem(eq("REFUSAL"), eq("ask_respond"), eq("ask-1"), anyString());
+    }
+
+    @Test
+    void expireNow_refusesANonAdmin() {
+        // ASK-032: the expiry closure is one of the system's named closures — a
+        // member may not force-close an ask through it.
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("pending");
+        ask.setTo("h:owner-1");
+        ask.setQuorumRequired(1);
+        ask.setDeadline(Instant.now().plusSeconds(3600));
+
+        AskService svc = buildService();
+        assertThrows(IllegalStateException.class, () -> svc.expireNow("ask-1", "member-1"));
+        verify(askRepository, never()).save(any());
+    }
+
+    @Test
+    void expireNow_opensASuccessorForAnEscalatingAsk() {
+        // ASK-011: `escalate` and `reassign` close the expired ask and open a
+        // linked successor ask. The manual door honours the behavior exactly as
+        // the scheduled sweep does.
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setKind("question");
+        ask.setStatus("pending");
+        ask.setFrom("h:proposer");
+        ask.setTo("h:owner-1");
+        ask.setSlaTier("standard");
+        ask.setExpiryBehavior("escalate");
+        ask.setQuorumRequired(1);
+        ask.setPayload("{}");
+        ask.setDeadline(Instant.now().plusSeconds(3600));
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+        when(askRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(memberService.isAdmin("admin-1")).thenReturn(true);
+        lenient().when(governanceService.getSetting(anyString(), eq(Number.class))).thenReturn(null);
+
+        AskService svc = buildService();
+        Ask result = svc.expireNow("ask-1", "admin-1");
+
+        assertEquals("expired", result.getStatus());
+        verify(auditService).log(eq("admin-1"), eq("EXPIRE_SUCCESSOR_CREATED"), eq("ask"), eq("ask-1"), anyString());
+    }
 }

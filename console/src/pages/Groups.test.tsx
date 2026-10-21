@@ -142,4 +142,16 @@ describe('Groups page', () => {
     })
     expect(screen.queryByText('Archive')).not.toBeInTheDocument()
   })
+
+  it('strips the keyed-union prefix from the leader reference', async () => {
+    // DAT-120: the leader is stored as a keyed union (h:<id> / a:<id>) — the
+    // console renders the member id, not the storage prefix.
+    vi.mocked(apiModule.api.groups.list).mockResolvedValue([
+      { id: 'g1', name: 'Engineering', leaderMemberId: 'h:human-1', status: 'active', createdAt: 0 },
+    ])
+    render(<Groups />)
+    await waitFor(() => expect(screen.getByText('Engineering')).toBeInTheDocument())
+    expect(screen.getByText('Leader: human-1')).toBeInTheDocument()
+    expect(screen.queryByText(/h:human-1/)).not.toBeInTheDocument()
+  })
 })

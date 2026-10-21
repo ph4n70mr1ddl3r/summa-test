@@ -3,6 +3,8 @@ package com.summa.service;
 import com.summa.repository.DnaRuleRepository;
 import com.summa.model.DnaRule;
 import com.summa.exception.EntityNotFoundException;
+import com.summa.model.DnaDomain;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,6 +34,19 @@ class DnaRuleServiceTest {
 
     @InjectMocks
     private DnaRuleService ruleService;
+
+    /**
+     * DGV-041: a rule write names its domain, so every rule door resolves the
+     * domain first. The default fixture is an active domain — the archived
+     * compartment has its own test.
+     */
+    @BeforeEach
+    void stubActiveDomain() {
+        DnaDomain domain = new DnaDomain();
+        domain.setId("domain-1");
+        domain.setStatus("active");
+        lenient().when(domainService.findById(anyString())).thenReturn(Optional.of(domain));
+    }
 
     @Test
     void create_setsDefaults() {
@@ -186,6 +201,8 @@ class DnaRuleServiceTest {
         successor.setId("rule-new");
         successor.setDomainId("domain-1");
         successor.setStatus("active");
+        // DNC-023: the displacement edge is the superseder's effective_from.
+        successor.setEffectiveFrom(Instant.now().minusSeconds(60));
         when(ruleRepository.findById("rule-new")).thenReturn(Optional.of(successor));
         when(ruleRepository.findById("rule-old")).thenReturn(Optional.of(predecessor));
         when(ruleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -195,6 +212,184 @@ class DnaRuleServiceTest {
         assertEquals("rule-old", successor.getSupersedesId());
         assertEquals("superseded", predecessor.getStatus());
         assertEquals("rule-old", result.getId());
+    }
+
+    @Test
+    void supersede_keepsThePredecessorLiveUntilTheSuccessorsWindowOpens() {
+        // DNC-023: "The displacement edge is the superseder's `effective_from`: a
+        // predecessor keeps injecting until its superseder's window opens; a
+        // future-windowed successor is a scheduled replacement, never a normative
+        // gap." The predecessor's window is truncated at the edge, so it stops
+        // injecting exactly when the successor starts — no gap before the edge and
+        // no co-temporal pair after it.
+        DnaRule predecessor = new DnaRule();
+        predecessor.setId("rule-old");
+        predecessor.setDomainId("domain-1");
+        predecessor.setStatus("active");
+        DnaRule successor = new DnaRule();
+        successor.setId("rule-new");
+        successor.setDomainId("domain-1");
+        successor.setStatus("active");
+        Instant edge = Instant.now().plusSeconds(3600);
+        successor.setEffectiveFrom(edge);
+        when(ruleRepository.findById("rule-new")).thenReturn(Optional.of(successor));
+        when(ruleRepository.findById("rule-old")).thenReturn(Optional.of(predecessor));
+        when(ruleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ruleService.supersede("rule-new", "rule-old", "admin");
+
+        assertEquals(edge, predecessor.getEffectiveTo());
+        // The predecessor still injects before the edge — it is not displaced yet.
+        assertEquals("active", predecessor.getStatus());
+    }
+
+    @Test
+    void supersede_neverShortensAnAlreadyEarlierWindow() {
+        // The displacement edge only ever shortens the predecessor's window.
+        DnaRule predecessor = new DnaRule();
+        predecessor.setId("rule-old");
+        predecessor.setDomainId("domain-1");
+        predecessor.setStatus("active");
+        Instant ownEnd = Instant.now().plusSeconds(60);
+        predecessor.setEffectiveTo(ownEnd);
+        DnaRule successor = new DnaRule();
+        successor.setId("rule-new");
+        successor.setDomainId("domain-1");
+        successor.setStatus("active");
+        successor.setEffectiveFrom(Instant.now().plusSeconds(7200));
+        when(ruleRepository.findById("rule-new")).thenReturn(Optional.of(successor));
+        when(ruleRepository.findById("rule-old")).thenReturn(Optional.of(predecessor));
+        when(ruleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ruleService.supersede("rule-new", "rule-old", "admin");
+
+        assertEquals(ownEnd, predecessor.getEffectiveTo());
+    }
+
+    @Test
+    void create_displacesThePredecessorAtTheSuccessorsWindow() {
+        // DNC-010/DNC-023: naming a predecessor on the create door is a
+        // displacement too — otherwise the chain kept two co-temporal heads.
+        DnaRule predecessor = new DnaRule();
+        predecessor.setId("rule-old");
+        predecessor.setDomainId("domain-1");
+        predecessor.setStatus("active");
+        when(ruleRepository.findById("rule-old")).thenReturn(Optional.of(predecessor));
+        when(ruleRepository.findBySupersedesId("rule-old")).thenReturn(List.of());
+        when(ruleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
+
+        Instant edge = Instant.now().minusSeconds(60);
+        ruleService.create("rule-new", "domain-1", "stmt", null, edge, null, "rule-old", "admin");
+
+        assertEquals(edge, predecessor.getEffectiveTo());
+        assertEquals("superseded", predecessor.getStatus());
+    }
+
+    @Test
+    void create_refusesAnArchivedDomain() {
+        // DGV-041: the archived domain row is read-only history — no new items.
+        DnaDomain archived = new DnaDomain();
+        archived.setId("domain-1");
+        archived.setStatus("archived");
+        when(domainService.findById("domain-1")).thenReturn(Optional.of(archived));
+        lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
+
+        assertThrows(IllegalStateException.class, () ->
+            ruleService.create("rule-1", "domain-1", "stmt", null, null, null, null, "admin")
+        );
+        verify(ruleRepository, never()).save(any());
+    }
+
+    @Test
+    void update_runsTheSecretsScan() {
+        // DWP-060/SEC-030: an item-level write gets the same secrets scan a
+        // reviewed proposal's publish gets — the update door is not a side door.
+        DnaRule rule = new DnaRule();
+        rule.setId("rule-1");
+        rule.setStatus("active");
+        rule.setDomainId("domain-1");
+        when(ruleRepository.findById("rule-1")).thenReturn(Optional.of(rule));
+        when(ruleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
+
+        ruleService.update("rule-1", "New statement", null, null, "admin");
+
+        verify(secretsScanner).hasSecrets("New statement");
+    }
+
+    @Test
+    void update_rejectsAnEffectiveToBeforeEffectiveFrom() {
+        // DWP-062/DWP-063: one validation at every door — window ordering is
+        // checked on update exactly as it is on create.
+        DnaRule rule = new DnaRule();
+        rule.setId("rule-1");
+        rule.setStatus("active");
+        rule.setDomainId("domain-1");
+        rule.setEffectiveFrom(Instant.now());
+        when(ruleRepository.findById("rule-1")).thenReturn(Optional.of(rule));
+
+        Instant before = Instant.now().minusSeconds(3600);
+        assertThrows(IllegalArgumentException.class, () ->
+            ruleService.update("rule-1", null, null, before, "admin")
+        );
+        verify(ruleRepository, never()).save(any());
+    }
+
+    @Test
+    void retire_truncatesTheWindow() {
+        // DNC-021/DWP-061: a rule's retire is window truncation — effective_to
+        // pinned to now, the row lapsing at that boundary. The item surface is
+        // create / update / retire, never delete.
+        DnaRule rule = new DnaRule();
+        rule.setId("rule-1");
+        rule.setStatus("active");
+        rule.setDomainId("domain-1");
+        when(ruleRepository.findById("rule-1")).thenReturn(Optional.of(rule));
+        when(ruleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        DnaRule result = ruleService.retire("rule-1", "admin");
+
+        assertEquals("lapsed", result.getStatus());
+        assertNotNull(result.getEffectiveTo());
+    }
+
+    @Test
+    void lapseExpiredRules_marksAnExpiredRuleLapsed() {
+        // DNC-026: ordinary expiring rules transition `lapsed` at effective_to.
+        DnaRule rule = new DnaRule();
+        rule.setId("rule-1");
+        rule.setStatus("active");
+        rule.setDomainId("domain-1");
+        rule.setEffectiveTo(Instant.now().minusSeconds(60));
+        when(ruleRepository.findByStatus("active")).thenReturn(List.of(rule));
+        when(ruleRepository.findBySupersedesId("rule-1")).thenReturn(List.of());
+        when(ruleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ruleService.lapseExpiredRules();
+
+        assertEquals("lapsed", rule.getStatus());
+    }
+
+    @Test
+    void lapseExpiredRules_keepsADisplacedPredecessorSuperseded() {
+        // DNC-022: a predecessor stays superseded when its superseder lapses —
+        // nothing flips back silently.
+        DnaRule rule = new DnaRule();
+        rule.setId("rule-1");
+        rule.setStatus("active");
+        rule.setDomainId("domain-1");
+        rule.setEffectiveTo(Instant.now().minusSeconds(60));
+        DnaRule successor = new DnaRule();
+        successor.setId("rule-2");
+        successor.setEffectiveFrom(Instant.now().minusSeconds(120));
+        when(ruleRepository.findByStatus("active")).thenReturn(List.of(rule));
+        when(ruleRepository.findBySupersedesId("rule-1")).thenReturn(List.of(successor));
+        when(ruleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ruleService.lapseExpiredRules();
+
+        assertEquals("superseded", rule.getStatus());
     }
 
     @Test

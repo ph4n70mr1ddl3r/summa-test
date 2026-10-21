@@ -62,11 +62,11 @@ export default function DNAProposals() {
   // is refused ("Only the proposer can withdraw").
   const canReview = (p: DnaProposal) => isAdmin || (!!p.reviewBy && stripKey(p.reviewBy) === userId)
   const canWithdraw = (p: DnaProposal) => stripKey(p.proposedBy) === userId
-  // The publish door is the strict one: it refuses anything but `open`, while
-  // reject and withdraw accept the breached queue too (a breach is an urgency
-  // flag, not a lifecycle). Offering Publish on a breached proposal produced a
-  // button that always failed with "Proposal is not open: breached".
-  const canPublish = (p: DnaProposal) => p.status === 'open' && canReview(p)
+  // The publish door is the strict one: it refuses a proposal that is neither
+  // `open` nor `breached` — a breach is an urgency flag, not a lifecycle, so a
+  // breached proposal is still in review and still publishable. Reject and
+  // withdraw accept the same two states.
+  const canPublish = (p: DnaProposal) => (p.status === 'open' || p.status === 'breached') && canReview(p)
   const canReject = (p: DnaProposal) => (p.status === 'open' || p.status === 'breached') && canReview(p)
 
   const handleAction = async (id: string, action: 'publish' | 'reject' | 'withdraw') => {

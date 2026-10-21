@@ -2,11 +2,13 @@ package com.summa.service;
 
 import com.summa.repository.RunRepository;
 import com.summa.model.Run;
+import com.summa.model.Agent;
 import com.summa.model.SpendLedger;
 import com.summa.repository.AgentRepository;
 import com.summa.repository.SpendLedgerRepository;
 import com.summa.repository.InitiativeRepository;
 import com.summa.model.Initiative;
+import com.summa.constants.Defaults;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -23,15 +25,17 @@ public class RunService {
     private final InitiativeRepository initiativeRepository;
     private final AgentRepository agentRepository;
     private final SpendLedgerRepository spendLedgerRepository;
+    private final MemberService memberService;
 
     public RunService(RunRepository runRepository, AuditService auditService,
                        InitiativeRepository initiativeRepository, AgentRepository agentRepository,
-                       SpendLedgerRepository spendLedgerRepository) {
+                       SpendLedgerRepository spendLedgerRepository, MemberService memberService) {
         this.runRepository = runRepository;
         this.auditService = auditService;
         this.initiativeRepository = initiativeRepository;
         this.agentRepository = agentRepository;
         this.spendLedgerRepository = spendLedgerRepository;
+        this.memberService = memberService;
     }
 
     @Transactional
@@ -93,8 +97,14 @@ public class RunService {
 
     @Transactional
     public Run start(String id) {
+        return start(id, Defaults.SYSTEM_ACTOR);
+    }
+
+    @Transactional
+    public Run start(String id, String actor) {
         Run run = runRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Run not found: " + id));
+        requireRunAuthority(run, actor, "start");
         if (!"queued".equals(run.getStatus())) {
             throw new IllegalStateException("Cannot start run with status: " + run.getStatus());
         }
@@ -105,10 +115,38 @@ public class RunService {
         return saved;
     }
 
+    /**
+     * Run-transition authority: a run belongs to the agent that runs it, and the
+     * agent belongs to its owner human. Only that agent, that owner, or an active
+     * admin may drive the run's lifecycle — a plain member may not cancel,
+     * complete, or fail another member's run (the write gate alone is not
+     * authority). The system's own walks act as the system.
+     */
+    private void requireRunAuthority(Run run, String actor, String action) {
+        if (actor == null || actor.isBlank() || Defaults.SYSTEM_ACTOR.equals(actor)) return;
+        String clean = JsonHelpers.stripIdPrefix(actor);
+        if (clean == null || clean.isBlank()) return;
+        if (memberService.isAdmin(clean)) return;
+        if (run.getAgentId() != null && clean.equals(run.getAgentId())) return;
+        Optional<Agent> agentOpt = agentRepository.findById(run.getAgentId());
+        if (agentOpt.isPresent() && agentOpt.get().getOwnerHumanId() != null
+                && clean.equals(agentOpt.get().getOwnerHumanId())) {
+            return;
+        }
+        throw new IllegalStateException(
+            "Only the run's agent, its owner, or an admin may " + action + " a run: " + run.getId());
+    }
+
     @Transactional
     public Run complete(String id, String result, Long costTokens, Double costUsd) {
+        return complete(id, result, costTokens, costUsd, Defaults.SYSTEM_ACTOR);
+    }
+
+    @Transactional
+    public Run complete(String id, String result, Long costTokens, Double costUsd, String actor) {
         Run run = runRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Run not found: " + id));
+        requireRunAuthority(run, actor, "complete");
         if (!"running".equals(run.getStatus())) {
             throw new IllegalStateException("Cannot complete run with status: " + run.getStatus());
         }
@@ -138,8 +176,14 @@ public class RunService {
 
     @Transactional
     public Run fail(String id, String errorMessage) {
+        return fail(id, errorMessage, Defaults.SYSTEM_ACTOR);
+    }
+
+    @Transactional
+    public Run fail(String id, String errorMessage, String actor) {
         Run run = runRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Run not found: " + id));
+        requireRunAuthority(run, actor, "fail");
         if (!"running".equals(run.getStatus())) {
             throw new IllegalStateException("Cannot fail run with status: " + run.getStatus());
         }
@@ -154,8 +198,14 @@ public class RunService {
 
     @Transactional
     public Run cancel(String id) {
+        return cancel(id, Defaults.SYSTEM_ACTOR);
+    }
+
+    @Transactional
+    public Run cancel(String id, String actor) {
         Run run = runRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Run not found: " + id));
+        requireRunAuthority(run, actor, "cancel");
         if (!"queued".equals(run.getStatus()) && !"running".equals(run.getStatus())) {
             throw new IllegalStateException("Cannot cancel run with status: " + run.getStatus());
         }

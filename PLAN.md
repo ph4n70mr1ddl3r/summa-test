@@ -2094,7 +2094,7 @@ CRUD /dna/domains · /dna/cards|rules|decisions|glossary|goals
                door: propose, amend, and item write run one check, so no door is softer than
                the git door)
 POST /dna/proposals  POST /dna/proposals/:id/review (publish|reject) · POST /dna/proposals/:id/withdraw
-               · POST /dna/proposals/:id/amend (revision during review, §4.3)  GET /dna/review-queue
+               · POST /dna/proposals/:id/amend (revision during review, §4.3)  GET /dna/proposals/review-queue
 POST /dna/domains/:id/split|merge|rename|archive (governed topology ops, §4.4; archive refuses
                a domain still holding live-set items — active rows and owner-staged drafts —
                live workspace bindings, or open proposals; terminal history never blocks —

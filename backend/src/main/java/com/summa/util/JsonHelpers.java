@@ -1,8 +1,10 @@
 package com.summa.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,6 +96,22 @@ public final class JsonHelpers {
             return Double.parseDouble(s.trim());
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid numeric value: " + s);
+        }
+    }
+
+    /**
+     * Parse a JSON array of strings into a list. A null or blank value yields an
+     * empty list; a malformed value is refused rather than silently read as
+     * empty — a silently-dropped list is a silently-dropped constraint.
+     */
+    public static List<String> parseStringList(String json) {
+        if (json == null || json.isBlank()) return List.of();
+        try {
+            List<String> parsed = MAPPER.readValue(json, new TypeReference<List<String>>() {});
+            if (parsed == null) return List.of();
+            return parsed.stream().filter(s -> s != null && !s.isBlank()).toList();
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Expected a JSON array of strings");
         }
     }
 

@@ -245,13 +245,15 @@ public class InitiativeService {
             throw new IllegalStateException("Cannot activate initiative with status: " + initiative.getStatus());
         }
 
-        // INT-020: If actor is not the sponsor or lead, route an activation ask to the sponsor
-        // with expiry=deny. The sponsor's or lead's own opens go active outright.
+        // INT-020: activation is the sponsor's acceptance. "An initiative opened by
+        // anyone other than its sponsor routes an activation ask to the sponsor"
+        // — the lead (and an admin) is "anyone other than its sponsor", so a
+        // direct activation by either would let a directive win its authority
+        // without its sponsor ever accepting it.
         // DAT-120: sponsor/lead are stored as keyed unions; compare stripped forms.
         String actorClean = actor != null ? JsonHelpers.stripIdPrefix(actor) : "";
         boolean isSponsor = actorClean != null && actorClean.equals(JsonHelpers.stripIdPrefix(initiative.getSponsor()));
-        boolean isLead = initiative.getLead() != null && actorClean != null && actorClean.equals(JsonHelpers.stripIdPrefix(initiative.getLead()));
-        if (!isSponsor && !isLead) {
+        if (!isSponsor) {
             // Validate sponsor is still active before routing ask to them
             String sponsorId = JsonHelpers.stripIdPrefix(initiative.getSponsor());
             if (sponsorId == null) {
@@ -344,7 +346,13 @@ public class InitiativeService {
         Initiative initiative = initiativeRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Initiative not found: " + id));
 
-        if (!"active".equals(initiative.getStatus()) && !"paused".equals(initiative.getStatus())) {
+        // INT-020/INT-022: a `proposed` directive that never won activation is
+        // closed by its sponsor or its lead — "the denied initiative stays
+        // proposed, inert ... until its sponsor or lead closes it; org state is
+        // never silently evaporated". Without this the state was a dead end: no
+        // actor could ever close it, so the initiative sat proposed forever.
+        if (!"active".equals(initiative.getStatus()) && !"paused".equals(initiative.getStatus())
+                && !"proposed".equals(initiative.getStatus())) {
             throw new IllegalStateException("Cannot close initiative with status: " + initiative.getStatus());
         }
 

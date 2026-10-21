@@ -20,4 +20,15 @@ public interface DnaRuleRepository extends JpaRepository<DnaRule, String> {
     
     List<DnaRule> findBySupersedesId(String supersedesId);
     long countByDomainIdAndStatus(String domainId, String status);
+
+    List<DnaRule> findByStatus(String status);
+
+    /**
+     * DGV-040: the live-set check counts the rules that are still in force — an
+     * {@code active} rule whose window has already closed is expired history, not
+     * live state, and never blocks an archive.
+     */
+    @Query("SELECT COUNT(r) FROM DnaRule r WHERE r.domainId = :domainId AND r.status = 'active' AND (r.effectiveTo IS NULL OR r.effectiveTo > :now)")
+    long countLiveByDomainId(@org.springframework.data.repository.query.Param("domainId") String domainId,
+                             @org.springframework.data.repository.query.Param("now") Instant now);
 }

@@ -116,7 +116,7 @@ public class RunController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            Run run = runService.start(id);
+            Run run = runService.start(id, actor);
             return ResponseEntity.ok(run);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
@@ -154,7 +154,7 @@ public class RunController {
                 }
             }
 
-            Run run = runService.complete(id, result, costTokens, costUsd);
+            Run run = runService.complete(id, result, costTokens, costUsd, actor);
             return ResponseEntity.ok(run);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
@@ -169,7 +169,7 @@ public class RunController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            Run run = runService.fail(id, body.get("errorMessage"));
+            Run run = runService.fail(id, body.get("errorMessage"), actor);
             return ResponseEntity.ok(run);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
@@ -184,7 +184,7 @@ public class RunController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            Run run = runService.cancel(id);
+            Run run = runService.cancel(id, actor);
             return ResponseEntity.ok(run);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());

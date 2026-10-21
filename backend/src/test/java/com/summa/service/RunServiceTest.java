@@ -40,6 +40,9 @@ class RunServiceTest {
     @Mock
     private SpendLedgerRepository spendLedgerRepository;
 
+    @Mock
+    private MemberService memberService;
+
     @InjectMocks
     private RunService runService;
 
@@ -325,6 +328,81 @@ class RunServiceTest {
 
         assertTrue(refusal.getMessage().contains("terminal"));
         assertEquals("suspended", run.getStatus());
+        verify(runRepository, never()).save(any());
+    }
+
+    @Test
+    void cancel_refusesAMemberWhoIsNeitherTheAgentNorItsOwner() {
+        // Run-transition authority: a plain member may not cancel another
+        // member's run — the write gate alone is not authority.
+        Run run = new Run();
+        run.setId("run-1");
+        run.setStatus("running");
+        run.setAgentId("agent-1");
+        when(runRepository.findById("run-1")).thenReturn(Optional.of(run));
+        Agent agent = new Agent();
+        agent.setId("agent-1");
+        agent.setOwnerHumanId("owner-1");
+        lenient().when(agentRepository.findById("agent-1")).thenReturn(Optional.of(agent));
+        lenient().when(memberService.isAdmin("member-1")).thenReturn(false);
+
+        IllegalStateException refusal = assertThrows(IllegalStateException.class,
+            () -> runService.cancel("run-1", "member-1"));
+
+        assertTrue(refusal.getMessage().contains("owner"));
+        assertEquals("running", run.getStatus());
+        verify(runRepository, never()).save(any());
+    }
+
+    @Test
+    void cancel_allowsTheAgentsOwner() {
+        Run run = new Run();
+        run.setId("run-1");
+        run.setStatus("running");
+        run.setAgentId("agent-1");
+        when(runRepository.findById("run-1")).thenReturn(Optional.of(run));
+        when(runRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        Agent agent = new Agent();
+        agent.setId("agent-1");
+        agent.setOwnerHumanId("owner-1");
+        lenient().when(agentRepository.findById("agent-1")).thenReturn(Optional.of(agent));
+        lenient().when(memberService.isAdmin("owner-1")).thenReturn(false);
+
+        Run result = runService.cancel("run-1", "owner-1");
+
+        assertEquals("cancelled", result.getStatus());
+    }
+
+    @Test
+    void cancel_allowsAnAdmin() {
+        Run run = new Run();
+        run.setId("run-1");
+        run.setStatus("running");
+        run.setAgentId("agent-1");
+        when(runRepository.findById("run-1")).thenReturn(Optional.of(run));
+        when(runRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        lenient().when(memberService.isAdmin("admin-1")).thenReturn(true);
+
+        Run result = runService.cancel("run-1", "admin-1");
+
+        assertEquals("cancelled", result.getStatus());
+    }
+
+    @Test
+    void complete_refusesAMemberWhoIsNeitherTheAgentNorItsOwner() {
+        Run run = new Run();
+        run.setId("run-1");
+        run.setStatus("running");
+        run.setAgentId("agent-1");
+        when(runRepository.findById("run-1")).thenReturn(Optional.of(run));
+        Agent agent = new Agent();
+        agent.setId("agent-1");
+        agent.setOwnerHumanId("owner-1");
+        lenient().when(agentRepository.findById("agent-1")).thenReturn(Optional.of(agent));
+        lenient().when(memberService.isAdmin("member-1")).thenReturn(false);
+
+        assertThrows(IllegalStateException.class,
+            () -> runService.complete("run-1", "result", null, null, "member-1"));
         verify(runRepository, never()).save(any());
     }
 }

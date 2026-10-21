@@ -215,12 +215,18 @@ public class AskService {
                     Ask saved = askRepository.save(canonical);
                     auditService.log(from, "COLLAPSED_ASK", "ask", saved.getId(),
                         String.format("{\"collapsedCount\":%d}", saved.getCollapsedCount() != null ? saved.getCollapsedCount() : 0));
+                    flagQuorumPoolShortfall(saved);
                     return saved;
                 }
             }
 
             // Save inside the lock to prevent concurrent duplicates from passing the collapse check
             Ask saved = askRepository.save(ask);
+            // ASK-053: N is pool-checked at every write door — an N larger than the
+            // eligible approver pool flags at write like any contradiction. The ask
+            // is still filed (a live pool can grow back — ASK-044), but the
+            // shortfall is named so the write is never a silent impossibility.
+            flagQuorumPoolShortfall(saved);
             // Re-arm the window for this new canonical ask: computeIfAbsent above does not
             // refresh an expired entry, so without this put every ask created after the
             // first window expiry would pass the collapse check forever (until the hourly
@@ -234,8 +240,27 @@ public class AskService {
         }
     }
 
-    private String buildCollapseKey(String kind, String to, String payload) {
-        try {
+    /**
+     * ASK-053: "N is bounded below (`requires_approvals` ≥ 1) and pool-checked at
+     * every write door: N exceeding the eligible approver pool flags at proposal
+     * time like any contradiction". The flag names the required quorum, the
+     * evaluated pool and the gap between them — the same shape the expiry
+     * escalation uses when the pool has shrunk under N.
+     *
+     * <p>The ask is not refused: a live pool can grow back (ASK-044), so the
+     * write stays legal and the impossibility is surfaced instead of hidden.
+     */
+    private void flagQuorumPoolShortfall(Ask ask) {
+        int quorum = ask.getQuorumRequired() != null ? ask.getQuorumRequired() : 1;
+        if (quorum <= 1) return;
+        int pool = eligiblePoolSize(ask);
+        if (quorum <= pool) return;
+        auditService.logSystem("ASK_QUORUM_POOL_SHORTFALL", "ask", ask.getId(),
+            String.format("{\"quorumRequired\":%d,\"eligiblePool\":%d,\"shortfall\":%d}",
+                quorum, pool, quorum - pool));
+    }
+
+    private String buildCollapseKey(String kind, String to, String payload) {        try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest((kind + "|" + to + "|" + (payload != null ? payload : "")).getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(hash);
@@ -437,8 +462,13 @@ public class AskService {
             return ask;
         }
 
-        // ASK-040: Check eligibility at the door
+        // ASK-040: Check eligibility at the door — a response from outside the
+        // ask's eligible set is refused with the attempt audited.
         if (!isEligibleResponder(ask, responder)) {
+            auditService.logSystem("REFUSAL", "ask_respond", id,
+                String.format("{\"responder\":%s,\"reason\":%s}",
+                    JsonHelpers.jsonString(responder),
+                    JsonHelpers.jsonString("responder_not_eligible")));
             throw new IllegalArgumentException("Responder is not eligible: " + responder);
         }
 
@@ -816,6 +846,65 @@ public class AskService {
                 quorum, poolSize, Math.max(0, quorum - poolSize),
                 JsonHelpers.jsonString(ask.getExpiryBehavior() != null ? ask.getExpiryBehavior() : "deny")));
         return saved;
+    }
+
+    /**
+     * ASK-011: the expiry semantics are explicit per ask — `deny` closes the
+     * expired ask, `escalate` and `reassign` close it and open a linked successor
+     * ask (up the chain / to the named deputy). The manual door honours the
+     * behavior exactly as the scheduled sweep does, so a force-expiry never
+     * silently drops the chain.
+     *
+     * <p>ASK-032: the expiry closure is one of the system's named closures — a
+     * member may not force-close an ask through it; an active admin may.
+     */
+    @Transactional
+    public Ask expireNow(String id, String actor) {
+        if (!memberService.isAdmin(actor)) {
+            throw new IllegalStateException(
+                "Only an admin may force-expire an ask — expiry is the system's closure");
+        }
+        Ask ask = askRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Ask not found: " + id));
+        if (!ask.isPending()) {
+            throw new IllegalStateException("Ask is not pending: " + ask.getStatus());
+        }
+        String behavior = ask.getExpiryBehavior() != null ? ask.getExpiryBehavior() : "deny";
+        if ("escalate".equals(behavior) || "reassign".equals(behavior)) {
+            try {
+                openExpirySuccessor(ask, behavior);
+                auditService.log(actor, "EXPIRE_SUCCESSOR_CREATED", "ask", id,
+                    String.format("{\"behavior\":%s}", JsonHelpers.jsonString(behavior)));
+            } catch (Exception ex) {
+                auditService.logSystem("EXPIRE_SUCCESSOR_FAIL", "ask", id,
+                    JsonHelpers.toJson(Map.of("behavior", behavior,
+                        "error", ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName()), objectMapper));
+            }
+        }
+        Ask saved = expire(id);
+        auditService.log(actor, "EXPIRE", "ask", id,
+            String.format("{\"behavior\":%s}", JsonHelpers.jsonString(behavior)));
+        return saved;
+    }
+
+    /**
+     * ASK-011: the linked successor an escalating or reassigning expiry opens —
+     * up the chain to the admin broadcast, or to the target's named deputy.
+     */
+    private void openExpirySuccessor(Ask ask, String behavior) {
+        String successorTo = OffboardingWalkService.ADMIN_BROADCAST;
+        if ("reassign".equals(behavior)) {
+            Optional<String> deputy = memberService.resolveDeputyTarget(ask.getTo());
+            if (deputy.isPresent()) {
+                successorTo = deputy.get();
+            }
+        }
+        long deadlineSeconds = Math.min(
+            deriveDeadlineFromTier(ask.getSlaTier()), Defaults.MAX_DEADLINE_SECONDS);
+        create(ask.getKind(), ask.getFrom(), successorTo, ask.getPayload(), ask.getSlaTier(),
+            ask.getExpiryBehavior(), ask.getQuorumRequired(),
+            Instant.now().plusSeconds(deadlineSeconds),
+            ask.getInitiativeId(), ask.getWorkspaceId());
     }
 
     /**

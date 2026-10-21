@@ -165,16 +165,17 @@ describe('DNAProposals page', () => {
     expect(screen.getByRole('button', { name: /publish proposal p1/i })).toBeInTheDocument()
   })
 
-  it('does not offer publish on a breached proposal', async () => {
-    // The publish door is the strict one — it refuses anything but `open`,
-    // while reject and withdraw accept the breached queue too.
+  it('offers publish on a breached proposal', async () => {
+    // DWP-025: a breach is an urgency flag, not a lifecycle — the proposal is
+    // still in review and the publish door admits it. Hiding the control left
+    // the most urgent proposals unpublishable from the console.
     localStorage.setItem('summa_user', JSON.stringify({ userId: 'owner-1', rbac: 'owner' }))
     vi.mocked(apiModule.api.dna.proposals).mockResolvedValue([
       { id: 'p1', kind: 'rule', payload: '{}', revision: 1, proposedBy: 'h:human-1', reviewBy: 'owner-1', provenance: '', status: 'breached' },
     ])
     render(<DNAProposals />)
     await waitFor(() => expect(screen.getByText('breached (1)')).toBeInTheDocument())
-    expect(screen.queryByRole('button', { name: /publish proposal p1/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /publish proposal p1/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /reject proposal p1/i })).toBeInTheDocument()
   })
 

@@ -16,6 +16,10 @@ import com.summa.model.DnaCard;
 import com.summa.model.DnaProposal;
 import com.summa.model.DnaDecision;
 import com.summa.model.Workspace;
+import com.summa.model.Ask;
+import com.summa.model.DnaRule;
+import com.summa.model.DnaGoal;
+import java.time.Instant;
 import com.summa.exception.EntityNotFoundException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -23,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Collections;
 import java.util.List;
@@ -46,8 +51,16 @@ class DnaDomainServiceTest {
     @Mock private AskRepository askRepository;
     @Mock private InitiativeRepository initiativeRepository;
     @Mock private AuditService auditService;
+    @Mock private AskService askService;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    /**
+     * A spy, not a plain instance: Mockito resolves the SUT's constructor
+     * arguments from the test's mock candidates, so a plain ObjectMapper field
+     * left the service's mapper null and every JSON path under test silently
+     * took its fallback branch.
+     */
+    @Spy
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     @InjectMocks
     private DnaDomainService domainService;
@@ -131,10 +144,10 @@ class DnaDomainServiceTest {
         domain.setStatus("active");
         when(domainRepository.findById("domain-1")).thenReturn(Optional.of(domain));
         when(cardRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(0L);
-        when(proposalRepository.countByDomainIdAndStatus("domain-1", "open")).thenReturn(0L);
+        when(proposalRepository.countOpenByDomain("domain-1")).thenReturn(0L);
         when(workspaceRepository.countByDomainIdsContaining("domain-1")).thenReturn(0L);
-        when(goalRepository.countByDomainIdAndStatus("domain-1", "active")).thenReturn(0L);
-        when(ruleRepository.countByDomainIdAndStatus("domain-1", "active")).thenReturn(0L);
+        when(goalRepository.countLiveByDomainId(eq("domain-1"), any())).thenReturn(0L);
+        when(ruleRepository.countLiveByDomainId(eq("domain-1"), any())).thenReturn(0L);
         when(domainRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         DnaDomain result = domainService.archive("domain-1", "admin");
@@ -149,8 +162,8 @@ class DnaDomainServiceTest {
         domain.setStatus("active");
         when(domainRepository.findById("domain-1")).thenReturn(Optional.of(domain));
         when(cardRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(1L);
-        when(goalRepository.countByDomainIdAndStatus("domain-1", "active")).thenReturn(0L);
-        when(ruleRepository.countByDomainIdAndStatus("domain-1", "active")).thenReturn(0L);
+        when(goalRepository.countLiveByDomainId(eq("domain-1"), any())).thenReturn(0L);
+        when(ruleRepository.countLiveByDomainId(eq("domain-1"), any())).thenReturn(0L);
 
         assertThrows(IllegalStateException.class, () ->
             domainService.archive("domain-1", "admin")
@@ -164,9 +177,9 @@ class DnaDomainServiceTest {
         domain.setStatus("active");
         when(domainRepository.findById("domain-1")).thenReturn(Optional.of(domain));
         when(cardRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(0L);
-        when(proposalRepository.countByDomainIdAndStatus("domain-1", "open")).thenReturn(1L);
-        when(goalRepository.countByDomainIdAndStatus("domain-1", "active")).thenReturn(0L);
-        when(ruleRepository.countByDomainIdAndStatus("domain-1", "active")).thenReturn(0L);
+        when(proposalRepository.countOpenByDomain("domain-1")).thenReturn(1L);
+        when(goalRepository.countLiveByDomainId(eq("domain-1"), any())).thenReturn(0L);
+        when(ruleRepository.countLiveByDomainId(eq("domain-1"), any())).thenReturn(0L);
 
         assertThrows(IllegalStateException.class, () ->
             domainService.archive("domain-1", "admin")
@@ -180,10 +193,10 @@ class DnaDomainServiceTest {
         domain.setStatus("active");
         when(domainRepository.findById("domain-1")).thenReturn(Optional.of(domain));
         when(cardRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(0L);
-        when(proposalRepository.countByDomainIdAndStatus("domain-1", "open")).thenReturn(0L);
+        when(proposalRepository.countOpenByDomain("domain-1")).thenReturn(0L);
         when(workspaceRepository.countByDomainIdsContaining("domain-1")).thenReturn(1L);
-        when(goalRepository.countByDomainIdAndStatus("domain-1", "active")).thenReturn(0L);
-        when(ruleRepository.countByDomainIdAndStatus("domain-1", "active")).thenReturn(0L);
+        when(goalRepository.countLiveByDomainId(eq("domain-1"), any())).thenReturn(0L);
+        when(ruleRepository.countLiveByDomainId(eq("domain-1"), any())).thenReturn(0L);
 
         assertThrows(IllegalStateException.class, () ->
             domainService.archive("domain-1", "admin")
@@ -197,10 +210,10 @@ class DnaDomainServiceTest {
         domain.setStatus("active");
         when(domainRepository.findById("domain-1")).thenReturn(Optional.of(domain));
         when(cardRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(0L);
-        when(proposalRepository.countByDomainIdAndStatus("domain-1", "open")).thenReturn(0L);
+        when(proposalRepository.countOpenByDomain("domain-1")).thenReturn(0L);
         when(workspaceRepository.countByDomainIdsContaining("domain-1")).thenReturn(0L);
-        when(goalRepository.countByDomainIdAndStatus("domain-1", "active")).thenReturn(1L);
-        when(ruleRepository.countByDomainIdAndStatus("domain-1", "active")).thenReturn(0L);
+        when(goalRepository.countLiveByDomainId(eq("domain-1"), any())).thenReturn(1L);
+        when(ruleRepository.countLiveByDomainId(eq("domain-1"), any())).thenReturn(0L);
 
         assertThrows(IllegalStateException.class, () ->
             domainService.archive("domain-1", "admin")
@@ -214,10 +227,10 @@ class DnaDomainServiceTest {
         domain.setStatus("active");
         when(domainRepository.findById("domain-1")).thenReturn(Optional.of(domain));
         when(cardRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(0L);
-        when(proposalRepository.countByDomainIdAndStatus("domain-1", "open")).thenReturn(0L);
+        when(proposalRepository.countOpenByDomain("domain-1")).thenReturn(0L);
         when(workspaceRepository.countByDomainIdsContaining("domain-1")).thenReturn(0L);
-        when(goalRepository.countByDomainIdAndStatus("domain-1", "active")).thenReturn(0L);
-        when(ruleRepository.countByDomainIdAndStatus("domain-1", "active")).thenReturn(1L);
+        when(goalRepository.countLiveByDomainId(eq("domain-1"), any())).thenReturn(0L);
+        when(ruleRepository.countLiveByDomainId(eq("domain-1"), any())).thenReturn(1L);
 
         assertThrows(IllegalStateException.class, () ->
             domainService.archive("domain-1", "admin")
@@ -292,7 +305,7 @@ class DnaDomainServiceTest {
         when(domainRepository.findById("parent-1")).thenReturn(Optional.of(parent));
         when(dataHoldRepository.existsByKindAndSubjectIdAndReleasedAtIsNull("domain", "parent-1")).thenReturn(false);
         when(cardRepository.countByDomainIdAndStatusNot("parent-1", "retired")).thenReturn(0L);
-        when(proposalRepository.countByDomainIdAndStatus("parent-1", "open")).thenReturn(0L);
+        when(proposalRepository.countOpenByDomain("parent-1")).thenReturn(0L);
         when(workspaceRepository.countByDomainIdsContaining("parent-1")).thenReturn(0L);
         when(domainRepository.save(any())).thenAnswer(invocation -> {
             DnaDomain d = invocation.getArgument(0);
@@ -329,7 +342,7 @@ class DnaDomainServiceTest {
         when(domainRepository.findById("parent-1")).thenReturn(Optional.of(parent));
         when(dataHoldRepository.existsByKindAndSubjectIdAndReleasedAtIsNull("domain", "parent-1")).thenReturn(false);
         when(cardRepository.countByDomainIdAndStatusNot("parent-1", "retired")).thenReturn(2L);
-        when(proposalRepository.countByDomainIdAndStatus("parent-1", "open")).thenReturn(0L);
+        when(proposalRepository.countOpenByDomain("parent-1")).thenReturn(0L);
         when(workspaceRepository.countByDomainIdsContaining("parent-1")).thenReturn(0L);
 
         assertThrows(IllegalStateException.class, () ->
@@ -497,7 +510,7 @@ class DnaDomainServiceTest {
         when(domainRepository.findById("parent-1")).thenReturn(Optional.of(parent));
         when(dataHoldRepository.existsByKindAndSubjectIdAndReleasedAtIsNull("domain", "parent-1")).thenReturn(false);
         when(cardRepository.countByDomainIdAndStatusNot("parent-1", "retired")).thenReturn(0L);
-        when(proposalRepository.countByDomainIdAndStatus("parent-1", "open")).thenReturn(0L);
+        when(proposalRepository.countOpenByDomain("parent-1")).thenReturn(0L);
         when(workspaceRepository.countByDomainIdsContaining("parent-1")).thenReturn(0L);
         DnaCard card = new DnaCard();
         card.setId("card-1");
@@ -575,5 +588,162 @@ class DnaDomainServiceTest {
 
         verify(decisionRepository).updateDomainId("dec-1", "survivor-1");
         verify(decisionRepository, never()).save(any());
+    }
+
+    @Test
+    void archive_refusesUnderALegalHold() {
+        // DGV-017: legal holds freeze removal, not addition — an archive of a held
+        // domain queues behind the hold's release.
+        DnaDomain domain = new DnaDomain();
+        domain.setId("domain-1");
+        domain.setStatus("active");
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.of(domain));
+        when(dataHoldRepository.existsByKindAndSubjectIdAndReleasedAtIsNull("domain", "domain-1"))
+            .thenReturn(true);
+
+        assertThrows(IllegalStateException.class, () -> domainService.archive("domain-1", "admin"));
+        verify(domainRepository, never()).save(any());
+    }
+
+    @Test
+    void archive_refusesWhenABreachedProposalIsStillInReview() {
+        // DGV-040: a `breached` proposal is still in review (the breach is an
+        // urgency flag, not a lifecycle), so it blocks the archive.
+        DnaDomain domain = new DnaDomain();
+        domain.setId("domain-1");
+        domain.setStatus("active");
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.of(domain));
+        when(proposalRepository.countOpenByDomain("domain-1")).thenReturn(1L);
+
+        assertThrows(IllegalStateException.class, () -> domainService.archive("domain-1", "admin"));
+    }
+
+    @Test
+    void archive_refusesWhenLiveGlossaryExists() {
+        // DGV-040: the live set includes the glossary — a domain holding live
+        // terms archives with those terms stranded.
+        DnaDomain domain = new DnaDomain();
+        domain.setId("domain-1");
+        domain.setStatus("active");
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.of(domain));
+        when(glossaryRepository.countByDomainIdAndStatusNot("domain-1", "retired")).thenReturn(1L);
+
+        assertThrows(IllegalStateException.class, () -> domainService.archive("domain-1", "admin"));
+    }
+
+    @Test
+    void archive_settlesOwnerAddressedAsks() {
+        // DGV-047: archive has no resulting owner to re-key onto, so it settles
+        // instead — owner-addressed asks close with an audit note in the event.
+        DnaDomain domain = new DnaDomain();
+        domain.setId("domain-1");
+        domain.setStatus("active");
+        domain.setOwnerHumanId("owner-1");
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.of(domain));
+        when(domainRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("pending");
+        ask.setTo("h:owner-1");
+        ask.setExpiryBehavior("deny");
+        ask.setDeadline(Instant.now().plusSeconds(3600));
+        when(askRepository.findByToAndStatusPending("h:owner-1")).thenReturn(List.of(ask));
+        when(askRepository.findByToAndStatusPending("owner-1")).thenReturn(List.of(ask));
+        Workspace ws = new Workspace();
+        ws.setId("ws-1");
+        ws.setDomainIds("[\"domain-1\"]");
+        when(workspaceRepository.findById("ws-1")).thenReturn(Optional.of(ws));
+        ask.setWorkspaceId("ws-1");
+
+        DnaDomain result = domainService.archive("domain-1", "admin");
+
+        assertEquals("archived", result.getStatus());
+        assertEquals("expired", ask.getStatus());
+        verify(auditService).log(eq("admin"), eq("ARCHIVE_SETTLE_ASK"), eq("ask"), eq("ask-1"), anyString());
+    }
+
+    @Test
+    void updateOwner_rekeysOwnerAddressedAsks() {
+        // DGV-045: the owner re-point is one of the owner-re-pointing doors the
+        // attention remapping names — pending asks whose addressee was derived
+        // from the domain's owner re-key to the resulting owner.
+        DnaDomain domain = new DnaDomain();
+        domain.setId("domain-1");
+        domain.setStatus("active");
+        domain.setOwnerHumanId("old-owner");
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.of(domain));
+        when(domainRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("pending");
+        ask.setTo("h:old-owner");
+        when(askRepository.findByToAndStatusPending("h:old-owner")).thenReturn(List.of(ask));
+        when(askRepository.findByToAndStatusPending("old-owner")).thenReturn(List.of(ask));
+        Workspace ws = new Workspace();
+        ws.setId("ws-1");
+        ws.setDomainIds("[\"domain-1\"]");
+        when(workspaceRepository.findById("ws-1")).thenReturn(Optional.of(ws));
+        ask.setWorkspaceId("ws-1");
+
+        domainService.updateOwner("domain-1", "new-owner", "admin");
+
+        assertEquals("h:new-owner", ask.getTo());
+    }
+
+    @Test
+    void split_refusesWhenLiveRulesAreUnmapped() {
+        // DGV-012: the declared mapping is total — every item, workspace binding,
+        // and open proposal names its result. A live rule is an item.
+        DnaDomain parent = new DnaDomain();
+        parent.setId("parent-1");
+        parent.setName("Parent");
+        when(domainRepository.findById("parent-1")).thenReturn(Optional.of(parent));
+        when(dataHoldRepository.existsByKindAndSubjectIdAndReleasedAtIsNull("domain", "parent-1")).thenReturn(false);
+        when(ruleRepository.countLiveByDomainId(eq("parent-1"), any())).thenReturn(2L);
+
+        assertThrows(IllegalStateException.class, () ->
+            domainService.split("parent-1", "admin", null, null, null, null, null, null,
+                List.of("card-1"), Collections.emptyList(), Collections.emptyList())
+        );
+    }
+
+    @Test
+    void split_movesRulesAndGoalsToTheChild() {
+        // DGV-010/DGV-012: items move with ids stable — a mapped rule and a mapped
+        // goal travel to the child, and the emptied parent archives.
+        DnaDomain parent = new DnaDomain();
+        parent.setId("parent-1");
+        parent.setName("Parent");
+        parent.setOwnerHumanId("owner-1");
+        when(domainRepository.findById("parent-1")).thenReturn(Optional.of(parent));
+        when(dataHoldRepository.existsByKindAndSubjectIdAndReleasedAtIsNull("domain", "parent-1")).thenReturn(false);
+        when(ruleRepository.countLiveByDomainId(eq("parent-1"), any())).thenReturn(1L);
+        when(goalRepository.countLiveByDomainId(eq("parent-1"), any())).thenReturn(1L);
+        DnaRule rule = new DnaRule();
+        rule.setId("rule-1");
+        rule.setDomainId("parent-1");
+        when(ruleRepository.findById("rule-1")).thenReturn(Optional.of(rule));
+        DnaGoal goal = new DnaGoal();
+        goal.setId("goal-1");
+        goal.setDomainId("parent-1");
+        when(goalRepository.findById("goal-1")).thenReturn(Optional.of(goal));
+        when(cardRepository.findById(anyString())).thenReturn(Optional.empty());
+        when(domainRepository.save(any())).thenAnswer(invocation -> {
+            DnaDomain d = invocation.getArgument(0);
+            if (d.getId() == null) d.setId("child-1");
+            return d;
+        });
+        when(ruleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(goalRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        List<DnaDomain> results = domainService.split("parent-1", "admin", null, null, null, null, null, null,
+            List.of("rule-1", "goal-1"), Collections.emptyList(), Collections.emptyList());
+
+        assertEquals(1, results.size());
+        String childId = results.get(0).getId();
+        assertEquals(childId, rule.getDomainId());
+        assertEquals(childId, goal.getDomainId());
+        // The emptied parent archives inside the same event (DGV-012).
+        assertEquals("archived", parent.getStatus());
     }
 }

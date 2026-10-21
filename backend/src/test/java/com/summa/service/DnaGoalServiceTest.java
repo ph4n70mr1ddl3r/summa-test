@@ -3,6 +3,7 @@ package com.summa.service;
 import com.summa.repository.DnaGoalRepository;
 import com.summa.repository.DnaDomainRepository;
 import com.summa.model.DnaGoal;
+import com.summa.model.DnaDomain;
 import com.summa.model.Human;
 import com.summa.model.Agent;
 import com.summa.exception.EntityNotFoundException;
@@ -238,5 +239,21 @@ class DnaGoalServiceTest {
 
         assertNotNull(results);
         verify(goalRepository).findAllActiveWindowed(now);
+    }
+
+    @Test
+    void create_refusesAnArchivedDomain() {
+        // DGV-041: the archived domain row is read-only history — no new items
+        // land in it. A goal is an item.
+        DnaDomain archived = new DnaDomain();
+        archived.setId("domain-1");
+        archived.setStatus("archived");
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.of(archived));
+        lenient().doReturn(List.of()).when(secretsScanner).scan(anyString());
+
+        assertThrows(IllegalStateException.class, () ->
+            goalService.create("goal-1", "domain-1", "Q1", "stmt", null, null, null, null, "admin")
+        );
+        verify(goalRepository, never()).save(any());
     }
 }

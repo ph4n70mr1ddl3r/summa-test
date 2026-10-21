@@ -72,7 +72,7 @@ describe('DNAConsole page', () => {
     ])
 
     render(wrapper(<DNAConsole />))
-    await waitFor(() => expect(screen.getByText('Review Queue (1 open)')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('Review Queue (1 in review)')).toBeInTheDocument())
   })
 
   it('shows summary cards', async () => {
@@ -143,5 +143,22 @@ describe('DNAConsole page', () => {
     await waitFor(() => expect(screen.getByText('Domains (1)')).toBeInTheDocument())
     expect(apiModule.api.dna.reviewQueue).not.toHaveBeenCalled()
     expect(screen.queryByText(/failed to load/i)).not.toBeInTheDocument()
+  })
+
+  it('counts a breached proposal in the review queue', async () => {
+    // DWP-020/DWP-025: a `breached` proposal is still in review — the breach is
+    // an urgency flag, not a lifecycle — and the backend's review-queue
+    // endpoint returns it. Filtering to `open` alone hid the urgent set.
+    localStorage.setItem('summa_user', JSON.stringify({ userId: 'admin-1', rbac: 'admin' }))
+    vi.mocked(apiModule.api.dna.domains).mockResolvedValue([])
+    vi.mocked(apiModule.api.dna.cards).mockResolvedValue([])
+    vi.mocked(apiModule.api.dna.goals).mockResolvedValue([])
+    vi.mocked(apiModule.api.dna.reviewQueue).mockResolvedValue([
+      { id: 'p1', kind: 'rule', payload: '{}', revision: 1, proposedBy: 'h1', provenance: '', status: 'breached' },
+    ])
+
+    render(wrapper(<DNAConsole />))
+    await waitFor(() => expect(screen.getByText('Review Queue (1 in review)')).toBeInTheDocument())
+    expect(screen.getByText('breached')).toBeInTheDocument()
   })
 })

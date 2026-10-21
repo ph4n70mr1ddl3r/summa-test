@@ -280,7 +280,10 @@ public class AskController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            Ask ask = askService.expire(id);
+            // ASK-011/ASK-032: the expiry closure honours the ask's expiry
+            // behavior (escalate/reassign open a linked successor) and belongs to
+            // the system's named closures — an active admin only.
+            Ask ask = askService.expireNow(id, actor);
             return ResponseEntity.ok(ask);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
