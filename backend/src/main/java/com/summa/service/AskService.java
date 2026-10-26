@@ -183,7 +183,8 @@ public class AskService {
         ask.setTo(to);
         ask.setPayload(payload != null ? payload : "{}");
         ask.setSlaTier(effectiveTier);
-        ask.setExpiryBehavior(expiryBehavior != null ? ExpiryBehavior.valueOf(expiryBehavior.toUpperCase()) : ExpiryBehavior.DENY);
+        ask.setExpiryBehavior(expiryBehavior != null && !expiryBehavior.isBlank()
+                ? ExpiryBehavior.requireFromValue(expiryBehavior) : ExpiryBehavior.DENY);
         ask.setQuorumRequired(quorumRequired != null ? quorumRequired : 1);
         ask.setDeadline(deadline);
         ask.setInitiativeId(initiativeId);
@@ -261,7 +262,8 @@ public class AskService {
                 quorum, pool, quorum - pool));
     }
 
-    private String buildCollapseKey(String kind, String to, String payload) {        try {
+    private String buildCollapseKey(String kind, String to, String payload) {
+        try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest((kind + "|" + to + "|" + (payload != null ? payload : "")).getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(hash);
@@ -371,9 +373,9 @@ public class AskService {
                         if (successorDeadlineSeconds > Defaults.MAX_DEADLINE_SECONDS) {
                             successorDeadlineSeconds = Defaults.MAX_DEADLINE_SECONDS;
                         }
-Ask successor = create(current.getKind(), current.getFrom(), successorTo,
-    current.getPayload(), current.getSlaTier(), current.getExpiryBehavior(),
-                              current.getQuorumRequired(),
+                        Ask successor = create(current.getKind(), current.getFrom(), successorTo,
+                            current.getPayload(), current.getSlaTier(), current.getExpiryBehavior(),
+                            current.getQuorumRequired(),
                               Instant.now().plusSeconds(successorDeadlineSeconds),
                               current.getInitiativeId(), current.getWorkspaceId(), rootAskId);
                          // Bump the chain depth only when a successor actually lands: the

@@ -1,5 +1,6 @@
 package com.summa.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.summa.config.ExpiryBehaviorConverter;
 import com.summa.config.InstantToUnixEpochConverter;
 import jakarta.persistence.*;
@@ -112,11 +113,14 @@ public class Ask {
     public void setSlaTier(String slaTier) { this.slaTier = slaTier; }
     public String getEscalation() { return escalation; }
     public void setEscalation(String escalation) { this.escalation = escalation; }
-    public String getExpiryBehavior() { return expiryBehavior != null ? expiryBehavior.getValue() : "deny"; }
+    public String getExpiryBehavior() { return expiryBehavior != null ? expiryBehavior.getValue() : ExpiryBehavior.DENY.getValue(); }
+    @JsonIgnore
     public ExpiryBehavior getExpiryBehaviorEnum() { return expiryBehavior; }
     public void setExpiryBehavior(ExpiryBehavior expiryBehavior) { this.expiryBehavior = expiryBehavior; }
     public void setExpiryBehavior(String expiryBehavior) {
-        this.expiryBehavior = expiryBehavior != null ? ExpiryBehavior.valueOf(expiryBehavior.toUpperCase()) : ExpiryBehavior.DENY;
+        this.expiryBehavior = expiryBehavior != null && !expiryBehavior.isBlank()
+                ? ExpiryBehavior.requireFromValue(expiryBehavior)
+                : ExpiryBehavior.DENY;
     }
     public Instant getRespondedAt() { return respondedAt; }
     public void setRespondedAt(Instant respondedAt) { this.respondedAt = respondedAt; }

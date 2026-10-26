@@ -156,6 +156,42 @@ class AskControllerTest {
     }
 
     @Test
+    void createAsk_withAnUnknownExpiryBehavior_isAValidationRefusal() {
+        // ASK-011/API-061: expiry semantics are a closed vocabulary; an unknown
+        // value is refused at the door rather than surviving to the CHECK abort.
+        TestAuthContext.allowWrites("member-1");
+        when(memberService.toKeyedMemberRef("member-1")).thenReturn("h:member-1");
+        when(memberService.toKeyedMemberRef("owner-1")).thenReturn("h:owner-1");
+
+        var res = controller.createAsk(Map.of(
+                "kind", "question",
+                "to", "owner-1",
+                "expiryBehavior", "maybe"));
+
+        assertEquals(422, res.getStatusCodeValue());
+        assertTrue(bodyMessage(res).contains("Invalid expiryBehavior"));
+        verify(askService, never()).create(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void createAsk_withAValidExpiryBehavior_passesTheStoredValue() {
+        TestAuthContext.allowWrites("member-1");
+        when(memberService.toKeyedMemberRef("member-1")).thenReturn("h:member-1");
+        when(memberService.toKeyedMemberRef("owner-1")).thenReturn("h:owner-1");
+        when(askService.create(anyString(), anyString(), anyString(), any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(new Ask());
+
+        var res = controller.createAsk(Map.of(
+                "kind", "question",
+                "to", "owner-1",
+                "expiryBehavior", "escalate"));
+
+        assertEquals(200, res.getStatusCodeValue());
+        verify(askService).create(eq("question"), eq("h:member-1"), eq("h:owner-1"), any(), any(),
+                eq("escalate"), any(), any(), any(), any());
+    }
+
+    @Test
     void respond_withAnUnknownDecision_isAValidationRefusal() {
         // ASK-050/API-061: the decision vocabulary is validated at the door.
         TestAuthContext.allowWrites("member-1");

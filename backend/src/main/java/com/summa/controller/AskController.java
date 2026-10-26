@@ -38,8 +38,6 @@ public class AskController {
     private static final Set<String> VALID_ASK_TIERS = EnumSet.allOf(AskTier.class).stream()
         .map(AskTier::getValue).collect(Collectors.toSet());
 
-    private static final Set<ExpiryBehavior> VALID_EXPIRY_BEHAVIORS = Set.of(ExpiryBehavior.DENY, ExpiryBehavior.ESCALATE, ExpiryBehavior.REASSIGN);
-
     public AskController(AskService askService, AuditService auditService, WriteGate writeGate,
                            MemberService memberService, RateLimiter rateLimiter) {
         this.askService = askService;
@@ -170,9 +168,9 @@ public class AskController {
             String expiryBehaviorStr = body.get("expiryBehavior");
             ExpiryBehavior expiryBehavior = null;
             if (expiryBehaviorStr != null && !expiryBehaviorStr.isBlank()) {
-                expiryBehavior = ExpiryBehavior.valueOf(expiryBehaviorStr.toUpperCase());
-                if (!VALID_EXPIRY_BEHAVIORS.contains(expiryBehavior)) {
-                    throw new IllegalArgumentException("Invalid expiryBehavior: " + expiryBehaviorStr + ". Must be one of: " + VALID_EXPIRY_BEHAVIORS);
+                expiryBehavior = ExpiryBehavior.fromValue(expiryBehaviorStr);
+                if (expiryBehavior == null) {
+                    throw new IllegalArgumentException("Invalid expiryBehavior: " + expiryBehaviorStr + ". Must be one of: deny, escalate, reassign");
                 }
             }
             String deadlineStr = body.get("deadlineSeconds");

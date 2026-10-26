@@ -14,13 +14,6 @@ public class ExpiryBehaviorConverter implements AttributeConverter<ExpiryBehavio
 
     @Override
     public ExpiryBehavior convertToEntityAttribute(String dbData) {
-        if (dbData != null) {
-            for (ExpiryBehavior eb : ExpiryBehavior.values()) {
-                if (eb.getValue().equals(dbData)) {
-                    return eb;
-                }
-            }
-        }
-        return null;
+        return ExpiryBehavior.fromValue(dbData);
     }
 }
