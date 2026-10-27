@@ -331,6 +331,12 @@ public class OffboardingWalkService {
             }
         }
 
+        // OFB-014/DAT-091: scrub the departing member from workspace participant
+        // entries and named domain access lists — the same sweep the demotion walk
+        // runs, so offboarding (the stronger event) cannot leave behind what a
+        // demotion would have removed.
+        int workspacesScrubbed = scrubMemberReferences(humanId, allDomains, "OFFBOARD", "member_departed");
+
         // OFB-010: Reassign board tasks or return to pool.
         // DAT-120: board_tasks.assignee_member_id is a keyed union.
         for (BoardTask task : boardTaskRepository.findByAssigneeMemberId(humanId)) {
@@ -381,6 +387,7 @@ public class OffboardingWalkService {
         result.put("proposalsTransferred", proposalsTransferred);
         result.put("asksReassigned", asksReassigned);
         result.put("tasksReassigned", tasksReassigned);
+        result.put("workspacesScrubbed", workspacesScrubbed);
         result.put("patsRevoked", patsRevoked);
         result.put("groupsLeadershipTransferred", groupsLeadershipTransferred);
 
@@ -571,77 +578,9 @@ public class OffboardingWalkService {
             }
         }
 
-        // OFB-014/OFB-031: Clear workspace participant entries and named domain access
-        // Always run cleanup on any role reduction (not just to viewer) to prevent stale access
-        List<Workspace> allWorkspaces = workspaceRepository.findByArchivedAtIsNullOrdered(OFFBOARD_BATCH_LIMIT);
-        for (Workspace ws : allWorkspaces) {
-            boolean changed = false;
-            if (ws.getParticipants() != null && !ws.getParticipants().isBlank()
-                    && !ws.getParticipants().equals("[]")) {
-                try {
-                    JsonNode participants =
-                        objectMapper.readTree(ws.getParticipants());
-                    int before = participants.size();
-                    ArrayNode filtered = objectMapper.createArrayNode();
-                    for (int i = 0; i < participants.size(); i++) {
-                        if (!humanId.equals(participants.get(i).asText())) {
-                            filtered.add(participants.get(i));
-                        }
-                    }
-                    if (filtered.size() < before) {
-                        ws.setParticipants(objectMapper.writeValueAsString(filtered));
-                        changed = true;
-                    }
-                } catch (Exception e) {
-                    auditService.logSystem("DEMOTE_CLEAN_WORKSPACE_FAIL", "workspace", ws.getId(),
-                        JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
-                }
-            }
-            // Clear named readers that reference this human
-            if (ws.getDomainIds() != null && !ws.getDomainIds().isBlank()
-                    && !ws.getDomainIds().equals("[]")) {
-                try {
-                    JsonNode domainIds =
-                        objectMapper.readTree(ws.getDomainIds());
-                    for (JsonNode domIdNode : domainIds) {
-                        String domId = domIdNode.asText();
-                        Optional<DnaDomain> domOpt = domainService.findById(domId);
-                        if (domOpt.isPresent() && "named".equals(domOpt.get().getAccess())) {
-                            String namedReaders = domOpt.get().getNamedReaders();
-                            if (namedReaders != null && !namedReaders.isBlank()
-                                    && !namedReaders.equals("[]")) {
-                                try {
-                                    JsonNode readers = objectMapper.readTree(namedReaders);
-                                    boolean contains = false;
-                                    for (JsonNode r : readers) {
-                                        if (humanId.equals(r.asText())) { contains = true; break; }
-                                    }
-                                    if (!contains) continue;
-                                    ArrayNode filteredReaders = objectMapper.createArrayNode();
-                                    for (int i = 0; i < readers.size(); i++) {
-                                        if (!humanId.equals(readers.get(i).asText())) {
-                                            filteredReaders.add(readers.get(i));
-                                        }
-                                    }
-                                    domOpt.get().setNamedReaders(objectMapper.writeValueAsString(filteredReaders));
-                                    domainRepository.save(domOpt.get());
-                                    changed = true;
-                                } catch (Exception e) {
-                                    auditService.logSystem("DEMOTE_CLEAN_DOMAIN_READERS_FAIL", "dna_domain", domId,
-                                        JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
-                                }
-                            }
-                        }
-                    }
-                } catch (Exception e) {
-                    auditService.logSystem("DEMOTE_CLEAN_DOMAIN_READERS_FAIL", "dna_domain", ws.getId(),
-                        JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
-                }
-            }
-            if (changed) {
-                workspaceRepository.save(ws);
-            }
-        }
+        // OFB-014/OFB-031: Clear workspace participant entries and named domain access.
+        // Always run cleanup on any role reduction (not just to viewer) to prevent stale access.
+        int workspacesScrubbed = scrubMemberReferences(humanId, allDomainsDemote, "DEMOTE", "member_demoted");
 
         // OFB-014: Revoke PATs — credential-death on any role reduction (DAT-120: sweep both forms)
         for (String memberRef : List.of(humanId, "h:" + humanId)) {
@@ -669,6 +608,7 @@ public class OffboardingWalkService {
         result.put("proposalsWithdrawn", proposalsWithdrawn);
         result.put("asksClosed", asksClosed);
         result.put("tasksReturned", tasksReturned);
+        result.put("workspacesScrubbed", workspacesScrubbed);
         result.put("patsRevoked", patsRevoked);
         result.put("groupsLeadershipTransferred", groupLeadershipsTransferred);
         result.put("changed", true);
@@ -677,6 +617,104 @@ public class OffboardingWalkService {
             JsonHelpers.toJson(Map.of("oldRbac", currentRbac, "newRbac", newRbac, "result", result), objectMapper));
 
         return result;
+    }
+
+    /**
+     * OFB-014 / DAT-091: the shared member-reference scrub door both walks run —
+     * offboarding ends the membership outright, a demotion sheds what the new role
+     * can no longer carry, and neither may leave a stale reference a reader set or
+     * routing decision could still resolve.
+     *
+     * <p>Sweeps workspace participant entries on every non-archived workspace and
+     * the {@code named_readers} list of every {@code named} domain in the fetched
+     * set (archived included — references persist past archiving), so a named
+     * domain no live workspace references is still scrubbed. DAT-120: the stored
+     * entries are member references, so the sweep matches the bare and the
+     * {@code h:}-prefixed form, like every other walk sweep. A workspace whose
+     * participants changed, or that names a domain whose reader list changed, is
+     * re-saved so reader sets and routing re-derive.
+     *
+     * @param humanId      the departing/reduced member's bare id
+     * @param domains      the already-fetched domain set to sweep named readers on
+     * @param auditPrefix  audit action prefix ({@code OFFBOARD} / {@code DEMOTE})
+     * @param reason       audit reason string ({@code member_departed} / {@code member_demoted})
+     * @return the number of workspaces whose stored row changed
+     */
+    private int scrubMemberReferences(String humanId, List<DnaDomain> domains, String auditPrefix, String reason) {
+        List<String> memberRefs = List.of(humanId, "h:" + humanId);
+
+        // Named domain access lists first — a workspace that names a scrubbed
+        // domain is re-saved below so the read path re-derives its reader set.
+        java.util.Set<String> scrubbedDomainIds = new HashSet<>();
+        for (DnaDomain domain : domains) {
+            if (!"named".equals(domain.getAccess())) continue;
+            String namedReaders = domain.getNamedReaders();
+            if (namedReaders == null || namedReaders.isBlank() || namedReaders.equals("[]")) continue;
+            try {
+                JsonNode readers = objectMapper.readTree(namedReaders);
+                ArrayNode filteredReaders = objectMapper.createArrayNode();
+                for (int i = 0; i < readers.size(); i++) {
+                    if (!memberRefs.contains(readers.get(i).asText())) {
+                        filteredReaders.add(readers.get(i));
+                    }
+                }
+                if (filteredReaders.size() < readers.size()) {
+                    domain.setNamedReaders(objectMapper.writeValueAsString(filteredReaders));
+                    domainRepository.save(domain);
+                    scrubbedDomainIds.add(domain.getId());
+                }
+            } catch (Exception e) {
+                auditService.logSystem(auditPrefix + "_CLEAN_DOMAIN_READERS_FAIL", "dna_domain", domain.getId(),
+                    JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName(), "reason", reason), objectMapper));
+            }
+        }
+
+        int workspacesScrubbed = 0;
+        List<Workspace> allWorkspaces = workspaceRepository.findByArchivedAtIsNullOrdered(OFFBOARD_BATCH_LIMIT);
+        for (Workspace ws : allWorkspaces) {
+            boolean changed = false;
+            if (ws.getParticipants() != null && !ws.getParticipants().isBlank()
+                    && !ws.getParticipants().equals("[]")) {
+                try {
+                    JsonNode participants = objectMapper.readTree(ws.getParticipants());
+                    ArrayNode filtered = objectMapper.createArrayNode();
+                    for (int i = 0; i < participants.size(); i++) {
+                        if (!memberRefs.contains(participants.get(i).asText())) {
+                            filtered.add(participants.get(i));
+                        }
+                    }
+                    if (filtered.size() < participants.size()) {
+                        ws.setParticipants(objectMapper.writeValueAsString(filtered));
+                        changed = true;
+                    }
+                } catch (Exception e) {
+                    auditService.logSystem(auditPrefix + "_CLEAN_WORKSPACE_FAIL", "workspace", ws.getId(),
+                        JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName(), "reason", reason), objectMapper));
+                }
+            }
+            // The workspace names a domain whose reader list was scrubbed — re-save
+            // the workspace so reader sets and routing re-derive (OFB-014).
+            if (!changed && !scrubbedDomainIds.isEmpty() && ws.getDomainIds() != null
+                    && !ws.getDomainIds().isBlank() && !ws.getDomainIds().equals("[]")) {
+                try {
+                    JsonNode domainIds = objectMapper.readTree(ws.getDomainIds());
+                    for (JsonNode domIdNode : domainIds) {
+                        if (scrubbedDomainIds.contains(domIdNode.asText())) {
+                            changed = true;
+                            break;
+                        }
+                    }
+                } catch (Exception ignored) {
+                    // A malformed domainIds list leaves the workspace untouched —
+                    // the participants sweep above already did its best.
+                }
+            }
+            if (changed) {
+                workspaceRepository.save(ws);
+                workspacesScrubbed++;
+            }
+        }
+        return workspacesScrubbed;
     }
 
     private boolean isPersonalAssistant(Agent agent) {

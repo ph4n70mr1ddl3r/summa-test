@@ -101,15 +101,9 @@ public class JwtUtil {
             if (Long.compareUnsigned(expMillis, System.currentTimeMillis()) < 0) {
                 return null;
             }
-            Object svObj = payload.get("sv");
-            long rawSv;
-            if (svObj instanceof Number num) {
-                rawSv = num.longValue();
-                if (rawSv < 0 || rawSv > Integer.MAX_VALUE) return null;
-            } else {
-                rawSv = 0;
-            }
-            int sessionVersion = (int) rawSv;
+            // The sv (session version) claim is intentionally not validated here —
+            // JwtAuthenticationFilter.checkSessionVersion resolves it against the
+            // live human row, which is the only check that can decide staleness.
             return payload;
         } catch (Exception e) {
             log.warn("JWT parse failure: {}", e.getMessage());

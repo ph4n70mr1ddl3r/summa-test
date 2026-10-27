@@ -21,6 +21,7 @@ import com.summa.model.DnaProposal;
 import com.summa.model.DnaDomain;
 import com.summa.model.Pat;
 import com.summa.model.Group;
+import com.summa.model.Workspace;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -531,5 +532,144 @@ class OffboardingWalkServiceTest {
 
         verify(agentService, never()).retire(anyString(), anyString());
         assertNotNull(human.getDeactivatedAt());
+    }
+
+    @Test
+    void walkOffboard_scrubsWorkspaceParticipantsAndNamedReaders() {
+        // OFB-014/DAT-091: the offboarding walk scrubs the departing member from
+        // workspace participant entries and named domain access lists — the same
+        // sweep the demotion walk runs. DAT-120: both the bare and the h:-prefixed
+        // form are member references, so both are swept; an agent ref is not this
+        // member and survives.
+        Human human = new Human();
+        human.setId("h1");
+        human.setRbac("member");
+        human.setDeactivatedAt(null);
+        when(memberService.findHuman("h1")).thenReturn(Optional.of(human));
+        when(memberService.saveHuman(any())).thenReturn(human);
+
+        DnaDomain namedDomain = new DnaDomain();
+        namedDomain.setId("d1");
+        namedDomain.setAccess("named");
+        namedDomain.setNamedReaders("[\"h1\",\"a:9\",\"h2\"]");
+        when(domainService.findAllIncludingArchived(anyInt())).thenReturn(java.util.List.of(namedDomain));
+
+        Workspace ws = new Workspace();
+        ws.setId("ws1");
+        ws.setParticipants("[\"h1\",\"h:h1\",\"h2\"]");
+        ws.setDomainIds("[\"d1\"]");
+        when(workspaceRepository.findByArchivedAtIsNullOrdered(anyInt())).thenReturn(java.util.List.of(ws));
+
+        when(agentService.findByOwner(eq("h1"), anyInt())).thenReturn(java.util.List.of());
+        when(initiativeService.findAllActive(anyInt())).thenReturn(java.util.List.of());
+        when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of());
+        when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
+        when(proposalService.findAllOpen()).thenReturn(java.util.List.of());
+        when(groupMembershipRepository.findById_MemberId("h1")).thenReturn(java.util.List.of());
+        when(askRepository.findByStatusPendingOrdered(anyInt())).thenReturn(java.util.List.of());
+        when(boardTaskRepository.findByAssigneeMemberId("h1")).thenReturn(java.util.List.of());
+        when(patRepository.findByMemberId("h1")).thenReturn(java.util.List.of());
+        when(groupRepository.findAll()).thenReturn(java.util.List.of());
+        Human admin = new Human();
+        admin.setId("admin1");
+        when(memberService.findAdmins()).thenReturn(java.util.List.of(admin));
+
+        var result = walkService.walkOffboard("h1", null, "admin1");
+
+        assertEquals("[\"h2\"]", ws.getParticipants());
+        verify(workspaceRepository).save(ws);
+        assertEquals("[\"a:9\",\"h2\"]", namedDomain.getNamedReaders());
+        verify(domainRepository).save(namedDomain);
+        assertEquals(1, result.get("workspacesScrubbed"));
+    }
+
+    @Test
+    void walkOffboard_scrubsNamedDomainNotReferencedByAnyWorkspace() {
+        // OFB-014: membership in named domain access lists is removed — the sweep
+        // runs over the fetched domain set, so a named domain no live workspace
+        // references is still scrubbed.
+        Human human = new Human();
+        human.setId("h1");
+        human.setRbac("member");
+        human.setDeactivatedAt(null);
+        when(memberService.findHuman("h1")).thenReturn(Optional.of(human));
+        when(memberService.saveHuman(any())).thenReturn(human);
+
+        DnaDomain namedDomain = new DnaDomain();
+        namedDomain.setId("d1");
+        namedDomain.setAccess("named");
+        namedDomain.setNamedReaders("[\"h:h1\",\"other\"]");
+        when(domainService.findAllIncludingArchived(anyInt())).thenReturn(java.util.List.of(namedDomain));
+
+        Workspace ws = new Workspace();
+        ws.setId("ws1");
+        ws.setParticipants("[]");
+        ws.setDomainIds("[]");
+        when(workspaceRepository.findByArchivedAtIsNullOrdered(anyInt())).thenReturn(java.util.List.of(ws));
+
+        when(agentService.findByOwner(eq("h1"), anyInt())).thenReturn(java.util.List.of());
+        when(initiativeService.findAllActive(anyInt())).thenReturn(java.util.List.of());
+        when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of());
+        when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
+        when(proposalService.findAllOpen()).thenReturn(java.util.List.of());
+        when(groupMembershipRepository.findById_MemberId("h1")).thenReturn(java.util.List.of());
+        when(askRepository.findByStatusPendingOrdered(anyInt())).thenReturn(java.util.List.of());
+        when(boardTaskRepository.findByAssigneeMemberId("h1")).thenReturn(java.util.List.of());
+        when(patRepository.findByMemberId("h1")).thenReturn(java.util.List.of());
+        when(groupRepository.findAll()).thenReturn(java.util.List.of());
+        Human admin = new Human();
+        admin.setId("admin1");
+        when(memberService.findAdmins()).thenReturn(java.util.List.of(admin));
+
+        var result = walkService.walkOffboard("h1", null, "admin1");
+
+        assertEquals("[\"other\"]", namedDomain.getNamedReaders());
+        verify(domainRepository).save(namedDomain);
+        // Nothing in the workspace changed, so its row is not re-saved.
+        verify(workspaceRepository, never()).save(any());
+        assertEquals(0, result.get("workspacesScrubbed"));
+    }
+
+    @Test
+    void walkDemote_scrubsWorkspaceParticipantsAndNamedReaders() {
+        // OFB-014/OFB-031: any role reduction scrubs the member from workspace
+        // participant entries and named domain access lists.
+        Human human = new Human();
+        human.setId("h1");
+        human.setRbac("owner");
+        when(memberService.findHuman("h1")).thenReturn(Optional.of(human));
+
+        DnaDomain namedDomain = new DnaDomain();
+        namedDomain.setId("d1");
+        namedDomain.setAccess("named");
+        namedDomain.setNamedReaders("[\"h1\",\"h2\"]");
+        when(domainService.findAllIncludingArchived(anyInt())).thenReturn(java.util.List.of(namedDomain));
+
+        Workspace ws = new Workspace();
+        ws.setId("ws1");
+        ws.setParticipants("[\"h:h1\",\"h2\"]");
+        ws.setDomainIds("[]");
+        when(workspaceRepository.findByArchivedAtIsNullOrdered(anyInt())).thenReturn(java.util.List.of(ws));
+
+        when(agentService.findByOwner(eq("h1"), anyInt())).thenReturn(java.util.List.of());
+        when(proposalService.findAllOpen()).thenReturn(java.util.List.of());
+        when(initiativeService.findAllActive(anyInt())).thenReturn(java.util.List.of());
+        when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of());
+        when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
+        when(askRepository.findByStatusPendingOrdered(anyInt())).thenReturn(java.util.List.of());
+        when(boardTaskRepository.findByAssigneeMemberId("h1")).thenReturn(java.util.List.of());
+        when(patRepository.findByMemberId("h1")).thenReturn(java.util.List.of());
+        when(groupRepository.findAll()).thenReturn(java.util.List.of());
+        Human admin = new Human();
+        admin.setId("admin1");
+        when(memberService.findAdmins()).thenReturn(java.util.List.of(admin));
+
+        var result = walkService.walkDemote("h1", "member", "admin1");
+
+        assertEquals("[\"h2\"]", ws.getParticipants());
+        verify(workspaceRepository).save(ws);
+        assertEquals("[\"h2\"]", namedDomain.getNamedReaders());
+        verify(domainRepository).save(namedDomain);
+        assertEquals(1, result.get("workspacesScrubbed"));
     }
 }
