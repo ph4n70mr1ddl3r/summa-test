@@ -67,7 +67,10 @@ the PRN-009 form — refuse, audit, ask where a human decision is needed.
 ## Work, initiatives, workspaces
 
 - **API-040** — `CRUD /asks` · `POST /asks/:id/respond` · `POST /asks/:id/withdraw`
-  (originator retract; the ASK-030/032 door rules apply) · `WS: ask.requested, ask.answered`.
+  (originator retract; the ASK-030/032 door rules apply) · `POST /asks/:id/expire` (admin
+  force-expiry — the system's named closure, ASK-032; honours the expiry behavior and
+  walks the same shared successor door — chain root, depth budget, deputy hop — as the
+  scheduled sweep) · `WS: ask.requested, ask.answered`.
   The respond body carries `response` (the human's answer) and `decision`
   (`accept` | `deny`): an absent decision is an acceptance, and a deny closes the ask
   denied immediately (ASK-050) — only an accept counts toward the quorum (ASK-052).

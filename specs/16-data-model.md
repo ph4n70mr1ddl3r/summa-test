@@ -51,7 +51,8 @@ dna_proposals  (id, kind 'card'|'rule'|'decision'|'goal'|'glossary'|'edit', payl
 asks           (id, kind 'approval'|'question'|'assignment'|'spawn_request'|'promotion', from member,
                 to member, payload json, initiative_id?, workspace_id?,
                 status 'pending'|'answered'|'denied'|'expired'|'withdrawn', deadline, created_at, updated_at?,
-                sla_tier 'critical'|'standard'|'bulk', escalation json?,
+                sla_tier 'critical'|'standard'|'bulk', escalation? (chain-root ask id — ASK-057 depth
+                accounting across both expiry doors),
                 expiry_behavior 'deny'|'escalate'|'reassign', responded_at?,
                  quorum_required int default 1, responses json, collapsed_count int default 0)
 initiatives    (id, title, goal_ref?, decision_ref?, sponsor member, lead member,

@@ -9,6 +9,7 @@ import com.summa.model.Human;
 import com.summa.model.Initiative;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
@@ -867,5 +868,86 @@ class AskServiceTest {
 
         assertEquals("expired", result.getStatus());
         verify(auditService).log(eq("admin-1"), eq("EXPIRE_SUCCESSOR_CREATED"), eq("ask"), eq("ask-1"), anyString());
+    }
+
+    @Test
+    void expireNow_successorCarriesTheChainRootAndWalksTheDeputyHop() {
+        // ASK-057/060: the manual door's successor carries the chain root so depth
+        // accounting survives across both doors, and the deputy hop is walked for
+        // `escalate` exactly as on the sweep — member → deputy → … → admin.
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setKind("question");
+        ask.setStatus("pending");
+        ask.setFrom("h:proposer");
+        ask.setTo("h:owner-1");
+        ask.setSlaTier("standard");
+        ask.setExpiryBehavior("escalate");
+        ask.setQuorumRequired(1);
+        ask.setPayload("{}");
+        ask.setDeadline(Instant.now().plusSeconds(3600));
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+        when(askRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(memberService.isAdmin("admin-1")).thenReturn(true);
+        lenient().when(governanceService.getSetting(anyString(), eq(Number.class))).thenReturn(null);
+        lenient().when(memberService.resolveDeputyTarget("h:owner-1")).thenReturn(Optional.of("h:deputy-1"));
+        lenient().when(askRepository.findByToAndStatusPending(any())).thenReturn(List.of());
+
+        AskService svc = buildService();
+        svc.expireNow("ask-1", "admin-1");
+
+        ArgumentCaptor<Ask> saved = ArgumentCaptor.forClass(Ask.class);
+        verify(askRepository, atLeastOnce()).save(saved.capture());
+        Ask successor = saved.getAllValues().stream()
+            .filter(a -> !"ask-1".equals(a.getId()))
+            .findFirst().orElseThrow();
+        assertEquals("ask-1", successor.getEscalation());
+        assertEquals("h:deputy-1", successor.getTo());
+        assertEquals("escalate", successor.getExpiryBehavior());
+    }
+
+    @Test
+    void expireNow_exhaustedChainBroadcastsOrgStallInsteadOfASuccessor() {
+        // ASK-057: chain exhaustion applies on the manual door exactly as on the
+        // sweep — the depth budget is shared, so a force-expiry cannot reset it.
+        // An exhausted chain broadcasts the org-stall alert instead of opening
+        // yet another successor.
+        when(askRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(memberService.isAdmin("admin-1")).thenReturn(true);
+        lenient().when(governanceService.getSetting(anyString(), eq(Number.class))).thenReturn(null);
+        lenient().when(memberService.resolveDeputyTarget(any())).thenReturn(Optional.empty());
+        lenient().when(memberService.findAdmins()).thenReturn(List.of());
+        lenient().when(askRepository.findByToAndStatusPending(any())).thenReturn(List.of());
+
+        for (int i = 0; i <= com.summa.constants.Defaults.MAX_EXPIRE_SUCCESSOR_DEPTH; i++) {
+            Ask hop = new Ask();
+            hop.setId("ask-hop-" + i);
+            hop.setKind("question");
+            hop.setStatus("pending");
+            hop.setFrom("h:proposer");
+            hop.setTo("h:owner-1");
+            hop.setSlaTier("standard");
+            hop.setExpiryBehavior("escalate");
+            hop.setQuorumRequired(1);
+            hop.setPayload("{}");
+            hop.setEscalation("ask-root");
+            hop.setDeadline(Instant.now().plusSeconds(3600));
+            lenient().when(askRepository.findById("ask-hop-" + i)).thenReturn(Optional.of(hop));
+        }
+
+        AskService svc = buildService();
+        for (int i = 0; i < com.summa.constants.Defaults.MAX_EXPIRE_SUCCESSOR_DEPTH; i++) {
+            assertEquals("expired", svc.expireNow("ask-hop-" + i, "admin-1").getStatus());
+        }
+        verify(auditService, never()).logSystem(eq("ORG_STALL_BROADCAST"), anyString(), anyString(), anyString());
+
+        // The budget is spent: the next hop exhausts the chain.
+        assertEquals("expired", svc.expireNow("ask-hop-" + com.summa.constants.Defaults.MAX_EXPIRE_SUCCESSOR_DEPTH, "admin-1").getStatus());
+        verify(auditService, times(com.summa.constants.Defaults.MAX_EXPIRE_SUCCESSOR_DEPTH))
+            .log(eq("admin-1"), eq("EXPIRE_SUCCESSOR_CREATED"), eq("ask"), anyString(), anyString());
+        verify(auditService).logSystem(eq("EXPIRE_CHAIN_EXHAUSTED"), eq("ask"),
+            eq("ask-hop-" + com.summa.constants.Defaults.MAX_EXPIRE_SUCCESSOR_DEPTH), anyString());
+        verify(auditService).logSystem(eq("ORG_STALL_BROADCAST"), eq("ask"),
+            eq("ask-hop-" + com.summa.constants.Defaults.MAX_EXPIRE_SUCCESSOR_DEPTH), anyString());
     }
 }
