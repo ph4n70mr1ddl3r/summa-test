@@ -950,4 +950,62 @@ class AskServiceTest {
         verify(auditService).logSystem(eq("ORG_STALL_BROADCAST"), eq("ask"),
             eq("ask-hop-" + com.summa.constants.Defaults.MAX_EXPIRE_SUCCESSOR_DEPTH), anyString());
     }
+
+    // --- STG-031: the erasure sweep's responses-ledger pseudonymization ---
+
+    @Test
+    void pseudonymizeResponderInLedgers_rewritesBareAndKeyedEntries() {
+        // The ledger keeps its event shape (text, decision) while both stored
+        // forms of the member's responder identity sever behind the pseudonym.
+        Ask bothForms = new Ask();
+        bothForms.setId("ask-1");
+        bothForms.setResponses("[{\"responder\":\"human-1\",\"response\":\"ok\",\"decision\":\"accept\"},"
+            + "{\"responder\":\"h:human-1\",\"response\":\"again\",\"decision\":\"deny\"}]");
+        when(askRepository.findByResponsesContaining(anyString())).thenReturn(List.of(bothForms));
+        when(askRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        AskService svc = buildService();
+        int rewritten = svc.pseudonymizeResponderInLedgers("human-1", "erased-abc");
+
+        assertEquals(1, rewritten);
+        assertEquals("[{\"responder\":\"erased-abc\",\"response\":\"ok\",\"decision\":\"accept\"},"
+            + "{\"responder\":\"erased-abc\",\"response\":\"again\",\"decision\":\"deny\"}]",
+            bothForms.getResponses());
+    }
+
+    @Test
+    void pseudonymizeResponderInLedgers_leavesOtherRespondersAlone() {
+        Ask ledger = new Ask();
+        ledger.setId("ask-1");
+        ledger.setResponses("[{\"responder\":\"human-11\",\"response\":\"x\",\"decision\":\"accept\"},"
+            + "{\"responder\":\"h:human-2\",\"response\":\"y\",\"decision\":\"accept\"}]");
+        // The LIKE needles are substrings, so an id that merely contains the
+        // erased id (human-11 ⊃ human-1) can match the query — the exact entry
+        // re-check must keep the row untouched and unrewritten.
+        when(askRepository.findByResponsesContaining(anyString())).thenReturn(List.of(ledger));
+
+        AskService svc = buildService();
+        int rewritten = svc.pseudonymizeResponderInLedgers("human-1", "erased-abc");
+
+        assertEquals(0, rewritten);
+        verify(askRepository, never()).save(any());
+        assertTrue(ledger.getResponses().contains("human-11"));
+        assertTrue(ledger.getResponses().contains("h:human-2"));
+    }
+
+    @Test
+    void pseudonymizeResponderInLedgers_survivesAMalformedRow() {
+        // One malformed ledger row must not abort the erasure sweep — the row
+        // is named in an audit event and the sweep moves on.
+        Ask malformed = new Ask();
+        malformed.setId("ask-bad");
+        malformed.setResponses("not-json");
+        when(askRepository.findByResponsesContaining(anyString())).thenReturn(List.of(malformed));
+
+        AskService svc = buildService();
+        int rewritten = svc.pseudonymizeResponderInLedgers("human-1", "erased-abc");
+
+        assertEquals(0, rewritten);
+        verify(auditService).logSystem(eq("ERASURE_LEDGER_FAIL"), eq("ask"), eq("ask-bad"), anyString());
+    }
 }

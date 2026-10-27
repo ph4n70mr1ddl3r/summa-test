@@ -18,6 +18,14 @@ public interface HumanRepository extends JpaRepository<Human, String> {
     @Query("SELECT h FROM Human h WHERE h.deactivatedAt IS NULL")
     java.util.List<Human> findAllActive();
 
+    /**
+     * STG-034/OFB-014: the erasure sweep's reverse deputy lookup — every human
+     * whose deputy pointer names the member being erased. Matched against the
+     * stored form (bare or h:-prefixed) by the caller.
+     */
+    @Query("SELECT h FROM Human h WHERE h.deputyMemberId = :deputyId")
+    java.util.List<Human> findByDeputyMemberId(@org.springframework.data.repository.query.Param("deputyId") String deputyId);
+
     long countByDeactivatedAtIsNullAndRbac(String rbac);
 
     /**

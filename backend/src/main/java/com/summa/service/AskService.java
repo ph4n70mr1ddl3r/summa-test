@@ -776,6 +776,61 @@ public class AskService {
         }
     }
 
+    /**
+     * STG-031: pseudonymize a member's entries in the ask responses ledger —
+     * the erasure sweep's ledger surface. The ledger's event shape is kept
+     * (response text, decision, and the count a settled quorum recorded), while
+     * the responder identity link is severed behind the one-way pseudonym.
+     * The member's entries are matched in both the bare and the h:-prefixed
+     * stored form, like every other erasure sweep.
+     *
+     * @param cleanMemberId the member's bare id
+     * @param pseudonym     the member's one-way erasure pseudonym
+     * @return the number of ask rows rewritten
+     */
+    @Transactional
+    public int pseudonymizeResponderInLedgers(String cleanMemberId, String pseudonym) {
+        int rewritten = 0;
+        // One pass per stored form; a row matched by both needles is processed
+        // once and swept against both forms in that pass.
+        java.util.Set<String> processedIds = new java.util.HashSet<>();
+        List<String> memberRefs = List.of(cleanMemberId, "h:" + cleanMemberId);
+        for (String ref : memberRefs) {
+            String needle = "%\"responder\":\"" + ref + "\"%";
+            for (Ask ask : askRepository.findByResponsesContaining(needle)) {
+                if (!processedIds.add(ask.getId())) continue;
+                List<Map<String, String>> entries;
+                try {
+                    entries = objectMapper.readValue(ask.getResponses(),
+                        new TypeReference<List<Map<String, String>>>() {});
+                } catch (Exception e) {
+                    // One malformed ledger row must not abort the erasure sweep —
+                    // name the row and move on, like every other walk sweep.
+                    auditService.logSystem("ERASURE_LEDGER_FAIL", "ask", ask.getId(),
+                        JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
+                    continue;
+                }
+                boolean changed = false;
+                for (Map<String, String> entry : entries) {
+                    if (entry != null && memberRefs.contains(entry.get("responder"))) {
+                        entry.put("responder", pseudonym);
+                        changed = true;
+                    }
+                }
+                if (!changed) continue;
+                try {
+                    ask.setResponses(objectMapper.writeValueAsString(entries));
+                    askRepository.save(ask);
+                    rewritten++;
+                } catch (Exception e) {
+                    auditService.logSystem("ERASURE_LEDGER_FAIL", "ask", ask.getId(),
+                        JsonHelpers.toJson(Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), objectMapper));
+                }
+            }
+        }
+        return rewritten;
+    }
+
     @Transactional
     public Ask withdraw(String id, String originator) {
         Ask ask = askRepository.findById(id)

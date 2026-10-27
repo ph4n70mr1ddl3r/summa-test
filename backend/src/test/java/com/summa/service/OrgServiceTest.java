@@ -67,6 +67,9 @@ class OrgServiceTest {
     @Mock
     private DataHoldRepository dataHoldRepository;
 
+    @Mock
+    private AskService askService;
+
     @InjectMocks
     private OrgService orgService;
 
@@ -231,6 +234,54 @@ class OrgServiceTest {
         assertEquals("h:admin-1", prop.getProposedBy());
         assertNull(task.getAssigneeMemberId());
         assertNull(mem.getMemberId());
+    }
+
+    @Test
+    void erasure_clearsReverseDeputyReferences() {
+        // OFB-014: deputy references clear in both directions — the walks sweep
+        // the reverse pointers, and erasure (the stronger event) must not leave
+        // them standing when it runs standalone. Both stored forms are swept.
+        Human human = createHuman("human-1", "member");
+        when(humanRepository.findByIdForUpdate("human-1")).thenReturn(Optional.of(human));
+        when(humanRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(dataHoldRepository.findByKindAndSubjectIdAndReleasedAtIsNull("member", "human-1"))
+            .thenReturn(List.of());
+        Human admin = createHuman("admin-1", "admin");
+        when(memberService.findAdmins()).thenReturn(List.of(admin));
+
+        Human barePointer = createHuman("human-2", "member");
+        barePointer.setDeputyMemberId("human-1");
+        Human keyedPointer = createHuman("human-3", "member");
+        keyedPointer.setDeputyMemberId("h:human-1");
+        when(humanRepository.findByDeputyMemberId("human-1")).thenReturn(List.of(barePointer));
+        when(humanRepository.findByDeputyMemberId("h:human-1")).thenReturn(List.of(keyedPointer));
+
+        orgService.erasure("human-1", "admin-1");
+
+        assertNull(barePointer.getDeputyMemberId());
+        assertNull(keyedPointer.getDeputyMemberId());
+    }
+
+    @Test
+    void erasure_pseudonymizesTheResponsesLedger() {
+        // STG-031: the quorum responses ledger is a named sweep surface — the
+        // member's responder entries pseudonymize behind the one-way token.
+        Human human = createHuman("human-1", "member");
+        when(humanRepository.findByIdForUpdate("human-1")).thenReturn(Optional.of(human));
+        when(humanRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(dataHoldRepository.findByKindAndSubjectIdAndReleasedAtIsNull("member", "human-1"))
+            .thenReturn(List.of());
+        Human admin = createHuman("admin-1", "admin");
+        when(memberService.findAdmins()).thenReturn(List.of(admin));
+        when(askService.pseudonymizeResponderInLedgers(eq("human-1"), anyString()))
+            .thenReturn(2);
+
+        orgService.erasure("human-1", "admin-1");
+
+        // The pseudonym is the same one-way token the identity fields carry.
+        String expectedPseudonym = OrgService.erasurePseudonymEmail("human-1")
+            .replace("erased-", "").replace("@erased.invalid", "");
+        verify(askService).pseudonymizeResponderInLedgers("human-1", expectedPseudonym);
     }
 
     @Test

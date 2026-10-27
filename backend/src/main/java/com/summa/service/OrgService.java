@@ -44,6 +44,7 @@ public class OrgService {
     private final MemoryItemRepository memoryItemRepository;
     private final PatRepository patRepository;
     private final DataHoldRepository dataHoldRepository;
+    private final AskService askService;
 
     public OrgService(HumanRepository humanRepository, AuditService auditService,
                       AuditEventRepository auditEventRepository,
@@ -55,7 +56,8 @@ public class OrgService {
                       DnaProposalRepository proposalRepository,
                       MemoryItemRepository memoryItemRepository,
                       PatRepository patRepository,
-                      DataHoldRepository dataHoldRepository) {
+                      DataHoldRepository dataHoldRepository,
+                      AskService askService) {
         this.humanRepository = humanRepository;
         this.auditService = auditService;
         this.auditEventRepository = auditEventRepository;
@@ -68,6 +70,7 @@ public class OrgService {
         this.memoryItemRepository = memoryItemRepository;
         this.patRepository = patRepository;
         this.dataHoldRepository = dataHoldRepository;
+        this.askService = askService;
     }
 
     private String findErasureCustodyAdmin() {
@@ -342,6 +345,16 @@ public class OrgService {
      * recoverable identity.
      */
     static String erasurePseudonymEmail(String memberId) {
+        return "erased-" + erasurePseudonymHex(memberId) + "@erased.invalid";
+    }
+
+    /**
+     * The one-way pseudonym token behind both erasure pseudonyms — the first 12
+     * hex chars of SHA-256 over the member id. Stable per member, unrecoverable
+     * to an identity, and shaped so it can never collide with a live id (member
+     * ids are UUIDs; ledger responders are member ids or "system").
+     */
+    static String erasurePseudonymHex(String memberId) {
         String clean = JsonHelpers.stripIdPrefix(memberId);
         try {
             java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
@@ -350,7 +363,7 @@ public class OrgService {
             for (int i = 0; i < 6; i++) {
                 sb.append(String.format("%02x", hash[i]));
             }
-            return "erased-" + sb + "@erased.invalid";
+            return sb.toString();
         } catch (java.security.NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 algorithm not available", e);
         }
@@ -385,8 +398,22 @@ public class OrgService {
         human.setSessionVersion(human.getSessionVersion() + 1);
         humanRepository.save(human);
 
+        // OFB-014: deputy references clear in both directions. The walks sweep
+        // the reverse pointers on offboard/demote; erasure — the stronger event —
+        // must not leave them standing when it runs standalone (STG-034 lets
+        // erasure assume the walk ran, not rely on it). Matched in both stored
+        // forms, like every other keyed-union sweep (DAT-120).
         String cleanId = JsonHelpers.stripIdPrefix(id);
-        // STG-034: legal holds (kind member) freeze erasure inside the transaction
+        int deputyRefsCleared = 0;
+        for (String ref : List.of(cleanId, "h:" + cleanId)) {
+            for (Human other : humanRepository.findByDeputyMemberId(ref)) {
+                other.setDeputyMemberId(null);
+                humanRepository.save(other);
+                deputyRefsCleared++;
+            }
+        }
+
+        // STG-031: legal holds (kind member) freeze erasure inside the transaction
         // so a hold created between any external check and the sweep cannot slip through
         if (!dataHoldRepository.findByKindAndSubjectIdAndReleasedAtIsNull("member", cleanId).isEmpty()) {
             throw new ConflictException("Active data holds prevent erasure");
@@ -459,12 +486,20 @@ public class OrgService {
             }
         }
 
+        // STG-031: the quorum responses ledger pseudonymizes with the ledgers —
+        // the member's responder entries keep their event shape (text, decision,
+        // quorum count) while the identity link severs behind the pseudonym.
+        int ledgerRowsPseudonymized =
+            askService.pseudonymizeResponderInLedgers(cleanId, erasurePseudonymHex(id));
+
         // STG-030/034: legal holds (kind member) freeze erasure inside the transaction
         // so a hold created between the controller check and the sweep cannot slip through
         if (!dataHoldRepository.findByKindAndSubjectIdAndReleasedAtIsNull("member", cleanId).isEmpty()) {
             throw new ConflictException("Active data holds prevent erasure");
         }
 
-        auditService.log(actor, "ERASURE", "human", id, null);
+        auditService.log(actor, "ERASURE", "human", id,
+            String.format("{\"deputyRefsCleared\":%d,\"ledgerRowsPseudonymized\":%d}",
+                deputyRefsCleared, ledgerRowsPseudonymized));
     }
 }

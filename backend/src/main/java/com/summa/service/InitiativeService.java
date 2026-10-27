@@ -604,7 +604,7 @@ public class InitiativeService {
                                     Instant.now().plusSeconds(askService.deriveDeadlineFromTier("bulk")), null, null);
                             } catch (Exception ex) {
                                 auditService.logSystem("STALL_ASK_FAIL", "initiative", init.getId(),
-                                    JsonHelpers.toJson(Map.of("error", ex.getMessage()), objectMapper));
+                                    JsonHelpers.toJson(Map.of("error", ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName()), objectMapper));
                             }
                         }
                     }

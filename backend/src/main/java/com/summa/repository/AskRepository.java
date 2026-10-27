@@ -51,4 +51,14 @@ public interface AskRepository extends JpaRepository<Ask, String> {
 
     @Query("SELECT a FROM Ask a WHERE a.initiativeId = :initiativeId AND a.kind = 'approval' AND a.status = 'pending'")
     List<Ask> findByInitiativeIdAndKindApprovalPending(@org.springframework.data.repository.query.Param("initiativeId") String initiativeId);
+
+    /**
+     * STG-031: the erasure sweep's ledger lookup — asks whose responses ledger
+     * names the member as a responder. The needle is a JSON substring (the
+     * stored ledger is a serialized array of responder entries), so the caller
+     * supplies both the bare and the h:-prefixed form; the sweep re-checks each
+     * entry exactly before rewriting.
+     */
+    @Query("SELECT a FROM Ask a WHERE a.responses LIKE :needle")
+    List<Ask> findByResponsesContaining(@org.springframework.data.repository.query.Param("needle") String needle);
 }
