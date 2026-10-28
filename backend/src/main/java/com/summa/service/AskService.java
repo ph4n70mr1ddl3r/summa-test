@@ -8,6 +8,9 @@ import com.summa.model.ExpiryBehavior;
 import com.summa.model.Human;
 import com.summa.repository.InitiativeRepository;
 import com.summa.repository.WorkspaceRepository;
+import com.summa.repository.DnaDomainRepository;
+import com.summa.model.DnaDomain;
+import com.summa.model.Workspace;
 import com.summa.model.Initiative;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -57,6 +60,7 @@ public class AskService {
     private final GovernanceService governanceService;
     private final InitiativeRepository initiativeRepository;
     private final WorkspaceRepository workspaceRepository;
+    private final DnaDomainRepository domainRepository;
     private final InitiativeService initiativeService;
     private final long stormCollapseWindowSeconds;
 
@@ -76,7 +80,7 @@ public class AskService {
 
     public AskService(AskRepository askRepository, AuditService auditService, MemberService memberService,
                       GovernanceService governanceService, InitiativeRepository initiativeRepository,
-                      WorkspaceRepository workspaceRepository,
+                      WorkspaceRepository workspaceRepository, DnaDomainRepository domainRepository,
                       @Lazy InitiativeService initiativeService,
                       @Value("${summa.asks.storm-collapse-window-hours:1}") long stormCollapseWindowHours,
                       ObjectMapper objectMapper) {
@@ -86,6 +90,7 @@ public class AskService {
         this.governanceService = governanceService;
         this.initiativeRepository = initiativeRepository;
         this.workspaceRepository = workspaceRepository;
+        this.domainRepository = domainRepository;
         this.initiativeService = initiativeService;
         this.stormCollapseWindowSeconds = stormCollapseWindowHours * 3600L;
         this.objectMapper = objectMapper;
@@ -148,6 +153,22 @@ public class AskService {
     public Ask create(String kind, String from, String to, String payload, String slaTier,
                       String expiryBehavior, Integer quorumRequired, Instant deadline,
                       String initiativeId, String workspaceId, String escalation) {
+        return createInternal(kind, from, to, payload, slaTier, expiryBehavior,
+                quorumRequired, deadline, initiativeId, workspaceId, escalation, null).ask();
+    }
+
+    /**
+     * A create's outcome: the canonical ask plus whether the storm-collapse path
+     * attached the caller to an existing pending ask instead of inserting a row.
+     * The expiry successor door needs the distinction so a collapsed successor
+     * does not consume the chain's depth budget.
+     */
+    record CreatedAsk(Ask ask, boolean collapsed) {}
+
+    private CreatedAsk createInternal(String kind, String from, String to, String payload, String slaTier,
+                      String expiryBehavior, Integer quorumRequired, Instant deadline,
+                      String initiativeId, String workspaceId, String escalation,
+                      String excludeAskId) {
         // ASK-012: explicit deadline earlier than creation is refused
         if (deadline == null) {
             throw new IllegalArgumentException("Deadline is required");
@@ -208,6 +229,7 @@ public class AskService {
                 List<Ask> candidates = askRepository.findByToAndStatusPending(to);
                 String targetHash = buildCollapseKey(kind, to, payload);
                 candidates = candidates.stream()
+                    .filter(a -> excludeAskId == null || !excludeAskId.equals(a.getId()))
                     .filter(a -> targetHash.equals(buildCollapseKey(kind, to, a.getPayload())))
                     .toList();
                 if (!candidates.isEmpty()) {
@@ -218,7 +240,7 @@ public class AskService {
                     auditService.log(from, "COLLAPSED_ASK", "ask", saved.getId(),
                         String.format("{\"collapsedCount\":%d}", saved.getCollapsedCount() != null ? saved.getCollapsedCount() : 0));
                     flagQuorumPoolShortfall(saved);
-                    return saved;
+                    return new CreatedAsk(saved, true);
                 }
             }
 
@@ -236,7 +258,7 @@ public class AskService {
             collapseWindowTimestamps.put(collapseKey, new ExpiringEntry<>(now, nowSeconds + stormCollapseWindowSeconds));
             auditService.log(from, "CREATE", "ask", ask.getId(),
                 String.format("{\"kind\":%s,\"to\":%s,\"tier\":%s}", JsonHelpers.jsonString(kind), JsonHelpers.jsonString(to), JsonHelpers.jsonString(ask.getSlaTier())));
-            return saved;
+            return new CreatedAsk(saved, false);
         } finally {
             lock.unlock();
         }
@@ -915,9 +937,9 @@ public class AskService {
      * accumulates across the chain regardless of which door opened the last hop;
      * the depth budget is consulted first — an exhausted chain broadcasts the
      * org-stall alert (ASK-057/058) instead of opening another successor. The deputy
-     * hop (ASK-060: member → deputy → … → admin) is walked for both behaviors —
-     * `reassign`'s named deputy is the first hop of the same walk — and with no
-     * live deputy the successor lands on the admin broadcast.
+     * hop (ASK-060: member → deputy → domain owner → admin) is walked for both
+     * behaviors — `reassign`'s named deputy is the first hop of the same walk —
+     * and with none of those hops live the successor lands on the admin broadcast.
      *
      * @return the opened successor, or empty when the chain was exhausted.
      */
@@ -938,29 +960,88 @@ public class AskService {
             successorDepth.remove(rootAskId);
             return Optional.empty();
         }
-        String successorTo = OffboardingWalkService.ADMIN_BROADCAST;
-        Optional<String> deputy = memberService.resolveDeputyTarget(ask.getTo());
-        if (deputy.isPresent()) {
-            successorTo = deputy.get();
-        }
+        String successorTo = resolveEscalationTarget(ask);
         // ASK-012/CFG-140: derive deadline from tier defaults
         long deadlineSeconds = deriveDeadlineFromTier(ask.getSlaTier());
         if (deadlineSeconds > Defaults.MAX_DEADLINE_SECONDS) {
             deadlineSeconds = Defaults.MAX_DEADLINE_SECONDS;
         }
-        Ask successor = create(ask.getKind(), ask.getFrom(), successorTo, ask.getPayload(),
+        CreatedAsk created = createInternal(ask.getKind(), ask.getFrom(), successorTo, ask.getPayload(),
             ask.getSlaTier(), ask.getExpiryBehavior(), ask.getQuorumRequired(),
             Instant.now().plusSeconds(deadlineSeconds),
-            ask.getInitiativeId(), ask.getWorkspaceId(), rootAskId);
+            ask.getInitiativeId(), ask.getWorkspaceId(), rootAskId, ask.getId());
+        if (created.collapsed()) {
+            // ASK-100: an identical pending ask already holds the work; the chain
+            // does not spend a depth step on a folded successor. The current ask
+            // is still excluded from the collapse candidates, so a successor can
+            // never fold back into the very ask that is expiring.
+            auditService.log(actor, "EXPIRE_SUCCESSOR_COLLAPSED", "ask", ask.getId(),
+                String.format("{\"canonicalId\":%s,\"behavior\":%s}",
+                    JsonHelpers.jsonString(created.ask().getId()), JsonHelpers.jsonString(behavior)));
+            return Optional.of(created.ask());
+        }
         // Bump the chain depth only when a successor actually lands: the collapse
-        // path inside create() returns an existing canonical ask without creating
-        // a new row, which must not consume depth budget.
+        // path returns an existing canonical ask without creating a new row,
+        // which must not consume depth budget.
         successorDepth.put(rootAskId, new ExpiringEntry<>(depth + 1,
             Instant.now().getEpochSecond() + SUCCESSOR_DEPTH_TTL_SECONDS));
         auditService.log(actor, "EXPIRE_SUCCESSOR_CREATED", "ask", ask.getId(),
             String.format("{\"originalId\":%s,\"behavior\":%s,\"depth\":%d}",
                 JsonHelpers.jsonString(ask.getId()), JsonHelpers.jsonString(behavior), depth + 1));
-        return Optional.of(successor);
+        return Optional.of(created.ask());
+    }
+
+    /**
+     * ASK-060: an expiring ask walks member → deputy → domain owner → admin.
+     * The domain is the first domain the ask's workspace belongs to (the primary
+     * domain for a multi-domain workspace); an ask with no workspace/domain skips
+     * that hop, and a non-active or viewer owner contributes nothing. The walk
+     * carries a visited set so a mis-configured deputy/owner cycle ends the hop.
+     */
+    private String resolveEscalationTarget(Ask ask) {
+        java.util.Set<String> visited = new java.util.HashSet<>();
+        String current = JsonHelpers.stripIdPrefix(ask.getTo());
+        if (current != null) visited.add(current);
+
+        Optional<String> deputy = memberService.resolveDeputyTarget(ask.getTo());
+        if (deputy.isPresent()) {
+            String clean = JsonHelpers.stripIdPrefix(deputy.get());
+            if (clean != null && visited.add(clean)) {
+                return deputy.get();
+            }
+        }
+        Optional<String> domainOwner = resolveDomainOwnerTarget(ask);
+        if (domainOwner.isPresent()) {
+            String clean = JsonHelpers.stripIdPrefix(domainOwner.get());
+            if (clean != null && visited.add(clean)) {
+                return domainOwner.get();
+            }
+        }
+        return OffboardingWalkService.ADMIN_BROADCAST;
+    }
+
+    private Optional<String> resolveDomainOwnerTarget(Ask ask) {
+        if (ask.getWorkspaceId() == null || ask.getWorkspaceId().isBlank()) return Optional.empty();
+        Optional<Workspace> wsOpt = workspaceRepository.findById(ask.getWorkspaceId());
+        if (wsOpt.isEmpty()) return Optional.empty();
+        String domainIds = wsOpt.get().getDomainIds();
+        if (domainIds == null || domainIds.isBlank() || "[]".equals(domainIds)) return Optional.empty();
+        try {
+            List<String> domains = objectMapper.readValue(domainIds, new TypeReference<List<String>>() {});
+            if (domains.isEmpty()) return Optional.empty();
+            Optional<DnaDomain> domainOpt = domainRepository.findById(domains.get(0));
+            if (domainOpt.isEmpty() || !"active".equals(domainOpt.get().getStatus())) return Optional.empty();
+            String owner = domainOpt.get().getOwnerHumanId();
+            if (owner == null || owner.isBlank()) return Optional.empty();
+            Optional<Human> ownerOpt = memberService.findHuman(JsonHelpers.stripIdPrefix(owner));
+            if (ownerOpt.isEmpty() || !ownerOpt.get().isActive()
+                    || RbacRole.VIEWER.getValue().equals(ownerOpt.get().getRbac())) {
+                return Optional.empty();
+            }
+            return Optional.of("h:" + ownerOpt.get().getId());
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 
     /**

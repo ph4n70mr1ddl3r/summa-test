@@ -285,6 +285,29 @@ class OrgServiceTest {
     }
 
     @Test
+    void erasure_pseudonymizesEveryAuditActorSpellingWithoutDeletingRows() {
+        // STG-030/DAT-121: the audit ledger is append-only, but erasure must
+        // sever the member's actor reference in every stored spelling.
+        Human human = createHuman("human-1", "member");
+        when(humanRepository.findByIdForUpdate("human-1")).thenReturn(Optional.of(human));
+        when(humanRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(dataHoldRepository.findByKindAndSubjectIdAndReleasedAtIsNull("member", "human-1"))
+            .thenReturn(List.of());
+        Human admin = createHuman("admin-1", "admin");
+        when(memberService.findAdmins()).thenReturn(List.of(admin));
+        when(auditEventRepository.pseudonymizeActor(anyList(), anyString())).thenReturn(7);
+
+        orgService.erasure("human-1", "admin-1");
+
+        verify(auditEventRepository).pseudonymizeActor(
+            List.of("human-1", "h:human-1", "a:human-1"),
+            OrgService.erasurePseudonymEmail("human-1")
+                .replace("erased-", "").replace("@erased.invalid", ""));
+        verify(auditService).log(eq("admin-1"), eq("ERASURE"), eq("human"), eq("human-1"),
+            contains("\"auditRowsPseudonymized\":7"));
+    }
+
+    @Test
     void erasure_refusesWhenNoActiveAdmin() {
         Human human = createHuman("human-1", "member");
         when(humanRepository.findByIdForUpdate("human-1")).thenReturn(Optional.of(human));

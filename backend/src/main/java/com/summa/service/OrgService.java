@@ -492,6 +492,14 @@ public class OrgService {
         int ledgerRowsPseudonymized =
             askService.pseudonymizeResponderInLedgers(cleanId, erasurePseudonymHex(id));
 
+        // STG-030/DAT-121: the audit ledger keeps every row (append-only) while
+        // the erased member's actor reference becomes the same one-way token the
+        // response ledger carries. The sweep matches every stored spelling so a
+        // keyed actor and a bare actor both sever; the ERASURE row below is the
+        // acting admin's, written after this update, so it is untouched.
+        int auditRowsPseudonymized = auditEventRepository.pseudonymizeActor(
+            List.of(cleanId, "h:" + cleanId, "a:" + cleanId), erasurePseudonymHex(id));
+
         // STG-030/034: legal holds (kind member) freeze erasure inside the transaction
         // so a hold created between the controller check and the sweep cannot slip through
         if (!dataHoldRepository.findByKindAndSubjectIdAndReleasedAtIsNull("member", cleanId).isEmpty()) {
@@ -499,7 +507,7 @@ public class OrgService {
         }
 
         auditService.log(actor, "ERASURE", "human", id,
-            String.format("{\"deputyRefsCleared\":%d,\"ledgerRowsPseudonymized\":%d}",
-                deputyRefsCleared, ledgerRowsPseudonymized));
+            String.format("{\"deputyRefsCleared\":%d,\"ledgerRowsPseudonymized\":%d,\"auditRowsPseudonymized\":%d}",
+                deputyRefsCleared, ledgerRowsPseudonymized, auditRowsPseudonymized));
     }
 }

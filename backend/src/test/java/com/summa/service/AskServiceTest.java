@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.summa.repository.AskRepository;
 import com.summa.repository.InitiativeRepository;
 import com.summa.repository.WorkspaceRepository;
+import com.summa.repository.DnaDomainRepository;
 import com.summa.model.Ask;
 import com.summa.model.Human;
 import com.summa.model.Initiative;
@@ -44,10 +45,13 @@ class AskServiceTest {
     @Mock
     private WorkspaceRepository workspaceRepository;
 
+    @Mock
+    private DnaDomainRepository domainRepository;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private AskService buildService() {
-        return new AskService(askRepository, auditService, memberService, governanceService, initiativeRepository, workspaceRepository, initiativeService, 1L, objectMapper);
+        return new AskService(askRepository, auditService, memberService, governanceService, initiativeRepository, workspaceRepository, domainRepository, initiativeService, 1L, objectMapper);
     }
 
     @Test
@@ -332,7 +336,7 @@ class AskServiceTest {
 
         InitiativeService initSvc = mock(InitiativeService.class);
         AskService svc = new AskService(askRepository, auditService, memberService, governanceService,
-            initiativeRepository, workspaceRepository, initSvc, 1L, objectMapper);
+            initiativeRepository, workspaceRepository, domainRepository, initSvc, 1L, objectMapper);
 
         svc.handleDirectionAskResponse(ask, "extend");
 
@@ -1007,5 +1011,88 @@ class AskServiceTest {
 
         assertEquals(0, rewritten);
         verify(auditService).logSystem(eq("ERASURE_LEDGER_FAIL"), eq("ask"), eq("ask-bad"), anyString());
+    }
+
+    @Test
+    void expireNow_walksTheDomainOwnerHopAfterTheDeputy() {
+        // ASK-060: member -> deputy -> domain owner -> admin. With no live deputy,
+        // the successor lands on the domain owner of the ask's workspace.
+        Ask ask = new Ask();
+        ask.setId("ask-domain-1");
+        ask.setKind("question");
+        ask.setStatus("pending");
+        ask.setFrom("h:proposer");
+        ask.setTo("h:owner-1");
+        ask.setSlaTier("standard");
+        ask.setExpiryBehavior("escalate");
+        ask.setQuorumRequired(1);
+        ask.setPayload("{}");
+        ask.setWorkspaceId("ws-1");
+        ask.setDeadline(Instant.now().plusSeconds(3600));
+        when(askRepository.findById("ask-domain-1")).thenReturn(Optional.of(ask));
+        when(askRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(memberService.isAdmin("admin-1")).thenReturn(true);
+        lenient().when(governanceService.getSetting(anyString(), eq(Number.class))).thenReturn(null);
+        lenient().when(memberService.resolveDeputyTarget("h:owner-1")).thenReturn(Optional.empty());
+        lenient().when(askRepository.findByToAndStatusPending(any())).thenReturn(List.of());
+
+        com.summa.model.Workspace ws = new com.summa.model.Workspace();
+        ws.setId("ws-1");
+        ws.setDomainIds("[\"domain-1\",\"domain-2\"]");
+        when(workspaceRepository.findById("ws-1")).thenReturn(Optional.of(ws));
+        com.summa.model.DnaDomain domain = new com.summa.model.DnaDomain();
+        domain.setId("domain-1");
+        domain.setStatus("active");
+        domain.setOwnerHumanId("human-owner");
+        when(domainRepository.findById("domain-1")).thenReturn(Optional.of(domain));
+        Human owner = new Human();
+        owner.setId("human-owner");
+        owner.setRbac("member");
+        owner.setDeactivatedAt(null);
+        when(memberService.findHuman("human-owner")).thenReturn(Optional.of(owner));
+
+        AskService svc = buildService();
+        svc.expireNow("ask-domain-1", "admin-1");
+
+        ArgumentCaptor<Ask> saved = ArgumentCaptor.forClass(Ask.class);
+        verify(askRepository, atLeastOnce()).save(saved.capture());
+        Ask successor = saved.getAllValues().stream()
+            .filter(a -> !"ask-domain-1".equals(a.getId()))
+            .findFirst().orElseThrow();
+        assertEquals("h:human-owner", successor.getTo());
+    }
+
+    @Test
+    void expireNow_neverCollapsesItsSuccessorBackIntoTheExpiringAsk() {
+        // ASK-100 must not fold an expiry successor into the very ask that is
+        // about to expire: that would create no successor and silently end the chain.
+        Ask ask = new Ask();
+        ask.setId("ask-self-1");
+        ask.setKind("question");
+        ask.setStatus("pending");
+        ask.setFrom("h:proposer");
+        ask.setTo("h:owner-1");
+        ask.setSlaTier("standard");
+        ask.setExpiryBehavior("escalate");
+        ask.setQuorumRequired(1);
+        ask.setPayload("{}");
+        ask.setDeadline(Instant.now().plusSeconds(3600));
+        when(askRepository.findById("ask-self-1")).thenReturn(Optional.of(ask));
+        when(askRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(memberService.isAdmin("admin-1")).thenReturn(true);
+        lenient().when(governanceService.getSetting(anyString(), eq(Number.class))).thenReturn(null);
+        lenient().when(memberService.resolveDeputyTarget(any())).thenReturn(Optional.empty());
+        // The original ask is the only pending candidate for the successor's key.
+        lenient().when(askRepository.findByToAndStatusPending("admins")).thenReturn(List.of(ask));
+
+        AskService svc = buildService();
+        svc.expireNow("ask-self-1", "admin-1");
+
+        ArgumentCaptor<Ask> saved = ArgumentCaptor.forClass(Ask.class);
+        verify(askRepository, atLeastOnce()).save(saved.capture());
+        assertTrue(saved.getAllValues().stream()
+                .anyMatch(a -> !"ask-self-1".equals(a.getId()) && "admins".equals(a.getTo())));
+        verify(auditService).log(eq("admin-1"), eq("EXPIRE_SUCCESSOR_CREATED"), eq("ask"),
+            eq("ask-self-1"), anyString());
     }
 }
