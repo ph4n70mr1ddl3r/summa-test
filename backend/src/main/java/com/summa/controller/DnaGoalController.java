@@ -14,6 +14,7 @@ import com.summa.exception.EntityNotFoundException;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.service.DnaDomainService;
 import com.summa.model.DnaDomain;
+import com.summa.util.DomainGuards;
 import com.summa.util.JsonHelpers;
 import com.summa.util.Vocabulary;
 import java.time.Instant;
@@ -100,22 +101,17 @@ public class DnaGoalController {
             }
             String rawDomainId = body.get("domainId");
             String domainIdClean = null;
+            DnaDomain domain = null;
             if (rawDomainId != null && !rawDomainId.isBlank()) {
                 domainIdClean = JsonHelpers.stripIdPrefix(rawDomainId);
-                Optional<DnaDomain> domOpt = domainService.findById(domainIdClean);
-                if (domOpt.isEmpty()) {
-                    throw new EntityNotFoundException("Domain not found: " + rawDomainId);
-                }
-                // ORG-020: Only the domain owner or admin may create goals in a domain.
-                // The authority is the caller's, not the goal's claimed owner: the
-                // owner field names who the goal belongs to, not who may write it.
-                String actorClean = JsonHelpers.stripIdPrefix(actor);
-                boolean actorIsDomainOwner = domOpt.get().getOwnerHumanId() != null
-                        && domOpt.get().getOwnerHumanId().equals(actorClean);
-                if (!actorIsDomainOwner && !memberService.isAdmin(actor)) {
-                    throw new IllegalStateException("Only the domain owner or an admin may create goals in this domain");
-                }
+                domain = domainService.findById(domainIdClean)
+                    .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + rawDomainId));
+                DomainGuards.requireWritable(domain, domainIdClean);
             }
+            // DWP-060 / ORG-020: Only domain owner or admin may create goals in a domain; org-wide goals require admin.
+            // Enforces SoD (reviewer-distinct SoD refuses direct writes).
+            DomainGuards.requireOwnerOrAdmin(memberService, domain, domainIdClean, actor);
+
             String generatedId = UUID.randomUUID().toString();
             Instant effectiveFrom = JsonHelpers.parseOptionalInstant(body.get("effectiveFrom"), "effectiveFrom");
             if (effectiveFrom == null) effectiveFrom = Instant.now();
@@ -141,6 +137,8 @@ public class DnaGoalController {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 
@@ -172,6 +170,8 @@ public class DnaGoalController {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 
@@ -209,6 +209,8 @@ public class DnaGoalController {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 }

@@ -219,4 +219,30 @@ class AskControllerTest {
         assertEquals(200, res.getStatusCodeValue());
         verify(askService).respond("ask-1", "h:member-1", "no thanks", "deny");
     }
+
+    @Test
+    void respond_notFound_returns404() {
+        TestAuthContext.allowWrites("member-1");
+        when(memberService.toKeyedMemberRef("member-1")).thenReturn("h:member-1");
+        when(askService.respond(eq("missing"), anyString(), anyString(), any()))
+            .thenThrow(new com.summa.exception.EntityNotFoundException("Ask not found: missing"));
+
+        var res = controller.respond("missing", Map.of("response", "ok"));
+
+        assertEquals(404, res.getStatusCodeValue());
+        assertTrue(bodyMessage(res).contains("Ask not found: missing"));
+    }
+
+    @Test
+    void withdraw_notFound_returns404() {
+        TestAuthContext.allowWrites("member-1");
+        when(memberService.toKeyedMemberRef("member-1")).thenReturn("h:member-1");
+        when(askService.withdraw(eq("missing"), anyString()))
+            .thenThrow(new com.summa.exception.EntityNotFoundException("Ask not found: missing"));
+
+        var res = controller.withdraw("missing");
+
+        assertEquals(404, res.getStatusCodeValue());
+        assertTrue(bodyMessage(res).contains("Ask not found: missing"));
+    }
 }

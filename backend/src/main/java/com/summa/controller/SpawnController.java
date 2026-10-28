@@ -7,6 +7,7 @@ import com.summa.service.AuditService;
 import com.summa.service.MemberService;
 import com.summa.service.SpawnService;
 import com.summa.model.SpawnRequest;
+import com.summa.exception.EntityNotFoundException;
 import com.summa.util.JsonHelpers;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -117,6 +118,8 @@ public class SpawnController {
         try {
             SpawnRequest request = spawnService.approve(id, JsonHelpers.stripIdPrefix(actor), actor);
             return ResponseEntity.ok(request);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -132,6 +135,8 @@ public class SpawnController {
         try {
             SpawnRequest request = spawnService.deny(id, actor);
             return ResponseEntity.ok(request);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {

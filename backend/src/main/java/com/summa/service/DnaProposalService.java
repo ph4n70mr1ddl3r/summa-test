@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.summa.util.KeyedUnionValidator;
 import com.summa.util.JsonHelpers;
 import com.summa.util.ScanUtils;
+import com.summa.util.DomainGuards;
 import com.summa.exception.EntityNotFoundException;
 import com.summa.model.Human;
 import com.summa.model.Agent;
@@ -500,12 +501,78 @@ public class DnaProposalService {
             // SEC-030 / DWP-060: secrets scan on amended payload
             ScanUtils.scanForSecrets(payload, actor, "dna_proposal", id, secretsScanner, auditService);
 
-            proposal.setRevision((proposal.getRevision() != null ? proposal.getRevision() : 0) + 1);
+            // DWP-033 / DWP-032 / DWP-064: Validate payload scope and kind invariants
+            String newDomainId = proposal.getDomainId();
+            if (payload != null && !payload.isBlank()) {
+                try {
+                    JsonNode node = objectMapper.readTree(payload);
+                    if (node.has("kind") && !node.get("kind").isNull()) {
+                        String newKind = node.get("kind").asText();
+                        if (!newKind.equals(proposal.getKind())) {
+                            throw new IllegalArgumentException(
+                                "Proposal kind cannot be changed by amendment (DWP-033): current="
+                                    + proposal.getKind() + ", amended=" + newKind);
+                        }
+                    }
+                    if (node.has("domain_id")) {
+                        String payloadDomain = node.get("domain_id").isNull() || node.get("domain_id").asText().isBlank()
+                            ? null : node.get("domain_id").asText();
+                        if (proposal.getDomainId() != null) {
+                            if (payloadDomain != null && !payloadDomain.equals(proposal.getDomainId())) {
+                                // Cross-domain moves are refused outright (DWP-064)
+                                throw new IllegalStateException(
+                                    "Cross-domain moves are refused at amendment (DWP-064): current domain="
+                                        + proposal.getDomainId() + ", target domain=" + payloadDomain);
+                            }
+                            if (payloadDomain == null) {
+                                // Scope re-routes from domain-scoped to org-wide (DWP-032)
+                                newDomainId = null;
+                            }
+                        } else {
+                            // Current is org-scoped
+                            if (payloadDomain != null) {
+                                // Scope re-routes from org-wide to domain-scoped (DWP-032)
+                                DnaDomain targetDomain = domainService.findById(payloadDomain)
+                                    .orElseThrow(() -> new EntityNotFoundException("Target domain not found: " + payloadDomain));
+                                DomainGuards.requireWritable(targetDomain, payloadDomain);
+                                newDomainId = payloadDomain;
+                            }
+                        }
+                    }
+                } catch (IllegalArgumentException | IllegalStateException | EntityNotFoundException e) {
+                    throw e;
+                } catch (Exception e) {
+                    // Non-JSON payloads continue to contradiction check
+                }
+            }
+
+            proposal.setDomainId(newDomainId);
             proposal.setPayload(payload);
+
+            // DWP-032: re-route review_by when scope changed
+            if (newDomainId != null && !newDomainId.isBlank()) {
+                domainService.findById(newDomainId).ifPresent(d -> proposal.setReviewBy(d.getOwnerHumanId()));
+            } else {
+                // Re-route to admin queue
+                String adminId = memberService.findAdmins().stream()
+                    .map(Human::getId)
+                    .findFirst()
+                    .orElse(null);
+                proposal.setReviewBy(adminId);
+            }
+
+            // DWP-042 / DWP-063: Contradiction checks at amendment
+            List<String> contradictions = detectContradictions(proposal);
+            if (!contradictions.isEmpty()) {
+                throw new IllegalArgumentException(
+                    "Contradiction detected at amendment: " + String.join("; ", contradictions));
+            }
+
+            proposal.setRevision((proposal.getRevision() != null ? proposal.getRevision() : 0) + 1);
             
             DnaProposal saved = proposalRepository.save(proposal);
             auditService.log(actor, "AMEND", "dna_proposal", id, 
-                String.format("{\"revision\":%d}", proposal.getRevision()));
+                String.format("{\"revision\":%d,\"domainId\":%s}", proposal.getRevision(), JsonHelpers.jsonString(newDomainId)));
             return saved;
         });
     }

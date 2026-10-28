@@ -8,6 +8,7 @@ import com.summa.security.RbacAuthorizationFilter;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.constants.Defaults;
+import com.summa.exception.EntityNotFoundException;
 import com.summa.service.GovernanceService;
 import com.summa.service.MemberService;
 import com.summa.service.WorkspaceService;
@@ -118,6 +119,8 @@ public class RunController {
         try {
             Run run = runService.start(id, actor);
             return ResponseEntity.ok(run);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -156,6 +159,8 @@ public class RunController {
 
             Run run = runService.complete(id, result, costTokens, costUsd, actor);
             return ResponseEntity.ok(run);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -171,6 +176,8 @@ public class RunController {
         try {
             Run run = runService.fail(id, body.get("errorMessage"), actor);
             return ResponseEntity.ok(run);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -186,6 +193,8 @@ public class RunController {
         try {
             Run run = runService.cancel(id, actor);
             return ResponseEntity.ok(run);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -201,6 +210,8 @@ public class RunController {
         try {
             Run run = runService.resume(id);
             return ResponseEntity.ok(run);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {

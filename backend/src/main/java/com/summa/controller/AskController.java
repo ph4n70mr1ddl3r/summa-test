@@ -13,6 +13,7 @@ import com.summa.model.ExpiryBehavior;
 import com.summa.util.JsonHelpers;
 import com.summa.constants.Defaults;
 import com.summa.service.OffboardingWalkService;
+import com.summa.exception.EntityNotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
@@ -249,6 +250,8 @@ public class AskController {
             }
             Ask ask = askService.respond(id, responderRef, response, decision);
             return ResponseEntity.ok(ask);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -268,6 +271,8 @@ public class AskController {
             }
             Ask ask = askService.withdraw(id, originatorRef);
             return ResponseEntity.ok(ask);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -286,6 +291,8 @@ public class AskController {
             // the system's named closures — an active admin only.
             Ask ask = askService.expireNow(id, actor);
             return ResponseEntity.ok(ask);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {

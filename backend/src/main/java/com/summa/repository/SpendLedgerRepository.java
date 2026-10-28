@@ -25,4 +25,7 @@ public interface SpendLedgerRepository extends JpaRepository<SpendLedger, String
 
     @Query("SELECT COALESCE(SUM(CASE WHEN s.kind = 'reserve' THEN s.cost WHEN s.kind = 'release' THEN -s.cost ELSE 0.0 END), 0.0) FROM SpendLedger s WHERE s.spawnId = :spawnId AND s.kind IN ('reserve', 'release')")
     double sumNetReserveForSpawn(@org.springframework.data.repository.query.Param("spawnId") String spawnId);
+
+    @Query("SELECT COUNT(s) FROM SpendLedger s WHERE s.kind = 'settle' AND s.acknowledged = false")
+    long countUnacknowledgedOverruns();
 }

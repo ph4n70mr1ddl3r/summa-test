@@ -71,12 +71,14 @@ public class DnaGlossaryController {
             if (body.get("term") == null || body.get("term").isBlank()) {
                 throw new IllegalArgumentException("term is required");
             }
-            if (body.get("domainId") == null || body.get("domainId").isBlank()) {
-                throw new IllegalArgumentException("domainId is required");
+            String rawDomainId = body.get("domainId");
+            String domainIdClean = (rawDomainId != null && !rawDomainId.isBlank()) ? JsonHelpers.stripIdPrefix(rawDomainId) : null;
+            DnaDomain domain = null;
+            if (domainIdClean != null) {
+                domain = domainService.findById(domainIdClean)
+                    .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + rawDomainId));
+                DomainGuards.requireWritable(domain, domainIdClean);
             }
-            String domainIdClean = JsonHelpers.stripIdPrefix(body.get("domainId"));
-            DnaDomain domain = domainService.findById(domainIdClean)
-                .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + body.get("domainId")));
             DomainGuards.requireOwnerOrAdmin(memberService, domain, domainIdClean, actor);
             // Security: reject client-supplied IDs — always generate server-side
             String generatedId = UUID.randomUUID().toString();

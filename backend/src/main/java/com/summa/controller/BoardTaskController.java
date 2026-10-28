@@ -7,6 +7,7 @@ import com.summa.security.WriteGate;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.util.JsonHelpers;
 import com.summa.service.MemberService;
+import com.summa.exception.EntityNotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
@@ -113,6 +114,8 @@ public class BoardTaskController {
             }
             BoardTask task = taskService.assign(id, assigneeId, actor);
             return ResponseEntity.ok(task);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -128,6 +131,8 @@ public class BoardTaskController {
         try {
             BoardTask task = taskService.complete(id, actor);
             return ResponseEntity.ok(task);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -143,6 +148,8 @@ public class BoardTaskController {
         try {
             BoardTask task = taskService.unassign(id, actor);
             return ResponseEntity.ok(task);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {

@@ -511,4 +511,93 @@ class DnaProposalServiceTest {
             proposalService.create("prop-lapsed", "rule", payload, "human-1", "{}", "domain-1"));
         assertTrue(ex.getMessage().contains("Cannot supersede non-active rule"));
     }
+
+    @Test
+    void amend_crossDomainMove_refused() {
+        DnaProposal prop = new DnaProposal();
+        prop.setId("prop-1");
+        prop.setStatus("open");
+        prop.setKind("card");
+        prop.setDomainId("domain-1");
+        prop.setProposedBy("h:human-1");
+
+        when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(prop));
+
+        String payload = "{\"domain_id\":\"domain-2\"}";
+        try {
+            when(objectMapper.readTree(payload)).thenReturn(new ObjectMapper().readTree(payload));
+        } catch (Exception ignored) {}
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
+            proposalService.amend("prop-1", payload, "human-1"));
+        assertTrue(ex.getMessage().contains("Cross-domain moves are refused at amendment"));
+    }
+
+    @Test
+    void amend_kindChange_refused() {
+        DnaProposal prop = new DnaProposal();
+        prop.setId("prop-1");
+        prop.setStatus("open");
+        prop.setKind("card");
+        prop.setDomainId("domain-1");
+        prop.setProposedBy("h:human-1");
+
+        when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(prop));
+
+        String payload = "{\"kind\":\"rule\"}";
+        try {
+            when(objectMapper.readTree(payload)).thenReturn(new ObjectMapper().readTree(payload));
+        } catch (Exception ignored) {}
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
+            proposalService.amend("prop-1", payload, "human-1"));
+        assertTrue(ex.getMessage().contains("Proposal kind cannot be changed by amendment"));
+    }
+
+    @Test
+    void amend_reroutesDomainToOrgWide() {
+        DnaProposal prop = new DnaProposal();
+        prop.setId("prop-1");
+        prop.setStatus("open");
+        prop.setKind("card");
+        prop.setDomainId("domain-1");
+        prop.setProposedBy("h:human-1");
+        prop.setReviewBy("owner-1");
+
+        when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(prop));
+        Human admin = new Human();
+        admin.setId("admin-1");
+        when(memberService.findAdmins()).thenReturn(List.of(admin));
+        when(proposalRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        String payload = "{\"domain_id\":null,\"title\":\"Org wide card\"}";
+        try {
+            when(objectMapper.readTree(payload)).thenReturn(new ObjectMapper().readTree(payload));
+        } catch (Exception ignored) {}
+
+        DnaProposal amended = proposalService.amend("prop-1", payload, "human-1");
+        assertNull(amended.getDomainId());
+        assertEquals("admin-1", amended.getReviewBy());
+    }
+
+    @Test
+    void amend_detectsContradiction_throwsWhenWindowInverted() {
+        DnaProposal prop = new DnaProposal();
+        prop.setId("prop-1");
+        prop.setStatus("open");
+        prop.setKind("rule");
+        prop.setDomainId("domain-1");
+        prop.setProposedBy("h:human-1");
+
+        when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(prop));
+
+        String payload = "{\"effective_from\":\"2026-10-20T00:00:00Z\",\"effective_to\":\"2026-10-10T00:00:00Z\"}";
+        try {
+            when(objectMapper.readTree(payload)).thenReturn(new ObjectMapper().readTree(payload));
+        } catch (Exception ignored) {}
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
+            proposalService.amend("prop-1", payload, "human-1"));
+        assertTrue(ex.getMessage().contains("effective_to must not be before effective_from"));
+    }
 }

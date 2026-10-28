@@ -179,4 +179,78 @@ class DnaGoalControllerTest {
         assertTrue(bodyMessage(res).contains("inject"));
         verify(goalService, never()).create(any(), any(), any(), any(), any(), any(), any(), any(), any());
     }
+
+    @Test
+    void createGoal_orgWide_nonAdmin_refused() {
+        TestAuthContext.allowWrites("member-1");
+        when(memberService.isAdmin("member-1")).thenReturn(false);
+        when(memberService.findHuman("owner-1")).thenReturn(Optional.of(human("owner-1", "member")));
+        when(memberService.findAgent("owner-1")).thenReturn(Optional.empty());
+
+        var res = controller.createGoal(Map.of(
+                "statementMd", "Org wide goal",
+                "owner", "owner-1"));
+
+        assertEquals(403, res.getStatusCodeValue());
+        assertTrue(bodyMessage(res).contains("Admin access required for org-wide DNA write"));
+        verify(goalService, never()).create(any(), any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void createGoal_orgWide_admin_allowed() {
+        TestAuthContext.allowWrites("admin-1");
+        when(memberService.isAdmin("admin-1")).thenReturn(true);
+        when(memberService.findHuman("owner-1")).thenReturn(Optional.of(human("owner-1", "member")));
+        when(memberService.findAgent("owner-1")).thenReturn(Optional.empty());
+        DnaGoal goal = new DnaGoal();
+        goal.setId("goal-org");
+        when(goalService.create(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(goal);
+
+        var res = controller.createGoal(Map.of(
+                "statementMd", "Org wide goal",
+                "owner", "owner-1"));
+
+        assertEquals(200, res.getStatusCodeValue());
+        verify(goalService).create(anyString(), isNull(), isNull(), eq("Org wide goal"),
+                eq("owner-1"), isNull(), any(), isNull(), eq("admin-1"));
+    }
+
+    @Test
+    void createGoal_reviewerDistinctSod_refused() {
+        TestAuthContext.allowWrites("owner-1");
+        when(memberService.isAdmin("owner-1")).thenReturn(false);
+        DnaDomain domain = domainOwnedBy("owner-1");
+        domain.setSod("reviewer-distinct");
+        when(domainService.findById("domain-1")).thenReturn(Optional.of(domain));
+        when(memberService.findHuman("owner-1")).thenReturn(Optional.of(human("owner-1", "owner")));
+        when(memberService.findAgent("owner-1")).thenReturn(Optional.empty());
+
+        var res = controller.createGoal(Map.of(
+                "statementMd", "Ship it",
+                "owner", "owner-1",
+                "domainId", "domain-1"));
+
+        assertEquals(403, res.getStatusCodeValue());
+        assertTrue(bodyMessage(res).contains("Separation of duties"));
+        verify(goalService, never()).create(any(), any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void createGoal_missingDomain_returns404() {
+        TestAuthContext.allowWrites("admin-1");
+        when(memberService.isAdmin("admin-1")).thenReturn(true);
+        when(domainService.findById("domain-missing")).thenReturn(Optional.empty());
+        when(memberService.findHuman("owner-1")).thenReturn(Optional.of(human("owner-1", "member")));
+        when(memberService.findAgent("owner-1")).thenReturn(Optional.empty());
+
+        var res = controller.createGoal(Map.of(
+                "statementMd", "Ship it",
+                "owner", "owner-1",
+                "domainId", "domain-missing"));
+
+        assertEquals(404, res.getStatusCodeValue());
+        assertTrue(bodyMessage(res).contains("Domain not found"));
+        verify(goalService, never()).create(any(), any(), any(), any(), any(), any(), any(), any(), any());
+    }
 }

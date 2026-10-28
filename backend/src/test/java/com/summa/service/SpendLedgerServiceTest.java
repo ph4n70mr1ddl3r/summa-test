@@ -145,6 +145,36 @@ class SpendLedgerServiceTest {
         assertEquals("settle", settle.getKind());
         assertEquals(12.0, settle.getCost());
         assertEquals(1000L, settle.getTokensOut());
+        assertTrue(settle.getAcknowledged(), "Run within budget is acknowledged at settle");
+    }
+
+    @Test
+    void settleRun_withOvershoot_marksOverrunUnacknowledged() {
+        Run run = new Run();
+        run.setId("run-1");
+        run.setAgentId("agent-1");
+
+        when(repository.sumNetReserveForRun("run-1")).thenReturn(10.0);
+        when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        SpendLedger settle = ledgerService.settleRun(run, 15.0, 2000L, "actor-1");
+        assertNotNull(settle);
+        assertEquals("settle", settle.getKind());
+        assertEquals(15.0, settle.getCost());
+        assertFalse(settle.getAcknowledged(), "Overrun settle must remain unacknowledged until admin acks");
+        verify(auditService).log(eq("actor-1"), eq("SPEND_OVERRUN"), eq("spend_ledger"), anyString(), anyString());
+    }
+
+    @Test
+    void checkCeilingForReserve_unacknowledgedOverrun_blocksReserves() {
+        SpawnRequest sr = new SpawnRequest();
+        sr.setId("spawn-1");
+
+        when(repository.countUnacknowledgedOverruns()).thenReturn(1L);
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
+            ledgerService.reserveForSpawn(sr, 10.0, "actor-1"));
+        assertTrue(ex.getMessage().contains("Unacknowledged spend overrun exists"));
     }
 
     @Test

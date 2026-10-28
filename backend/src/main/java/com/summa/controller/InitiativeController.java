@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.summa.security.RbacAuthorizationFilter;
 import com.summa.constants.Defaults;
+import com.summa.exception.EntityNotFoundException;
 import com.summa.util.JsonHelpers;
 import java.time.Instant;
 import java.util.Map;
@@ -107,13 +108,19 @@ public class InitiativeController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        if (!memberService.isAdmin(actor) && !isInitiativeOwnerOrLead(id, actor)) {
+        Optional<Initiative> opt = initiativeService.findById(id);
+        if (opt.isEmpty()) {
+            return ControllerResponses.notFound(auditService, "Initiative not found: " + id);
+        }
+        if (!memberService.isAdmin(actor) && !isInitiativeOwnerOrLead(opt.get(), actor)) {
             return ControllerResponses.gate(auditService, actor, "Only the sponsor, lead, or an admin can activate this initiative");
         }
         try {
             String actorClean = JsonHelpers.stripIdPrefix(actor);
             Initiative initiative = initiativeService.activate(id, actorClean);
             return ResponseEntity.ok(initiative);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -126,13 +133,19 @@ public class InitiativeController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        if (!memberService.isAdmin(actor) && !isInitiativeOwnerOrLead(id, actor)) {
+        Optional<Initiative> opt = initiativeService.findById(id);
+        if (opt.isEmpty()) {
+            return ControllerResponses.notFound(auditService, "Initiative not found: " + id);
+        }
+        if (!memberService.isAdmin(actor) && !isInitiativeOwnerOrLead(opt.get(), actor)) {
             return ControllerResponses.gate(auditService, actor, "Only the sponsor, lead, or an admin can pause this initiative");
         }
         try {
             String actorClean = JsonHelpers.stripIdPrefix(actor);
             Initiative initiative = initiativeService.pause(id, actorClean);
             return ResponseEntity.ok(initiative);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -145,13 +158,19 @@ public class InitiativeController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        if (!memberService.isAdmin(actor) && !isInitiativeOwnerOrLead(id, actor)) {
+        Optional<Initiative> opt = initiativeService.findById(id);
+        if (opt.isEmpty()) {
+            return ControllerResponses.notFound(auditService, "Initiative not found: " + id);
+        }
+        if (!memberService.isAdmin(actor) && !isInitiativeOwnerOrLead(opt.get(), actor)) {
             return ControllerResponses.gate(auditService, actor, "Only the sponsor, lead, or an admin can resume this initiative");
         }
         try {
             String actorClean = JsonHelpers.stripIdPrefix(actor);
             Initiative initiative = initiativeService.resume(id, actorClean);
             return ResponseEntity.ok(initiative);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -164,13 +183,19 @@ public class InitiativeController {
         String actor = RbacAuthorizationFilter.getCurrentActorOrDefault();
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
-        if (!memberService.isAdmin(actor) && !isInitiativeOwnerOrLead(id, actor)) {
+        Optional<Initiative> opt = initiativeService.findById(id);
+        if (opt.isEmpty()) {
+            return ControllerResponses.notFound(auditService, "Initiative not found: " + id);
+        }
+        if (!memberService.isAdmin(actor) && !isInitiativeOwnerOrLead(opt.get(), actor)) {
             return ControllerResponses.gate(auditService, actor, "Only the sponsor, lead, or an admin can close this initiative");
         }
         try {
             String actorClean = JsonHelpers.stripIdPrefix(actor);
             Initiative initiative = initiativeService.close(id, actorClean);
             return ResponseEntity.ok(initiative);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -178,10 +203,8 @@ public class InitiativeController {
         }
     }
 
-    private boolean isInitiativeOwnerOrLead(String initiativeId, String actor) {
-        Optional<Initiative> opt = initiativeService.findById(initiativeId);
-        if (opt.isEmpty()) return false;
-        Initiative initiative = opt.get();
+    private boolean isInitiativeOwnerOrLead(Initiative initiative, String actor) {
+        if (initiative == null) return false;
         String actorClean = JsonHelpers.stripIdPrefix(actor);
         return actorClean.equals(JsonHelpers.stripIdPrefix(initiative.getSponsor()))
             || actorClean.equals(JsonHelpers.stripIdPrefix(initiative.getLead()));

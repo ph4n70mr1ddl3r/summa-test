@@ -155,14 +155,17 @@ public class SpendLedgerService {
 
     /**
      * SPW-033 / SPW-035: Settle actual run cost at completion. Releases any active
-     * reserve for the run and appends the settle row.
+     * reserve for the run and appends the settle row. If actual cost exceeds the
+     * reserved amount, an overrun is recorded (acknowledged = false) and audited.
      */
     @Transactional
     public SpendLedger settleRun(Run run, Double actualCost, Long tokensOut, String actor) {
         if (run == null || run.getId() == null) return null;
+        double reservedAmount = repository.sumNetReserveForRun(run.getId());
         releaseRun(run, actor);
 
         if (actualCost != null && actualCost > 0 && run.getAgentId() != null) {
+            boolean isOverrun = actualCost > reservedAmount;
             SpendLedger ledger = new SpendLedger();
             ledger.setId(UUID.randomUUID().toString());
             ledger.setMemberId(run.getAgentId());
@@ -170,8 +173,13 @@ public class SpendLedgerService {
             ledger.setKind("settle");
             ledger.setCost(actualCost);
             ledger.setTokensOut(tokensOut != null ? tokensOut : 0L);
-            ledger.setAcknowledged(false);
+            ledger.setAcknowledged(!isOverrun);
             SpendLedger saved = repository.save(ledger);
+            if (isOverrun) {
+                auditService.log(actor, "SPEND_OVERRUN", "spend_ledger", saved.getId(),
+                    String.format("{\"runId\":%s,\"cost\":%.4f,\"reserved\":%.4f,\"overshoot\":%.4f}",
+                        JsonHelpers.jsonString(run.getId()), actualCost, reservedAmount, (actualCost - reservedAmount)));
+            }
             auditService.log(actor, "SETTLE_SPEND", "spend_ledger", saved.getId(),
                 String.format("{\"runId\":%s,\"cost\":%.4f}", JsonHelpers.jsonString(run.getId()), actualCost));
             return saved;
@@ -183,6 +191,10 @@ public class SpendLedgerService {
         if (governanceService == null) return;
         if (governanceService.isSpendHaltTripped()) {
             throw new IllegalStateException("Spend halt is active — spend reservations are blocked");
+        }
+        if (repository.countUnacknowledgedOverruns() > 0) {
+            throw new IllegalStateException(
+                "Unacknowledged spend overrun exists — further reserves are blocked until acknowledged (SPW-035)");
         }
         double ceiling = governanceService.resolveSpendCeiling();
         Instant window = Instant.now().minus(Defaults.DEFAULT_EVALUATION_WINDOW_DAYS, ChronoUnit.DAYS);

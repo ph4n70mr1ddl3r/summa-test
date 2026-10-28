@@ -409,4 +409,34 @@ class NodeServiceTest {
         assertEquals("cancelled", run.getStatus());
         verify(spendLedgerRepository, never()).save(any());
     }
+
+    @Test
+    void reportRun_withSpendLedgerService_settlesRun() throws Exception {
+        SpendLedgerService mockSpendService = mock(SpendLedgerService.class);
+        NodeService serviceWithSpend = new NodeService(nodeRepository, auditService, workspaceService, askService,
+            runRepository, spendLedgerRepository, workspaceRepository, new ObjectMapper(), mockSpendService);
+
+        Node node = new Node();
+        node.setId("node-1");
+        node.setStatus("trusted");
+
+        Run run = new Run();
+        run.setId("run-1");
+        run.setStatus("running");
+        run.setWorkspaceId("ws-1");
+        run.setAgentId("agent-1");
+
+        Workspace ws = new Workspace();
+        ws.setId("ws-1");
+        ws.setLeaseExpiresAt(java.time.Instant.now().plusSeconds(30));
+
+        when(nodeRepository.findById("node-1")).thenReturn(Optional.of(node));
+        when(runRepository.findById("run-1")).thenReturn(Optional.of(run));
+        when(workspaceService.findByNode("node-1")).thenReturn(List.of(ws));
+        when(runRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        serviceWithSpend.reportRun("node-1", "run-1", "done", "[]", 150L, 0.75, "agent-1");
+
+        verify(mockSpendService).settleRun(eq(run), eq(0.75), eq(150L), eq("node-node-1"));
+    }
 }

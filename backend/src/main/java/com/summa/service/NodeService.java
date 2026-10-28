@@ -39,6 +39,7 @@ public class NodeService {
     private final SpendLedgerRepository spendLedgerRepository;
     private final WorkspaceRepository workspaceRepository;
     private final ObjectMapper objectMapper;
+    private final SpendLedgerService spendLedgerService;
 
     public NodeService(NodeRepository nodeRepository, AuditService auditService,
                         WorkspaceService workspaceService, AskService askService,
@@ -46,6 +47,17 @@ public class NodeService {
                         SpendLedgerRepository spendLedgerRepository,
                         WorkspaceRepository workspaceRepository,
                         ObjectMapper objectMapper) {
+        this(nodeRepository, auditService, workspaceService, askService,
+             runRepository, spendLedgerRepository, workspaceRepository, objectMapper, null);
+    }
+
+    public NodeService(NodeRepository nodeRepository, AuditService auditService,
+                        WorkspaceService workspaceService, AskService askService,
+                        RunRepository runRepository,
+                        SpendLedgerRepository spendLedgerRepository,
+                        WorkspaceRepository workspaceRepository,
+                        ObjectMapper objectMapper,
+                        SpendLedgerService spendLedgerService) {
         this.nodeRepository = nodeRepository;
         this.auditService = auditService;
         this.workspaceService = workspaceService;
@@ -54,6 +66,7 @@ public class NodeService {
         this.spendLedgerRepository = spendLedgerRepository;
         this.workspaceRepository = workspaceRepository;
         this.objectMapper = objectMapper;
+        this.spendLedgerService = spendLedgerService;
     }
 
     @Transactional
@@ -333,10 +346,11 @@ public class NodeService {
         run.setCostUsd(costUsd);
         Run saved = runRepository.save(run);
 
-        // Land spend ledger line (DAT-100). The ledger's member_id FK points at
-        // agents(id), so the accountable member is the run's agent, not a human —
-        // store the run's agent id. The node-supplied memberId is audit-only.
-        if (costUsd > 0 && run.getAgentId() != null && !run.getAgentId().isBlank()) {
+        // Land spend ledger line (DAT-100 / SPW-033 / SPW-035). Settle through SpendLedgerService
+        // to release reservations, detect overruns, and record the settle row.
+        if (spendLedgerService != null) {
+            spendLedgerService.settleRun(run, costUsd, costTokens, "node-" + nodeId);
+        } else if (costUsd > 0 && run.getAgentId() != null && !run.getAgentId().isBlank()) {
             SpendLedger ledger = new SpendLedger();
             ledger.setId(UUID.randomUUID().toString());
             ledger.setMemberId(run.getAgentId());
