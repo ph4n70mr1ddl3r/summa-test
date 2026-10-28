@@ -197,9 +197,10 @@ public class SpendLedgerService {
                 "Unacknowledged spend overrun exists — further reserves are blocked until acknowledged (SPW-035)");
         }
         double ceiling = governanceService.resolveSpendCeiling();
-        Instant window = Instant.now().minus(Defaults.DEFAULT_EVALUATION_WINDOW_DAYS, ChronoUnit.DAYS);
-        double reserved = repository.sumUnacknowledgedReservedSince(window);
-        double settled = repository.sumUnacknowledgedSettleCostSince(window);
+        long windowDays = governanceService.resolveSpendWindowDays();
+        Instant window = Instant.now().minus(windowDays, ChronoUnit.DAYS);
+        double reserved = repository.sumReservedSince(window);
+        double settled = repository.sumSettleCostSince(window);
         if ((reserved + settled + amount) > ceiling) {
             throw new IllegalStateException(
                 String.format("Spend ceiling exceeded: cannot reserve %.4f against ceiling %.4f (current reserved+settled: %.4f)",

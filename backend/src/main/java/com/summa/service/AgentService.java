@@ -152,6 +152,9 @@ public class AgentService {
         for (Run run : findRunningRuns(id)) {
             run.setStatus("suspended");
             runRepository.save(run);
+            if (spendLedgerService != null) {
+                spendLedgerService.releaseRun(run, actor);
+            }
             auditService.logSystem("SUSPEND_HALT_RUN", "run", run.getId(),
                 String.format("{\"agentId\":%s,\"reason\":\"agent_suspended\"}", JsonHelpers.jsonString(id)));
         }

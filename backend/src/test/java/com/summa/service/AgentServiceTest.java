@@ -256,6 +256,32 @@ class AgentServiceTest {
     }
 
     @Test
+    void suspend_haltsRunningRuns_andReleasesSpendReserves() {
+        SpendLedgerService mockSpendService = mock(SpendLedgerService.class);
+        AgentService serviceWithSpend = new AgentService(agentRepository, auditService, memberService, askRepository,
+            boardTaskRepository, initiativeRepository, triggerRepository, spawnRequestRepository,
+            runRepository, proposalRepository, objectMapper, 2, mockSpendService);
+
+        Agent agent = new Agent();
+        agent.setId("agent-1");
+        agent.setStatus("active");
+        when(agentRepository.findById("agent-1")).thenReturn(Optional.of(agent));
+        when(agentRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Run run1 = new Run();
+        run1.setId("run-1");
+        run1.setStatus("running");
+        run1.setAgentId("agent-1");
+        when(runRepository.findByAgentIdAndStatus("agent-1", "running")).thenReturn(List.of(run1));
+
+        Agent result = serviceWithSpend.suspend("agent-1", "admin");
+
+        assertEquals("suspended", result.getStatus());
+        assertEquals("suspended", run1.getStatus());
+        verify(mockSpendService).releaseRun(run1, "admin");
+    }
+
+    @Test
     void findFirstHumanUpChain_returnsHuman() {
         Agent agent = new Agent();
         agent.setOwnerHumanId("human-1");

@@ -95,6 +95,8 @@ public class RoleTemplateController {
         try {
             RoleTemplate template = templateService.publish(id, actor);
             return ResponseEntity.ok(template);
+        } catch (com.summa.exception.EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -113,6 +115,8 @@ public class RoleTemplateController {
         try {
             RoleTemplate template = templateService.retire(id, actor);
             return ResponseEntity.ok(template);
+        } catch (com.summa.exception.EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {

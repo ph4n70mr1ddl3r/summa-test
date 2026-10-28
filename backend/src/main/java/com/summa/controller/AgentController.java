@@ -137,6 +137,8 @@ public class AgentController {
         try {
             Agent result = action.apply(actor);
             return ResponseEntity.ok(result);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -215,6 +217,8 @@ public class AgentController {
                 Instant.now().plusSeconds(Defaults.DEFAULT_STANDARD_ASK_DEADLINE_HOURS * 3600L), null, null);
             auditService.log(actor, "PROMOTE_REQUEST", "agent", agentId, snapshotPayload);
             return ResponseEntity.ok(Map.of("message", "Promotion ask filed", "agentId", agentId, "placement", placement));
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {

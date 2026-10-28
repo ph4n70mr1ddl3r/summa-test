@@ -103,6 +103,8 @@ public class SpawnController {
                 actor
             );
             return ResponseEntity.ok(request);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {

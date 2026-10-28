@@ -127,12 +127,19 @@ public class TriggerController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         String triggerId = JsonHelpers.stripIdPrefix(id);
-        if (!mayControlTrigger(triggerId, actor)) {
+        Optional<Trigger> triggerOpt = triggerService.findById(triggerId);
+        if (triggerOpt.isEmpty()) {
+            return ControllerResponses.notFound(auditService, "Trigger not found: " + id);
+        }
+        Trigger trigger = triggerOpt.get();
+        if (!memberService.isAdmin(actor) && !isAgentOwner(trigger.getAgentId(), actor)) {
             return ControllerResponses.gate(auditService, actor, "Only the agent's owner or an admin may pause this trigger");
         }
         try {
-            Trigger trigger = triggerService.pause(triggerId, actor);
-            return ResponseEntity.ok(trigger);
+            Trigger updated = triggerService.pause(triggerId, actor);
+            return ResponseEntity.ok(updated);
+        } catch (com.summa.exception.EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -146,12 +153,19 @@ public class TriggerController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         String triggerId = JsonHelpers.stripIdPrefix(id);
-        if (!mayControlTrigger(triggerId, actor)) {
+        Optional<Trigger> triggerOpt = triggerService.findById(triggerId);
+        if (triggerOpt.isEmpty()) {
+            return ControllerResponses.notFound(auditService, "Trigger not found: " + id);
+        }
+        Trigger trigger = triggerOpt.get();
+        if (!memberService.isAdmin(actor) && !isAgentOwner(trigger.getAgentId(), actor)) {
             return ControllerResponses.gate(auditService, actor, "Only the agent's owner or an admin may resume this trigger");
         }
         try {
-            Trigger trigger = triggerService.resume(triggerId, actor);
-            return ResponseEntity.ok(trigger);
+            Trigger updated = triggerService.resume(triggerId, actor);
+            return ResponseEntity.ok(updated);
+        } catch (com.summa.exception.EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -165,12 +179,19 @@ public class TriggerController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         String triggerId = JsonHelpers.stripIdPrefix(id);
-        if (!mayControlTrigger(triggerId, actor)) {
+        Optional<Trigger> triggerOpt = triggerService.findById(triggerId);
+        if (triggerOpt.isEmpty()) {
+            return ControllerResponses.notFound(auditService, "Trigger not found: " + id);
+        }
+        Trigger trigger = triggerOpt.get();
+        if (!memberService.isAdmin(actor) && !isAgentOwner(trigger.getAgentId(), actor)) {
             return ControllerResponses.gate(auditService, actor, "Only the agent's owner or an admin may archive this trigger");
         }
         try {
-            Trigger trigger = triggerService.archive(triggerId, actor);
-            return ResponseEntity.ok(trigger);
+            Trigger updated = triggerService.archive(triggerId, actor);
+            return ResponseEntity.ok(updated);
+        } catch (com.summa.exception.EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {

@@ -65,6 +65,9 @@ class InitiativeServiceTest {
     @Mock
     private ObjectMapper objectMapper;
 
+    @Mock
+    private SpendLedgerService spendLedgerService;
+
     @InjectMocks
     private InitiativeService initiativeService;
 
@@ -129,6 +132,31 @@ class InitiativeServiceTest {
         assertEquals("closed", result.getStatus());
         assertNotNull(result.getClosedAt());
         verify(auditService).log(eq("admin"), eq("CLOSE"), eq("initiative"), eq("i1"), isNull());
+    }
+
+    @Test
+    void close_cancelsNonTerminalRunsAndReleasesSpendReserves() {
+        Initiative init = new Initiative();
+        init.setId("i1");
+        init.setStatus("active");
+        init.setSponsor("admin");
+        init.setClosedAt(null);
+        when(initiativeRepository.findById("i1")).thenReturn(Optional.of(init));
+        when(initiativeRepository.save(any())).thenReturn(init);
+        when(boardTaskRepository.findByInitiativeId("i1")).thenReturn(List.of());
+        when(askRepository.findByInitiativeIdAndStatusPending("i1")).thenReturn(List.of());
+
+        com.summa.model.Run queuedRun = new com.summa.model.Run();
+        queuedRun.setId("run-queued");
+        queuedRun.setStatus("queued");
+        when(runRepository.findByInitiativeIdAndStatus("i1", "queued")).thenReturn(new java.util.ArrayList<>(List.of(queuedRun)));
+        when(runRepository.findByInitiativeIdAndStatus("i1", "suspended")).thenReturn(List.of());
+
+        Initiative result = initiativeService.close("i1", "admin");
+
+        assertEquals("closed", result.getStatus());
+        assertEquals("cancelled", queuedRun.getStatus());
+        verify(spendLedgerService).releaseRun(queuedRun, "admin");
     }
 
     @Test

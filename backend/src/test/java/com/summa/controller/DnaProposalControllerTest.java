@@ -169,4 +169,41 @@ class DnaProposalControllerTest {
                     "domainId", "ghost")));
         verify(proposalService, never()).create(any(), any(), any(), any(), any(), any());
     }
+
+    @Test
+    void reviewProposal_missingProposal_returns404() {
+        TestAuthContext.allowWrites("admin-1");
+        when(memberService.isAdmin("admin-1")).thenReturn(true);
+        when(proposalService.publish(eq("p-missing"), anyString(), anyString()))
+            .thenThrow(new com.summa.exception.EntityNotFoundException("Proposal not found: p-missing"));
+
+        var res = controller.reviewProposal("p-missing", Map.of("action", "publish"));
+
+        assertEquals(404, res.getStatusCodeValue());
+        assertTrue(bodyMessage(res).contains("Proposal not found: p-missing"));
+    }
+
+    @Test
+    void withdrawProposal_missingProposal_returns404() {
+        TestAuthContext.allowWrites("proposer-1");
+        when(proposalService.withdraw("p-missing", "proposer-1"))
+            .thenThrow(new com.summa.exception.EntityNotFoundException("Proposal not found: p-missing"));
+
+        var res = controller.withdrawProposal("p-missing");
+
+        assertEquals(404, res.getStatusCodeValue());
+        assertTrue(bodyMessage(res).contains("Proposal not found: p-missing"));
+    }
+
+    @Test
+    void amendProposal_missingProposal_returns404() {
+        TestAuthContext.allowWrites("proposer-1");
+        when(proposalService.amend("p-missing", "{}", "proposer-1"))
+            .thenThrow(new com.summa.exception.EntityNotFoundException("Proposal not found: p-missing"));
+
+        var res = controller.amendProposal("p-missing", Map.of("payload", "{}"));
+
+        assertEquals(404, res.getStatusCodeValue());
+        assertTrue(bodyMessage(res).contains("Proposal not found: p-missing"));
+    }
 }

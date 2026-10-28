@@ -146,6 +146,8 @@ public class DnaProposalController {
             try {
                 DnaProposal proposal = proposalService.publish(id, effectiveReviewer, actor);
                 return ResponseEntity.ok(proposal);
+            } catch (EntityNotFoundException e) {
+                return ControllerResponses.notFound(auditService, e.getMessage());
             } catch (IllegalArgumentException e) {
                 return ControllerResponses.validation(auditService, e.getMessage());
             } catch (IllegalStateException e) {
@@ -155,6 +157,8 @@ public class DnaProposalController {
             try {
                 DnaProposal proposal = proposalService.reject(id, effectiveReviewer, actor);
                 return ResponseEntity.ok(proposal);
+            } catch (EntityNotFoundException e) {
+                return ControllerResponses.notFound(auditService, e.getMessage());
             } catch (IllegalArgumentException e) {
                 return ControllerResponses.validation(auditService, e.getMessage());
             } catch (IllegalStateException e) {
@@ -173,6 +177,8 @@ public class DnaProposalController {
         try {
             DnaProposal proposal = proposalService.withdraw(id, actor);
             return ResponseEntity.ok(proposal);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -188,6 +194,8 @@ public class DnaProposalController {
         try {
             DnaProposal proposal = proposalService.amend(id, body.get("payload"), actor);
             return ResponseEntity.ok(proposal);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {

@@ -134,6 +134,8 @@ public class OrgController {
             RbacRole.requireFromValue(rbacValue);
             Human human = orgService.updateRbac(id, rbacValue, actor);
             return ResponseEntity.ok(human);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -158,6 +160,8 @@ public class OrgController {
         try {
             Human human = orgService.demote(id, newRbac, actor);
             return ResponseEntity.ok(human);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -181,6 +185,8 @@ public class OrgController {
             }
             Human human = orgService.setDeputy(id, deputyId, actor);
             return ResponseEntity.ok(human);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -200,6 +206,8 @@ public class OrgController {
         try {
             Human human = orgService.offboard(id, actor);
             return ResponseEntity.ok(human);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {

@@ -159,12 +159,11 @@ public class GovernanceService {
             double ceiling = resolveSpendCeiling();
             long windowDays = resolveSpendWindowDays();
             Instant window = Instant.now().minus(windowDays, ChronoUnit.DAYS);
-            // SPW-035: only unacknowledged overruns trip the breaker; acknowledged reserves do not
-            Double reservedObj = spendLedgerRepository.sumUnacknowledgedReservedSince(window);
-            Double unsettledObj = spendLedgerRepository.sumUnacknowledgedSettleCostSince(window);
+            Double reservedObj = spendLedgerRepository.sumReservedSince(window);
+            Double settledObj = spendLedgerRepository.sumSettleCostSince(window);
             double reserved = reservedObj != null ? reservedObj : 0.0;
-            double unsettled = unsettledObj != null ? unsettledObj : 0.0;
-            return (reserved + unsettled) >= ceiling;
+            double settled = settledObj != null ? settledObj : 0.0;
+            return (reserved + settled) >= ceiling;
         } catch (PersistenceException e) {
             // SEC-011/SPW-060: Fail-closed on DB errors — a corrupted ledger must
             // trip the breaker rather than silently allow unchecked spending.
@@ -200,6 +199,7 @@ public class GovernanceService {
         view.put("ceiling", ceiling);
         view.put("utilization", String.format("%.2f%%", utilization * 100));
         view.put("halted", isSpendHaltTripped());
+        view.put("unacknowledgedOverruns", spendLedgerRepository.countUnacknowledgedOverruns());
         return view;
     }
 
@@ -209,7 +209,7 @@ public class GovernanceService {
         return ceiling;
     }
 
-    private long resolveSpendWindowDays() {
+    public long resolveSpendWindowDays() {
         Long windowDays = getSetting("spend-evaluation-window-days", Long.class);
         long result = windowDays != null ? windowDays : Defaults.DEFAULT_EVALUATION_WINDOW_DAYS;
         return result;

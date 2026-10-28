@@ -96,6 +96,8 @@ public class InitiativeController {
                 actor
             );
             return ResponseEntity.ok(initiative);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {

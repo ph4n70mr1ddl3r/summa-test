@@ -104,4 +104,30 @@ class RoleTemplateControllerTest {
         assertEquals(200, res.getStatusCodeValue());
         verify(templateService).create(eq("Worker"), eq("ephemeral-subagent"), any(), any(), eq("admin-1"));
     }
+
+    @Test
+    void publish_missingTemplate_returns404() {
+        TestAuthContext.allowWrites("admin-1");
+        when(memberService.isAdmin("admin-1")).thenReturn(true);
+        when(templateService.publish("tmpl-missing", "admin-1"))
+            .thenThrow(new com.summa.exception.EntityNotFoundException("Template not found: tmpl-missing"));
+
+        var res = controller.publish("tmpl-missing");
+
+        assertEquals(404, res.getStatusCodeValue());
+        assertTrue(bodyMessage(res).contains("Template not found: tmpl-missing"));
+    }
+
+    @Test
+    void retire_missingTemplate_returns404() {
+        TestAuthContext.allowWrites("admin-1");
+        when(memberService.isAdmin("admin-1")).thenReturn(true);
+        when(templateService.retire("tmpl-missing", "admin-1"))
+            .thenThrow(new com.summa.exception.EntityNotFoundException("Template not found: tmpl-missing"));
+
+        var res = controller.retire("tmpl-missing");
+
+        assertEquals(404, res.getStatusCodeValue());
+        assertTrue(bodyMessage(res).contains("Template not found: tmpl-missing"));
+    }
 }

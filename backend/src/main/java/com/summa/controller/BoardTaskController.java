@@ -95,6 +95,8 @@ public class BoardTaskController {
                 dueAt
             );
             return ResponseEntity.ok(task);
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {

@@ -81,6 +81,8 @@ public class GroupController {
         try {
             Group group = groupService.archive(id, actor);
             return ResponseEntity.ok(group);
+        } catch (com.summa.exception.EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -104,6 +106,8 @@ public class GroupController {
             }
             Group group = groupService.setLeader(id, leaderId, actor);
             return ResponseEntity.ok(group);
+        } catch (com.summa.exception.EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {

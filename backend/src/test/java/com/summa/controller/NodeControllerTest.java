@@ -102,4 +102,29 @@ class NodeControllerTest {
         assertTrue(bodyMessage(res).contains("kind"));
         verify(nodeService, never()).enroll(anyString(), anyString(), anyString(), anyString());
     }
+
+    @Test
+    void heartbeat_missingNode_returns404() {
+        TestAuthContext.allowWrites("node-1");
+        when(nodeService.heartbeat(eq("node-missing"), anyString(), any()))
+            .thenThrow(new com.summa.exception.EntityNotFoundException("Node not found: node-missing"));
+
+        var res = controller.heartbeat("node-missing", Map.of());
+
+        assertEquals(404, res.getStatusCodeValue());
+        assertTrue(bodyMessage(res).contains("Node not found: node-missing"));
+    }
+
+    @Test
+    void revoke_missingNode_returns404() {
+        TestAuthContext.allowWrites("admin-1");
+        when(memberService.isAdmin("admin-1")).thenReturn(true);
+        when(nodeService.revoke("node-missing", "admin-1"))
+            .thenThrow(new com.summa.exception.EntityNotFoundException("Node not found: node-missing"));
+
+        var res = controller.revoke("node-missing");
+
+        assertEquals(404, res.getStatusCodeValue());
+        assertTrue(bodyMessage(res).contains("Node not found: node-missing"));
+    }
 }

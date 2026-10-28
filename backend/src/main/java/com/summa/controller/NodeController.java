@@ -101,6 +101,8 @@ public class NodeController {
         try {
             Node node = nodeService.heartbeat(id, actor, body.get("capabilities"));
             return ResponseEntity.ok(node);
+        } catch (com.summa.exception.EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -131,6 +133,8 @@ public class NodeController {
             }
             Node node = nodeService.claimWorkspace(id, workspaceId, currentEpoch);
             return ResponseEntity.ok(node);
+        } catch (com.summa.exception.EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -147,6 +151,8 @@ public class NodeController {
         try {
             List<Run> runs = nodeService.pullWork(id);
             return ResponseEntity.ok(runs);
+        } catch (com.summa.exception.EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -190,6 +196,8 @@ public class NodeController {
             }
             Run run = nodeService.reportRun(id, runId, result, artifacts, costTokens, costUsd, memberId);
             return ResponseEntity.ok(run);
+        } catch (com.summa.exception.EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -210,6 +218,8 @@ public class NodeController {
         try {
             Node node = nodeService.revoke(id, actor);
             return ResponseEntity.ok(node);
+        } catch (com.summa.exception.EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
@@ -233,6 +243,8 @@ public class NodeController {
                 actor
             );
             return ResponseEntity.ok(node);
+        } catch (com.summa.exception.EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {

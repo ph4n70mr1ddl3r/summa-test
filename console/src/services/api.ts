@@ -623,6 +623,7 @@ export interface SpendSnapshot {
   ceiling: number;
   utilization: string;
   halted: boolean;
+  unacknowledgedOverruns?: number;
 }
 
 export interface DataHold {

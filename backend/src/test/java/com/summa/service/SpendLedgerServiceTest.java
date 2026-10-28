@@ -81,8 +81,9 @@ class SpendLedgerServiceTest {
         sr.setBudgetCap(25.0);
 
         when(governanceService.resolveSpendCeiling()).thenReturn(100.0);
-        when(repository.sumUnacknowledgedReservedSince(any())).thenReturn(10.0);
-        when(repository.sumUnacknowledgedSettleCostSince(any())).thenReturn(20.0);
+        when(governanceService.resolveSpendWindowDays()).thenReturn(30L);
+        when(repository.sumReservedSince(any())).thenReturn(10.0);
+        when(repository.sumSettleCostSince(any())).thenReturn(20.0);
         when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         SpendLedger result = ledgerService.reserveForSpawn(sr, 25.0, "actor-1");
@@ -101,8 +102,9 @@ class SpendLedgerServiceTest {
         sr.setBudgetCap(80.0);
 
         when(governanceService.resolveSpendCeiling()).thenReturn(100.0);
-        when(repository.sumUnacknowledgedReservedSince(any())).thenReturn(50.0);
-        when(repository.sumUnacknowledgedSettleCostSince(any())).thenReturn(40.0);
+        when(governanceService.resolveSpendWindowDays()).thenReturn(30L);
+        when(repository.sumReservedSince(any())).thenReturn(50.0);
+        when(repository.sumSettleCostSince(any())).thenReturn(40.0);
 
         IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
             ledgerService.reserveForSpawn(sr, 80.0, "actor-1"));
@@ -132,8 +134,9 @@ class SpendLedgerServiceTest {
         run.setAgentId("agent-1");
 
         when(governanceService.resolveSpendCeiling()).thenReturn(50.0);
-        when(repository.sumUnacknowledgedReservedSince(any())).thenReturn(0.0);
-        when(repository.sumUnacknowledgedSettleCostSince(any())).thenReturn(0.0);
+        when(governanceService.resolveSpendWindowDays()).thenReturn(30L);
+        when(repository.sumReservedSince(any())).thenReturn(0.0);
+        when(repository.sumSettleCostSince(any())).thenReturn(0.0);
         when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         SpendLedger reserve = ledgerService.reserveForRun(run, 15.0, "actor-1");
@@ -189,5 +192,22 @@ class SpendLedgerServiceTest {
         assertNotNull(release);
         assertEquals("release", release.getKind());
         assertEquals(20.0, release.getCost());
+    }
+
+    @Test
+    void checkCeilingForReserve_honorsConfiguredWindowAndTotalSettled() {
+        SpawnRequest sr = new SpawnRequest();
+        sr.setId("spawn-1");
+
+        when(governanceService.resolveSpendCeiling()).thenReturn(100.0);
+        when(governanceService.resolveSpendWindowDays()).thenReturn(14L);
+        when(repository.countUnacknowledgedOverruns()).thenReturn(0L);
+        when(repository.sumReservedSince(any())).thenReturn(20.0);
+        when(repository.sumSettleCostSince(any())).thenReturn(75.0);
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
+            ledgerService.reserveForSpawn(sr, 10.0, "actor-1"));
+        assertTrue(ex.getMessage().contains("Spend ceiling exceeded"));
+        verify(governanceService).resolveSpendWindowDays();
     }
 }

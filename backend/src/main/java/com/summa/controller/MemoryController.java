@@ -102,6 +102,8 @@ public class MemoryController {
         try {
             MemoryItem item = memoryService.review(id, actor);
             return ResponseEntity.ok(item);
+        } catch (com.summa.exception.EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {

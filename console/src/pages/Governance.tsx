@@ -231,6 +231,11 @@ export default function Governance() {
               </p>
             </div>
           </div>
+          {typeof spend.unacknowledgedOverruns === 'number' && spend.unacknowledgedOverruns > 0 && (
+            <div className="mt-4 p-3 bg-red-900/40 border border-red-700 rounded text-red-200 text-sm">
+              {spend.unacknowledgedOverruns} unacknowledged spend overrun(s) active. Further budget reservations are blocked until acknowledged (SPW-035).
+            </div>
+          )}
         </div>
       )}
 

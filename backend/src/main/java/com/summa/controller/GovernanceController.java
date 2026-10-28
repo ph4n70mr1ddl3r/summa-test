@@ -141,19 +141,23 @@ public class GovernanceController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         if (!memberService.isAdmin(actor)) return ControllerResponses.gate(auditService, actor, "Admin access required to acknowledge spend overruns");
-        SpendLedger ledger = spendLedgerService.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Spend ledger row not found: " + id));
-        // Verify the acknowledging admin is related to this spend entry (member or admin)
-        String cleanActor = JsonHelpers.stripIdPrefix(actor);
-        String cleanMemberId = JsonHelpers.stripIdPrefix(ledger.getMemberId());
-        boolean isRelated = cleanActor.equals(cleanMemberId) || memberService.isAdmin(cleanActor);
-        if (!isRelated) {
-            return ControllerResponses.gate(auditService, actor, "Admin must be related to this spend entry to acknowledge");
+        try {
+            SpendLedger ledger = spendLedgerService.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Spend ledger row not found: " + id));
+            // Verify the acknowledging admin is related to this spend entry (member or admin)
+            String cleanActor = JsonHelpers.stripIdPrefix(actor);
+            String cleanMemberId = JsonHelpers.stripIdPrefix(ledger.getMemberId());
+            boolean isRelated = cleanActor.equals(cleanMemberId) || memberService.isAdmin(cleanActor);
+            if (!isRelated) {
+                return ControllerResponses.gate(auditService, actor, "Admin must be related to this spend entry to acknowledge");
+            }
+            if (!Boolean.TRUE.equals(ledger.getAcknowledged())) {
+                spendLedgerService.acknowledge(id, actor);
+            }
+            return ResponseEntity.ok(Map.of("status", "overrun_acknowledged", "rowId", id,
+                    "haltTripped", governanceService.isSpendHaltTripped()));
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         }
-        if (!Boolean.TRUE.equals(ledger.getAcknowledged())) {
-            spendLedgerService.acknowledge(id, actor);
-        }
-        return ResponseEntity.ok(Map.of("status", "overrun_acknowledged", "rowId", id,
-                "haltTripped", governanceService.isSpendHaltTripped()));
     }
 }

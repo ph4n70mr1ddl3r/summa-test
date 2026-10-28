@@ -51,6 +51,7 @@ public class InitiativeService {
     private final SpawnRequestRepository spawnRequestRepository;
     private final RunRepository runRepository;
     private final ObjectMapper objectMapper;
+    private final SpendLedgerService spendLedgerService;
 
     public InitiativeService(InitiativeRepository initiativeRepository, BoardTaskRepository boardTaskRepository,
                                AuditService auditService, AskService askService,
@@ -61,6 +62,21 @@ public class InitiativeService {
                                SpawnRequestRepository spawnRequestRepository,
                                RunRepository runRepository,
                                ObjectMapper objectMapper) {
+        this(initiativeRepository, boardTaskRepository, auditService, askService, askRepository,
+             dnaGoalRepository, dnaDecisionRepository, dnaGoalService, memberService,
+             workspaceRepository, spawnRequestRepository, runRepository, objectMapper, null);
+    }
+
+    public InitiativeService(InitiativeRepository initiativeRepository, BoardTaskRepository boardTaskRepository,
+                               AuditService auditService, AskService askService,
+                               AskRepository askRepository,
+                               DnaGoalRepository dnaGoalRepository, DnaDecisionRepository dnaDecisionRepository,
+                               DnaGoalService dnaGoalService, MemberService memberService,
+                               WorkspaceRepository workspaceRepository,
+                               SpawnRequestRepository spawnRequestRepository,
+                               RunRepository runRepository,
+                               ObjectMapper objectMapper,
+                               SpendLedgerService spendLedgerService) {
         this.initiativeRepository = initiativeRepository;
         this.boardTaskRepository = boardTaskRepository;
         this.auditService = auditService;
@@ -74,6 +90,7 @@ public class InitiativeService {
         this.spawnRequestRepository = spawnRequestRepository;
         this.runRepository = runRepository;
         this.objectMapper = objectMapper;
+        this.spendLedgerService = spendLedgerService;
     }
 
     @Transactional
@@ -513,6 +530,9 @@ public class InitiativeService {
                     run.setStatus("cancelled");
                     run.setCompletedAt(Instant.now());
                     runRepository.save(run);
+                    if (spendLedgerService != null) {
+                        spendLedgerService.releaseRun(run, actor);
+                    }
                     auditService.logSystem("CLOSE_CANCEL_RUN", "run", run.getId(),
                         String.format("{\"initiativeId\":\"%s\",\"reason\":\"initiative_closed\"}", id));
                 } catch (Exception e) {
