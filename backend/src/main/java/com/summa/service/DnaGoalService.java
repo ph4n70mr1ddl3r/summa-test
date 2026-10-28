@@ -24,61 +24,71 @@ public class DnaGoalService {
     private final AuditService auditService;
     private final SecretsScanner secretsScanner;
     private final MemberService memberService;
+    private final DomainLockService domainLockService;
 
     public DnaGoalService(DnaGoalRepository goalRepository, DnaDomainRepository domainRepository,
                           AuditService auditService, SecretsScanner secretsScanner,
                           MemberService memberService) {
+        this(goalRepository, domainRepository, auditService, secretsScanner, memberService, new DomainLockService());
+    }
+
+    public DnaGoalService(DnaGoalRepository goalRepository, DnaDomainRepository domainRepository,
+                          AuditService auditService, SecretsScanner secretsScanner,
+                          MemberService memberService, DomainLockService domainLockService) {
         this.goalRepository = goalRepository;
         this.domainRepository = domainRepository;
         this.auditService = auditService;
         this.secretsScanner = secretsScanner;
         this.memberService = memberService;
+        this.domainLockService = domainLockService != null ? domainLockService : new DomainLockService();
     }
 
     @Transactional
     public DnaGoal create(String id, String domainId, String quarter, String statementMd,
                             String owner, String inject, Instant effectiveFrom,
                             Instant effectiveTo, String actor) {
-        if (domainId != null && !domainId.isBlank()) {
-            // DGV-041: an archived domain is read-only history — no new items land in it.
-            DomainGuards.requireWritable(domainRepository.findById(domainId).orElse(null), domainId);
-        }
-        // DNC-053: Validate owner exists before writing
-        // DAT-120: dna_goals.owner is a keyed union (h:<id>/a:<id>); strip the
-        // prefix for lookup, then re-derive the kind when storing.
-        String ownerClean = owner != null && !owner.isBlank() ? JsonHelpers.stripIdPrefix(owner) : null;
-        Optional<Human> ownerHuman = ownerClean != null ? memberService.findHuman(ownerClean) : Optional.empty();
-        Optional<Agent> ownerAgent = ownerClean != null ? memberService.findAgent(ownerClean) : Optional.empty();
-        if (ownerClean != null) {
-            if (ownerHuman.isEmpty() && ownerAgent.isEmpty()) {
-                throw new IllegalArgumentException("Owner does not reference an existing human or agent: " + owner);
+        return domainLockService.withLock(domainId, () -> {
+            if (domainId != null && !domainId.isBlank()) {
+                // DGV-041: an archived domain is read-only history — no new items land in it.
+                DomainGuards.requireWritable(domainRepository.findById(domainId).orElse(null), domainId);
             }
-            if (ownerHuman.isPresent() && memberService.isViewer(ownerHuman.get())) {
-                throw new IllegalArgumentException("viewer humans cannot own goals: " + owner);
+            // DNC-053: Validate owner exists before writing
+            // DAT-120: dna_goals.owner is a keyed union (h:<id>/a:<id>); strip the
+            // prefix for lookup, then re-derive the kind when storing.
+            String ownerClean = owner != null && !owner.isBlank() ? JsonHelpers.stripIdPrefix(owner) : null;
+            Optional<Human> ownerHuman = ownerClean != null ? memberService.findHuman(ownerClean) : Optional.empty();
+            Optional<Agent> ownerAgent = ownerClean != null ? memberService.findAgent(ownerClean) : Optional.empty();
+            if (ownerClean != null) {
+                if (ownerHuman.isEmpty() && ownerAgent.isEmpty()) {
+                    throw new IllegalArgumentException("Owner does not reference an existing human or agent: " + owner);
+                }
+                if (ownerHuman.isPresent() && memberService.isViewer(ownerHuman.get())) {
+                    throw new IllegalArgumentException("viewer humans cannot own goals: " + owner);
+                }
+                if (ownerAgent.isPresent() && ownerAgent.get().isEphemeral()) {
+                    throw new IllegalArgumentException("ephemeral workers cannot own goals: " + owner);
+                }
             }
-            if (ownerAgent.isPresent() && ownerAgent.get().isEphemeral()) {
-                throw new IllegalArgumentException("ephemeral workers cannot own goals: " + owner);
-            }
-        }
-        // SEC-030: scan for secrets before writing
-        ScanUtils.scanForSecrets(statementMd, actor, "dna_goal", id, secretsScanner, auditService);
-        DnaGoal goal = new DnaGoal();
-        goal.setId(id);
-        goal.setDomainId(domainId);
-        goal.setQuarter(quarter);
-        goal.setStatementMd(statementMd != null ? statementMd : "");
-        String ownerKeyed = ownerClean == null ? null
-            : (ownerHuman.isPresent() ? "h:" + ownerClean : "a:" + ownerClean);
-        goal.setOwner(ownerKeyed);
-        goal.setInject(inject != null ? inject : "linked");
-        goal.setEffectiveFrom(effectiveFrom);
-        goal.setEffectiveTo(effectiveTo);
-        goal.setStatus("active");
+            // SEC-030: scan for secrets before writing
+            ScanUtils.scanForSecrets(statementMd, actor, "dna_goal", id, secretsScanner, auditService);
+            DnaGoal goal = new DnaGoal();
+            goal.setId(id);
+            goal.setDomainId(domainId);
+            goal.setQuarter(quarter);
+            goal.setStatementMd(statementMd != null ? statementMd : "");
+            String ownerKeyed = ownerClean == null ? null
+                : (ownerHuman.isPresent() ? "h:" + ownerClean : "a:" + ownerClean);
+            goal.setOwner(ownerKeyed);
+            goal.setInject(inject != null ? inject : "linked");
+            goal.setEffectiveFrom(effectiveFrom);
+            goal.setEffectiveTo(effectiveTo);
+            goal.setStatus("active");
 
-        DnaGoal saved = goalRepository.save(goal);
-        auditService.log(actor, "CREATE_GOAL", "dna_goal", id,
-            String.format("{\"owner\":%s,\"inject\":%s}", JsonHelpers.jsonString(ownerKeyed), JsonHelpers.jsonString(inject)));
-        return saved;
+            DnaGoal saved = goalRepository.save(goal);
+            auditService.log(actor, "CREATE_GOAL", "dna_goal", id,
+                String.format("{\"owner\":%s,\"inject\":%s}", JsonHelpers.jsonString(ownerKeyed), JsonHelpers.jsonString(inject)));
+            return saved;
+        });
     }
 
     @Transactional(readOnly = true)
@@ -106,22 +116,28 @@ public class DnaGoalService {
         DnaGoal goal = goalRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Goal not found: " + id));
 
-        // Terminal statuses are immutable
-        if ("met".equals(goal.getStatus()) || "missed".equals(goal.getStatus()) || "retired".equals(goal.getStatus())) {
-            throw new IllegalArgumentException("Cannot update terminal goal: " + goal.getStatus());
-        }
+        return domainLockService.withLock(goal.getDomainId(), () -> {
+            if (goal.getDomainId() != null && !goal.getDomainId().isBlank()) {
+                // DGV-041: an archived domain is read-only history.
+                DomainGuards.requireWritable(domainRepository.findById(goal.getDomainId()).orElse(null), goal.getDomainId());
+            }
+            // Terminal statuses are immutable
+            if ("met".equals(goal.getStatus()) || "missed".equals(goal.getStatus()) || "retired".equals(goal.getStatus())) {
+                throw new IllegalArgumentException("Cannot update terminal goal: " + goal.getStatus());
+            }
 
-        // Allowlist: only recognized status transitions are permitted
-        if (!"active".equals(status) && !"met".equals(status) && !"missed".equals(status) && !"retired".equals(status)) {
-            throw new IllegalArgumentException("Invalid goal status: " + status);
-        }
+            // Allowlist: only recognized status transitions are permitted
+            if (!"active".equals(status) && !"met".equals(status) && !"missed".equals(status) && !"retired".equals(status)) {
+                throw new IllegalArgumentException("Invalid goal status: " + status);
+            }
 
-        String oldStatus = goal.getStatus();
-        goal.setStatus(status);
-        DnaGoal saved = goalRepository.save(goal);
-        auditService.log(actor, "UPDATE_GOAL_STATUS", "dna_goal", id,
-            String.format("{\"newStatus\":%s,\"previousStatus\":%s}", JsonHelpers.jsonString(status), JsonHelpers.jsonString(oldStatus)));
-        return saved;
+            String oldStatus = goal.getStatus();
+            goal.setStatus(status);
+            DnaGoal saved = goalRepository.save(goal);
+            auditService.log(actor, "UPDATE_GOAL_STATUS", "dna_goal", id,
+                String.format("{\"newStatus\":%s,\"previousStatus\":%s}", JsonHelpers.jsonString(status), JsonHelpers.jsonString(oldStatus)));
+            return saved;
+        });
     }
 
     @Transactional
@@ -129,23 +145,29 @@ public class DnaGoalService {
         DnaGoal goal = goalRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Goal not found: " + id));
 
-        // Terminal statuses are immutable (same guard as updateStatus)
-        if ("met".equals(goal.getStatus()) || "missed".equals(goal.getStatus()) || "retired".equals(goal.getStatus())) {
-            throw new IllegalArgumentException("Cannot update window of terminal goal: " + goal.getStatus());
-        }
+        return domainLockService.withLock(goal.getDomainId(), () -> {
+            if (goal.getDomainId() != null && !goal.getDomainId().isBlank()) {
+                // DGV-041: an archived domain is read-only history.
+                DomainGuards.requireWritable(domainRepository.findById(goal.getDomainId()).orElse(null), goal.getDomainId());
+            }
+            // Terminal statuses are immutable (same guard as updateStatus)
+            if ("met".equals(goal.getStatus()) || "missed".equals(goal.getStatus()) || "retired".equals(goal.getStatus())) {
+                throw new IllegalArgumentException("Cannot update window of terminal goal: " + goal.getStatus());
+            }
 
-        // Schema requires effective_from NOT NULL; rejecting a clear-of-both would violate the constraint.
-        if (effectiveFrom == null && effectiveTo == null) {
-            throw new IllegalArgumentException("At least one of effectiveFrom or effectiveTo must be provided");
-        }
-        if (effectiveFrom != null && effectiveTo != null && effectiveTo.isBefore(effectiveFrom)) {
-            throw new IllegalArgumentException("effectiveTo must not be before effectiveFrom");
-        }
-        if (effectiveFrom != null) goal.setEffectiveFrom(effectiveFrom);
-        if (effectiveTo != null) goal.setEffectiveTo(effectiveTo);
+            // Schema requires effective_from NOT NULL; rejecting a clear-of-both would violate the constraint.
+            if (effectiveFrom == null && effectiveTo == null) {
+                throw new IllegalArgumentException("At least one of effectiveFrom or effectiveTo must be provided");
+            }
+            if (effectiveFrom != null && effectiveTo != null && effectiveTo.isBefore(effectiveFrom)) {
+                throw new IllegalArgumentException("effectiveTo must not be before effectiveFrom");
+            }
+            if (effectiveFrom != null) goal.setEffectiveFrom(effectiveFrom);
+            if (effectiveTo != null) goal.setEffectiveTo(effectiveTo);
 
-        DnaGoal saved = goalRepository.save(goal);
-        auditService.log(actor, "UPDATE_GOAL_WINDOW", "dna_goal", id, null);
-        return saved;
+            DnaGoal saved = goalRepository.save(goal);
+            auditService.log(actor, "UPDATE_GOAL_WINDOW", "dna_goal", id, null);
+            return saved;
+        });
     }
 }

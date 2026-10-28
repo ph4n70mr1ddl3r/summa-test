@@ -2,6 +2,8 @@ package com.summa.controller;
 
 import com.summa.service.DnaDecisionService;
 import com.summa.model.DnaDecision;
+import com.summa.model.DnaDomain;
+import com.summa.util.DomainGuards;
 import com.summa.model.Human;
 import com.summa.model.Agent;
 import com.summa.service.AuditService;
@@ -70,9 +72,9 @@ public class DnaDecisionController {
                 throw new IllegalArgumentException("domainId is required");
             }
             String domainIdClean = JsonHelpers.stripIdPrefix(rawDomainId);
-            if (domainService.findById(domainIdClean).isEmpty()) {
-                throw new EntityNotFoundException("Domain not found: " + rawDomainId);
-            }
+            DnaDomain domain = domainService.findById(domainIdClean)
+                .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + rawDomainId));
+            DomainGuards.requireOwnerOrAdmin(memberService, domain, domainIdClean, actor);
             if (body.get("contextMd") == null || body.get("contextMd").isBlank()) {
                 throw new IllegalArgumentException("contextMd is required");
             }

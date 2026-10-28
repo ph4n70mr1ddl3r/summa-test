@@ -21,6 +21,9 @@ public interface AgentRepository extends JpaRepository<Agent, String> {
     @Query("SELECT COUNT(a) FROM Agent a WHERE a.status = 'active'")
     long countActiveAgents();
 
+    @Query("SELECT COUNT(a) FROM Agent a WHERE a.spawnedBy = :requesterId AND a.status = 'active' AND a.agentClass IN ('ephemeral', 'ephemeral-subagent')")
+    long countActiveEphemeralBySpawner(@org.springframework.data.repository.query.Param("requesterId") String requesterId);
+
     List<Agent> findBySpawnedBy(String spawnedBy);
 
     @Query("SELECT a FROM Agent a WHERE a.ownerHumanId = :ownerId AND a.status = 'active'")

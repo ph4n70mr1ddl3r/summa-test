@@ -18,62 +18,72 @@ public class DnaGlossaryService {
     private final DnaDomainRepository domainRepository;
     private final AuditService auditService;
     private final SecretsScanner secretsScanner;
+    private final DomainLockService domainLockService;
 
     public DnaGlossaryService(DnaGlossaryRepository glossaryRepository, DnaDomainRepository domainRepository,
                               AuditService auditService, SecretsScanner secretsScanner) {
+        this(glossaryRepository, domainRepository, auditService, secretsScanner, new DomainLockService());
+    }
+
+    public DnaGlossaryService(DnaGlossaryRepository glossaryRepository, DnaDomainRepository domainRepository,
+                              AuditService auditService, SecretsScanner secretsScanner,
+                              DomainLockService domainLockService) {
         this.glossaryRepository = glossaryRepository;
         this.domainRepository = domainRepository;
         this.auditService = auditService;
         this.secretsScanner = secretsScanner;
+        this.domainLockService = domainLockService != null ? domainLockService : new DomainLockService();
     }
 
     @Transactional
     public DnaGlossary create(String id, String domainId, String term, String definition,
                                String aliases, String actor) {
-        if (domainId != null && !domainId.isBlank()) {
-            // DGV-041: an archived domain is read-only history — no new items.
-            DomainGuards.requireWritable(domainRepository.findById(domainId).orElse(null), domainId);
-        }
-        // DNC-041/042: the live entry of the duplicate check is any non-retired row of
-        // the same scope; a retired entry no longer blocks the term (retirement is
-        // what frees it for reuse).
-        List<DnaGlossary> liveEntries = glossaryRepository.findLiveByTermAndScope(term, domainId);
-        if (!liveEntries.isEmpty()) {
-            throw new IllegalArgumentException("Term already exists in this domain: " + term);
-        }
-        // DRP-032: the duplicate check covers an alias as well as a term — "term or
-        // alias duplicating a live entry of the same scope". The new entry's term
-        // and aliases are matched against every live name the scope already holds.
-        List<String> claimedNames = new java.util.ArrayList<>();
-        claimedNames.add(term);
-        claimedNames.addAll(aliasNames(aliases));
-        for (DnaGlossary live : glossaryRepository.findLiveByScope(domainId)) {
-            for (String liveName : liveNames(live)) {
-                for (String claimed : claimedNames) {
-                    if (claimed.equalsIgnoreCase(liveName)) {
-                        throw new IllegalArgumentException(
-                            "Term or alias already exists in this domain: " + claimed);
+        return domainLockService.withLock(domainId, () -> {
+            if (domainId != null && !domainId.isBlank()) {
+                // DGV-041: an archived domain is read-only history — no new items.
+                DomainGuards.requireWritable(domainRepository.findById(domainId).orElse(null), domainId);
+            }
+            // DNC-041/042: the live entry of the duplicate check is any non-retired row of
+            // the same scope; a retired entry no longer blocks the term (retirement is
+            // what frees it for reuse).
+            List<DnaGlossary> liveEntries = glossaryRepository.findLiveByTermAndScope(term, domainId);
+            if (!liveEntries.isEmpty()) {
+                throw new IllegalArgumentException("Term already exists in this domain: " + term);
+            }
+            // DRP-032: the duplicate check covers an alias as well as a term — "term or
+            // alias duplicating a live entry of the same scope". The new entry's term
+            // and aliases are matched against every live name the scope already holds.
+            List<String> claimedNames = new java.util.ArrayList<>();
+            claimedNames.add(term);
+            claimedNames.addAll(aliasNames(aliases));
+            for (DnaGlossary live : glossaryRepository.findLiveByScope(domainId)) {
+                for (String liveName : liveNames(live)) {
+                    for (String claimed : claimedNames) {
+                        if (claimed.equalsIgnoreCase(liveName)) {
+                            throw new IllegalArgumentException(
+                                "Term or alias already exists in this domain: " + claimed);
+                        }
                     }
                 }
             }
-        }
 
-        // SEC-030: scan for secrets before writing
-        ScanUtils.scanForSecrets(term, actor, "dna_glossary", id, secretsScanner, auditService);
-        ScanUtils.scanForSecrets(definition, actor, "dna_glossary", id, secretsScanner, auditService);
+            // SEC-030: scan for secrets before writing
+            ScanUtils.scanForSecrets(term, actor, "dna_glossary", id, secretsScanner, auditService);
+            ScanUtils.scanForSecrets(definition, actor, "dna_glossary", id, secretsScanner, auditService);
 
-        DnaGlossary entry = new DnaGlossary();
-        entry.setId(id);
-        entry.setDomainId(domainId);
-        entry.setTerm(term);
-        entry.setDefinition(definition != null ? definition : "");
-        entry.setAliases(aliases != null ? aliases : "[]");
-        entry.setStatus("active");
+            DnaGlossary entry = new DnaGlossary();
+            entry.setId(id);
+            entry.setDomainId(domainId);
+            entry.setTerm(term);
+            entry.setDefinition(definition != null ? definition : "");
+            entry.setAliases(aliases != null ? aliases : "[]");
+            entry.setStatus("active");
 
-        DnaGlossary saved = glossaryRepository.save(entry);
-        auditService.log(actor, "CREATE_GLOSSARY", "dna_glossary", id,
-            String.format("{\"term\":%s,\"domainId\":%s}", JsonHelpers.jsonString(term), JsonHelpers.jsonString(domainId)));
-        return saved;
+            DnaGlossary saved = glossaryRepository.save(entry);
+            auditService.log(actor, "CREATE_GLOSSARY", "dna_glossary", id,
+                String.format("{\"term\":%s,\"domainId\":%s}", JsonHelpers.jsonString(term), JsonHelpers.jsonString(domainId)));
+            return saved;
+        });
     }
 
     @Transactional(readOnly = true)
@@ -132,10 +142,16 @@ public class DnaGlossaryService {
         DnaGlossary entry = glossaryRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Glossary entry not found: " + id));
 
-        entry.setStatus("retired");
-        DnaGlossary saved = glossaryRepository.save(entry);
-        auditService.log(actor, "RETIRE_GLOSSARY", "dna_glossary", id, null);
-        return saved;
+        return domainLockService.withLock(entry.getDomainId(), () -> {
+            if (entry.getDomainId() != null && !entry.getDomainId().isBlank()) {
+                // DGV-041: an archived domain is read-only history.
+                DomainGuards.requireWritable(domainRepository.findById(entry.getDomainId()).orElse(null), entry.getDomainId());
+            }
+            entry.setStatus("retired");
+            DnaGlossary saved = glossaryRepository.save(entry);
+            auditService.log(actor, "RETIRE_GLOSSARY", "dna_glossary", id, null);
+            return saved;
+        });
     }
 
     @Transactional
@@ -143,38 +159,44 @@ public class DnaGlossaryService {
         DnaGlossary entry = glossaryRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Glossary entry not found: " + id));
 
-        if (!"active".equals(entry.getStatus()) && !"draft".equals(entry.getStatus())) {
-            throw new IllegalArgumentException("Cannot update retired entry");
-        }
+        return domainLockService.withLock(entry.getDomainId(), () -> {
+            if (entry.getDomainId() != null && !entry.getDomainId().isBlank()) {
+                // DGV-041: an archived domain is read-only history.
+                DomainGuards.requireWritable(domainRepository.findById(entry.getDomainId()).orElse(null), entry.getDomainId());
+            }
+            if (!"active".equals(entry.getStatus()) && !"draft".equals(entry.getStatus())) {
+                throw new IllegalArgumentException("Cannot update retired entry");
+            }
 
-        if (definition != null) {
-            ScanUtils.scanForSecrets(definition, actor, "dna_glossary", id, secretsScanner, auditService);
-            entry.setDefinition(definition);
-        }
-        if (aliases != null) {
-            ScanUtils.scanForSecrets(aliases, actor, "dna_glossary", id, secretsScanner, auditService);
-            // DRP-032: an alias change is a write into the scope's name space —
-            // it must not collide with a live entry of the same scope. The entry
-            // being edited is not a collision with itself.
-            List<String> claimedNames = new java.util.ArrayList<>();
-            claimedNames.add(entry.getTerm());
-            claimedNames.addAll(aliasNames(aliases));
-            for (DnaGlossary live : glossaryRepository.findLiveByScope(entry.getDomainId())) {
-                if (live.getId() != null && live.getId().equals(entry.getId())) continue;
-                for (String liveName : liveNames(live)) {
-                    for (String claimed : claimedNames) {
-                        if (claimed.equalsIgnoreCase(liveName)) {
-                            throw new IllegalArgumentException(
-                                "Term or alias already exists in this domain: " + claimed);
+            if (definition != null) {
+                ScanUtils.scanForSecrets(definition, actor, "dna_glossary", id, secretsScanner, auditService);
+                entry.setDefinition(definition);
+            }
+            if (aliases != null) {
+                ScanUtils.scanForSecrets(aliases, actor, "dna_glossary", id, secretsScanner, auditService);
+                // DRP-032: an alias change is a write into the scope's name space —
+                // it must not collide with a live entry of the same scope. The entry
+                // being edited is not a collision with itself.
+                List<String> claimedNames = new java.util.ArrayList<>();
+                claimedNames.add(entry.getTerm());
+                claimedNames.addAll(aliasNames(aliases));
+                for (DnaGlossary live : glossaryRepository.findLiveByScope(entry.getDomainId())) {
+                    if (live.getId() != null && live.getId().equals(entry.getId())) continue;
+                    for (String liveName : liveNames(live)) {
+                        for (String claimed : claimedNames) {
+                            if (claimed.equalsIgnoreCase(liveName)) {
+                                throw new IllegalArgumentException(
+                                    "Term or alias already exists in this domain: " + claimed);
+                            }
                         }
                     }
                 }
+                entry.setAliases(aliases);
             }
-            entry.setAliases(aliases);
-        }
 
-        DnaGlossary saved = glossaryRepository.save(entry);
-        auditService.log(actor, "UPDATE_GLOSSARY", "dna_glossary", id, null);
-        return saved;
+            DnaGlossary saved = glossaryRepository.save(entry);
+            auditService.log(actor, "UPDATE_GLOSSARY", "dna_glossary", id, null);
+            return saved;
+        });
     }
 }

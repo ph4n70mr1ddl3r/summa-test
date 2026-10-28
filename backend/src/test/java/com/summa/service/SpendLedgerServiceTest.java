@@ -2,6 +2,8 @@ package com.summa.service;
 
 import com.summa.repository.SpendLedgerRepository;
 import com.summa.model.SpendLedger;
+import com.summa.model.Run;
+import com.summa.model.SpawnRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,6 +24,9 @@ class SpendLedgerServiceTest {
 
     @Mock
     private AuditService auditService;
+
+    @Mock
+    private GovernanceService governanceService;
 
     @InjectMocks
     private SpendLedgerService ledgerService;
@@ -67,5 +72,92 @@ class SpendLedgerServiceTest {
         Optional<SpendLedger> result = ledgerService.findById("missing");
 
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void reserveForSpawn_createsReserveWhenUnderCeiling() {
+        SpawnRequest sr = new SpawnRequest();
+        sr.setId("spawn-1");
+        sr.setBudgetCap(25.0);
+
+        when(governanceService.resolveSpendCeiling()).thenReturn(100.0);
+        when(repository.sumUnacknowledgedReservedSince(any())).thenReturn(10.0);
+        when(repository.sumUnacknowledgedSettleCostSince(any())).thenReturn(20.0);
+        when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        SpendLedger result = ledgerService.reserveForSpawn(sr, 25.0, "actor-1");
+
+        assertNotNull(result);
+        assertEquals("reserve", result.getKind());
+        assertEquals("spawn-1", result.getSpawnId());
+        assertEquals(25.0, result.getCost());
+        verify(auditService).log(eq("actor-1"), eq("RESERVE_SPEND"), eq("spend_ledger"), anyString(), anyString());
+    }
+
+    @Test
+    void reserveForSpawn_throwsWhenExceedingCeiling() {
+        SpawnRequest sr = new SpawnRequest();
+        sr.setId("spawn-1");
+        sr.setBudgetCap(80.0);
+
+        when(governanceService.resolveSpendCeiling()).thenReturn(100.0);
+        when(repository.sumUnacknowledgedReservedSince(any())).thenReturn(50.0);
+        when(repository.sumUnacknowledgedSettleCostSince(any())).thenReturn(40.0);
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
+            ledgerService.reserveForSpawn(sr, 80.0, "actor-1"));
+        assertTrue(ex.getMessage().contains("Spend ceiling exceeded"));
+    }
+
+    @Test
+    void releaseSpawn_createsReleaseWhenNetReserveExists() {
+        SpawnRequest sr = new SpawnRequest();
+        sr.setId("spawn-1");
+
+        when(repository.sumNetReserveForSpawn("spawn-1")).thenReturn(30.0);
+        when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        SpendLedger result = ledgerService.releaseSpawn(sr, "actor-1");
+
+        assertNotNull(result);
+        assertEquals("release", result.getKind());
+        assertEquals(30.0, result.getCost());
+        verify(auditService).log(eq("actor-1"), eq("RELEASE_SPEND"), eq("spend_ledger"), anyString(), anyString());
+    }
+
+    @Test
+    void reserveForRun_and_settleRun_lifecycle() {
+        Run run = new Run();
+        run.setId("run-1");
+        run.setAgentId("agent-1");
+
+        when(governanceService.resolveSpendCeiling()).thenReturn(50.0);
+        when(repository.sumUnacknowledgedReservedSince(any())).thenReturn(0.0);
+        when(repository.sumUnacknowledgedSettleCostSince(any())).thenReturn(0.0);
+        when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        SpendLedger reserve = ledgerService.reserveForRun(run, 15.0, "actor-1");
+        assertEquals("reserve", reserve.getKind());
+        assertEquals("run-1", reserve.getRunId());
+
+        when(repository.sumNetReserveForRun("run-1")).thenReturn(15.0);
+        SpendLedger settle = ledgerService.settleRun(run, 12.0, 1000L, "actor-1");
+        assertEquals("settle", settle.getKind());
+        assertEquals(12.0, settle.getCost());
+        assertEquals(1000L, settle.getTokensOut());
+    }
+
+    @Test
+    void releaseRun_createsRelease() {
+        Run run = new Run();
+        run.setId("run-2");
+
+        when(repository.sumNetReserveForRun("run-2")).thenReturn(20.0);
+        when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        SpendLedger release = ledgerService.releaseRun(run, "actor-1");
+        assertNotNull(release);
+        assertEquals("release", release.getKind());
+        assertEquals(20.0, release.getCost());
     }
 }

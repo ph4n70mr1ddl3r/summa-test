@@ -26,16 +26,26 @@ public class RunService {
     private final AgentRepository agentRepository;
     private final SpendLedgerRepository spendLedgerRepository;
     private final MemberService memberService;
+    private final SpendLedgerService spendLedgerService;
 
     public RunService(RunRepository runRepository, AuditService auditService,
                        InitiativeRepository initiativeRepository, AgentRepository agentRepository,
                        SpendLedgerRepository spendLedgerRepository, MemberService memberService) {
+        this(runRepository, auditService, initiativeRepository, agentRepository,
+             spendLedgerRepository, memberService, null);
+    }
+
+    public RunService(RunRepository runRepository, AuditService auditService,
+                       InitiativeRepository initiativeRepository, AgentRepository agentRepository,
+                       SpendLedgerRepository spendLedgerRepository, MemberService memberService,
+                       SpendLedgerService spendLedgerService) {
         this.runRepository = runRepository;
         this.auditService = auditService;
         this.initiativeRepository = initiativeRepository;
         this.agentRepository = agentRepository;
         this.spendLedgerRepository = spendLedgerRepository;
         this.memberService = memberService;
+        this.spendLedgerService = spendLedgerService;
     }
 
     @Transactional
@@ -156,11 +166,11 @@ public class RunService {
         if (costTokens != null) run.setCostTokens(costTokens);
         if (costUsd != null) run.setCostUsd(costUsd);
         Run saved = runRepository.save(run);
-        // SPW-060: land a settle line so the spend breaker sees API-landed runs,
-        // matching NodeService.reportRun (the node path lands the same ledger row).
-        // spend_ledger.member_id carries the agent id (its agents(id) FK); the agent is
-        // accountable for its own spend, and the run already references it.
-        if (costUsd != null && costUsd > 0 && run.getAgentId() != null) {
+        // SPW-033 / SPW-060: settle actual cost in the spend ledger and release
+        // any active reserve for this run.
+        if (spendLedgerService != null) {
+            spendLedgerService.settleRun(run, costUsd, costTokens, actor);
+        } else if (costUsd != null && costUsd > 0 && run.getAgentId() != null) {
             SpendLedger ledger = new SpendLedger();
             ledger.setId(UUID.randomUUID().toString());
             ledger.setMemberId(run.getAgentId());
@@ -191,6 +201,9 @@ public class RunService {
         run.setErrorMessage(errorMessage);
         run.setCompletedAt(Instant.now());
         Run saved = runRepository.save(run);
+        if (spendLedgerService != null) {
+            spendLedgerService.releaseRun(run, actor);
+        }
         auditService.logSystem("FAIL_RUN", "run", id,
             String.format("{\"error\":%s}", JsonHelpers.jsonString(errorMessage != null ? errorMessage.substring(0, Math.min(200, errorMessage.length())) : "")));
         return saved;
@@ -212,6 +225,9 @@ public class RunService {
         run.setStatus("cancelled");
         run.setCompletedAt(Instant.now());
         Run saved = runRepository.save(run);
+        if (spendLedgerService != null) {
+            spendLedgerService.releaseRun(run, actor);
+        }
         auditService.logSystem("CANCEL_RUN", "run", id, null);
         return saved;
     }
@@ -225,6 +241,9 @@ public class RunService {
         }
         run.setStatus("suspended");
         Run saved = runRepository.save(run);
+        if (spendLedgerService != null) {
+            spendLedgerService.releaseRun(run, Defaults.SYSTEM_ACTOR);
+        }
         auditService.logSystem("SUSPEND_RUN", "run", id, null);
         return saved;
     }

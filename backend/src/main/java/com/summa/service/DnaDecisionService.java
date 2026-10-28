@@ -18,46 +18,56 @@ public class DnaDecisionService {
     private final AuditService auditService;
     private final MemberService memberService;
     private final SecretsScanner secretsScanner;
+    private final DomainLockService domainLockService;
 
     public DnaDecisionService(DnaDecisionRepository decisionRepository, DnaDomainRepository domainRepository, AuditService auditService,
                                MemberService memberService, SecretsScanner secretsScanner) {
+        this(decisionRepository, domainRepository, auditService, memberService, secretsScanner, new DomainLockService());
+    }
+
+    public DnaDecisionService(DnaDecisionRepository decisionRepository, DnaDomainRepository domainRepository, AuditService auditService,
+                               MemberService memberService, SecretsScanner secretsScanner,
+                               DomainLockService domainLockService) {
         this.decisionRepository = decisionRepository;
         this.domainRepository = domainRepository;
         this.auditService = auditService;
         this.memberService = memberService;
         this.secretsScanner = secretsScanner;
+        this.domainLockService = domainLockService != null ? domainLockService : new DomainLockService();
     }
 
     @Transactional
     public DnaDecision create(String id, String domainId, String contextMd, String outcomeMd,
                                String decidedBy, String provenance, String actor) {
-        if (domainId != null && !domainId.isBlank()) {
-            // DGV-041: an archived domain is read-only history — no new items land in it.
-            DomainGuards.requireWritable(domainRepository.findById(domainId).orElse(null), domainId);
-        }
-        // DAT-120: dna_decisions.decided_by is a keyed union (h:<humans.id> /
-        // a:<agents.id>) — resolve the kind by live lookup and store the keyed form.
-        String decidedByKeyed = decidedBy != null && !decidedBy.isBlank()
-                ? memberService.toKeyedMemberRef(decidedBy)
-                : decidedBy;
-        if (decidedBy != null && !decidedBy.isBlank() && decidedByKeyed == null) {
-            throw new IllegalArgumentException("decidedBy does not reference an existing member: " + decidedBy);
-        }
-        ScanUtils.scanForSecrets(contextMd, actor, "dna_decision", id, secretsScanner, auditService);
-        ScanUtils.scanForSecrets(outcomeMd, actor, "dna_decision", id, secretsScanner, auditService);
+        return domainLockService.withLock(domainId, () -> {
+            if (domainId != null && !domainId.isBlank()) {
+                // DGV-041: an archived domain is read-only history — no new items land in it.
+                DomainGuards.requireWritable(domainRepository.findById(domainId).orElse(null), domainId);
+            }
+            // DAT-120: dna_decisions.decided_by is a keyed union (h:<humans.id> /
+            // a:<agents.id>) — resolve the kind by live lookup and store the keyed form.
+            String decidedByKeyed = decidedBy != null && !decidedBy.isBlank()
+                    ? memberService.toKeyedMemberRef(decidedBy)
+                    : decidedBy;
+            if (decidedBy != null && !decidedBy.isBlank() && decidedByKeyed == null) {
+                throw new IllegalArgumentException("decidedBy does not reference an existing member: " + decidedBy);
+            }
+            ScanUtils.scanForSecrets(contextMd, actor, "dna_decision", id, secretsScanner, auditService);
+            ScanUtils.scanForSecrets(outcomeMd, actor, "dna_decision", id, secretsScanner, auditService);
 
-        DnaDecision decision = new DnaDecision();
-        decision.setId(id);
-        decision.setDomainId(domainId);
-        decision.setContextMd(contextMd != null ? contextMd : "");
-        decision.setOutcomeMd(outcomeMd != null ? outcomeMd : "");
-        decision.setDecidedBy(decidedByKeyed);
-        decision.setProvenance(provenance != null ? provenance : "{}");
+            DnaDecision decision = new DnaDecision();
+            decision.setId(id);
+            decision.setDomainId(domainId);
+            decision.setContextMd(contextMd != null ? contextMd : "");
+            decision.setOutcomeMd(outcomeMd != null ? outcomeMd : "");
+            decision.setDecidedBy(decidedByKeyed);
+            decision.setProvenance(provenance != null ? provenance : "{}");
 
-        DnaDecision saved = decisionRepository.save(decision);
-        auditService.log(actor, "CREATE_DECISION", "dna_decision", id,
-            String.format("{\"domainId\":%s,\"decidedBy\":%s}", JsonHelpers.jsonString(domainId), JsonHelpers.jsonString(decidedByKeyed)));
-        return saved;
+            DnaDecision saved = decisionRepository.save(decision);
+            auditService.log(actor, "CREATE_DECISION", "dna_decision", id,
+                String.format("{\"domainId\":%s,\"decidedBy\":%s}", JsonHelpers.jsonString(domainId), JsonHelpers.jsonString(decidedByKeyed)));
+            return saved;
+        });
     }
 
     @Transactional(readOnly = true)

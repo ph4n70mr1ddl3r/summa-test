@@ -57,6 +57,7 @@ public class DnaDomainService {
     private final AuditService auditService;
     private final AskService askService;
     private final ObjectMapper objectMapper;
+    private final DomainLockService domainLockService;
 
     public DnaDomainService(DnaDomainRepository domainRepository, DnaCardRepository cardRepository,
                             DnaProposalRepository proposalRepository, WorkspaceRepository workspaceRepository,
@@ -65,6 +66,20 @@ public class DnaDomainService {
                             DataHoldRepository dataHoldRepository,
                             AskRepository askRepository, InitiativeRepository initiativeRepository,
                             AuditService auditService, AskService askService, ObjectMapper objectMapper) {
+        this(domainRepository, cardRepository, proposalRepository, workspaceRepository,
+             ruleRepository, glossaryRepository, goalRepository, decisionRepository,
+             dataHoldRepository, askRepository, initiativeRepository,
+             auditService, askService, objectMapper, new DomainLockService());
+    }
+
+    public DnaDomainService(DnaDomainRepository domainRepository, DnaCardRepository cardRepository,
+                            DnaProposalRepository proposalRepository, WorkspaceRepository workspaceRepository,
+                            DnaRuleRepository ruleRepository, DnaGlossaryRepository glossaryRepository,
+                            DnaGoalRepository goalRepository, DnaDecisionRepository decisionRepository,
+                            DataHoldRepository dataHoldRepository,
+                            AskRepository askRepository, InitiativeRepository initiativeRepository,
+                            AuditService auditService, AskService askService, ObjectMapper objectMapper,
+                            DomainLockService domainLockService) {
         this.domainRepository = domainRepository;
         this.cardRepository = cardRepository;
         this.proposalRepository = proposalRepository;
@@ -79,6 +94,7 @@ public class DnaDomainService {
         this.auditService = auditService;
         this.askService = askService;
         this.objectMapper = objectMapper;
+        this.domainLockService = domainLockService != null ? domainLockService : new DomainLockService();
     }
 
     @Transactional
@@ -129,43 +145,45 @@ public class DnaDomainService {
 
     @Transactional
     public DnaDomain archive(String id, String actor) {
-        DnaDomain domain = domainRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + id));
+        return domainLockService.withLock(id, () -> {
+            DnaDomain domain = domainRepository.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + id));
 
-        // DGV-017: legal holds freeze removal, not addition — an archive of a held
-        // domain queues behind the hold's release. Rename and merge-into stay open.
-        if (dataHoldRepository.existsByKindAndSubjectIdAndReleasedAtIsNull("domain", id)) {
-            throw new IllegalStateException("Domain is under a legal hold — archive refused");
-        }
+            // DGV-017: legal holds freeze removal, not addition — an archive of a held
+            // domain queues behind the hold's release. Rename and merge-into stay open.
+            if (dataHoldRepository.existsByKindAndSubjectIdAndReleasedAtIsNull("domain", id)) {
+                throw new IllegalStateException("Domain is under a legal hold — archive refused");
+            }
 
-        // DGV-040: Archive refuses a domain still holding live-set state
-        // (terminal history — superseded/lapsed rules, terminal goals, retired cards,
-        // glossary — never blocks; only the live set does, §4.4). A `breached`
-        // proposal is still in review (the breach is an urgency flag, not a
-        // lifecycle), so it blocks the archive exactly as an `open` one does.
-        Instant now = Instant.now();
-        long liveCards = cardRepository.countByDomainIdAndStatusNot(id, "retired");
-        long openProposals = proposalRepository.countOpenByDomain(id);
-        long liveBindings = workspaceRepository.countByDomainIdsContaining(id);
-        long activeGoals = goalRepository.countLiveByDomainId(id, now);
-        long activeRules = ruleRepository.countLiveByDomainId(id, now);
-        long liveGlossary = glossaryRepository.countByDomainIdAndStatusNot(id, "retired");
-        if (liveCards > 0 || openProposals > 0 || liveBindings > 0 || activeGoals > 0
-                || activeRules > 0 || liveGlossary > 0) {
-            throw new IllegalStateException(
-                String.format("Domain holds live state: cards=%d proposals=%d bindings=%d goals=%d rules=%d glossary=%d",
-                    liveCards, openProposals, liveBindings, activeGoals, activeRules, liveGlossary));
-        }
+            // DGV-040: Archive refuses a domain still holding live-set state
+            // (terminal history — superseded/lapsed rules, terminal goals, retired cards,
+            // glossary — never blocks; only the live set does, §4.4). A `breached`
+            // proposal is still in review (the breach is an urgency flag, not a
+            // lifecycle), so it blocks the archive exactly as an `open` one does.
+            Instant now = Instant.now();
+            long liveCards = cardRepository.countByDomainIdAndStatusNot(id, "retired");
+            long openProposals = proposalRepository.countOpenByDomain(id);
+            long liveBindings = workspaceRepository.countByDomainIdsContaining(id);
+            long activeGoals = goalRepository.countLiveByDomainId(id, now);
+            long activeRules = ruleRepository.countLiveByDomainId(id, now);
+            long liveGlossary = glossaryRepository.countByDomainIdAndStatusNot(id, "retired");
+            if (liveCards > 0 || openProposals > 0 || liveBindings > 0 || activeGoals > 0
+                    || activeRules > 0 || liveGlossary > 0) {
+                throw new IllegalStateException(
+                    String.format("Domain holds live state: cards=%d proposals=%d bindings=%d goals=%d rules=%d glossary=%d",
+                        liveCards, openProposals, liveBindings, activeGoals, activeRules, liveGlossary));
+            }
 
-        // DGV-047: archive has no resulting owner to re-key onto, so it settles
-        // instead — owner-addressed asks pending against the archiving domain close
-        // with an audit note inside the event (ASK-044).
-        settleOwnerAddressedAsks(domain, actor);
+            // DGV-047: archive has no resulting owner to re-key onto, so it settles
+            // instead — owner-addressed asks pending against the archiving domain close
+            // with an audit note inside the event (ASK-044).
+            settleOwnerAddressedAsks(domain, actor);
 
-        domain.setStatus("archived");
-        DnaDomain saved = domainRepository.save(domain);
-        auditService.log(actor, "ARCHIVE", "dna_domain", id, null);
-        return saved;
+            domain.setStatus("archived");
+            DnaDomain saved = domainRepository.save(domain);
+            auditService.log(actor, "ARCHIVE", "dna_domain", id, null);
+            return saved;
+        });
     }
 
     /**
@@ -218,35 +236,39 @@ public class DnaDomainService {
 
     @Transactional
     public DnaDomain rename(String id, String newName, String actor) {
-        DnaDomain domain = domainRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + id));
+        return domainLockService.withLock(id, () -> {
+            DnaDomain domain = domainRepository.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + id));
 
-        domain.setName(newName);
-        DnaDomain saved = domainRepository.save(domain);
-        auditService.log(actor, "RENAME", "dna_domain", id,
-            String.format("{\"newName\":%s}", JsonHelpers.jsonString(newName)));
-        return saved;
+            domain.setName(newName);
+            DnaDomain saved = domainRepository.save(domain);
+            auditService.log(actor, "RENAME", "dna_domain", id,
+                String.format("{\"newName\":%s}", JsonHelpers.jsonString(newName)));
+            return saved;
+        });
     }
 
     @Transactional
     public DnaDomain updateOwner(String id, String newOwnerId, String actor) {
-        DnaDomain domain = domainRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + id));
-        String previousOwner = domain.getOwnerHumanId();
-        domain.setOwnerHumanId(newOwnerId);
-        DnaDomain saved = domainRepository.save(domain);
-        // DWP-021: owner re-pointing re-keys the queue's rendering — the review
-        // authority is the proposal's review_by, so without this the new owner is
-        // refused at the publish door while the former owner keeps it.
-        rekeyReviewAuthority(id, newOwnerId);
-        // DGV-045: the owner re-point is one of the owner-re-pointing doors the
-        // attention remapping names — pending asks whose addressee was derived
-        // from the domain's owner re-key to the resulting owner, ids stable and
-        // deadlines untouched.
-        rekeyOwnerAddressedAsks(previousOwner, newOwnerId, id, actor);
-        auditService.log(actor, "UPDATE_OWNER", "dna_domain", id,
-            String.format("{\"newOwner\":%s}", JsonHelpers.jsonString(newOwnerId)));
-        return saved;
+        return domainLockService.withLock(id, () -> {
+            DnaDomain domain = domainRepository.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + id));
+            String previousOwner = domain.getOwnerHumanId();
+            domain.setOwnerHumanId(newOwnerId);
+            DnaDomain saved = domainRepository.save(domain);
+            // DWP-021: owner re-pointing re-keys the queue's rendering — the review
+            // authority is the proposal's review_by, so without this the new owner is
+            // refused at the publish door while the former owner keeps it.
+            rekeyReviewAuthority(id, newOwnerId);
+            // DGV-045: the owner re-point is one of the owner-re-pointing doors the
+            // attention remapping names — pending asks whose addressee was derived
+            // from the domain's owner re-key to the resulting owner, ids stable and
+            // deadlines untouched.
+            rekeyOwnerAddressedAsks(previousOwner, newOwnerId, id, actor);
+            auditService.log(actor, "UPDATE_OWNER", "dna_domain", id,
+                String.format("{\"newOwner\":%s}", JsonHelpers.jsonString(newOwnerId)));
+            return saved;
+        });
     }
 
     /**
@@ -263,12 +285,14 @@ public class DnaDomainService {
 
     @Transactional
     public DnaDomain updateAccess(String id, String access, String actor) {
-        DnaDomain domain = domainRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + id));
-        domain.setAccess(access);
-        DnaDomain saved = domainRepository.save(domain);
-        auditService.log(actor, "UPDATE_ACCESS", "dna_domain", id, null);
-        return saved;
+        return domainLockService.withLock(id, () -> {
+            DnaDomain domain = domainRepository.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + id));
+            domain.setAccess(access);
+            DnaDomain saved = domainRepository.save(domain);
+            auditService.log(actor, "UPDATE_ACCESS", "dna_domain", id, null);
+            return saved;
+        });
     }
 
     /**
@@ -286,20 +310,22 @@ public class DnaDomainService {
         if (reviewSlaDays == null || reviewSlaDays < 1) {
             throw new IllegalArgumentException("reviewSlaDays must be >= 1");
         }
-        DnaDomain domain = domainRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + id));
-        Integer oldSlaDays = domain.getReviewSlaDays() != null ? domain.getReviewSlaDays() : 7;
-        if (!reviewSlaDays.equals(oldSlaDays)) {
-            domain.setReviewSlaDays(reviewSlaDays);
-            domainRepository.save(domain);
-            // DWP-025: only tighten — when the new SLA is shorter, re-derive standing clocks
-            if (reviewSlaDays < oldSlaDays) {
-                rederiveReviewClocks(id, reviewSlaDays);
+        return domainLockService.withLock(id, () -> {
+            DnaDomain domain = domainRepository.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + id));
+            Integer oldSlaDays = domain.getReviewSlaDays() != null ? domain.getReviewSlaDays() : 7;
+            if (!reviewSlaDays.equals(oldSlaDays)) {
+                domain.setReviewSlaDays(reviewSlaDays);
+                domainRepository.save(domain);
+                // DWP-025: only tighten — when the new SLA is shorter, re-derive standing clocks
+                if (reviewSlaDays < oldSlaDays) {
+                    rederiveReviewClocks(id, reviewSlaDays);
+                }
             }
-        }
-        auditService.log(actor, "UPDATE_REVIEW_SLA", "dna_domain", id,
-            String.format("{\"oldSlaDays\":%d,\"newSlaDays\":%d}", oldSlaDays, reviewSlaDays));
-        return domain;
+            auditService.log(actor, "UPDATE_REVIEW_SLA", "dna_domain", id,
+                String.format("{\"oldSlaDays\":%d,\"newSlaDays\":%d}", oldSlaDays, reviewSlaDays));
+            return domain;
+        });
     }
 
     private void rederiveReviewClocks(String domainId, int newSlaDays) {
@@ -330,13 +356,11 @@ public class DnaDomainService {
                                   String namedReaders,
                                    List<String> itemIds, List<String> workspaceIds,
                                    List<String> proposalIds) {
-        if (itemIds == null) itemIds = List.of();
-        if (workspaceIds == null) workspaceIds = List.of();
-        if (proposalIds == null) proposalIds = List.of();
+        return domainLockService.withLock(parentId, () -> {
         // Deduplicate to prevent cardinality arithmetic from being gamed by duplicate IDs.
-        itemIds = itemIds.stream().distinct().toList();
-        workspaceIds = workspaceIds.stream().distinct().toList();
-        proposalIds = proposalIds.stream().distinct().toList();
+        final List<String> effectiveItemIds = (itemIds == null ? List.<String>of() : itemIds).stream().distinct().toList();
+        final List<String> effectiveWorkspaceIds = (workspaceIds == null ? List.<String>of() : workspaceIds).stream().distinct().toList();
+        final List<String> effectiveProposalIds = (proposalIds == null ? List.<String>of() : proposalIds).stream().distinct().toList();
         DnaDomain parent = domainRepository.findById(parentId)
                 .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + parentId));
 
@@ -358,10 +382,10 @@ public class DnaDomainService {
         long liveProposals = proposalRepository.countOpenByDomain(parentId);
         long liveBindings = workspaceRepository.countByDomainIdsContaining(parentId);
         long liveItems = liveCards + liveRules + liveGoals + liveGlossary;
-        if (Math.max(0, liveItems - itemIds.size()) > 0 || Math.max(0, liveProposals - proposalIds.size()) > 0 || Math.max(0, liveBindings - workspaceIds.size()) > 0) {
+        if (Math.max(0, liveItems - effectiveItemIds.size()) > 0 || Math.max(0, liveProposals - effectiveProposalIds.size()) > 0 || Math.max(0, liveBindings - effectiveWorkspaceIds.size()) > 0) {
             throw new IllegalStateException(
                 String.format("Split mapping is not total: unmapped_items=%d proposals=%d bindings=%d",
-                    Math.max(0, liveItems - itemIds.size()), Math.max(0, liveProposals - proposalIds.size()), Math.max(0, liveBindings - workspaceIds.size())));
+                    Math.max(0, liveItems - effectiveItemIds.size()), Math.max(0, liveProposals - effectiveProposalIds.size()), Math.max(0, liveBindings - effectiveWorkspaceIds.size())));
         }
 
         // DGV-011: create child inheriting undeclared parent attrs
@@ -382,7 +406,7 @@ public class DnaDomainService {
         // This prevents partial splits where items are silently left behind.
         List<String> missingCards = new ArrayList<>();
         List<String> missingItems = new ArrayList<>();
-        for (String cardId : itemIds) {
+        for (String cardId : effectiveItemIds) {
             Optional<DnaCard> cardOpt = cardRepository.findById(cardId);
             if (cardOpt.isPresent()) {
                 DnaCard card = cardOpt.get();
@@ -400,7 +424,7 @@ public class DnaDomainService {
             }
         }
         List<String> missingProposals = new ArrayList<>();
-        for (String propId : proposalIds) {
+        for (String propId : effectiveProposalIds) {
             Optional<DnaProposal> propOpt = proposalRepository.findById(propId);
             if (propOpt.isEmpty()) {
                 missingProposals.add(propId);
@@ -412,7 +436,7 @@ public class DnaDomainService {
             }
         }
         List<String> missingWorkspaces = new ArrayList<>();
-        for (String wsId : workspaceIds) {
+        for (String wsId : effectiveWorkspaceIds) {
             Optional<Workspace> wsOpt = workspaceRepository.findById(wsId);
             if (wsOpt.isEmpty()) {
                 missingWorkspaces.add(wsId);
@@ -447,12 +471,12 @@ public class DnaDomainService {
 
         // Move the mapped items (ids stable per DGV-010) — a card, a rule, a goal,
         // or a glossary entry all move to the child by re-pointing their domain.
-        for (String itemId : itemIds) {
+        for (String itemId : effectiveItemIds) {
             moveItemToDomain(itemId, savedChild.getId());
         }
 
         // Remap proposals (ids stable per DGV-042) — validate each belongs to parent domain
-        for (String propId : proposalIds) {
+        for (String propId : effectiveProposalIds) {
             proposalRepository.findById(propId).ifPresent(prop -> {
                 prop.setDomainId(savedChild.getId());
                 proposalRepository.save(prop);
@@ -460,7 +484,7 @@ public class DnaDomainService {
         }
 
         // Remap workspace bindings — validate each workspace is bound to parent domain
-        for (String wsId : workspaceIds) {
+        for (String wsId : effectiveWorkspaceIds) {
             workspaceRepository.findById(wsId).ifPresent(ws -> {
                 try {
                     List<String> domains = objectMapper.readValue(ws.getDomainIds(), new TypeReference<List<String>>() {});
@@ -484,6 +508,7 @@ public class DnaDomainService {
         auditService.log(actor, "SPLIT", "dna_domain", parentId,
             String.format("{\"childId\":%s}", JsonHelpers.jsonString(savedChild.getId())));
         return Collections.singletonList(savedChild);
+        });
     }
 
     // DGV-014: Merge source into survivor.
@@ -495,6 +520,7 @@ public class DnaDomainService {
         if (sourceId.equals(survivorId)) {
             throw new IllegalStateException("Cannot merge a domain onto itself");
         }
+        return domainLockService.withLocks(List.of(sourceId, survivorId), () -> {
         DnaDomain source = domainRepository.findById(sourceId)
                 .orElseThrow(() -> new EntityNotFoundException("Source domain not found: " + sourceId));
         DnaDomain survivor = domainRepository.findById(survivorId)
@@ -590,6 +616,7 @@ public class DnaDomainService {
         auditService.log(actor, "MERGE", "dna_domain", survivorId,
             String.format("{\"sourceId\":%s,\"access\":%s}", JsonHelpers.jsonString(sourceId), JsonHelpers.jsonString(resolvedAccess)));
         return savedSurvivor;
+        });
     }
 
     private String computeMergeAccess(DnaDomain source, DnaDomain survivor) {

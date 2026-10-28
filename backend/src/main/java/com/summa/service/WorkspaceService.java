@@ -37,6 +37,7 @@ public class WorkspaceService {
     private final SpawnRequestRepository spawnRequestRepository;
     private final NodeRepository nodeRepository;
     private final RunRepository runRepository;
+    private final DomainLockService domainLockService;
 
     public WorkspaceService(WorkspaceRepository workspaceRepository, DnaDomainRepository domainRepository,
                             AuditService auditService, ObjectMapper objectMapper,
@@ -45,6 +46,19 @@ public class WorkspaceService {
                             SpawnRequestRepository spawnRequestRepository,
                             NodeRepository nodeRepository,
                             RunRepository runRepository) {
+        this(workspaceRepository, domainRepository, auditService, objectMapper,
+             initiativeRepository, triggerRepository, spawnRequestRepository, nodeRepository, runRepository,
+             new DomainLockService());
+    }
+
+    public WorkspaceService(WorkspaceRepository workspaceRepository, DnaDomainRepository domainRepository,
+                            AuditService auditService, ObjectMapper objectMapper,
+                            InitiativeRepository initiativeRepository,
+                            TriggerRepository triggerRepository,
+                            SpawnRequestRepository spawnRequestRepository,
+                            NodeRepository nodeRepository,
+                            RunRepository runRepository,
+                            DomainLockService domainLockService) {
         this.workspaceRepository = workspaceRepository;
         this.domainRepository = domainRepository;
         this.auditService = auditService;
@@ -54,37 +68,43 @@ public class WorkspaceService {
         this.spawnRequestRepository = spawnRequestRepository;
         this.nodeRepository = nodeRepository;
         this.runRepository = runRepository;
+        this.domainLockService = domainLockService != null ? domainLockService : new DomainLockService();
     }
 
     @Transactional
     public Workspace create(String id, String name, String kind, String domainIds,
                               String initiativeIds, String nodeId, String participants, String actor) {
+        List<String> domainIdList = new ArrayList<>();
         // Validate referenced domains exist
         if (domainIds != null && !domainIds.isBlank() && !domainIds.equals("[]")) {
             try {
-                List<String> domainIdList = objectMapper.readValue(domainIds, new TypeReference<List<String>>() {});
+                domainIdList = objectMapper.readValue(domainIds, new TypeReference<List<String>>() {});
                 for (String domId : domainIdList) {
                     domainRepository.findById(domId).orElseThrow(
                         () -> new EntityNotFoundException("Domain not found: " + domId));
                 }
+            } catch (EntityNotFoundException e) {
+                throw e;
             } catch (Exception e) {
                 throw new IllegalArgumentException("Invalid domainIds format: " + e.getMessage());
             }
         }
 
-        Workspace ws = new Workspace();
-        ws.setId(id);
-        ws.setName(name);
-        ws.setKind(kind != null ? kind : "project");
-        ws.setDomainIds(domainIds != null ? domainIds : "[]");
-        ws.setInitiativeIds(initiativeIds != null ? initiativeIds : "[]");
-        ws.setNodeId(nodeId);
-        ws.setParticipants(participants != null ? participants : "[]");
+        return domainLockService.withLocks(domainIdList, () -> {
+            Workspace ws = new Workspace();
+            ws.setId(id);
+            ws.setName(name);
+            ws.setKind(kind != null ? kind : "project");
+            ws.setDomainIds(domainIds != null ? domainIds : "[]");
+            ws.setInitiativeIds(initiativeIds != null ? initiativeIds : "[]");
+            ws.setNodeId(nodeId);
+            ws.setParticipants(participants != null ? participants : "[]");
 
-        Workspace saved = workspaceRepository.save(ws);
-        auditService.log(actor, "CREATE_WORKSPACE", "workspace", id,
-            String.format("{\"name\":%s,\"kind\":%s}", JsonHelpers.jsonString(name), JsonHelpers.jsonString(ws.getKind())));
-        return saved;
+            Workspace saved = workspaceRepository.save(ws);
+            auditService.log(actor, "CREATE_WORKSPACE", "workspace", id,
+                String.format("{\"name\":%s,\"kind\":%s}", JsonHelpers.jsonString(name), JsonHelpers.jsonString(ws.getKind())));
+            return saved;
+        });
     }
 
     @Transactional(readOnly = true)
@@ -156,77 +176,91 @@ public class WorkspaceService {
             throw new IllegalStateException("Workspace is already archived");
         }
 
-        // Drop initiative bindings — goal slice re-derives at once
-        ws.setInitiativeIds("[]");
-
-        // Kill the node claim — clear only this workspace's ref from the node's claim JSON
-        String previousNodeId = ws.getNodeId();
-        ws.setNodeId(null);
-        ws.setClaimEpoch(0);
-        ws.setLeaseExpiresAt(null);
-        if (previousNodeId != null) {
-            nodeRepository.findById(previousNodeId).ifPresent(node -> {
-                String claim = node.getClaim();
-                if (claim != null && !claim.isBlank()) {
-                    JsonNode claimNode = null;
-                    try {
-                        claimNode = objectMapper.readTree(claim);
-                        applyFilteredClaim(node, claimNode, id);
-                        nodeRepository.save(node);
-                    } catch (Exception e) {
-                        // On parse error, remove only this workspace's entry rather than nullifying the entire claim.
-                        // This prevents data loss for other workspaces sharing the same node.
-                        if (claimNode != null) {
-                            try {
-                                applyFilteredClaim(node, claimNode, id);
-                            } catch (Exception parseError) {
-                                auditService.logSystem("ARCHIVE_CLEAR_NODE_CLAIM_PARSE_FAIL", "node", previousNodeId,
-                                    JsonHelpers.toJson(Map.of("workspaceId", id, "error", parseError.getMessage()), objectMapper));
-                            }
-                        }
-                        nodeRepository.save(node);
-                    }
-                }
-                auditService.log(actor, "ARCHIVE_CLEAR_NODE_CLAIM", "node", previousNodeId,
-                    String.format("{\"workspaceId\":%s,\"reason\":\"workspace_archived\"}", JsonHelpers.jsonString(id)));
-            });
+        List<String> domainIdList = new ArrayList<>();
+        if (ws.getDomainIds() != null && !ws.getDomainIds().isBlank() && !ws.getDomainIds().equals("[]")) {
+            try {
+                domainIdList = objectMapper.readValue(ws.getDomainIds(), new TypeReference<List<String>>() {});
+            } catch (Exception ignored) {}
         }
 
-        // Disable bound triggers and playbooks
-        List<Trigger> boundTriggers = triggerRepository.findByWorkspaceId(id);
-        for (Trigger t : boundTriggers) {
-            if ("active".equals(t.getStatus())) {
-                t.setStatus("paused");
-                triggerRepository.save(t);
-                auditService.log(actor, "ARCHIVE_PAUSE_TRIGGER", "trigger", t.getId(),
+        return domainLockService.withLocks(domainIdList, () -> {
+            Workspace liveWs = workspaceRepository.findById(id).orElse(ws);
+            if (liveWs.isArchived()) {
+                throw new IllegalStateException("Workspace is already archived");
+            }
+
+            // Drop initiative bindings — goal slice re-derives at once
+            liveWs.setInitiativeIds("[]");
+
+            // Kill the node claim — clear only this workspace's ref from the node's claim JSON
+            String previousNodeId = liveWs.getNodeId();
+            liveWs.setNodeId(null);
+            liveWs.setClaimEpoch(0);
+            liveWs.setLeaseExpiresAt(null);
+            if (previousNodeId != null) {
+                nodeRepository.findById(previousNodeId).ifPresent(node -> {
+                    String claim = node.getClaim();
+                    if (claim != null && !claim.isBlank()) {
+                        JsonNode claimNode = null;
+                        try {
+                            claimNode = objectMapper.readTree(claim);
+                            applyFilteredClaim(node, claimNode, id);
+                            nodeRepository.save(node);
+                        } catch (Exception e) {
+                            // On parse error, remove only this workspace's entry rather than nullifying the entire claim.
+                            // This prevents data loss for other workspaces sharing the same node.
+                            if (claimNode != null) {
+                                try {
+                                    applyFilteredClaim(node, claimNode, id);
+                                } catch (Exception parseError) {
+                                    auditService.logSystem("ARCHIVE_CLEAR_NODE_CLAIM_PARSE_FAIL", "node", previousNodeId,
+                                        JsonHelpers.toJson(Map.of("workspaceId", id, "error", parseError.getMessage()), objectMapper));
+                                }
+                            }
+                            nodeRepository.save(node);
+                        }
+                    }
+                    auditService.log(actor, "ARCHIVE_CLEAR_NODE_CLAIM", "node", previousNodeId,
+                        String.format("{\"workspaceId\":%s,\"reason\":\"workspace_archived\"}", JsonHelpers.jsonString(id)));
+                });
+            }
+
+            // Disable bound triggers and playbooks
+            List<Trigger> boundTriggers = triggerRepository.findByWorkspaceId(id);
+            for (Trigger t : boundTriggers) {
+                if ("active".equals(t.getStatus())) {
+                    t.setStatus("paused");
+                    triggerRepository.save(t);
+                    auditService.log(actor, "ARCHIVE_PAUSE_TRIGGER", "trigger", t.getId(),
+                        String.format("{\"workspaceId\":%s,\"reason\":\"workspace_archived\"}", JsonHelpers.jsonString(id)));
+                }
+            }
+
+            // CLC-040: Archive pending spawn requests binding to this workspace
+            List<SpawnRequest> pendingSpawns = spawnRequestRepository.findPendingByWorkspaceBinding(
+                SpawnRequestRepository.escapeLike(id));
+            for (SpawnRequest sr : pendingSpawns) {
+                sr.setStatus("archived");
+                spawnRequestRepository.save(sr);
+                auditService.log(actor, "ARCHIVE_PENDING_SPAWN", "spawn_request", sr.getId(),
                     String.format("{\"workspaceId\":%s,\"reason\":\"workspace_archived\"}", JsonHelpers.jsonString(id)));
             }
-        }
 
-        // CLC-040: Archive pending spawn requests binding to this workspace
-        List<SpawnRequest> pendingSpawns = spawnRequestRepository.findPendingByWorkspaceBinding(
-            SpawnRequestRepository.escapeLike(id));
-        for (SpawnRequest sr : pendingSpawns) {
-            sr.setStatus("archived");
-            spawnRequestRepository.save(sr);
-            auditService.log(actor, "ARCHIVE_PENDING_SPAWN", "spawn_request", sr.getId(),
-                String.format("{\"workspaceId\":%s,\"reason\":\"workspace_archived\"}", JsonHelpers.jsonString(id)));
-        }
+            // CLC-041: Cancel queued/running runs binding to this workspace
+            List<Run> activeRuns = runRepository.findByWorkspaceIdAndStatusIn(id, List.of("queued", "running"));
+            for (Run run : activeRuns) {
+                run.setStatus("cancelled");
+                run.setCompletedAt(Instant.now());
+                runRepository.save(run);
+                auditService.log(actor, "ARCHIVE_CANCEL_RUN", "run", run.getId(),
+                    String.format("{\"workspaceId\":%s,\"reason\":\"workspace_archived\"}", JsonHelpers.jsonString(id)));
+            }
 
-        // CLC-041: Cancel queued/running runs binding to this workspace
-        List<Run> activeRuns = runRepository.findByWorkspaceIdAndStatusIn(id, List.of("queued", "running"));
-        for (Run run : activeRuns) {
-            run.setStatus("cancelled");
-            run.setCompletedAt(Instant.now());
-            runRepository.save(run);
-            auditService.log(actor, "ARCHIVE_CANCEL_RUN", "run", run.getId(),
-                String.format("{\"workspaceId\":%s,\"reason\":\"workspace_archived\"}", JsonHelpers.jsonString(id)));
-        }
-
-        ws.setArchivedAt(Instant.now());
-        Workspace saved = workspaceRepository.save(ws);
-        auditService.log(actor, "ARCHIVE_WORKSPACE", "workspace", id, null);
-        return saved;
+            liveWs.setArchivedAt(Instant.now());
+            Workspace saved = workspaceRepository.save(liveWs);
+            auditService.log(actor, "ARCHIVE_WORKSPACE", "workspace", id, null);
+            return saved;
+        });
     }
 
     /**

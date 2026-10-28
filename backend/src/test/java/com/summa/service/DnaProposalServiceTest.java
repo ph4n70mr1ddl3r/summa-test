@@ -48,6 +48,9 @@ class DnaProposalServiceTest {
     @Mock
     private GovernanceService governanceService;
 
+    @Mock
+    private SecretsScanner secretsScanner;
+
     @Spy
     private ObjectMapper objectMapper = new ObjectMapper();
 
@@ -57,7 +60,8 @@ class DnaProposalServiceTest {
     void setUp() {
         proposalService = new DnaProposalService(
             proposalRepository, ruleRepository, auditService,
-            domainService, memberService, askService, governanceService, objectMapper
+            domainService, memberService, askService, governanceService, objectMapper,
+            secretsScanner, new DomainLockService()
         );
     }
 
@@ -450,5 +454,61 @@ class DnaProposalServiceTest {
         DnaProposal result = proposalService.publish("prop-1", "owner-1", "owner-1");
 
         assertEquals("published", result.getStatus());
+    }
+
+    @Test
+    void create_scansSecrets_throwsConflictExceptionWhenSecretsFound() {
+        when(memberService.toKeyedMemberRef("human-1")).thenReturn("h:human-1");
+        Human human = new Human();
+        human.setId("human-1");
+        human.setRbac("member");
+        when(memberService.findHuman("human-1")).thenReturn(Optional.of(human));
+
+        when(secretsScanner.hasSecrets("secret-payload")).thenReturn(true);
+        when(secretsScanner.scan("secret-payload")).thenReturn(List.of("AWS_KEY"));
+
+        assertThrows(com.summa.exception.ConflictException.class, () ->
+            proposalService.create("prop-sec", "card", "secret-payload", "human-1", "{}", "domain-1"));
+    }
+
+    @Test
+    void create_detectsContradiction_throwsWhenWindowInverted() {
+        when(memberService.toKeyedMemberRef("human-1")).thenReturn("h:human-1");
+        Human human = new Human();
+        human.setId("human-1");
+        human.setRbac("member");
+        when(memberService.findHuman("human-1")).thenReturn(Optional.of(human));
+
+        String payload = "{\"effective_from\":\"2026-10-20T00:00:00Z\",\"effective_to\":\"2026-10-10T00:00:00Z\"}";
+        try {
+            when(objectMapper.readTree(payload)).thenReturn(new ObjectMapper().readTree(payload));
+        } catch (Exception ignored) {}
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
+            proposalService.create("prop-inv", "rule", payload, "human-1", "{}", "domain-1"));
+        assertTrue(ex.getMessage().contains("effective_to must not be before effective_from"));
+    }
+
+    @Test
+    void create_detectsContradiction_throwsWhenSupersedesNonActiveRule() {
+        when(memberService.toKeyedMemberRef("human-1")).thenReturn("h:human-1");
+        Human human = new Human();
+        human.setId("human-1");
+        human.setRbac("member");
+        when(memberService.findHuman("human-1")).thenReturn(Optional.of(human));
+
+        String payload = "{\"supersedes_id\":\"rule-lapsed\"}";
+        try {
+            when(objectMapper.readTree(payload)).thenReturn(new ObjectMapper().readTree(payload));
+        } catch (Exception ignored) {}
+
+        DnaRule lapsed = new DnaRule();
+        lapsed.setId("rule-lapsed");
+        lapsed.setStatus("lapsed");
+        when(ruleRepository.findById("rule-lapsed")).thenReturn(Optional.of(lapsed));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
+            proposalService.create("prop-lapsed", "rule", payload, "human-1", "{}", "domain-1"));
+        assertTrue(ex.getMessage().contains("Cannot supersede non-active rule"));
     }
 }

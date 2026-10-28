@@ -91,12 +91,34 @@ public class SpawnService {
             throw new IllegalStateException("Spend halt is active - spawns are blocked");
         }
 
+        // SPW-031: Quotas — org-wide concurrent active agents (CFG-017)
+        Integer maxActiveSetting = governanceService.getSetting("spawn-org-wide-max-active-agents", Integer.class);
+        int maxActiveAgents = maxActiveSetting != null ? maxActiveSetting : Defaults.DEFAULT_SPAWN_ORG_WIDE_MAX_ACTIVE_AGENTS;
+        long liveAgents = agentRepository.countActiveAgents();
+        long pendingSpawns = spawnRepository.countByStatus("requested");
+        if ((liveAgents + pendingSpawns) >= maxActiveAgents) {
+            throw new IllegalStateException("Org-wide active agents cap reached: " + maxActiveAgents);
+        }
+
         // SPW-021: Class must match — persistent hire needs persistent template,
         // ephemeral needs ephemeral-subagent template
         if (spawnClass == null || spawnClass.isBlank()) {
             throw new IllegalStateException("spawnClass is required");
         }
         String effectiveSpawnClass = spawnClass;
+
+        // SPW-031: Quotas — max concurrent ephemeral workers per spawner (CFG-040)
+        if (AgentClass.EPHEMERAL.getValue().equals(effectiveSpawnClass)
+                || AgentClass.EPHEMERAL_SUBAGENT.getValue().equals(effectiveSpawnClass)) {
+            Integer maxEphemeralSetting = governanceService.getSetting("spawn-ephemeral-max-concurrent-per-spawner", Integer.class);
+            int maxEphemeral = maxEphemeralSetting != null ? maxEphemeralSetting : Defaults.DEFAULT_SPAWN_EPHEMERAL_MAX_CONCURRENT_PER_SPAWNER;
+            long liveEphemeral = agentRepository.countActiveEphemeralBySpawner(requesterId);
+            long pendingEphemeral = spawnRepository.countPendingEphemeralBySpawner(requesterId);
+            if ((liveEphemeral + pendingEphemeral) >= maxEphemeral) {
+                throw new IllegalStateException(
+                    "Max concurrent ephemeral workers per spawner reached for requester: " + requesterId);
+            }
+        }
 
         // SPW-010: Ephemeral requester refused a persistent-hire request at write
         if (AgentClass.PERSISTENT.getValue().equals(effectiveSpawnClass)) {
@@ -244,6 +266,11 @@ public class SpawnService {
         request.setGateTarget(gateTarget);
 
         SpawnRequest saved = spawnRepository.save(request);
+        // SPW-033 / SPW-034: Budget reserve attaches at request creation inside
+        // the spawn transaction.
+        if (budgetCap != null && budgetCap > 0 && spendLedgerService != null) {
+            spendLedgerService.reserveForSpawn(saved, budgetCap, actor);
+        }
         auditService.log(actor, "CREATE_SPAWN", "spawn_request", saved.getId(),
             String.format("{\"class\":%s,\"templateId\":%s,\"gateTarget\":%s}", JsonHelpers.jsonString(effectiveSpawnClass), JsonHelpers.jsonString(templateId), JsonHelpers.jsonString(gateTarget)));
         return saved;
@@ -290,6 +317,9 @@ public class SpawnService {
             request.setApprovedBy(approvedBy);
             request.setApprovedAt(Instant.now());
             SpawnRequest saved = spawnRepository.save(request);
+            if (spendLedgerService != null) {
+                spendLedgerService.releaseSpawn(saved, actor);
+            }
             auditService.log(actor, "AUDIT_ONLY_SPAWN_APPROVE", "spawn_request", id,
                 String.format("{\"reason\":\"%s\"}", "spend_halt_active"));
             return saved;
@@ -426,6 +456,9 @@ public class SpawnService {
         }
         request.setStatus("archived");
         SpawnRequest saved = spawnRepository.save(request);
+        if (spendLedgerService != null) {
+            spendLedgerService.releaseSpawn(saved, actor);
+        }
         auditService.log(actor, "DENY_SPAWN", "spawn_request", id, null);
         return saved;
     }
@@ -440,6 +473,9 @@ public class SpawnService {
         }
         request.setStatus("archived");
         SpawnRequest saved = spawnRepository.save(request);
+        if (spendLedgerService != null) {
+            spendLedgerService.releaseSpawn(saved, actor);
+        }
         auditService.log(actor, "ARCHIVE_SPAWN", "spawn_request", id, null);
         return saved;
     }

@@ -2,6 +2,8 @@ package com.summa.controller;
 
 import com.summa.service.DnaCardService;
 import com.summa.model.DnaCard;
+import com.summa.model.DnaDomain;
+import com.summa.util.DomainGuards;
 import com.summa.service.AuditService;
 import com.summa.security.WriteGate;
 import com.summa.exception.EntityNotFoundException;
@@ -70,9 +72,9 @@ public class DnaCardController {
             if (domainId == null || domainId.isBlank()) {
                 throw new IllegalArgumentException("domainId is required");
             }
-            if (domainService.findById(domainId).isEmpty()) {
-                throw new EntityNotFoundException("Domain not found: " + domainId);
-            }
+            DnaDomain domain = domainService.findById(domainId)
+                .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + domainId));
+            DomainGuards.requireOwnerOrAdmin(memberService, domain, domainId, actor);
             String generatedId = UUID.randomUUID().toString();
             DnaCard card = cardService.create(
                 generatedId,
@@ -105,9 +107,9 @@ public class DnaCardController {
             if (domainId == null || domainId.isBlank()) {
                 throw new IllegalArgumentException("domainId is required");
             }
-            if (domainService.findById(domainId).isEmpty()) {
-                throw new EntityNotFoundException("Domain not found: " + domainId);
-            }
+            DnaDomain domain = domainService.findById(domainId)
+                .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + domainId));
+            DomainGuards.requireOwnerOrAdmin(memberService, domain, domainId, actor);
             String generatedId = UUID.randomUUID().toString();
             DnaCard card = cardService.createDraft(
                 generatedId,
@@ -133,6 +135,10 @@ public class DnaCardController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
+            DnaCard existing = cardService.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Card not found: " + id));
+            DnaDomain domain = existing.getDomainId() != null ? domainService.findById(existing.getDomainId()).orElse(null) : null;
+            DomainGuards.requireOwnerOrAdmin(memberService, domain, existing.getDomainId(), actor);
             DnaCard card = cardService.update(
                 id,
                 body.get("title"),
@@ -145,6 +151,8 @@ public class DnaCardController {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 
@@ -154,12 +162,18 @@ public class DnaCardController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
+            DnaCard existing = cardService.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Card not found: " + id));
+            DnaDomain domain = existing.getDomainId() != null ? domainService.findById(existing.getDomainId()).orElse(null) : null;
+            DomainGuards.requireOwnerOrAdmin(memberService, domain, existing.getDomainId(), actor);
             DnaCard card = cardService.retire(id, actor);
             return ResponseEntity.ok(card);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 }

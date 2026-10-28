@@ -2,6 +2,8 @@ package com.summa.controller;
 
 import com.summa.service.DnaRuleService;
 import com.summa.model.DnaRule;
+import com.summa.model.DnaDomain;
+import com.summa.util.DomainGuards;
 import com.summa.service.AuditService;
 import com.summa.security.WriteGate;
 import org.springframework.http.ResponseEntity;
@@ -64,13 +66,13 @@ public class DnaRuleController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
-            String domainId = body.get("domainId");
+            String domainId = JsonHelpers.stripIdPrefix(body.get("domainId"));
             if (domainId == null || domainId.isBlank()) {
                 throw new IllegalArgumentException("domainId is required");
             }
-            if (domainService.findById(domainId).isEmpty()) {
-                throw new EntityNotFoundException("Domain not found: " + domainId);
-            }
+            DnaDomain domain = domainService.findById(domainId)
+                .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + domainId));
+            DomainGuards.requireOwnerOrAdmin(memberService, domain, domainId, actor);
             String statementMd = body.get("statementMd");
             if (statementMd == null || statementMd.isBlank()) {
                 throw new IllegalArgumentException("statementMd is required");
@@ -84,7 +86,7 @@ public class DnaRuleController {
             String generatedId = UUID.randomUUID().toString();
             DnaRule rule = ruleService.create(
                 generatedId,
-                body.get("domainId"),
+                domainId,
                 body.get("statementMd"),
                 body.get("machineHint"),
                 effectiveFrom,
@@ -114,6 +116,10 @@ public class DnaRuleController {
             return ControllerResponses.validation(auditService, "At least one of statementMd, machineHint, or effectiveTo must be provided");
         }
         try {
+            DnaRule existing = ruleService.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Rule not found: " + id));
+            DnaDomain domain = existing.getDomainId() != null ? domainService.findById(existing.getDomainId()).orElse(null) : null;
+            DomainGuards.requireOwnerOrAdmin(memberService, domain, existing.getDomainId(), actor);
             Instant effectiveTo = hasEffectiveTo ?
                 JsonHelpers.parseOptionalInstant(body.get("effectiveTo"), "effectiveTo") : null;
 
@@ -129,6 +135,8 @@ public class DnaRuleController {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 
@@ -138,6 +146,10 @@ public class DnaRuleController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
+            DnaRule existing = ruleService.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Rule not found: " + id));
+            DnaDomain domain = existing.getDomainId() != null ? domainService.findById(existing.getDomainId()).orElse(null) : null;
+            DomainGuards.requireOwnerOrAdmin(memberService, domain, existing.getDomainId(), actor);
             // DWP-061/DNC-021: the item surface is create / update / retire, never
             // delete. A rule's retire is window truncation — `effective_to` pinned
             // to now, the row lapsing at that boundary.
@@ -158,12 +170,18 @@ public class DnaRuleController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
+            DnaRule existing = ruleService.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Rule not found: " + id));
+            DnaDomain domain = existing.getDomainId() != null ? domainService.findById(existing.getDomainId()).orElse(null) : null;
+            DomainGuards.requireOwnerOrAdmin(memberService, domain, existing.getDomainId(), actor);
             DnaRule rule = ruleService.supersede(id, supersedesId, actor);
             return ResponseEntity.ok(rule);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 }

@@ -2,6 +2,8 @@ package com.summa.controller;
 
 import com.summa.service.DnaGlossaryService;
 import com.summa.model.DnaGlossary;
+import com.summa.model.DnaDomain;
+import com.summa.util.DomainGuards;
 import com.summa.service.AuditService;
 import com.summa.exception.EntityNotFoundException;
 import com.summa.service.DnaDomainService;
@@ -73,9 +75,9 @@ public class DnaGlossaryController {
                 throw new IllegalArgumentException("domainId is required");
             }
             String domainIdClean = JsonHelpers.stripIdPrefix(body.get("domainId"));
-            if (domainService.findById(domainIdClean).isEmpty()) {
-                throw new EntityNotFoundException("Domain not found: " + body.get("domainId"));
-            }
+            DnaDomain domain = domainService.findById(domainIdClean)
+                .orElseThrow(() -> new EntityNotFoundException("Domain not found: " + body.get("domainId")));
+            DomainGuards.requireOwnerOrAdmin(memberService, domain, domainIdClean, actor);
             // Security: reject client-supplied IDs — always generate server-side
             String generatedId = UUID.randomUUID().toString();
             DnaGlossary entry = glossaryService.create(
@@ -91,6 +93,8 @@ public class DnaGlossaryController {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 
@@ -100,6 +104,10 @@ public class DnaGlossaryController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
+            DnaGlossary existing = glossaryService.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Glossary entry not found: " + id));
+            DnaDomain domain = existing.getDomainId() != null ? domainService.findById(existing.getDomainId()).orElse(null) : null;
+            DomainGuards.requireOwnerOrAdmin(memberService, domain, existing.getDomainId(), actor);
             DnaGlossary entry = glossaryService.update(
                 id,
                 body.get("definition"),
@@ -111,6 +119,8 @@ public class DnaGlossaryController {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 
@@ -120,12 +130,18 @@ public class DnaGlossaryController {
         ResponseEntity<Map<String, Object>> gate = writeGate.enforce(actor);
         if (gate != null) return gate;
         try {
+            DnaGlossary existing = glossaryService.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Glossary entry not found: " + id));
+            DnaDomain domain = existing.getDomainId() != null ? domainService.findById(existing.getDomainId()).orElse(null) : null;
+            DomainGuards.requireOwnerOrAdmin(memberService, domain, existing.getDomainId(), actor);
             DnaGlossary entry = glossaryService.retire(id, actor);
             return ResponseEntity.ok(entry);
         } catch (IllegalArgumentException e) {
             return ControllerResponses.validation(auditService, e.getMessage());
         } catch (IllegalStateException e) {
             return ControllerResponses.gate(auditService, e.getMessage());
+        } catch (EntityNotFoundException e) {
+            return ControllerResponses.notFound(auditService, e.getMessage());
         }
     }
 }

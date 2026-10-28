@@ -292,4 +292,87 @@ class SpawnServiceTest {
             spawnService.approve("spawn-1", "agent-99", "actor");
         });
     }
+
+    @Test
+    void create_refusesWhenOrgWideActiveAgentsCapExceeded() {
+        when(governanceService.isSpendHaltTripped()).thenReturn(false);
+        when(governanceService.getSetting("spawn-org-wide-max-active-agents", Integer.class)).thenReturn(5);
+        when(agentRepository.countActiveAgents()).thenReturn(5L);
+
+        Agent agent = new Agent();
+        agent.setId("agent-1");
+        agent.setStatus("active");
+        when(agentRepository.findById("agent-1")).thenReturn(Optional.of(agent));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
+            spawnService.create("agent-1", null, null, "ephemeral",
+                "Do task", "[]", "{}", null, 24, "human-1", "actor"));
+        assertTrue(ex.getMessage().contains("Org-wide active agents cap reached"));
+    }
+
+    @Test
+    void create_refusesWhenEphemeralPerSpawnerCapExceeded() {
+        when(governanceService.isSpendHaltTripped()).thenReturn(false);
+        lenient().when(governanceService.getSetting("spawn-org-wide-max-active-agents", Integer.class)).thenReturn(100);
+        lenient().when(governanceService.getSetting("spawn-ephemeral-max-concurrent-per-spawner", Integer.class)).thenReturn(2);
+        when(agentRepository.countActiveEphemeralBySpawner("agent-1")).thenReturn(1L);
+        when(spawnRepository.countPendingEphemeralBySpawner("agent-1")).thenReturn(1L);
+
+        Agent agent = new Agent();
+        agent.setId("agent-1");
+        agent.setStatus("active");
+        when(agentRepository.findById("agent-1")).thenReturn(Optional.of(agent));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
+            spawnService.create("agent-1", null, null, "ephemeral",
+                "Do task", "[]", "{}", null, 24, "human-1", "actor"));
+        assertTrue(ex.getMessage().contains("Max concurrent ephemeral workers per spawner reached"));
+    }
+
+    @Test
+    void create_reservesBudgetCapWhenSet() {
+        when(governanceService.isSpendHaltTripped()).thenReturn(false);
+
+        Agent agent = new Agent();
+        agent.setId("agent-1");
+        agent.setStatus("active");
+        when(agentRepository.findById("agent-1")).thenReturn(Optional.of(agent));
+
+        SpawnRequest request = new SpawnRequest();
+        request.setId("spawn-1");
+        request.setBudgetCap(40.0);
+        when(spawnRepository.save(any())).thenReturn(request);
+
+        SpawnRequest result = spawnService.create("agent-1", null, null, "ephemeral",
+            "Do task", "[]", "{}", 40.0, 24, "human-1", "actor");
+
+        assertNotNull(result);
+        verify(spendLedgerService).reserveForSpawn(eq(request), eq(40.0), eq("actor"));
+    }
+
+    @Test
+    void deny_releasesBudget() {
+        SpawnRequest request = new SpawnRequest();
+        request.setId("spawn-1");
+        request.setStatus("requested");
+        when(spawnRepository.findById("spawn-1")).thenReturn(Optional.of(request));
+        when(spawnRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        SpawnRequest denied = spawnService.deny("spawn-1", "admin");
+        assertEquals("archived", denied.getStatus());
+        verify(spendLedgerService).releaseSpawn(eq(request), eq("admin"));
+    }
+
+    @Test
+    void archive_releasesBudget() {
+        SpawnRequest request = new SpawnRequest();
+        request.setId("spawn-1");
+        request.setStatus("denied");
+        when(spawnRepository.findById("spawn-1")).thenReturn(Optional.of(request));
+        when(spawnRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        SpawnRequest archived = spawnService.archive("spawn-1", "admin");
+        assertEquals("archived", archived.getStatus());
+        verify(spendLedgerService).releaseSpawn(eq(request), eq("admin"));
+    }
 }

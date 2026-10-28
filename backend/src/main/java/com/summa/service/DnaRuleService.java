@@ -21,75 +21,85 @@ public class DnaRuleService {
     private final AuditService auditService;
     private final DnaDomainService domainService;
     private final SecretsScanner secretsScanner;
+    private final DomainLockService domainLockService;
 
     public DnaRuleService(DnaRuleRepository ruleRepository, AuditService auditService,
                           DnaDomainService domainService, SecretsScanner secretsScanner) {
+        this(ruleRepository, auditService, domainService, secretsScanner, new DomainLockService());
+    }
+
+    public DnaRuleService(DnaRuleRepository ruleRepository, AuditService auditService,
+                          DnaDomainService domainService, SecretsScanner secretsScanner,
+                          DomainLockService domainLockService) {
         this.ruleRepository = ruleRepository;
         this.auditService = auditService;
         this.domainService = domainService;
         this.secretsScanner = secretsScanner;
+        this.domainLockService = domainLockService != null ? domainLockService : new DomainLockService();
     }
 
     @Transactional
     public DnaRule create(String id, String domainId, String statementMd, String machineHint,
                           Instant effectiveFrom, Instant effectiveTo, String supersedesId,
                           String actor) {
-        // DGV-041: an archived domain is read-only history — no new items land in it.
-        requireWritableDomain(domainId);
-        ScanUtils.scanForSecrets(statementMd, actor, "dna_rule", id, secretsScanner, auditService);
-        // Validate effective date ordering
-        if (effectiveTo != null && effectiveFrom != null && effectiveTo.isBefore(effectiveFrom)) {
-            throw new IllegalArgumentException("effectiveTo must not be before effectiveFrom");
-        }
-
-        // Validate supersedes_id is in same domain
-        DnaRule predecessor = null;
-        if (supersedesId != null) {
-            Optional<DnaRule> existingOpt = ruleRepository.findById(supersedesId);
-            if (existingOpt.isEmpty()) {
-                throw new IllegalArgumentException("Supersedes rule not found: " + supersedesId);
-            }
-            DnaRule existing = existingOpt.get();
-            if (!Objects.equals(existing.getDomainId(), domainId)) {
-                throw new IllegalArgumentException("Supersedes rule must be in the same domain");
-            }
-            if (!"active".equals(existing.getStatus()) && !"superseded".equals(existing.getStatus())) {
-                throw new IllegalArgumentException("Cannot supersede a lapsed rule");
+        return domainLockService.withLock(domainId, () -> {
+            // DGV-041: an archived domain is read-only history — no new items land in it.
+            requireWritableDomain(domainId);
+            ScanUtils.scanForSecrets(statementMd, actor, "dna_rule", id, secretsScanner, auditService);
+            // Validate effective date ordering
+            if (effectiveTo != null && effectiveFrom != null && effectiveTo.isBefore(effectiveFrom)) {
+                throw new IllegalArgumentException("effectiveTo must not be before effectiveFrom");
             }
 
-            // Check for forked supersession
-            long successorCount = ruleRepository.findBySupersedesId(supersedesId).size();
-            if (successorCount > 0) {
-                throw new IllegalArgumentException(
-                    "Rule already has a superseder. Name the chain's live head instead.");
+            // Validate supersedes_id is in same domain
+            DnaRule predecessor = null;
+            if (supersedesId != null) {
+                Optional<DnaRule> existingOpt = ruleRepository.findById(supersedesId);
+                if (existingOpt.isEmpty()) {
+                    throw new IllegalArgumentException("Supersedes rule not found: " + supersedesId);
+                }
+                DnaRule existing = existingOpt.get();
+                if (!Objects.equals(existing.getDomainId(), domainId)) {
+                    throw new IllegalArgumentException("Supersedes rule must be in the same domain");
+                }
+                if (!"active".equals(existing.getStatus()) && !"superseded".equals(existing.getStatus())) {
+                    throw new IllegalArgumentException("Cannot supersede a lapsed rule");
+                }
+
+                // Check for forked supersession
+                long successorCount = ruleRepository.findBySupersedesId(supersedesId).size();
+                if (successorCount > 0) {
+                    throw new IllegalArgumentException(
+                        "Rule already has a superseder. Name the chain's live head instead.");
+                }
+                predecessor = existing;
             }
-            predecessor = existing;
-        }
 
-        DnaRule rule = new DnaRule();
-        rule.setId(id);
-        rule.setDomainId(domainId);
-        rule.setStatementMd(statementMd != null ? statementMd : "");
-        rule.setMachineHint(machineHint != null ? machineHint : "");
-        rule.setEffectiveFrom(effectiveFrom);
-        rule.setEffectiveTo(effectiveTo);
-        rule.setSupersedesId(supersedesId);
-        if (effectiveTo != null && effectiveTo.isBefore(Instant.now())) {
-            rule.setStatus("lapsed");
-        } else {
-            rule.setStatus("active");
-        }
+            DnaRule rule = new DnaRule();
+            rule.setId(id);
+            rule.setDomainId(domainId);
+            rule.setStatementMd(statementMd != null ? statementMd : "");
+            rule.setMachineHint(machineHint != null ? machineHint : "");
+            rule.setEffectiveFrom(effectiveFrom);
+            rule.setEffectiveTo(effectiveTo);
+            rule.setSupersedesId(supersedesId);
+            if (effectiveTo != null && effectiveTo.isBefore(Instant.now())) {
+                rule.setStatus("lapsed");
+            } else {
+                rule.setStatus("active");
+            }
 
-        DnaRule saved = ruleRepository.save(rule);
-        // DNC-023: naming a predecessor displaces it at the successor's window
-        // edge — the create door is as much a displacement door as the explicit
-        // supersede door, so a chain is never left with two co-temporal heads.
-        if (predecessor != null) {
-            displacePredecessor(predecessor, saved.getEffectiveFrom(), actor);
-        }
-        auditService.log(actor, "CREATE_RULE", "dna_rule", id,
-            String.format("{\"domainId\":%s,\"effectiveFrom\":%s}", JsonHelpers.jsonString(domainId), JsonHelpers.jsonString(effectiveFrom != null ? String.valueOf(effectiveFrom) : null)));
-        return saved;
+            DnaRule saved = ruleRepository.save(rule);
+            // DNC-023: naming a predecessor displaces it at the successor's window
+            // edge — the create door is as much a displacement door as the explicit
+            // supersede door, so a chain is never left with two co-temporal heads.
+            if (predecessor != null) {
+                displacePredecessor(predecessor, saved.getEffectiveFrom(), actor);
+            }
+            auditService.log(actor, "CREATE_RULE", "dna_rule", id,
+                String.format("{\"domainId\":%s,\"effectiveFrom\":%s}", JsonHelpers.jsonString(domainId), JsonHelpers.jsonString(effectiveFrom != null ? String.valueOf(effectiveFrom) : null)));
+            return saved;
+        });
     }
 
     /**
@@ -167,34 +177,36 @@ public class DnaRuleService {
         DnaRule rule = ruleRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Rule not found: " + id));
 
-        if (!"active".equals(rule.getStatus())) {
-            throw new IllegalArgumentException("Cannot update non-active rule: " + rule.getStatus());
-        }
-        // DGV-041: a rule in an archived domain is frozen history.
-        requireWritableDomain(rule.getDomainId());
-
-        // DWP-060: an item-level write gets the same secrets scan a reviewed
-        // proposal's publish gets — the update door is not a softer door.
-        if (statementMd != null) {
-            ScanUtils.scanForSecrets(statementMd, actor, "dna_rule", id, secretsScanner, auditService);
-            rule.setStatementMd(statementMd);
-        }
-        if (machineHint != null) rule.setMachineHint(machineHint);
-        if (effectiveTo != null) {
-            // DWP-062/DWP-063: one validation at every door — window ordering is
-            // checked here exactly as it is at the create door.
-            if (rule.getEffectiveFrom() != null && effectiveTo.isBefore(rule.getEffectiveFrom())) {
-                throw new IllegalArgumentException("effectiveTo must not be before effectiveFrom");
+        return domainLockService.withLock(rule.getDomainId(), () -> {
+            if (!"active".equals(rule.getStatus())) {
+                throw new IllegalArgumentException("Cannot update non-active rule: " + rule.getStatus());
             }
-            rule.setEffectiveTo(effectiveTo);
-            if (effectiveTo.isBefore(Instant.now())) {
-                rule.setStatus("lapsed");
-            }
-        }
+            // DGV-041: a rule in an archived domain is frozen history.
+            requireWritableDomain(rule.getDomainId());
 
-        DnaRule saved = ruleRepository.save(rule);
-        auditService.log(actor, "UPDATE_RULE", "dna_rule", id, null);
-        return saved;
+            // DWP-060: an item-level write gets the same secrets scan a reviewed
+            // proposal's publish gets — the update door is not a softer door.
+            if (statementMd != null) {
+                ScanUtils.scanForSecrets(statementMd, actor, "dna_rule", id, secretsScanner, auditService);
+                rule.setStatementMd(statementMd);
+            }
+            if (machineHint != null) rule.setMachineHint(machineHint);
+            if (effectiveTo != null) {
+                // DWP-062/DWP-063: one validation at every door — window ordering is
+                // checked here exactly as it is at the create door.
+                if (rule.getEffectiveFrom() != null && effectiveTo.isBefore(rule.getEffectiveFrom())) {
+                    throw new IllegalArgumentException("effectiveTo must not be before effectiveFrom");
+                }
+                rule.setEffectiveTo(effectiveTo);
+                if (effectiveTo.isBefore(Instant.now())) {
+                    rule.setStatus("lapsed");
+                }
+            }
+
+            DnaRule saved = ruleRepository.save(rule);
+            auditService.log(actor, "UPDATE_RULE", "dna_rule", id, null);
+            return saved;
+        });
     }
 
     /**
@@ -208,18 +220,20 @@ public class DnaRuleService {
         DnaRule rule = ruleRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Rule not found: " + id));
 
-        if (!"active".equals(rule.getStatus())) {
-            throw new IllegalArgumentException("Cannot retire non-active rule: " + rule.getStatus());
-        }
-        // DGV-041: a rule in an archived domain is frozen history.
-        requireWritableDomain(rule.getDomainId());
+        return domainLockService.withLock(rule.getDomainId(), () -> {
+            if (!"active".equals(rule.getStatus())) {
+                throw new IllegalArgumentException("Cannot retire non-active rule: " + rule.getStatus());
+            }
+            // DGV-041: a rule in an archived domain is frozen history.
+            requireWritableDomain(rule.getDomainId());
 
-        Instant now = Instant.now();
-        rule.setEffectiveTo(now);
-        rule.setStatus("lapsed");
-        DnaRule saved = ruleRepository.save(rule);
-        auditService.log(actor, "RETIRE_RULE", "dna_rule", id, null);
-        return saved;
+            Instant now = Instant.now();
+            rule.setEffectiveTo(now);
+            rule.setStatus("lapsed");
+            DnaRule saved = ruleRepository.save(rule);
+            auditService.log(actor, "RETIRE_RULE", "dna_rule", id, null);
+            return saved;
+        });
     }
 
     /**
@@ -250,42 +264,44 @@ public class DnaRuleService {
         DnaRule rule = ruleRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Rule not found: " + id));
 
-        DnaRule predecessor = ruleRepository.findById(supersedesId)
-                .orElseThrow(() -> new EntityNotFoundException("Predecessor rule not found: " + supersedesId));
+        return domainLockService.withLock(rule.getDomainId(), () -> {
+            DnaRule predecessor = ruleRepository.findById(supersedesId)
+                    .orElseThrow(() -> new EntityNotFoundException("Predecessor rule not found: " + supersedesId));
 
-        if (!predecessor.getDomainId().equals(rule.getDomainId())) {
-            throw new IllegalArgumentException("Cross-domain supersession not allowed");
-        }
-        // DGV-041: a rule in an archived domain is frozen history.
-        requireWritableDomain(rule.getDomainId());
+            if (!predecessor.getDomainId().equals(rule.getDomainId())) {
+                throw new IllegalArgumentException("Cross-domain supersession not allowed");
+            }
+            // DGV-041: a rule in an archived domain is frozen history.
+            requireWritableDomain(rule.getDomainId());
 
-        // DNC-025: supersession chains are linear, not forks — a second live
-        // `supersedes_id` edge onto an already-superseded row is refused at
-        // propose, amend, and item write; displacing a superseded rule means
-        // naming the chain's live head. The create door carries these guards; the
-        // item-write door must carry them too or a fork is reachable from the API.
-        long successorCount = ruleRepository.findBySupersedesId(supersedesId).size();
-        if (successorCount > 0) {
-            throw new IllegalArgumentException(
-                "Rule already has a superseder. Name the chain's live head instead.");
-        }
-        // DNC-022: superseded and lapsed rules are frozen history — a write must
-        // not flip a lapsed rule out of it.
-        if (!"active".equals(predecessor.getStatus()) && !"superseded".equals(predecessor.getStatus())) {
-            throw new IllegalArgumentException("Cannot supersede a lapsed rule");
-        }
+            // DNC-025: supersession chains are linear, not forks — a second live
+            // `supersedes_id` edge onto an already-superseded row is refused at
+            // propose, amend, and item write; displacing a superseded rule means
+            // naming the chain's live head. The create door carries these guards; the
+            // item-write door must carry them too or a fork is reachable from the API.
+            long successorCount = ruleRepository.findBySupersedesId(supersedesId).size();
+            if (successorCount > 0) {
+                throw new IllegalArgumentException(
+                    "Rule already has a superseder. Name the chain's live head instead.");
+            }
+            // DNC-022: superseded and lapsed rules are frozen history — a write must
+            // not flip a lapsed rule out of it.
+            if (!"active".equals(predecessor.getStatus()) && !"superseded".equals(predecessor.getStatus())) {
+                throw new IllegalArgumentException("Cannot supersede a lapsed rule");
+            }
 
-        rule.setSupersedesId(supersedesId);
+            rule.setSupersedesId(supersedesId);
 
-        // Save successor first, then predecessor, within the same transaction
-        // If predecessor save fails, the transaction rolls back entirely
-        ruleRepository.save(rule);
-        // DNC-023: the displacement edge is the successor's `effective_from` — a
-        // future-windowed successor is a scheduled replacement, not a gap.
-        displacePredecessor(predecessor, rule.getEffectiveFrom(), actor);
-        DnaRule saved = ruleRepository.save(predecessor);
-        auditService.log(actor, "SUPERSEDE_RULE", "dna_rule", id,
-            String.format("{\"supersedes\":%s}", JsonHelpers.jsonString(supersedesId)));
-        return saved;
+            // Save successor first, then predecessor, within the same transaction
+            // If predecessor save fails, the transaction rolls back entirely
+            ruleRepository.save(rule);
+            // DNC-023: the displacement edge is the successor's `effective_from` — a
+            // future-windowed successor is a scheduled replacement, not a gap.
+            displacePredecessor(predecessor, rule.getEffectiveFrom(), actor);
+            DnaRule saved = ruleRepository.save(predecessor);
+            auditService.log(actor, "SUPERSEDE_RULE", "dna_rule", id,
+                String.format("{\"supersedes\":%s}", JsonHelpers.jsonString(supersedesId)));
+            return saved;
+        });
     }
 }

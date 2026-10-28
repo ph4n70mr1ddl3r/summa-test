@@ -49,6 +49,7 @@ public class AgentService {
     private final DnaProposalRepository proposalRepository;
     private final int depthCap;
     private final ObjectMapper objectMapper;
+    private final SpendLedgerService spendLedgerService;
 
     public AgentService(AgentRepository agentRepository, AuditService auditService,
                         MemberService memberService, AskRepository askRepository,
@@ -60,6 +61,23 @@ public class AgentService {
                         DnaProposalRepository proposalRepository,
                         ObjectMapper objectMapper,
                         @Value("${summa.spawn.depth-cap:2}") int depthCap) {
+        this(agentRepository, auditService, memberService, askRepository,
+             boardTaskRepository, initiativeRepository, triggerRepository,
+             spawnRequestRepository, runRepository, proposalRepository,
+             objectMapper, depthCap, null);
+    }
+
+    public AgentService(AgentRepository agentRepository, AuditService auditService,
+                        MemberService memberService, AskRepository askRepository,
+                        BoardTaskRepository boardTaskRepository,
+                        InitiativeRepository initiativeRepository,
+                        TriggerRepository triggerRepository,
+                        SpawnRequestRepository spawnRequestRepository,
+                        RunRepository runRepository,
+                        DnaProposalRepository proposalRepository,
+                        ObjectMapper objectMapper,
+                        @Value("${summa.spawn.depth-cap:2}") int depthCap,
+                        SpendLedgerService spendLedgerService) {
         this.agentRepository = agentRepository;
         this.auditService = auditService;
         this.memberService = memberService;
@@ -72,6 +90,7 @@ public class AgentService {
         this.proposalRepository = proposalRepository;
         this.objectMapper = objectMapper;
         this.depthCap = Math.max(2, depthCap);
+        this.spendLedgerService = spendLedgerService;
     }
 
     @Transactional
@@ -211,6 +230,9 @@ public class AgentService {
                 if ("requested".equals(spawn.getStatus())) {
                     spawn.setStatus("archived");
                     spawnRequestRepository.save(spawn);
+                    if (spendLedgerService != null) {
+                        spendLedgerService.releaseSpawn(spawn, "system");
+                    }
                     auditService.logSystem("RETIRE_ARCHIVE_SPAWN", "spawn_request", spawn.getId(),
                         String.format("{\"agentId\":%s,\"reason\":\"agent_retiring\"}", JsonHelpers.jsonString(id)));
                 }

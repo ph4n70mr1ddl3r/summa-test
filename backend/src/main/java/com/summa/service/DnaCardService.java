@@ -18,35 +18,45 @@ public class DnaCardService {
     private final DnaDomainRepository domainRepository;
     private final AuditService auditService;
     private final SecretsScanner secretsScanner;
+    private final DomainLockService domainLockService;
 
     public DnaCardService(DnaCardRepository cardRepository, DnaDomainRepository domainRepository,
                           AuditService auditService, SecretsScanner secretsScanner) {
+        this(cardRepository, domainRepository, auditService, secretsScanner, new DomainLockService());
+    }
+
+    public DnaCardService(DnaCardRepository cardRepository, DnaDomainRepository domainRepository,
+                          AuditService auditService, SecretsScanner secretsScanner,
+                          DomainLockService domainLockService) {
         this.cardRepository = cardRepository;
         this.domainRepository = domainRepository;
         this.auditService = auditService;
         this.secretsScanner = secretsScanner;
+        this.domainLockService = domainLockService != null ? domainLockService : new DomainLockService();
     }
 
     @Transactional
     public DnaCard create(String id, String domainId, String title, String definitionMd,
                           String provenance, String actor) {
-        if (domainId != null && !domainId.isBlank()) {
-            // DGV-041: an archived domain is read-only history — no new items.
-            DomainGuards.requireWritable(domainRepository.findById(domainId).orElse(null), domainId);
-        }
-        ScanUtils.scanForSecrets(definitionMd, actor, "dna_card", id, secretsScanner, auditService);
-        DnaCard card = new DnaCard();
-        card.setId(id);
-        card.setDomainId(domainId);
-        card.setTitle(title);
-        card.setDefinitionMd(definitionMd != null ? definitionMd : "");
-        card.setProvenance(provenance != null ? provenance : "{}");
-        card.setStatus("active");
+        return domainLockService.withLock(domainId, () -> {
+            if (domainId != null && !domainId.isBlank()) {
+                // DGV-041: an archived domain is read-only history — no new items.
+                DomainGuards.requireWritable(domainRepository.findById(domainId).orElse(null), domainId);
+            }
+            ScanUtils.scanForSecrets(definitionMd, actor, "dna_card", id, secretsScanner, auditService);
+            DnaCard card = new DnaCard();
+            card.setId(id);
+            card.setDomainId(domainId);
+            card.setTitle(title);
+            card.setDefinitionMd(definitionMd != null ? definitionMd : "");
+            card.setProvenance(provenance != null ? provenance : "{}");
+            card.setStatus("active");
 
-        DnaCard saved = cardRepository.save(card);
-        auditService.log(actor, "CREATE_CARD", "dna_card", id,
-            String.format("{\"domainId\":%s,\"title\":%s}", JsonHelpers.jsonString(domainId), JsonHelpers.jsonString(title)));
-        return saved;
+            DnaCard saved = cardRepository.save(card);
+            auditService.log(actor, "CREATE_CARD", "dna_card", id,
+                String.format("{\"domainId\":%s,\"title\":%s}", JsonHelpers.jsonString(domainId), JsonHelpers.jsonString(title)));
+            return saved;
+        });
     }
 
     @Transactional(readOnly = true)
@@ -69,20 +79,26 @@ public class DnaCardService {
         DnaCard card = cardRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Card not found: " + id));
 
-        if (!"active".equals(card.getStatus()) && !"draft".equals(card.getStatus())) {
-            throw new IllegalArgumentException("Cannot update retired card: " + card.getStatus());
-        }
+        return domainLockService.withLock(card.getDomainId(), () -> {
+            if (card.getDomainId() != null && !card.getDomainId().isBlank()) {
+                DomainGuards.requireWritable(domainRepository.findById(card.getDomainId()).orElse(null), card.getDomainId());
+            }
 
-        if (title != null) card.setTitle(title);
-        if (definitionMd != null) {
-            ScanUtils.scanForSecrets(definitionMd, actor, "dna_card", id, secretsScanner, auditService);
-            card.setDefinitionMd(definitionMd);
-        }
-        if (provenance != null) card.setProvenance(provenance);
+            if (!"active".equals(card.getStatus()) && !"draft".equals(card.getStatus())) {
+                throw new IllegalArgumentException("Cannot update retired card: " + card.getStatus());
+            }
 
-        DnaCard saved = cardRepository.save(card);
-        auditService.log(actor, "UPDATE_CARD", "dna_card", id, null);
-        return saved;
+            if (title != null) card.setTitle(title);
+            if (definitionMd != null) {
+                ScanUtils.scanForSecrets(definitionMd, actor, "dna_card", id, secretsScanner, auditService);
+                card.setDefinitionMd(definitionMd);
+            }
+            if (provenance != null) card.setProvenance(provenance);
+
+            DnaCard saved = cardRepository.save(card);
+            auditService.log(actor, "UPDATE_CARD", "dna_card", id, null);
+            return saved;
+        });
     }
 
     @Transactional
@@ -90,31 +106,39 @@ public class DnaCardService {
         DnaCard card = cardRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Card not found: " + id));
 
-        card.setStatus("retired");
-        DnaCard saved = cardRepository.save(card);
-        auditService.log(actor, "RETIRE_CARD", "dna_card", id, null);
-        return saved;
+        return domainLockService.withLock(card.getDomainId(), () -> {
+            if (card.getDomainId() != null && !card.getDomainId().isBlank()) {
+                DomainGuards.requireWritable(domainRepository.findById(card.getDomainId()).orElse(null), card.getDomainId());
+            }
+
+            card.setStatus("retired");
+            DnaCard saved = cardRepository.save(card);
+            auditService.log(actor, "RETIRE_CARD", "dna_card", id, null);
+            return saved;
+        });
     }
 
     @Transactional
     public DnaCard createDraft(String id, String domainId, String title, String definitionMd,
                                   String provenance, String actor) {
-        if (domainId != null && !domainId.isBlank()) {
-            // DGV-041: an archived domain is read-only history — no new items.
-            DomainGuards.requireWritable(domainRepository.findById(domainId).orElse(null), domainId);
-        }
-        ScanUtils.scanForSecrets(definitionMd, actor, "dna_card", id, secretsScanner, auditService);
-        DnaCard card = new DnaCard();
-        card.setId(id);
-        card.setDomainId(domainId);
-        card.setTitle(title);
-        card.setDefinitionMd(definitionMd != null ? definitionMd : "");
-        card.setProvenance(provenance != null ? provenance : "{}");
-        card.setStatus("draft");
+        return domainLockService.withLock(domainId, () -> {
+            if (domainId != null && !domainId.isBlank()) {
+                // DGV-041: an archived domain is read-only history — no new items.
+                DomainGuards.requireWritable(domainRepository.findById(domainId).orElse(null), domainId);
+            }
+            ScanUtils.scanForSecrets(definitionMd, actor, "dna_card", id, secretsScanner, auditService);
+            DnaCard card = new DnaCard();
+            card.setId(id);
+            card.setDomainId(domainId);
+            card.setTitle(title);
+            card.setDefinitionMd(definitionMd != null ? definitionMd : "");
+            card.setProvenance(provenance != null ? provenance : "{}");
+            card.setStatus("draft");
 
-        DnaCard saved = cardRepository.save(card);
-        auditService.log(actor, "CREATE_DRAFT", "dna_card", id,
-            String.format("{\"domainId\":%s,\"title\":%s}", JsonHelpers.jsonString(domainId), JsonHelpers.jsonString(title)));
-        return saved;
+            DnaCard saved = cardRepository.save(card);
+            auditService.log(actor, "CREATE_DRAFT", "dna_card", id,
+                String.format("{\"domainId\":%s,\"title\":%s}", JsonHelpers.jsonString(domainId), JsonHelpers.jsonString(title)));
+            return saved;
+        });
     }
 }

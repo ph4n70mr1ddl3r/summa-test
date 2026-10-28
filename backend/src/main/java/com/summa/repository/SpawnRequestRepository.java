@@ -21,6 +21,9 @@ public interface SpawnRequestRepository extends JpaRepository<SpawnRequest, Stri
 
     long countByTemplateIdAndStatus(String templateId, String status);
 
+    @Query("SELECT COUNT(r) FROM SpawnRequest r WHERE r.requesterId = :requesterId AND r.status = 'requested' AND r.spawnClass IN ('ephemeral', 'ephemeral-subagent')")
+    long countPendingEphemeralBySpawner(@Param("requesterId") String requesterId);
+
     /**
      * Escape SQL LIKE wildcards (% and _) so the query treats them as literals.
      * Workspace/Initiative IDs are UUIDs but the guard prevents future format changes from breaking the query.

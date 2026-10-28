@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.summa.util.KeyedUnionValidator;
 import com.summa.util.JsonHelpers;
+import com.summa.util.ScanUtils;
 import com.summa.exception.EntityNotFoundException;
 import com.summa.model.Human;
 import com.summa.model.Agent;
@@ -37,16 +38,33 @@ public class DnaProposalService {
     private final AskService askService;
     private final ObjectMapper objectMapper;
     private final GovernanceService governanceService;
+    private final SecretsScanner secretsScanner;
+    private final DomainLockService domainLockService;
     private final Set<String> alreadyEscalated = ConcurrentHashMap.newKeySet();
 
     public DnaProposalService(DnaProposalRepository proposalRepository,
-                                  DnaRuleRepository ruleRepository,
-                                  AuditService auditService,
-                                  DnaDomainService domainService,
-                                  MemberService memberService,
-                                  AskService askService,
-                                  GovernanceService governanceService,
-                                  ObjectMapper objectMapper) {
+                              DnaRuleRepository ruleRepository,
+                              AuditService auditService,
+                              DnaDomainService domainService,
+                              MemberService memberService,
+                              AskService askService,
+                              GovernanceService governanceService,
+                              ObjectMapper objectMapper) {
+        this(proposalRepository, ruleRepository, auditService, domainService,
+             memberService, askService, governanceService, objectMapper,
+             new SecretsScanner(), new DomainLockService());
+    }
+
+    public DnaProposalService(DnaProposalRepository proposalRepository,
+                              DnaRuleRepository ruleRepository,
+                              AuditService auditService,
+                              DnaDomainService domainService,
+                              MemberService memberService,
+                              AskService askService,
+                              GovernanceService governanceService,
+                              ObjectMapper objectMapper,
+                              SecretsScanner secretsScanner,
+                              DomainLockService domainLockService) {
         this.proposalRepository = proposalRepository;
         this.ruleRepository = ruleRepository;
         this.auditService = auditService;
@@ -55,6 +73,8 @@ public class DnaProposalService {
         this.askService = askService;
         this.governanceService = governanceService;
         this.objectMapper = objectMapper;
+        this.secretsScanner = secretsScanner != null ? secretsScanner : new SecretsScanner();
+        this.domainLockService = domainLockService != null ? domainLockService : new DomainLockService();
     }
 
     @Transactional
@@ -72,6 +92,8 @@ public class DnaProposalService {
         }
         requireProposeSurface(proposedByKeyed);
         KeyedUnionValidator.validate(proposedByKeyed, "proposedBy");
+        // SEC-030: Secrets scan on proposal payload
+        ScanUtils.scanForSecrets(payload, proposedBy, "dna_proposal", id, secretsScanner, auditService);
         DnaProposal proposal = new DnaProposal();
         proposal.setId(id);
         proposal.setKind(kind);
@@ -79,6 +101,13 @@ public class DnaProposalService {
         proposal.setProposedBy(proposedByKeyed);
         proposal.setProvenance(provenance != null ? provenance : "{}");
         proposal.setDomainId(domainId);
+
+        // DWP-042: Contradiction detection at proposal time
+        List<String> contradictions = detectContradictions(proposal);
+        if (!contradictions.isEmpty()) {
+            throw new IllegalArgumentException(
+                "Contradiction detected: " + String.join("; ", contradictions));
+        }
 
         // DWP-020/021/022: Derive review_by from domain owner (or the admin queue for org-wide).
         // review_by is a humans(id) reference — the reserved 'admins' broadcast addressee
@@ -165,75 +194,80 @@ public class DnaProposalService {
     public DnaProposal publish(String id, String reviewedBy, String actor) {
         DnaProposal proposal = proposalRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Proposal not found: " + id));
-        
-        if (!proposal.isOpen()) {
-            // DWP-025: a proposal whose SLA was tightened into the past is flagged
-            // 'breached' — still open, surfaced as urgent in the review queue. The
-            // publish door admits it; the literal 'open' check bricked it.
-            throw new IllegalStateException("Proposal is not open: " + proposal.getStatus());
-        }
 
-        // DWP-003: the publish door belongs to the domain owner (the proposal's
-        // review_by) or an admin — any other member is refused.
-        requireReviewAuthority(proposal, actor);
+        return domainLockService.withLock(proposal.getDomainId(), () -> {
+            if (!proposal.isOpen()) {
+                // DWP-025: a proposal whose SLA was tightened into the past is flagged
+                // 'breached' — still open, surfaced as urgent in the review queue. The
+                // publish door admits it; the literal 'open' check bricked it.
+                throw new IllegalStateException("Proposal is not open: " + proposal.getStatus());
+            }
 
-        // DWP-064: Prevent cross-domain topology smuggling — published payload domain must match proposal domain
-        if (proposal.getDomainId() != null && !proposal.getDomainId().isBlank()) {
-            try {
-                JsonNode payload = objectMapper.readTree(proposal.getPayload());
-                if (payload.has("domain_id") && !payload.get("domain_id").isNull()) {
-                    String payloadDomainId = payload.get("domain_id").asText();
-                    if (!payloadDomainId.equals(proposal.getDomainId())) {
+            // DWP-003: the publish door belongs to the domain owner (the proposal's
+            // review_by) or an admin — any other member is refused.
+            requireReviewAuthority(proposal, actor);
+
+            // SEC-030 / DWP-060: secrets scan at publish
+            ScanUtils.scanForSecrets(proposal.getPayload(), actor, "dna_proposal", id, secretsScanner, auditService);
+
+            // DWP-064: Prevent cross-domain topology smuggling — published payload domain must match proposal domain
+            if (proposal.getDomainId() != null && !proposal.getDomainId().isBlank()) {
+                try {
+                    JsonNode payload = objectMapper.readTree(proposal.getPayload());
+                    if (payload.has("domain_id") && !payload.get("domain_id").isNull()) {
+                        String payloadDomainId = payload.get("domain_id").asText();
+                        if (!payloadDomainId.equals(proposal.getDomainId())) {
+                            throw new IllegalStateException(
+                                "Domain smuggling blocked: payload domain " + payloadDomainId
+                                + " differs from proposal domain " + proposal.getDomainId());
+                        }
+                    }
+                } catch (IllegalStateException e) {
+                    throw e;
+                } catch (Exception e) {
+                    // Non-fatal: payload may not be JSON or may lack domain_id
+                }
+            }
+
+            // DWP-042: Contradiction detection — re-check against current state
+            List<String> contradictions = detectContradictions(proposal);
+            if (!contradictions.isEmpty()) {
+                throw new IllegalStateException(
+                    "Contradiction detected at publish: " + String.join("; ", contradictions));
+            }
+
+            // DWP-050: Check SoD — if the domain has sod enabled and the proposer is the publisher,
+            // the publish routes to the admin broadcast instead of self-approval.
+            String actualReviewer = reviewedBy;
+            if (proposal.getDomainId() != null && !proposal.getDomainId().isBlank()) {
+                Optional<DnaDomain> domainOpt = domainService.findById(proposal.getDomainId());
+                if (domainOpt.isPresent() && "reviewer-distinct".equals(domainOpt.get().getSod())) {
+                    // DAT-120: proposed_by is a keyed union and the actor is a bare id —
+                    // compare the stripped forms so the separation-of-duties guard fires.
+                    if (proposedByMatches(proposal, actor)) {
+                        // SoD breach: the proposer may not publish their own proposal.
+                        // DWP-050 routes the publish to the admin broadcast (ASK-055):
+                        // the proposal stays in review and an admin picks it up. The
+                        // publish itself is refused — recording an admin who never saw
+                        // the proposal as its reviewer and publishing it anyway made the
+                        // knob cosmetic.
+                        routeSodPublishToAdmin(proposal);
                         throw new IllegalStateException(
-                            "Domain smuggling blocked: payload domain " + payloadDomainId
-                            + " differs from proposal domain " + proposal.getDomainId());
+                            "Separation of duties: the proposer may not publish this proposal — "
+                                + "the publish is routed to the admin broadcast");
                     }
                 }
-            } catch (IllegalStateException e) {
-                throw e;
-            } catch (Exception e) {
-                // Non-fatal: payload may not be JSON or may lack domain_id
             }
-        }
 
-        // DWP-042: Contradiction detection — re-check against current state
-        List<String> contradictions = detectContradictions(proposal);
-        if (!contradictions.isEmpty()) {
-            throw new IllegalStateException(
-                "Contradiction detected at publish: " + String.join("; ", contradictions));
-        }
-
-        // DWP-050: Check SoD — if the domain has sod enabled and the proposer is the publisher,
-        // the publish routes to the admin broadcast instead of self-approval.
-        String actualReviewer = reviewedBy;
-        if (proposal.getDomainId() != null && !proposal.getDomainId().isBlank()) {
-            Optional<DnaDomain> domainOpt = domainService.findById(proposal.getDomainId());
-            if (domainOpt.isPresent() && "reviewer-distinct".equals(domainOpt.get().getSod())) {
-                // DAT-120: proposed_by is a keyed union and the actor is a bare id —
-                // compare the stripped forms so the separation-of-duties guard fires.
-                if (proposedByMatches(proposal, actor)) {
-                    // SoD breach: the proposer may not publish their own proposal.
-                    // DWP-050 routes the publish to the admin broadcast (ASK-055):
-                    // the proposal stays in review and an admin picks it up. The
-                    // publish itself is refused — recording an admin who never saw
-                    // the proposal as its reviewer and publishing it anyway made the
-                    // knob cosmetic.
-                    routeSodPublishToAdmin(proposal);
-                    throw new IllegalStateException(
-                        "Separation of duties: the proposer may not publish this proposal — "
-                            + "the publish is routed to the admin broadcast");
-                }
-            }
-        }
-
-        proposal.setStatus("published");
-        proposal.setReviewedBy(actualReviewer);
-        proposal.setReviewedAt(Instant.now());
-        
-        DnaProposal saved = proposalRepository.save(proposal);
-        auditService.log(actor, "PUBLISH", "dna_proposal", id,
-            String.format("{\"reviewedBy\":%s}", JsonHelpers.jsonString(actualReviewer)));
-        return saved;
+            proposal.setStatus("published");
+            proposal.setReviewedBy(actualReviewer);
+            proposal.setReviewedAt(Instant.now());
+            
+            DnaProposal saved = proposalRepository.save(proposal);
+            auditService.log(actor, "PUBLISH", "dna_proposal", id,
+                String.format("{\"reviewedBy\":%s}", JsonHelpers.jsonString(actualReviewer)));
+            return saved;
+        });
     }
 
     /**
@@ -275,27 +309,61 @@ public class DnaProposalService {
             JsonNode payload = objectMapper.readTree(proposal.getPayload());
             String kind = proposal.getKind();
 
-            if ("rule".equals(kind) && payload.has("supersedes_id") && !payload.get("supersedes_id").isNull()) {
-                String supersedesId = payload.get("supersedes_id").asText();
-                // DGV-025: Check supersedence chain integrity — refuse if the target
-                // already has a live superseder (fork), or if the target itself is not
-                // found (reference to a non-existent rule).
-                Optional<DnaRule> supersedesOpt = ruleRepository.findById(supersedesId);
-                if (supersedesOpt.isEmpty()) {
-                    issues.add("Supersedes reference not found: " + supersedesId);
-                } else {
-                    List<DnaRule> successors = ruleRepository.findBySupersedesId(supersedesId);
-                    if (!successors.isEmpty()) {
-                        issues.add("Supersession chain fork: " + supersedesId + " already has a live superseder");
+            if ("rule".equals(kind)) {
+                if (payload.has("supersedes_id") && !payload.get("supersedes_id").isNull()) {
+                    String supersedesId = payload.get("supersedes_id").asText();
+                    // DGV-025: Check supersedence chain integrity — refuse if the target
+                    // already has a live superseder (fork), or if the target itself is not
+                    // found (reference to a non-existent rule).
+                    Optional<DnaRule> supersedesOpt = ruleRepository.findById(supersedesId);
+                    if (supersedesOpt.isEmpty()) {
+                        issues.add("Supersedes reference not found: " + supersedesId);
+                    } else {
+                        // DWP-041: target must be in a live state, not retired/lapsed
+                        String status = supersedesOpt.get().getStatus();
+                        if (status != null && !"active".equals(status) && !"superseded".equals(status)) {
+                            issues.add("Cannot supersede non-active rule (" + status + "): " + supersedesId);
+                        }
+                        List<DnaRule> successors = ruleRepository.findBySupersedesId(supersedesId);
+                        if (!successors.isEmpty()) {
+                            issues.add("Supersession chain fork: " + supersedesId + " already has a live superseder");
+                        }
+                    }
+                }
+                // DWP-063: window ordering
+                if (payload.has("effective_from") && payload.has("effective_to")
+                        && !payload.get("effective_from").isNull() && !payload.get("effective_to").isNull()) {
+                    Instant from = JsonHelpers.parseOptionalInstant(payload.get("effective_from").asText(), "effective_from");
+                    Instant to = JsonHelpers.parseOptionalInstant(payload.get("effective_to").asText(), "effective_to");
+                    if (from != null && to != null && to.isBefore(from)) {
+                        issues.add("effective_to must not be before effective_from");
                     }
                 }
             }
 
-            if ("goal".equals(kind) && payload.has("domain_id") && !payload.get("domain_id").isNull()) {
-                String goalDomainId = payload.get("domain_id").asText();
-                if (!goalDomainId.equals(proposal.getDomainId())) {
-                    issues.add("Goal domain_id mismatch: payload domain " + goalDomainId
-                        + " differs from proposal domain " + proposal.getDomainId());
+            if ("goal".equals(kind)) {
+                if (payload.has("domain_id") && !payload.get("domain_id").isNull()) {
+                    String goalDomainId = payload.get("domain_id").asText();
+                    if (!goalDomainId.equals(proposal.getDomainId())) {
+                        issues.add("Goal domain_id mismatch: payload domain " + goalDomainId
+                            + " differs from proposal domain " + proposal.getDomainId());
+                    }
+                }
+                if (payload.has("effective_from") && payload.has("effective_to")
+                        && !payload.get("effective_from").isNull() && !payload.get("effective_to").isNull()) {
+                    Instant from = JsonHelpers.parseOptionalInstant(payload.get("effective_from").asText(), "effective_from");
+                    Instant to = JsonHelpers.parseOptionalInstant(payload.get("effective_to").asText(), "effective_to");
+                    if (from != null && to != null && to.isBefore(from)) {
+                        issues.add("effective_to must not be before effective_from");
+                    }
+                }
+            }
+
+            // ASK-053 / DWP-063: Quorum bounds check
+            if (payload.has("quorum") && !payload.get("quorum").isNull()) {
+                int q = payload.get("quorum").asInt();
+                if (q < 1) {
+                    issues.add("quorum must be at least 1, found: " + q);
                 }
             }
         } catch (Exception e) {
@@ -422,19 +490,24 @@ public class DnaProposalService {
     public DnaProposal amend(String id, String payload, String actor) {
         DnaProposal proposal = proposalRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Proposal not found: " + id));
-        
-        if (!proposal.isOpen()) {
-            throw new IllegalStateException("Only open proposals can be amended");
-        }
-        requireAmendAuthority(proposal, actor);
-        
-        proposal.setRevision((proposal.getRevision() != null ? proposal.getRevision() : 0) + 1);
-        proposal.setPayload(payload);
-        
-        DnaProposal saved = proposalRepository.save(proposal);
-        auditService.log(actor, "AMEND", "dna_proposal", id, 
-            String.format("{\"revision\":%d}", proposal.getRevision()));
-        return saved;
+
+        return domainLockService.withLock(proposal.getDomainId(), () -> {
+            if (!proposal.isOpen()) {
+                throw new IllegalStateException("Only open proposals can be amended");
+            }
+            requireAmendAuthority(proposal, actor);
+
+            // SEC-030 / DWP-060: secrets scan on amended payload
+            ScanUtils.scanForSecrets(payload, actor, "dna_proposal", id, secretsScanner, auditService);
+
+            proposal.setRevision((proposal.getRevision() != null ? proposal.getRevision() : 0) + 1);
+            proposal.setPayload(payload);
+            
+            DnaProposal saved = proposalRepository.save(proposal);
+            auditService.log(actor, "AMEND", "dna_proposal", id, 
+                String.format("{\"revision\":%d}", proposal.getRevision()));
+            return saved;
+        });
     }
 
     /**
