@@ -325,13 +325,34 @@ class OrgServiceTest {
     void erasure_refusesUnderLegalHold() {
         Human human = createHuman("human-1", "member");
         when(humanRepository.findByIdForUpdate("human-1")).thenReturn(Optional.of(human));
-        when(humanRepository.save(any())).thenAnswer(i -> i.getArgument(0));
         when(dataHoldRepository.findByKindAndSubjectIdAndReleasedAtIsNull("member", "human-1"))
             .thenReturn(List.of(new DataHold()));
 
         assertThrows(ConflictException.class, () -> {
             orgService.erasure("human-1", "admin-1");
         });
+    }
+
+    @Test
+    void erasure_refusesUnderLegalHold_beforeAnyMutation() {
+        // STG-031: an active legal hold must refuse erasure before any data is touched
+        // — no anonymization, no deputy clearing, no sweeps may run.
+        Human human = createHuman("human-1", "member");
+        when(humanRepository.findByIdForUpdate("human-1")).thenReturn(Optional.of(human));
+        when(dataHoldRepository.findByKindAndSubjectIdAndReleasedAtIsNull("member", "human-1"))
+            .thenReturn(List.of(new DataHold()));
+
+        assertThrows(ConflictException.class, () -> {
+            orgService.erasure("human-1", "admin-1");
+        });
+
+        // No mutation may have been saved before the refusal.
+        verify(humanRepository, never()).save(any());
+        verify(proposalRepository, never()).save(any());
+        verify(askRepository, never()).save(any());
+        verify(boardTaskRepository, never()).save(any());
+        verify(memoryItemRepository, never()).save(any());
+        verify(patRepository, never()).save(any());
     }
 
     @Test

@@ -384,6 +384,13 @@ public class OrgService {
             throw new IllegalStateException("Cannot erase the last admin");
         }
 
+        // STG-031: legal holds (kind member) freeze erasure — checked before any
+        // mutation so an active hold refuses erasure with no data touched.
+        String cleanId = JsonHelpers.stripIdPrefix(id);
+        if (!dataHoldRepository.findByKindAndSubjectIdAndReleasedAtIsNull("member", cleanId).isEmpty()) {
+            throw new ConflictException("Active data holds prevent erasure");
+        }
+
         // Anonymize identity fields per STG-030..034
         human.setName("[ERASED]");
         // STG-030: the member reference becomes a one-way pseudonym. The email is
@@ -403,7 +410,6 @@ public class OrgService {
         // must not leave them standing when it runs standalone (STG-034 lets
         // erasure assume the walk ran, not rely on it). Matched in both stored
         // forms, like every other keyed-union sweep (DAT-120).
-        String cleanId = JsonHelpers.stripIdPrefix(id);
         int deputyRefsCleared = 0;
         for (String ref : List.of(cleanId, "h:" + cleanId)) {
             for (Human other : humanRepository.findByDeputyMemberId(ref)) {
@@ -411,12 +417,6 @@ public class OrgService {
                 humanRepository.save(other);
                 deputyRefsCleared++;
             }
-        }
-
-        // STG-031: legal holds (kind member) freeze erasure inside the transaction
-        // so a hold created between any external check and the sweep cannot slip through
-        if (!dataHoldRepository.findByKindAndSubjectIdAndReleasedAtIsNull("member", cleanId).isEmpty()) {
-            throw new ConflictException("Active data holds prevent erasure");
         }
 
         // STG-031: Sweep DNA proposal attribution to the erasure custody admin
@@ -499,12 +499,6 @@ public class OrgService {
         // acting admin's, written after this update, so it is untouched.
         int auditRowsPseudonymized = auditEventRepository.pseudonymizeActor(
             List.of(cleanId, "h:" + cleanId, "a:" + cleanId), erasurePseudonymHex(id));
-
-        // STG-030/034: legal holds (kind member) freeze erasure inside the transaction
-        // so a hold created between the controller check and the sweep cannot slip through
-        if (!dataHoldRepository.findByKindAndSubjectIdAndReleasedAtIsNull("member", cleanId).isEmpty()) {
-            throw new ConflictException("Active data holds prevent erasure");
-        }
 
         auditService.log(actor, "ERASURE", "human", id,
             String.format("{\"deputyRefsCleared\":%d,\"ledgerRowsPseudonymized\":%d,\"auditRowsPseudonymized\":%d}",
