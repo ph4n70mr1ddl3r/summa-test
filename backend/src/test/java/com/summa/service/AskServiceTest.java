@@ -14,9 +14,15 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -1123,5 +1129,69 @@ class AskServiceTest {
                 .anyMatch(a -> !"ask-self-1".equals(a.getId()) && "admins".equals(a.getTo())));
         verify(auditService).log(eq("admin-1"), eq("EXPIRE_SUCCESSOR_CREATED"), eq("ask"),
             eq("ask-self-1"), anyString());
+    }
+
+    @Test
+    void expireNow_concurrentExpiryOnSameChainRespectsDepthBudget() throws Exception {
+        // ASK-057: concurrent expiries sharing one escalation root must not exceed
+        // MAX_EXPIRE_SUCCESSOR_DEPTH successors before the chain exhausts and
+        // broadcasts the org-stall alert. With 24 asks and MAX depth 5, exactly
+        // four chains of (5 successors + 1 exhaustion) complete: 4 org stalls,
+        // 20 successors, every ask expired.
+        int askCount = 24;
+        String root = "esc-root";
+        Map<String, Ask> askMap = new ConcurrentHashMap<>();
+        List<Ask> asks = new ArrayList<>();
+        for (int i = 0; i < askCount; i++) {
+            Ask ask = new Ask();
+            ask.setId("ask-" + i);
+            ask.setKind("question");
+            ask.setStatus("pending");
+            ask.setFrom("h:proposer");
+            ask.setTo("h:owner-1");
+            ask.setSlaTier("standard");
+            ask.setExpiryBehavior("escalate");
+            ask.setQuorumRequired(1);
+            ask.setPayload("{}");
+            ask.setEscalation(root);
+            ask.setDeadline(Instant.now().minusSeconds(3600));
+            askMap.put(ask.getId(), ask);
+            asks.add(ask);
+        }
+
+        when(askRepository.findById(anyString()))
+            .thenAnswer(i -> Optional.ofNullable(askMap.get(i.getArgument(0))));
+        when(askRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(askRepository.findByToAndStatusPending(anyString())).thenReturn(List.of());
+        lenient().when(memberService.isAdmin("admin-1")).thenReturn(true);
+        lenient().when(governanceService.getSetting(anyString(), eq(Number.class))).thenReturn(null);
+        lenient().when(memberService.resolveDeputyTarget(anyString())).thenReturn(Optional.empty());
+        lenient().when(memberService.findAdmins()).thenReturn(List.of());
+        lenient().when(memberService.findHuman(anyString())).thenReturn(Optional.empty());
+        lenient().when(workspaceRepository.findById(anyString())).thenReturn(Optional.empty());
+
+        AskService svc = buildService();
+
+        ExecutorService executor = Executors.newFixedThreadPool(askCount);
+        List<Callable<Void>> tasks = new ArrayList<>();
+        for (Ask ask : asks) {
+            String id = ask.getId();
+            tasks.add(() -> {
+                svc.expireNow(id, "admin-1");
+                return null;
+            });
+        }
+        executor.invokeAll(tasks);
+        executor.shutdown();
+        assertTrue(executor.awaitTermination(60, TimeUnit.SECONDS));
+
+        // Every ask must be closed as expired.
+        for (Ask ask : asks) {
+            assertEquals("expired", ask.getStatus());
+        }
+        // Depth budget enforced: 24 asks / (MAX_DEPTH 5 + 1 exhaustion) = 4 chains
+        // -> exactly 4 org-stall broadcasts and 4 chain-exhaustion records.
+        verify(auditService, times(4)).logSystem(eq("ORG_STALL_BROADCAST"), anyString(), anyString(), anyString());
+        verify(auditService, times(4)).logSystem(eq("EXPIRE_CHAIN_EXHAUSTED"), anyString(), anyString(), anyString());
     }
 }

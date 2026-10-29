@@ -76,6 +76,10 @@ public class AskService {
     private final ConcurrentHashMap<String, ExpiringEntry<Integer>> successorDepth = new ConcurrentHashMap<>();
     // Per-key locks to prevent concurrent collapse race conditions
     private final ConcurrentHashMap<String, ReentrantLock> collapseLocks = new ConcurrentHashMap<>();
+    // Guards the depth check-read-bump per chain root so concurrent expiries (the
+    // scheduled sweep and the manual expireNow door) cannot each read the same
+    // depth and blow past MAX_EXPIRE_SUCCESSOR_DEPTH (ASK-057 chain exhaustion).
+    private final ConcurrentHashMap<String, ReentrantLock> depthLocks = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper;
 
     public AskService(AskRepository askRepository, AuditService auditService, MemberService memberService,
@@ -947,50 +951,57 @@ public class AskService {
      */
     private Optional<Ask> openExpirySuccessor(Ask ask, String behavior, String actor) {
         // Depth is keyed by the root ask ID stored in the escalation field.
-        // Read the current depth (without bumping it) to decide whether the chain
-        // is exhausted. The bump happens only after a non-collapsed successor
-        // create succeeds — a storm collapse must not burn the chain's remaining
-        // depth budget.
+        // The check-read-bump must be atomic per chain root: concurrent expiries
+        // (scheduled sweep and the manual expireNow door) share successorDepth,
+        // so without a per-root lock two threads can read the same depth and blow
+        // past MAX_EXPIRE_SUCCESSOR_DEPTH, bypassing the org-stall exhaustion
+        // broadcast (ASK-057).
         String rootAskId = ask.getEscalation() != null ? ask.getEscalation() : ask.getId();
-        ExpiringEntry<Integer> depthEntry = successorDepth.get(rootAskId);
-        int depth = depthEntry != null ? depthEntry.value : 0;
-        if (depth >= Defaults.MAX_EXPIRE_SUCCESSOR_DEPTH) {
-            // ASK-057: Chain exhausted — broadcast org-stall alert
-            broadcastOrgStall(ask);
-            auditService.logSystem("EXPIRE_CHAIN_EXHAUSTED", "ask", ask.getId(),
-                String.format("{\"depth\":%d,\"behavior\":\"%s\"}", depth, behavior));
-            successorDepth.remove(rootAskId);
-            return Optional.empty();
-        }
-        String successorTo = resolveEscalationTarget(ask);
-        // ASK-012/CFG-140: derive deadline from tier defaults
-        long deadlineSeconds = deriveDeadlineFromTier(ask.getSlaTier());
-        if (deadlineSeconds > Defaults.MAX_DEADLINE_SECONDS) {
-            deadlineSeconds = Defaults.MAX_DEADLINE_SECONDS;
-        }
-        CreatedAsk created = createInternal(ask.getKind(), ask.getFrom(), successorTo, ask.getPayload(),
-            ask.getSlaTier(), ask.getExpiryBehavior(), ask.getQuorumRequired(),
-            Instant.now().plusSeconds(deadlineSeconds),
-            ask.getInitiativeId(), ask.getWorkspaceId(), rootAskId, ask.getId());
-        if (created.collapsed()) {
-            // ASK-100: an identical pending ask already holds the work; the chain
-            // does not spend a depth step on a folded successor. The current ask
-            // is still excluded from the collapse candidates, so a successor can
-            // never fold back into the very ask that is expiring.
-            auditService.log(actor, "EXPIRE_SUCCESSOR_COLLAPSED", "ask", ask.getId(),
-                String.format("{\"canonicalId\":%s,\"behavior\":%s}",
-                    JsonHelpers.jsonString(created.ask().getId()), JsonHelpers.jsonString(behavior)));
+        ReentrantLock lock = depthLocks.computeIfAbsent(rootAskId, k -> new ReentrantLock());
+        lock.lock();
+        try {
+            ExpiringEntry<Integer> depthEntry = successorDepth.get(rootAskId);
+            int depth = depthEntry != null ? depthEntry.value : 0;
+            if (depth >= Defaults.MAX_EXPIRE_SUCCESSOR_DEPTH) {
+                // ASK-057: Chain exhausted — broadcast org-stall alert
+                broadcastOrgStall(ask);
+                auditService.logSystem("EXPIRE_CHAIN_EXHAUSTED", "ask", ask.getId(),
+                    String.format("{\"depth\":%d,\"behavior\":\"%s\"}", depth, behavior));
+                successorDepth.remove(rootAskId);
+                return Optional.empty();
+            }
+            String successorTo = resolveEscalationTarget(ask);
+            // ASK-012/CFG-140: derive deadline from tier defaults
+            long deadlineSeconds = deriveDeadlineFromTier(ask.getSlaTier());
+            if (deadlineSeconds > Defaults.MAX_DEADLINE_SECONDS) {
+                deadlineSeconds = Defaults.MAX_DEADLINE_SECONDS;
+            }
+            CreatedAsk created = createInternal(ask.getKind(), ask.getFrom(), successorTo, ask.getPayload(),
+                ask.getSlaTier(), ask.getExpiryBehavior(), ask.getQuorumRequired(),
+                Instant.now().plusSeconds(deadlineSeconds),
+                ask.getInitiativeId(), ask.getWorkspaceId(), rootAskId, ask.getId());
+            if (created.collapsed()) {
+                // ASK-100: an identical pending ask already holds the work; the chain
+                // does not spend a depth step on a folded successor. The current ask
+                // is still excluded from the collapse candidates, so a successor can
+                // never fold back into the very ask that is expiring.
+                auditService.log(actor, "EXPIRE_SUCCESSOR_COLLAPSED", "ask", ask.getId(),
+                    String.format("{\"canonicalId\":%s,\"behavior\":%s}",
+                        JsonHelpers.jsonString(created.ask().getId()), JsonHelpers.jsonString(behavior)));
+                return Optional.of(created.ask());
+            }
+            // Bump the chain depth only when a successor actually lands: the collapse
+            // path returns an existing canonical ask without creating a new row,
+            // which must not consume depth budget.
+            successorDepth.put(rootAskId, new ExpiringEntry<>(depth + 1,
+                Instant.now().getEpochSecond() + SUCCESSOR_DEPTH_TTL_SECONDS));
+            auditService.log(actor, "EXPIRE_SUCCESSOR_CREATED", "ask", ask.getId(),
+                String.format("{\"originalId\":%s,\"behavior\":%s,\"depth\":%d}",
+                    JsonHelpers.jsonString(ask.getId()), JsonHelpers.jsonString(behavior), depth + 1));
             return Optional.of(created.ask());
+        } finally {
+            lock.unlock();
         }
-        // Bump the chain depth only when a successor actually lands: the collapse
-        // path returns an existing canonical ask without creating a new row,
-        // which must not consume depth budget.
-        successorDepth.put(rootAskId, new ExpiringEntry<>(depth + 1,
-            Instant.now().getEpochSecond() + SUCCESSOR_DEPTH_TTL_SECONDS));
-        auditService.log(actor, "EXPIRE_SUCCESSOR_CREATED", "ask", ask.getId(),
-            String.format("{\"originalId\":%s,\"behavior\":%s,\"depth\":%d}",
-                JsonHelpers.jsonString(ask.getId()), JsonHelpers.jsonString(behavior), depth + 1));
-        return Optional.of(created.ask());
     }
 
     /**
