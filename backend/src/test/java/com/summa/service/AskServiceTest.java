@@ -990,6 +990,39 @@ class AskServiceTest {
             eq("ask-hop-" + com.summa.constants.Defaults.MAX_EXPIRE_SUCCESSOR_DEPTH), anyString());
     }
 
+    @Test
+    void expireNow_recordsSingleExpireAuditEvent() {
+        // expire() already audits the expiry (EXPIRE, system actor, quorum + pool +
+        // shortfall + behavior detail). expireNow() must not emit a second, redundant
+        // EXPIRE event for the same action — that would make the manual expiry door
+        // inconsistent with the sweep path, which records exactly one EXPIRE per ask.
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setKind("question");
+        ask.setStatus("pending");
+        ask.setFrom("h:proposer");
+        ask.setTo("h:owner-1");
+        ask.setSlaTier("standard");
+        ask.setExpiryBehavior("escalate");
+        ask.setQuorumRequired(1);
+        ask.setPayload("{}");
+        ask.setDeadline(Instant.now().plusSeconds(3600));
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+        when(askRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(memberService.isAdmin("admin-1")).thenReturn(true);
+        lenient().when(governanceService.getSetting(anyString(), eq(Number.class))).thenReturn(null);
+        lenient().when(memberService.resolveDeputyTarget("h:owner-1")).thenReturn(Optional.of("h:deputy-1"));
+        lenient().when(askRepository.findByToAndStatusPending(any())).thenReturn(List.of());
+
+        AskService svc = buildService();
+        svc.expireNow("ask-1", "admin-1");
+
+        // One EXPIRE audit event total, from expire() itself.
+        verify(auditService, times(1)).logSystem(eq("EXPIRE"), eq("ask"), eq("ask-1"), anyString());
+        // No second, actor-branded EXPIRE event for the same logical expiry.
+        verify(auditService, never()).log(eq("admin-1"), eq("EXPIRE"), eq("ask"), eq("ask-1"), anyString());
+    }
+
     // --- STG-031: the erasure sweep's responses-ledger pseudonymization ---
 
     @Test

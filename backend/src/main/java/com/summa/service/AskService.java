@@ -929,8 +929,6 @@ public class AskService {
             }
         }
         Ask saved = expire(id);
-        auditService.log(actor, "EXPIRE", "ask", id,
-            String.format("{\"behavior\":%s}", JsonHelpers.jsonString(behavior)));
         return saved;
     }
 
