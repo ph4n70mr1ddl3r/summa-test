@@ -103,13 +103,15 @@ def expand_sections(lo: str, hi: str) -> list[str] | None:
     lo_parts, hi_parts = lo.split("."), hi.split(".")
     if len(lo_parts) != len(hi_parts):
         return None
+    lo_last = int(lo_parts[-1])
+    hi_last = int(hi_parts[-1])
+    if hi_last < lo_last:
+        return None
     if len(lo_parts) == 1:
-        nums = range(int(lo), int(hi) + 1)
-        return [] if hi < lo else [str(n) for n in nums]
+        return [str(n) for n in range(lo_last, hi_last + 1)]
     if lo_parts[:-1] != hi_parts[:-1]:
         return None
-    nums = range(int(lo_parts[1]), int(hi_parts[1]) + 1)
-    return [] if hi < lo else [f"{lo_parts[0]}.{n}" for n in nums]
+    return [f"{lo_parts[0]}.{n}" for n in range(lo_last, hi_last + 1)]
 
 
 def sections_in(text: str, where: str, errors: list[str]) -> set[str]:

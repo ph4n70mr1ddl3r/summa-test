@@ -188,6 +188,39 @@ SCENARIOS = [
         [("specs/01-vision.md", "per §1", "per §2.1–1.9")],
         fragment="malformed section range",
     ),
+    # --- check 7: section range expansion with unequal digit lengths ---
+    Scenario(
+        "section-range-multi-digit-ok",
+        [
+            (
+                "PLAN.md",
+                "## 2. Principles\n",
+                "## 2. Principles\n\n## 3. Architecture\n\n## 4. Data model\n\n## 5. Org model\n\n## 6. Spawning\n\n## 7. Data model delta\n\n## 8. Subsystem designs\n\n## 9. API surface\n\n## 10. Security\n",
+            ),
+            (
+                "specs/01-vision.md",
+                "per §1",
+                "per §1 and §2–10",
+            ),
+        ],
+        expect_ok=True,
+    ),
+    Scenario(
+        "section-range-reversed-multi-digit",
+        [
+            (
+                "PLAN.md",
+                "## 2. Principles\n",
+                "## 2. Principles\n\n## 3. Architecture\n\n## 4. Data model\n\n## 5. Org model\n\n## 6. Spawning\n\n## 7. Data model delta\n\n## 8. Subsystem designs\n\n## 9. API surface\n\n## 10. Security\n",
+            ),
+            (
+                "specs/01-vision.md",
+                "per §1",
+                "per §9–1",
+            ),
+        ],
+        fragment="malformed section range",
+    ),
     # --- check 7, PLAN.md's own body and list-item addresses ---
     Scenario(
         "plan-section-dangling",
