@@ -7,6 +7,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import java.lang.reflect.Field;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -86,5 +88,49 @@ class DataHoldServiceTest {
 
         assertThrows(EntityNotFoundException.class, () ->
             dataHoldService.release("missing", "admin"));
+    }
+
+    /* --- DataHold.preUpdate() lifecycle-guard logic ---
+
+       The @PreUpdate guard must permit exactly one update: the release
+       transition releasedAt null -> non-null. Anything else (a mutation of an
+       unreleased hold, or touching an already-released hold) must throw. These
+       tests drive preUpdate() directly and inject the transient
+       originalReleasedAt snapshot that @PostLoad would populate against a real
+       JPA provider. */
+
+    private void snapshot(DataHold hold, Instant releasedAt) throws Exception {
+        Field f = DataHold.class.getDeclaredField("originalReleasedAt");
+        f.setAccessible(true);
+        f.set(hold, releasedAt);
+    }
+
+    @Test
+    void preUpdate_allowsSingleReleaseNullToNonNull() throws Exception {
+        DataHold hold = new DataHold();
+        hold.setReleasedAt(null);
+        snapshot(hold, null);
+        hold.setReleasedAt(Instant.now());
+        assertDoesNotThrow(hold::preUpdate);
+    }
+
+    @Test
+    void preUpdate_rejectsMutationOfUnreleasedHold() throws Exception {
+        DataHold hold = new DataHold();
+        hold.setReleasedAt(null);
+        snapshot(hold, null);
+        // No release: releasedAt stays null, yet preUpdate is invoked (some other
+        // field was "changed"). The guard must refuse.
+        assertThrows(UnsupportedOperationException.class, hold::preUpdate);
+    }
+
+    @Test
+    void preUpdate_rejectsTouchingAlreadyReleasedHold() throws Exception {
+        DataHold hold = new DataHold();
+        Instant released = Instant.now();
+        hold.setReleasedAt(released);
+        snapshot(hold, released);
+        hold.setReleasedAt(Instant.now().plusSeconds(1));
+        assertThrows(UnsupportedOperationException.class, hold::preUpdate);
     }
 }

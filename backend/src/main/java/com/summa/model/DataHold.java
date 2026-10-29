@@ -31,18 +31,37 @@ public class DataHold {
     @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant releasedAt;
 
+    // Snapshot of releasedAt taken at load time (@PostLoad); transient, never
+    // persisted — used by preUpdate() to distinguish a release from a mutation.
+    @Transient
+    private Instant originalReleasedAt;
+
     @PrePersist
     public void prePersist() {
         if (createdAt == null) createdAt = Instant.now();
         if (reasonMd == null) reasonMd = "";
     }
 
+    /**
+     * Snapshot the released state on load so {@link #preUpdate()} can tell a
+     * legitimate release (null -> non-null releasedAt) apart from any other
+     * mutation of an append-only row.
+     */
+    @PostLoad
+    void captureOriginalReleasedAt() {
+        this.originalReleasedAt = this.releasedAt;
+    }
+
     @PreUpdate
     public void preUpdate() {
-        // data_holds is append-only except for release; release is performed
-        // via the service layer (setReleasedAt + save) so this hook prevents
-        // any other field mutations through JPA proxy updates.
-        throw new UnsupportedOperationException("data_holds is append-only except for setting releasedAt via the service layer");
+        // data_holds is append-only except for a single release: releasedAt may
+        // transition null -> non-null exactly once. Any other mutation, or
+        // touching an already-released hold, is refused.
+        if (originalReleasedAt == null && releasedAt != null) {
+            return;
+        }
+        throw new UnsupportedOperationException(
+                "data_holds is append-only except for a single null->non-null releasedAt release");
     }
 
     public String getId() { return id; }
