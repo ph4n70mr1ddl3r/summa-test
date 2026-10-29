@@ -370,12 +370,14 @@ public class AskService {
                         // accumulates across both doors, and walks the deputy hop
                         // (ASK-060) — see openExpirySuccessor.
                         openExpirySuccessor(current, behavior, Defaults.SYSTEM_ACTOR);
-                        // Expire the original ask after scheduling the successor
-                        expire(current.getId());
                     } catch (Exception ex) {
                         auditService.logSystem("EXPIRE_SUCCESSOR_FAIL", "ask", current.getId(),
                             JsonHelpers.toJson(Map.of("behavior", behavior, "error", ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName()), objectMapper));
                     }
+                    // Expire the original ask even when the successor door throws —
+                    // an unexpired ask must not linger past its deadline just because
+                    // the chain hop failed. Matches expireNow() which always expires.
+                    expire(current.getId());
                 }
             } catch (Exception e) {
                 auditService.logSystem("EXPIRE_BATCH_FAIL", "ask", ask.getId(),

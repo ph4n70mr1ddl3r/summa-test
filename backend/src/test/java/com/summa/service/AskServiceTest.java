@@ -478,6 +478,35 @@ class AskServiceTest {
     }
 
     @Test
+    void processExpiredAsks_expiresAskEvenWhenSuccessorCreationFails() {
+        // ASK-011: the sweep must close the expired ask even when the successor
+        // door throws — an unexpired ask must not linger past its deadline just
+        // because the chain hop failed. expireNow() already honours this; the
+        // sweep must match it.
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("pending");
+        ask.setExpiryBehavior("escalate");
+        ask.setSlaTier("standard");
+        ask.setDeadline(Instant.now().minusSeconds(3600));
+        ask.setFrom("agent-1");
+        ask.setTo("human-1");
+        ask.setQuorumRequired(1);
+        ask.setKind("approval");
+
+        when(askRepository.findExpiredBefore(any())).thenReturn(List.of(ask));
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+        // Every save blows up — the successor create inside openExpirySuccessor
+        // fails first, so expire() must still run and flip the status.
+        when(askRepository.save(any())).thenThrow(new RuntimeException("store down"));
+
+        AskService svc = buildService();
+        svc.processExpiredAsks();
+
+        assertEquals("expired", ask.getStatus());
+    }
+
+    @Test
     void toJsonResponseList_preservesPriorResponses() throws Exception {
         AskService svc = buildService();
         // Use reflection to invoke the private method
