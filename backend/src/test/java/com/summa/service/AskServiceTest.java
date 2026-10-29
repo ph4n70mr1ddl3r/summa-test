@@ -596,6 +596,35 @@ class AskServiceTest {
     }
 
     @Test
+    void create_collapsesNullPayloadIntoStoredEmptyObject() {
+        // Null payload is stored as "{}"; the collapse key must be derived from
+        // the effective stored payload so a null-payload ask collapses into an
+        // identical "{}"-payload canonical ask.
+        AskService svc = buildService();
+        when(askRepository.save(any(Ask.class))).thenAnswer(i -> {
+            Ask a = (Ask) i.getArgument(0);
+            if (a.getId() == null) a.setId("ask-new");
+            return a;
+        });
+
+        Instant deadline = Instant.now().plusSeconds(600);
+        when(askRepository.findByToAndStatusPending("h:user-2")).thenReturn(List.of());
+
+        // Create canonical with "{}" payload
+        Ask canonical = new Ask();
+        canonical.setId("ask-canonical");
+        canonical.setTo("h:user-2");
+        canonical.setPayload("{}");
+        canonical.setKind("question");
+        when(askRepository.findByToAndStatusPending("h:user-2")).thenReturn(List.of(canonical));
+
+        // Null payload — stored as "{}" — must collapse into the canonical
+        Ask collapsed = svc.create("question", "h:user-1", "h:user-2", null, "standard", "deny", 1, deadline, null, null);
+        assertEquals("ask-canonical", collapsed.getId());
+        assertEquals(1, canonical.getCollapsedCount());
+    }
+
+    @Test
     void create_defaultsTheSlaTierWhenAbsent() {
         // The tier is optional at the API door and the row defaults to
         // 'standard' — an absent tier must resolve to the default, not be

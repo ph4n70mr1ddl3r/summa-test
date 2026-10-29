@@ -206,7 +206,11 @@ public class AskService {
         ask.setKind(kind);
         ask.setFrom(from);
         ask.setTo(to);
-        ask.setPayload(payload != null ? payload : "{}");
+        // The effective payload is what is stored (null -> "{}"); derive the
+        // collapse key from it so null-payload and "{}"-payload asks collapse
+        // into the same canonical ask.
+        String effectivePayload = payload != null ? payload : "{}";
+        ask.setPayload(effectivePayload);
         ask.setSlaTier(effectiveTier);
         ask.setExpiryBehavior(expiryBehavior != null && !expiryBehavior.isBlank()
                 ? ExpiryBehavior.requireFromValue(expiryBehavior) : ExpiryBehavior.DENY);
@@ -216,7 +220,7 @@ public class AskService {
         ask.setWorkspaceId(workspaceId);
         ask.setEscalation(escalation);
 
-        String collapseKey = buildCollapseKey(kind, to, payload);
+        String collapseKey = buildCollapseKey(kind, to, effectivePayload);
         Instant now = Instant.now();
         long nowSeconds = now.getEpochSecond();
         // Use computeIfAbsent to atomically establish the window.
@@ -231,7 +235,7 @@ public class AskService {
                 // Filter by kind, to, AND payload hash to avoid collapsing unrelated asks
                 // to the same recipient within the storm window.
                 List<Ask> candidates = askRepository.findByToAndStatusPending(to);
-                String targetHash = buildCollapseKey(kind, to, payload);
+                String targetHash = buildCollapseKey(kind, to, effectivePayload);
                 candidates = candidates.stream()
                     .filter(a -> excludeAskId == null || !excludeAskId.equals(a.getId()))
                     .filter(a -> targetHash.equals(buildCollapseKey(kind, to, a.getPayload())))
