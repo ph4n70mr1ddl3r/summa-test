@@ -169,6 +169,27 @@ class SpendLedgerServiceTest {
     }
 
     @Test
+    void settleRun_withoutReserve_isAcknowledgedNotOverrun() {
+        // No reserve was ever made for this run (reserveForRun is not called in the
+        // run lifecycle), so a positive settle cost must not be flagged as an
+        // overrun — there is no reserve to exceed.
+        Run run = new Run();
+        run.setId("run-2");
+        run.setAgentId("agent-1");
+
+        when(repository.sumNetReserveForRun("run-2")).thenReturn(0.0);
+        when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        SpendLedger settle = ledgerService.settleRun(run, 12.0, 1000L, "actor-1");
+        assertNotNull(settle);
+        assertEquals("settle", settle.getKind());
+        assertEquals(12.0, settle.getCost());
+        assertTrue(settle.getAcknowledged(), "Settle with no reserve must be acknowledged, not an overrun");
+        verify(auditService, never()).log(eq("actor-1"), eq("SPEND_OVERRUN"), anyString(), anyString(), anyString());
+        verify(auditService).log(eq("actor-1"), eq("SETTLE_SPEND"), eq("spend_ledger"), anyString(), anyString());
+    }
+
+    @Test
     void checkCeilingForReserve_unacknowledgedOverrun_blocksReserves() {
         SpawnRequest sr = new SpawnRequest();
         sr.setId("spawn-1");

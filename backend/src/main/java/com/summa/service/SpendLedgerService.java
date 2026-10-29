@@ -165,7 +165,7 @@ public class SpendLedgerService {
         releaseRun(run, actor);
 
         if (actualCost != null && actualCost > 0 && run.getAgentId() != null) {
-            boolean isOverrun = actualCost > reservedAmount;
+            boolean isOverrun = reservedAmount > 0 && actualCost > reservedAmount;
             SpendLedger ledger = new SpendLedger();
             ledger.setId(UUID.randomUUID().toString());
             ledger.setMemberId(run.getAgentId());
