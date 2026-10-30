@@ -239,6 +239,47 @@ class DnaProposalServiceTest {
     }
 
     @Test
+    void publish_allowsReviewingOwnerWhenReviewByIsKeyed() {
+        // DAT-120: review_by may be stored keyed-union; the reviewing owner must
+        // still be recognized across the bare/keyed spellings. Mirrors the
+        // isEligibleResponder and proposedByMatches normalization.
+        DnaProposal proposal = new DnaProposal();
+        proposal.setId("prop-1");
+        proposal.setStatus("open");
+        proposal.setProposedBy("h:human-1");
+        proposal.setReviewBy("h:owner-1");
+        proposal.setPayload("{}");
+        proposal.setDomainId(null);
+        when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
+        when(proposalRepository.save(any())).thenReturn(proposal);
+        when(memberService.isAdmin("owner-1")).thenReturn(false);
+
+        DnaProposal result = proposalService.publish("prop-1", "owner-1", "owner-1");
+
+        assertEquals("published", result.getStatus());
+        assertNotNull(result.getReviewedAt());
+        assertEquals("owner-1", result.getReviewedBy());
+    }
+
+    @Test
+    void amend_allowedForReviewingOwnerWhenReviewByIsKeyed() {
+        DnaProposal proposal = new DnaProposal();
+        proposal.setId("prop-1");
+        proposal.setStatus("open");
+        proposal.setRevision(1);
+        proposal.setProposedBy("h:human-1");
+        proposal.setReviewBy("h:owner-1");
+        proposal.setPayload("{}");
+        when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
+        when(proposalRepository.save(any())).thenReturn(proposal);
+        when(memberService.isAdmin("owner-1")).thenReturn(false);
+
+        DnaProposal result = proposalService.amend("prop-1", "{\"new\":\"payload\"}", "owner-1");
+
+        assertEquals(2, result.getRevision());
+    }
+
+    @Test
     void withdraw_onlyProposerAllowed() {
         DnaProposal proposal = new DnaProposal();
         proposal.setId("prop-1");

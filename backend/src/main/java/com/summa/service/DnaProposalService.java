@@ -585,7 +585,7 @@ public class DnaProposalService {
         if (memberService.isAdmin(actor)) return;
         String reviewBy = proposal.getReviewBy();
         if (reviewBy != null && !reviewBy.isBlank()
-                && reviewBy.equals(JsonHelpers.stripIdPrefix(actor))) {
+                && JsonHelpers.stripIdPrefix(reviewBy).equals(JsonHelpers.stripIdPrefix(actor))) {
             return;
         }
         throw new IllegalStateException("Only the reviewing owner or an admin may review this proposal");
@@ -599,7 +599,7 @@ public class DnaProposalService {
         if (memberService.isAdmin(actor)) return;
         String reviewBy = proposal.getReviewBy();
         if (reviewBy != null && !reviewBy.isBlank()
-                && reviewBy.equals(JsonHelpers.stripIdPrefix(actor))) {
+                && JsonHelpers.stripIdPrefix(reviewBy).equals(JsonHelpers.stripIdPrefix(actor))) {
             return;
         }
         throw new IllegalStateException("Only the proposer or the reviewing owner may amend this proposal");
