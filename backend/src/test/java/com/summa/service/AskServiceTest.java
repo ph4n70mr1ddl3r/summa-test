@@ -1,6 +1,7 @@
 package com.summa.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.summa.enums.RbacRole;
 import com.summa.repository.AskRepository;
 import com.summa.repository.InitiativeRepository;
 import com.summa.repository.WorkspaceRepository;
@@ -893,6 +894,31 @@ class AskServiceTest {
         AskService svc = buildService();
         assertThrows(IllegalArgumentException.class, () -> svc.respond("ask-1", "stranger-1", "accept"));
         verify(auditService).logSystem(eq("REFUSAL"), eq("ask_respond"), eq("ask-1"), anyString());
+    }
+
+    @Test
+    void respond_adminBroadcastAcceptsKeyedHAdminsTarget() {
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("pending");
+        ask.setTo("h:admins");
+        ask.setQuorumRequired(1);
+        ask.setDeadline(Instant.now().plusSeconds(3600));
+
+        Human admin = new Human();
+        admin.setId("admin-1");
+        admin.setRbac(RbacRole.ADMIN.getValue());
+
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+        when(askRepository.save(any())).thenReturn(ask);
+        lenient().when(memberService.findAdmins()).thenReturn(List.of(admin));
+        lenient().when(memberService.findHuman("admins")).thenReturn(Optional.empty());
+
+        AskService svc = buildService();
+        Ask result = svc.respond("ask-1", "h:admin-1", "accepted");
+
+        assertEquals("answered", result.getStatus());
+        assertNotNull(result.getRespondedAt());
     }
 
     @Test

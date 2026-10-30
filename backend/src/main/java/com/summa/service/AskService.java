@@ -1113,7 +1113,7 @@ public class AskService {
         }
 
         // Admin broadcast: any active admin can respond to `admins` target
-        if (OffboardingWalkService.ADMIN_BROADCAST.equals(ask.getTo())) {
+        if (OffboardingWalkService.ADMIN_BROADCAST.equals(targetClean)) {
             return memberService.findAdmins().stream()
                     .anyMatch(h -> h.getId().equals(responderClean));
         }
