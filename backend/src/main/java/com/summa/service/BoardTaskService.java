@@ -106,11 +106,17 @@ public class BoardTaskService {
 
     @Transactional(readOnly = true)
     public List<BoardTask> findByAssignee(String assigneeMemberId) {
-        // DAT-120: the stored assignee is a keyed union; match the bare and the
-        // h:-prefixed form so a caller-supplied bare id still resolves.
+        // DAT-120: the stored assignee is a keyed union; match the bare, the
+        // h:-prefixed (human) and the a:-prefixed (agent) form so any caller
+        // spelling resolves the row.
         String clean = JsonHelpers.stripIdPrefix(assigneeMemberId);
         List<BoardTask> tasks = new java.util.ArrayList<>(taskRepository.findByAssigneeMemberId(clean));
         for (BoardTask task : taskRepository.findByAssigneeMemberId("h:" + clean)) {
+            if (tasks.stream().noneMatch(t -> t.getId().equals(task.getId()))) {
+                tasks.add(task);
+            }
+        }
+        for (BoardTask task : taskRepository.findByAssigneeMemberId("a:" + clean)) {
             if (tasks.stream().noneMatch(t -> t.getId().equals(task.getId()))) {
                 tasks.add(task);
             }

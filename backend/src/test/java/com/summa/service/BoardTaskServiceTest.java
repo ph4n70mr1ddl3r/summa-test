@@ -126,6 +126,23 @@ class BoardTaskServiceTest {
     }
 
     @Test
+    void findByAssignee_matchesAgentKeyedForm() {
+        // DAT-120: board tasks can be assigned to agents (a:<id>); findByAssignee
+        // must resolve the a:-prefixed stored form as well as bare and h:-prefixed.
+        BoardTask agentKeyed = new BoardTask();
+        agentKeyed.setId("t2");
+        agentKeyed.setAssigneeMemberId("a:agent-1");
+        when(taskRepository.findByAssigneeMemberId("agent-1")).thenReturn(java.util.List.of());
+        when(taskRepository.findByAssigneeMemberId("h:agent-1")).thenReturn(java.util.List.of());
+        when(taskRepository.findByAssigneeMemberId("a:agent-1")).thenReturn(java.util.List.of(agentKeyed));
+
+        var result = boardTaskService.findByAssignee("agent-1");
+
+        assertEquals(1, result.size());
+        assertEquals("t2", result.get(0).getId());
+    }
+
+    @Test
     void assign_toActiveHuman() {
         BoardTask task = new BoardTask();
         task.setId("t1");
