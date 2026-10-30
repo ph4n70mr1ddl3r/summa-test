@@ -14,6 +14,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -1255,5 +1256,75 @@ class AskServiceTest {
         // -> exactly 4 org-stall broadcasts and 4 chain-exhaustion records.
         verify(auditService, times(4)).logSystem(eq("ORG_STALL_BROADCAST"), anyString(), anyString(), anyString());
         verify(auditService, times(4)).logSystem(eq("EXPIRE_CHAIN_EXHAUSTED"), anyString(), anyString(), anyString());
+    }
+
+    // --- purgeExpiredEntries: all four internal maps are evicted when their TTL expires ---
+
+    @SuppressWarnings("unchecked")
+    private <K, V> ConcurrentHashMap<K, V> fieldMap(AskService svc, String name) throws Exception {
+        Field f = AskService.class.getDeclaredField(name);
+        f.setAccessible(true);
+        return (ConcurrentHashMap<K, V>) f.get(svc);
+    }
+
+    @Test
+    void purgeExpiredEntries_evictsExpiredWindowsAndLocks() throws Exception {
+        AskService svc = buildService();
+        long now = Instant.now().getEpochSecond();
+
+        ConcurrentHashMap<String, ExpiringEntry<Instant>> windows =
+            fieldMap(svc, "collapseWindowTimestamps");
+        ConcurrentHashMap<String, ExpiringEntry<Integer>> depths =
+            fieldMap(svc, "successorDepth");
+        ConcurrentHashMap<String, java.util.concurrent.locks.ReentrantLock> collapseLocks =
+            fieldMap(svc, "collapseLocks");
+        ConcurrentHashMap<String, java.util.concurrent.locks.ReentrantLock> depthLocks =
+            fieldMap(svc, "depthLocks");
+
+        // Live entries — keys shared between a map and its lock map
+        windows.put("key-1", new ExpiringEntry<>(Instant.now(), now + 3600));
+        depths.put("key-2", new ExpiringEntry<>(1, now + 3600));
+        collapseLocks.put("key-1", new java.util.concurrent.locks.ReentrantLock());
+        depthLocks.put("key-2", new java.util.concurrent.locks.ReentrantLock());
+
+        // Expired entries
+        windows.put("key-3", new ExpiringEntry<>(Instant.now(), now - 1));
+        depths.put("key-4", new ExpiringEntry<>(2, now - 1));
+        collapseLocks.put("key-3", new java.util.concurrent.locks.ReentrantLock());
+        depthLocks.put("key-4", new java.util.concurrent.locks.ReentrantLock());
+
+        svc.purgeExpiredEntries();
+
+        // Live entries survive
+        assertTrue(windows.containsKey("key-1"));
+        assertTrue(depths.containsKey("key-2"));
+        assertTrue(collapseLocks.containsKey("key-1"));
+        assertTrue(depthLocks.containsKey("key-2"));
+
+        // Expired entries are evicted
+        assertFalse(windows.containsKey("key-3"));
+        assertFalse(depths.containsKey("key-4"));
+        assertFalse(collapseLocks.containsKey("key-3"));
+        assertFalse(depthLocks.containsKey("key-4"), "depthLocks must be purged like the other maps");
+    }
+
+    @Test
+    void purgeExpiredEntries_boundaryEvictsEntryExpiringExactlyNow() throws Exception {
+        AskService svc = buildService();
+        long now = Instant.now().getEpochSecond();
+
+        ConcurrentHashMap<String, ExpiringEntry<Integer>> depths =
+            fieldMap(svc, "successorDepth");
+        ConcurrentHashMap<String, java.util.concurrent.locks.ReentrantLock> depthLocks =
+            fieldMap(svc, "depthLocks");
+
+        // Entry whose expiry is exactly now is evicted (<= comparison)
+        depths.put("key-5", new ExpiringEntry<>(3, now));
+        depthLocks.put("key-5", new java.util.concurrent.locks.ReentrantLock());
+
+        svc.purgeExpiredEntries();
+
+        assertFalse(depths.containsKey("key-5"));
+        assertFalse(depthLocks.containsKey("key-5"));
     }
 }

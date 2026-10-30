@@ -143,6 +143,18 @@ public class AskService {
         for (String key : staleKeys) {
             collapseLocks.remove(key);
         }
+        // Purge depth locks whose successor-depth entry has expired, so the map
+        // cannot grow without bound across the lifetime of the service.
+        List<String> staleDepthKeys = new ArrayList<>();
+        for (String key : depthLocks.keySet()) {
+            ExpiringEntry<Integer> entry = successorDepth.get(key);
+            if (entry == null || entry.expiryEpochSeconds <= nowSeconds) {
+                staleDepthKeys.add(key);
+            }
+        }
+        for (String key : staleDepthKeys) {
+            depthLocks.remove(key);
+        }
     }
 
     @Transactional
