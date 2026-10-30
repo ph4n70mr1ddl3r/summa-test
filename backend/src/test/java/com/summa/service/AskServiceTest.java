@@ -922,6 +922,42 @@ class AskServiceTest {
     }
 
     @Test
+    void respond_quorumN_adminBroadcastKeyedHAdminsTarget_adminIsPoolPrincipal() {
+        // ASK-051/052: for a quorum ask addressed to the admin broadcast (keyed-union
+        // spelling "h:admins"), an active admin is a pool principal and its accept
+        // counts toward the quorum.
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("pending");
+        ask.setTo("h:admins");
+        ask.setQuorumRequired(2);
+        ask.setResponses("[]");
+        ask.setDeadline(Instant.now().plusSeconds(3600));
+
+        Human admin1 = new Human();
+        admin1.setId("admin-1");
+        admin1.setRbac(RbacRole.ADMIN.getValue());
+        Human admin2 = new Human();
+        admin2.setId("admin-2");
+        admin2.setRbac(RbacRole.ADMIN.getValue());
+
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+        when(askRepository.save(any())).thenReturn(ask);
+        lenient().when(memberService.findAdmins()).thenReturn(List.of(admin1, admin2));
+        lenient().when(memberService.findHuman("admins")).thenReturn(Optional.empty());
+
+        AskService svc = buildService();
+        // First admin accept counts toward quorum (1 of 2) — ask stays pending.
+        Ask result = svc.respond("ask-1", "h:admin-1", "accept");
+        assertEquals("pending", result.getStatus());
+        assertTrue(result.getResponses().contains("admin-1"));
+
+        // Second admin accept reaches quorum — ask closes answered.
+        Ask result2 = svc.respond("ask-1", "h:admin-2", "accept");
+        assertEquals("answered", result2.getStatus());
+    }
+
+    @Test
     void expireNow_refusesANonAdmin() {
         // ASK-032: the expiry closure is one of the system's named closures — a
         // member may not force-close an ask through it.

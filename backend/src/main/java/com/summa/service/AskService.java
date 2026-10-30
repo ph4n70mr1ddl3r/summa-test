@@ -616,10 +616,10 @@ public class AskService {
             return false;
         }
         // Admin broadcast: any active admin is a pool principal.
-        // targetClean strips the h:/a: prefix from the stored 'to' value, so a
-        // keyed-union stored target of "admins" (unlikely but possible) still matches.
-        if (OffboardingWalkService.ADMIN_BROADCAST.equals(ask.getTo())
-                || OffboardingWalkService.ADMIN_BROADCAST.equals(targetClean)) {
+        // targetClean strips the h:/a: prefix from the stored 'to' value, so both
+        // the bare "admins" and keyed-union spellings (h:admins/a:admins) admit an
+        // active admin — matching isEligibleResponder exactly.
+        if (OffboardingWalkService.ADMIN_BROADCAST.equals(targetClean)) {
             return memberService.findAdmins().stream()
                     .anyMatch(h -> h.getId().equals(responderClean));
         }
