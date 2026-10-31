@@ -884,7 +884,14 @@ public class AskService {
             throw new IllegalStateException("Can only withdraw pending asks, current status: " + ask.getStatus());
         }
 
-        if (JsonHelpers.stripIdPrefix(originator) == null || !JsonHelpers.stripIdPrefix(originator).equals(JsonHelpers.stripIdPrefix(ask.getFrom()))) {
+        // ASK-030/032: withdrawal is the originator's side — the retracting
+        // originator is a side of its own ask, so the originator's kind matters.
+        // A human and an agent that share a namespace id are distinct members
+        // (ORG-001), so compare the full keyed-union stored in from: strip each
+        // side's own key (system, bare members, legacy bare ids) but never erase
+        // an h:/a: key — "h:7" and "a:7" are two different originators.
+        if (JsonHelpers.stripIdPrefix(originator) == null
+                || !kindPinsOriginator(ask.getFrom(), originator)) {
             throw new IllegalArgumentException("Only the originator can withdraw");
         }
 
@@ -898,6 +905,14 @@ public class AskService {
     public Ask expire(String id) {
         Ask ask = askRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Ask not found: " + id));
+
+        // Expiry is a denial by the deadline — closing a closed ask a second
+        // time would re-write the terminal, re-fire the ASK-053 audit row, and
+        // the scheduled sweep and the admin's manual door could each expire the
+        // same ask.
+        if (!ask.isPending()) {
+            throw new IllegalStateException("Ask is not pending: " + ask.getStatus());
+        }
 
         // ASK-053: an unanswerable quorum ask denies at expiry, fail-safe, "with the
         // breach escalation naming the shortfall" — the audit row names the required
@@ -946,6 +961,28 @@ public class AskService {
         }
         Ask saved = expire(id);
         return saved;
+    }
+
+    /**
+     * ASK-030/032: does {@code originator} pin the ask's originator side? Both sides
+     * normalize to clean form (a bare or legacy id admits any keying), but a
+     * caller that keys its own side h: or a: must match the stored keying —
+     * "h:7" never pins an "a:7" originator, because ORG-001's shared namespace
+     * keeps the two sides of a member pair distinct. The reserved spellings
+     * ({@code system}, {@code admins}) and a bare stored originator admit any
+     * caller side with the same clean id.
+     */
+    private boolean kindPinsOriginator(String from, String originator) {
+        String fromClean = JsonHelpers.stripIdPrefix(from);
+        String originatorClean = JsonHelpers.stripIdPrefix(originator);
+        if (fromClean == null || originatorClean == null || !fromClean.equals(originatorClean)) {
+            return false;
+        }
+        String storedKey = from != null && from.startsWith("h:") ? "h"
+                : from != null && from.startsWith("a:") ? "a" : null;
+        String callerKey = originator != null && originator.startsWith("h:") ? "h"
+                : originator != null && originator.startsWith("a:") ? "a" : null;
+        return storedKey == null || callerKey == null || storedKey.equals(callerKey);
     }
 
     /**

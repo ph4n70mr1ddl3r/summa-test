@@ -132,6 +132,74 @@ class AskServiceTest {
     }
 
     @Test
+    void expire_refusesAClosedAsk() {
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("answered");
+        ask.setDeadline(Instant.now().minusSeconds(3600));
+
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+
+        AskService svc = buildService();
+
+        assertThrows(IllegalStateException.class, () -> svc.expire("ask-1"));
+        verify(askRepository, never()).save(any());
+    }
+
+    @Test
+    void withdraw_refusesACrossKindOriginatorSharingANamespaceId() {
+        // ASK-030/032: the originator side is pinned by the stored keyed union —
+        // a human "h:7" must not retract an agent's "a:7" ask even though the two
+        // share the namespace id 7 (ORG-001).
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("pending");
+        ask.setFrom("a:7");
+
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+
+        AskService svc = buildService();
+
+        assertThrows(IllegalArgumentException.class, () ->
+            svc.withdraw("ask-1", "h:7"));
+    }
+
+    @Test
+    void withdraw_allowsTheOriginatorAndAKeyedOrBareSpellingOfTheSameSide() {
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("pending");
+        ask.setFrom("a:7");
+
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+        when(askRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        AskService svc = buildService();
+
+        Ask byKey = svc.withdraw("ask-1", "a:7");
+        assertEquals("withdrawn", byKey.getStatus());
+
+        ask.setStatus("pending");
+        Ask byBare = svc.withdraw("ask-1", "7");
+        assertEquals("withdrawn", byBare.getStatus());
+    }
+
+    @Test
+    void withdraw_refusesAClosedAsk() {
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("denied");
+        ask.setFrom("h:7");
+
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+
+        AskService svc = buildService();
+
+        assertThrows(IllegalStateException.class, () ->
+            svc.withdraw("ask-1", "h:7"));
+    }
+
+    @Test
     void respond_quorumN_GreaterThan1_requiresPoolPrincipal() {
         Ask ask = new Ask();
         ask.setId("ask-1");
