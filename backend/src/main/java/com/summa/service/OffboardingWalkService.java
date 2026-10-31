@@ -550,6 +550,11 @@ public class OffboardingWalkService {
                 ask.setTo(adminKeyedRef);
                 askRepository.save(ask);
                 asksClosed++;
+                // OFB-031: a custody transfer is never an un-audited mutation —
+                // the demotion walk names its reassignment the way the
+                // offboarding walk names its (OFFBOARD_REASSIGN_ASK_TO).
+                auditService.logSystem("DEMOTE_REASSIGN_ASK_TO", "ask", ask.getId(),
+                    JsonHelpers.toJson(Map.of("newTo", adminKeyedRef, "reason", "member_demoted"), objectMapper));
             } else if (humanId.equals(ask.getFrom()) || humanKeyedRefDemoteAsks.equals(ask.getFrom())) {
                 ask.setStatus("withdrawn");
                 askRepository.save(ask);
