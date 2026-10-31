@@ -46,9 +46,8 @@ public class RateLimiter {
                 return true;
             }
             long count = attemptCounts.getOrDefault(identifier, 0L) + 1L;
-            long capped = Math.min(count, MAX_ATTEMPTS + 1L);
-            attemptCounts.put(identifier, capped);
-            return capped <= MAX_ATTEMPTS;
+            attemptCounts.put(identifier, count);
+            return count <= MAX_ATTEMPTS;
         } finally {
             lock.unlock();
         }
@@ -65,8 +64,7 @@ public class RateLimiter {
             return MAX_ATTEMPTS;
         }
         long used = count != null ? count : 0L;
-        // Count may be capped at MAX_ATTEMPTS+1 in allow(), so clamp to avoid negative remaining.
-        return Math.max(0, MAX_ATTEMPTS - Math.min(used, MAX_ATTEMPTS));
+        return Math.max(0, MAX_ATTEMPTS - used);
     }
 
     public long getResetSeconds(String identifier) {

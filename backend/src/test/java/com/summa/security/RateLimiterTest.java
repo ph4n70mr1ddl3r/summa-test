@@ -35,6 +35,31 @@ class RateLimiterTest {
     }
 
     @Test
+    void allow_exactlyMaxAttemptsAllowed_sixthRejected() {
+        boolean[] results = new boolean[7];
+        for (int i = 0; i < results.length; i++) {
+            results[i] = limiter.allow("user-limit");
+        }
+        assertTrue(results[0]);
+        assertTrue(results[1]);
+        assertTrue(results[2]);
+        assertTrue(results[3]);
+        assertTrue(results[4], "Fifth request must be allowed");
+        assertFalse(results[5], "Sixth request must be rejected");
+        assertFalse(results[6], "Seventh request must be rejected");
+    }
+
+    @Test
+    void getRemainingAttempts_rejectsAfterExactlyMaxAttempts() {
+        for (int i = 0; i < 5; i++) {
+            limiter.allow("user-exact");
+        }
+        assertEquals(0, limiter.getRemainingAttempts("user-exact"));
+        assertFalse(limiter.allow("user-exact"),
+            "Must reject immediately after exactly MAX_ATTEMPTS allowed requests");
+    }
+
+    @Test
     void allow_differentIdentifiersIndependent() {
         for (int i = 0; i < 5; i++) {
             limiter.allow("user-a");
