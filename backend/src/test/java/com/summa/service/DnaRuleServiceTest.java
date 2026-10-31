@@ -244,6 +244,35 @@ class DnaRuleServiceTest {
     }
 
     @Test
+    void supersede_keepsThePredecessorActiveWhileItsOwnWindowStillExtends() {
+        // DNC-022/DNC-023: when the successor's edge is in the past and the
+        // predecessor has no explicit end, the truncation sets the end to the
+        // past edge — the window has closed and the flip is immediate. When
+        // the edge is in the future, the predecessor stays active until the
+        // expiry sweep flips it when the edge arrives.
+        DnaRule predecessor = new DnaRule();
+        predecessor.setId("rule-old");
+        predecessor.setDomainId("domain-1");
+        predecessor.setStatus("active");
+        DnaRule successor = new DnaRule();
+        successor.setId("rule-new");
+        successor.setDomainId("domain-1");
+        successor.setStatus("active");
+        Instant futureEdge = Instant.now().plusSeconds(3600);
+        successor.setEffectiveFrom(futureEdge);
+        when(ruleRepository.findById("rule-new")).thenReturn(Optional.of(successor));
+        when(ruleRepository.findById("rule-old")).thenReturn(Optional.of(predecessor));
+        when(ruleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ruleService.supersede("rule-new", "rule-old", "admin");
+
+        // No explicit end on the predecessor — truncated to the future edge,
+        // still active until the sweep arrives.
+        assertEquals(futureEdge, predecessor.getEffectiveTo());
+        assertEquals("active", predecessor.getStatus());
+    }
+
+    @Test
     void supersede_neverShortensAnAlreadyEarlierWindow() {
         // The displacement edge only ever shortens the predecessor's window.
         DnaRule predecessor = new DnaRule();

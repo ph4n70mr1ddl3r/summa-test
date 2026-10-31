@@ -166,11 +166,11 @@ public class AgentController {
                 throw new IllegalStateException("Only customRole hires (no template) can be promoted");
             }
             // TPL-046: One live promotion ask per hire — refuse if already pending.
-            // Promotion asks are filed from the owner (a human), not to the agent,
-            // so check pending promotion asks from the actor matching this agentId.
-            String actorClean = JsonHelpers.stripIdPrefix(actor);
+            // Promotion asks are stored with from = "h:<owner>" so the pending
+            // check must query the same keyed form, not the bare actor id.
+            String actorKeyed = "h:" + JsonHelpers.stripIdPrefix(actor);
             boolean hasPromoForAgent = false;
-            for (Ask a : askService.findByFromAndStatusPending(actorClean).stream()
+            for (Ask a : askService.findByFromAndStatusPending(actorKeyed).stream()
                     .filter(a -> "promotion".equals(a.getKind()))
                     .toList()) {
                 try {
@@ -212,7 +212,7 @@ public class AgentController {
             } catch (Exception e) {
                 throw new IllegalStateException("Failed to serialize promotion snapshot: " + e.getMessage());
             }
-            askService.create("promotion", "h:" + JsonHelpers.stripIdPrefix(actor), OffboardingWalkService.ADMIN_BROADCAST,
+            askService.create("promotion", actorKeyed, OffboardingWalkService.ADMIN_BROADCAST,
                 snapshotPayload, "standard", "deny", 1,
                 Instant.now().plusSeconds(Defaults.DEFAULT_STANDARD_ASK_DEADLINE_HOURS * 3600L), null, null);
             auditService.log(actor, "PROMOTE_REQUEST", "agent", agentId, snapshotPayload);
