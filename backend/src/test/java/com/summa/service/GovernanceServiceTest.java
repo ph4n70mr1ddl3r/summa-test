@@ -9,6 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -138,5 +139,27 @@ class GovernanceServiceTest {
         Number result = governanceService.getSetting("asks-tier-critical-deadline-hours", Number.class);
         assertNotNull(result);
         assertEquals(1.5, result.doubleValue(), 0.0001);
+    }
+
+    @Test
+    void getAllSettings_warmCacheStillServesDefaults() {
+        // Regression: defaults used to be baked into the cache only at fill time.
+        // A caller that deleted or never set a key got the default on a cold
+        // cache but null from a warm one, until the next cache miss.
+        when(settingRepository.findAll()).thenReturn(java.util.List.of());
+
+        Map<String, Object> cold = governanceService.getAllSettings();
+        assertNotNull(cold.get("spawn-ephemeral-default-ttl-hours"),
+            "cold cache must carry the default");
+
+        Map<String, Object> warm = governanceService.getAllSettings();
+        assertEquals(cold, warm, "warm cache must return the same value set");
+        assertEquals(24, ((Number) warm.get("spawn-ephemeral-default-ttl-hours")).intValue());
+        assertEquals(7, ((Number) warm.get("summa.dna.default-review-sla-days")).intValue());
+
+        // getSetting reads through the same cache, so it must also see the
+        // default while the cache is warm.
+        Integer result = governanceService.getSetting("spawn-ephemeral-default-ttl-hours", Integer.class);
+        assertEquals(24, result);
     }
 }

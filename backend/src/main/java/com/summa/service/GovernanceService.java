@@ -58,7 +58,11 @@ public class GovernanceService {
         for (GovernanceSetting s : settingRepository.findAll()) {
             settings.put(s.getKey(), parseValue(s.getValue()));
         }
-        // Apply defaults for any missing keys
+        // Apply defaults for any missing keys. Defaults are applied per read, not
+        // only at cache-fill time: a warm cache must return the same value set a
+        // cold cache does, otherwise a default (e.g. an ask deadline tier) is
+        // present for the first 10 seconds and silently gone until the next
+        // cache miss.
         Map<String, Object> result = Collections.unmodifiableMap(applyDefaults(settings));
         cachedSettings = result;
         cacheExpiryEpochSeconds = nowSeconds + SETTINGS_CACHE_TTL_SECONDS;
@@ -66,10 +70,8 @@ public class GovernanceService {
     }
 
     @Transactional(readOnly = true)
-    @SuppressWarnings("unchecked")
     public <T> T getSetting(String key, Class<T> type) {
-        Map<String, Object> settings = getAllSettings();
-        Object value = settings.get(key);
+        Object value = getAllSettings().get(key);
         if (value == null) return null;
         if (type.isInstance(value)) return type.cast(value);
         if (type.equals(Integer.class) || type.equals(int.class)) {
