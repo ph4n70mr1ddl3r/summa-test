@@ -179,8 +179,15 @@ public class MemberService {
 
     /**
      * Walk the lineage chain from a member ID, following agent spawned-by links
-     * and human deputy links, up to the configured depth cap. Returns the chain
-     * of member IDs from the starting point to the root. Stops on cycles.
+     * up to the root owner, capped at the configured depth. ORG-050 makes the
+     * spawner line the lineage edge: every agent row's chain must terminate at
+     * a human, so a human is a chain root and the walk stops there — a depth
+     * cap that lands mid-chain stops at the cap, it does not re-route the
+     * lineage. The deputy is a standing successor (ORG-060), not an
+     * ancestor, and deputy cycles are refused at write (ORG-061) — it is not
+     * a lineage hop. Spawner pointers are normalized to their bare form on
+     * every hop, so a keyed-union pointer (h:…/a:…) can never break the
+     * visited-set or resolve against the wrong table. Stops on cycles.
      */
     @Transactional(readOnly = true)
     public List<String> walkLineage(String memberId, int depthCap) {
@@ -192,13 +199,15 @@ public class MemberService {
                 break;
             }
             lineage.add(currentId);
-            Optional<Agent> agentOpt = findAgent(currentId);
-            if (agentOpt.isPresent()) {
-                currentId = agentOpt.get().getSpawnedBy();
+            // A human is the lineage root (ORG-050) and the deputy is a
+            // successor, not an ancestor (ORG-060) — terminate on the
+            // humans table so deputy cycles can never extend a walk.
+            if (findHuman(currentId).isPresent()) {
+                currentId = null;
             } else {
-                Optional<Human> humanOpt = findHuman(currentId);
-                if (humanOpt.isPresent()) {
-                    currentId = humanOpt.get().getDeputyMemberId();
+                Optional<Agent> agentOpt = findAgent(currentId);
+                if (agentOpt.isPresent()) {
+                    currentId = JsonHelpers.stripIdPrefix(agentOpt.get().getSpawnedBy());
                 } else {
                     currentId = null;
                 }

@@ -87,7 +87,7 @@ public class AgentController {
         if (id == null || id.isBlank()) {
             return ControllerResponses.validation(auditService, "Agent ID must not be blank");
         }
-        // API-004: full lineage graph from any member — follows agent chain then human deputy chain
+        // API-004: full lineage graph from any member — follows agent spawner links to the root owner
         int depthCap = agentService.getDepthCap();
         List<String> lineage = memberService.walkLineage(id, depthCap);
         return ResponseEntity.ok(lineage);

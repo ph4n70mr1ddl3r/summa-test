@@ -431,4 +431,138 @@ class MemberServiceTest {
 
         assertTrue(memberService.resolveDeputyTarget("h1").isEmpty());
     }
+
+    @Test
+    void walkLineage_followsSpawnerLinksToTheRootOwner() {
+        // ORG-050: lineage is the spawner line — a3 (worker) spawned by a2
+        // (spawner) owned by h1 (root).
+        Agent worker = new Agent();
+        worker.setId("a3");
+        worker.setSpawnedBy("a2");
+        Agent spawner = new Agent();
+        spawner.setId("a2");
+        spawner.setSpawnedBy("h1");
+        when(agentRepository.findById("a3")).thenReturn(Optional.of(worker));
+        when(agentRepository.findById("a2")).thenReturn(Optional.of(spawner));
+        when(humanRepository.findById("a3")).thenReturn(Optional.empty());
+        when(humanRepository.findById("a2")).thenReturn(Optional.empty());
+        when(agentRepository.findById("h1")).thenReturn(Optional.empty());
+
+        assertEquals(List.of("a3", "a2", "h1"), memberService.walkLineage("a3", 10));
+    }
+
+    @Test
+    void walkLineage_ignoresTheDeputyLinkOfTheRoot() {
+        // ORG-060: the root human's deputy is a successor, never a lineage
+        // hop — the walk stops at the root even when a live deputy exists.
+        Agent spawner = new Agent();
+        spawner.setId("a2");
+        spawner.setSpawnedBy("h1");
+        when(agentRepository.findById("a2")).thenReturn(Optional.of(spawner));
+        when(humanRepository.findById("a2")).thenReturn(Optional.empty());
+        when(agentRepository.findById("h1")).thenReturn(Optional.empty());
+
+        assertEquals(List.of("a2", "h1"), memberService.walkLineage("a2", 10));
+    }
+
+    @Test
+    void walkLineage_fromAHumanStopsAtTheChainRoot() {
+        // ORG-050/ORG-061: a human is always a chain root — its deputy is a
+        // successor, not an ancestor, so the walk returns the human and stops.
+        Human h1 = newHuman("h1");
+        h1.setDeputyMemberId("h2");
+        when(humanRepository.findById("h1")).thenReturn(Optional.of(h1));
+
+        assertEquals(List.of("h1"), memberService.walkLineage("h1", 10));
+        assertEquals(List.of("h1"), memberService.walkLineage("h:h1", 10));
+    }
+
+    @Test
+    void walkLineage_normalizesKeyedSpawnerPointers() {
+        // A keyed-union spawner pointer ("h1") must resolve against the
+        // humans table, never against the wrong namespace.
+        Agent spawner = new Agent();
+        spawner.setId("a2");
+        spawner.setSpawnedBy("h:h1");
+        when(agentRepository.findById("a2")).thenReturn(Optional.of(spawner));
+        when(humanRepository.findById("a2")).thenReturn(Optional.empty());
+        when(agentRepository.findById("h1")).thenReturn(Optional.empty());
+
+        assertEquals(List.of("a2", "h1"), memberService.walkLineage("a:a2", 10));
+    }
+
+    @Test
+    void walkLineage_honorsTheDepthCap() {
+        // The depth cap budgets hops: a3 -> a2 -> a1 would be three, so
+        // with a cap of two the walk records [a3, a2] and stops.
+        Agent a3 = new Agent();
+        a3.setId("a3");
+        a3.setSpawnedBy("a2");
+        Agent a2 = new Agent();
+        a2.setId("a2");
+        a2.setSpawnedBy("a1");
+        when(agentRepository.findById("a3")).thenReturn(Optional.of(a3));
+        when(agentRepository.findById("a2")).thenReturn(Optional.of(a2));
+        when(humanRepository.findById("a3")).thenReturn(Optional.empty());
+        when(humanRepository.findById("a2")).thenReturn(Optional.empty());
+
+        assertEquals(List.of("a3", "a2"), memberService.walkLineage("a3", 2));
+    }
+
+    @Test
+    void walkLineage_walksToARootOwnerHumanEvenBeyondTheDepthCap() {
+        // ORG-050: the chain must terminate at a human; a depth cap that
+        // lands mid-chain stops at the cap — the budget, not the lineage,
+        // governs how many hops are walked.
+        Agent a3 = new Agent();
+        a3.setId("a3");
+        a3.setSpawnedBy("a2");
+        Agent a2 = new Agent();
+        a2.setId("a2");
+        a2.setSpawnedBy("h1");
+        when(agentRepository.findById("a3")).thenReturn(Optional.of(a3));
+        when(agentRepository.findById("a2")).thenReturn(Optional.of(a2));
+        when(humanRepository.findById("a3")).thenReturn(Optional.empty());
+        when(humanRepository.findById("a2")).thenReturn(Optional.empty());
+
+        assertEquals(List.of("a3", "a2"), memberService.walkLineage("a3", 2));
+        assertEquals(List.of("a3", "a2", "h1"), memberService.walkLineage("a3", 3));
+    }
+
+    @Test
+    void walkLineage_stopsOnASpawnerCycle() {
+        // A mis-configured spawned_by cycle must end at the hop, not loop.
+        Agent a1 = new Agent();
+        a1.setId("a1");
+        a1.setSpawnedBy("a2");
+        Agent a2 = new Agent();
+        a2.setId("a2");
+        a2.setSpawnedBy("a1");
+        when(agentRepository.findById("a1")).thenReturn(Optional.of(a1));
+        when(agentRepository.findById("a2")).thenReturn(Optional.of(a2));
+        when(humanRepository.findById("a1")).thenReturn(Optional.empty());
+        when(humanRepository.findById("a2")).thenReturn(Optional.empty());
+
+        assertEquals(List.of("a1", "a2"), memberService.walkLineage("a1", 10));
+    }
+
+    @Test
+    void walkLineage_doesNotFollowDeputyLinks() {
+        // ORG-060: the deputy is a successor, not an ancestor — from a human
+        // start the walk returns the human and stops.
+        Human h1 = newHuman("h1");
+        h1.setDeputyMemberId("h2");
+        when(humanRepository.findById("h1")).thenReturn(Optional.of(h1));
+
+        assertEquals(List.of("h1"), memberService.walkLineage("h1", 10));
+        assertEquals(List.of("h1"), memberService.walkLineage("h:h1", 10));
+    }
+
+    private Human newHuman(String id) {
+        Human h = new Human();
+        h.setId(id);
+        h.setRbac("member");
+        h.setDeactivatedAt(null);
+        return h;
+    }
 }
