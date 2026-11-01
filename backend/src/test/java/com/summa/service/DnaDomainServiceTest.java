@@ -848,4 +848,61 @@ class DnaDomainServiceTest {
         // The emptied parent archives inside the same event (DGV-012).
         assertEquals("archived", parent.getStatus());
     }
+
+    @Test
+    void split_ignoresPaddedForeignAndNonexistentItemIds() {
+        // DGV-012: the move loop must honor the total-mapping gate's rule — only
+        // ids that name the parent's live items travel to the child. Padding the
+        // mapping with an item of another domain (or a nonexistent id) is
+        // refused at per-item validation, but the refusal happens after the
+        // child domain was already created; the move loop still ran against the
+        // padded list. Without the gate, the foreign item was pulled into the
+        // child — a cross-domain move the write door refuses outright.
+        DnaDomain parent = new DnaDomain();
+        parent.setId("parent-1");
+        parent.setName("Parent");
+        when(domainRepository.findById("parent-1")).thenReturn(Optional.of(parent));
+        when(dataHoldRepository.existsByKindAndSubjectIdAndReleasedAtIsNull("domain", "parent-1")).thenReturn(false);
+        DnaCard parentCard = new DnaCard();
+        parentCard.setId("card-1");
+        parentCard.setDomainId("parent-1");
+        parentCard.setStatus("active");
+        when(cardRepository.findByDomainId("parent-1")).thenReturn(List.of(parentCard));
+        when(ruleRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        when(goalRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        when(glossaryRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        when(proposalRepository.findOpenByDomain("parent-1")).thenReturn(Collections.emptyList());
+        when(workspaceRepository.countByDomainIdsContaining("parent-1")).thenReturn(0L);
+        when(cardRepository.findById("card-1")).thenReturn(Optional.of(parentCard));
+        // A live rule sitting in another domain — the mapping pads with it.
+        DnaRule foreignRule = new DnaRule();
+        foreignRule.setId("rule-other");
+        foreignRule.setDomainId("other-domain");
+        when(ruleRepository.findById("rule-other")).thenReturn(Optional.of(foreignRule));
+        lenient().when(goalRepository.findById(anyString())).thenReturn(Optional.empty());
+        lenient().when(glossaryRepository.findById(anyString())).thenReturn(Optional.empty());
+        when(domainRepository.save(any())).thenAnswer(invocation -> {
+            DnaDomain d = invocation.getArgument(0);
+            if (d.getId() == null) d.setId("child-1");
+            return d;
+        });
+        lenient().when(cardRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(ruleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(goalRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(glossaryRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // The padded mapping is refused at per-item validation...
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
+            domainService.split("parent-1", "admin", null, null, null, null, null, null,
+                List.of("card-1", "rule-other", "nonexistent-item"), Collections.emptyList(), Collections.emptyList()));
+        assertTrue(ex.getMessage().contains("misplaced_items"), ex.getMessage());
+
+        // ...and nothing padded was pulled into the child before the abort:
+        // the foreign rule keeps its domain, and only the parent's live item
+        // (or nothing, on the abort path) is re-pointed.
+        verify(ruleRepository, never()).save(foreignRule);
+        verify(goalRepository, never()).save(any());
+        verify(glossaryRepository, never()).save(any());
+        assertEquals("other-domain", foreignRule.getDomainId());
+    }
 }

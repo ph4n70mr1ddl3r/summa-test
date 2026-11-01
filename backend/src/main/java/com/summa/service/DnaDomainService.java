@@ -494,16 +494,26 @@ public class DnaDomainService {
 
         // Move the mapped items (ids stable per DGV-010) — a card, a rule, a goal,
         // or a glossary entry all move to the child by re-pointing their domain.
+        // The move honors the total-mapping gate's rule: only ids that name one of
+        // the parent's live items travel. Padded ids (an item of another domain,
+        // a nonexistent id, a retired row no longer in the live set) may pass
+        // the count gate without naming a live item, and moving them would pull
+        // foreign or frozen history into the child — the split is the parent's
+        // dissolution, not a cross-domain move.
         for (String itemId : effectiveItemIds) {
-            moveItemToDomain(itemId, savedChild.getId());
+            if (liveItemIds.contains(itemId)) {
+                moveItemToDomain(itemId, savedChild.getId());
+            }
         }
 
         // Remap proposals (ids stable per DGV-042) — validate each belongs to parent domain
         for (String propId : effectiveProposalIds) {
-            proposalRepository.findById(propId).ifPresent(prop -> {
-                prop.setDomainId(savedChild.getId());
-                proposalRepository.save(prop);
-            });
+            if (liveProposalIds.contains(propId)) {
+                proposalRepository.findById(propId).ifPresent(prop -> {
+                    prop.setDomainId(savedChild.getId());
+                    proposalRepository.save(prop);
+                });
+            }
         }
 
         // Remap workspace bindings — validate each workspace is bound to parent domain
