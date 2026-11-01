@@ -105,7 +105,7 @@ public class PatService {
         StringBuilder sb = new StringBuilder("[");
         for (int i = 0; i < scopes.size(); i++) {
             if (i > 0) sb.append(",");
-            sb.append("\"").append(scopes.get(i)).append("\"");
+            sb.append(JsonHelpers.jsonString(scopes.get(i)));
         }
         sb.append("]");
         return sb.toString();

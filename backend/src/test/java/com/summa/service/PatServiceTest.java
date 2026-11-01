@@ -115,6 +115,23 @@ class PatServiceTest {
     }
 
     @Test
+    void create_scopesAreEscapedAsValidJson() {
+        when(passwordEncoder.encode(any())).thenReturn("bcrypt_hash");
+        when(patRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        PatService.PatWithToken result = patService.create(
+            "human-1", "Tricky Key",
+            List.of("runs:write", "we\"ird", "back\\slash"),
+            90);
+
+        String scopesJson = result.pat().getScopes();
+        // The stored scopes column must be parseable JSON, even when scope values
+        // contain quotes or backslashes that would break hand-rolled string building.
+        List<String> roundTripped = com.summa.util.JsonHelpers.parseStringList(scopesJson);
+        assertEquals(List.of("runs:write", "we\"ird", "back\\slash"), roundTripped);
+    }
+
+    @Test
     void findByHash() {
         Pat pat = new Pat();
         pat.setId("pat-1");
