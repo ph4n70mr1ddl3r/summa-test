@@ -30,10 +30,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import com.summa.exception.EntityNotFoundException;
 import org.slf4j.Logger;
@@ -374,18 +376,39 @@ public class DnaDomainService {
         // and every open proposal and live binding must be named too. Decisions
         // never block (DNC-032: they are history at birth) and ride the parent's
         // archive as resolvable history.
+        //
+        // The gate checks membership, not supplied-list size: a caller may pad the
+        // mapping with ids of foreign or nonexistent items to make the list cover
+        // the live count, so a supplied id only maps an item when it is one of the
+        // parent's live items (the per-class detail check below). Without this a
+        // split could pass the count gate, fail per-item validation, and archive
+        // the child with the parent's real items left behind.
         Instant now = Instant.now();
-        long liveCards = cardRepository.countByDomainIdAndStatusNot(parentId, "retired");
-        long liveRules = ruleRepository.countLiveByDomainId(parentId, now);
-        long liveGoals = goalRepository.countLiveByDomainId(parentId, now);
-        long liveGlossary = glossaryRepository.countByDomainIdAndStatusNot(parentId, "retired");
-        long liveProposals = proposalRepository.countOpenByDomain(parentId);
+        List<DnaCard> liveCardList = cardRepository.findByDomainId(parentId).stream()
+            .filter(c -> !"retired".equals(c.getStatus())).toList();
+        List<DnaRule> liveRuleList = ruleRepository.findByDomainId(parentId).stream()
+            .filter(r -> "active".equals(r.getStatus()) && (r.getEffectiveTo() == null || r.getEffectiveTo().isAfter(now))).toList();
+        List<DnaGoal> liveGoalList = goalRepository.findByDomainId(parentId).stream()
+            .filter(g -> "active".equals(g.getStatus()) && (g.getEffectiveTo() == null || g.getEffectiveTo().isAfter(now))).toList();
+        List<DnaGlossary> liveGlossaryList = glossaryRepository.findByDomainId(parentId).stream()
+            .filter(g -> !"retired".equals(g.getStatus())).toList();
+        List<DnaProposal> liveProposalList = proposalRepository.findOpenByDomain(parentId);
+        Set<String> liveItemIds = new HashSet<>();
+        liveCardList.forEach(c -> liveItemIds.add(c.getId()));
+        liveRuleList.forEach(r -> liveItemIds.add(r.getId()));
+        liveGoalList.forEach(g -> liveItemIds.add(g.getId()));
+        liveGlossaryList.forEach(g -> liveItemIds.add(g.getId()));
+        Set<String> liveProposalIds = new HashSet<>();
+        liveProposalList.forEach(p -> liveProposalIds.add(p.getId()));
+        long liveItems = liveItemIds.size();
+        long liveProposals = liveProposalList.size();
         long liveBindings = workspaceRepository.countByDomainIdsContaining(parentId);
-        long liveItems = liveCards + liveRules + liveGoals + liveGlossary;
-        if (Math.max(0, liveItems - effectiveItemIds.size()) > 0 || Math.max(0, liveProposals - effectiveProposalIds.size()) > 0 || Math.max(0, liveBindings - effectiveWorkspaceIds.size()) > 0) {
+        long mappedItems = effectiveItemIds.stream().filter(liveItemIds::contains).count();
+        long mappedProposals = effectiveProposalIds.stream().filter(liveProposalIds::contains).count();
+        if (Math.max(0, liveItems - mappedItems) > 0 || Math.max(0, liveProposals - mappedProposals) > 0 || Math.max(0, liveBindings - effectiveWorkspaceIds.size()) > 0) {
             throw new IllegalStateException(
                 String.format("Split mapping is not total: unmapped_items=%d proposals=%d bindings=%d",
-                    Math.max(0, liveItems - effectiveItemIds.size()), Math.max(0, liveProposals - effectiveProposalIds.size()), Math.max(0, liveBindings - effectiveWorkspaceIds.size())));
+                    Math.max(0, liveItems - mappedItems), Math.max(0, liveProposals - mappedProposals), Math.max(0, liveBindings - effectiveWorkspaceIds.size())));
         }
 
         // DGV-011: create child inheriting undeclared parent attrs

@@ -304,9 +304,12 @@ class DnaDomainServiceTest {
         parent.setReviewSlaDays(7);
         when(domainRepository.findById("parent-1")).thenReturn(Optional.of(parent));
         when(dataHoldRepository.existsByKindAndSubjectIdAndReleasedAtIsNull("domain", "parent-1")).thenReturn(false);
-        when(cardRepository.countByDomainIdAndStatusNot("parent-1", "retired")).thenReturn(0L);
-        when(proposalRepository.countOpenByDomain("parent-1")).thenReturn(0L);
-        when(workspaceRepository.countByDomainIdsContaining("parent-1")).thenReturn(0L);
+        lenient().when(cardRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        lenient().when(ruleRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        lenient().when(goalRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        lenient().when(glossaryRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        lenient().when(proposalRepository.findOpenByDomain("parent-1")).thenReturn(Collections.emptyList());
+        lenient().when(workspaceRepository.countByDomainIdsContaining("parent-1")).thenReturn(0L);
         when(domainRepository.save(any())).thenAnswer(invocation -> {
             DnaDomain d = invocation.getArgument(0);
             if (d.getId() == null) d.setId("child-1");
@@ -341,8 +344,19 @@ class DnaDomainServiceTest {
         parent.setName("Parent");
         when(domainRepository.findById("parent-1")).thenReturn(Optional.of(parent));
         when(dataHoldRepository.existsByKindAndSubjectIdAndReleasedAtIsNull("domain", "parent-1")).thenReturn(false);
-        when(cardRepository.countByDomainIdAndStatusNot("parent-1", "retired")).thenReturn(2L);
-        when(proposalRepository.countOpenByDomain("parent-1")).thenReturn(0L);
+        DnaCard card1 = new DnaCard();
+        card1.setId("card-1");
+        card1.setDomainId("parent-1");
+        card1.setStatus("active");
+        DnaCard card2 = new DnaCard();
+        card2.setId("card-2");
+        card2.setDomainId("parent-1");
+        card2.setStatus("active");
+        when(cardRepository.findByDomainId("parent-1")).thenReturn(List.of(card1, card2));
+        when(ruleRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        when(goalRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        when(glossaryRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        when(proposalRepository.findOpenByDomain("parent-1")).thenReturn(Collections.emptyList());
         when(workspaceRepository.countByDomainIdsContaining("parent-1")).thenReturn(0L);
 
         assertThrows(IllegalStateException.class, () ->
@@ -509,13 +523,17 @@ class DnaDomainServiceTest {
         parent.setName("Parent");
         when(domainRepository.findById("parent-1")).thenReturn(Optional.of(parent));
         when(dataHoldRepository.existsByKindAndSubjectIdAndReleasedAtIsNull("domain", "parent-1")).thenReturn(false);
-        when(cardRepository.countByDomainIdAndStatusNot("parent-1", "retired")).thenReturn(0L);
-        when(proposalRepository.countOpenByDomain("parent-1")).thenReturn(0L);
-        when(workspaceRepository.countByDomainIdsContaining("parent-1")).thenReturn(0L);
         DnaCard card = new DnaCard();
         card.setId("card-1");
         card.setDomainId("parent-1");
+        card.setStatus("active");
+        when(cardRepository.findByDomainId("parent-1")).thenReturn(List.of(card));
         lenient().when(cardRepository.findById("card-1")).thenReturn(Optional.of(card));
+        when(ruleRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        when(goalRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        when(glossaryRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        when(proposalRepository.findOpenByDomain("parent-1")).thenReturn(Collections.emptyList());
+        when(workspaceRepository.countByDomainIdsContaining("parent-1")).thenReturn(0L);
         lenient().when(cardRepository.save(any())).thenReturn(card);
         when(domainRepository.save(any())).thenAnswer(invocation -> {
             DnaDomain d = invocation.getArgument(0);
@@ -699,12 +717,89 @@ class DnaDomainServiceTest {
         parent.setName("Parent");
         when(domainRepository.findById("parent-1")).thenReturn(Optional.of(parent));
         when(dataHoldRepository.existsByKindAndSubjectIdAndReleasedAtIsNull("domain", "parent-1")).thenReturn(false);
-        when(ruleRepository.countLiveByDomainId(eq("parent-1"), any())).thenReturn(2L);
+        DnaRule rule1 = new DnaRule();
+        rule1.setId("rule-1");
+        rule1.setDomainId("parent-1");
+        rule1.setStatus("active");
+        DnaRule rule2 = new DnaRule();
+        rule2.setId("rule-2");
+        rule2.setDomainId("parent-1");
+        rule2.setStatus("active");
+        when(ruleRepository.findByDomainId("parent-1")).thenReturn(List.of(rule1, rule2));
+        lenient().when(cardRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        lenient().when(goalRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        lenient().when(glossaryRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        lenient().when(proposalRepository.findOpenByDomain("parent-1")).thenReturn(Collections.emptyList());
+        lenient().when(workspaceRepository.countByDomainIdsContaining("parent-1")).thenReturn(0L);
 
         assertThrows(IllegalStateException.class, () ->
             domainService.split("parent-1", "admin", null, null, null, null, null, null,
                 List.of("card-1"), Collections.emptyList(), Collections.emptyList())
         );
+    }
+
+    @Test
+    void split_refusesWhenItemMappingIsPaddedWithForeignOrNonexistentIds() {
+        // DGV-012: a split's declared mapping is total — every live item of the parent
+        // must name its result. The gate may not be gamed by padding the item list
+        // with ids that belong to another domain or to no item at all: those ids map
+        // nothing, so the parent's real live items stay unmapped and the split is
+        // refused at declare.
+        DnaDomain parent = new DnaDomain();
+        parent.setId("parent-1");
+        parent.setName("Parent");
+        when(domainRepository.findById("parent-1")).thenReturn(Optional.of(parent));
+        when(dataHoldRepository.existsByKindAndSubjectIdAndReleasedAtIsNull("domain", "parent-1")).thenReturn(false);
+        DnaCard liveCard = new DnaCard();
+        liveCard.setId("card-1");
+        liveCard.setDomainId("parent-1");
+        liveCard.setStatus("active");
+        when(cardRepository.findByDomainId("parent-1")).thenReturn(List.of(liveCard));
+        when(ruleRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        when(goalRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        when(glossaryRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        when(proposalRepository.findOpenByDomain("parent-1")).thenReturn(Collections.emptyList());
+        when(workspaceRepository.countByDomainIdsContaining("parent-1")).thenReturn(0L);
+
+        // One real live card, but the mapping pads with a nonexistent id instead of
+        // naming card-1. The padded id maps nothing, so card-1 stays unmapped.
+        List<String> padded = List.of("nonexistent-card-1");
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
+            domainService.split("parent-1", "admin", null, null, null, null, null, null,
+                padded, Collections.emptyList(), Collections.emptyList())
+        );
+        assertTrue(ex.getMessage().contains("not total"), ex.getMessage());
+        // Refused at declare: the child was never created, so no save ever ran.
+        verify(domainRepository, never()).save(any());
+    }
+
+    @Test
+    void split_refusesWhenUnmappedItemsRemain() {
+        // DGV-012/DGV-040: the parent holds a live card that the mapping does not name.
+        // The op is refused at declare — the child is never created, the card stays
+        // in the parent, and no partial split leaves the parent's state behind.
+        DnaDomain parent = new DnaDomain();
+        parent.setId("parent-1");
+        parent.setName("Parent");
+        when(domainRepository.findById("parent-1")).thenReturn(Optional.of(parent));
+        when(dataHoldRepository.existsByKindAndSubjectIdAndReleasedAtIsNull("domain", "parent-1")).thenReturn(false);
+        DnaCard liveCard = new DnaCard();
+        liveCard.setId("card-1");
+        liveCard.setDomainId("parent-1");
+        liveCard.setStatus("active");
+        when(cardRepository.findByDomainId("parent-1")).thenReturn(List.of(liveCard));
+        when(ruleRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        when(goalRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        when(glossaryRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        when(proposalRepository.findOpenByDomain("parent-1")).thenReturn(Collections.emptyList());
+        when(workspaceRepository.countByDomainIdsContaining("parent-1")).thenReturn(0L);
+
+        // Mapping names no items: the live card is unmapped, so the split is refused.
+        assertThrows(IllegalStateException.class, () ->
+            domainService.split("parent-1", "admin", null, null, null, null, null, null,
+                Collections.emptyList(), Collections.emptyList(), Collections.emptyList())
+        );
+        verify(domainRepository, never()).save(any());
     }
 
     @Test
@@ -717,17 +812,24 @@ class DnaDomainServiceTest {
         parent.setOwnerHumanId("owner-1");
         when(domainRepository.findById("parent-1")).thenReturn(Optional.of(parent));
         when(dataHoldRepository.existsByKindAndSubjectIdAndReleasedAtIsNull("domain", "parent-1")).thenReturn(false);
-        when(ruleRepository.countLiveByDomainId(eq("parent-1"), any())).thenReturn(1L);
-        when(goalRepository.countLiveByDomainId(eq("parent-1"), any())).thenReturn(1L);
         DnaRule rule = new DnaRule();
         rule.setId("rule-1");
         rule.setDomainId("parent-1");
-        when(ruleRepository.findById("rule-1")).thenReturn(Optional.of(rule));
+        rule.setStatus("active");
         DnaGoal goal = new DnaGoal();
         goal.setId("goal-1");
         goal.setDomainId("parent-1");
-        when(goalRepository.findById("goal-1")).thenReturn(Optional.of(goal));
+        goal.setStatus("active");
+        when(ruleRepository.findByDomainId("parent-1")).thenReturn(List.of(rule));
+        lenient().when(ruleRepository.findById("rule-1")).thenReturn(Optional.of(rule));
+        when(goalRepository.findByDomainId("parent-1")).thenReturn(List.of(goal));
+        lenient().when(goalRepository.findById("goal-1")).thenReturn(Optional.of(goal));
+        lenient().when(cardRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        lenient().when(glossaryRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        lenient().when(proposalRepository.findOpenByDomain("parent-1")).thenReturn(Collections.emptyList());
+        lenient().when(workspaceRepository.countByDomainIdsContaining("parent-1")).thenReturn(0L);
         when(cardRepository.findById(anyString())).thenReturn(Optional.empty());
+        lenient().when(glossaryRepository.findById(anyString())).thenReturn(Optional.empty());
         when(domainRepository.save(any())).thenAnswer(invocation -> {
             DnaDomain d = invocation.getArgument(0);
             if (d.getId() == null) d.setId("child-1");
