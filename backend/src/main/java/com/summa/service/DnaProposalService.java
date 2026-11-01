@@ -12,11 +12,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.summa.util.KeyedUnionValidator;
@@ -41,7 +39,6 @@ public class DnaProposalService {
     private final GovernanceService governanceService;
     private final SecretsScanner secretsScanner;
     private final DomainLockService domainLockService;
-    private final Set<String> alreadyEscalated = ConcurrentHashMap.newKeySet();
 
     public DnaProposalService(DnaProposalRepository proposalRepository,
                               DnaRuleRepository ruleRepository,
@@ -381,14 +378,12 @@ public class DnaProposalService {
     public void checkAndEscalateBreachedProposals() {
         Instant now = Instant.now();
         List<DnaProposal> openProposals = proposalRepository.findAllOpen();
-        // Purge alreadyEscalated of proposals that are no longer open (resolved/withdrawn)
-        // to prevent unbounded set growth and re-escalation of new proposals with same ID pattern.
-        alreadyEscalated.removeIf(id -> {
-            Optional<DnaProposal> p = proposalRepository.findById(id);
-            return p.isEmpty() || !"open".equals(p.get().getStatus());
-        });
         for (DnaProposal proposal : openProposals) {
-            if (alreadyEscalated.contains(proposal.getId())) {
+            // DWP-020 fix: escalatedAt is persisted on the proposal row, so a
+            // restarted application cannot re-escalate a proposal that already
+            // has a live escalation ask. The in-memory alreadyEscalated set
+            // was lost on restart, duplicating every escalation.
+            if (proposal.getEscalatedAt() != null) {
                 continue;
             }
             boolean shouldEscalate = false;
@@ -412,7 +407,8 @@ public class DnaProposalService {
             }
             if (shouldEscalate) {
                 escalateToAdmin(proposal);
-                alreadyEscalated.add(proposal.getId());
+                proposal.setEscalatedAt(now);
+                proposalRepository.save(proposal);
             }
         }
     }

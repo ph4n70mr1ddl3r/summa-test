@@ -459,6 +459,67 @@ class DnaProposalServiceTest {
     }
 
     @Test
+    void checkAndEscalateBreachedProposals_doesNotReescalateAcrossRestarts() {
+        // DWP-020 fix: escalation state is persisted on the proposal row
+        // (escalatedAt) so a restarted application does not re-escalate.
+        DnaProposal proposal = new DnaProposal();
+        proposal.setId("prop-1");
+        proposal.setStatus("open");
+        proposal.setKind("card");
+        proposal.setDomainId("domain-1");
+        proposal.setCreatedAt(Instant.now().minusSeconds(8L * 86400L)); // 8 days ago, SLA is 7
+        // Simulate a proposal that was already escalated before a restart:
+        // escalatedAt is set (persisted), the in-memory set is empty.
+        proposal.setEscalatedAt(Instant.now().minusSeconds(3600));
+
+        when(proposalRepository.findAllOpen()).thenReturn(List.of(proposal));
+
+        // A fresh service instance (no in-memory state) must not re-escalate.
+        proposalService.checkAndEscalateBreachedProposals();
+
+        verify(askService, never()).create(
+            eq("question"), eq("system"), eq("admins"), anyString(),
+            eq("critical"), eq("escalate"), eq(1), any(), isNull(), isNull());
+    }
+
+    @Test
+    void checkAndEscalateBreachedProposals_escalatesOnceThenStops() {
+        // First call: proposal is breached and not yet escalated → escalate.
+        // Second call: escalatedAt is set → no second escalation.
+        DnaProposal proposal = new DnaProposal();
+        proposal.setId("prop-1");
+        proposal.setStatus("open");
+        proposal.setKind("card");
+        proposal.setDomainId("domain-1");
+        proposal.setCreatedAt(Instant.now().minusSeconds(8L * 86400L)); // 8 days ago, SLA is 7
+        proposal.setEscalatedAt(null); // not yet escalated
+
+        DnaDomain domain = new DnaDomain();
+        domain.setId("domain-1");
+        domain.setReviewSlaDays(7);
+        when(proposalRepository.findAllOpen()).thenReturn(List.of(proposal));
+        when(domainService.findById("domain-1")).thenReturn(Optional.of(domain));
+        when(proposalRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Ask ask = new Ask();
+        ask.setId("ask-escalation");
+        when(askService.create(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyInt(), any(), anyString(), anyString())).thenReturn(ask);
+
+        // First call escalates
+        proposalService.checkAndEscalateBreachedProposals();
+        verify(askService, times(1)).create(
+            eq("question"), eq("system"), eq("admins"), anyString(),
+            eq("critical"), eq("escalate"), eq(1), any(), isNull(), isNull());
+        assertNotNull(proposal.getEscalatedAt(), "escalatedAt must be persisted on the proposal row");
+
+        // Second call (same instance, escalatedAt now set) must not re-escalate
+        proposalService.checkAndEscalateBreachedProposals();
+        verify(askService, times(1)).create(
+            eq("question"), eq("system"), eq("admins"), anyString(),
+            eq("critical"), eq("escalate"), eq(1), any(), isNull(), isNull());
+    }
+
+    @Test
     void publish_withNullProposedByDoesNotNpe() {
         DnaProposal proposal = new DnaProposal();
         proposal.setId("prop-1");

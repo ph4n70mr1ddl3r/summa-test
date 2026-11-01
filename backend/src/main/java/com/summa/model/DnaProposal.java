@@ -46,6 +46,10 @@ public class DnaProposal {
     @Column(name = "domain_id", length = 36)
     private String domainId;
 
+    @Column(name = "escalated_at")
+    @Convert(converter = InstantToUnixEpochConverter.class)
+    private Instant escalatedAt;
+
     @Column(name = "updated_at", nullable = false)
     @Convert(converter = InstantToUnixEpochConverter.class)
     private Instant updatedAt;
@@ -89,6 +93,8 @@ public class DnaProposal {
     public void setReviewedAt(Instant reviewedAt) { this.reviewedAt = reviewedAt; }
     public String getDomainId() { return domainId; }
     public void setDomainId(String domainId) { this.domainId = domainId; }
+    public Instant getEscalatedAt() { return escalatedAt; }
+    public void setEscalatedAt(Instant escalatedAt) { this.escalatedAt = escalatedAt; }
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
     public boolean isOpen() { return "open".equals(status) || "breached".equals(status); }
