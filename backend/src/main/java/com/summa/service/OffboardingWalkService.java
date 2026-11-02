@@ -502,15 +502,20 @@ public class OffboardingWalkService {
             }
         }
 
-        // OFB-031: Re-own or retire owned goals (active only).
-        // DAT-120: dna_goals.owner is stored as a keyed union.
+        // OFB-031: Re-own owned goals to admin custody on any role reduction.
+        // A viewer cannot own goals (the DGV write doors refuse them), so goals
+        // are retired; every other reduction sheds ownership to custody, matching
+        // the domain transfer just above.
+        // DAT-120: dna_goals.owner is a stored keyed union.
         for (DnaGoal goal : goalService.findAllActiveWindowed(Instant.now())) {
             if (("h:" + humanId).equals(goal.getOwner()) || humanId.equals(goal.getOwner())) {
                 if (RbacRole.VIEWER.getValue().equals(newRbac)) {
                     goal.setStatus("retired");
-                    goalRepository.save(goal);
                     goalsRetired++;
+                } else {
+                    goal.setOwner(adminKeyedRef);
                 }
+                goalRepository.save(goal);
             }
         }
         // OFB-031: Clear deputy references — clear references TO the departing member from others

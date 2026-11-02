@@ -720,4 +720,43 @@ class OffboardingWalkServiceTest {
         verify(boardTaskRepository).save(keyedForm);
         assertEquals(2, result.get("tasksReturned"));
     }
+
+    @Test
+    void walkDemote_reownsMemberOwnedGoalsToAdminCustodyOnAnyRoleReduction() {
+        // OFB-013/OFB-033: owned goals re-own via successor or admin custody on a
+        // role reduction — the owner→member demotion sheds domain ownership, so the
+        // goals the demoted member no longer carries cannot stay pinned to them.
+        // Retiring them was a viewer-only door; an owner→member demotion left the
+        // member owning goals it can no longer act on.
+        Human human = new Human();
+        human.setId("h1");
+        human.setRbac("owner");
+        when(memberService.findHuman("h1")).thenReturn(Optional.of(human));
+
+        DnaGoal goal = new DnaGoal();
+        goal.setId("g1");
+        goal.setOwner("h1");
+        goal.setStatus("active");
+        when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of(goal));
+        when(goalRepository.save(any())).thenReturn(goal);
+
+        when(domainService.findAllIncludingArchived(anyInt())).thenReturn(java.util.List.of());
+        when(agentService.findByOwner(eq("h1"), anyInt())).thenReturn(java.util.List.of());
+        when(proposalService.findAllOpen()).thenReturn(java.util.List.of());
+        when(initiativeService.findAllActive(anyInt())).thenReturn(java.util.List.of());
+        when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
+        when(askRepository.findByStatusPendingOrdered(anyInt())).thenReturn(java.util.List.of());
+        when(boardTaskRepository.findByAssigneeMemberId(anyString())).thenReturn(java.util.List.of());
+        when(patRepository.findByMemberId(anyString())).thenReturn(java.util.List.of());
+        when(groupRepository.findAll()).thenReturn(java.util.List.of());
+        Human admin = new Human();
+        admin.setId("admin1");
+        when(memberService.findAdmins()).thenReturn(java.util.List.of(admin));
+
+        var result = walkService.walkDemote("h1", "member", "admin1");
+
+        assertEquals("h:admin1", goal.getOwner());
+        assertEquals("active", goal.getStatus());
+        verify(goalRepository).save(goal);
+    }
 }

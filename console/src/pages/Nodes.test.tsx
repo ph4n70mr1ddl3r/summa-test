@@ -62,6 +62,17 @@ describe('Nodes page', () => {
     })
   })
 
+  it('renders a node with a null pubkey without crashing', async () => {
+    vi.mocked(apiModule.api.nodes.list).mockResolvedValue([
+      { id: 'n-3', name: 'no-pubkey', kind: 'remote', capabilities: '{}', pubkey: null, enrolledAt: 1704067200, status: 'trusted' },
+    ])
+    const { container } = render(<Nodes />)
+    await waitFor(() => {
+      expect(container.textContent).toContain('no-pubkey')
+    })
+    expect(container.textContent).toContain('Pubkey: …')
+  })
+
   it('shows error state on API failure', async () => {
     vi.mocked(apiModule.api.nodes.list).mockRejectedValue(new Error('failed'))
     const { container } = render(<Nodes />)
