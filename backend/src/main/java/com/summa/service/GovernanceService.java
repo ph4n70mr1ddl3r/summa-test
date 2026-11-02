@@ -144,7 +144,13 @@ public class GovernanceService {
 
     @Transactional
     public void deleteSetting(String key) {
-        settingRepository.deleteById(key);
+        // Clearing a value that was never stored (or was reset to its default)
+        // is a no-op, not an error — the console's "clear" path sends
+        // {key: null} without first checking what the server holds.
+        boolean existed = settingRepository.existsById(key);
+        if (existed) {
+            settingRepository.deleteById(key);
+        }
         // Invalidate cache on delete so subsequent reads reflect the change
         cachedSettings = null;
     }

@@ -101,9 +101,45 @@ class GovernanceServiceTest {
 
     @Test
     void setSetting_nullValue_deletesExistingSetting() {
+        GovernanceSetting setting = new GovernanceSetting();
+        setting.setKey("spawn-depth-cap");
+        setting.setValue("99");
+        when(settingRepository.existsById("spawn-depth-cap")).thenReturn(true);
+
         governanceService.setSetting("spawn-depth-cap", null, "admin");
 
         verify(settingRepository).deleteById("spawn-depth-cap");
+    }
+
+    @Test
+    void setSetting_nullValue_missingKey_isNoOp() {
+        // Regression: clearing a key the server never stored blew up the request
+        // with an integrity error — the console's "clear value" path sends
+        // {key: null} without checking what the server holds first.
+        lenient().when(settingRepository.existsById("spawn-depth-cap")).thenReturn(false);
+
+        assertDoesNotThrow(() -> governanceService.setSetting("spawn-depth-cap", null, "admin"));
+        verify(settingRepository, never()).deleteById("spawn-depth-cap");
+    }
+
+    @Test
+    void setSetting_nullValue_invalidatesWarmCache() {
+        // Regression: a cleared key vanished from the database but the warm
+        // settings cache still served its old value for up to the TTL — readers
+        // (spawn gates, ask deadlines) kept using a setting the admin removed.
+        GovernanceSetting setting = new GovernanceSetting();
+        setting.setKey("spawn-depth-cap");
+        setting.setValue("99");
+        when(settingRepository.findAll()).thenReturn(java.util.List.of(setting));
+        lenient().when(settingRepository.existsById("spawn-depth-cap")).thenReturn(true);
+
+        governanceService.getAllSettings(); // warm the cache with the stored value
+        governanceService.setSetting("spawn-depth-cap", null, "admin");
+        when(settingRepository.findAll()).thenReturn(java.util.List.of()); // row is gone
+
+        Map<String, Object> after = governanceService.getAllSettings();
+        assertEquals(2, ((Number) after.get("spawn-depth-cap")).intValue(),
+            "after a clear the key must fall back to its default, not the stale cached value");
     }
 
     @Test
