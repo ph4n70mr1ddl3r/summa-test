@@ -850,6 +850,67 @@ class DnaDomainServiceTest {
     }
 
     @Test
+    void split_rekeysOwnerAddressedAsksToTheChildOwner() {
+        // DGV-045: pending asks whose addressee was derived from the domain's
+        // owner re-key to the resulting owner inside a topology op — ask ids
+        // stable, deadlines untouched. The scope check must run against the
+        // child domain: by the time the re-key runs, the live state (workspace
+        // bindings, goal refs) has already been re-pointed to the child, so a
+        // check against the emptied parent misses every ask and the re-key
+        // silently does nothing.
+        DnaDomain parent = new DnaDomain();
+        parent.setId("parent-1");
+        parent.setName("Parent");
+        parent.setOwnerHumanId("old-owner");
+        DnaDomain child = new DnaDomain();
+        child.setId("child-1");
+        child.setOwnerHumanId("new-owner");
+        when(domainRepository.findById("child-1")).thenReturn(Optional.of(child));
+        when(domainRepository.findById("parent-1")).thenReturn(Optional.of(parent));
+        when(dataHoldRepository.existsByKindAndSubjectIdAndReleasedAtIsNull("domain", "parent-1")).thenReturn(false);
+        when(workspaceRepository.countByDomainIdsContaining("parent-1")).thenReturn(1L);
+        lenient().when(cardRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        lenient().when(ruleRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        lenient().when(goalRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        lenient().when(glossaryRepository.findByDomainId("parent-1")).thenReturn(Collections.emptyList());
+        lenient().when(proposalRepository.findOpenByDomain("parent-1")).thenReturn(Collections.emptyList());
+
+        Workspace ws = new Workspace();
+        ws.setId("ws-1");
+        ws.setDomainIds("[\"parent-1\"]");
+        when(workspaceRepository.findById("ws-1")).thenReturn(Optional.of(ws));
+        lenient().when(workspaceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("pending");
+        ask.setTo("h:old-owner");
+        ask.setWorkspaceId("ws-1");
+        ask.setDeadline(Instant.now().plusSeconds(3600));
+        when(askRepository.findByToAndStatusPending("h:old-owner")).thenReturn(List.of(ask));
+        lenient().when(askRepository.findByToAndStatusPending("old-owner")).thenReturn(Collections.emptyList());
+        lenient().when(askRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        when(domainRepository.save(any())).thenAnswer(inv -> {
+            DnaDomain d = inv.getArgument(0);
+            if ("parent-1".equals(d.getId())) return d;
+            d.setId("child-1");
+            return d;
+        });
+
+        List<DnaDomain> results = domainService.split("parent-1", "admin", "new-owner", null, null,
+            null, null, null,
+            Collections.emptyList(), List.of("ws-1"), Collections.emptyList());
+
+        assertEquals(1, results.size());
+        assertEquals("child-1", results.get(0).getId());
+        // DGV-045: the pending ask re-keys to the resulting owner, id stable.
+        assertEquals("h:new-owner", ask.getTo());
+        assertEquals("ask-1", ask.getId());
+        verify(askRepository).save(ask);
+    }
+
+    @Test
     void split_ignoresPaddedForeignAndNonexistentItemIds() {
         // DGV-012: the move loop must honor the total-mapping gate's rule — only
         // ids that name the parent's live items travel to the child. Padding the

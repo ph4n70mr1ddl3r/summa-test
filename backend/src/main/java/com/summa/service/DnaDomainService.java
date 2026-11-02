@@ -266,7 +266,7 @@ public class DnaDomainService {
             // attention remapping names — pending asks whose addressee was derived
             // from the domain's owner re-key to the resulting owner, ids stable and
             // deadlines untouched.
-            rekeyOwnerAddressedAsks(previousOwner, newOwnerId, id, actor);
+            rekeyOwnerAddressedAsks(previousOwner, newOwnerId, id, id, actor);
             auditService.log(actor, "UPDATE_OWNER", "dna_domain", id,
                 String.format("{\"newOwner\":%s}", JsonHelpers.jsonString(newOwnerId)));
             return saved;
@@ -745,7 +745,11 @@ public class DnaDomainService {
         // Query both bare and h:-prefixed forms so asks filed by either code path
         // are re-keyed, and compare owners by their stripped forms.
         if (Objects.equals(JsonHelpers.stripIdPrefix(oldOwner), JsonHelpers.stripIdPrefix(newOwner))) return;
-        rekeyOwnerAddressedAsks(oldOwner, newOwner, oldDomainId, actor);
+        // DGV-045: topology ops re-point the live state (items, bindings, goals) to
+        // the resulting domain before the re-key runs, so the domain-scope check
+        // must consult the new domain — scoping the check against the emptied old
+        // domain misses every ask and the re-key silently does nothing.
+        rekeyOwnerAddressedAsks(oldOwner, newOwner, oldDomainId, newDomainId, actor);
     }
 
     /**
@@ -755,7 +759,7 @@ public class DnaDomainService {
      * addressed to that owner and the domain is what the ask hangs off (the
      * workspace it is bound to, or the initiative whose goal lives in the domain).
      */
-    private void rekeyOwnerAddressedAsks(String oldOwner, String newOwner, String domainId, String actor) {
+    private void rekeyOwnerAddressedAsks(String oldOwner, String newOwner, String oldDomainId, String newDomainId, String actor) {
         if (oldOwner == null || oldOwner.isBlank()) return;
         if (newOwner == null || newOwner.isBlank()) return;
         if (Objects.equals(JsonHelpers.stripIdPrefix(oldOwner), JsonHelpers.stripIdPrefix(newOwner))) return;
@@ -764,13 +768,13 @@ public class DnaDomainService {
         for (String oldForm : List.of(oldOwner, "h:" + JsonHelpers.stripIdPrefix(oldOwner))) {
             for (Ask ask : askRepository.findByToAndStatusPending(oldForm)) {
                 if (ask.getId() != null && !rekeyed.add(ask.getId())) continue;
-                boolean scoped = isAskScopedToDomain(ask, domainId);
+                boolean scoped = isAskScopedToDomain(ask, newDomainId);
                 if (scoped) {
                     ask.setTo(newOwnerKeyed);
                     askRepository.save(ask);
                     auditService.logSystem("REKEY_ASK", "ask", ask.getId(),
                         String.format("{\"oldDomain\":%s,\"newDomain\":%s,\"oldTo\":%s,\"newTo\":%s}",
-                            JsonHelpers.jsonString(domainId), JsonHelpers.jsonString(domainId),
+                            JsonHelpers.jsonString(oldDomainId), JsonHelpers.jsonString(newDomainId),
                             JsonHelpers.jsonString(oldForm), JsonHelpers.jsonString(newOwnerKeyed)));
                 }
             }
