@@ -436,11 +436,15 @@ public class SpawnService {
 
     private int computeDepthFromChain(String agentId, AgentRepository repo) {
         int depth = 1;
-        String currentId = agentId;
-        for (int i = 0; i < Defaults.MAX_LINEAGE_CHAIN_DEPTH; i++) {
+        // DAT-120: spawned_by is a keyed union — strip the a:/h: prefix on
+        // every hop so a keyed pointer never breaks the chain walk.
+        String currentId = JsonHelpers.stripIdPrefix(agentId);
+        for (int i = 0; i < Defaults.MAX_LINEAGE_CHAIN_DEPTH && currentId != null; i++) {
             Optional<Agent> parentOpt = repo.findById(currentId);
-            if (parentOpt.isEmpty() || parentOpt.get().getSpawnedBy() == null) break;
-            currentId = parentOpt.get().getSpawnedBy();
+            if (parentOpt.isEmpty()) break;
+            String nextId = parentOpt.get().getSpawnedBy();
+            if (nextId == null) break;
+            currentId = JsonHelpers.stripIdPrefix(nextId);
             depth++;
         }
         return depth;

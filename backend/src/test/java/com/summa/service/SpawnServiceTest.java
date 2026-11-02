@@ -375,4 +375,74 @@ class SpawnServiceTest {
         assertEquals("archived", archived.getStatus());
         verify(spendLedgerService).releaseSpawn(eq(request), eq("admin"));
     }
+
+    @Test
+    void activateAgent_computesDepthFromKeyedSpawnerChain() {
+        // DAT-120: parent's lineageDepth is null (corrupted) and its spawned_by
+        // pointer is keyed (a:…) — the chain walk must strip the prefix on every
+        // hop or the parent lookup fails and depth silently falls back to 1.
+        SpawnService deepCap = new SpawnService(
+            spawnRepository, auditService, governanceService, templateRepository,
+            agentRepository, memberService, workspaceRepository, domainRepository,
+            askService, spendLedgerService, initiativeRepository, objectMapper, 10
+        );
+        SpawnRequest request = new SpawnRequest();
+        request.setId("spawn-1");
+        request.setRequesterId("agent-1");
+        request.setRequestedByHumanId("human-1");
+        request.setSpawnClass("persistent");
+
+        Human owner = new Human();
+        owner.setId("human-1");
+        when(memberService.findHuman("human-1")).thenReturn(Optional.of(owner));
+
+        Agent parent = new Agent();
+        parent.setLineageDepth(null);
+        parent.setSpawnedBy("a:agent-0");
+        when(agentRepository.findById("agent-1")).thenReturn(Optional.of(parent));
+
+        Agent root = new Agent();
+        root.setLineageDepth(null);
+        root.setSpawnedBy(null);
+        when(agentRepository.findById("agent-0")).thenReturn(Optional.of(root));
+
+        when(agentRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Agent activated = deepCap.activateAgent(request, "admin", "human-1");
+
+        // Before the fix the keyed hop "a:agent-0" never resolved, so the walk
+        // saw only agent-1 and recorded depth 1 → child depth 2. Now the keyed
+        // hop resolves: chain (agent-1 → agent-0 → root) computes 2 → child depth 3.
+        assertEquals(3, activated.getLineageDepth(),
+            "keyed spawner chain of length 2 must compute depth 3, not fall back to the bare-id miss");
+        verify(agentRepository).findById("agent-0");
+        verify(agentRepository, never()).findById("a:agent-0");
+    }
+
+    @Test
+    void activateAgent_keyedSpawnerChainExceedingCapIsRefused() {
+        SpawnRequest request = new SpawnRequest();
+        request.setId("spawn-1");
+        request.setRequesterId("agent-1");
+        request.setRequestedByHumanId("human-1");
+        request.setSpawnClass("persistent");
+
+        Agent parent = new Agent();
+        parent.setLineageDepth(null);
+        parent.setSpawnedBy("a:agent-0");
+        when(agentRepository.findById("agent-1")).thenReturn(Optional.of(parent));
+
+        Agent root = new Agent();
+        root.setLineageDepth(null);
+        root.setSpawnedBy(null);
+        when(agentRepository.findById("agent-0")).thenReturn(Optional.of(root));
+
+        // Chain (agent-1 → agent-0) computes depth 2 → child depth 3 > cap 2.
+        // Before the fix the keyed hop missed, depth computed as 1 → child depth 2
+        // (within cap) and the spawn would have been allowed — a silent under-cap.
+        assertThrows(IllegalStateException.class, () ->
+            spawnService.activateAgent(request, "admin", "human-1"));
+        verify(agentRepository).findById("agent-0");
+        verify(agentRepository, never()).findById("a:agent-0");
+    }
 }

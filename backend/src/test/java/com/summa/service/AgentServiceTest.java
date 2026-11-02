@@ -310,8 +310,65 @@ class AgentServiceTest {
         when(agentRepository.findById("agent-2")).thenReturn(Optional.of(agent2));
 
         Optional<Human> result = agentService.findFirstHumanUpChain("agent-1");
-
         assertFalse(result.isPresent());
+    }
+
+    @Test
+    void findFirstHumanUpChain_stripsKeyedSpawnerPointers() {
+        // DAT-120: spawned_by pointers are keyed unions (a:…) — the walk must
+        // normalize to bare form on every hop or the agents table lookup breaks.
+        Agent agent = new Agent();
+        agent.setOwnerHumanId(null);
+        agent.setSpawnedBy("a:agent-2");
+        when(agentRepository.findById("agent-1")).thenReturn(Optional.of(agent));
+
+        Agent agent2 = new Agent();
+        agent2.setOwnerHumanId("human-1");
+        agent2.setSpawnedBy(null);
+        when(agentRepository.findById("agent-2")).thenReturn(Optional.of(agent2));
+
+        Human human = new Human();
+        human.setId("human-1");
+        when(memberService.findHuman("human-1")).thenReturn(Optional.of(human));
+        when(memberService.findHuman(null)).thenReturn(Optional.empty());
+
+        Optional<Human> result = agentService.findFirstHumanUpChain("a:agent-1");
+
+        assertTrue(result.isPresent());
+        assertEquals("human-1", result.get().getId());
+        verify(agentRepository).findById("agent-2");
+        verify(agentRepository, never()).findById("a:agent-2");
+    }
+
+    @Test
+    void findFirstHumanUpChain_fallsThroughKeyedSpawnerChainToHuman() {
+        // Keyed spawner pointers two hops up — every hop must resolve in bare form.
+        Agent agent1 = new Agent();
+        agent1.setOwnerHumanId(null);
+        agent1.setSpawnedBy("a:agent-2");
+        when(agentRepository.findById("agent-1")).thenReturn(Optional.of(agent1));
+
+        Agent agent2 = new Agent();
+        agent2.setOwnerHumanId(null);
+        agent2.setSpawnedBy("a:agent-3");
+        when(agentRepository.findById("agent-2")).thenReturn(Optional.of(agent2));
+
+        Agent agent3 = new Agent();
+        agent3.setOwnerHumanId("human-9");
+        agent3.setSpawnedBy(null);
+        when(agentRepository.findById("agent-3")).thenReturn(Optional.of(agent3));
+
+        Human human = new Human();
+        human.setId("human-9");
+        when(memberService.findHuman("human-9")).thenReturn(Optional.of(human));
+        when(memberService.findHuman(null)).thenReturn(Optional.empty());
+
+        Optional<Human> result = agentService.findFirstHumanUpChain("agent-1");
+
+        assertTrue(result.isPresent());
+        assertEquals("human-9", result.get().getId());
+        verify(agentRepository).findById("agent-3");
+        verify(agentRepository, never()).findById("a:agent-3");
     }
 
     @Test

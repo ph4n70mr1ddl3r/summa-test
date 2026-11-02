@@ -419,14 +419,18 @@ public class AgentService {
     }
 
     public Optional<Human> findFirstHumanUpChain(String agentId) {
-        String currentId = agentId;
+        // DAT-120: spawned_by pointers are keyed unions (a:…) — normalize to the
+        // bare form on the entry hop and every spawner hop so a keyed pointer
+        // can never break the walk against the agents table.
+        String currentId = JsonHelpers.stripIdPrefix(agentId);
         int depth = 0;
         while (depth < Defaults.MAX_LINEAGE_CHAIN_DEPTH) {
+            if (currentId == null) break;
             Optional<Agent> agent = agentRepository.findById(currentId);
             if (agent.isEmpty()) break;
             Optional<Human> owner = memberService.findHuman(agent.get().getOwnerHumanId());
             if (owner.isPresent()) return owner;
-            currentId = agent.get().getSpawnedBy();
+            currentId = JsonHelpers.stripIdPrefix(agent.get().getSpawnedBy());
             if (currentId == null) break;
             depth++;
         }
