@@ -22,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -120,9 +119,13 @@ public class SpawnService {
             }
         }
 
-        // SPW-010: Ephemeral requester refused a persistent-hire request at write
+        // SPW-010: Ephemeral requester refused a persistent-hire request at write.
+        // Both ephemeral classes count (isEphemeral covers ephemeral and
+        // ephemeral-subagent) — a narrow class equality let an
+        // ephemeral-subagent file the hire.
         if (AgentClass.PERSISTENT.getValue().equals(effectiveSpawnClass)) {
-            if (Objects.equals(AgentClass.EPHEMERAL.getValue(), requesterOpt.get().getAgentClass())) {
+            AgentClass requesterClass = AgentClass.fromValue(requesterOpt.get().getAgentClass());
+            if (requesterClass != null && requesterClass.isEphemeral()) {
                 throw new IllegalStateException("Ephemeral agents cannot request persistent hires");
             }
         }

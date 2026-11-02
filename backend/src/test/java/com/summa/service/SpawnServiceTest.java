@@ -273,6 +273,45 @@ class SpawnServiceTest {
     }
 
     @Test
+    void create_persistentHireFromEphemeralSubagent_requesterRefused() {
+        // SPW-010: an ephemeral requester — of either ephemeral class — is refused
+        // a persistent-hire request at write. The gate used to compare only the
+        // `ephemeral` class, so an `ephemeral-subagent` requester filed the hire.
+        when(governanceService.isSpendHaltTripped()).thenReturn(false);
+
+        Agent subagent = new Agent();
+        subagent.setId("agent-1");
+        subagent.setStatus("active");
+        subagent.setAgentClass("ephemeral-subagent");
+        when(agentRepository.findById("agent-1")).thenReturn(Optional.of(subagent));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
+            spawnService.create("agent-1", null, "worker", "persistent",
+                "Hire a worker", "[]", "{}", null, null, "human-1", "actor"));
+        assertTrue(ex.getMessage().contains("Ephemeral agents cannot request persistent hires"));
+        verify(spawnRepository, never()).save(any());
+    }
+
+    @Test
+    void create_persistentHireFromEphemeralRequesterRefused() {
+        // The `ephemeral` class spelling was always caught by the gate; keep a
+        // test pinning it alongside the subagent one.
+        when(governanceService.isSpendHaltTripped()).thenReturn(false);
+
+        Agent agent = new Agent();
+        agent.setId("agent-1");
+        agent.setStatus("active");
+        agent.setAgentClass("ephemeral");
+        when(agentRepository.findById("agent-1")).thenReturn(Optional.of(agent));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
+            spawnService.create("agent-1", null, "worker", "persistent",
+                "Hire a worker", "[]", "{}", null, null, "human-1", "actor"));
+        assertTrue(ex.getMessage().contains("Ephemeral agents cannot request persistent hires"));
+        verify(spawnRepository, never()).save(any());
+    }
+
+    @Test
     void approve_throwsWhenApprovedByIsAgentNotHuman() {
         SpawnRequest request = new SpawnRequest();
         request.setId("spawn-1");
