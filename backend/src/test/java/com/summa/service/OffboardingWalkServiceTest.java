@@ -21,6 +21,7 @@ import com.summa.model.DnaProposal;
 import com.summa.model.DnaDomain;
 import com.summa.model.Pat;
 import com.summa.model.Group;
+import com.summa.model.BoardTask;
 import com.summa.model.Workspace;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -671,5 +672,52 @@ class OffboardingWalkServiceTest {
         assertEquals("[\"h2\"]", namedDomain.getNamedReaders());
         verify(domainRepository).save(namedDomain);
         assertEquals(1, result.get("workspacesScrubbed"));
+    }
+
+    @Test
+    void walkDemote_returnsBoardTasksToPoolOnAnyRoleReduction() {
+        // OFB-031: the workspaces scrub runs on any role reduction "to prevent
+        // stale access"; board-task ownership must carry the same guarantee.
+        // An owner→member demotion can strip the member's write access to the
+        // board, so their in-flight tasks must be returned to the pool — not
+        // only when demoted to viewer.
+        Human human = new Human();
+        human.setId("h1");
+        human.setRbac("owner");
+        when(memberService.findHuman("h1")).thenReturn(Optional.of(human));
+
+        BoardTask bareForm = new BoardTask();
+        bareForm.setId("bt1");
+        bareForm.setAssigneeMemberId("h1");
+        when(boardTaskRepository.findByAssigneeMemberId("h1")).thenReturn(java.util.List.of(bareForm));
+
+        BoardTask keyedForm = new BoardTask();
+        keyedForm.setId("bt2");
+        keyedForm.setAssigneeMemberId("h:h1");
+        when(boardTaskRepository.findByAssigneeMemberId("h:h1")).thenReturn(java.util.List.of(keyedForm));
+
+        when(domainService.findAllIncludingArchived(anyInt())).thenReturn(java.util.List.of());
+        when(agentService.findByOwner(eq("h1"), anyInt())).thenReturn(java.util.List.of());
+        when(proposalService.findAllOpen()).thenReturn(java.util.List.of());
+        when(initiativeService.findAllActive(anyInt())).thenReturn(java.util.List.of());
+        when(goalService.findAllActiveWindowed(any())).thenReturn(java.util.List.of());
+        when(memberService.findAllActiveHumans()).thenReturn(java.util.List.of());
+        when(askRepository.findByStatusPendingOrdered(anyInt())).thenReturn(java.util.List.of());
+        when(patRepository.findByMemberId("h1")).thenReturn(java.util.List.of());
+        when(patRepository.findByMemberId("h:h1")).thenReturn(java.util.List.of());
+        when(groupRepository.findAll()).thenReturn(java.util.List.of());
+        Human admin = new Human();
+        admin.setId("admin1");
+        when(memberService.findAdmins()).thenReturn(java.util.List.of(admin));
+
+        var result = walkService.walkDemote("h1", "member", "admin1");
+
+        assertNull(bareForm.getAssigneeMemberId());
+        assertEquals("open", bareForm.getStatus());
+        assertNull(keyedForm.getAssigneeMemberId());
+        assertEquals("open", keyedForm.getStatus());
+        verify(boardTaskRepository).save(bareForm);
+        verify(boardTaskRepository).save(keyedForm);
+        assertEquals(2, result.get("tasksReturned"));
     }
 }

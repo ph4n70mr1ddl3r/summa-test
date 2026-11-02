@@ -564,23 +564,24 @@ public class OffboardingWalkService {
             }
         }
 
-        // OFB-031: Return board-task assignments to pool or reassign.
-        // DAT-120: board_tasks.assignee_member_id is a keyed union.
+        // OFB-031: Return board-task assignments to the pool on any role reduction.
+        // The workspaces/participants scrub below explicitly runs "on any role
+        // reduction (not just to viewer) to prevent stale access" — board-task
+        // ownership must carry the same guarantee. Gating on viewer alone left
+        // owner→member demotions with their in-flight tasks still assigned to
+        // the demoted member, who may have just lost write access to the board.
+        // DAT-120: board_tasks.assignee_member_id is a keyed union — sweep both forms.
         for (BoardTask task : boardTaskRepository.findByAssigneeMemberId(humanId)) {
-            if (RbacRole.VIEWER.getValue().equals(newRbac)) {
-                task.setAssigneeMemberId(null);
-                task.setStatus("open");
-                boardTaskRepository.save(task);
-                tasksReturned++;
-            }
+            task.setAssigneeMemberId(null);
+            task.setStatus("open");
+            boardTaskRepository.save(task);
+            tasksReturned++;
         }
         for (BoardTask task : boardTaskRepository.findByAssigneeMemberId(humanKeyedRefDemoteAsks)) {
-            if (RbacRole.VIEWER.getValue().equals(newRbac)) {
-                task.setAssigneeMemberId(null);
-                task.setStatus("open");
-                boardTaskRepository.save(task);
-                tasksReturned++;
-            }
+            task.setAssigneeMemberId(null);
+            task.setStatus("open");
+            boardTaskRepository.save(task);
+            tasksReturned++;
         }
 
         // OFB-014/OFB-031: Clear workspace participant entries and named domain access.
