@@ -136,16 +136,20 @@ public final class JsonHelpers {
 
     /**
      * Constant-time string comparison to prevent timing attacks.
-     * Returns false immediately on length mismatch to avoid length-oracle side channels.
+     * Must never return early based on input values (including length)
+     * to avoid timing side channels. Always executes the full comparison.
      */
     public static boolean constantTimeEquals(String a, String b) {
-        if (a == null || b == null) return a == b;
+        if (a == null && b == null) return true;
+        if (a == null || b == null) return false;
         int lenA = a.length();
         int lenB = b.length();
-        if (lenA != lenB) return false;
-        int result = 0;
-        for (int i = 0; i < lenA; i++) {
-            result |= a.charAt(i) ^ b.charAt(i);
+        int maxLen = Math.max(lenA, lenB);
+        int result = lenA - lenB; // Include length difference in result to prevent early return
+        for (int i = 0; i < maxLen; i++) {
+            char charA = i < lenA ? a.charAt(i) : 0;
+            char charB = i < lenB ? b.charAt(i) : 0;
+            result |= charA ^ charB;
         }
         return result == 0;
     }
