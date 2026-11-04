@@ -565,7 +565,7 @@ export interface Node {
   kind: NodeKind;
   capabilities: string;
   region?: string;
-  pubkey: string;
+  pubkey?: string | null;
   enrolledAt: number;
   status: NodeStatus;
   revokedAt?: number;
