@@ -251,6 +251,22 @@ SCENARIOS = [
         ],
         fragment="dangling PLAN section references: §3.2",
     ),
+    Scenario(
+        "leading-zeros-preserved",
+        [
+            (
+                "PLAN.md",
+                "*Version v1.0 · 2026-01-01 — fixture corpus for the lint self-tests*\n\n## 1. Vision\n\nOne shared member namespace.\n\n## 2. Principles\n\nRefusals are loud.",
+                "*Version v1.0 · 2026-01-01 — fixture corpus for the lint self-tests*\n\n## 1. Vision\n\nOne shared member namespace.\n\n## 2. Principles\n\nRefusals are loud.\n\n## 3. Data model\n\n## 4. Org model\n\n## 5. Spawning\n\n## 6. Subsystem designs\n\n## 7. Data model delta\n\n## 8. Subsystem designs\n\n## 9. API surface\n\n## 10. Security\n",
+            ),
+            (
+                "specs/01-vision.md",
+                "- **VIS-001** — The org **shall** be one shared namespace, per §1 (cites PRN-001).",
+                "- **VIS-001** — The org **shall** be one shared namespace, per §1 and §2–10 (cites PRN-001).",
+            ),
+        ],
+        expect_ok=True,
+    ),
 ]
 
 
