@@ -7,7 +7,7 @@ import { useEffect, useRef } from 'react'
  */
 export function useEscapeKey(callback: (e: KeyboardEvent) => void) {
   const callbackRef = useRef(callback)
-  useEffect(() => { callbackRef.current = callback })
+  useEffect(() => { callbackRef.current = callback }, [callback])
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

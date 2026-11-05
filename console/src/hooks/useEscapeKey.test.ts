@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { renderHook, } from '@testing-library/react'
+import { renderHook } from '@testing-library/react'
 import { useEscapeKey } from './useEscapeKey'
 
 describe('useEscapeKey', () => {
@@ -46,5 +46,19 @@ describe('useEscapeKey', () => {
     renderHook(() => useEscapeKey(callback))
     window.dispatchEvent(keyDownEvent)
     expect(callback).toHaveBeenCalledWith(keyDownEvent)
+  })
+
+  it('uses the updated callback after rerender', () => {
+    const newCallback = vi.fn()
+    const { rerender } = renderHook(
+      ({ cb }) => useEscapeKey(cb),
+      { initialProps: { cb: callback } }
+    )
+    window.dispatchEvent(keyDownEvent)
+    expect(callback).toHaveBeenCalledTimes(1)
+
+    rerender({ cb: newCallback })
+    window.dispatchEvent(keyDownEvent)
+    expect(newCallback).toHaveBeenCalledTimes(1)
   })
 })
