@@ -165,21 +165,105 @@ class AskServiceTest {
     }
 
     @Test
-    void withdraw_allowsTheOriginatorAndAKeyedOrBareSpellingOfTheSameSide() {
+    void withdraw_allowsBareIdToMatchBareId() {
+        // ASK-030/032: a bare originator can withdraw its own bare ask
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("pending");
+        ask.setFrom("7");
+
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+        lenient().when(askRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        AskService svc = buildService();
+
+        Ask byBare = svc.withdraw("ask-1", "7");
+        assertEquals("withdrawn", byBare.getStatus());
+    }
+
+    @Test
+    void withdraw_refusesBareIdMatchingKeyedOriginator() {
+        // ASK-030/032: a bare originator must NOT match a keyed-union from (ORG-001)
+        // "7" must not retract an ask with "h:7" from
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("pending");
+        ask.setFrom("h:7");
+
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+        lenient().when(askRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        AskService svc = buildService();
+
+        assertThrows(IllegalArgumentException.class, () ->
+            svc.withdraw("ask-1", "7"));
+    }
+
+    @Test
+    void withdraw_refusesKeyedMatchingBareOriginator() {
+        // ASK-030/032: a keyed-union originator must NOT match a bare from (ORG-001)
+        // "h:7" must not retract an ask with "7" from
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("pending");
+        ask.setFrom("7");
+
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+        lenient().when(askRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        AskService svc = buildService();
+
+        assertThrows(IllegalArgumentException.class, () ->
+            svc.withdraw("ask-1", "h:7"));
+    }
+
+    @Test
+    void withdraw_allowsSameKeyedOriginator() {
+        // ASK-030/032: same keyed originator can withdraw
         Ask ask = new Ask();
         ask.setId("ask-1");
         ask.setStatus("pending");
         ask.setFrom("a:7");
 
         when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
-        when(askRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        lenient().when(askRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         AskService svc = buildService();
 
         Ask byKey = svc.withdraw("ask-1", "a:7");
         assertEquals("withdrawn", byKey.getStatus());
+    }
 
+    @Test
+    void withdraw_allowsTheOriginatorAndAKeyedOrBareSpellingOfTheSameSide() {
+        // ASK-030/032: same keyed originator can withdraw
+        Ask ask = new Ask();
+        ask.setId("ask-1");
         ask.setStatus("pending");
+        ask.setFrom("a:7");
+
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+        lenient().when(askRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        AskService svc = buildService();
+
+        Ask byKey = svc.withdraw("ask-1", "a:7");
+        assertEquals("withdrawn", byKey.getStatus());
+    }
+
+    @Test
+    void withdraw_allowsBareIdMatchingBareId() {
+        // ASK-030/032: a bare originator can withdraw its own bare ask
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("pending");
+        ask.setFrom("7");
+
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+        lenient().when(askRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        AskService svc = buildService();
+
         Ask byBare = svc.withdraw("ask-1", "7");
         assertEquals("withdrawn", byBare.getStatus());
     }

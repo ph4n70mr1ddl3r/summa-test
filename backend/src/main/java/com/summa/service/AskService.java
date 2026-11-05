@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.security.MessageDigest;
@@ -982,7 +983,7 @@ public class AskService {
                 : from != null && from.startsWith("a:") ? "a" : null;
         String callerKey = originator != null && originator.startsWith("h:") ? "h"
                 : originator != null && originator.startsWith("a:") ? "a" : null;
-        return storedKey == null || callerKey == null || storedKey.equals(callerKey);
+        return Objects.equals(storedKey, callerKey);
     }
 
     /**
