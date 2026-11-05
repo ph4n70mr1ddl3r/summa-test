@@ -18,7 +18,7 @@ vi.mock('../services/api', () => ({
       return { data, error: null }
     } catch (e) {
       const results = await fetchIndividual()
-      const hasError = results.some((r: unknown) => r === null)
+      const hasError = results.some((r: unknown) => r == null)
       const error = hasError
         ? 'Some data could not be loaded: ' + (e instanceof Error ? e.message : String(e))
         : null
@@ -102,5 +102,15 @@ describe('OrgView page', () => {
     await waitFor(() => {
       expect(screen.getByText(/Failed to load/)).toBeInTheDocument()
     })
+  })
+
+  it('detects undefined as error in individual fetches', async () => {
+    vi.mocked(apiModule.api.org.members).mockRejectedValue(new Error('parallel fail'))
+    vi.mocked(apiModule.api.groups.list).mockResolvedValue([])
+    render(<OrgView />)
+    await waitFor(() => {
+      expect(screen.getByText(/Failed to load/)).toBeInTheDocument()
+    })
+    expect(screen.queryByText(/Some data could not be loaded/)).toBeInTheDocument()
   })
 })
