@@ -43,16 +43,22 @@ export function setAuthToken(token: string | null, user?: { userId: string; rbac
       localStorage.setItem(TOKEN_KEY, token);
     } else {
       localStorage.removeItem(TOKEN_KEY);
-    }
-    // Clear the cached user only on logout (user === null sentinel); a
-    // token refresh with no user argument leaves the cached identity intact.
-    if (user === undefined) {
-      if (token === null) localStorage.removeItem(USER_KEY);
-    } else if (user) {
-      localStorage.setItem(USER_KEY, JSON.stringify(user));
-    } else {
       localStorage.removeItem(USER_KEY);
     }
+    // Clear the cached user when the token is cleared — a null token means
+    // the user is unauthenticated, so the cached user identity must also be
+    // removed. A token refresh with no user argument leaves the cached
+    // identity intact only when a new token is set.
+    if (token) {
+      if (user === undefined) {
+        // keep cached user intact — do nothing, the previous user remains
+      } else if (user) {
+        localStorage.setItem(USER_KEY, JSON.stringify(user));
+      } else {
+        localStorage.removeItem(USER_KEY);
+      }
+    }
+    // If token is null, USER_KEY was already removed above; no further action needed.
   } catch {
     // storage unavailable — values still work in memory for this session
   }

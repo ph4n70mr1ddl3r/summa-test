@@ -360,6 +360,21 @@ describe('refusal envelopes', () => {
     expect(err.body).toEqual({ code, message, audit_event_id: 'audit-1' })
   })
 
+  it('setAuthToken clears both token and user when token is null', async () => {
+    // BUG: setAuthToken(null, {userId: "1"}) used to clear the token but leave
+    // the user in localStorage, creating an inconsistent auth state where a
+    // user identity exists without an authentication token. The fix ensures
+    // clearing the token also clears the cached user.
+    setAuthToken('test-token', { userId: 'u1', rbac: 'admin' as RbacRole, name: 'Test' })
+    expect(getAuthToken()).toBe('test-token')
+    expect(getUser()).toEqual({ userId: 'u1', rbac: 'admin', name: 'Test' })
+
+    // Clear token with null — user should also be cleared
+    setAuthToken(null, { userId: 'u1', rbac: 'admin' as RbacRole })
+    expect(getAuthToken()).toBe(null)
+    expect(getUser()).toBe(null)
+  })
+
   it('keeps the degraded-health checks on a 503', async () => {
     // The health screen names the down subsystem from the refusal body.
     fetchMock.mockResolvedValue(new Response(
