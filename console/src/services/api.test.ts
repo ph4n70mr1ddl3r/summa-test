@@ -183,6 +183,17 @@ describe('loadWithFallback', () => {
     )
     expect(result.error).toBeNull()
   })
+
+  it('detects undefined as error in individual fetches', async () => {
+    const result = await loadWithFallback(
+      async () => { throw new Error('parallel fail'); },
+      async () => [{ id: '1' }, undefined]
+    )
+    expect(result.error).toBeDefined()
+    expect(result.data).toHaveLength(2)
+    expect(result.data[0]).toEqual({ id: '1' })
+    expect(result.data[1]).toBeUndefined()
+  })
 })
 
 describe('buildQuery key encoding', () => {
