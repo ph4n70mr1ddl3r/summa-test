@@ -51,6 +51,17 @@ describe('auth helpers', () => {
     setAuthToken(null)
   })
 
+  it('setAuthToken null token clears both token and user (no user argument)', () => {
+    setAuthToken('test-token', { userId: 'u1', rbac: 'admin' as RbacRole, name: 'Test' })
+    expect(getAuthToken()).toBe('test-token')
+    expect(getUser()).toEqual({ userId: 'u1', rbac: 'admin', name: 'Test' })
+
+    // Clear token with no user argument — both should be cleared
+    setAuthToken(null)
+    expect(getAuthToken()).toBe(null)
+    expect(getUser()).toBe(null)
+  })
+
   it('isAuthenticated returns false when no token', () => {
     expect(isAuthenticated()).toBe(false)
   })
