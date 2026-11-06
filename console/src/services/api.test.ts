@@ -386,6 +386,19 @@ describe('refusal envelopes', () => {
     expect(getUser()).toBe(null)
   })
 
+  it('setAuthToken null token and null user clears both and dispatches event', async () => {
+    setAuthToken('test-token', { userId: 'u1', rbac: 'admin' as RbacRole, name: 'Test' })
+    const handler = vi.fn()
+    window.addEventListener('summa-auth-change', handler)
+
+    setAuthToken(null, null)
+    expect(getAuthToken()).toBe(null)
+    expect(getUser()).toBe(null)
+    expect(handler).toHaveBeenCalledOnce()
+    expect(handler.mock.calls[0][0].detail).toBe(null)
+    window.removeEventListener('summa-auth-change', handler)
+  })
+
   it('setAuthToken with token and null user clears user from storage', async () => {
     // When a new token is set with an explicit null user, the cached user must
     // also be cleared from localStorage to avoid an inconsistent state where a
