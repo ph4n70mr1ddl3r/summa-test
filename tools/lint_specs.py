@@ -112,7 +112,8 @@ def expand_sections(lo: str, hi: str) -> list[str] | None:
     if lo_parts[:-1] != hi_parts[:-1]:
         return None
     width = len(lo_parts[-1])
-    return [f"{lo_parts[0]}.{n:0{width}d}" for n in range(lo_last, hi_last + 1)]
+    prefix = ".".join(lo_parts[:-1])
+    return [f"{prefix}.{n:0{width}d}" for n in range(lo_last, hi_last + 1)]
 
 
 def sections_in(text: str, where: str, errors: list[str]) -> set[str]:
