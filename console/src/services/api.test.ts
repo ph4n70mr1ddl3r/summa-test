@@ -403,6 +403,16 @@ describe('refusal envelopes', () => {
     expect(getUser()).toBe(null)
   })
 
+  it('setAuthToken with empty string token clears both token and user', async () => {
+    setAuthToken('test-token', { userId: 'u1', rbac: 'admin' as RbacRole, name: 'Test' })
+    expect(getAuthToken()).toBe('test-token')
+    expect(getUser()).toEqual({ userId: 'u1', rbac: 'admin', name: 'Test' })
+
+    setAuthToken('')
+    expect(getAuthToken()).toBe('')
+    expect(getUser()).toBe(null)
+  })
+
   it('keeps the degraded-health checks on a 503', async () => {
     // The health screen names the down subsystem from the refusal body.
     fetchMock.mockResolvedValue(new Response(
