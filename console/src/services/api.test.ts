@@ -403,6 +403,17 @@ describe('refusal envelopes', () => {
     expect(getUser()).toBe(null)
   })
 
+  it('setAuthToken with null token and null user clears both', async () => {
+    setAuthToken('test-token', { userId: 'u1', rbac: 'admin' as RbacRole, name: 'Test' })
+    expect(getAuthToken()).toBe('test-token')
+    expect(getUser()).toEqual({ userId: 'u1', rbac: 'admin', name: 'Test' })
+
+    // Clear token and user with null, null — both should be cleared
+    setAuthToken(null, null)
+    expect(getAuthToken()).toBe(null)
+    expect(getUser()).toBe(null)
+  })
+
   it('setAuthToken with empty string token clears both token and user', async () => {
     setAuthToken('test-token', { userId: 'u1', rbac: 'admin' as RbacRole, name: 'Test' })
     expect(getAuthToken()).toBe('test-token')
