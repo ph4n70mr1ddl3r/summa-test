@@ -389,6 +389,20 @@ describe('refusal envelopes', () => {
     expect(getUser()).toBe(null)
   })
 
+  it('setAuthToken with new token and no user argument clears cached user', async () => {
+    // When a new token is set without a user argument, the cached user must
+    // also be cleared from localStorage to avoid an inconsistent auth state
+    // where a token exists without a corresponding user identity.
+    setAuthToken('test-token', { userId: 'u1', rbac: 'admin' as RbacRole, name: 'Test' })
+    expect(getAuthToken()).toBe('test-token')
+    expect(getUser()).toEqual({ userId: 'u1', rbac: 'admin', name: 'Test' })
+
+    // Set new token without user argument — user should also be cleared
+    setAuthToken('new-token')
+    expect(getAuthToken()).toBe('new-token')
+    expect(getUser()).toBe(null)
+  })
+
   it('keeps the degraded-health checks on a 503', async () => {
     // The health screen names the down subsystem from the refusal body.
     fetchMock.mockResolvedValue(new Response(

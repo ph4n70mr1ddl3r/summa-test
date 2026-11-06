@@ -47,11 +47,11 @@ export function setAuthToken(token: string | null, user?: { userId: string; rbac
     }
     // Clear the cached user when the token is cleared — a null token means
     // the user is unauthenticated, so the cached user identity must also be
-    // removed. A token refresh with no user argument leaves the cached
-    // identity intact only when a new token is set.
+    // removed. A token refresh with no user argument clears the cached
+    // identity so the caller can set a fresh user if desired.
     if (token) {
       if (user === undefined) {
-        // keep cached user intact — do nothing, the previous user remains
+        localStorage.removeItem(USER_KEY);
       } else if (user) {
         localStorage.setItem(USER_KEY, JSON.stringify(user));
       } else {
