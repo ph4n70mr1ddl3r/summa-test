@@ -430,20 +430,13 @@ public class DnaDomainService {
         List<String> missingCards = new ArrayList<>();
         List<String> missingItems = new ArrayList<>();
         for (String cardId : effectiveItemIds) {
-            Optional<DnaCard> cardOpt = cardRepository.findById(cardId);
-            if (cardOpt.isPresent()) {
-                DnaCard card = cardOpt.get();
-                if (card.getDomainId() == null || !card.getDomainId().equals(parent.getId())) {
-                    missingCards.add(cardId + "(wrong_domain:" + card.getDomainId() + ")");
-                }
-                continue;
-            }
-            // DGV-010/DGV-012: the mapping names items of every class the domain
-            // holds — a rule, a goal, or a glossary entry moves with the same
-            // "ids stable" rule a card does.
             String misplaced = misplacedItemDomain(cardId, parent.getId());
             if (misplaced != null) {
-                missingItems.add(cardId + "(" + misplaced + ")");
+                if (misplaced.startsWith("wrong_domain")) {
+                    missingCards.add(cardId + "(" + misplaced + ")");
+                } else {
+                    missingItems.add(cardId + "(" + misplaced + ")");
+                }
             }
         }
         List<String> missingProposals = new ArrayList<>();
@@ -684,6 +677,14 @@ public class DnaDomainService {
      * another domain.
      */
     private String misplacedItemDomain(String itemId, String parentId) {
+        Optional<DnaCard> cardOpt = cardRepository.findById(itemId);
+        if (cardOpt.isPresent()) {
+            DnaCard card = cardOpt.get();
+            if (card.getDomainId() == null || !card.getDomainId().equals(parentId)) {
+                return "wrong_domain:" + card.getDomainId();
+            }
+            return null;
+        }
         Optional<DnaRule> ruleOpt = ruleRepository.findById(itemId);
         if (ruleOpt.isPresent()) {
             return ruleOpt.get().getDomainId() != null && ruleOpt.get().getDomainId().equals(parentId)
