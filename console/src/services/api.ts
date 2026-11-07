@@ -62,7 +62,11 @@ export function setAuthToken(token: string | null, user?: { userId: string; rbac
   } catch {
     // storage unavailable — values still work in memory for this session
   }
-  window.dispatchEvent(new CustomEvent('summa-auth-change', { detail: user }));
+  window.dispatchEvent(
+      new CustomEvent('summa-auth-change', {
+        detail: token === null ? null : user,
+      }),
+    );
 }
 
 export function getAuthToken(): string | null {

@@ -62,6 +62,19 @@ describe('auth helpers', () => {
     expect(getUser()).toBe(null)
   })
 
+  it('setAuthToken null token and null user clears both and dispatches event with null detail', async () => {
+    setAuthToken('test-token', { userId: 'u1', rbac: 'admin' as RbacRole, name: 'Test' })
+    const handler = vi.fn()
+    window.addEventListener('summa-auth-change', handler)
+
+    setAuthToken(null, null)
+    expect(getAuthToken()).toBe(null)
+    expect(getUser()).toBe(null)
+    expect(handler).toHaveBeenCalledOnce()
+    expect(handler.mock.calls[0][0].detail).toBe(null)
+    window.removeEventListener('summa-auth-change', handler)
+  })
+
   it('isAuthenticated returns false when no token', () => {
     expect(isAuthenticated()).toBe(false)
   })
