@@ -385,10 +385,9 @@ describe('refusal envelopes', () => {
   })
 
   it('setAuthToken clears both token and user when token is null', async () => {
-    // BUG: setAuthToken(null, {userId: "1"}) used to clear the token but leave
-    // the user in localStorage, creating an inconsistent auth state where a
-    // user identity exists without an authentication token. The fix ensures
-    // clearing the token also clears the cached user.
+// Fixed: setAuthToken(null, {userId: "1"}) now correctly clears both the token
+// and the cached user from localStorage, preventing inconsistent auth state.
+// See commit 5f5edc7 for the original fix.
     setAuthToken('test-token', { userId: 'u1', rbac: 'admin' as RbacRole, name: 'Test' })
     expect(getAuthToken()).toBe('test-token')
     expect(getUser()).toEqual({ userId: 'u1', rbac: 'admin', name: 'Test' })
