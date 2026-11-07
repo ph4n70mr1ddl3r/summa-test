@@ -59,6 +59,8 @@ public final class JsonHelpers {
                     sb.append("\\t");
                 } else if (c < 0x20) {
                     sb.append(String.format("\\u%04x", c));
+                } else if (c == 0x7f) {
+                    sb.append("\\u007f");
                 } else {
                     sb.appendCodePoint(c);
                 }
