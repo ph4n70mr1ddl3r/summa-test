@@ -64,7 +64,7 @@ export function setAuthToken(token: string | null, user?: { userId: string; rbac
   }
   window.dispatchEvent(
       new CustomEvent('summa-auth-change', {
-        detail: token === null ? null : user,
+        detail: token ? user : null,
       }),
     );
 }
