@@ -461,6 +461,19 @@ describe('refusal envelopes', () => {
     expect(getUser()).toBe(null)
   })
 
+  it('setAuthToken empty string token clears both token and user and dispatches event with null detail', async () => {
+    setAuthToken('test-token', { userId: 'u1', rbac: 'admin' as RbacRole, name: 'Test' })
+    const handler = vi.fn()
+    window.addEventListener('summa-auth-change', handler)
+
+    setAuthToken('')
+    expect(getAuthToken()).toBe('')
+    expect(getUser()).toBe(null)
+    expect(handler).toHaveBeenCalledOnce()
+    expect(handler.mock.calls[0][0].detail).toBe(null)
+    window.removeEventListener('summa-auth-change', handler)
+  })
+
   it('keeps the degraded-health checks on a 503', async () => {
     // The health screen names the down subsystem from the refusal body.
     fetchMock.mockResolvedValue(new Response(
