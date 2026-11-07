@@ -231,6 +231,25 @@ class JsonHelpersTest {
         assertTrue(json.contains("\\u007f") || json.contains("\u007f"));
     }
 
+    @Test
+    void jsonString_handlesOtherControlCharacters() {
+        // Test that additional control characters are properly escaped
+        // when ObjectMapper fails and the manual fallback is used.
+        String input = "\u0001\u0002\u0003"; // SOH, STX, ETX
+        String json = JsonHelpers.jsonString(input);
+        // Output must be valid JSON string
+        assertTrue(json.startsWith("\"") && json.endsWith("\""));
+        // Control characters must be escaped (not appear raw in the JSON output)
+        String inner = json.substring(1, json.length() - 1);
+        // Check that no raw control characters (0x00-0x1F, 0x7F) remain
+        for (int k = 0; k < inner.length(); ) {
+            int codePoint = inner.codePointAt(k);
+            assertTrue(codePoint >= 0x20 && codePoint != 0x7F,
+                "Raw control character 0x" + Integer.toHexString(codePoint) + " found in JSON output: " + json);
+            k += Character.charCount(codePoint);
+        }
+    }
+
     static class InstantHolder {
         public Instant ts;
     }
