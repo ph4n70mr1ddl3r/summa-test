@@ -702,4 +702,23 @@ class DnaProposalServiceTest {
             proposalService.amend("prop-1", payload, "human-1"));
         assertTrue(ex.getMessage().contains("effective_to must not be before effective_from"));
     }
+
+    @Test
+    void publish_domainSmugglingWithInvalidJson_shouldFail() {
+        // DWP-064: A payload that is not valid JSON should NOT bypass the
+        // domain smuggling guard. Previously the catch (Exception e) block
+        // silently swallowed JSON parse errors, allowing domain smuggling.
+        DnaProposal proposal = new DnaProposal();
+        proposal.setId("prop-1");
+        proposal.setStatus("open");
+        proposal.setKind("card");
+        proposal.setDomainId("domain-1");
+        proposal.setProposedBy("h:human-1");
+        proposal.setReviewBy("human-1");
+        proposal.setPayload("NOT_JSON_AT_ALL{domain_id:domain-2");  // invalid JSON
+        when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
+
+        assertThrows(IllegalStateException.class, () ->
+            proposalService.publish("prop-1", "human-1", "human-1"));
+    }
 }
