@@ -250,6 +250,20 @@ class JsonHelpersTest {
         }
     }
 
+    @Test
+    void jsonString_handlesNullCharacter() {
+        // 0x00 (NULL) is a control character that must be escaped in JSON
+        // as \u0000. Verify the method produces valid JSON output for this edge case.
+        String input = "\u0000"; // NULL character
+        String json = JsonHelpers.jsonString(input);
+        // Output must be valid JSON (starts and ends with quotes, parseable)
+        assertTrue(json.startsWith("\"") && json.endsWith("\""));
+        // The NULL character must be escaped
+        String inner = json.substring(1, json.length() - 1);
+        assertTrue(inner.contains("\\u0000"),
+            "NULL character not escaped in JSON output: " + json);
+    }
+
     static class InstantHolder {
         public Instant ts;
     }
