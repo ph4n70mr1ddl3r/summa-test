@@ -446,6 +446,34 @@ class DnaRuleServiceTest {
     }
 
     @Test
+    void supersede_truncatesPredecessorWhenSuccessorStartsAtPredecessorEnd() {
+        // DNC-023: when the successor's effective_from equals the predecessor's
+        // effective_to, the predecessor's window should be truncated at that edge
+        // so there are no co-temporal heads.
+        DnaRule predecessor = new DnaRule();
+        predecessor.setId("rule-old");
+        predecessor.setDomainId("domain-1");
+        predecessor.setStatus("active");
+        Instant sharedEdge = Instant.now().plusSeconds(3600);
+        predecessor.setEffectiveTo(sharedEdge);
+        DnaRule successor = new DnaRule();
+        successor.setId("rule-new");
+        successor.setDomainId("domain-1");
+        successor.setStatus("active");
+        successor.setEffectiveFrom(sharedEdge);
+        when(ruleRepository.findById("rule-new")).thenReturn(Optional.of(successor));
+        when(ruleRepository.findById("rule-old")).thenReturn(Optional.of(predecessor));
+        when(ruleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ruleService.supersede("rule-new", "rule-old", "admin");
+
+        assertEquals(sharedEdge, predecessor.getEffectiveTo(),
+            "Predecessor's effectiveTo should be truncated to successor's effectiveFrom");
+        assertEquals("active", predecessor.getStatus(),
+            "Predecessor stays active when successor's effectiveFrom is in the future");
+    }
+
+    @Test
     void supersede_refusesALapsedPredecessor() {
         // DNC-022: superseded and lapsed rules are frozen history — an item
         // write must not flip a lapsed rule out of it.

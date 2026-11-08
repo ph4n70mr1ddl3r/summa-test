@@ -138,7 +138,7 @@ public class DnaRuleService {
     private void displacePredecessor(DnaRule predecessor, Instant successorEffectiveFrom, String actor) {
         if (successorEffectiveFrom == null) return;
         Instant currentEnd = predecessor.getEffectiveTo();
-        if (currentEnd == null || successorEffectiveFrom.isBefore(currentEnd)) {
+        if (currentEnd == null || !successorEffectiveFrom.isAfter(currentEnd)) {
             predecessor.setEffectiveTo(successorEffectiveFrom);
         }
         if (!successorEffectiveFrom.isAfter(Instant.now())) {
