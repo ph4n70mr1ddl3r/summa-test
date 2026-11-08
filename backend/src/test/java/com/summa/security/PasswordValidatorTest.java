@@ -84,4 +84,19 @@ class PasswordValidatorTest {
         // "Aa" (2) + 17*"😀" (68) + "1!" (2) = 72 bytes
         assertDoesNotThrow(() -> PasswordValidator.validate(multiByte));
     }
+
+    @Test
+    void validate_passwordWithSpace_rejects() {
+        assertThrows(IllegalArgumentException.class, () -> PasswordValidator.validate("Abcdefghij1 "));
+    }
+
+    @Test
+    void validate_passwordWithTab_rejects() {
+        assertThrows(IllegalArgumentException.class, () -> PasswordValidator.validate("Abcdefghij1\t"));
+    }
+
+    @Test
+    void validate_passwordWithLeadingSpace_rejects() {
+        assertThrows(IllegalArgumentException.class, () -> PasswordValidator.validate(" Abcdefghij1!"));
+    }
 }
