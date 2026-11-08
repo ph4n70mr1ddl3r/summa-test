@@ -277,6 +277,15 @@ describe('loadWithFallback error message formatting', () => {
     // When individual fetches succeed, error is null even if parallel failed
     expect(result.data).toHaveLength(1)
   })
+
+  it('handles null error gracefully', async () => {
+    const result = await loadWithFallback(
+      async () => { throw null; },
+      async () => [null, null]
+    )
+    expect(result.error).toBeDefined()
+    expect(result.error).toContain('unknown error')
+  })
 })
 
 describe('api.nodes endpoint paths', () => {

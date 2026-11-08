@@ -223,7 +223,7 @@ export async function loadWithFallback<T>(
     const results = await fetchIndividual();
     const hasError = results.some(r => r == null);
     const error = hasError
-      ? 'Some data could not be loaded: ' + (e instanceof Error ? e.message : (typeof e === 'string' ? e : String(e)))
+      ? 'Some data could not be loaded: ' + (e != null ? (e instanceof Error ? e.message : (typeof e === 'string' ? e : String(e))) : 'unknown error')
       : null;
     return { data: results, error };
   }
