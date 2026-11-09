@@ -300,6 +300,9 @@ public class DnaProposalService {
      */
     private List<String> detectContradictions(DnaProposal proposal) {
         List<String> issues = new ArrayList<>();
+        if (proposal.getPayload() == null) {
+            return issues;
+        }
         try {
             JsonNode payload = objectMapper.readTree(proposal.getPayload());
             String kind = proposal.getKind();
