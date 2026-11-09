@@ -147,6 +147,17 @@ describe('auth helpers', () => {
     window.removeEventListener('summa-auth-change', handler)
   })
 
+  it('setAuthToken empty string token with user dispatches event with null detail', () => {
+    const handler = vi.fn()
+    window.addEventListener('summa-auth-change', handler)
+    setAuthToken('', { userId: 'u1', rbac: 'admin' as RbacRole, name: 'Test' })
+    expect(getAuthToken()).toBe('')
+    expect(getUser()).toBe(null)
+    expect(handler).toHaveBeenCalledOnce()
+    expect(handler.mock.calls[0][0].detail).toBe(null)
+    window.removeEventListener('summa-auth-change', handler)
+  })
+
   it('getUser returns null when no user stored', () => {
     expect(getUser()).toBe(null)
   })
