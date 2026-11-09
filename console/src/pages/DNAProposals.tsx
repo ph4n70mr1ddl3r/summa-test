@@ -81,9 +81,10 @@ export default function DNAProposals() {
       setActionId(null)
     }
     // Reload in both cases — a refused action may still have changed server
-    // state — and await it: the loader's failure is recorded in the page's own
-    // error banner, so the rejection is only swallowed here.
-    try { await loadProposals().promise } catch { /* the page's error banner shows it */ }
+    // state. The loader's failure is recorded in the page's own error banner
+    // (via loadProposals' .catch() setting error state), so the page re-renders
+    // with the updated data and error banner.
+    loadProposals()
   }
 
   if (loading) return <div className="text-gray-400" role="status" aria-live="polite">Loading...</div>
