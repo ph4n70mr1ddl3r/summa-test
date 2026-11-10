@@ -762,4 +762,62 @@ class DnaProposalServiceTest {
         // Non-string domain_id should not block publish
         assertEquals("published", result.getStatus());
     }
+
+    @Test
+    void detectContradictions_goalDomainIdNonStringShouldNotProduceContradiction() {
+        // Bug hunt: detectContradictions() checks goal domain_id without verifying it's a string.
+        // If domain_id is a non-string JSON value (number, boolean), asText() returns an
+        // unreliable representation, potentially causing false domain mismatches.
+        DnaProposal proposal = new DnaProposal();
+        proposal.setId("prop-1");
+        proposal.setStatus("open");
+        proposal.setKind("goal");
+        proposal.setDomainId("domain-1");
+        // Payload with domain_id as a non-string JSON value (number)
+        proposal.setPayload("{\"domain_id\": 42}");
+
+        List<String> contradictions = proposalService.detectContradictions(proposal);
+
+        // Non-string domain_id should not produce a false contradiction
+        assertTrue(contradictions.isEmpty(),
+            "Expected no contradictions for non-string goal domain_id, but got: " + contradictions);
+    }
+
+    @Test
+    void detectContradictions_goalDomainIdBooleanShouldNotProduceContradiction() {
+        // Same as above, but with a boolean domain_id value.
+        DnaProposal proposal = new DnaProposal();
+        proposal.setId("prop-1");
+        proposal.setStatus("open");
+        proposal.setKind("goal");
+        proposal.setDomainId("domain-1");
+        // Payload with domain_id as a boolean
+        proposal.setPayload("{\"domain_id\": false}");
+
+        List<String> contradictions = proposalService.detectContradictions(proposal);
+
+        // Non-string domain_id should not produce a false contradiction
+        assertTrue(contradictions.isEmpty(),
+            "Expected no contradictions for boolean goal domain_id, but got: " + contradictions);
+    }
+
+    @Test
+    void detectContradictions_goalDomainIdProposalNullShouldNotProduceContradiction() {
+        // Bug hunt: detectContradictions() does not handle the case where
+        // proposal.getDomainId() is null. String.equals(null) returns false in Java,
+        // so a payload with a string domain_id would falsely produce a mismatch issue.
+        DnaProposal proposal = new DnaProposal();
+        proposal.setId("prop-1");
+        proposal.setStatus("open");
+        proposal.setKind("goal");
+        proposal.setDomainId(null);
+        // Payload with domain_id as a valid string
+        proposal.setPayload("{\"domain_id\": \"domain-1\"}");
+
+        List<String> contradictions = proposalService.detectContradictions(proposal);
+
+        // Null proposal domain_id should not produce a false contradiction
+        assertTrue(contradictions.isEmpty(),
+            "Expected no contradictions for null proposal domain_id, but got: " + contradictions);
+    }
 }

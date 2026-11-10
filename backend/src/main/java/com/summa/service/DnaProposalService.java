@@ -299,7 +299,7 @@ public class DnaProposalService {
      * DWP-042: Detect contradictions between the proposal payload and current domain state.
      * Covers rule supersedence chain integrity and goal domain alignment.
      */
-    private List<String> detectContradictions(DnaProposal proposal) {
+    List<String> detectContradictions(DnaProposal proposal) {
         List<String> issues = new ArrayList<>();
         if (proposal.getPayload() == null) {
             return issues;
@@ -341,9 +341,10 @@ public class DnaProposalService {
             }
 
             if ("goal".equals(kind)) {
-                if (payload.has("domain_id") && !payload.get("domain_id").isNull()) {
+                if (payload.has("domain_id") && !payload.get("domain_id").isNull()
+                        && payload.get("domain_id").isTextual()) {
                     String goalDomainId = payload.get("domain_id").asText();
-                    if (!goalDomainId.equals(proposal.getDomainId())) {
+                    if (proposal.getDomainId() != null && !goalDomainId.equals(proposal.getDomainId())) {
                         issues.add("Goal domain_id mismatch: payload domain " + goalDomainId
                             + " differs from proposal domain " + proposal.getDomainId());
                     }
