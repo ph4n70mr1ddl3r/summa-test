@@ -217,7 +217,8 @@ public class DnaProposalService {
                     throw new IllegalStateException(
                         "Failed to parse proposal payload as JSON: " + e.getMessage());
                 }
-                if (payload.has("domain_id") && !payload.get("domain_id").isNull()) {
+                if (payload.has("domain_id") && !payload.get("domain_id").isNull()
+                        && payload.get("domain_id").isTextual()) {
                     String payloadDomainId = payload.get("domain_id").asText();
                     if (!payloadDomainId.equals(proposal.getDomainId())) {
                         throw new IllegalStateException(

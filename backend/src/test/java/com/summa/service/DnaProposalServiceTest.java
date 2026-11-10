@@ -721,4 +721,45 @@ class DnaProposalServiceTest {
         assertThrows(IllegalStateException.class, () ->
             proposalService.publish("prop-1", "human-1", "human-1"));
     }
+
+    @Test
+    void publish_domainSmugglingWithNonStringDomainIdShouldNotBlockPublish() {
+        // DWP-064: The domain smuggling check should only compare string domain_id values.
+        // If domain_id is a non-string JSON value (number, boolean, object), asText()
+        // would return an unreliable value; the check should be skipped rather than
+        // producing a false contradiction or blocking publish.
+        DnaProposal proposal = new DnaProposal();
+        proposal.setId("prop-1");
+        proposal.setStatus("open");
+        proposal.setReviewBy("human-1");
+        proposal.setDomainId("domain-1");
+        // Payload with domain_id as a non-string JSON value (number)
+        proposal.setPayload("{\"domain_id\": 123}");
+        when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
+        when(proposalRepository.save(any())).thenReturn(proposal);
+
+        DnaProposal result = proposalService.publish("prop-1", "human-1", "human-1");
+
+        // Non-string domain_id should not block publish — the check is skipped
+        assertEquals("published", result.getStatus());
+    }
+
+    @Test
+    void publish_domainSmugglingWithBooleanDomainIdShouldNotBlockPublish() {
+        // DWP-064: Same as above, but with a boolean domain_id value.
+        DnaProposal proposal = new DnaProposal();
+        proposal.setId("prop-1");
+        proposal.setStatus("open");
+        proposal.setReviewBy("human-1");
+        proposal.setDomainId("domain-1");
+        // Payload with domain_id as a boolean
+        proposal.setPayload("{\"domain_id\": true}");
+        when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
+        when(proposalRepository.save(any())).thenReturn(proposal);
+
+        DnaProposal result = proposalService.publish("prop-1", "human-1", "human-1");
+
+        // Non-string domain_id should not block publish
+        assertEquals("published", result.getStatus());
+    }
 }
