@@ -723,6 +723,25 @@ class DnaProposalServiceTest {
     }
 
     @Test
+    void amend_withInvalidJsonPayload_shouldFail() {
+        // DWP-064: An amendment payload that is not valid JSON should NOT bypass
+        // the domain smuggling guard. The catch (Exception e) block that silently
+        // swallows JSON parse errors must throw IllegalStateException instead.
+        DnaProposal proposal = new DnaProposal();
+        proposal.setId("prop-1");
+        proposal.setStatus("open");
+        proposal.setKind("card");
+        proposal.setDomainId("domain-1");
+        proposal.setProposedBy("h:human-1");
+        proposal.setReviewBy("human-1");
+        proposal.setPayload("NOT_JSON_AT_ALL{domain_id:domain-2");  // invalid JSON
+        when(proposalRepository.findById("prop-1")).thenReturn(Optional.of(proposal));
+
+        assertThrows(IllegalStateException.class, () ->
+            proposalService.amend("prop-1", "NOT_JSON_AT_ALL{domain_id:domain-2}", "human-1"));
+    }
+
+    @Test
     void publish_domainSmugglingWithNonStringDomainIdShouldNotBlockPublish() {
         // DWP-064: The domain smuggling check should only compare string domain_id values.
         // If domain_id is a non-string JSON value (number, boolean, object), asText()

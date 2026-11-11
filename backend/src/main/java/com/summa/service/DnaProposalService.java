@@ -540,7 +540,8 @@ public class DnaProposalService {
                 } catch (IllegalArgumentException | IllegalStateException | EntityNotFoundException e) {
                     throw e;
                 } catch (Exception e) {
-                    // Non-JSON payloads continue to contradiction check
+                    throw new IllegalStateException(
+                        "Failed to parse proposal payload as JSON: " + e.getMessage());
                 }
             }
 
