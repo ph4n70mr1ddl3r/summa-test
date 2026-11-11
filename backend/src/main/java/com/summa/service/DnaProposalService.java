@@ -309,7 +309,8 @@ public class DnaProposalService {
             String kind = proposal.getKind();
 
             if ("rule".equals(kind)) {
-                if (payload.has("supersedes_id") && !payload.get("supersedes_id").isNull()) {
+                if (payload.has("supersedes_id") && !payload.get("supersedes_id").isNull()
+                        && payload.get("supersedes_id").isTextual()) {
                     String supersedesId = payload.get("supersedes_id").asText();
                     // DGV-025: Check supersedence chain integrity — refuse if the target
                     // already has a live superseder (fork), or if the target itself is not
