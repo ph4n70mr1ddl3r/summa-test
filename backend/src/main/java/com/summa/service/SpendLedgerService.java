@@ -162,7 +162,6 @@ public class SpendLedgerService {
     public SpendLedger settleRun(Run run, Double actualCost, Long tokensOut, String actor) {
         if (run == null || run.getId() == null) return null;
         double reservedAmount = repository.sumNetReserveForRun(run.getId());
-        releaseRun(run, actor);
 
         if (actualCost != null && actualCost > 0 && run.getAgentId() != null) {
             boolean isOverrun = reservedAmount > 0 && actualCost > reservedAmount;
@@ -182,6 +181,7 @@ public class SpendLedgerService {
             }
             auditService.log(actor, "SETTLE_SPEND", "spend_ledger", saved.getId(),
                 String.format("{\"runId\":%s,\"cost\":%.4f}", JsonHelpers.jsonString(run.getId()), actualCost));
+            releaseRun(run, actor);
             return saved;
         }
         return null;
