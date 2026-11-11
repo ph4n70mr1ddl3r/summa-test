@@ -483,6 +483,50 @@ class DnaProposalServiceTest {
     }
 
     @Test
+    void checkAndEscalateBreachedProposals_orgScopedNullCreatedAtNotEscalated() {
+        // Bug hunt: checkAndEscalateBreachedProposals has inconsistent handling
+        // of null CreatedAt between org-scoped and domain-scoped proposals.
+        // Org-scoped: if CreatedAt is null, SLA check doesn't apply (no escalation).
+        // Domain-scoped: if CreatedAt is null, proposal is skipped with continue.
+        // This test verifies org-scoped proposals with null CreatedAt are handled.
+        DnaProposal proposal = new DnaProposal();
+        proposal.setId("prop-1");
+        proposal.setStatus("open");
+        proposal.setKind("card");
+        proposal.setDomainId(null); // org-scoped
+        proposal.setCreatedAt(null); // null CreatedAt
+
+        when(proposalRepository.findAllOpen()).thenReturn(List.of(proposal));
+
+        proposalService.checkAndEscalateBreachedProposals();
+
+        // With null CreatedAt, the org-scoped SLA check should not escalate
+        verify(askService, never()).create(
+            eq("question"), eq("system"), eq("admins"), anyString(),
+            eq("critical"), eq("escalate"), eq(1), any(), isNull(), isNull());
+    }
+
+    @Test
+    void checkAndEscalateBreachedProposals_domainScopedNullCreatedAtSkipped() {
+        // Bug hunt: domain-scoped proposals with null CreatedAt should be skipped.
+        DnaProposal proposal = new DnaProposal();
+        proposal.setId("prop-1");
+        proposal.setStatus("open");
+        proposal.setKind("card");
+        proposal.setDomainId("domain-1"); // domain-scoped
+        proposal.setCreatedAt(null); // null CreatedAt
+
+        when(proposalRepository.findAllOpen()).thenReturn(List.of(proposal));
+
+        proposalService.checkAndEscalateBreachedProposals();
+
+        // With null CreatedAt, the domain-scoped proposal should be skipped
+        verify(askService, never()).create(
+            eq("question"), eq("system"), eq("admins"), anyString(),
+            eq("critical"), eq("escalate"), eq(1), any(), isNull(), isNull());
+    }
+
+    @Test
     void checkAndEscalateBreachedProposals_escalatesOnceThenStops() {
         // First call: proposal is breached and not yet escalated → escalate.
         // Second call: escalatedAt is set → no second escalation.

@@ -392,9 +392,10 @@ public class DnaProposalService {
             boolean shouldEscalate = false;
             if (proposal.getDomainId() == null || proposal.getDomainId().isBlank()) {
                 // Org-scoped: check against global default SLA from governance settings
+                if (proposal.getCreatedAt() == null) continue;
                 Integer defaultSlaDays = governanceService.getSetting("summa.dna.default-review-sla-days", Integer.class);
                 long slaSeconds = (defaultSlaDays != null ? defaultSlaDays : 7) * 86400L;
-                if (proposal.getCreatedAt() != null && now.isAfter(proposal.getCreatedAt().plusSeconds(slaSeconds))) {
+                if (now.isAfter(proposal.getCreatedAt().plusSeconds(slaSeconds))) {
                     shouldEscalate = true;
                 }
             } else {
