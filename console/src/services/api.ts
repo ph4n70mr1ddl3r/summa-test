@@ -220,11 +220,18 @@ export async function loadWithFallback<T>(
     const data = await fetchAll();
     return { data, error: null };
   } catch (e) {
-    const results = await fetchIndividual();
-    const hasError = results.some(r => r == null);
-    const error = hasError
-      ? 'Some data could not be loaded: ' + (e != null ? (e instanceof Error ? e.message : (typeof e === 'string' ? e : String(e))) : 'unknown error')
-      : null;
+    let results: (T | null | undefined)[];
+    let error: string | null;
+    try {
+      results = await fetchIndividual();
+      const hasError = results.some(r => r == null);
+      error = hasError
+        ? 'Some data could not be loaded: ' + (e != null ? (e instanceof Error ? e.message : (typeof e === 'string' ? e : String(e))) : 'unknown error')
+        : null;
+    } catch {
+      results = [];
+      error = 'unknown error';
+    }
     return { data: results, error };
   }
 }

@@ -220,10 +220,19 @@ describe('loadWithFallback', () => {
     expect(result.data[1]).toBeNull()
   })
 
-  it('returns null error when all individual fetches succeed', async () => {
+  it('returns unknown error when individual fetch also throws', async () => {
     const result = await loadWithFallback(
       async () => { throw new Error('parallel fail'); },
-      async () => [{ id: '1' }, { id: '2' }]
+      async () => { throw new Error('individual fail'); }
+    )
+    expect(result.error).toBe('unknown error')
+    expect(result.data).toEqual([])
+  })
+
+  it("returns null error when all individual fetches succeed", async () => {
+    const result = await loadWithFallback(
+      async () => { throw new Error("parallel fail"); },
+      async () => [{ id: "1" }, { id: "2" }]
     )
     expect(result.error).toBeNull()
   })
