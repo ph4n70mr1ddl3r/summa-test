@@ -513,8 +513,14 @@ public class DnaProposalService {
                         }
                     }
                     if (node.has("domain_id")) {
-                        String payloadDomain = node.get("domain_id").isNull() || node.get("domain_id").asText().isBlank()
-                            ? null : node.get("domain_id").asText();
+                    JsonNode domainIdNode = node.get("domain_id");
+                    if (domainIdNode.isNull()) {
+                        // Explicitly null domain_id — re-route to org-wide (DWP-032)
+                        newDomainId = null;
+                    } else if (domainIdNode.isTextual()) {
+                        // String domain_id — process normally
+                        String payloadDomain = domainIdNode.asText().isBlank()
+                            ? null : domainIdNode.asText();
                         if (proposal.getDomainId() != null) {
                             if (payloadDomain != null && !payloadDomain.equals(proposal.getDomainId())) {
                                 // Cross-domain moves are refused outright (DWP-064)
@@ -537,6 +543,9 @@ public class DnaProposalService {
                             }
                         }
                     }
+                    // Non-string domain_id (number, boolean, etc.) — treat as no domain change,
+                    // skip the domain_id processing to avoid false cross-domain errors
+                }
                 } catch (IllegalArgumentException | IllegalStateException | EntityNotFoundException e) {
                     throw e;
                 } catch (Exception e) {
