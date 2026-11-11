@@ -38,14 +38,14 @@ public class GovernanceService {
         this.settingRepository = settingRepository;
         this.spendLedgerRepository = spendLedgerRepository;
         this.objectMapper = objectMapper;
-        double override = 0.0;
+        double override = -1.0;
         if (spendCeilingStr != null && !spendCeilingStr.isBlank()) {
             try { override = Double.parseDouble(spendCeilingStr.trim()); }
             catch (NumberFormatException e) {
                 log.debug("Invalid spend ceiling override '{}': {}", spendCeilingStr, e.getMessage());
             }
         }
-        this.spendCeilingOverride = override > 0 ? override : -1.0;
+        this.spendCeilingOverride = override >= 0 ? override : -1.0;
     }
 
     @Transactional(readOnly = true)
@@ -213,7 +213,7 @@ public class GovernanceService {
 
     public double resolveSpendCeiling() {
         Double ceiling = getSetting("spend-org-ceiling", Double.class);
-        if (ceiling == null || ceiling <= 0) ceiling = spendCeilingOverride > 0 ? spendCeilingOverride : Defaults.DEFAULT_SPEND_CEILING;
+        if (ceiling == null || ceiling <= 0) ceiling = spendCeilingOverride >= 0 ? spendCeilingOverride : Defaults.DEFAULT_SPEND_CEILING;
         return ceiling;
     }
 
