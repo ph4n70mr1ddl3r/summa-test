@@ -238,24 +238,29 @@ public class DnaProposalService {
             // DWP-050: Check SoD — if the domain has sod enabled and the proposer is the publisher,
             // the publish routes to the admin broadcast instead of self-approval.
             String actualReviewer = reviewedBy;
+            boolean sodTriggered = false;
             if (proposal.getDomainId() != null && !proposal.getDomainId().isBlank()) {
                 Optional<DnaDomain> domainOpt = domainService.findById(proposal.getDomainId());
                 if (domainOpt.isPresent() && "reviewer-distinct".equals(domainOpt.get().getSod())) {
-                    // DAT-120: proposed_by is a keyed union and the actor is a bare id —
-                    // compare the stripped forms so the separation-of-duties guard fires.
                     if (proposedByMatches(proposal, actor)) {
-                        // SoD breach: the proposer may not publish their own proposal.
-                        // DWP-050 routes the publish to the admin broadcast (ASK-055):
-                        // the proposal stays in review and an admin picks it up. The
-                        // publish itself is refused — recording an admin who never saw
-                        // the proposal as its reviewer and publishing it anyway made the
-                        // knob cosmetic.
-                        routeSodPublishToAdmin(proposal);
-                        throw new IllegalStateException(
-                            "Separation of duties: the proposer may not publish this proposal — "
-                                + "the publish is routed to the admin broadcast");
+                        sodTriggered = true;
                     }
                 }
+            } else {
+                // org-scoped: SOD applies when reviewBy is an admin (org-wide review queue),
+                // preventing the proposer from self-publishing their own proposal.
+                if (proposal.getReviewBy() != null && !proposal.getReviewBy().isBlank()
+                        && memberService.isAdmin(proposal.getReviewBy())) {
+                    if (proposedByMatches(proposal, actor)) {
+                        sodTriggered = true;
+                    }
+                }
+            }
+            if (sodTriggered) {
+                routeSodPublishToAdmin(proposal);
+                throw new IllegalStateException(
+                    "Separation of duties: the proposer may not publish this proposal — "
+                        + "the publish is routed to the admin broadcast");
             }
 
             proposal.setStatus("published");

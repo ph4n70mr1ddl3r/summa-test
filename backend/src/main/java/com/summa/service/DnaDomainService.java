@@ -278,7 +278,14 @@ public class DnaDomainService {
      * rendering with the review_by clocks untouched.
      */
     private void rekeyReviewAuthority(String domainId, String newOwnerId) {
-        if (newOwnerId == null || newOwnerId.isBlank()) return;
+        if (newOwnerId == null || newOwnerId.isBlank()) {
+            // Clear reviewBy on open proposals when owner is being removed
+            for (DnaProposal proposal : proposalRepository.findOpenByDomain(domainId)) {
+                proposal.setReviewBy(null);
+                proposalRepository.save(proposal);
+            }
+            return;
+        }
         for (DnaProposal proposal : proposalRepository.findOpenByDomain(domainId)) {
             proposal.setReviewBy(newOwnerId);
             proposalRepository.save(proposal);
@@ -320,6 +327,13 @@ public class DnaDomainService {
                 domain.setReviewSlaDays(reviewSlaDays);
                 domainRepository.save(domain);
                 // DWP-025: only tighten — when the new SLA is shorter, re-derive standing clocks
+                // applying them only where they land earlier; loosening leaves standing clocks
+                // untouched. Log when raising the SLA so operators are aware clocks won't
+                // be re-derived and proposals keep their existing deadlines.
+                if (reviewSlaDays > oldSlaDays) {
+                    auditService.logSystem("SLA_RAISED_NO_CLOCK_REDERIVATION", "dna_domain", id,
+                        String.format("{\"oldSlaDays\":%d,\"newSlaDays\":%d}", oldSlaDays, reviewSlaDays));
+                }
                 if (reviewSlaDays < oldSlaDays) {
                     rederiveReviewClocks(id, reviewSlaDays);
                 }
@@ -607,8 +621,8 @@ public class DnaDomainService {
         }
 
         // Remap workspace bindings
-        List<Workspace> allWorkspaces = workspaceRepository.findAll();
-        for (Workspace ws : allWorkspaces) {
+        List<Workspace> workspaces = workspaceRepository.findByDomainIdsContaining(sourceId);
+        for (Workspace ws : workspaces) {
             try {
                 String domainIdsStr = ws.getDomainIds();
                 if (domainIdsStr == null || domainIdsStr.isBlank() || domainIdsStr.equals("[]")) continue;
