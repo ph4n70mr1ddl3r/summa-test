@@ -35,6 +35,13 @@ public class DnaGlossaryService {
         this.domainLockService = domainLockService != null ? domainLockService : new DomainLockService();
     }
 
+    /**
+     * DNC-041/042: Create a DNA glossary entry within a domain write lock. Validates
+     * that the term/alias does not already block a live entry of the same scope; a
+     * retired entry does not block reuse (retirement frees it). DRP-032: the duplicate
+     * check covers both term and aliases. Scans for secrets before writing (SEC-030).
+     * Frontmatter carries a schema_version; product upgrades run in-place migrations.
+     */
     @Transactional
     public DnaGlossary create(String id, String domainId, String term, String definition,
                                String aliases, String actor) {

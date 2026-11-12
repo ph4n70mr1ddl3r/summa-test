@@ -43,6 +43,15 @@ public class DnaGoalService {
         this.domainLockService = domainLockService != null ? domainLockService : new DomainLockService();
     }
 
+    /**
+     * DAT-120 / DNC-053: Create a DNA goal within a domain write lock. Validates
+     * that the owner exists and has write surface (not a viewer, not ephemeral).
+     * Owner is stored as a keyed union (h:<humans.id>/a:<agents.id>). Scans for
+     * secrets in the statement (SEC-030). The inject mode ('always' or 'linked')
+     * controls how the goal appears in run prompts. Effective dates control the
+     * injection window — a goal not yet at effective_from has not entered the slice,
+     * and one past effective_to has left the slice.
+     */
     @Transactional
     public DnaGoal create(String id, String domainId, String quarter, String statementMd,
                             String owner, String inject, Instant effectiveFrom,

@@ -75,6 +75,16 @@ public class DnaProposalService {
         this.domainLockService = domainLockService != null ? domainLockService : new DomainLockService();
     }
 
+    /**
+     * DAT-120 / DWP-010: Create a DNA proposal — the proposer must hold a write
+     * surface (a human of any role but viewer, or a persistent agent). ProposedBy
+     * is resolved to a keyed-union form (h:/a:) by live member lookup so an agent
+     * proposer is never relabelled as human. Kind determines the proposal type and
+     * review queue. Contradiction detection runs at create time (DWP-042). The
+     * review_by addressee is derived from the domain owner (domain-scoped) or the
+     * global admin queue (org-wide), with a guard against dangling references
+     * when no admins exist.
+     */
     @Transactional
     public DnaProposal create(String id, String kind, String payload, String proposedBy,
                                  String provenance, String domainId) {
@@ -380,6 +390,12 @@ public class DnaProposalService {
 
     /**
      * DWP-020: Check for proposals whose review SLA has been breached and escalate to admin.
+     * <p>
+     * Performance note: iterates all open proposals every 5 minutes (300s). The
+     * {@code escalatedAt} field on each proposal row prevents duplicate escalations
+     * after application restarts. For large datasets consider targeted querying or
+     * increasing the dedup window. The 5-minute cadence is tuned for the single-process
+     * MVP path; scale-out may require adjustment.
      */
     @Scheduled(fixedRate = 300000)
     @Transactional
@@ -492,6 +508,14 @@ public class DnaProposalService {
      * DWP-030: amendments come from the proposer or the reviewing owner (as
      * suggested changes) — any other member is refused.
      */
+    /**
+     * DWP-030: Amend a proposal — the proposer or the reviewing owner may submit
+     * suggested changes. The proposal kind cannot be changed; scope re-routing
+     * (domain-scoped ↔ org-wide) is permitted per DWP-032 and validated here.
+     * Contradiction checks re-run at amendment time (DWP-042 / DWP-063).
+     * Revisions are incremented atomically; concurrent amendments serialize
+     * behind the domain write lock (DWP-031).
+     */
     @Transactional
     public DnaProposal amend(String id, String payload, String actor) {
         DnaProposal proposal = proposalRepository.findById(id)
@@ -520,39 +544,42 @@ public class DnaProposalService {
                         }
                     }
                     if (node.has("domain_id")) {
-                    JsonNode domainIdNode = node.get("domain_id");
-                    if (domainIdNode.isNull()) {
-                        // Explicitly null domain_id — re-route to org-wide (DWP-032)
-                        newDomainId = null;
-                    } else if (domainIdNode.isTextual()) {
-                        // String domain_id — process normally
-                        String payloadDomain = domainIdNode.asText().isBlank()
-                            ? null : domainIdNode.asText();
-                        if (proposal.getDomainId() != null) {
-                            if (payloadDomain != null && !payloadDomain.equals(proposal.getDomainId())) {
-                                // Cross-domain moves are refused outright (DWP-064)
-                                throw new IllegalStateException(
-                                    "Cross-domain moves are refused at amendment (DWP-064): current domain="
-                                        + proposal.getDomainId() + ", target domain=" + payloadDomain);
-                            }
-                            if (payloadDomain == null) {
-                                // Scope re-routes from domain-scoped to org-wide (DWP-032)
-                                newDomainId = null;
-                            }
-                        } else {
-                            // Current is org-scoped
-                            if (payloadDomain != null) {
-                                // Scope re-routes from org-wide to domain-scoped (DWP-032)
-                                DnaDomain targetDomain = domainService.findById(payloadDomain)
-                                    .orElseThrow(() -> new EntityNotFoundException("Target domain not found: " + payloadDomain));
-                                DomainGuards.requireWritable(targetDomain, payloadDomain);
-                                newDomainId = payloadDomain;
+                        JsonNode domainIdNode = node.get("domain_id");
+                        if (domainIdNode.isNull()) {
+                            // Explicitly null domain_id — re-route to org-wide (DWP-032)
+                            newDomainId = null;
+                        } else if (domainIdNode.isTextual()) {
+                            String payloadDomain = domainIdNode.asText().isBlank()
+                                ? null : domainIdNode.asText();
+                            if (proposal.getDomainId() != null) {
+                                // Domain-scoped proposal: validate no cross-domain move
+                                if (payloadDomain != null && !payloadDomain.equals(proposal.getDomainId())) {
+                                    throw new IllegalStateException(
+                                        "Cross-domain moves are refused at amendment (DWP-064): current domain="
+                                            + proposal.getDomainId() + ", target domain=" + payloadDomain);
+                                }
+                                // If payload domain is null, scope re-routes to org-wide (DWP-032)
+                                if (payloadDomain == null) {
+                                    newDomainId = null;
+                                }
+                            } else {
+                                // Org-scoped proposal: scope re-routes based on payload
+                                if (payloadDomain != null) {
+                                    DnaDomain targetDomain = domainService.findById(payloadDomain)
+                                        .orElseThrow(() -> new EntityNotFoundException(
+                                            "Target domain not found: " + payloadDomain));
+                                    DomainGuards.requireWritable(targetDomain, payloadDomain);
+                                    newDomainId = payloadDomain;
+                                } else {
+                                    // Org-scoped payload stays org-scoped
+                                    newDomainId = null;
+                                }
                             }
                         }
+                        // Non-string domain_id (number, boolean, etc.) — treat as no domain change,
+                        // skip the domain_id processing to avoid false cross-domain errors
+                        // (newDomainId stays as proposal.getDomainId())
                     }
-                    // Non-string domain_id (number, boolean, etc.) — treat as no domain change,
-                    // skip the domain_id processing to avoid false cross-domain errors
-                }
                 } catch (IllegalArgumentException | IllegalStateException | EntityNotFoundException e) {
                     throw e;
                 } catch (Exception e) {

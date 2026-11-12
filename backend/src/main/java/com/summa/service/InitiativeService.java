@@ -588,6 +588,11 @@ public class InitiativeService {
      * - Goal window ended without initiative action → direction ask (INT-050)
      * Deduplicates by refusing to file a new ask if one was created within
      * STALL_ASK_DEDUP_WINDOW_SECONDS for the same initiative and reason.
+     * <p>
+     * Performance note: iterates all active and proposed initiatives every 5 minutes.
+     * For large datasets consider targeted querying by status and deadline. The
+     * 5-minute cadence is tuned for the single-process MVP path; scale-out may
+     * require adjustment.
      */
     @Scheduled(fixedRate = Defaults.STALL_CHECK_INTERVAL_MS) // every 5 minutes
     @Transactional

@@ -38,6 +38,14 @@ public class DnaRuleService {
         this.domainLockService = domainLockService != null ? domainLockService : new DomainLockService();
     }
 
+    /**
+     * DNC-023 / DWC-020: Create a DNA rule within a domain write lock. Validates
+     * effective date ordering, supersedence chain integrity (no forks, no superseding
+     * a lapsed rule), and domain membership. The predecessor rule (if any) is
+     * displaced at the successor's effective_from edge — the create door is as much
+     * a displacement door as the explicit supersede door, so a chain is never left
+     * with two co-temporal heads. Scans for secrets before writing (SEC-030).
+     */
     @Transactional
     public DnaRule create(String id, String domainId, String statementMd, String machineHint,
                           Instant effectiveFrom, Instant effectiveTo, String supersedesId,
@@ -241,6 +249,11 @@ public class DnaRuleService {
      * dropping out of injection and routing." A rule that was displaced by a
      * successor becomes `superseded` instead — DNC-022: a predecessor stays
      * superseded when its superseder lapses, nothing flips back silently.
+     * <p>
+     * Performance note: iterates all active rules every 5 minutes (300s). For
+     * large datasets consider pagination or a more targeted query (e.g. by
+     * effectiveTo date range). The 5-minute cadence is tuned for the
+     * single-process MVP path; scale-out may require adjustment.
      */
     @Scheduled(fixedRate = 300000)
     @Transactional

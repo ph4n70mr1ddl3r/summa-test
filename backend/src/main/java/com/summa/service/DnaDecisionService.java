@@ -36,6 +36,14 @@ public class DnaDecisionService {
         this.domainLockService = domainLockService != null ? domainLockService : new DomainLockService();
     }
 
+    /**
+     * DAT-120: Create a DNA decision within a domain write lock. DecidedBy is
+     * resolved to a keyed-union form (h:<humans.id>/a:<agents.id>) by live member
+     * lookup. Context and outcome are scanned for secrets (SEC-030). Decisions are
+     * lifecycle-free by design — immutable records that compose with the domain
+     * axis rather than overriding it. Archived domain decisions leave search with
+     * their domain's corpus and resolve by citation.
+     */
     @Transactional
     public DnaDecision create(String id, String domainId, String contextMd, String outcomeMd,
                                String decidedBy, String provenance, String actor) {
