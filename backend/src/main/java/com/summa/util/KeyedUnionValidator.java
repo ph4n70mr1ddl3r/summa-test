@@ -14,7 +14,6 @@ public final class KeyedUnionValidator {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException(fieldName + " is required");
         }
-        if (RESERVED_IDS.contains(value)) return;
         if (!KEYED_UNION_PATTERN.matcher(value).matches()) {
             throw new IllegalArgumentException(fieldName + " must be a valid keyed union (h:<human-id> or a:<agent-id>)");
         }
