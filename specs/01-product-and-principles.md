@@ -46,12 +46,11 @@ module says so explicitly.
   one runtime serves all roles (TPL-001).
 - **PRN-008** — Governance is proportional to blast radius: ephemeral workers get quotas;
   persistent hires and DNA changes get review (SPW-001, DWP-001).
-- **PRN-009** — **Universal fallback**: when any subsystem meets a state its designers did not
-  anticipate, it shall refuse the effect, write an audit entry, and raise an ask — no subsystem
-  may fail silently or improvise a side effect. This is the contract that makes "handle every
-  scenario" falsifiable rather than aspirational; the chaos/fault-injection suite (DLV-060)
-  enforces it.
-
+- **PRN-009** — **Universal fallback (principle level)**: when any subsystem meets a state its
+  designers did not anticipate, it shall refuse the effect, write an audit entry, and raise an
+  ask — no subsystem may fail silently or improvise a side effect. This principle establishes
+  the contract that makes "handle every scenario" falsifiable rather than aspirational; the
+  chaos/fault-injection suite (DLV-060) enforces it at the subsystem level.
 ## Actor eligibility summary
 
 The following guards recur across modules and are specified once:

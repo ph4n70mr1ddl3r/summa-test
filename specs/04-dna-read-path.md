@@ -32,6 +32,12 @@ Source: PLAN.md §4.2, §4.6.
   structurally instead: the routing spine — domains with their owners, groups with their
   Leaders — never demotes, and member rows beyond the budget demote to the org-facts
   directory (DNC-003), never a truncated roster.
+ 
+  **Example**: If a run's prompt exceeds the glossary budget (2k tokens), the least-recently-
+  cited glossary term is demoted to retrieval. If the goal slice also overflows, 'linked'
+  goals are preserved before 'always' goals. If rules overflow, narrative-only rules are
+  demoted before enforcement-bearing rules carrying `machine_hint`. Two enforcement-bearing
+  rules with identical `machine_hint` status tie-break by ascending item id.
 
 ## Applicable rules
 
