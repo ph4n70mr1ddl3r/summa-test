@@ -155,6 +155,19 @@ SCENARIOS = [
         ],
         fragment="stale Intentional cross-listings entry",
     ),
+    # New test: cross-listings with ID appearing in additional row
+    Scenario(
+        "crosslist-additional-row",
+        [
+            (
+                "specs/TRACEABILITY.md",
+                "| §2 Principles | 02 | PRN-001…002 |",
+                "| §2 Principles | 02 | PRN-001…003 |",
+            ),
+        ],
+        expect_ok=False,
+        fragment="listed IDs not defined: PRN-003",
+    ),
     # --- check 6: version pins ---
     Scenario(
         "version-pin-disagree",
