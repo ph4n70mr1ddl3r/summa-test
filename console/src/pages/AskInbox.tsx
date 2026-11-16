@@ -28,13 +28,13 @@ const STATUS_DISPLAY_NAMES: Record<string, string> = {
  * The ask's responses ledger (DAT-080) counts the accepts toward the quorum:
  * only an accept counts, a denial never does (ASK-050).
  */
-function countAccepts(ask: Ask): number {
+export function countAccepts(ask: Ask): number {
   if (!ask.responses) return 0
   try {
     const entries = JSON.parse(ask.responses)
     if (!Array.isArray(entries)) return 0
     return entries.filter(
-      (entry) => entry && (entry.decision === undefined || entry.decision === 'accept'),
+      (entry) => entry && entry.decision === 'accept',
     ).length
   } catch {
     return 0

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, waitFor, fireEvent } from '@testing-library/react'
-import AskInbox from './AskInbox'
+import AskInbox, { countAccepts } from './AskInbox'
 import { api, type AskKind, type AskTier, getUser } from '../services/api'
 
 vi.mock('../services/api', () => ({
@@ -14,6 +14,54 @@ vi.mock('../services/api', () => ({
   },
   getUser: vi.fn(() => ({ userId: 'agent-1', rbac: 'member', name: 'Test Agent' })),
 }))
+
+describe('countAccepts', () => {
+  it('counts only accept decisions', () => {
+    const askWithAccept = {
+      id: 'ask-1',
+      kind: 'question' as AskKind,
+      slaTier: 'standard' as AskTier,
+      from: 'agent-1',
+      to: 'human-1',
+      payload: '{}',
+      deadline: Math.floor(Date.now() / 1000) + 86400,
+      status: 'pending' as const,
+      responses: JSON.stringify([
+        { decision: 'accept' },
+        { decision: 'deny' },
+        { decision: undefined },
+      ]),
+    }
+    const askWithOnlyDeny = {
+      id: 'ask-2',
+      kind: 'question' as AskKind,
+      slaTier: 'standard' as AskTier,
+      from: 'agent-1',
+      to: 'human-1',
+      payload: '{}',
+      deadline: Math.floor(Date.now() / 1000) + 86400,
+      status: 'pending' as const,
+      responses: JSON.stringify([
+        { decision: 'deny' },
+        { decision: 'deny' },
+      ]),
+    }
+    const askNoResponses = {
+      id: 'ask-3',
+      kind: 'question' as AskKind,
+      slaTier: 'standard' as AskTier,
+      from: 'agent-1',
+      to: 'human-1',
+      payload: '{}',
+      deadline: Math.floor(Date.now() / 1000) + 86400,
+      status: 'pending' as const,
+    }
+
+    expect(countAccepts(askWithAccept)).toBe(1)
+    expect(countAccepts(askWithOnlyDeny)).toBe(0)
+    expect(countAccepts(askNoResponses)).toBe(0)
+  })
+})
 
 describe('AskInbox page', () => {
   beforeEach(() => {
