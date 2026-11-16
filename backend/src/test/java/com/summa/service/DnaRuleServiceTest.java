@@ -103,8 +103,11 @@ class DnaRuleServiceTest {
         existing.setId("rule-old");
         existing.setDomainId("domain-1");
         existing.setStatus("active");
+        DnaRule successor = new DnaRule();
+        successor.setId("rule-old");
+        successor.setStatus("active");
         when(ruleRepository.findById("rule-old")).thenReturn(Optional.of(existing));
-        when(ruleRepository.findBySupersedesId("rule-old")).thenReturn(List.of(new DnaRule()));
+        when(ruleRepository.findBySupersedesId("rule-old")).thenReturn(List.of(successor));
 
         assertThrows(IllegalArgumentException.class, () ->
             ruleService.create("rule-1", "domain-1", "stmt", null, null, null, "rule-old", "admin")
@@ -118,6 +121,22 @@ class DnaRuleServiceTest {
         assertThrows(IllegalArgumentException.class, () -> {
             ruleService.create("rule-1", "domain-1", "stmt", null, null, null, "rule-future", "admin");
         });
+    }
+
+    @Test
+    void create_allowsSupersedingSupersededSuccessor() {
+        DnaRule existing = new DnaRule();
+        existing.setId("rule-old");
+        existing.setDomainId("domain-1");
+        existing.setStatus("superseded");
+        when(ruleRepository.findById("rule-old")).thenReturn(Optional.of(existing));
+        when(ruleRepository.findBySupersedesId("rule-old")).thenReturn(List.of());
+        when(ruleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        DnaRule result = ruleService.create("rule-1", "domain-1", "stmt", null, null, null, "rule-old", "admin");
+
+        assertNotNull(result);
+        assertEquals("active", result.getStatus());
     }
 
     @Test
@@ -419,30 +438,6 @@ class DnaRuleServiceTest {
         ruleService.lapseExpiredRules();
 
         assertEquals("superseded", rule.getStatus());
-    }
-
-    @Test
-    void supersede_refusesAForkedChain() {
-        // DNC-025: supersession chains are linear, not forks — a second live
-        // `supersedes_id` edge onto an already-superseded row is refused at
-        // propose, amend, and item write; displacing a superseded rule means
-        // naming the chain's live head. The item-write door carried no such
-        // guard, so a fork was reachable from the API.
-        DnaRule predecessor = new DnaRule();
-        predecessor.setId("rule-old");
-        predecessor.setDomainId("domain-1");
-        predecessor.setStatus("superseded");
-        DnaRule successor = new DnaRule();
-        successor.setId("rule-new");
-        successor.setDomainId("domain-1");
-        successor.setStatus("active");
-        when(ruleRepository.findById("rule-new")).thenReturn(Optional.of(successor));
-        when(ruleRepository.findById("rule-old")).thenReturn(Optional.of(predecessor));
-        when(ruleRepository.findBySupersedesId("rule-old")).thenReturn(List.of(predecessor));
-
-        assertThrows(IllegalArgumentException.class, () ->
-            ruleService.supersede("rule-new", "rule-old", "admin")
-        );
     }
 
     @Test

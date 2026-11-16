@@ -74,8 +74,10 @@ public class DnaRuleService {
                     throw new IllegalArgumentException("Cannot supersede a lapsed rule");
                 }
 
-                // Check for forked supersession
-                long successorCount = ruleRepository.findBySupersedesId(supersedesId).size();
+                // Check for forked supersession — only count live (active) successors
+                long successorCount = ruleRepository.findBySupersedesId(supersedesId).stream()
+                    .filter(r -> "active".equals(r.getStatus()))
+                    .count();
                 if (successorCount > 0) {
                     throw new IllegalArgumentException(
                         "Rule already has a superseder. Name the chain's live head instead.");
@@ -292,7 +294,9 @@ public class DnaRuleService {
             // propose, amend, and item write; displacing a superseded rule means
             // naming the chain's live head. The create door carries these guards; the
             // item-write door must carry them too or a fork is reachable from the API.
-            long successorCount = ruleRepository.findBySupersedesId(supersedesId).size();
+            long successorCount = ruleRepository.findBySupersedesId(supersedesId).stream()
+                    .filter(r -> "active".equals(r.getStatus()))
+                    .count();
             if (successorCount > 0) {
                 throw new IllegalArgumentException(
                     "Rule already has a superseder. Name the chain's live head instead.");
