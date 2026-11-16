@@ -306,6 +306,15 @@ describe('loadWithFallback error message formatting', () => {
     expect(result.error).toBeDefined()
     expect(result.error).toContain('unknown error')
   })
+
+  it('handles empty string error gracefully', async () => {
+    const result = await loadWithFallback(
+      async () => { throw ''; },
+      async () => [null, null]
+    )
+    expect(result.error).toBeDefined()
+    expect(result.error).toContain('unknown error')
+  })
 })
 
 describe('api.nodes endpoint paths', () => {

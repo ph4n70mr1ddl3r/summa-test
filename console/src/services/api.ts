@@ -226,7 +226,7 @@ export async function loadWithFallback<T>(
       results = await fetchIndividual();
       const hasError = results.some(r => r == null);
       error = hasError
-        ? 'Some data could not be loaded: ' + (e != null ? (e instanceof Error ? e.message : (typeof e === 'string' ? e : String(e))) : 'unknown error')
+        ? 'Some data could not be loaded: ' + (e != null && e !== '' ? (e instanceof Error ? e.message : (typeof e === 'string' ? e : String(e))) : 'unknown error')
         : null;
     } catch {
       results = [];
