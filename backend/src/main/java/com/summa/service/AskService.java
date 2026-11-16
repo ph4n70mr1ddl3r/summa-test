@@ -489,6 +489,21 @@ public class AskService {
         if (quorum > 1) {
             boolean isPoolPrincipal = isPoolPrincipal(ask, responder);
             if (!isPoolPrincipal) {
+                // ASK-050: a deny is terminal even for audit-only responders —
+                // the ask closes as denied immediately, but the deny does not
+                // count toward quorum. Record the response and close the ask.
+                if (AskDecision.DENY.getValue().equals(effectiveDecision)) {
+                    recordResponse(ask, responder, response, effectiveDecision);
+                    ask.setRespondedAt(Instant.now());
+                    ask.setStatus(AskStatus.DENIED.getValue());
+                    Ask saved = askRepository.save(ask);
+                    auditService.log(responder, "RESPOND_DENY", "ask", id,
+                        String.format("{\"decision\":%s}", JsonHelpers.jsonString(effectiveDecision)));
+                    auditService.logSystem("AUDIT_ONLY_QUORUM_RESPONSE", "ask", id,
+                        String.format("{\"responder\":%s,\"reason\":\"not_pool_principal\",\"decision\":%s}",
+                            JsonHelpers.jsonString(responder), JsonHelpers.jsonString(effectiveDecision)));
+                    return saved;
+                }
                 // Audit-only: record but don't count toward quorum
                 auditService.logSystem("AUDIT_ONLY_QUORUM_RESPONSE", "ask", id,
                     String.format("{\"responder\":%s,\"reason\":\"not_pool_principal\",\"decision\":%s}",

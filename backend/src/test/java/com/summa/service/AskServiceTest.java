@@ -942,6 +942,34 @@ class AskServiceTest {
     }
 
     @Test
+    void respond_quorumN_nonPoolPrincipalDeny_isRecorded() {
+        // ASK-052/050: when N>1 and a non-pool-principal (e.g. agent) responds
+        // with "deny", the deny should still close the ask even though it is
+        // audit-only for quorum counting purposes.
+        Ask ask = new Ask();
+        ask.setId("ask-1");
+        ask.setStatus("pending");
+        ask.setTo("a:agent-1");
+        ask.setQuorumRequired(2);
+        ask.setResponses("[]");
+        ask.setDeadline(Instant.now().plusSeconds(3600));
+
+        when(askRepository.findById("ask-1")).thenReturn(Optional.of(ask));
+        when(askRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(memberService.findHuman("agent-1")).thenReturn(Optional.empty());
+        lenient().when(memberService.findAdmins()).thenReturn(List.of());
+
+        AskService svc = buildService();
+        Ask result = svc.respond("ask-1", "agent-1", "done", "deny");
+
+        // The ask should be closed as denied even though the responder is not
+        // a pool principal. The deny is recorded on the ledger.
+        assertEquals("denied", result.getStatus());
+        verify(auditService).logSystem(eq("AUDIT_ONLY_QUORUM_RESPONSE"), eq("ask"), eq("ask-1"), anyString());
+        verify(auditService).log(eq("agent-1"), eq("RESPOND_DENY"), eq("ask"), eq("ask-1"), anyString());
+    }
+
+    @Test
     void expire_namesTheQuorumShortfall() {
         // ASK-053: an unanswerable quorum ask denies at expiry, fail-safe, "with
         // the breach escalation naming the shortfall".
