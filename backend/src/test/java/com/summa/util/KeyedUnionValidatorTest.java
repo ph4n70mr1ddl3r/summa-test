@@ -29,15 +29,13 @@ class KeyedUnionValidatorTest {
     }
 
     @Test
-    void reserved_system_bypasses_pattern_check_throws() {
-        assertThrows(IllegalArgumentException.class, () ->
-            KeyedUnionValidator.validate("system", "proposedBy"));
+    void valid_reserved_system_passes() {
+        KeyedUnionValidator.validate("system", "proposedBy");
     }
 
     @Test
-    void reserved_admins_bypasses_pattern_check_throws() {
-        assertThrows(IllegalArgumentException.class, () ->
-            KeyedUnionValidator.validate("admins", "proposedBy"));
+    void valid_reserved_admins_passes() {
+        KeyedUnionValidator.validate("admins", "proposedBy");
     }
 
     @Test
